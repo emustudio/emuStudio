@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_COMPUTER;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class EditComputerAction extends AbstractAction {
 

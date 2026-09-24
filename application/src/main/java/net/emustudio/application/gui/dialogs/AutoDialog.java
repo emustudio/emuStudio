@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.util.Objects;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_MOTHERBOARD;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 /**
  * This is the dialog form that displays when the emuStudio automatization

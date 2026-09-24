@@ -26,7 +26,17 @@ public class ConfigFiles {
             PLUGIN_TYPE.MEMORY, DIR_MEMORY,
             PLUGIN_TYPE.DEVICE, DIR_DEVICE
     );
-    private static final Path basePath = Path.of(System.getProperty("user.dir"));
+    private static volatile Path configBasePath = defaultBasePath();
+    private static volatile Path pluginsBasePath = defaultBasePath();
+
+    public static void setBasePaths(Path configBasePath, Path pluginsBasePath) {
+        ConfigFiles.configBasePath = normalize(configBasePath);
+        ConfigFiles.pluginsBasePath = normalize(pluginsBasePath);
+    }
+
+    public static Path getConfigBasePath() {
+        return configBasePath;
+    }
 
     public static Optional<ComputerConfig> loadConfiguration(String computerName) throws IOException {
         return loadConfigurations().stream().filter(config -> config.getName().equals(computerName)).findAny();
@@ -45,7 +55,7 @@ public class ConfigFiles {
     }
 
     public static List<ComputerConfig> loadConfigurations() throws IOException {
-        return loadConfigurations(basePath);
+        return loadConfigurations(configBasePath);
     }
 
     public static List<ComputerConfig> loadConfigurations(Path basePath) throws IOException {
@@ -73,13 +83,13 @@ public class ConfigFiles {
         if (basicPath.isAbsolute()) {
             return basicPath;
         } else {
-            Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
+            Path pluginBasePath = pluginsBasePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
             return pluginBasePath.resolve(relativePluginPath);
         }
     }
 
     public static List<String> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
-        Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
+        Path pluginBasePath = pluginsBasePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
         try (Stream<Path> paths = Files.list(pluginBasePath)) {
             return paths
                     .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
@@ -90,12 +100,14 @@ public class ConfigFiles {
     }
 
     public static ComputerConfig createConfiguration(String computerName) throws IOException {
-        Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
+        Path configDirectory = configBasePath.resolve(DIR_CONFIG);
+        Files.createDirectories(configDirectory);
+        Path configPath = configDirectory.resolve(encodeToFileName(computerName) + ".toml");
         return ComputerConfig.create(computerName, configPath);
     }
 
     public static void removeConfiguration(String computerName) throws IOException {
-        Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
+        Path configPath = configBasePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
     }
 
@@ -109,5 +121,13 @@ public class ConfigFiles {
 
     private static String encodeToFileName(String name) {
         return name.replaceAll("\\W+", "");
+    }
+
+    private static Path normalize(Path path) {
+        return Objects.requireNonNull(path).toAbsolutePath().normalize();
+    }
+
+    private static Path defaultBasePath() {
+        return Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
     }
 }

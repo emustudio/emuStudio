@@ -5,6 +5,7 @@ package net.emustudio.application.gui.debugtable;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static net.emustudio.application.gui.debugtable.MockHelper.*;
@@ -21,7 +22,12 @@ public class PaginatingDisassemblerTest {
 
     @Test(expected = NullPointerException.class)
     public void testCreateInstanceNullDisassemblerThrows() {
-        new PaginatingDisassembler(null, () -> 0);
+        new PaginatingDisassembler(null, 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateInstanceEmptyAddressSpaceThrows() {
+        new PaginatingDisassembler(mock(CallFlow.class), 0);
     }
 
     @Test
@@ -29,7 +35,7 @@ public class PaginatingDisassemblerTest {
         callFlow = mock(CallFlow.class);
         when(callFlow.getLongestInstructionSize()).thenReturn(2);
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(INSTR_PER_PAGE, asm.getInstructionsPerPage());
         asm.setInstructionsPerPage(9);
@@ -42,7 +48,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageCurrentReturnsToPageZero() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
         asm.pageNext();
@@ -56,7 +62,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testFlushCacheAddsInclusiveUpperBoundOffset() {
         callFlow = mock(CallFlow.class);
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.flushCache(2, 6);
 
@@ -64,11 +70,12 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testRowAboveHalfReturnsMinusOneForEmptyMemory() {
+    public void testRowAboveHalfReturnsMinusOneAtAddressSpaceEnd() {
         callFlow = mock(CallFlow.class);
         when(callFlow.getLongestInstructionSize()).thenReturn(1);
+        when(callFlow.getLocations(0, 0)).thenReturn(new ArrayList<>(Collections.singletonList(0)));
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 1);
 
         assertEquals(-1, asm.rowToLocation(0, INSTR_PER_HALF_PAGE + 1));
         verify(callFlow).updateCache(0);
@@ -80,7 +87,7 @@ public class PaginatingDisassemblerTest {
         when(callFlow.getLongestInstructionSize()).thenReturn(1);
         when(callFlow.getLocations(0, 5)).thenReturn(Collections.emptyList());
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 6);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 6);
 
         assertEquals(-1, asm.rowToLocation(0, INSTR_PER_HALF_PAGE + 1));
     }
@@ -88,7 +95,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testCachedNextAndPreviousPagesCanBeReused() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
         asm.pageNext();
@@ -109,7 +116,7 @@ public class PaginatingDisassemblerTest {
     public void testPageZeroCurrentInstruction() {
         callFlow = mock(CallFlow.class);
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(50, asm.rowToLocation(50, INSTR_PER_HALF_PAGE));
         verify(callFlow).updateCache(50);
@@ -126,7 +133,7 @@ public class PaginatingDisassemblerTest {
                 CURRENT_INSTR
         );
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(
                 -1,
@@ -145,7 +152,7 @@ public class PaginatingDisassemblerTest {
                 CURRENT_INSTR
         );
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(
                 -1,
@@ -294,7 +301,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageMinusOneFirstRowNotEnoughInstructions() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, LONGEST_INSTR));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.rowToLocation(CURRENT_INSTR, 0);
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE);
@@ -322,7 +329,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageZeroInstructionStepped() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(-1, asm.rowToLocation(CURRENT_INSTR, 0));
         assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE));
@@ -341,7 +348,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageOneInstructionStepped() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
         asm.pageNext();
@@ -372,7 +379,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageMinusOneInstructionStepped() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         callFlow.updateCache(0);
 
@@ -404,7 +411,7 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageMinusOneMinLocationIsNotKnownThenAnotherPreviousPageIsIgnored() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         callFlow.updateCache(0);
 
@@ -419,7 +426,7 @@ public class PaginatingDisassemblerTest {
     @Test(timeout = 1000)
     public void testLastPageThenAnotherPageNextIsIgnored() {
         CallFlow callFlow = new CallFlow(makeDisassembler(5 * CURRENT_INSTR, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 5 * CURRENT_INSTR);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 5 * CURRENT_INSTR);
 
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
         asm.pageLast();
@@ -435,7 +442,7 @@ public class PaginatingDisassemblerTest {
     @Test(timeout = 1000)
     public void testLastPageThenFirstPageReturnsBack() {
         CallFlow callFlow = new CallFlow(makeDisassembler(5 * CURRENT_INSTR, 1));
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 5 * CURRENT_INSTR);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 5 * CURRENT_INSTR);
 
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
         asm.pageLast();

@@ -128,6 +128,23 @@ inputReadDelayMillis = 0
 halfDuplex = false
 font = "original"
 
+[[DEVICE]]
+schemaPoint = "220,180"
+path = "88-pio.jar"
+settings = { }
+name = "88-pio"
+id = "7e7f84b5-d958-41d6-968b-d50f93600369"
+
+type = "DEVICE"
+
+[[DEVICE]]
+schemaPoint = "480,60"
+path = "88-ptr-ptp.jar"
+settings = { }
+name = "88-ptr-ptp"
+id = "d5f4104a-a803-47ba-b867-603408ef04ae"
+type = "DEVICE"
+
 [[connections]]
 bidirectional = true
 from = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
@@ -158,3 +175,14 @@ from = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
 to = "515f3dfd-5005-4b62-b002-a20f23324573"
 points = []
 
+[[connections]]
+bidirectional = true
+from = "7e7f84b5-d958-41d6-968b-d50f93600369"
+to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "d5f4104a-a803-47ba-b867-603408ef04ae"
+to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+points = []

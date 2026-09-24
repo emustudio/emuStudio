@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Optional;
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -85,6 +86,8 @@ public class MemoryTableModelTest {
         assertEquals(Optional.of(100), model.findSequence(new byte[]{0x42}, 0));
         assertEquals(Optional.of(65534), model.findSequence(new byte[]{(byte) 0xFE, (byte) 0xFF}, 0));
         assertEquals(Optional.empty(), model.findSequence(new byte[]{(byte) 0xAA}, 70000));
+        context.write(200, (byte) 0x42);
+        assertEquals(Arrays.asList(100, 200), model.findSequences(new byte[]{0x42}));
         assertFalse(model.isROMAt(0, 0));
         assertTrue(model.isAtBANK(0, 0));
         context.setReadOnly(new RangeTree.Range(0, 15));

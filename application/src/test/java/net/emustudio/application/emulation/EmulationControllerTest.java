@@ -268,6 +268,11 @@ public class EmulationControllerTest {
         }
 
         @Override
+        public int getAddressSpaceSize() {
+            return 256;
+        }
+
+        @Override
         public boolean setInstructionLocation(int pos) {
             return false;
         }

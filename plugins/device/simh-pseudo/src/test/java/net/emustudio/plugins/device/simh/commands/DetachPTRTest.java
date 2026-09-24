@@ -4,14 +4,18 @@ package net.emustudio.plugins.device.simh.commands;
 
 import org.junit.Test;
 
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class DetachPTRTest extends CommandTestBase {
 
     @Test
     public void testStartClearsCommand() {
+        paperTape.detachReader();
+        expectLastCall().once();
+        replay(paperTape);
         DetachPTR.INS.start(control);
         assertTrue(isCommandCleared());
+        verify(paperTape);
     }
 }
-

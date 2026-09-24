@@ -19,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.nio.file.Path;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -60,6 +62,11 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
+    public int getAddressSpaceSize() {
+        return 0x10000;
+    }
+
+    @Override
     public boolean setInstructionLocation(int location) {
         if (location < 0) {
             return false;
@@ -76,7 +83,18 @@ public class CpuImpl extends AbstractCPU {
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
-            statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions(), applicationApi.getGUI());
+            statusPanel = new StatusPanel(
+                    this, context, initializer.shouldDumpInstructions(), applicationApi.getDialogs(), applicationApi.getGUI()
+            );
+        }
+    }
+
+    public void loadSnapshot(Path path) throws IOException {
+        ZxSpectrumSnapshot snapshot = ZxSpectrumSnapshotLoader.load(path);
+        reset(snapshot.programCounter);
+        engine.loadSnapshot(snapshot);
+        if (statusPanel != null) {
+            statusPanel.updateGUI();
         }
     }
 

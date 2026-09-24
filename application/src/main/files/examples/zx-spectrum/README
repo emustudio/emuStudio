@@ -1,4 +1,18 @@
-ZX Spectrum ROM and tape files can be found at:
+ZX Spectrum 48K quick start
+===========================
+
+1. Start the `ZX Spectrum 48K` virtual computer.
+2. In the Byte Memory settings, load a 16 KiB Spectrum ROM at address 0000H.
+3. Open one of the assembly examples in the editor and compile it with AS-Z80.
+   The examples use `org 8000H`, so compilation writes them at address 32768.
+4. From Spectrum BASIC run `RANDOMIZE USR 32768`.
+
+The Z80 CPU status panel can also load a stopped 48K machine snapshot. Use
+`Load snapshot...` for `.sna` or `.z80` files. Z80 v1, v2, and v3 48K files are
+accepted; 128K and banked snapshots are rejected because this computer model has
+no compatible paging hardware.
+
+ROM and tape files can be found at:
 
 - https://www.planetemu.net/roms/sinclair-zx-spectrum-z80
 - https://worldofspectrum.org/
@@ -7,6 +21,18 @@ ZX Spectrum ROM and tape files can be found at:
 
 Example sources:
 
+- `border_stripes.asm` beginner example: set the border, bitmap, and attributes.
 - `zx_audio.asm` standalone ZX Spectrum ROM `BEEP` melody demo (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`).
 - `twinkle_beeper.asm` (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`)
-- `ay_ode_to_joy.asm` AY-3-8910 three-voice demo for `ZxSpectrum48KAY.toml` (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`)
+- `ay_ode_to_joy.asm` AY-3-8910 three-voice demo. Add the AY device to the computer first, then assemble for 32768 / 8000H and run with `RANDOMIZE USR 32768`.
+
+AS-Z80 tutorial
+---------------
+
+Numbers can use hexadecimal suffix `H` (`8000H`), decimal notation, or symbols
+declared with `equ`. Labels end with `:` and can be used by jumps, calls, and
+data directives. `db` emits bytes and `dw` emits little-endian words.
+
+The screen bitmap starts at `4000H`; its attributes start at `5800H`. Port
+`FEH` controls the border and beeper. Begin with `border_stripes.asm`, then use
+`twinkle_beeper.asm` to see subroutines, a data table, and port output.

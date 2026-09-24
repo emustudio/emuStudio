@@ -3,9 +3,6 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
-import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
-import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,25 +10,24 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class PerformFindSequenceActionTest {
 
-    private MemoryContextImpl context;
-    private MemoryTableModel tableModel;
     private Dialogs dialogs;
-    private AtomicInteger foundAddress;
+    private AtomicReference<byte[]> sequence;
+    private AtomicInteger from;
     private boolean disposed;
 
     @Before
     public void setUp() {
-        context = TestMemoryContextFactory.create(256, 1, 0);
-        tableModel = new MemoryTableModel(context);
         dialogs = createNiceMock(Dialogs.class);
         replay(dialogs);
-        foundAddress = new AtomicInteger(-1);
+        sequence = new AtomicReference<>();
+        from = new AtomicInteger(-1);
         disposed = false;
     }
 
@@ -42,8 +38,10 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField(findText);
 
         return new PerformFindSequenceAction(
-                dialogs, () -> disposed = true, tableModel,
-                foundAddress::set,
+                dialogs, () -> disposed = true, (value, address) -> {
+                    sequence.set(value);
+                    from.set(address);
+                },
                 () -> isCurrentPage, () -> isPlainText,
                 currentAddress, txtPosition, txtFindText
         );
@@ -52,60 +50,52 @@ public class PerformFindSequenceActionTest {
     @Test(expected = NullPointerException.class)
     public void testNullDialogsThrows() {
         JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(null, () -> {}, tableModel, i -> {}, () -> true, () -> true, 0, txt, txt);
+        new PerformFindSequenceAction(null, () -> {}, (value, from) -> {}, () -> true, () -> true, 0, txt, txt);
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullDisposeThrows() {
         JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(dialogs, null, tableModel, i -> {}, () -> true, () -> true, 0, txt, txt);
+        new PerformFindSequenceAction(dialogs, null, (value, from) -> {}, () -> true, () -> true, 0, txt, txt);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullTableModelThrows() {
+    public void testNullStartSearchThrows() {
         JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(dialogs, () -> {}, null, i -> {}, () -> true, () -> true, 0, txt, txt);
+        new PerformFindSequenceAction(dialogs, () -> {}, null, () -> true, () -> true, 0, txt, txt);
     }
 
     @Test
     public void testFindSequenceHexFromCurrentPage() {
-        context.write(10, (byte) 0xAA);
-        context.write(11, (byte) 0xBB);
-
         PerformFindSequenceAction action = createAction(true, false, "", "0xAA 0xBB", 0);
         action.actionPerformed(new ActionEvent(this, 0, ""));
 
-        assertEquals(10, foundAddress.get());
+        assertArrayEquals(new byte[]{(byte) 0xAA, (byte) 0xBB}, sequence.get());
+        assertEquals(0, from.get());
     }
 
     @Test
     public void testFindSequencePlainText() {
-        context.write(0, (byte) 'H');
-        context.write(1, (byte) 'i');
-
         PerformFindSequenceAction action = createAction(true, true, "", "Hi", 0);
         action.actionPerformed(new ActionEvent(this, 0, ""));
 
-        assertEquals(0, foundAddress.get());
+        assertArrayEquals(new byte[]{'H', 'i'}, sequence.get());
     }
 
     @Test
     public void testFindSequenceFromSpecificAddress() {
-        context.write(5, (byte) 0xAA);
-        context.write(50, (byte) 0xAA);
-
         PerformFindSequenceAction action = createAction(false, false, "10", "0xAA", 0);
         action.actionPerformed(new ActionEvent(this, 0, ""));
 
-        assertEquals(50, foundAddress.get());
+        assertEquals(10, from.get());
     }
 
     @Test
-    public void testFindSequenceNotFound() {
+    public void testSearchRequestAlwaysIncludesPattern() {
         PerformFindSequenceAction action = createAction(true, false, "", "0xDE 0xAD", 0);
         action.actionPerformed(new ActionEvent(this, 0, ""));
 
-        assertEquals(-1, foundAddress.get());
+        assertArrayEquals(new byte[]{(byte) 0xDE, (byte) 0xAD}, sequence.get());
     }
 
     @Test
@@ -119,8 +109,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, tableModel,
-                foundAddress::set,
+                strictDialogs, () -> {}, (value, from) -> {},
                 () -> true, () -> false,
                 0, txtPosition, txtFindText
         );
@@ -140,8 +129,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("0xAA");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, tableModel,
-                foundAddress::set,
+                strictDialogs, () -> {}, (value, from) -> {},
                 () -> false, () -> false,
                 0, txtPosition, txtFindText
         );
@@ -161,8 +149,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("xyz");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, tableModel,
-                foundAddress::set,
+                strictDialogs, () -> {}, (value, from) -> {},
                 () -> true, () -> false,
                 0, txtPosition, txtFindText
         );
@@ -173,11 +160,9 @@ public class PerformFindSequenceActionTest {
 
     @Test
     public void testDisposeCalledOnSuccess() {
-        context.write(0, (byte) 0x42);
         PerformFindSequenceAction action = createAction(true, false, "", "0x42", 0);
         action.actionPerformed(new ActionEvent(this, 0, ""));
 
         assertEquals(true, disposed);
     }
 }
-

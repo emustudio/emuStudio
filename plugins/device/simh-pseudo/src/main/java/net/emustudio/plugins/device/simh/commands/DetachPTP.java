@@ -7,7 +7,7 @@ public class DetachPTP implements Command {
 
     @Override
     public void start(Control control) {
-        //detach_unit( & ptp_unit);
+        control.getPaperTape().detachPunch();
         control.clearCommand();
     }
 }

@@ -1,0 +1,77 @@
+name = "Space Invaders"
+
+[MEMORY]
+schemaPoint = "80,180"
+path = "byte-mem.jar"
+name = "byte-mem"
+id = "66d7906b-1815-470f-8473-07f49c6dbf0f"
+type = "MEMORY"
+
+[MEMORY.settings]
+memorySize = 16384
+banksCount = 1
+commonBoundary = 0
+# Original ROMs are not distributed. Configure legally obtained files here:
+#imageName0 = "invaders.h"
+#imageAddress0 = 0
+#imageBank0 = 0
+#imageName1 = "invaders.g"
+#imageAddress1 = 2048
+#imageBank1 = 0
+#imageName2 = "invaders.f"
+#imageAddress2 = 4096
+#imageBank2 = 0
+#imageName3 = "invaders.e"
+#imageAddress3 = 6144
+#imageBank3 = 0
+
+[COMPILER]
+schemaPoint = "80,60"
+path = "as-8080.jar"
+settings = { }
+name = "as-8080"
+id = "be00bc93-ef40-422d-b891-acf141b294aa"
+type = "COMPILER"
+
+[CPU]
+schemaPoint = "220,180"
+path = "8080-cpu.jar"
+settings = { }
+name = "8080-cpu"
+id = "916ec602-826f-4150-bb24-b8016b1f38a7"
+type = "CPU"
+
+[[DEVICE]]
+schemaPoint = "220,60"
+path = "spaceinvaders-display.jar"
+name = "spaceinvaders-display"
+id = "543fbb19-f066-40ba-a4c7-8a845b5500ef"
+type = "DEVICE"
+
+[DEVICE.settings]
+scale = 2
+colorOverlay = true
+
+[[connections]]
+bidirectional = true
+from = "be00bc93-ef40-422d-b891-acf141b294aa"
+to = "66d7906b-1815-470f-8473-07f49c6dbf0f"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "66d7906b-1815-470f-8473-07f49c6dbf0f"
+to = "916ec602-826f-4150-bb24-b8016b1f38a7"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "543fbb19-f066-40ba-a4c7-8a845b5500ef"
+to = "916ec602-826f-4150-bb24-b8016b1f38a7"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "543fbb19-f066-40ba-a4c7-8a845b5500ef"
+to = "66d7906b-1815-470f-8473-07f49c6dbf0f"
+points = []

@@ -4,15 +4,25 @@ package net.emustudio.plugins.device.simh.commands;
 
 import org.junit.Test;
 
+import java.nio.file.Paths;
+
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class AttachPTRTest extends CommandTestBase {
 
     @Test
-    public void testStartClearsWriteCommand() {
+    public void testStartAttachesReaderAndClearsWriteCommand() throws Exception {
+        String path = "reader.pt";
+        expectCommandLine(path);
+        paperTape.attachReader(Paths.get(path));
+        expectLastCall().once();
+        replay(memory, paperTape);
+
         AttachPTR.INS.start(control);
         assertTrue(isWriteCommandCleared());
         assertFalse(isCommandCleared());
+        verify(memory, paperTape);
     }
 
     @Test
@@ -20,6 +30,6 @@ public class AttachPTRTest extends CommandTestBase {
         AttachPTR.INS.reset(control);
         byte result = AttachPTR.INS.read(control);
         assertEquals(0, result);
+        assertTrue(isCommandCleared());
     }
 }
-

@@ -18,40 +18,37 @@ public class FindSequenceActionTest {
     public void testConstructorNullDialogsThrows() {
         JDialog parent = createNiceMock(JDialog.class);
         replay(parent);
-        new FindSequenceAction(null, addr -> {}, tableModel, () -> 0, parent, null);
+        new FindSequenceAction(null, search(), () -> 0, parent, null);
     }
     @Test(expected = NullPointerException.class)
-    public void testConstructorNullSetPageFromAddressThrows() {
+    public void testConstructorNullSearchThrows() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         JDialog parent = createNiceMock(JDialog.class);
         replay(dialogs, parent);
-        new FindSequenceAction(dialogs, null, tableModel, () -> 0, parent, null);
-    }
-    @Test(expected = NullPointerException.class)
-    public void testConstructorNullTableModelThrows() {
-        Dialogs dialogs = createNiceMock(Dialogs.class);
-        JDialog parent = createNiceMock(JDialog.class);
-        replay(dialogs, parent);
-        new FindSequenceAction(dialogs, addr -> {}, null, () -> 0, parent, null);
+        new FindSequenceAction(dialogs, null, () -> 0, parent, null);
     }
     @Test(expected = NullPointerException.class)
     public void testConstructorNullGetCurrentAddressThrows() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         JDialog parent = createNiceMock(JDialog.class);
         replay(dialogs, parent);
-        new FindSequenceAction(dialogs, addr -> {}, tableModel, null, parent, null);
+        new FindSequenceAction(dialogs, search(), null, parent, null);
     }
     @Test(expected = NullPointerException.class)
     public void testConstructorNullParentThrows() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         replay(dialogs);
-        new FindSequenceAction(dialogs, addr -> {}, tableModel, () -> 0, null, null);
+        new FindSequenceAction(dialogs, search(), () -> 0, null, null);
     }
     @Test
     public void testConstructorAcceptsNullGUI() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         JDialog parent = createNiceMock(JDialog.class);
         replay(dialogs, parent);
-        new FindSequenceAction(dialogs, addr -> {}, tableModel, () -> 0, parent, null);
+        new FindSequenceAction(dialogs, search(), () -> 0, parent, null);
+    }
+
+    private MemorySearch search() {
+        return new MemorySearch(tableModel, address -> {}, status -> {});
     }
 }

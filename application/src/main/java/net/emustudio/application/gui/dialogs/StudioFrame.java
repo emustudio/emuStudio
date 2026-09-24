@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_FAVICON;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 
 public class StudioFrame extends JFrame {
@@ -109,7 +109,11 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        setIconImage(Optional.ofNullable(loadIcon(ICON_FAVICON)).map(ImageIcon::getImage).orElse(null));
+        setIconImage(Optional.ofNullable(loadIcon(ICON_FAVICON))
+                .filter(ImageIcon.class::isInstance)
+                .map(ImageIcon.class::cast)
+                .map(ImageIcon::getImage)
+                .orElse(null));
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 

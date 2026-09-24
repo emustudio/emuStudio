@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -55,8 +56,19 @@ public class RunnerTest {
         assertTrue(before.hasSubcommand());
         assertEquals("BrainDuck", ((Runner) before.commandSpec().userObject()).exclusive.configName);
 
-        CommandLine.ParseResult after = cmdline.parseArgs(Runner.normalizeArgs("automation", "--no-gui", "-cn", "BrainDuck"));
+        CommandLine.ParseResult after = cmdline.parseArgs(Runner.normalizeArgs(
+                "automation", "--no-gui", "-cn", "BrainDuck", "--config-dir", "/config", "--plugins-dir=/plugins"));
         assertTrue(after.hasSubcommand());
-        assertEquals("BrainDuck", ((Runner) after.commandSpec().userObject()).exclusive.configName);
+        Runner runner = (Runner) after.commandSpec().userObject();
+        assertEquals("BrainDuck", runner.exclusive.configName);
+        assertEquals(Path.of("/config"), runner.configDirectory);
+        assertEquals(Path.of("/plugins"), runner.pluginsDirectory);
+    }
+
+    @Test
+    public void directoryResolutionUsesCliThenEnvironmentThenWorkingDirectory() {
+        assertEquals(Path.of("cli"), Runner.resolveDirectory(Path.of("cli"), "environment"));
+        assertEquals(Path.of("environment"), Runner.resolveDirectory(null, "environment"));
+        assertEquals(Path.of(System.getProperty("user.dir")), Runner.resolveDirectory(null, ""));
     }
 }

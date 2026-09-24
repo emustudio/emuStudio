@@ -4,15 +4,25 @@ package net.emustudio.plugins.device.simh.commands;
 
 import org.junit.Test;
 
+import java.nio.file.Paths;
+
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class AttachPTPTest extends CommandTestBase {
 
     @Test
-    public void testStartClearsWriteCommand() {
+    public void testStartAttachesPunchAndClearsWriteCommand() throws Exception {
+        String path = "punch.pt";
+        expectCommandLine(path);
+        paperTape.attachPunch(Paths.get(path));
+        expectLastCall().once();
+        replay(memory, paperTape);
+
         AttachPTP.INS.start(control);
         assertTrue(isWriteCommandCleared());
         assertFalse(isCommandCleared());
+        verify(memory, paperTape);
     }
 
     @Test
@@ -30,4 +40,3 @@ public class AttachPTPTest extends CommandTestBase {
         assertEquals(0, result);
     }
 }
-

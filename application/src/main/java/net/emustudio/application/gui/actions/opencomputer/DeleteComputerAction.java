@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_REMOVE;
 import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class DeleteComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeleteComputerAction.class);

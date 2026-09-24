@@ -175,6 +175,25 @@ public class EmulatorEngine implements CpuEngine {
         currentRunState = RunState.STATE_STOPPED_BREAK;
     }
 
+    void loadSnapshot(ZxSpectrumSnapshot snapshot) {
+        reset(snapshot.programCounter);
+        memory.write(ZxSpectrumSnapshot.RAM_START, snapshot.ram, snapshot.ram.length);
+        System.arraycopy(snapshot.registers, 0, regs, 0, regs.length);
+        System.arraycopy(snapshot.alternateRegisters, 0, regs2, 0, regs2.length);
+        flags = snapshot.flags;
+        flags2 = snapshot.alternateFlags;
+        SP = snapshot.stackPointer;
+        IX = snapshot.indexX;
+        IY = snapshot.indexY;
+        I = snapshot.interrupt;
+        R = snapshot.refresh;
+        interruptMode = (byte) snapshot.interruptMode;
+        IFF[0] = snapshot.iff1;
+        IFF[1] = snapshot.iff2;
+        interruptSkip = false;
+        context.writeIO(0xFE, (byte) snapshot.border);
+    }
+
     CPU.RunState step() throws Exception {
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
         try {

@@ -141,6 +141,11 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
+    public int getAddressSpaceSize() {
+        return memory.getSize();
+    }
+
+    @Override
     public boolean setInstructionLocation(int location) {
         return engine.setInstructionLocation(location);
     }
