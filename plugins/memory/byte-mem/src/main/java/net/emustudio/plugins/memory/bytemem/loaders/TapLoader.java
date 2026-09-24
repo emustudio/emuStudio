@@ -2,21 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.loaders;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.Optional;
 
 public class TapLoader implements Loader {
-    private final static Logger LOGGER = LoggerFactory.getLogger(TapLoader.class);
-
     @Override
     public boolean isMemoryAddressAware() {
         // Only tapes with memory blocks (with given start address) are loadable
@@ -35,43 +29,22 @@ public class TapLoader implements Loader {
         }
     }
 
-    private void parse(byte[] content, ByteMemoryContext memory) {
-        Optional<Integer> startAddress = Optional.empty();
-
+    private void parse(byte[] content, ByteMemoryContext memory) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        while (buffer.position() < buffer.limit()) {
-            int blockLength = buffer.getShort() & 0xFFFF;
-            int flagByte = buffer.get() & 0xFF;
-
-            if (flagByte == 0) {
-                final Optional<Integer> failOver = startAddress;
-                startAddress = parseHeader(buffer).or(() -> failOver);
-            } else {
-                byte[] data = new byte[blockLength - 2];
-                buffer.get(data);
-                // ignore other than memory blocks
-                startAddress.ifPresentOrElse(
-                        integer -> memory.write(integer, NumberUtils.nativeBytesToBytes(data)),
-                        () -> LOGGER.warn("Ignoring non-memory block data (program or variables)")
-                );
+        SpectrumTapeData tapeData = new SpectrumTapeData();
+        while (buffer.hasRemaining()) {
+            if (buffer.remaining() < Short.BYTES) {
+                throw new IOException("Incomplete TAP block length");
             }
-            buffer.get(); // checksum
-        }
-    }
+            int blockLength = buffer.getShort() & 0xFFFF;
+            if (blockLength < 2 || blockLength > buffer.remaining()) {
+                throw new IOException("Invalid TAP block length: " + blockLength);
+            }
 
-    private Optional<Integer> parseHeader(ByteBuffer buffer) {
-        int headerFlag = buffer.get() & 0xFF;
-        byte[] maybeFileName = new byte[10];
-        buffer.get(maybeFileName); // filename
-        buffer.getShort(); // length
-        int maybeAddress = buffer.getShort() & 0xFFFF;
-        buffer.getShort();
-
-        if (headerFlag == 3) {
-            // memory block
-            return Optional.of(maybeAddress);
+            byte[] block = new byte[blockLength];
+            buffer.get(block);
+            tapeData.accept(block, memory);
         }
-        return Optional.empty();
     }
 }
