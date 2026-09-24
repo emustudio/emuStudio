@@ -11,6 +11,7 @@ import net.emustudio.application.gui.dialogs.OpenComputerDialog;
 import net.emustudio.application.gui.dialogs.StudioFrame;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
@@ -37,9 +38,10 @@ public class Utils {
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {
-        Path configFile = Path.of("emuStudio.toml");
+        Path configFile = ConfigFiles.getConfigBasePath().resolve("emuStudio.toml");
         if (Files.notExists(configFile)) {
             LOGGER.warn("No configuration file found; creating empty one");
+            Files.createDirectories(configFile.getParent());
             Files.createFile(configFile);
         }
 

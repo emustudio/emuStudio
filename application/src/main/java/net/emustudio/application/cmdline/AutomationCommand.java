@@ -48,6 +48,7 @@ public class AutomationCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        runner.configureDirectories();
         Dialogs dialogs = new DialogsNoGui();
         DialogsGui guiDialogs = null;
         try {

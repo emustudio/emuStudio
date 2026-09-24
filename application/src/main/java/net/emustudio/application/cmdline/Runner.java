@@ -44,7 +44,8 @@ public class Runner implements Callable<Integer> {
             "-i", "--input-file",
             "-cn", "--computer-name",
             "-cf", "--computer-file",
-            "-ci", "--computer-index"
+            "-ci", "--computer-index",
+            "--config-dir", "--plugins-dir"
     ));
     private static final Set<String> PARENT_FLAGS = new HashSet<>(Arrays.asList(
             "-cl", "--computers-list"
@@ -58,6 +59,12 @@ public class Runner implements Callable<Integer> {
 
     @CommandLine.Option(names = {"-cl", "--computers-list"}, description = "list all existing virtual computers")
     private boolean listConfigs;
+
+    @CommandLine.Option(names = "--config-dir", description = "configuration base directory", paramLabel = "DIR")
+    public Path configDirectory;
+
+    @CommandLine.Option(names = "--plugins-dir", description = "plugin base directory", paramLabel = "DIR")
+    public Path pluginsDirectory;
 
     public static void main(String[] args) {
         int exitCode = executeArgs(args);
@@ -127,6 +134,7 @@ public class Runner implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        configureDirectories();
         if (listConfigs) {
             try {
                 AtomicInteger index = new AtomicInteger();
@@ -171,6 +179,23 @@ public class Runner implements Callable<Integer> {
             LOGGER.error("Unexpected error", e);
             return 1;
         }
+    }
+
+    void configureDirectories() {
+        ConfigFiles.setBasePaths(
+                resolveDirectory(configDirectory, System.getenv("EMUSTUDIO_CONFIG_DIR")),
+                resolveDirectory(pluginsDirectory, System.getenv("EMUSTUDIO_PLUGINS_DIR"))
+        );
+    }
+
+    static Path resolveDirectory(Path commandLineValue, String environmentValue) {
+        if (commandLineValue != null) {
+            return commandLineValue;
+        }
+        if (environmentValue != null && !environmentValue.isBlank()) {
+            return Path.of(environmentValue);
+        }
+        return Path.of(System.getProperty("user.dir"));
     }
 
     public static class Exclusive {
