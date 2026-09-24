@@ -3,7 +3,9 @@
 package net.emustudio.plugins.cpu.zilogZ80.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
@@ -11,13 +13,18 @@ import net.emustudio.plugins.cpu.zilogZ80.InstructionPrinter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
+    private static final FileExtensionsFilter SNAPSHOT_FILTER =
+            new FileExtensionsFilter("ZX Spectrum snapshots", "sna", "z80");
+
     private final GUI gui;
+    private final Dialogs dialogs;
     private final CpuImpl cpu;
     private final Context8080 context;
     private final FlagsModel flagModel1;
@@ -66,17 +73,22 @@ public class StatusPanel extends JPanel {
     private final JLabel lblFrequency = new JLabel("0.00 kHz");
     private final JSpinner spnFrequency;
     private final JCheckBox chkPrintInstructions = new JCheckBox("Dump instructions history");
+    private final JButton btnLoadSnapshot;
+    private Path recentSnapshotPath = Path.of(System.getProperty("user.dir"));
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, Dialogs dialogs, GUI gui) {
         this.gui = gui;
+        this.dialogs = dialogs;
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
         this.flagModel2 = new FlagsModel(1, cpu.getEngine());
         this.spnFrequency = new JSpinner(new SpinnerNumberModel(context.getCPUFrequency(), 1, null, 100));
+        this.btnLoadSnapshot = gui.button("Load snapshot...");
 
         initComponents();
         chkPrintInstructions.setSelected(dumpInstructions);
+        btnLoadSnapshot.addActionListener(e -> loadSnapshot());
         tblFlags1.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
 
@@ -155,6 +167,7 @@ public class StatusPanel extends JPanel {
 
             lblRunState.setText(runState.toString());
             spnFrequency.setEnabled(runState != CPU.RunState.STATE_RUNNING);
+            btnLoadSnapshot.setEnabled(runState != CPU.RunState.STATE_RUNNING);
         });
     }
 
@@ -187,7 +200,7 @@ public class StatusPanel extends JPanel {
         panelExtra.add(txtR, "growx");
 
         // Run control
-        JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[]6[]push[]", "[]6[]6[]6[]12[]");
+        JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[]6[]push[]", "[]6[]6[]6[]6[]12[]");
         panelRun.add(lblRunState, "span, wrap");
         panelRun.add(new JSeparator(), "span, growx, wrap");
         panelRun.add(gui.label("CPU Frequency:"));
@@ -196,7 +209,8 @@ public class StatusPanel extends JPanel {
         panelRun.add(gui.label("Runtime frequency:"));
         panelRun.add(lblFrequency, "span, wrap");
         chkPrintInstructions.addActionListener(this::chkPrintInstructionsActionPerformed);
-        panelRun.add(chkPrintInstructions, "span");
+        panelRun.add(chkPrintInstructions, "span, wrap");
+        panelRun.add(btnLoadSnapshot, "span");
 
         setLayout(new BorderLayout());
         JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
@@ -257,6 +271,18 @@ public class StatusPanel extends JPanel {
         } else {
             cpu.getEngine().setDispatchListener(null);
         }
+    }
+
+    private void loadSnapshot() {
+        dialogs.chooseFile("Load ZX Spectrum snapshot", "Load", recentSnapshotPath, false, SNAPSHOT_FILTER)
+                .ifPresent(path -> {
+                    try {
+                        cpu.loadSnapshot(path);
+                        recentSnapshotPath = path;
+                    } catch (Exception e) {
+                        dialogs.showError("Could not load snapshot: " + e.getMessage(), "Load ZX Spectrum snapshot");
+                    }
+                });
     }
 
     private static JTextField regField() {
