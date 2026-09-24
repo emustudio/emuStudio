@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_RESET;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class ResetAction extends AbstractAction {
 

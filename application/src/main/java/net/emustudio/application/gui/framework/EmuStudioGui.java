@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.
@@ -311,7 +311,7 @@ public class EmuStudioGui implements GUI {
     @Override
     public JButton button(String iconResource, String text, Runnable action) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        JButton btn = new JButton(text, GUI.loadIcon(iconResource, callerClass));
+        JButton btn = new JButton(text, Icons.loadIcon(iconResource, callerClass));
         btn.addActionListener(e -> action.run());
         return btn;
     }

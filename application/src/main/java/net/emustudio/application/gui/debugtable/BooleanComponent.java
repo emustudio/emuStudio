@@ -5,7 +5,7 @@ package net.emustudio.application.gui.debugtable;
 import javax.swing.*;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_BREAKPOINT;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class BooleanComponent extends JLabel {
     public static final Icon BOOLEAN_ICON = loadIcon(ICON_BREAKPOINT);

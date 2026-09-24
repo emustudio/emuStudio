@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_RUN;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class RunAction extends AbstractAction {
 

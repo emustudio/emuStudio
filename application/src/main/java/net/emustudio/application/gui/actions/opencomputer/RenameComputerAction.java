@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_RENAME;
 import static net.emustudio.application.settings.ConfigFiles.renameConfiguration;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class RenameComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(RenameComputerAction.class);

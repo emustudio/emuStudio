@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.components;
 
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -28,7 +28,7 @@ public class ToolbarToggleButton extends JToggleButton {
     public ToolbarToggleButton(Action action, String iconResource, String tooltipText, Class<?> callerClass) {
         super(action);
         action.putValue(SHORT_DESCRIPTION, tooltipText);
-        action.putValue(SMALL_ICON, GUI.loadIcon(iconResource, callerClass));
+        action.putValue(SMALL_ICON, Icons.loadIcon(iconResource, callerClass));
         setHideActionText(true);
         setToolTipText(tooltipText);
         setFocusable(false);
@@ -46,4 +46,3 @@ public class ToolbarToggleButton extends JToggleButton {
         this(new ActionFromEvent(action, iconResource, tooltipText, callerClass));
     }
 }
-
