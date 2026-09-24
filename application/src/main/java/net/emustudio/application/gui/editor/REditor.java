@@ -23,10 +23,14 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -44,6 +51,9 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
+    private final static Pattern INCLUDE_PATTERN = Pattern.compile(
+            "(?i)^\\s*#?\\s*include\\s+([\"'])([^\"']+)\\1"
+    );
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
@@ -51,6 +61,8 @@ public class REditor implements Editor {
 
     private final Dialogs dialogs;
     private final List<FileExtension> fileExtensions;
+    private Consumer<Path> openFileHandler = path -> {
+    };
     private boolean isnew = true;
     private SearchContext lastSearchedContext;
 
@@ -105,6 +117,18 @@ public class REditor implements Editor {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     clearMarkedOccurences();
+                }
+            }
+        });
+        textPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown()) {
+                    int offset = textPane.viewToModel2D(e.getPoint());
+                    if (offset >= 0) {
+                        openIncludeAt(offset);
+                        e.consume();
+                    }
                 }
             }
         });
@@ -246,6 +270,47 @@ public class REditor implements Editor {
                 listener.run();
             }
         });
+    }
+
+    void setOpenFileHandler(Consumer<Path> openFileHandler) {
+        this.openFileHandler = Objects.requireNonNull(openFileHandler);
+    }
+
+    void openIncludeAt(int offset) {
+        resolveIncludeAt(offset).ifPresent(path -> {
+            if (Files.isRegularFile(path)) {
+                textPane.setToolTipText(null);
+                openFileHandler.accept(path);
+            } else {
+                textPane.setToolTipText("File not found: " + path);
+            }
+        });
+    }
+
+    private Optional<Path> resolveIncludeAt(int offset) {
+        Token token = textPane.modelToToken(offset);
+        if (token == null || !token.containsPosition(offset)) {
+            return Optional.empty();
+        }
+        try {
+            int line = textPane.getLineOfOffset(offset);
+            int lineStart = textPane.getLineStartOffset(line);
+            int lineEnd = textPane.getLineEndOffset(line);
+            Matcher matcher = INCLUDE_PATTERN.matcher(textPane.getText(lineStart, lineEnd - lineStart));
+            if (!matcher.find()) {
+                return Optional.empty();
+            }
+
+            int filenameStart = lineStart + matcher.start(2);
+            int filenameEnd = lineStart + matcher.end(2);
+            if (offset < filenameStart || offset >= filenameEnd) {
+                return Optional.empty();
+            }
+            return getCurrentFile().map(File::toPath).map(Path::getParent)
+                    .map(parent -> parent.resolve(matcher.group(2)).normalize());
+        } catch (BadLocationException | InvalidPathException e) {
+            return Optional.empty();
+        }
     }
 
     @Override

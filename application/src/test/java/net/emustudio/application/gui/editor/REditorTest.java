@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -335,6 +336,39 @@ public class REditorTest extends AbstractSwingTest {
             }
         });
         assertEquals(1, editor.clearCalls);
+    }
+
+    @Test
+    public void ctrlClickIncludeResolutionUsesCurrentFileDirectory() throws Exception {
+        Path directory = Files.createTempDirectory("reditor-include");
+        Path include = Files.writeString(directory.resolve("library.asm"), "NOP");
+        Path source = Files.writeString(directory.resolve("main.asm"), "include \"library.asm\"");
+        REditor editor = createEditor(mock(Dialogs.class), null);
+        AtomicReference<Path> opened = new AtomicReference<>();
+        editor.setOpenFileHandler(opened::set);
+
+        assertTrue(onEdt(() -> editor.openFile(source)));
+        runOnEdt(() -> editor.openIncludeAt("include \"".length()));
+
+        assertEquals(include, opened.get());
+    }
+
+    @Test
+    public void missingIncludeSetsTooltipWithoutOpeningFile() throws Exception {
+        Path directory = Files.createTempDirectory("reditor-missing-include");
+        Path source = Files.writeString(directory.resolve("main.asm"), "#include \"missing.asm\"");
+        REditor editor = createEditor(mock(Dialogs.class), null);
+        AtomicReference<Path> opened = new AtomicReference<>();
+        editor.setOpenFileHandler(opened::set);
+
+        assertTrue(onEdt(() -> editor.openFile(source)));
+        runOnEdt(() -> editor.openIncludeAt("#include \"".length()));
+
+        assertNull(opened.get());
+        assertEquals(
+                "File not found: " + directory.resolve("missing.asm"),
+                onEdt(() -> textPane(editor).getToolTipText())
+        );
     }
 
     private REditor createEditor(Dialogs dialogs, Compiler compiler) {

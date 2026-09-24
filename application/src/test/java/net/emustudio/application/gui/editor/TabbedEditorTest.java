@@ -11,6 +11,9 @@ import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -80,6 +83,37 @@ public class TabbedEditorTest extends AbstractSwingTest {
 
         assertEquals(1, onEdt(tabs::getTabCount).intValue());
         assertEquals("existing.asm", onEdt(() -> tabs.getTitleAt(0)));
+    }
+
+    @Test
+    public void ctrlClickingIncludeOpensItInNewTab() throws Exception {
+        Path include = source("library.asm", "NOP");
+        Path main = source("main.asm", "include \"library.asm\"");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(main), files -> {
+        }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        showInFrame(tabs);
+        TextEditorPane textPane = findComponent(
+                (Container) onEdt(tabs::getSelectedComponent), TextEditorPane.class, pane -> true
+        );
+        int offset = "include \"".length();
+        Rectangle2D location = onEdt(() -> textPane.modelToView2D(offset));
+
+        runOnEdt(() -> textPane.dispatchEvent(new MouseEvent(
+                textPane,
+                MouseEvent.MOUSE_CLICKED,
+                System.currentTimeMillis(),
+                InputEvent.CTRL_DOWN_MASK,
+                (int) location.getCenterX(),
+                (int) location.getCenterY(),
+                1,
+                false,
+                MouseEvent.BUTTON1
+        )));
+
+        assertEquals(2, onEdt(tabs::getTabCount).intValue());
+        assertEquals("library.asm", onEdt(() -> tabs.getTitleAt(1)));
+        assertEquals(include, editor.getCurrentFile().orElseThrow().toPath());
     }
 
     private Path source(String name, String text) throws Exception {

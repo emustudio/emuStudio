@@ -200,6 +200,7 @@ public class TabbedEditor implements Editor {
 
     private REditor createEditor() {
         REditor editor = new REditor(dialogs, compiler);
+        editor.setOpenFileHandler(this::openFile);
         editor.addChangeListener(() -> SwingUtilities.invokeLater(() -> {
             if (editors.contains(editor)) {
                 updateTitle(editor);
