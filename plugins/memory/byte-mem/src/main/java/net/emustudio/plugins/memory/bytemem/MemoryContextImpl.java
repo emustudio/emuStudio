@@ -5,6 +5,7 @@ package net.emustudio.plugins.memory.bytemem;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
@@ -42,6 +43,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         for (Byte[] bank : mem) {
             Arrays.fill(bank, (byte) 0);
         }
+        invalidateSourceCode(Integer.MIN_VALUE, Integer.MAX_VALUE);
         notifyMemoryContentChanged(-1);
     }
 
@@ -98,6 +100,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     public void write(int to, Byte value) {
         if (!isReadOnly(to)) {
             mem[bank(to)][to] = value;
+            invalidateSourceCode(to, to);
             notifyMemoryContentChanged(to);
         }
     }
@@ -106,6 +109,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         if (!isReadOnly(to)) {
             int activeBank = (to < bankCommon) ? bank : 0;
             mem[activeBank][to] = val;
+            invalidateSourceCode(to, to);
             notifyMemoryContentChanged(to);
         }
     }
@@ -113,6 +117,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     public void write(int to, Byte[] values, int count) {
         if (!romRanges.intersects(to, to + count - 1)) {
             System.arraycopy(values, 0, mem[bank(to)], to, count);
+            invalidateSourceCode(to, to + count - 1);
             notifyMemoryContentChanged(to, to + count - 1);
         }
     }
@@ -173,5 +178,17 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
 
     private int bank(int address) {
         return (address < bankCommon) ? bankSelect : 0;
+    }
+
+    private void invalidateSourceCode(int from, int to) {
+        var sourceCode = annotations.getAll(SourceCodeAnnotation.class);
+        if (sourceCode == null) {
+            return;
+        }
+        sourceCode.forEach((address, values) -> {
+            if (address >= from && address <= to) {
+                values.forEach(annotation -> annotations.removeAll(annotation.getPluginId(), address));
+            }
+        });
     }
 }

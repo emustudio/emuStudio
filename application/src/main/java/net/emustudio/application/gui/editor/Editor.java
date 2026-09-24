@@ -8,6 +8,7 @@ import org.fife.rsta.ui.search.SearchListener;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface Editor extends SearchListener {
@@ -42,6 +43,14 @@ public interface Editor extends SearchListener {
      * @param position position in the source code
      */
     void setPosition(SourceCodePosition position);
+
+    /**
+     * Show source lines which produced compiled memory.
+     *
+     * @param positions source positions attached to memory addresses
+     */
+    default void setSourceCodePositions(Collection<SourceCodePosition> positions) {
+    }
 
 
     Optional<File> getCurrentFile();

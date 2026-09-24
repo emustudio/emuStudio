@@ -6,6 +6,7 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
+import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,5 +71,6 @@ public class DumpMemoryAction extends AbstractAction {
                 }
             }
         }
+        MetadataSidecar.save(path, context);
     }
 }

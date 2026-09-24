@@ -12,6 +12,7 @@ import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.*;
+import org.fife.ui.rtextarea.GutterIconInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_BREAKPOINT;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
@@ -40,6 +45,7 @@ public class REditor implements Editor {
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
+    private final List<GutterIconInfo> sourceCodeMarkers = new ArrayList<>();
 
     private final Dialogs dialogs;
     private final List<FileExtension> fileExtensions;
@@ -69,6 +75,7 @@ public class REditor implements Editor {
         textPane.requestFocusInWindow();
         textPane.setMarkOccurrences(true);
         textPane.setClearWhitespaceLinesEnabled(false);
+        scrollPane.setIconRowHeaderEnabled(true);
 
         // CTRL+{mouse wheel} zooms text
         MouseWheelListener[] listeners = scrollPane.getMouseWheelListeners();
@@ -140,6 +147,31 @@ public class REditor implements Editor {
     }
 
     @Override
+    public void setSourceCodePositions(Collection<SourceCodePosition> positions) {
+        clearSourceCodeMarkers();
+        Optional<Path> currentFile = getCurrentFile().map(File::toPath);
+        if (currentFile.isEmpty()) {
+            return;
+        }
+
+        Icon marker = loadIcon(ICON_BREAKPOINT);
+        positions.stream()
+                .filter(position -> position.line > 0)
+                .filter(position -> isCurrentFile(position.fileName, currentFile.get()))
+                .map(position -> position.line)
+                .distinct()
+                .sorted()
+                .forEach(line -> {
+                    try {
+                        sourceCodeMarkers.add(scrollPane.getGutter().addLineTrackingIcon(
+                                line - 1, marker, "Compiled source line"
+                        ));
+                    } catch (BadLocationException ignored) {
+                    }
+                });
+    }
+
+    @Override
     public boolean isDirty() {
         return textPane.isDirty();
     }
@@ -174,6 +206,7 @@ public class REditor implements Editor {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
+                clearSourceCodeMarkers();
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
@@ -197,6 +230,7 @@ public class REditor implements Editor {
             textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
+            clearSourceCodeMarkers();
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
@@ -211,6 +245,7 @@ public class REditor implements Editor {
         textPane.discardAllEdits();
         textPane.setDirty(false);
         isnew = true;
+        clearSourceCodeMarkers();
     }
 
     @Override
@@ -275,6 +310,24 @@ public class REditor implements Editor {
                 .map(Path::of)
                 .map(Path::getParent)
                 .orElseGet(() -> Path.of(System.getProperty("user.dir")));
+    }
+
+    private boolean isCurrentFile(String fileName, Path currentFile) {
+        try {
+            Path sourceFile = Path.of(fileName);
+            Path normalizedCurrentFile = currentFile.toAbsolutePath().normalize();
+            if (sourceFile.getNameCount() == 1) {
+                return sourceFile.equals(normalizedCurrentFile.getFileName());
+            }
+            return sourceFile.toAbsolutePath().normalize().equals(normalizedCurrentFile);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    private void clearSourceCodeMarkers() {
+        sourceCodeMarkers.forEach(scrollPane.getGutter()::removeTrackingIcon);
+        sourceCodeMarkers.clear();
     }
 
     private List<FileExtensionsFilter> saveFilters() {

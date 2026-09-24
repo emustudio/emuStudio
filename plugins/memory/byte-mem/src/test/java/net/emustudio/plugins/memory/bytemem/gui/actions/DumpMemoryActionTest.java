@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
@@ -71,6 +73,24 @@ public class DumpMemoryActionTest {
         assertEquals((byte) 0xBB, bytes[1]);
         assertEquals((byte) 0xCC, bytes[2]);
         assertEquals((byte) 0xDD, bytes[3]);
+    }
+
+    @Test
+    public void testDumpPersistsMetadataSidecar() throws Exception {
+        File binFile = tmpFolder.newFile("metadata.bin");
+        context.annotations().add(1, new SourceCodeAnnotation(9, SourceCodePosition.of(4, 2, "source.asm")));
+        Dialogs dialogs = createNiceMock(Dialogs.class);
+        expect(dialogs.chooseFile(anyString(), anyString(), anyObject(Path.class), eq(true),
+                anyObject(net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter.class),
+                anyObject(net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter.class)))
+                .andReturn(Optional.of(binFile.toPath()));
+        replay(dialogs);
+
+        DumpMemoryAction action = new DumpMemoryAction(dialogs, context);
+        action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
+
+        assertTrue(Files.exists(Path.of(binFile + ".meta")));
     }
     @Test
     public void testDumpCancelledByUser() {
