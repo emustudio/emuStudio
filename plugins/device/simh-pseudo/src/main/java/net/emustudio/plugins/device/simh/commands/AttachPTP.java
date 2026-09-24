@@ -2,25 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.simh.commands;
 
-public class AttachPTP implements Command {
+import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+public class AttachPTP extends AttachTape {
     public final static AttachPTP INS = new AttachPTP();
-    private int lastCPMStatus = 0; // result of last attachCPM command
 
     @Override
-    public void reset(Control control) {
-        lastCPMStatus = 0;
-    }
-
-    @Override
-    public byte read(Control control) {
-        byte result = (byte) lastCPMStatus;
-        control.clearCommand();
-        return result;
-    }
-
-    @Override
-    public void start(Control control) {
-        // attachCPM( & ptp_unit);
-        control.clearWriteCommand();
+    protected void attach(PaperTapeContext tape, Path path) throws IOException {
+        tape.attachPunch(path);
     }
 }
