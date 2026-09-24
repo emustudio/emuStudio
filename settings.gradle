@@ -32,6 +32,7 @@ include ':plugins:cpu:z80-cpu'
 
 include ':plugins:device:88-dcdd'
 include ':plugins:device:88-sio'
+include ':plugins:device:88-pio'
 include ':plugins:device:abstract-tape'
 include ':plugins:device:adm3A-terminal'
 include ':plugins:device:vt100-terminal'
