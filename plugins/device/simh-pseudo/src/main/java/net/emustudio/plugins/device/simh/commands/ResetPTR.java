@@ -7,7 +7,7 @@ public class ResetPTR implements Command {
 
     @Override
     public void start(Control control) {
-        //ptr_reset( & ptr_dev);
+        control.getPaperTape().rewindReader();
         control.clearCommand();
     }
 }

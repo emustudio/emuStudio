@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.simh;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.simh.commands.Command;
+import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import static net.emustudio.plugins.device.simh.Commands.COMMANDS_MAP;
@@ -46,6 +47,7 @@ import static net.emustudio.plugins.device.simh.Commands.unknownCmd;
 class PseudoContext implements Context8080.CpuPortDevice, Command.Control {
     private ByteMemoryContext memory;
     private Context8080 cpu;
+    private PaperTapeContext paperTape;
 
     private Commands lastReadCommand = unknownCmd;
     private Commands lastWriteCommand = unknownCmd;
@@ -83,6 +85,15 @@ class PseudoContext implements Context8080.CpuPortDevice, Command.Control {
 
     void setCpu(Context8080 cpu) {
         this.cpu = cpu;
+    }
+
+    @Override
+    public PaperTapeContext getPaperTape() {
+        return paperTape;
+    }
+
+    void setPaperTape(PaperTapeContext paperTape) {
+        this.paperTape = paperTape;
     }
 
     void reset() {

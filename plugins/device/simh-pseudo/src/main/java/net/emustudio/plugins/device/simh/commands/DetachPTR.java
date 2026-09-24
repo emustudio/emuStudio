@@ -7,7 +7,7 @@ public class DetachPTR implements Command {
 
     @Override
     public void start(Control control) {
-        //detach_unit( & ptr_unit);
+        control.getPaperTape().detachReader();
         control.clearCommand();
     }
 }
