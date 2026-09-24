@@ -61,6 +61,37 @@ public class MemoryImplTest {
     }
 
     @Test
+    public void parsesHumanReadableMemorySizes() {
+        assertEquals(65536, MemoryImpl.parseSizeString("64K"));
+        assertEquals(65536, MemoryImpl.parseSizeString("64k"));
+        assertEquals(1048576, MemoryImpl.parseSizeString("1M"));
+        assertEquals(1048576, MemoryImpl.parseSizeString("1m"));
+        assertEquals(512, MemoryImpl.parseSizeString("512"));
+    }
+
+    @Test
+    public void rejectsInvalidHumanReadableMemorySizes() {
+        for (String size : List.of("", "K", "1G", "-1", "2048M")) {
+            try {
+                MemoryImpl.parseSizeString(size);
+                fail("Expected invalid memory size: " + size);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+    }
+
+    @Test
+    public void initializesFromHumanReadableMemorySize() throws PluginInitializationException {
+        MemoryImpl mem = createMemory(settings().set("size", "64K").mock());
+        try {
+            mem.initialize();
+            assertEquals(65536, mem.getSize());
+        } finally {
+            mem.destroy();
+        }
+    }
+
+    @Test
     public void initializeLoadsImagesAndRomRanges() throws Exception {
         Path image = image("init.bin", (byte) 1, (byte) 2, (byte) 3);
         MemoryImpl mem = createMemory(settings()

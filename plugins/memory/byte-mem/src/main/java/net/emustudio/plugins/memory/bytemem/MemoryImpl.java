@@ -83,7 +83,7 @@ public class MemoryImpl extends AbstractMemory {
                 bankCommon = 0;
             }
 
-            int memorySize = settings.getInt("memorySize", MemoryContextImpl.DEFAULT_MEM_SIZE);
+            int memorySize = readMemorySize();
             if (memorySize < 0) {
                 LOGGER.warn("Memory size < 0. Resetting to 0");
             }
@@ -95,6 +95,44 @@ public class MemoryImpl extends AbstractMemory {
 
         loadImages();
         loadRomRanges();
+    }
+
+    private int readMemorySize() {
+        String key = settings.contains("size") ? "size" : "memorySize";
+        if (!settings.contains(key)) return MemoryContextImpl.DEFAULT_MEM_SIZE;
+        try {
+            return settings.getString(key).map(MemoryImpl::parseSizeString)
+                    .orElse(MemoryContextImpl.DEFAULT_MEM_SIZE);
+        } catch (ClassCastException e) {
+            return settings.getInt(key, MemoryContextImpl.DEFAULT_MEM_SIZE);
+        }
+    }
+
+    static int parseSizeString(String size) {
+        String value = size.trim();
+        if (value.isEmpty()) {
+            throw new NumberFormatException("Memory size cannot be empty");
+        }
+
+        long multiplier = 1;
+        char suffix = value.charAt(value.length() - 1);
+        if (suffix == 'K' || suffix == 'k') {
+            multiplier = 1024;
+            value = value.substring(0, value.length() - 1);
+        } else if (suffix == 'M' || suffix == 'm') {
+            multiplier = 1024 * 1024;
+            value = value.substring(0, value.length() - 1);
+        }
+
+        try {
+            long parsed = Math.multiplyExact(Long.parseLong(value), multiplier);
+            if (parsed < 0 || parsed > Integer.MAX_VALUE) {
+                throw new NumberFormatException("Memory size must be between 0 and " + Integer.MAX_VALUE + " bytes");
+            }
+            return (int) parsed;
+        } catch (ArithmeticException e) {
+            throw new NumberFormatException("Memory size is too large: " + size);
+        }
     }
 
     private void loadRomRanges() throws PluginInitializationException {
