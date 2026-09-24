@@ -78,16 +78,6 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public String getVersion() {
-        return Resources.getVersion();
-    }
-
-    @Override
-    public String getCopyright() {
-        return Resources.getCopyright();
-    }
-
-    @Override
     public String getDescription() {
         return DIALOG_TITLE + " floppy disk controller.";
     }

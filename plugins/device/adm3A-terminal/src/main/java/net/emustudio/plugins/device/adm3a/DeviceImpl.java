@@ -26,9 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFont;
 
@@ -124,16 +121,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "Custom implementation of LSI ADM-3A terminal";
     }
@@ -176,12 +163,4 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         }
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
-        } catch (MissingResourceException e) {
-            LOGGER.error("Could not find resource bundle", e);
-            return Optional.empty();
-        }
-    }
 }

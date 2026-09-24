@@ -18,9 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -54,16 +51,6 @@ public class CpuImpl extends AbstractCPU {
         initializer = new InitializerFor8080(
                 this, pluginID, applicationApi.getContextPool(), settings, context
         );
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -157,12 +144,4 @@ public class CpuImpl extends AbstractCPU {
         return true;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.intel8080.version"));
-        } catch (MissingResourceException e) {
-            LOGGER.warn("Could not load Intel 8080 version resource bundle", e);
-            return Optional.empty();
-        }
-    }
 }

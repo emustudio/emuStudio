@@ -20,9 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU")
 @SuppressWarnings("unused")
@@ -44,16 +41,6 @@ public class CpuImpl extends AbstractCPU {
             LOGGER.error("Could not register CPU context", e);
             applicationApi.getDialogs().showError("Could not register CPU context. Please see log file for details", getTitle());
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -94,7 +81,6 @@ public class CpuImpl extends AbstractCPU {
         }
         return new StatusPanel(memory, this, applicationApi.getGUI());
     }
-
 
     @Override
     public void resetInternal(int adr) {
@@ -148,11 +134,4 @@ public class CpuImpl extends AbstractCPU {
         return disassembler;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.brainduck.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

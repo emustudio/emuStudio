@@ -24,9 +24,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -149,16 +146,6 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "RASP machine emulator";
     }
@@ -172,11 +159,4 @@ public class CpuImpl extends AbstractCPU {
         return memory.read(0);
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.rasp.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

@@ -19,9 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
@@ -52,16 +49,6 @@ public class DeviceImpl extends AbstractDevice {
                     "Could not register 88-SIO device channel. Please see log file for details.", super.getTitle()
             );
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -140,11 +127,4 @@ public class DeviceImpl extends AbstractDevice {
         return guiSupported;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.mits88sio.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

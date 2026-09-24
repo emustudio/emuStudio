@@ -16,10 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
@@ -51,16 +48,6 @@ public class AbstractTape extends AbstractDevice {
                     "Could not register abstract tape context. Please see log file for details.", super.getTitle()
             );
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -139,11 +126,4 @@ public class AbstractTape extends AbstractDevice {
         return guiSupported;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.abstracttape.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }
