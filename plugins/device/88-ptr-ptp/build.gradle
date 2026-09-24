@@ -1,0 +1,27 @@
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
+
+plugins {
+  id 'java'
+  id 'com.adarshr.test-logger' version '4.0.0'
+  id 'jacoco'
+}
+
+dependencies {
+  implementation libs.emuLib
+  cpuLib project(":plugins:cpu:8080-cpu")
+
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+  testImplementation libs.slf4JSimple
+}
+
+apply from: "$rootDir/gradle/conventions/java-conventions.gradle"
+
+test {
+  finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+  dependsOn test
+}
