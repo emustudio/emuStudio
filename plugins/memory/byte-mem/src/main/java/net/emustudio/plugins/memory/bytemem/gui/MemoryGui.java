@@ -41,6 +41,9 @@ public class MemoryGui extends DialogBase {
     private final DumpMemoryAction dumpMemoryAction;
     private final GotoAddressAction gotoAddressAction;
     private final FindSequenceAction findSequenceAction;
+    private final NavigateSequenceAction findNextAction;
+    private final NavigateSequenceAction findPreviousAction;
+    private final JLabel lblSearchStatus = new JLabel(" ");
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
@@ -63,8 +66,10 @@ public class MemoryGui extends DialogBase {
         }, gui);
         this.dumpMemoryAction = new DumpMemoryAction(dialogs, context);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
-        this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
-                this::getCurrentAddress, this, gui);
+        MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
+        this.findSequenceAction = new FindSequenceAction(dialogs, search, this::getCurrentAddress, this, gui);
+        this.findNextAction = new NavigateSequenceAction(search, false);
+        this.findPreviousAction = new NavigateSequenceAction(search, true);
 
         AsciiModeAction asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
         btnAsciiMode.setAction(asciiModeAction);
@@ -129,12 +134,20 @@ public class MemoryGui extends DialogBase {
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(gotoAddressAction));
         toolBar.add(gui.toolbarButton(findSequenceAction));
+        toolBar.add(gui.toolbarButton(findNextAction));
+        toolBar.add(gui.toolbarButton(findPreviousAction));
         toolBar.addSeparator();
         toolBar.add(btnAsciiMode);
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(settingsAction));
+        toolBar.add(Box.createHorizontalGlue());
+        toolBar.add(lblSearchStatus);
+
+        bindSearchShortcut("findSequence", findSequenceAction);
+        bindSearchShortcut("findNext", findNextAction);
+        bindSearchShortcut("findPrevious", findPreviousAction);
 
         // Memory control section
         JPanel panelControl = gui.section("Memory control", "insets dialog", "[]6[75!]6[]6[]54[]6[75!]6[]6[]push", "[]");
@@ -184,6 +197,12 @@ public class MemoryGui extends DialogBase {
 
     private int getCurrentAddress() {
         return tableModel.getPage() * (tableModel.getRowCount() * tableModel.getColumnCount());
+    }
+
+    private void bindSearchShortcut(String name, Action action) {
+        KeyStroke shortcut = (KeyStroke) action.getValue(Action.ACCELERATOR_KEY);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(shortcut, name);
+        getRootPane().getActionMap().put(name, action);
     }
 
     private void setPageFromAddress(int address) {

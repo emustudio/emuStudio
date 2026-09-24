@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,9 +22,7 @@ public class PerformFindSequenceAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(PerformFindSequenceAction.class);
     private final Dialogs dialogs;
     private final Runnable dispose;
-    private final MemoryTableModel tableModel;
-
-    private final Consumer<Integer> setFoundAddress;
+    private final BiConsumer<byte[], Integer> startSearch;
 
     private final Supplier<Boolean> isCurrentPage;
     private final Supplier<Boolean> isPlainText;
@@ -36,8 +33,7 @@ public class PerformFindSequenceAction extends AbstractAction {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
 
     public PerformFindSequenceAction(Dialogs dialogs, Runnable dispose,
-                                     MemoryTableModel tableModel,
-                                     Consumer<Integer> setFoundAddress,
+                                     BiConsumer<byte[], Integer> startSearch,
                                      Supplier<Boolean> isCurrentPage,
                                      Supplier<Boolean> isPlainText,
                                      int currentAddress,
@@ -46,9 +42,7 @@ public class PerformFindSequenceAction extends AbstractAction {
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.dispose = Objects.requireNonNull(dispose);
-        this.tableModel = Objects.requireNonNull(tableModel);
-
-        this.setFoundAddress = Objects.requireNonNull(setFoundAddress);
+        this.startSearch = Objects.requireNonNull(startSearch);
 
         this.currentAddress = currentAddress;
         this.isCurrentPage = Objects.requireNonNull(isCurrentPage);
@@ -86,7 +80,7 @@ public class PerformFindSequenceAction extends AbstractAction {
                 }
             }
 
-            tableModel.findSequence(sequenceToFind, from).ifPresent(setFoundAddress);
+            startSearch.accept(sequenceToFind, from);
             dispose.run();
         } catch (Exception ex) {
             LOGGER.debug(lastError.message, ex);

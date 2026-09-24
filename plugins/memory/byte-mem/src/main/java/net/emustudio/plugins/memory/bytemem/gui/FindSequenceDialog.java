@@ -6,10 +6,9 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence.PerformFindSequenceAction;
-import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class FindSequenceDialog extends DialogBase {
     private final GUI gui;
@@ -19,13 +18,13 @@ public class FindSequenceDialog extends DialogBase {
     private final JTextField txtPosition = new JTextField();
     private final JTextField txtSequence = new JTextField();
 
-    public FindSequenceDialog(Dialogs dialogs, JDialog parent, MemoryTableModel tableModel, int currentAddress,
-                              Consumer<Integer> setFoundAddress, GUI gui) {
+    public FindSequenceDialog(Dialogs dialogs, JDialog parent, int currentAddress,
+                              BiConsumer<byte[], Integer> startSearch, GUI gui) {
         super(parent, "Find sequence", true);
         this.gui = gui;
 
         this.performFindSequenceAction = new PerformFindSequenceAction(
-                dialogs, this::dispose, tableModel, setFoundAddress, radioCurrentPage::isSelected,
+                dialogs, this::dispose, startSearch, radioCurrentPage::isSelected,
                 radioPlainText::isSelected, currentAddress, txtPosition, txtSequence
         );
         buildContent();
