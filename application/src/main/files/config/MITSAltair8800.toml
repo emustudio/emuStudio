@@ -10,7 +10,7 @@ type = "MEMORY"
 [MEMORY.settings]
 banksCount = 1
 commonBoundary = 0
-#memorySize = 65536
+#size = "64K"
 
 # ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
 #ROMfromN = someAddress
