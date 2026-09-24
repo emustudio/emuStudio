@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -218,10 +220,32 @@ public class REditor implements Editor {
 
     @Override
     public boolean openFile() {
-        Optional<Path> openedFile = dialogs.chooseFile(
+        return chooseFileToOpen().map(this::openFile).orElse(false);
+    }
+
+    Optional<Path> chooseFileToOpen() {
+        return dialogs.chooseFile(
                 "Open a file", "Open", getCurrentBaseDirectory(), false, openFilters()
         );
-        return openedFile.map(this::openFile).orElse(false);
+    }
+
+    void addChangeListener(Runnable listener) {
+        textPane.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                listener.run();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                listener.run();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                listener.run();
+            }
+        });
     }
 
     @Override

@@ -9,10 +9,10 @@ import net.emustudio.application.gui.actions.ExitAction;
 import net.emustudio.application.gui.actions.ViewComputerAction;
 import net.emustudio.application.gui.actions.editor.FindNextAction;
 import net.emustudio.application.gui.actions.editor.FindPreviousAction;
+import net.emustudio.application.gui.actions.editor.CloseTabAction;
 import net.emustudio.application.gui.actions.editor.SaveFileAsAction;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
-import net.emustudio.application.gui.editor.Editor;
-import net.emustudio.application.gui.editor.REditor;
+import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -38,12 +38,13 @@ public class StudioFrame extends JFrame {
 
     private final GUI gui;
     private final Dialogs dialogs;
-    private final Editor editor;
+    private final TabbedEditor editor;
 
     private final EditorPanel editorPanel;
     private final EmulatorPanel emulatorPanel;
 
     private final SaveFileAsAction saveFileAsAction;
+    private final CloseTabAction closeTabAction;
     private final FindNextAction findNextAction;
     private final FindPreviousAction findPreviousAction;
     private final ExitAction exitAction;
@@ -61,9 +62,13 @@ public class StudioFrame extends JFrame {
         this.gui = Objects.requireNonNull(gui);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        this.editor = computer.getCompiler()
-                .map(compiler -> new REditor(dialogs, compiler))
-                .orElse(new REditor(dialogs));
+        this.editor = new TabbedEditor(
+                dialogs,
+                computer.getCompiler().orElse(null),
+                computer.getComputerConfig().getOpenSourceFiles(),
+                computer.getComputerConfig()::setOpenSourceFiles
+        );
+        this.editor.setActiveEditorChanged(this::updateTitleOfSourceCodePanel);
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
                 cpu, computer.getMemory().orElse(null), computer.getDevices()
@@ -79,6 +84,7 @@ public class StudioFrame extends JFrame {
         );
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);
+        this.closeTabAction = new CloseTabAction(editor, this::updateTitleOfSourceCodePanel);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
         this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
@@ -156,6 +162,7 @@ public class StudioFrame extends JFrame {
         mnuFile.setText("File");
         mnuFile.add(gui.menuItem(editorPanel.getNewFileAction()));
         mnuFile.add(gui.menuItem(editorPanel.getOpenFileAction()));
+        mnuFile.add(closeTabAction);
         mnuFile.addSeparator();
         mnuFile.add(gui.menuItem(editorPanel.getSaveFileAction()));
         mnuFile.add(saveFileAsAction);
@@ -196,7 +203,7 @@ public class StudioFrame extends JFrame {
 
     private void updateTitleOfSourceCodePanel() {
         editor.getCurrentFile().ifPresentOrElse(
-                file -> tabbedPane.setTitleAt(0, file.getName()),
+                file -> tabbedPane.setTitleAt(0, file.getName() + (editor.isDirty() ? "*" : "")),
                 () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
     }
@@ -208,7 +215,7 @@ public class StudioFrame extends JFrame {
                     .map(file -> file.toPath().toAbsolutePath().normalize())
                     .filter(sourceFile::equals)
                     .isPresent();
-            if (!currentFile && (!editorPanel.confirmSave() || !editor.openFile(sourceFile))) {
+            if (!currentFile && !editor.openFile(sourceFile)) {
                 return;
             }
 

@@ -5,6 +5,7 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
+import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -57,8 +58,9 @@ public class EditorPanel extends JPanel {
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
         this.findAction = new FindAction(findDialog, replaceDialog);
         this.replaceAction = new ReplaceAction(findDialog, replaceDialog);
-        this.newFileAction = new NewFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
-        this.openFileAction = new OpenFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
+        Supplier<Boolean> confirmReplace = editor instanceof TabbedEditor ? () -> true : this::confirmSave;
+        this.newFileAction = new NewFileAction(confirmReplace, editor, compilerOutput, updateTitle);
+        this.openFileAction = new OpenFileAction(confirmReplace, editor, compilerOutput, updateTitle);
         this.compileAction = new CompileAction(
                 computer, dialogs, editor, runState, compilerOutput, updateTitle, memoryContext
         );
@@ -115,6 +117,9 @@ public class EditorPanel extends JPanel {
     }
 
     public final boolean confirmSave() {
+        if (editor instanceof TabbedEditor) {
+            return ((TabbedEditor) editor).confirmSaveAll();
+        }
         if (editor.isDirty()) {
             Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
             if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
