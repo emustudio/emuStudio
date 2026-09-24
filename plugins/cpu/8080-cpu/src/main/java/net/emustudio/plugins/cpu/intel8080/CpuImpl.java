@@ -149,6 +149,11 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
+    public int getAddressSpaceSize() {
+        return 0x10000;
+    }
+
+    @Override
     public boolean setInstructionLocation(int position) {
         if (position < 0) {
             return false;

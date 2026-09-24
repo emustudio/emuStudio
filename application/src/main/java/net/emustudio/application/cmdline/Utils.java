@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 public class Utils {
     public static final long EMUSTUDIO_ID = 0L;
@@ -61,8 +60,7 @@ public class Utils {
         computer.initialize(contextPool);
         computer.reset();
 
-        Optional<Supplier<Integer>> memory = computer.getMemory().map(m -> m::getSize);
-        computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memory.orElse(() -> 0)));
+        computer.getCPU().ifPresent(debugTableModel::setCPU);
         return computer;
     }
 

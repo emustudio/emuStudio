@@ -6,7 +6,6 @@ import net.jcip.annotations.ThreadSafe;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.function.Supplier;
 
 /**
  * Paginating disassembler
@@ -43,7 +42,7 @@ public class PaginatingDisassembler {
     private final NavigableMap<Integer, Page> bytesPerPageCache = new ConcurrentSkipListMap<>();
 
     private volatile int pageIndex;
-    private final Supplier<Integer> getMemorySize;
+    private final int lastAddress;
 
     private volatile Page currentPage = new Page(0, -1, -1);
     private volatile int lastKnownCurrentLocation;
@@ -52,9 +51,12 @@ public class PaginatingDisassembler {
     private volatile int currentInstrRow = instructionsPerPage / 2;
     private volatile int instrPerHalfPage = instructionsPerPage / 2;
 
-    PaginatingDisassembler(CallFlow callFlow, Supplier<Integer> getMemorySize) {
+    PaginatingDisassembler(CallFlow callFlow, int addressSpaceSize) {
         this.callFlow = Objects.requireNonNull(callFlow);
-        this.getMemorySize = Objects.requireNonNull(getMemorySize);
+        if (addressSpaceSize <= 0) {
+            throw new IllegalArgumentException("Address-space size must be positive");
+        }
+        this.lastAddress = addressSpaceSize - 1;
         bytesPerPageCache.put(0, currentPage);
     }
 
@@ -176,6 +178,9 @@ public class PaginatingDisassembler {
     }
 
     synchronized int rowToLocation(int currentLocation, int row) {
+        if (currentLocation < 0 || currentLocation > lastAddress) {
+            return -1;
+        }
         int tmpLastKnownCurrentLocation = lastKnownCurrentLocation;
         Page tmpCurrentPage = currentPage;
 
@@ -263,7 +268,8 @@ public class PaginatingDisassembler {
 
         int maxBytesPP = maxBytesPerPage();
         int longestInstr = callFlow.getLongestInstructionSize();
-        int guessUpTo = currentLocation + currentPageIndex * (maxBytesPP - longestInstr);
+        long guessedLocation = (long) currentLocation + (long) currentPageIndex * (maxBytesPP - longestInstr);
+        int guessUpTo = (int) Math.min(lastAddress, Math.max(0, guessedLocation));
 
         int result = callFlow.traverseUpTo(from, guessUpTo, instructions::add);
         if (result == guessUpTo) {
@@ -328,12 +334,7 @@ public class PaginatingDisassembler {
     }
 
     private int findLocationAboveHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
-        int lastMemoryIndex = getMemorySize.get() - 1;
-        if (lastMemoryIndex < 0) {
-            return -1;
-        }
-
-        int realUpTo = Math.min(lastMemoryIndex, currentLocation + half);
+        int realUpTo = (int) Math.min(lastAddress, (long) currentLocation + half);
         if (currentLocation > realUpTo) {
             return -1;
         }
@@ -341,7 +342,7 @@ public class PaginatingDisassembler {
         List<Integer> halfPage = callFlow.getLocations(currentLocation, realUpTo);
         int loadedHalfSize = halfPage.size();
 
-        if (realUpTo < lastMemoryIndex && loadedHalfSize < instrPerHalfPage) {
+        if (realUpTo < lastAddress && loadedHalfSize < instrPerHalfPage) {
             // try to fill it up (the "half" was not enough)
             callFlow.traverseForInstructionCount(realUpTo, instrPerHalfPage - loadedHalfSize + 1, halfPage::add);
             loadedHalfSize = halfPage.size();

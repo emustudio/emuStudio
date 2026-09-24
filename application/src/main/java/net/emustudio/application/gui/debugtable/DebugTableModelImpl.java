@@ -10,7 +10,6 @@ import javax.swing.event.TableModelEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
@@ -20,10 +19,10 @@ public class DebugTableModelImpl extends DebugTableModel {
     public DebugTableModelImpl() {
     }
 
-    public void setCPU(CPU cpu, Supplier<Integer> getMemorySize) {
+    public void setCPU(CPU cpu) {
         this.cpu = Objects.requireNonNull(cpu);
         CallFlow callFlow = new CallFlow(cpu.getDisassembler());
-        this.ida = new PaginatingDisassembler(callFlow, getMemorySize);
+        this.ida = new PaginatingDisassembler(callFlow, cpu.getAddressSpaceSize());
         setDefaultColumns();
     }
 
@@ -164,11 +163,6 @@ public class DebugTableModelImpl extends DebugTableModel {
             ida.flushCache(from, to + 1);
         }
         fireTableDataChanged();
-    }
-
-    @Override
-    public void memorySizeChanged(int memorySize) {
-        fireTableChanged(new TableModelEvent(this));
     }
 
     @Override
