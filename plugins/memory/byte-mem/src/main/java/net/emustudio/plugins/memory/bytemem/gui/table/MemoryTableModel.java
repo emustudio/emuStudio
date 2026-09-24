@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -85,26 +87,30 @@ public class MemoryTableModel extends AbstractTableModel {
     }
 
     public Optional<Integer> findSequence(byte[] sequence, int from) {
-        final int size = memory.getSize();
-        int offset = 0;
-        int foundAddress = -1;
-        for (int currentAddr = from; currentAddr < size && offset < sequence.length; currentAddr++) {
-            if (memory.readBank(currentAddr, currentBank) == sequence[offset]) {
-                if (offset == 0) {
-                    foundAddress = currentAddr;
-                }
-                offset++;
-            } else {
-                offset = 0;
-                foundAddress = -1;
-            }
+        return findSequences(sequence).stream().filter(address -> address >= from).findFirst();
+    }
+
+    public List<Integer> findSequences(byte[] sequence) {
+        Objects.requireNonNull(sequence);
+        List<Integer> matches = new ArrayList<>();
+        int size = memory.getSize();
+        if (sequence.length == 0 || sequence.length > size) {
+            return matches;
         }
 
-        if (foundAddress == -1) {
-            return Optional.empty();
-        } else {
-            return Optional.of(foundAddress);
+        for (int address = 0; address <= size - sequence.length; address++) {
+            boolean matchesAtAddress = true;
+            for (int offset = 0; offset < sequence.length; offset++) {
+                if (memory.readBank(address + offset, currentBank) != sequence[offset]) {
+                    matchesAtAddress = false;
+                    break;
+                }
+            }
+            if (matchesAtAddress) {
+                matches.add(address);
+            }
         }
+        return matches;
     }
 
     public int getPage() {

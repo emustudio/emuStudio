@@ -5,15 +5,12 @@ package net.emustudio.plugins.memory.bytemem.gui.actions;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
-import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
@@ -21,19 +18,17 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 public class FindSequenceAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/edit-find.png";
     private final Dialogs dialogs;
-    private final Consumer<Integer> setPageFromAddress;
-    private final MemoryTableModel tableModel;
+    private final MemorySearch search;
     private final Supplier<Integer> getCurrentAddress;
     private final JDialog parent;
     private final GUI gui;
 
-    public FindSequenceAction(Dialogs dialogs, Consumer<Integer> setPageFromAddress, MemoryTableModel tableModel,
-                              Supplier<Integer> getCurrentAddress, JDialog parent, GUI gui) {
+    public FindSequenceAction(Dialogs dialogs, MemorySearch search, Supplier<Integer> getCurrentAddress,
+                              JDialog parent, GUI gui) {
         super("Find sequence...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.setPageFromAddress = Objects.requireNonNull(setPageFromAddress);
-        this.tableModel = Objects.requireNonNull(tableModel);
+        this.search = Objects.requireNonNull(search);
         this.getCurrentAddress = Objects.requireNonNull(getCurrentAddress);
         this.parent = Objects.requireNonNull(parent);
         this.gui = gui;
@@ -45,16 +40,9 @@ public class FindSequenceAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        AtomicInteger foundAddress = new AtomicInteger(-1);
         FindSequenceDialog dialog = new FindSequenceDialog(
-                dialogs, parent, tableModel, getCurrentAddress.get(), foundAddress::set, gui
+                dialogs, parent, getCurrentAddress.get(), search::start, gui
         );
-
         dialog.setVisible(true);
-
-        int address = foundAddress.get();
-        if (address != -1) {
-            setPageFromAddress.accept(address);
-        }
     }
 }
