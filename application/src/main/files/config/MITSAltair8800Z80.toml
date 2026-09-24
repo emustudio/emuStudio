@@ -135,6 +135,13 @@ name = "88-pio"
 id = "7e7f84b5-d958-41d6-968b-d50f93600369"
 type = "DEVICE"
 
+[[DEVICE]]
+schemaPoint = "480,300"
+path = "88-ptr-ptp.jar"
+settings = { }
+name = "88-ptr-ptp"
+id = "d5f4104a-a803-47ba-b867-603408ef04ae"
+type = "DEVICE"
 
 [[DEVICE]]
 schemaPoint = "220,60"
@@ -183,6 +190,12 @@ points = []
 [[connections]]
 bidirectional = true
 from = "7e7f84b5-d958-41d6-968b-d50f93600369"
+to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "d5f4104a-a803-47ba-b867-603408ef04ae"
 to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 points = []
 
