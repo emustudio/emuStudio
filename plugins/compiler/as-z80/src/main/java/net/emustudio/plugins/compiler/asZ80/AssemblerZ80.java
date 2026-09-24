@@ -126,6 +126,10 @@ public class AssemblerZ80 extends AbstractCompiler {
 
                 if (memory != null) {
                     hex.loadIntoMemory(memory, b -> b);
+                    Optional.ofNullable(memory.annotations()).ifPresent(annotations -> {
+                        annotations.removeAll(pluginID);
+                        new SourceCodeAnnotationsVisitor(pluginID, annotations).visit(program);
+                    });
                     notifyInfo("Compiled file was loaded into memory.");
                 } else {
                     notifyWarning("Memory is not available.");

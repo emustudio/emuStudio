@@ -287,6 +287,26 @@ public class REditorTest extends AbstractSwingTest {
     }
 
     @Test
+    public void sourceCodePositionsCreateDistinctMarkersForCurrentFile() throws Exception {
+        Path file = Files.createTempFile("reditor-markers", ".asm");
+        Files.writeString(file, "first\nsecond\nthird\n");
+        REditor editor = createEditor(mock(Dialogs.class), null);
+        assertTrue(editor.openFile(file));
+
+        runOnEdt(() -> editor.setSourceCodePositions(List.of(
+                SourceCodePosition.of(1, 0, file.toString()),
+                SourceCodePosition.of(1, 2, file.toString()),
+                SourceCodePosition.of(3, 0, file.getFileName().toString()),
+                SourceCodePosition.of(2, 0, "other.asm")
+        )));
+
+        assertEquals(2, sourceCodeMarkerCount(editor));
+
+        runOnEdt(editor::newFile);
+        assertEquals(0, sourceCodeMarkerCount(editor));
+    }
+
+    @Test
     public void ctrlMouseWheelZoomsAndEscapeTriggersClearAction() {
         Dialogs dialogs = mock(Dialogs.class);
         TrackingEditor editor = createTrackingEditor(dialogs);
@@ -331,6 +351,10 @@ public class REditorTest extends AbstractSwingTest {
 
     private RTextScrollPane scrollPane(REditor editor) {
         return getField(editor, "scrollPane", RTextScrollPane.class);
+    }
+
+    private int sourceCodeMarkerCount(REditor editor) {
+        return getField(editor, "sourceCodeMarkers", List.class).size();
     }
 
     private <T> T getField(Object target, String fieldName, Class<T> type) {

@@ -7,6 +7,8 @@ import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -30,12 +32,19 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected Assembler8080 compiler;
     protected MemoryStub<Byte> memoryStub;
+    protected MemoryContextAnnotations annotations;
     private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        annotations = new Annotations();
+        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+            @Override
+            public MemoryContextAnnotations annotations() {
+                return annotations;
+            }
+        };
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();

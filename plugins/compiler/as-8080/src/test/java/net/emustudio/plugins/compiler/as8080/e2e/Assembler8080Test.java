@@ -2,8 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.e2e;
 
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class Assembler8080Test extends AbstractCompilerTest {
@@ -16,6 +18,14 @@ public class Assembler8080Test extends AbstractCompilerTest {
     @Test
     public void testCopyrightIsKnown() {
         assertNotEquals("(unknown)", compiler.getCopyright());
+    }
+
+    @Test
+    public void testCompilationAddsSourceCodeAnnotations() {
+        compile("nop\nmov a,b");
+
+        assertEquals(1, annotations.get(0, SourceCodeAnnotation.class).iterator().next().getPosition().line);
+        assertEquals(2, annotations.get(1, SourceCodeAnnotation.class).iterator().next().getPosition().line);
     }
 
     @Test

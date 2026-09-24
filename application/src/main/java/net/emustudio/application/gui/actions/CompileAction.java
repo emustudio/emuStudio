@@ -9,6 +9,8 @@ import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
@@ -17,6 +19,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_COMPILER;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
@@ -30,9 +33,10 @@ public class CompileAction extends AbstractAction {
     private final Supplier<CPU.RunState> runState;
     private final JTextArea compilerOutput;
     private final Runnable updateTitle;
+    private final MemoryContext<?> memoryContext;
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
-                         JTextArea compilerOutput, Runnable updateTitle) {
+                         JTextArea compilerOutput, Runnable updateTitle, MemoryContext<?> memoryContext) {
         super("Compile", loadIcon(ICON_COMPILER));
 
         this.computer = Objects.requireNonNull(computer);
@@ -41,6 +45,7 @@ public class CompileAction extends AbstractAction {
         this.runState = Objects.requireNonNull(runState);
         this.compilerOutput = Objects.requireNonNull(compilerOutput);
         this.updateTitle = Objects.requireNonNull(updateTitle);
+        this.memoryContext = memoryContext;
 
         putValue(SHORT_DESCRIPTION, "Save & Compile source file");
         putValue(MNEMONIC_KEY, KeyEvent.VK_C);
@@ -62,6 +67,13 @@ public class CompileAction extends AbstractAction {
             @Override
             public void onFinish() {
                 compilerOutput.append("Compiling has finished.\n");
+                Optional.ofNullable(memoryContext)
+                        .map(MemoryContext::annotations)
+                        .map(annotations -> annotations.getAll(SourceCodeAnnotation.class))
+                        .ifPresent(sourceCode -> editor.setSourceCodePositions(sourceCode.values().stream()
+                                .flatMap(java.util.Collection::stream)
+                                .map(SourceCodeAnnotation::getPosition)
+                                .collect(Collectors.toList())));
             }
         }));
     }

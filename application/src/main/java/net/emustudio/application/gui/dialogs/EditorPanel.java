@@ -7,6 +7,7 @@ import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.rsta.ui.search.FindDialog;
@@ -41,7 +42,7 @@ public class EditorPanel extends JPanel {
     private final JSplitPane splitSource;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState, GUI gui) {
+                       Supplier<CPU.RunState> runState, MemoryContext<?> memoryContext, GUI gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -59,7 +60,7 @@ public class EditorPanel extends JPanel {
         this.newFileAction = new NewFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
         this.openFileAction = new OpenFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
         this.compileAction = new CompileAction(
-                computer, dialogs, editor, runState, compilerOutput, updateTitle
+                computer, dialogs, editor, runState, compilerOutput, updateTitle, memoryContext
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);

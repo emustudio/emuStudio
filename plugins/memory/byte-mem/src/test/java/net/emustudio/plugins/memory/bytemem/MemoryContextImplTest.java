@@ -2,7 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -121,5 +124,22 @@ public class MemoryContextImplTest {
         context.destroy();
         assertEquals(0, context.getBanksCount());
         context.init(256, 2, 128);
+    }
+
+    @Test
+    public void writesInvalidateSourceCodeAnnotationsOnlyAtChangedAddresses() {
+        Annotations realAnnotations = new Annotations();
+        MemoryContextImpl realContext = new MemoryContextImpl(realAnnotations);
+        realContext.init(256, 1, 0);
+        realAnnotations.add(10, new SourceCodeAnnotation(7, SourceCodePosition.of(1, 0, "test.asm")));
+        realAnnotations.add(11, new SourceCodeAnnotation(7, SourceCodePosition.of(2, 0, "test.asm")));
+        realAnnotations.add(20, new SourceCodeAnnotation(7, SourceCodePosition.of(3, 0, "test.asm")));
+
+        realContext.write(10, (byte) 1);
+        realContext.write(11, new Byte[]{2, 3}, 2);
+
+        assertTrue(realAnnotations.get(10, SourceCodeAnnotation.class).isEmpty());
+        assertTrue(realAnnotations.get(11, SourceCodeAnnotation.class).isEmpty());
+        assertFalse(realAnnotations.get(20, SourceCodeAnnotation.class).isEmpty());
     }
 }

@@ -69,7 +69,8 @@ public class StudioFrame extends JFrame {
                 this, computer, debugTableModel, dialogs, emulationController, memoryContext, gui
         );
         this.editorPanel = new EditorPanel(
-                this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState, gui
+                this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState,
+                memoryContext, gui
         );
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);

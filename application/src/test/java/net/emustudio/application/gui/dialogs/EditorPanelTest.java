@@ -85,6 +85,7 @@ public class EditorPanelTest extends AbstractSwingTest {
                 () -> {
                 },
                 () -> CPU.RunState.STATE_STOPPED_BREAK,
+                null,
                 new EmuStudioGui()
         ));
     }

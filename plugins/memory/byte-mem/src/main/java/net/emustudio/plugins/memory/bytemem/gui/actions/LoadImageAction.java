@@ -7,6 +7,7 @@ import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.Loader;
+import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,10 @@ public class LoadImageAction extends AbstractAction {
             if (bank.isPresent()) {
                 GUI.runInBackground(
                         this,
-                        () -> loader.load(path, context, bank.get()),
+                        () -> {
+                            loader.load(path, context, bank.get());
+                            MetadataSidecar.load(path, context);
+                        },
                         repaint,
                         cause -> {
                             dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
