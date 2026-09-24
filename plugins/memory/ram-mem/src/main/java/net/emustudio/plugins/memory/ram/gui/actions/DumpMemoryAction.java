@@ -59,13 +59,14 @@ public class DumpMemoryAction extends AbstractAction {
 
                 @Override
                 protected void done() {
-                    setEnabled(true);
                     try {
                         get();
                     } catch (Exception ex) {
                         Throwable cause = ex.getCause() == null ? ex : ex.getCause();
                         LOGGER.error("Memory dump could not be created", cause);
                         dialogs.showError("Memory dump could not be created: " + cause.getMessage() + ". Please see log file for more details.");
+                    } finally {
+                        setEnabled(true);
                     }
                 }
             }.execute();

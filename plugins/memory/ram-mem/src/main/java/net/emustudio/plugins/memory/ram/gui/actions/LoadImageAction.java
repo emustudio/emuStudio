@@ -57,7 +57,6 @@ public class LoadImageAction extends AbstractAction {
 
                 @Override
                 protected void done() {
-                    setEnabled(true);
                     try {
                         get();
                         repaint.run();
@@ -65,6 +64,8 @@ public class LoadImageAction extends AbstractAction {
                         Throwable cause = ex.getCause() == null ? ex : ex.getCause();
                         dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
                         LOGGER.error("Could not load image file '{}'", path, cause);
+                    } finally {
+                        setEnabled(true);
                     }
                 }
             }.execute();
