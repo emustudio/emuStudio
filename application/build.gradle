@@ -209,8 +209,25 @@ startScripts {
                       '# Workaround for Swing/AWT resizing under Sway/Wayland (XWayland)\n' +
                       'export _JAVA_AWT_WM_NONREPARENTING=1\n'
       )
+      def unixAppHome = 'APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf \'%s\\n\' "$PWD" ) || exit'
+      unixText = unixText.replace(
+              unixAppHome,
+              unixAppHome + '\n' +
+                      'export EMUSTUDIO_CONFIG_DIR="${EMUSTUDIO_CONFIG_DIR:-$APP_HOME}"\n' +
+                      'export EMUSTUDIO_PLUGINS_DIR="${EMUSTUDIO_PLUGINS_DIR:-$APP_HOME}"'
+      )
       unixScriptFile.text = unixText
     }
+
+    def windowsText = windowsScriptFile.text
+    def windowsAppHome = 'for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi'
+    windowsText = windowsText.replace(
+            windowsAppHome,
+            windowsAppHome + '\r\n' +
+                    'if not defined EMUSTUDIO_CONFIG_DIR set "EMUSTUDIO_CONFIG_DIR=%APP_HOME%"\r\n' +
+                    'if not defined EMUSTUDIO_PLUGINS_DIR set "EMUSTUDIO_PLUGINS_DIR=%APP_HOME%"'
+    )
+    windowsScriptFile.text = windowsText
   }
 }
 
