@@ -43,7 +43,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         for (Byte[] bank : mem) {
             Arrays.fill(bank, (byte) 0);
         }
-        invalidateSourceCode(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        removeAllSourceCode();
         notifyMemoryContentChanged(-1);
     }
 
@@ -181,14 +181,21 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     }
 
     private void invalidateSourceCode(int from, int to) {
-        var sourceCode = annotations.getAll(SourceCodeAnnotation.class);
-        if (sourceCode == null) {
-            return;
-        }
-        sourceCode.forEach((address, values) -> {
-            if (address >= from && address <= to) {
-                values.forEach(annotation -> annotations.removeAll(annotation.getPluginId(), address));
+        for (int address = from; address <= to; address++) {
+            var atAddress = annotations.get(address, SourceCodeAnnotation.class);
+            if (atAddress != null) {
+                for (SourceCodeAnnotation annotation : atAddress) {
+                    annotations.removeAll(annotation.getPluginId(), address);
+                }
             }
-        });
+        }
+    }
+
+    private void removeAllSourceCode() {
+        var sourceCode = annotations.getAll(SourceCodeAnnotation.class);
+        if (sourceCode != null) {
+            sourceCode.forEach((address, values) ->
+                    values.forEach(annotation -> annotations.removeAll(annotation.getPluginId(), address)));
+        }
     }
 }
