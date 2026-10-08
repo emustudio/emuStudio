@@ -78,15 +78,33 @@ final class DisplayPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
+        renderPixels(image);
+        drawImage(graphics, image, getWidth(), getHeight());
+    }
+
+    BufferedImage captureFrame(int width, int height) {
+        BufferedImage pixels = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        renderPixels(pixels);
+        BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = frame.createGraphics();
+        drawImage(graphics, pixels, width, height);
+        graphics.dispose();
+        return frame;
+    }
+
+    private void renderPixels(BufferedImage pixels) {
         for (int y = 0; y < HEIGHT; y++) {
             int on = colorOverlay ? overlayColor(y) : Color.WHITE.getRGB();
             for (int x = 0; x < WIDTH; x++) {
-                image.setRGB(x, y, pixelOn(memory, x, y) ? on : Color.BLACK.getRGB());
+                pixels.setRGB(x, y, pixelOn(memory, x, y) ? on : Color.BLACK.getRGB());
             }
         }
+    }
+
+    private static void drawImage(Graphics graphics, BufferedImage image, int width, int height) {
         Graphics2D target = (Graphics2D) graphics.create();
         target.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        target.drawImage(image, 0, 0, getWidth(), getHeight(), null);
+        target.drawImage(image, 0, 0, width, height, null);
         target.dispose();
     }
 

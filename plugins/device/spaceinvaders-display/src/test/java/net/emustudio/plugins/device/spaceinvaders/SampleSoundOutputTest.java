@@ -7,6 +7,8 @@ import javax.sound.sampled.BooleanControl;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import java.util.Map;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import static net.emustudio.plugins.device.spaceinvaders.SoundOutput.Sample.*;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -85,6 +87,53 @@ public class SampleSoundOutputTest {
         output.setVolumePercent(40);
         output.close();
         assertEquals(40, output.getVolumePercent());
+    }
+
+    @Test
+    public void recordedAudioMixesEffectsAtCurrentPositionAndVolume() {
+        Clip shot = playingClip(1);
+        Clip hit = playingClip(0);
+        SampleSoundOutput output = new SampleSoundOutput(Map.of(SHOT, shot, PLAYER_HIT, hit),
+                Map.of(SHOT, new short[]{0, 2000, -2000}, PLAYER_HIT, new short[]{1000, 1000}));
+        output.setVolumePercent(50);
+        assertArrayEquals(new short[]{1500, 1500, -500, -500, 0, 0}, pcm(output.captureAudio(3)));
+        output.setVolumePercent(0);
+        assertArrayEquals(new short[6], pcm(output.captureAudio(3)));
+    }
+
+    @Test
+    public void recordedAudioLoopsUfoAndClampsOverlappingEffects() {
+        Clip ufo = playingClip(3);
+        Clip shot = playingClip(0);
+        SampleSoundOutput output = new SampleSoundOutput(Map.of(UFO, ufo, SHOT, shot),
+                Map.of(UFO, new short[]{20000, -20000}, SHOT, new short[]{-20000, 20000}));
+        output.setVolumePercent(100);
+        output.play(UFO, true);
+        assertArrayEquals(new short[]{Short.MIN_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MAX_VALUE},
+                pcm(output.captureAudio(2)));
+    }
+
+    @Test
+    public void missingOrStoppedEffectsRecordSilence() {
+        Clip stopped = createNiceMock(Clip.class);
+        replay(stopped);
+        SampleSoundOutput output = new SampleSoundOutput(Map.of(SHOT, stopped), Map.of(SHOT, new short[]{2000}));
+        assertArrayEquals(new short[4], pcm(output.captureAudio(2)));
+        assertArrayEquals(new short[4], pcm(new SampleSoundOutput().captureAudio(2)));
+    }
+
+    private static Clip playingClip(long framePosition) {
+        Clip clip = createNiceMock(Clip.class);
+        expect(clip.isRunning()).andReturn(true).anyTimes();
+        expect(clip.getLongFramePosition()).andReturn(framePosition).anyTimes();
+        replay(clip);
+        return clip;
+    }
+
+    private static short[] pcm(byte[] data) {
+        short[] samples = new short[data.length / Short.BYTES];
+        ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(samples);
+        return samples;
     }
 
     private static FloatControl gainControl() {

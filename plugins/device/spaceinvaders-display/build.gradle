@@ -9,6 +9,9 @@ plugins {
 
 dependencies {
   implementation libs.emuLib
+  implementation libs.slf4JApi
+  implementation libs.jcodec
+  implementation libs.jcodecJavase
   cpuLib project(":plugins:cpu:8080-cpu")
 
   testImplementation libs.junit
