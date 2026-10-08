@@ -85,6 +85,9 @@ final class DisplayPanel extends JPanel {
     BufferedImage captureFrame(int width, int height) {
         BufferedImage pixels = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         renderPixels(pixels);
+        if (width == WIDTH && height == HEIGHT) {
+            return pixels;
+        }
         BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = frame.createGraphics();
         drawImage(graphics, pixels, width, height);

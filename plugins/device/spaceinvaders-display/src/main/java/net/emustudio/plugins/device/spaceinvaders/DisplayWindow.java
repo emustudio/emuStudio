@@ -112,18 +112,23 @@ final class DisplayWindow extends JFrame {
     void frameReady() {
         RecordingSession session = recordingSession;
         if (session != null) {
-            session.capture(display.captureFrame(session.width, session.height),
-                    sound.captureAudio(RecordingSession.AUDIO_FRAMES_PER_VIDEO_FRAME));
+            if (!session.capture(display.captureFrame(session.width, session.height),
+                    sound.captureAudio(RecordingSession.AUDIO_FRAMES_PER_VIDEO_FRAME)) && session.getFailure() != null) {
+                SwingUtilities.invokeLater(() -> {
+                    if (recordingSession == session) {
+                        stopRecording(false);
+                        dialogs.showError("Recording stopped: " + session.getFailure().getMessage(), "Recording");
+                    }
+                });
+            }
         }
         display.repaint();
     }
 
     private void startRecording() {
         try {
-            // Keep recording dimensions fixed when the window is resized; H.264 needs even dimensions.
-            int width = Math.max(2, (display.getWidth() + 1) & ~1);
-            int height = Math.max(2, (display.getHeight() + 1) & ~1);
-            recordingSession = new RecordingSession(width, height);
+            // Encode game pixels; scaling the window adds no detail and makes H.264 much slower.
+            recordingSession = new RecordingSession(DisplayPanel.WIDTH, DisplayPanel.HEIGHT);
             btnRecord.setIcon(STOP_ICON);
             btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {
@@ -143,6 +148,7 @@ final class DisplayWindow extends JFrame {
                 "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
         ) : Optional.empty();
         btnRecord.setEnabled(false);
+        btnRecord.setToolTipText("Saving video...");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws IOException {
@@ -154,6 +160,7 @@ final class DisplayWindow extends JFrame {
             protected void done() {
                 btnRecord.setEnabled(true);
                 btnRecord.setIcon(RECORD_ICON);
+                btnRecord.setToolTipText("Start video recording");
                 try {
                     get();
                     target.map(Path::getParent).ifPresent(parent -> lastRecordingDirectory = parent);

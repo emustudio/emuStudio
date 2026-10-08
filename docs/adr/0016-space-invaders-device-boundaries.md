@@ -19,10 +19,14 @@ memory-mapped I/O to byte-mem.
 
 Recording follows the ZX Spectrum record/stop/save flow and uses the same bundled JCodec encoder and PCM audio
 muxing approach. Keep recorder implementations private to each device rather than importing another plugin's
-implementation. Capture the framebuffer at 60 fps with fixed dimensions and mix currently playing samples into
+implementation. Capture the native 224x256 framebuffer at 60 fps and mix currently playing samples into
 48 kHz stereo audio, applying the selected volume. Capture continues when Swing repaint requests are coalesced;
-temporary file writes and final encoding run off the Swing event thread. Closing the display discards active
-recording and releases temporary files.
+H.264 encoding runs during recording on a worker, through a queue bounded to two seconds of frames. If the encoder
+falls behind, stop recording and report the failure rather than blocking emulation or retaining unlimited frames.
+Save only finalizes the encoded MP4 and adds PCM audio, off the Swing event thread. Window scaling adds no detail
+to the recorded pixels and does not change recording dimensions. Closing the display discards active recording
+and releases temporary files. Compress temporary PCM data losslessly with JDK gzip; store only encoded video
+rather than gigabytes of raw frames per minute in the system temporary directory.
 
 ## Consequences
 The CPU and memory plugins remain reusable. The display can run headless while still producing interrupts. Wall-clock

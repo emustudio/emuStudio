@@ -18,26 +18,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * One-time usable Video+Audio recorder.
  *
  * <p>It is not thread safe, because it is called from single thread using a worker queue in {@link RecordingSession}.
  *
- * <p>Records screen frames and PCM audio into temporary raw files and exports them on demand.
+ * <p>Encodes screen frames during capture and stores PCM audio in a compressed temporary file.
  *
  * <p>Video is encoded through JCodec's AWT encoder. If PCM audio was captured alongside the
  * frames, the encoded video is remuxed with an uncompressed stereo audio track during export.
@@ -45,36 +45,31 @@ import java.util.Objects;
 final class VideoRecorder {
     private static final Logger LOGGER = LoggerFactory.getLogger(VideoRecorder.class);
     private static final int AUDIO_BUFFER_SIZE = 16 * 1024;
+    private static final int COMPRESSION_BUFFER_SIZE = 64 * 1024;
     private static final int AUDIO_CHANNELS = 2;
     private static final int AUDIO_FRAME_SIZE = AUDIO_CHANNELS * Short.BYTES;
 
     public static final String TEMP_VIDEO_FILE_PREFIX = "emustudio-space-invaders-video-";
     public static final String TEMP_AUDIO_FILE_PREFIX = "emustudio-space-invaders-audio-";
     public static final String TEMP_EXPORT_OUTPUT_FILE_PREFIX = "emustudio-space-invaders-video-export-";
-    public static final String TEMP_EXPORT_VIDEO_ONLY_FILE_PREFIX = "emustudio-space-invaders-video-only-";
 
 
     private final Path tempVideoFile;
-    private final OutputStream tempVideoFileOutputStream;
+    private final FileChannelWrapper tempVideoChannel;
+    private final AWTSequenceEncoder encoder;
     private final Path tempAudioFile;
     private final OutputStream tempAudioFileOutputStream;
 
     private final int width;
     private final int height;
 
-    private final int videoScale;
-    private final int videoRate;
     private final int audioSampleRate;
-
-    private final int frameByteSize;
-
-    private final byte[] frameBuffer;
-    private final IntBuffer frameIntBuffer; // mutable temporary buffer wrapping the frameBuffer
 
     private long videoFramesWritten;
     private long audioBytesWritten;
 
     private RECORDING_STATE recordingState = RECORDING_STATE.RUNNING;
+    private volatile IOException captureFailure;
 
     private enum RECORDING_STATE {
         RUNNING, STOPPED, ABORTED
@@ -104,17 +99,29 @@ final class VideoRecorder {
         this.width = width;
         this.height = height;
 
-        this.videoScale = videoScale;
-        this.videoRate = videoRate;
         this.audioSampleRate = audioSampleRate;
-        this.frameByteSize = width * height * Integer.BYTES;
-        this.frameBuffer = new byte[frameByteSize];
-        this.frameIntBuffer = ByteBuffer.wrap(frameBuffer).asIntBuffer();
-
-        this.tempVideoFile = Files.createTempFile(TEMP_VIDEO_FILE_PREFIX, ".rgb");
-        this.tempVideoFileOutputStream = new BufferedOutputStream(Files.newOutputStream(tempVideoFile));
-        this.tempAudioFile = Files.createTempFile(TEMP_AUDIO_FILE_PREFIX, ".pcm");
-        this.tempAudioFileOutputStream = new BufferedOutputStream(Files.newOutputStream(tempAudioFile));
+        this.tempVideoFile = Files.createTempFile(TEMP_VIDEO_FILE_PREFIX, ".mp4");
+        FileChannelWrapper channel = null;
+        OutputStream audioOutput = null;
+        Path audioFile = null;
+        try {
+            channel = NIOUtils.writableChannel(tempVideoFile.toFile());
+            this.encoder = new AWTSequenceEncoder(channel, Rational.R(videoRate, videoScale));
+            audioFile = Files.createTempFile(TEMP_AUDIO_FILE_PREFIX, ".pcm.gz");
+            audioOutput = new BufferedOutputStream(Files.newOutputStream(audioFile));
+            this.tempAudioFileOutputStream = new GZIPOutputStream(
+                    audioOutput, COMPRESSION_BUFFER_SIZE);
+            this.tempAudioFile = audioFile;
+            this.tempVideoChannel = channel;
+        } catch (IOException | RuntimeException e) {
+            NIOUtils.closeQuietly(channel);
+            NIOUtils.closeQuietly(audioOutput);
+            Files.deleteIfExists(tempVideoFile);
+            if (audioFile != null) {
+                Files.deleteIfExists(audioFile);
+            }
+            throw e;
+        }
     }
 
     /**
@@ -129,18 +136,11 @@ final class VideoRecorder {
                     throw new IOException("Recording frame size changed during capture");
                 }
 
-                // Capture supplies independent TYPE_INT_RGB frames.
-                if (frame.getType() == BufferedImage.TYPE_INT_RGB && frame.getRaster().getDataBuffer() instanceof DataBufferInt) {
-                    DataBufferInt dataBuffer = (DataBufferInt) frame.getRaster().getDataBuffer();
-                    int[] source = dataBuffer.getData();
-                    frameIntBuffer.clear();
-                    frameIntBuffer.put(source, 0, source.length);
-                }
-
-                tempVideoFileOutputStream.write(frameBuffer);
+                encoder.encodeImage(frame);
                 videoFramesWritten++;
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
                 LOGGER.error("Failed to write recording video frame; aborting recording", e);
+                captureFailure = new IOException("Could not encode recording video", e);
                 closeRecording(true);
             }
         }
@@ -160,6 +160,7 @@ final class VideoRecorder {
             if ((pcmFrames.length % AUDIO_FRAME_SIZE) != 0) {
                 LOGGER.error("Recording audio must contain whole PCM frames (expected frame size={}; last frame was={})",
                         AUDIO_FRAME_SIZE, pcmFrames.length % AUDIO_FRAME_SIZE);
+                captureFailure = new IOException("Recording audio contains an incomplete PCM frame");
                 closeRecording(true);
             } else {
                 try {
@@ -167,6 +168,7 @@ final class VideoRecorder {
                     audioBytesWritten += pcmFrames.length;
                 } catch (IOException e) {
                     LOGGER.error("Failed to write recording audio data; aborting recording", e);
+                    captureFailure = e;
                     closeRecording(true);
                 }
             }
@@ -181,10 +183,10 @@ final class VideoRecorder {
      * @throws IOException when video contains no frames; could not create temp files; or unexpected error during encoding
      */
     public void stop(Path target) throws IOException {
-        boolean wasAborted = recordingState == RECORDING_STATE.ABORTED;
         closeRecording(target == null);
-        if (wasAborted) {
-            throw new IOException("Recording was discarded after an earlier I/O error");
+        if (captureFailure != null && target != null) {
+            deleteTempFiles();
+            throw captureFailure;
         }
         if (target != null) {
             try {
@@ -195,6 +197,10 @@ final class VideoRecorder {
         }
     }
 
+    IOException getCaptureFailure() {
+        return captureFailure;
+    }
+
     /**
      * Closes capturing (i.e. clears buffers, closes output streams and deletes temp files if discard = true)
      *
@@ -202,15 +208,25 @@ final class VideoRecorder {
      */
     private void closeRecording(boolean discard) {
         if (recordingState == RECORDING_STATE.RUNNING) {
+            if (!discard && videoFramesWritten > 0) {
+                try {
+                    encoder.finish();
+                } catch (IOException | RuntimeException e) {
+                    LOGGER.error("Failed to finalize recording video", e);
+                    captureFailure = new IOException("Could not finalize recording video", e);
+                }
+            }
             try {
-                tempVideoFileOutputStream.close();
+                tempVideoChannel.close();
             } catch (IOException e) {
                 LOGGER.error("Failed to close recording video output stream", e);
+                captureFailure = e;
             }
             try {
                 tempAudioFileOutputStream.close();
             } catch (IOException e) {
                 LOGGER.error("Failed to close recording audio output stream", e);
+                captureFailure = e;
             }
             recordingState = discard ? RECORDING_STATE.ABORTED : RECORDING_STATE.STOPPED;
         }
@@ -241,38 +257,14 @@ final class VideoRecorder {
         Path tempOutputFile = Files.createTempFile(TEMP_EXPORT_OUTPUT_FILE_PREFIX, ".mp4");
         try {
             if (audioBytesWritten == 0) {
-                exportVideoOnly(tempOutputFile);
+                Files.copy(tempVideoFile, tempOutputFile, StandardCopyOption.REPLACE_EXISTING);
             } else {
-                Path tempVideo = Files.createTempFile(TEMP_EXPORT_VIDEO_ONLY_FILE_PREFIX, ".mp4");
-                try {
-                    exportVideoOnly(tempVideo);
-                    muxAudio(tempVideo, tempOutputFile);
-                } finally {
-                    Files.deleteIfExists(tempVideo);
-                }
+                muxAudio(tempVideoFile, tempOutputFile);
             }
             moveFile(tempOutputFile, target);
         } catch (IOException e) {
             Files.deleteIfExists(tempOutputFile);
             throw e;
-        }
-    }
-
-    private void exportVideoOnly(Path target) throws IOException {
-        try (FileChannelWrapper channel = NIOUtils.writableChannel(target.toFile());
-             InputStream frameInput = new BufferedInputStream(Files.newInputStream(tempVideoFile))) {
-            AWTSequenceEncoder encoder = new AWTSequenceEncoder(channel, Rational.R(videoRate, videoScale));
-            BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            int[] framePixels = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-
-            for (long frameIndex = 0; frameIndex < videoFramesWritten; frameIndex++) {
-                readFully(frameInput, frameBuffer, frameByteSize);
-                frameIntBuffer.clear();
-                frameIntBuffer.get(framePixels, 0, framePixels.length);
-                encoder.encodeImage(frame);
-            }
-
-            encoder.finish();
         }
     }
 
@@ -321,7 +313,8 @@ final class VideoRecorder {
         byte[] buffer = new byte[AUDIO_BUFFER_SIZE];
         int pending = 0;
 
-        try (InputStream audioInput = new BufferedInputStream(Files.newInputStream(tempAudioFile))) {
+        try (InputStream audioInput = new GZIPInputStream(
+                new BufferedInputStream(Files.newInputStream(tempAudioFile)), COMPRESSION_BUFFER_SIZE)) {
             while (true) {
                 int read = audioInput.read(buffer, pending, buffer.length - pending);
                 if (read < 0) {
@@ -341,17 +334,6 @@ final class VideoRecorder {
 
         if (pending != 0) {
             throw new IOException("Temporary recording audio ended with an incomplete PCM frame");
-        }
-    }
-
-    private static void readFully(InputStream input, byte[] buffer, int length) throws IOException {
-        int offset = 0;
-        while (offset < length) {
-            int read = input.read(buffer, offset, length - offset);
-            if (read < 0) {
-                throw new IOException("Unexpected end of temporary recording data");
-            }
-            offset += read;
         }
     }
 
