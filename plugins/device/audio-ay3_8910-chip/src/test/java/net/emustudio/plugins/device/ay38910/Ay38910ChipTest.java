@@ -27,6 +27,52 @@ public class Ay38910ChipTest {
     }
 
     @Test
+    public void testRegisterSelectDataAndReadAliases() {
+        Ay38910Chip chip = silentChip();
+        int[] selectPorts = {0xFFFD, 0xFEFD, 0xDFFD, 0xC001};
+        int[] dataPorts = {0xBFFD, 0xBEFD, 0x9FFD, 0x8001};
+        for (int i = 0; i < selectPorts.length; i++) {
+            chip.write(selectPorts[i], (byte) 1);
+            chip.write(dataPorts[i], (byte) (0xF0 | i));
+            for (int selectPort : selectPorts) {
+                assertEquals(i, chip.read(selectPort) & 0xFF);
+            }
+            assertEquals(0xFF, chip.read(dataPorts[i]) & 0xFF);
+        }
+    }
+
+    @Test
+    public void testNonAyPortsDoNotSelectOrWriteRegisters() {
+        Ay38910Chip chip = silentChip();
+        writeRegister(chip, 1, 3);
+        writeRegister(chip, 0, 0x12);
+        for (int port : new int[]{0x7FFD, 0x3FFD, 0xFFFE, 0xBFFE, 0xFFFF, 0xBFFF}) {
+            chip.write(port, (byte) 1);
+            chip.write(port, (byte) 0x56);
+            assertEquals(0x12, chip.read(Ay38910Chip.SELECT_REGISTER_PORT) & 0xFF);
+            assertEquals(0xFF, chip.read(port) & 0xFF);
+        }
+        chip.write(Ay38910Chip.SELECT_REGISTER_PORT, (byte) 1);
+        assertEquals(3, chip.read(Ay38910Chip.SELECT_REGISTER_PORT) & 0xFF);
+    }
+
+    @Test
+    public void testOutdDataPortAliasProducesAudio() {
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);
+        int[][] registers = {{0, 0x20}, {1, 0}, {7, 0x38}, {8, 0x0F}};
+        for (int[] register : registers) {
+            chip.write(Ay38910Chip.SELECT_REGISTER_PORT, (byte) register[0]);
+            // OUTD decrements B before output: BC=BFFD becomes BEFD on the address bus.
+            chip.write(0xBEFD, (byte) register[1]);
+        }
+        chip.passedCycles(100_000);
+        chip.close();
+        assertTrue(hasPositive(sink.toShortArray()));
+        assertTrue(hasNegative(sink.toShortArray()));
+    }
+
+    @Test
     public void testToneGenerationProducesPositiveAndNegativeSamples() {
         RecordingAudioSink sink = new RecordingAudioSink();
         Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);

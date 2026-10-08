@@ -22,6 +22,8 @@ import java.util.function.IntSupplier;
 public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.PassedCyclesListener, AutoCloseable {
     public static final int SELECT_REGISTER_PORT = 0xFFFD;
     public static final int DATA_PORT = 0xBFFD;
+    // Spectrum AY wiring decodes A15, A14 and A1; the other address bits are aliases.
+    private static final int PORT_MASK = 0xC002;
 
     public static final int DEFAULT_SAMPLE_RATE = 48_000;
     public static final int CHANNELS = 2;
@@ -95,7 +97,7 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
     public synchronized byte read(int portAddress) {
         // On ZX Spectrum wiring the selected register is read back from the address/latch port (0xFFFD),
         // while 0xBFFD is write-only for register data.
-        if (portAddress == SELECT_REGISTER_PORT) {
+        if ((portAddress & PORT_MASK) == (SELECT_REGISTER_PORT & PORT_MASK)) {
             return (byte) registers[selectedRegister];
         }
         return (byte) 0xFF;
@@ -103,11 +105,12 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
 
     @Override
     public synchronized void write(int portAddress, byte data) {
-        if (portAddress == SELECT_REGISTER_PORT) {
+        int decodedPort = portAddress & PORT_MASK;
+        if (decodedPort == (SELECT_REGISTER_PORT & PORT_MASK)) {
             selectedRegister = data & 0x0F;
             return;
         }
-        if (portAddress != DATA_PORT) {
+        if (decodedPort != (DATA_PORT & PORT_MASK)) {
             return;
         }
 
