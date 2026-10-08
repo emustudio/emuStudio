@@ -23,15 +23,12 @@ final class DisplayPanel extends JPanel {
     static final int FRAMEBUFFER = 0x2400;
 
     private final MemoryContext<Byte> memory;
-    private final boolean colorOverlay;
-    private final int scale;
+    private volatile boolean colorOverlay;
     private final BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 
     DisplayPanel(MemoryContext<Byte> memory, SpaceInvadersHardware hardware, int scale, boolean colorOverlay) {
         this.memory = memory;
-        this.scale = Math.max(1, scale);
-        this.colorOverlay = colorOverlay;
-        setPreferredSize(new Dimension(WIDTH * this.scale, HEIGHT * this.scale));
+        applySettings(scale, colorOverlay);
         setBackground(Color.BLACK);
         setFocusable(true);
         bind(hardware, KeyEvent.VK_C, SpaceInvadersHardware.COIN, 1);
@@ -41,6 +38,14 @@ final class DisplayPanel extends JPanel {
         bind(hardware, KeyEvent.VK_LEFT, SpaceInvadersHardware.LEFT, 1);
         bind(hardware, KeyEvent.VK_RIGHT, SpaceInvadersHardware.RIGHT, 1);
         bind(hardware, KeyEvent.VK_T, SpaceInvadersHardware.TILT, 2);
+    }
+
+    void applySettings(int scale, boolean colorOverlay) {
+        this.colorOverlay = colorOverlay;
+        int displayScale = Math.max(1, scale);
+        setPreferredSize(new Dimension(WIDTH * displayScale, HEIGHT * displayScale));
+        revalidate();
+        repaint();
     }
 
     static boolean pixelOn(MemoryContext<Byte> memory, int x, int y) {
@@ -96,8 +101,9 @@ final class DisplayPanel extends JPanel {
     }
 
     private void renderPixels(BufferedImage pixels) {
+        boolean overlay = colorOverlay;
         for (int y = 0; y < HEIGHT; y++) {
-            int on = colorOverlay ? overlayColor(y) : Color.WHITE.getRGB();
+            int on = overlay ? overlayColor(y) : Color.WHITE.getRGB();
             for (int x = 0; x < WIDTH; x++) {
                 pixels.setRGB(x, y, pixelOn(memory, x, y) ? on : Color.BLACK.getRGB());
             }

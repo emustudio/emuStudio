@@ -15,6 +15,25 @@ import static org.junit.Assert.*;
 public class DisplayPanelTest {
     @Test
     @SuppressWarnings("unchecked")
+    public void settingsUpdateSizeAndOverlayWithoutReplacingPanel() {
+        MemoryContext<Byte> memory = createMock(MemoryContext.class);
+        expect(memory.read(anyInt())).andReturn((byte) 0xFF).anyTimes();
+        replay(memory);
+        DisplayPanel panel = new DisplayPanel(memory, new SpaceInvadersHardware(), 2, true);
+        panel.applySettings(3, false);
+        assertEquals(672, panel.getPreferredSize().width);
+        assertEquals(768, panel.getPreferredSize().height);
+        BufferedImage frame = panel.captureFrame(DisplayPanel.WIDTH, DisplayPanel.HEIGHT);
+        assertEquals(Color.WHITE.getRGB(), frame.getRGB(0, 0));
+        assertEquals(Color.WHITE.getRGB(), frame.getRGB(0, 255));
+        panel.applySettings(1, true);
+        assertEquals(224, panel.getPreferredSize().width);
+        assertEquals(new Color(255, 80, 80).getRGB(),
+                panel.captureFrame(DisplayPanel.WIDTH, DisplayPanel.HEIGHT).getRGB(0, 0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void capturedFramesKeepOverlayScaleAndIndependentPixels() {
         AtomicReference<Byte> value = new AtomicReference<>((byte) 0xFF);
         MemoryContext<Byte> memory = createMock(MemoryContext.class);

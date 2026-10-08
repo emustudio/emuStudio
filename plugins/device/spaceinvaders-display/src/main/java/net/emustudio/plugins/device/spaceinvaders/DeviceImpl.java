@@ -20,10 +20,10 @@ public final class DeviceImpl extends AbstractDevice {
     private final SampleSoundOutput sound = new SampleSoundOutput();
     private final SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
     private final boolean guiSupported;
-    private final int scale;
-    private final boolean colorOverlay;
-    private final boolean soundEnabled;
-    private final Path soundSamplesDirectory;
+    private int scale;
+    private boolean colorOverlay;
+    private boolean soundEnabled;
+    private Path soundSamplesDirectory;
     private Context8080 cpu;
     private int attachedPorts;
     private MemoryContext<Byte> memory;
@@ -33,6 +33,10 @@ public final class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        readSettings();
+    }
+
+    private void readSettings() {
         scale = settings.getInt("scale", 2);
         colorOverlay = settings.getBoolean("colorOverlay", true);
         soundEnabled = settings.getBoolean("soundEnabled", guiSupported);
@@ -114,11 +118,32 @@ public final class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame parent) {
+        if (guiSupported) {
+            new SettingsDialog(parent, settings, applicationApi.getDialogs(), applicationApi.getGUI(),
+                    this::applySettings).setVisible(true);
+        }
+    }
+
+    private void applySettings() {
+        boolean previousSoundEnabled = soundEnabled;
+        Path previousDirectory = soundSamplesDirectory;
+        readSettings();
+        if (frameClock != null && (soundEnabled != previousSoundEnabled
+                || !soundSamplesDirectory.equals(previousDirectory))) {
+            if (soundEnabled) {
+                sound.open(soundSamplesDirectory);
+            } else {
+                sound.close();
+            }
+        }
+        if (window != null) {
+            window.applySettings(scale, colorOverlay);
+        }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return false;
+        return guiSupported;
     }
 
     @Override

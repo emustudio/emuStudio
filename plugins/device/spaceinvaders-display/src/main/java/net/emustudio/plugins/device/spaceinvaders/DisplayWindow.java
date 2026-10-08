@@ -112,6 +112,11 @@ final class DisplayWindow extends JFrame {
         return bottomBar;
     }
 
+    void applySettings(int scale, boolean colorOverlay) {
+        display.applySettings(scale, colorOverlay);
+        pack();
+    }
+
     void frameReady() {
         RecordingSession session = recordingSession;
         if (session != null) {
