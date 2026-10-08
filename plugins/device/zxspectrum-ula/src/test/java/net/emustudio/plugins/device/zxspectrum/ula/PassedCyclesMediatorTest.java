@@ -74,6 +74,8 @@ public class PassedCyclesMediatorTest {
             canvas.drawNextLine(i);
             expectLastCall().once();
         }
+        canvas.frameReady();
+        expectLastCall().once();
         canvas.repaint();
         expectLastCall().once();
         replay(canvas);
@@ -92,6 +94,8 @@ public class PassedCyclesMediatorTest {
         TestULA ula = new TestULA();
         PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         DisplayCanvas canvas = createNiceMock(DisplayCanvas.class);
+        canvas.frameReady();
+        expectLastCall().once();
         canvas.repaint();
         expectLastCall().once();
         replay(canvas);

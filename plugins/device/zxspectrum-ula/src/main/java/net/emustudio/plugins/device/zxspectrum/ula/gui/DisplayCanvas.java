@@ -99,6 +99,25 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         this.frameListener = frameListener;
     }
 
+    /** Native raster dimensions, padded to even dimensions for H.264. Independent of window size. */
+    public Dimension getRecordingSize() {
+        return new Dimension((screenImageWidth + 1) & ~1, (screenImageHeight + 1) & ~1);
+    }
+
+    /** Captures a completed emulated frame, independently of Swing painting. */
+    public void frameReady() {
+        Consumer<BufferedImage> listener = frameListener;
+        if (listener != null) {
+            Dimension size = getRecordingSize();
+            BufferedImage frame = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+            int[] pixels = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
+            for (int y = 0; y < screenImageHeight; y++) {
+                System.arraycopy(screenImageData, y * screenImageWidth, pixels, y * size.width, screenImageWidth);
+            }
+            listener.accept(frame);
+        }
+    }
+
     /**
      * Renders a single raster line into the {@link #screenImageData} pixel buffer.
      *
@@ -196,15 +215,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             g2d.dispose();
         }
         g.drawImage(buffer, 0, 0, null);
-
-        Consumer<BufferedImage> listener = frameListener;
-        if (listener != null) {
-            BufferedImage frame = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            Graphics2D fg = frame.createGraphics();
-            fg.drawImage(buffer, 0, 0, null);
-            fg.dispose();
-            listener.accept(frame);
-        }
     }
 
     @Override

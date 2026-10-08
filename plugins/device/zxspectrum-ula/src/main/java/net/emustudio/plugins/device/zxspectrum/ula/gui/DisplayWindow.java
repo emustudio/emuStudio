@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
+import net.emustudio.emulib.runtime.recording.RecordingSession;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
@@ -9,7 +10,6 @@ import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
-import net.emustudio.plugins.device.zxspectrum.ula.recording.RecordingSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class DisplayWindow extends DialogBase {
     private final KeyboardDispatcher keyboardDispatcher;
     private JButton btnRecord;
 
-    private RecordingSession recordingSession;
+    private volatile RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
     public DisplayWindow(JFrame parent, ULA ula, TimingProfile timing, Dialogs dialogs, GUI gui) {
@@ -152,9 +152,10 @@ public class DisplayWindow extends DialogBase {
 
     private void startRecording() {
         try {
+            Dimension recordingSize = canvas.getRecordingSize();
             RecordingSession session = new RecordingSession(
-                    Math.max(1, canvas.getWidth()),
-                    Math.max(1, canvas.getHeight()),
+                    recordingSize.width,
+                    recordingSize.height,
                     timing.displayFrameTstates,
                     // Sample CPU frequency at recording-start so the muxer's frame-rate metadata
                     // matches the clock the user is currently running. RecordingSession expects an
@@ -163,13 +164,30 @@ public class DisplayWindow extends DialogBase {
                     ula.getAudioSampleRate()
             );
             recordingSession = session;
-            canvas.setFrameListener(session);
-            ula.setRecordingSink(session);
+            canvas.setFrameListener(frame -> {
+                session.captureVideo(frame);
+                checkRecordingFailure(session);
+            });
+            ula.setRecordingSink((pcm, length) -> {
+                session.captureAudio(pcm, length);
+                checkRecordingFailure(session);
+            });
             btnRecord.setIcon(STOP_RECORDING_ICON);
             btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {
             LOGGER.error("Could not start ZX Spectrum recording", e);
             dialogs.showError("Could not start recording. Please see log file for details.", "Recording");
+        }
+    }
+
+    private void checkRecordingFailure(RecordingSession session) {
+        if (session.getFailure() != null) {
+            SwingUtilities.invokeLater(() -> {
+                if (recordingSession == session) {
+                    stopRecording(false);
+                    dialogs.showError("Recording stopped: " + session.getFailure().getMessage(), "Recording");
+                }
+            });
         }
     }
 
@@ -189,9 +207,9 @@ public class DisplayWindow extends DialogBase {
                 "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
         ) : Optional.empty();
 
-        // Video export (encoding + audio muxing) is CPU-intensive and must not run on the EDT,
-        // otherwise the ULA display freezes and the UI becomes unresponsive until the export finishes.
+        // Drain the encoder and mux audio off the EDT so saving cannot freeze the display.
         btnRecord.setEnabled(false);
+        btnRecord.setToolTipText("Saving video...");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -203,6 +221,7 @@ public class DisplayWindow extends DialogBase {
             protected void done() {
                 btnRecord.setEnabled(true);
                 btnRecord.setIcon(RECORD_ICON);
+                btnRecord.setToolTipText("Start video recording");
                 try {
                     get(); // propagate any exception from doInBackground
                     if (selectedFile.isPresent()) {
@@ -214,7 +233,9 @@ public class DisplayWindow extends DialogBase {
                 } catch (Exception e) {
                     Throwable cause = (e instanceof java.util.concurrent.ExecutionException) ? e.getCause() : e;
                     LOGGER.error("Could not finish ZX Spectrum recording", cause);
-                    dialogs.showError("Could not save recording. Please see log file for details.", "Recording");
+                    if (saveToFile) {
+                        dialogs.showError("Could not save recording. Please see log file for details.", "Recording");
+                    }
                 }
             }
         }.execute();

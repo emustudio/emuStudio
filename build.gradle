@@ -38,9 +38,6 @@ ext.libs = [
         editor           : "com.fifesoft:rsyntaxtextarea:3.6.2",
         editorDialogs    : "com.fifesoft:rstaui:3.3.2",
 
-        jcodec           : "org.jcodec:jcodec:0.2.3",
-        jcodecJavase     : "org.jcodec:jcodec-javase:0.2.3",
-
         cacioTta         : "com.github.caciocavallosilano:cacio-tta:1.11.1",
         junit            : "junit:junit:4.13.2",
         easyMock         : "org.easymock:easymock:5.6.0",
@@ -138,4 +135,3 @@ tasks.register('doc', org.asciidoctor.gradle.jvm.AsciidoctorTask) {
       'imagesoutdir'     : file('docs/output/images')
   )
 }
-

@@ -18,10 +18,10 @@ emulation running with a warning. Read video RAM through the existing memory con
 memory-mapped I/O to byte-mem.
 
 Recording follows the ZX Spectrum record/stop/save flow and uses the same bundled JCodec encoder and PCM audio
-muxing approach. Keep recorder implementations private to each device rather than importing another plugin's
-implementation. Capture the native 224x256 framebuffer at 60 fps and mix currently playing samples into
-48 kHz stereo audio, applying the selected volume. Capture continues when Swing repaint requests are coalesced;
-H.264 encoding runs during recording on a worker, through a queue bounded to two seconds of frames. If the encoder
+muxing approach. Use the shared emuLib recording session described in ADR-018. Capture the native 224x256 framebuffer
+at 60 fps and mix currently playing samples into 48 kHz stereo audio, applying the selected volume.
+Capture continues when Swing repaint requests are coalesced;
+H.264 encoding runs during recording on a worker, through a bounded queue. If the encoder
 falls behind, stop recording and report the failure rather than blocking emulation or retaining unlimited frames.
 Save only finalizes the encoded MP4 and adds PCM audio, off the Swing event thread. Window scaling adds no detail
 to the recorded pixels and does not change recording dimensions. Closing the display discards active recording
@@ -31,5 +31,5 @@ rather than gigabytes of raw frames per minute in the system temporary directory
 ## Consequences
 The CPU and memory plugins remain reusable. The display can run headless while still producing interrupts. Wall-clock
 refresh favors playable emulation over cycle-exact scanline timing; ROM images and sound samples remain user-supplied.
-Sound playback uses the JDK; recording uses JCodec already bundled by emuStudio. Neither changes the CPU or shared
+Sound playback uses the JDK; recording uses emuLib and its JCodec implementation dependency. Neither changes the CPU
 plugin API. Temporary recordings consume disk space until exported or discarded.

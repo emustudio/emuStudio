@@ -3,6 +3,7 @@
 package net.emustudio.plugins.device.spaceinvaders;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.recording.RecordingSession;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
@@ -24,6 +25,8 @@ final class DisplayWindow extends JFrame {
     private static final ImageIcon STOP_ICON = GUI.loadIcon("toolbar-stop.png");
     private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
+    private static final int FRAME_RATE = 60;
+    private static final int AUDIO_FRAMES_PER_VIDEO_FRAME = SampleSoundOutput.RECORDING_SAMPLE_RATE / FRAME_RATE;
     private final DisplayPanel display;
     private final SampleSoundOutput sound;
     private final Dialogs dialogs;
@@ -112,8 +115,8 @@ final class DisplayWindow extends JFrame {
     void frameReady() {
         RecordingSession session = recordingSession;
         if (session != null) {
-            if (!session.capture(display.captureFrame(session.width, session.height),
-                    sound.captureAudio(RecordingSession.AUDIO_FRAMES_PER_VIDEO_FRAME)) && session.getFailure() != null) {
+            if (!session.capture(display.captureFrame(DisplayPanel.WIDTH, DisplayPanel.HEIGHT),
+                    sound.captureAudio(AUDIO_FRAMES_PER_VIDEO_FRAME)) && session.getFailure() != null) {
                 SwingUtilities.invokeLater(() -> {
                     if (recordingSession == session) {
                         stopRecording(false);
@@ -128,7 +131,8 @@ final class DisplayWindow extends JFrame {
     private void startRecording() {
         try {
             // Encode game pixels; scaling the window adds no detail and makes H.264 much slower.
-            recordingSession = new RecordingSession(DisplayPanel.WIDTH, DisplayPanel.HEIGHT);
+            recordingSession = new RecordingSession(DisplayPanel.WIDTH, DisplayPanel.HEIGHT,
+                    1, FRAME_RATE, SampleSoundOutput.RECORDING_SAMPLE_RATE);
             btnRecord.setIcon(STOP_ICON);
             btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {

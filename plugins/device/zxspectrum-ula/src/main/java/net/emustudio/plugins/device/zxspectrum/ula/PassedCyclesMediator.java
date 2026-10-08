@@ -102,6 +102,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             lineCycles = 0; // keep line timing in sync with frame timing
             interruptActive = true;
             if (canvas != null) {
+                canvas.frameReady();
                 canvas.repaint();
             }
         }
