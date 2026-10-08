@@ -5,6 +5,10 @@ package net.emustudio.plugins.device.spaceinvaders;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Test;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import static net.emustudio.plugins.device.spaceinvaders.SoundOutput.Sample.*;
 
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.createMock;
@@ -17,6 +21,77 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class SpaceInvadersHardwareTest {
+    private static class RecordingSound implements SoundOutput {
+        final List<Sample> played = new ArrayList<>();
+        int loops;
+        int ufoStops;
+        int stops;
+
+        public void play(Sample sample, boolean loop) {
+            played.add(sample);
+            if (loop) loops++;
+        }
+        public void stop(Sample sample) {
+            assertEquals(UFO, sample);
+            ufoStops++;
+        }
+        public void stopAll() { stops++; }
+    }
+
+    @Test
+    public void soundPortsTriggerOnlyOnRisingEdges() {
+        RecordingSound sound = new RecordingSound();
+        SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
+        hardware.write(3, (byte) 0x3E);
+        hardware.write(3, (byte) 0x3E);
+        hardware.write(5, (byte) 0x1F);
+        hardware.write(5, (byte) 0x1F);
+        assertEquals(Arrays.asList(SHOT, PLAYER_HIT, INVADER_HIT, BONUS,
+                FLEET_1, FLEET_2, FLEET_3, FLEET_4, UFO_HIT), sound.played);
+
+        hardware.write(3, (byte) 0x20);
+        hardware.write(3, (byte) 0x22);
+        assertEquals(SHOT, sound.played.get(9));
+        // Reading port 3 remains the shifter even when writing it controls sound.
+        hardware.write(4, (byte) 0xAA);
+        hardware.write(4, (byte) 0xCC);
+        hardware.write(2, (byte) 3);
+        assertEquals(0x65, hardware.read(3) & 0xFF);
+    }
+
+    @Test
+    public void ufoLoopsUntilClearedAndMuteStopsAllSounds() {
+        RecordingSound sound = new RecordingSound();
+        SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
+        hardware.write(3, (byte) 0x21);
+        hardware.write(3, (byte) 0x21);
+        assertEquals(1, sound.loops);
+        hardware.write(3, (byte) 0x20);
+        assertEquals(1, sound.ufoStops);
+        hardware.write(3, (byte) 0x21);
+        hardware.write(3, (byte) 0x01);
+        assertEquals(1, sound.stops);
+        hardware.write(5, (byte) 0x1F);
+        assertEquals(Arrays.asList(UFO, UFO), sound.played);
+        hardware.write(3, (byte) 0x21);
+        assertEquals(3, sound.loops);
+    }
+
+    @Test
+    public void resetStopsAudioAndClearsSoundLatches() {
+        RecordingSound sound = new RecordingSound();
+        SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
+        hardware.write(3, (byte) 0x22);
+        hardware.write(5, (byte) 0x01);
+        hardware.reset();
+        hardware.write(5, (byte) 0x10);
+        assertEquals(1, sound.stops);
+        assertEquals(Arrays.asList(SHOT, FLEET_1), sound.played);
+        hardware.write(3, (byte) 0x22);
+        hardware.write(5, (byte) 0x01);
+        assertEquals(Arrays.asList(SHOT, FLEET_1, SHOT, FLEET_1), sound.played);
+    }
+
     @Test
     public void shiftsTwoWrittenBytesBySelectedAmount() {
         SpaceInvadersHardware hardware = new SpaceInvadersHardware();

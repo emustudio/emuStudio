@@ -86,6 +86,15 @@ public class MemoryContextImplTest {
     }
 
     @Test
+    public void bulkReadsPastMemoryThrowIndexOutOfBounds() {
+        context.init(16384, 1, 0);
+        assertEquals(1, context.read(16383, 3).length);
+        assertEquals(0, context.read(16384, 3).length);
+        assertThrows(IndexOutOfBoundsException.class, () -> context.read(16385, 3));
+        assertThrows(IndexOutOfBoundsException.class, () -> context.read(-1, 3));
+    }
+
+    @Test
     public void readOnlyRangesBlockWritesAndCanBeRemoved() {
         RangeTree.Range range = new RangeTree.Range(10, 20);
         context.setReadOnly(range);

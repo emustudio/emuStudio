@@ -12,15 +12,20 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.JFrame;
+import java.nio.file.Path;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Space Invaders display")
 @SuppressWarnings("unused")
 public final class DeviceImpl extends AbstractDevice {
-    private final SpaceInvadersHardware hardware = new SpaceInvadersHardware();
+    private final SampleSoundOutput sound = new SampleSoundOutput();
+    private final SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
     private final boolean guiSupported;
     private final int scale;
     private final boolean colorOverlay;
+    private final boolean soundEnabled;
+    private final Path soundSamplesDirectory;
     private Context8080 cpu;
+    private int attachedPorts;
     private MemoryContext<Byte> memory;
     private FrameClock frameClock;
     private volatile DisplayWindow window;
@@ -30,6 +35,8 @@ public final class DeviceImpl extends AbstractDevice {
         guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         scale = settings.getInt("scale", 2);
         colorOverlay = settings.getBoolean("colorOverlay", true);
+        soundEnabled = settings.getBoolean("soundEnabled", guiSupported);
+        soundSamplesDirectory = Path.of(settings.getString("soundSamplesDirectory", "examples/space-invaders/sounds"));
     }
 
     @SuppressWarnings("unchecked")
@@ -40,21 +47,22 @@ public final class DeviceImpl extends AbstractDevice {
         if (memory.getCellTypeClass() != Byte.class || memory.getSize() <= 0x3FFF) {
             throw new PluginInitializationException(this, "Space Invaders requires byte memory through address 3FFFh");
         }
-        int attached = 0;
-        for (int port = SpaceInvadersHardware.INPUT_1_PORT; port <= SpaceInvadersHardware.SHIFT_DATA_PORT; port++) {
+        for (int port = SpaceInvadersHardware.INPUT_1_PORT; port <= SpaceInvadersHardware.SOUND_2_PORT; port++) {
             if (!cpu.attachDevice(port, hardware)) {
                 for (int cleanup = SpaceInvadersHardware.INPUT_1_PORT; cleanup < port; cleanup++) {
                     cpu.detachDevice(cleanup);
                 }
+                attachedPorts = 0;
                 throw new PluginInitializationException(this,
                         String.format("Space Invaders cannot attach to CPU port %02Xh", port));
             }
-            attached++;
+            attachedPorts++;
         }
-        if (attached == 4) {
-            frameClock = new FrameClock(cpu, this::frameReady);
-            frameClock.start();
+        if (soundEnabled) {
+            sound.open(soundSamplesDirectory);
         }
+        frameClock = new FrameClock(cpu, this::frameReady);
+        frameClock.start();
     }
 
     private void frameReady() {
@@ -76,10 +84,12 @@ public final class DeviceImpl extends AbstractDevice {
             frameClock = null;
         }
         if (cpu != null) {
-            for (int port = SpaceInvadersHardware.INPUT_1_PORT; port <= SpaceInvadersHardware.SHIFT_DATA_PORT; port++) {
+            for (int port = SpaceInvadersHardware.INPUT_1_PORT; port < SpaceInvadersHardware.INPUT_1_PORT + attachedPorts; port++) {
                 cpu.detachDevice(port);
             }
+            attachedPorts = 0;
         }
+        sound.close();
         if (window != null) {
             window.dispose();
             window = null;
@@ -117,6 +127,6 @@ public final class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "Space Invaders framebuffer, controls, shift register, and raster interrupts.";
+        return "Space Invaders framebuffer, controls, shift register, sampled sound, and raster interrupts.";
     }
 }

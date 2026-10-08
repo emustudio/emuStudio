@@ -8,9 +8,19 @@ id = "66d7906b-1815-470f-8473-07f49c6dbf0f"
 type = "MEMORY"
 
 [MEMORY.settings]
-memorySize = 16384
+# Cover the 8080 address space, including writes beyond the framebuffer during attract mode.
+memorySize = 65536
 banksCount = 1
 commonBoundary = 0
+# Ignore writes to ROM and its upper address windows.
+ROMfrom0 = 0
+ROMto0 = 8191
+ROMfrom1 = 16384
+ROMto1 = 24575
+ROMfrom2 = 32768
+ROMto2 = 40959
+ROMfrom3 = 49152
+ROMto3 = 57343
 # Original ROMs are not distributed. Configure legally obtained files here:
 #imageName0 = "invaders.h"
 #imageAddress0 = 0
@@ -51,6 +61,10 @@ type = "DEVICE"
 [DEVICE.settings]
 scale = 2
 colorOverlay = true
+# Extract the standard Space Invaders sound samples (0.wav through 9.wav) into this directory.
+soundSamplesDirectory = "examples/space-invaders/sounds"
+# Sound defaults to enabled with GUI and disabled during headless automation.
+#soundEnabled = true
 
 [[connections]]
 bidirectional = true
