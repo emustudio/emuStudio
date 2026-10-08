@@ -4,7 +4,9 @@ package net.emustudio.plugins.device.spaceinvaders;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.BooleanControl;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.IOException;
@@ -17,11 +19,34 @@ import java.util.Map;
 final class SampleSoundOutput implements SoundOutput, AutoCloseable {
     private static final System.Logger LOGGER = System.getLogger(SampleSoundOutput.class.getName());
     private final Map<Sample, Clip> clips = new EnumMap<>(Sample.class);
+    private int volumePercent = 25;
 
     SampleSoundOutput() { }
 
     SampleSoundOutput(Map<Sample, Clip> clips) {
         this.clips.putAll(clips);
+        this.clips.values().forEach(this::applyVolume);
+    }
+
+    synchronized int getVolumePercent() {
+        return volumePercent;
+    }
+
+    synchronized void setVolumePercent(int volumePercent) {
+        this.volumePercent = Math.max(0, Math.min(100, volumePercent));
+        clips.values().forEach(this::applyVolume);
+    }
+
+    private void applyVolume(Clip clip) {
+        if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float decibels = volumePercent == 0 ? gain.getMinimum() : (float) (20 * Math.log10(volumePercent / 100.0));
+            gain.setValue(Math.max(gain.getMinimum(), Math.min(gain.getMaximum(), decibels)));
+        }
+        if (clip.isControlSupported(BooleanControl.Type.MUTE)) {
+            BooleanControl mute = (BooleanControl) clip.getControl(BooleanControl.Type.MUTE);
+            mute.setValue(volumePercent == 0);
+        }
     }
 
     synchronized void open(Path directory) {
@@ -39,6 +64,7 @@ final class SampleSoundOutput implements SoundOutput, AutoCloseable {
             try (AudioInputStream stream = AudioSystem.getAudioInputStream(path.toFile())) {
                 clip = AudioSystem.getClip();
                 clip.open(stream);
+                applyVolume(clip);
                 clips.put(sample, clip);
             } catch (IOException | UnsupportedAudioFileException | LineUnavailableException | IllegalArgumentException e) {
                 if (clip != null) {

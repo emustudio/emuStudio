@@ -100,7 +100,7 @@ public final class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (window == null) {
-                window = new DisplayWindow(parent, memory, hardware, scale, colorOverlay);
+                window = new DisplayWindow(parent, memory, hardware, scale, colorOverlay, sound, applicationApi.getGUI());
             }
             window.setVisible(true);
         }
