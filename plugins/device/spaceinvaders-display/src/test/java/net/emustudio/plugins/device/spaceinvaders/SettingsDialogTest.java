@@ -12,6 +12,8 @@ import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +62,7 @@ public class SettingsDialogTest {
     }
 
     @Test
-    public void cancelDiscardsEdits() throws Exception {
+    public void escapeDiscardsEdits() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             createDialog();
             assertEquals(2, spinner().getValue());
@@ -69,7 +71,10 @@ public class SettingsDialogTest {
             assertEquals("examples/space-invaders/sounds", directory().getText());
             spinner().setValue(4);
             directory().setText("other/sounds");
-            button("Cancel").doClick();
+            JRootPane root = dialog.getRootPane();
+            Object escape = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                    .get(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+            root.getActionMap().get(escape).actionPerformed(new ActionEvent(root, 0, "escape"));
             assertFalse(dialog.isDisplayable());
             assertEquals(0, saves.get());
         });

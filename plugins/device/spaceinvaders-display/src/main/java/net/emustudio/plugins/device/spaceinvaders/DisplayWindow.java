@@ -3,6 +3,7 @@
 package net.emustudio.plugins.device.spaceinvaders;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.audio.SamplePlayer;
 import net.emustudio.emulib.runtime.recording.RecordingSession;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -26,16 +27,16 @@ final class DisplayWindow extends JFrame {
     private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
     private static final int FRAME_RATE = 60;
-    private static final int AUDIO_FRAMES_PER_VIDEO_FRAME = SampleSoundOutput.RECORDING_SAMPLE_RATE / FRAME_RATE;
+    private static final int AUDIO_FRAMES_PER_VIDEO_FRAME = DeviceImpl.SOUND_SAMPLE_RATE / FRAME_RATE;
     private final DisplayPanel display;
-    private final SampleSoundOutput sound;
+    private final SamplePlayer<SoundOutput.Sample> sound;
     private final Dialogs dialogs;
     private JButton btnRecord;
     private volatile RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
     DisplayWindow(JFrame parent, MemoryContext<Byte> memory, SpaceInvadersHardware hardware,
-                  int scale, boolean colorOverlay, SampleSoundOutput sound, GUI gui, Dialogs dialogs) {
+                  int scale, boolean colorOverlay, SamplePlayer<SoundOutput.Sample> sound, GUI gui, Dialogs dialogs) {
         super("Space Invaders");
         this.sound = sound;
         this.dialogs = dialogs;
@@ -54,7 +55,7 @@ final class DisplayWindow extends JFrame {
         });
     }
 
-    private JPanel createSoundBar(SampleSoundOutput sound, GUI gui) {
+    private JPanel createSoundBar(SamplePlayer<SoundOutput.Sample> sound, GUI gui) {
         int initialVolume = sound.getVolumePercent();
         JSlider slider = new JSlider(JSlider.VERTICAL, 0, 100, initialVolume);
         slider.setFocusable(false);
@@ -137,7 +138,7 @@ final class DisplayWindow extends JFrame {
         try {
             // Encode game pixels; scaling the window adds no detail and makes H.264 much slower.
             recordingSession = new RecordingSession(DisplayPanel.WIDTH, DisplayPanel.HEIGHT,
-                    1, FRAME_RATE, SampleSoundOutput.RECORDING_SAMPLE_RATE);
+                    1, FRAME_RATE, DeviceImpl.SOUND_SAMPLE_RATE);
             btnRecord.setIcon(STOP_ICON);
             btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {

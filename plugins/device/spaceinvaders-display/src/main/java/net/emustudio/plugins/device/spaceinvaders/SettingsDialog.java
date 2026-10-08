@@ -66,14 +66,11 @@ final class SettingsDialog extends DialogBase {
         btnSave.addActionListener(e -> saveSettings());
         rootPane.setDefaultButton(btnSave);
         gui.buttonMakePrimary(btnSave);
-        JButton btnCancel = gui.button("Cancel");
-        btnCancel.addActionListener(e -> dispose());
 
         JPanel content = gui.panel("insets dialog, fillx", "[grow]", "[][][]");
         content.add(display, "growx, wrap");
         content.add(sound, "growx, wrap");
-        content.add(btnSave, "split 2, align right");
-        content.add(btnCancel);
+        content.add(btnSave, "align right");
         return content;
     }
 

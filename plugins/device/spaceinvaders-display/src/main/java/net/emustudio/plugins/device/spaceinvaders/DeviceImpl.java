@@ -8,17 +8,24 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.audio.SamplePlayer;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFrame;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Space Invaders display")
 @SuppressWarnings("unused")
-public final class DeviceImpl extends AbstractDevice {
-    private final SampleSoundOutput sound = new SampleSoundOutput();
-    private final SpaceInvadersHardware hardware = new SpaceInvadersHardware(sound);
+public final class DeviceImpl extends AbstractDevice implements SoundOutput {
+    static final int SOUND_SAMPLE_RATE = 48_000;
+    private static final System.Logger LOGGER = System.getLogger(DeviceImpl.class.getName());
+    private final SamplePlayer<Sample> sound = new SamplePlayer<>(SOUND_SAMPLE_RATE);
+    private final SpaceInvadersHardware hardware = new SpaceInvadersHardware(this);
     private final boolean guiSupported;
     private int scale;
     private boolean colorOverlay;
@@ -33,6 +40,7 @@ public final class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        sound.setVolumePercent(25);
         readSettings();
     }
 
@@ -63,7 +71,7 @@ public final class DeviceImpl extends AbstractDevice {
             attachedPorts++;
         }
         if (soundEnabled) {
-            sound.open(soundSamplesDirectory);
+            openSoundSamples();
         }
         frameClock = new FrameClock(cpu, this::frameReady);
         frameClock.start();
@@ -74,6 +82,41 @@ public final class DeviceImpl extends AbstractDevice {
         if (current != null) {
             current.frameReady();
         }
+    }
+
+    private void openSoundSamples() {
+        sound.close();
+        if (!Files.isDirectory(soundSamplesDirectory)) {
+            LOGGER.log(System.Logger.Level.WARNING, "Space Invaders sound samples not found at {0}",
+                    soundSamplesDirectory);
+            return;
+        }
+        for (Sample sample : Sample.values()) {
+            Path path = soundSamplesDirectory.resolve(sample.ordinal() + ".wav");
+            if (!Files.isRegularFile(path)) {
+                path = soundSamplesDirectory.resolve(sample.ordinal() + ".WAV");
+            }
+            try {
+                sound.load(sample, path);
+            } catch (IOException | UnsupportedAudioFileException | LineUnavailableException | IllegalArgumentException e) {
+                LOGGER.log(System.Logger.Level.WARNING, "Could not load Space Invaders sound {0}: {1}", path, e.toString());
+            }
+        }
+    }
+
+    @Override
+    public void play(Sample sample, boolean loop) {
+        sound.play(sample, loop);
+    }
+
+    @Override
+    public void stop(Sample sample) {
+        sound.stop(sample);
+    }
+
+    @Override
+    public void stopAll() {
+        sound.stopAll();
     }
 
     @Override
@@ -131,7 +174,7 @@ public final class DeviceImpl extends AbstractDevice {
         if (frameClock != null && (soundEnabled != previousSoundEnabled
                 || !soundSamplesDirectory.equals(previousDirectory))) {
             if (soundEnabled) {
-                sound.open(soundSamplesDirectory);
+                openSoundSamples();
             } else {
                 sound.close();
             }

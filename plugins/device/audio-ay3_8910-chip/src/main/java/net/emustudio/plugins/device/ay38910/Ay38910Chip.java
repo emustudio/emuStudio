@@ -3,8 +3,8 @@
 package net.emustudio.plugins.device.ay38910;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.runtime.audio.AudioSink;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.ay38910.audio.AudioSink;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

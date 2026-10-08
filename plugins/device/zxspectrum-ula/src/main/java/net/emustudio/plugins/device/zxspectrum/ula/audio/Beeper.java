@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.audio;
 
+import net.emustudio.emulib.runtime.audio.AudioSink;
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
@@ -39,7 +40,7 @@ import java.util.function.LongSupplier;
  * <p>Each generated frame writes the same signed 16-bit amplitude to left and right channels. The
  * amplitudes are derived once from the Issue 3 voltage table by centering the analog range around
  * its midpoint and scaling it into 16-bit PCM. The backing {@link ByteBuffer} is little-endian to
- * match the Java Sound format created by {@link SoundAudioSink}.
+ * match the PCM format accepted by {@link AudioSink}.
  *
  * <p>References:
  * <ul>
@@ -104,7 +105,7 @@ public class Beeper implements AutoCloseable {
 
     public static Beeper createDefault(LongSupplier cpuFrequencyHzSupplier) {
         try {
-            return new Beeper(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE, cpuFrequencyHzSupplier);
+            return new Beeper(AudioSink.open(DEFAULT_SAMPLE_RATE, CHANNELS), DEFAULT_SAMPLE_RATE, cpuFrequencyHzSupplier);
         } catch (LineUnavailableException | IllegalArgumentException e) {
             LOGGER.warn("ZX Spectrum tone output is unavailable; continuing without sound", e);
             return silent(cpuFrequencyHzSupplier);

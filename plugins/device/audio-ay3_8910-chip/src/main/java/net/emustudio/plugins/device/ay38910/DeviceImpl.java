@@ -9,9 +9,9 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.audio.AudioSink;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.ay38910.audio.SoundAudioSink;
 import net.emustudio.plugins.device.ay38910.gui.Ay38910Gui;
 
 import javax.sound.sampled.LineUnavailableException;
@@ -39,7 +39,7 @@ public class DeviceImpl extends AbstractDevice {
 
         try {
             this.cpu = contextPool.getCPUContext(pluginID, Context8080.class); // For the sake of generalization we allow to connect this chip also to 8080 CPU
-            this.chip = new Ay38910Chip(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE, cpu::getCPUFrequency);
+            this.chip = new Ay38910Chip(AudioSink.open(DEFAULT_SAMPLE_RATE, Ay38910Chip.CHANNELS), DEFAULT_SAMPLE_RATE, cpu::getCPUFrequency);
             if (!cpu.attachDevice(Ay38910Chip.DATA_PORT & 0xFF, chip)) {
                 throw new PluginInitializationException(
                         this, "AY-3-8910 cannot be attached to CPU port 0xFD (hardware conflict?)"
