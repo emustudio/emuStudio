@@ -183,12 +183,11 @@ public class SettingsDialog extends DialogBase {
         // === Drive settings tab ===
 
         // Drive selection: 2 rows of 8 buttons
-        JPanel panelDriveSelection = gui.panel("insets dialog", "[][][][][][][][]", "[][]");
+        JPanel panelDriveSelection = gui.panel("insets dialog", "[][][][][][][][][]", "[][]");
         panelDriveSelection.add(gui.label("Drive:"), "span 1 2");
         for (int i = 0; i < 8; i++) {
             panelDriveSelection.add(driveButtons.get(i), i == 7 ? "wrap" : "");
         }
-        panelDriveSelection.add(new JPanel(), "skip 1"); // skip "Drive:" label column
         for (int i = 8; i < 16; i++) {
             panelDriveSelection.add(driveButtons.get(i));
         }
