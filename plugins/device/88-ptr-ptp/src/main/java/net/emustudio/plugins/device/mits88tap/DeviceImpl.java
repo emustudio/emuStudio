@@ -20,11 +20,13 @@ import javax.swing.JFrame;
 public final class DeviceImpl extends AbstractDevice {
     private final PaperTapeUnit tape = new PaperTapeUnit();
     private final boolean guiSupported;
+    private final PluginSettings settings;
     private Context8080 cpu;
     private PaperTapeGui gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        this.settings = settings;
         guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             applicationApi.getContextPool().register(pluginID, tape, PaperTapeContext.class);
@@ -42,6 +44,9 @@ public final class DeviceImpl extends AbstractDevice {
         if (!cpu.attachDevice(PaperTapeUnit.DATA_PORT, tape)) {
             cpu.detachDevice(PaperTapeUnit.STATUS_PORT);
             throw new PluginInitializationException(this, "PTR/PTP cannot attach to CPU data port 13h");
+        }
+        if (guiSupported && settings.getBoolean(SettingsDialog.SHOW_GUI_AT_STARTUP, false)) {
+            showGUI(null);
         }
     }
 
@@ -67,7 +72,7 @@ public final class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                gui = new PaperTapeGui(parent, tape);
+                gui = new PaperTapeGui(parent, tape, applicationApi.getDialogs(), applicationApi.getGUI());
             }
             gui.setVisible(true);
         }
@@ -80,11 +85,14 @@ public final class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame parent) {
+        if (guiSupported) {
+            new SettingsDialog(parent, settings, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
+        }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return false;
+        return guiSupported;
     }
 
     @Override
