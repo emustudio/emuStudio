@@ -14,6 +14,15 @@ pluginManagement {
 
 rootProject.name = 'emuStudio'
 
+// Develop shared APIs against a local emuLib checkout without publishing a snapshot.
+if (providers.gradleProperty('emuLibPath').isPresent()) {
+    includeBuild(providers.gradleProperty('emuLibPath').get()) {
+        dependencySubstitution {
+            substitute module('net.emustudio:emulib') using project(':')
+        }
+    }
+}
+
 include ':application'
 
 include ':plugins:compiler:as-8080'

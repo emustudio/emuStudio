@@ -5,7 +5,6 @@ package net.emustudio.plugins.device.audiotape_player;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
-import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
@@ -31,7 +30,7 @@ import java.util.stream.Collectors;
  * - <a href="https://softspectrum48.weebly.com/notes/tape-loading-routines">Tape loading routines</a>
  * - <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface">Spectrum tape interface</a>
  */
-public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedCyclesListener {
+public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesListener {
     private static final int FILE_START_PAUSE_MS = 2000;
     private final static int LEADER_PULSE_TSTATES = 2168;
     private final static int SYNC1_PULSE_TSTATES = 667;

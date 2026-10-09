@@ -52,7 +52,7 @@ public class TapLoaderTest {
     public void testLoadWritesMemoryBlock() throws IOException {
         File tapFile = createTapFile("memory.tap", (byte) 3, 0x1000, new byte[]{0x11, 0x22, 0x33});
 
-        new TapLoader().load(tapFile.toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(tapFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x11), memoryData.get(0x1000));
         assertEquals(Byte.valueOf((byte) 0x22), memoryData.get(0x1001));
@@ -63,7 +63,7 @@ public class TapLoaderTest {
     public void testLoadIgnoresNonMemoryBlocks() throws IOException {
         File tapFile = createTapFile("program.tap", (byte) 0, 0x2000, new byte[]{(byte) 0xAA, (byte) 0xBB});
 
-        new TapLoader().load(tapFile.toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(tapFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertNull(memoryData.get(0x2000));
     }
@@ -77,7 +77,7 @@ public class TapLoaderTest {
         putTapBlock(buffer, dataBlock(new byte[]{0x33}));
 
         File tapFile = writeFile("multi.tap", buffer);
-        new TapLoader().load(tapFile.toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(tapFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x11), memoryData.get(0x1000));
         assertEquals(Byte.valueOf((byte) 0x22), memoryData.get(0x1001));
@@ -91,7 +91,26 @@ public class TapLoaderTest {
         ByteBuffer buffer = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN);
         putTapBlock(buffer, header);
 
-        new TapLoader().load(writeFile("invalid.tap", buffer).toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(writeFile("invalid.tap", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+    }
+
+    @Test(expected = IOException.class)
+    public void testLoadRejectsDataLengthMismatch() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+        putTapBlock(buffer, headerBlock((byte) 3, 0x1000, 3));
+        putTapBlock(buffer, dataBlock(new byte[]{1, 2}));
+        MemoryImageLoader.load(writeFile("mismatch.tap", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+    }
+
+    @Test
+    public void testHeaderDoesNotCarryOverToNextFile() throws IOException {
+        ByteBuffer header = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN);
+        putTapBlock(header, headerBlock((byte) 3, 0x1000, 1));
+        MemoryImageLoader.load(writeFile("header.tap", header).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+        ByteBuffer orphan = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
+        putTapBlock(orphan, dataBlock(new byte[]{1}));
+        MemoryImageLoader.load(writeFile("orphan.tap", orphan).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+        assertNull(memoryData.get(0x1000));
     }
 
     private File createTapFile(String name, byte headerType, int address, byte[] data) throws IOException {

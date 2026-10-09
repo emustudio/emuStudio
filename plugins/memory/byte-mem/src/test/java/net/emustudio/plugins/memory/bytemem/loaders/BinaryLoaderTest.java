@@ -57,7 +57,7 @@ public class BinaryLoaderTest {
             fos.write(new byte[]{0x01, 0x02, 0x03, 0x04, 0x05});
         }
 
-        new BinaryLoader().load(binFile.toPath(), memory, Loader.MemoryBank.of(1, 0x100));
+        MemoryImageLoader.load(binFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(1, 0x100));
 
         assertEquals(1, selectedBank);
         assertEquals(Byte.valueOf((byte) 0x01), memoryData.get(0x100));

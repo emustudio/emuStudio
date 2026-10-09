@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotape_player;
 
-import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +17,7 @@ public class TapePlaybackControllerTest {
 
     @Before
     public void setUp() {
-        Loader.TapePlayback listener = niceMock(Loader.TapePlayback.class);
+        TapePlayback listener = niceMock(TapePlayback.class);
         replay(listener);
         controller = new TapePlaybackController(listener);
     }
@@ -30,6 +29,14 @@ public class TapePlaybackControllerTest {
 
     @Test
     public void testInitialStateIsUnloaded() {
+        assertEquals(TapePlaybackController.CassetteState.UNLOADED, controller.getState());
+    }
+
+    @Test
+    public void testMemoryFormatsAreNotAcceptedAsTapes() {
+        controller.load(Path.of("image.hex"));
+        assertEquals(TapePlaybackController.CassetteState.UNLOADED, controller.getState());
+        controller.load(Path.of("image.bin"));
         assertEquals(TapePlaybackController.CassetteState.UNLOADED, controller.getState());
     }
 
@@ -142,4 +149,3 @@ public class TapePlaybackControllerTest {
                 || state == TapePlaybackController.CassetteState.STOPPED;
     }
 }
-

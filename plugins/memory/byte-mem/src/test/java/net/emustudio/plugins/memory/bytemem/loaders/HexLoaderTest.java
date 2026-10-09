@@ -39,11 +39,11 @@ public class HexLoaderTest {
             selectedBank = (int) getCurrentArguments()[0];
             return null;
         }).anyTimes();
-        memory.write(anyInt(), anyObject(Byte.class));
+        memory.write(anyInt(), anyObject(Byte[].class));
         expectLastCall().andAnswer(() -> {
             int addr = (int) getCurrentArguments()[0];
-            Byte data = (Byte) getCurrentArguments()[1];
-            memoryData.put(addr, data);
+            Byte[] data = (Byte[]) getCurrentArguments()[1];
+            for (int i = 0; i < data.length; i++) memoryData.put(addr + i, data[i]);
             return null;
         }).anyTimes();
 
@@ -62,7 +62,7 @@ public class HexLoaderTest {
 
     @Test
     public void testIsMemoryAddressAware() {
-        assertTrue(new HexLoader().isMemoryAddressAware());
+        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(java.nio.file.Path.of("file.hex"))));
     }
 
     @Test
@@ -73,8 +73,7 @@ public class HexLoaderTest {
                 ":03000000010203F7",
                 ":00000001FF");
 
-        HexLoader loader = new HexLoader();
-        loader.load(hexFile.toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(hexFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x01), memoryData.get(0));
         assertEquals(Byte.valueOf((byte) 0x02), memoryData.get(1));
@@ -87,8 +86,7 @@ public class HexLoaderTest {
                 ":0100000041BE",
                 ":00000001FF");
 
-        HexLoader loader = new HexLoader();
-        loader.load(hexFile.toPath(), memory, Loader.MemoryBank.of(2, 0));
+        MemoryImageLoader.load(hexFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(2, 0));
 
         assertEquals(2, selectedBank);
     }
@@ -102,21 +100,19 @@ public class HexLoaderTest {
             writer.write("not a hex file\n");
         }
 
-        HexLoader loader = new HexLoader();
         try {
-            loader.load(hexFile.toPath(), memory, Loader.MemoryBank.of(1, 0));
+            MemoryImageLoader.load(hexFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(1, 0));
         } catch (IOException e) {
             // expected - bank should be restored to old value
             assertEquals(3, selectedBank);
             return;
         }
-        // If no exception was thrown, that's also OK - some implementations might be lenient
+        fail("Invalid HEX must fail");
     }
 
     @Test(expected = IOException.class)
     public void testLoadNonExistentFileThrows() throws IOException {
-        HexLoader loader = new HexLoader();
-        loader.load(Path.of("/nonexistent/file.hex"), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(Path.of("/nonexistent/file.hex"), memory, MemoryImageLoader.MemoryBank.of(0, 0));
     }
 
     @Test
@@ -127,8 +123,7 @@ public class HexLoaderTest {
                 ":0200100041426B",
                 ":00000001FF");
 
-        HexLoader loader = new HexLoader();
-        loader.load(hexFile.toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(hexFile.toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x41), memoryData.get(0x10));
         assertEquals(Byte.valueOf((byte) 0x42), memoryData.get(0x11));

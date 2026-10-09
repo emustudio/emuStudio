@@ -2,12 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
+import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import java.awt.*;
-import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-import static net.emustudio.plugins.memory.bytemem.loaders.Loader.IMAGE_LOADERS;
 
 
 public class Constants {
@@ -15,6 +16,6 @@ public class Constants {
     public final static Color BANK_COLOR = new Color(0xFF, 0xE6, 0xBF);
 
     public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
-            "Memory image", List.copyOf(IMAGE_LOADERS.keySet())
+            "Memory image", Arrays.stream(FileLoader.Format.values()).flatMap(f -> f.getExtensions().stream()).collect(Collectors.toList())
     );
 }

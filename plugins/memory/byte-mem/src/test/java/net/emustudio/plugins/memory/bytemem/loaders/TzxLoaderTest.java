@@ -53,7 +53,7 @@ public class TzxLoaderTest {
         putStandardBlock(buffer, headerBlock(0x5000, 3));
         putStandardBlock(buffer, dataBlock(new byte[]{0x44, 0x55, 0x66}));
 
-        new TzxLoader().load(writeFile("test.tzx", buffer).toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(writeFile("test.tzx", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x44), memoryData.get(0x5000));
         assertEquals(Byte.valueOf((byte) 0x55), memoryData.get(0x5001));
@@ -66,7 +66,7 @@ public class TzxLoaderTest {
         putTurboBlock(buffer, headerBlock(0x6000, 2));
         putTurboBlock(buffer, dataBlock(new byte[]{0x12, 0x34}));
 
-        new TzxLoader().load(writeFile("turbo.tzx", buffer).toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(writeFile("turbo.tzx", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
 
         assertEquals(Byte.valueOf((byte) 0x12), memoryData.get(0x6000));
         assertEquals(Byte.valueOf((byte) 0x34), memoryData.get(0x6001));
@@ -77,7 +77,23 @@ public class TzxLoaderTest {
         ByteBuffer buffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(new byte[]{'N', 'o', 't', 'T', 'Z', 'X', '!', 0x1A, 1, 20});
 
-        new TzxLoader().load(writeFile("invalid.tzx", buffer).toPath(), memory, Loader.MemoryBank.of(0, 0));
+        MemoryImageLoader.load(writeFile("invalid.tzx", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+    }
+
+    @Test(expected = IOException.class)
+    public void testMemoryRejectsControlFlowBlocks() throws IOException {
+        ByteBuffer buffer = createTzxBuffer();
+        buffer.put((byte) 0x23).putShort((short) 1);
+        MemoryImageLoader.load(writeFile("jump.tzx", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
+    }
+
+    @Test(expected = IOException.class)
+    public void testMemoryRejectsPartialTurboBytes() throws IOException {
+        ByteBuffer buffer = createTzxBuffer();
+        int start = buffer.position();
+        putTurboBlock(buffer, headerBlock(0x6000, 2));
+        buffer.put(start + 13, (byte) 7);
+        MemoryImageLoader.load(writeFile("partial.tzx", buffer).toPath(), memory, MemoryImageLoader.MemoryBank.of(0, 0));
     }
 
     private ByteBuffer createTzxBuffer() {

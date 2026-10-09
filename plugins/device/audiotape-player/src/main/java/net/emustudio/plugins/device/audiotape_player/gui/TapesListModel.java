@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotape_player.gui;
 
+import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.ShortenedString;
-import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class TapesListModel extends DefaultListModel<String> {
         try(Stream<Path> stream = Files.list(directory)) {
             return stream
                     .filter(Files::isReadable)
-                    .filter(Loader::hasLoader)
+                    .filter(p -> FileLoader.Format.fromPath(p).map(FileLoader.Format::isTape).orElse(false))
                     .map(p -> new ShortenedString<>(p, pp -> pp.getFileName().toString()))
                     .collect(Collectors.toList());
         } catch (IOException e) {

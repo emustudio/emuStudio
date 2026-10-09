@@ -14,7 +14,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
-import net.emustudio.plugins.memory.bytemem.loaders.Loader;
+import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
 import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,9 +176,8 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     public void loadImage(Path imagePath, int address, int bank) throws IOException {
-        Loader.MemoryBank memoryBank = Loader.MemoryBank.of(bank, address);
-        Loader loader = Loader.createLoader(imagePath);
-        loader.load(imagePath, context, memoryBank);
+        MemoryImageLoader.MemoryBank memoryBank = MemoryImageLoader.MemoryBank.of(bank, address);
+        MemoryImageLoader.load(imagePath, context, memoryBank);
         MetadataSidecar.load(imagePath, context);
     }
 

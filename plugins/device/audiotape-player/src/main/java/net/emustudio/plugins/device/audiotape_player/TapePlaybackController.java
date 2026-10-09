@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotape_player;
 
-import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
+import net.emustudio.emulib.runtime.io.FileLoader;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -26,20 +26,22 @@ public class TapePlaybackController implements AutoCloseable {
         CLOSED // terminal state
     }
 
-    private final Loader.TapePlayback listener;
+    private final TapePlayback listener;
     private final ExecutorService playPool = Executors.newFixedThreadPool(1);
 
     private final Object stateLock = new Object();
     @GuardedBy("stateLock")
     private CassetteState state = CassetteState.UNLOADED;
     @GuardedBy("stateLock")
-    private Loader loader;
+    private FileLoader loader;
+    @GuardedBy("stateLock")
+    private Path path;
     @GuardedBy("stateLock")
     private Future<?> playFuture;
 
     private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
 
-    public TapePlaybackController(Loader.TapePlayback listener) {
+    public TapePlaybackController(TapePlayback listener) {
         this.listener = Objects.requireNonNull(listener);
     }
 
@@ -71,12 +73,13 @@ public class TapePlaybackController implements AutoCloseable {
     }
 
     public void load(Path path) {
-        Loader.create(path).ifPresent(tmpLoader -> {
+        FileLoader.forPath(path).filter(l -> l.getFormat().isTape()).ifPresent(tmpLoader -> {
             synchronized (stateLock) {
                 switch (state) {
                     case UNLOADED:
                     case STOPPED:
                         this.loader = tmpLoader;
+                        this.path = path;
                         this.state = CassetteState.STOPPED;
                 }
                 stateNotifications.add(this.state);
@@ -88,12 +91,13 @@ public class TapePlaybackController implements AutoCloseable {
     public void play() {
         synchronized (stateLock) {
             if (this.state == CassetteState.STOPPED) {
-                Loader tmpLoader = this.loader;
+                FileLoader tmpLoader = this.loader;
+                Path tmpPath = this.path;
                 if (tmpLoader != null) {
                     this.state = CassetteState.PLAYING;
                     this.playFuture = playPool.submit(() -> {
                         try {
-                            tmpLoader.load(listener);
+                            tmpLoader.load(tmpPath, listener, FileLoader.Options.playback());
                             synchronized (stateLock) {
                                 this.state = CassetteState.STOPPED;
                                 stateNotifications.add(this.state);
@@ -123,6 +127,7 @@ public class TapePlaybackController implements AutoCloseable {
             }
             if (unload && this.state == CassetteState.STOPPED) {
                 this.loader = null;
+                this.path = null;
                 this.state = CassetteState.UNLOADED;
             }
             stateNotifications.add(this.state);

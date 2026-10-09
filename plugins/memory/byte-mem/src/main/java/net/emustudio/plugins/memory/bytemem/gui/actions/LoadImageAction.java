@@ -2,11 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
+import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
-import net.emustudio.plugins.memory.bytemem.loaders.Loader;
+import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
 import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +55,13 @@ public class LoadImageAction extends AbstractAction {
                 "Load image file", "Load", currentDirectory, false, IMAGE_EXTENSION_FILTER);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            Loader loader = Loader.createLoader(path);
-            Optional<Loader.MemoryBank> bank = askForMemoryBank(!loader.isMemoryAddressAware());
+            FileLoader loader = MemoryImageLoader.createLoader(path);
+            Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(loader));
             if (bank.isPresent()) {
                 GUI.runInBackground(
                         this,
                         () -> {
-                            loader.load(path, context, bank.get());
+                            MemoryImageLoader.load(path, context, bank.get());
                             MetadataSidecar.load(path, context);
                         },
                         repaint,
@@ -72,9 +73,9 @@ public class LoadImageAction extends AbstractAction {
         });
     }
 
-    private Optional<Loader.MemoryBank> askForMemoryBank(boolean canSelectAddress) {
+    private Optional<MemoryImageLoader.MemoryBank> askForMemoryBank(boolean canSelectAddress) {
         boolean hasMultipleBanks = context.getBanksCount() > 1;
-        Loader.MemoryBank bank = Loader.MemoryBank.of(0, 0);
+        MemoryImageLoader.MemoryBank bank = MemoryImageLoader.MemoryBank.of(0, 0);
 
         if (hasMultipleBanks || canSelectAddress) {
             SelectBankAddressDialog dialog = new SelectBankAddressDialog(
@@ -82,7 +83,7 @@ public class LoadImageAction extends AbstractAction {
             dialog.setVisible(true);
 
             if (dialog.isOk()) {
-                return Optional.of(Loader.MemoryBank.of(dialog.getBank(), dialog.getAddress()));
+                return Optional.of(MemoryImageLoader.MemoryBank.of(dialog.getBank(), dialog.getAddress()));
             } else {
                 return Optional.empty();
             }
