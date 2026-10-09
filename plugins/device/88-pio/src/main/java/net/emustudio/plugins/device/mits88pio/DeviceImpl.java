@@ -12,44 +12,77 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.mits88pio.api.PioContext;
 
 import javax.swing.JFrame;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "MITS 88-PIO")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "MITS 88-PIO / 88-4PIO")
 @SuppressWarnings("unused")
 public final class DeviceImpl extends AbstractDevice {
-    private final Pio8255 pio = new Pio8255();
+    private final PioUnit pio;
+    private final PioBoard fourPio;
+    private final Context8080.CpuPortDevice ports;
+    private final int portCount;
+    private final int basePort;
+    private final int interruptVector;
+    private int attachedPorts;
     private final boolean guiSupported;
     private Context8080 cpu;
-    private PioGui gui;
+    private JFrame gui;
+    private Exception registrationError;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        String boardType = settings.getString("boardType", "88-4PIO");
+        if (!boardType.equals("88-PIO") && !boardType.equals("88-4PIO")) {
+            throw new IllegalArgumentException("boardType must be 88-PIO or 88-4PIO");
+        }
+        boolean originalPio = boardType.equals("88-PIO");
+        basePort = settings.getInt("basePort", originalPio ? 0x04 : 0xA0);
+        interruptVector = settings.getInt("interruptVector", 7);
+        if (interruptVector < 0 || interruptVector > 7) {
+            throw new IllegalArgumentException("interruptVector must be between 0 and 7");
+        }
+        pio = originalPio ? new PioUnit(basePort) : null;
+        fourPio = originalPio ? null : new PioBoard(basePort, settings.getInt("piaCount", 2));
+        ports = originalPio ? pio : fourPio;
+        portCount = originalPio ? 2 : fourPio.getPortCount();
         guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
-            for (int port = 0; port < 3; port++) {
-                applicationApi.getContextPool().register(pluginID, pio.getChannel(port), DeviceContext.class);
-            }
+            if (originalPio) { applicationApi.getContextPool().register(pluginID, pio, DeviceContext.class); }
+            else { applicationApi.getContextPool().register(pluginID, fourPio, PioContext.class); }
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            applicationApi.getDialogs().showError("Could not register 88-PIO port contexts", getTitle());
+            registrationError = e;
         }
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
+        if (registrationError != null) {
+            throw new PluginInitializationException(this, "Could not register PIO context", registrationError);
+        }
         cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-        for (int port = Pio8255.PORT_A; port <= Pio8255.CONTROL_PORT; port++) {
-            if (!cpu.attachDevice(port, pio)) {
+        Runnable interrupt = () -> {
+            if (cpu != null && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(new byte[]{(byte) (0xC7 | (interruptVector << 3))});
+            }
+        };
+        if (pio != null) { pio.setInterruptHandler(interrupt); }
+        else { fourPio.setInterruptHandler(interrupt); }
+        for (int port = basePort; port < basePort + portCount; port++) {
+            if (!cpu.attachDevice(port, ports)) {
                 detachPorts();
                 throw new PluginInitializationException(this,
                         String.format("88-PIO cannot attach to CPU port %02Xh", port));
             }
+            attachedPorts++;
         }
     }
 
     @Override
     public void reset() {
-        pio.reset();
+        if (pio != null) { pio.reset(); }
+        else { fourPio.reset(); }
     }
 
     @Override
@@ -63,9 +96,10 @@ public final class DeviceImpl extends AbstractDevice {
 
     private void detachPorts() {
         if (cpu != null) {
-            for (int port = Pio8255.PORT_A; port <= Pio8255.CONTROL_PORT; port++) {
-                cpu.detachDevice(port);
+            while (attachedPorts > 0) {
+                cpu.detachDevice(basePort + --attachedPorts);
             }
+            cpu = null;
         }
     }
 
@@ -73,7 +107,7 @@ public final class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                gui = new PioGui(parent, pio);
+                gui = pio != null ? new PioGui(parent, pio) : new FourPioGui(parent, fourPio);
             }
             gui.setVisible(true);
         }
@@ -100,6 +134,6 @@ public final class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "MITS 88-PIO parallel interface with Intel 8255 mode-0 ports A, B, and C.";
+        return "MITS parallel interface: Intel 8212-based 88-PIO or Motorola 6820-based 88-4PIO.";
     }
 }
