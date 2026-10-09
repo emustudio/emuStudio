@@ -1,5 +1,8 @@
 name = "MITS Altair8800 (Z80)"
 
+# 88-DCDD uses 08h-0Ah. 88-4PIO owns A0h-A7h; MHDSK connects through it.
+# Original 88-PIO is selectable in the same plugin (boardType = "88-PIO").
+
 [MEMORY]
 schemaPoint = "80,220"
 path = "byte-mem.jar"
@@ -130,10 +133,15 @@ font = "original"
 [[DEVICE]]
 schemaPoint = "340,300"
 path = "88-pio.jar"
-settings = { }
 name = "88-pio"
 id = "7e7f84b5-d958-41d6-968b-d50f93600369"
 type = "DEVICE"
+
+[DEVICE.settings]
+boardType = "88-4PIO"
+basePort = 160
+piaCount = 2
+interruptVector = 7
 
 [[DEVICE]]
 schemaPoint = "480,300"
@@ -150,6 +158,20 @@ settings = { }
 name = "simh-pseudo"
 id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 type = "DEVICE"
+
+[[DEVICE]]
+schemaPoint = "480,380"
+path = "88-hdsk.jar"
+name = "88-hdsk"
+id = "f4cd9b5d-6c99-4f60-a92f-0727a9d1b266"
+type = "DEVICE"
+
+[DEVICE.settings]
+controllerType = "MITS"
+# One raw image per platter (406 cylinders, 2 surfaces, 24 sectors, 256 bytes).
+# image0/readOnly0: unit 0 removable; image1/readOnly1: unit 0 fixed; ... unit 3.
+# image0 = "disk.dsk"
+# readOnly0 = false
 
 [[connections]]
 bidirectional = true
@@ -210,3 +232,9 @@ bidirectional = true
 from = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 to = "1e13a25d-fb23-4061-853a-5fe996b03281"
 points = ["200,140", "120,140"]
+
+[[connections]]
+bidirectional = true
+from = "f4cd9b5d-6c99-4f60-a92f-0727a9d1b266"
+to = "7e7f84b5-d958-41d6-968b-d50f93600369"
+points = []
