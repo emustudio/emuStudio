@@ -42,5 +42,23 @@ PIA2-A, PIA2-B, etc. One peripheral owns the board's connector. Access and callb
 serialized on the context monitor; peripheral host-side work must use the same monitor.
 Byte-only device contexts cannot represent these handshakes.
 
+## Status and settings dialogs
+
+Both boards use the same dialog pair, styled like 88-SIO. The status window shows
+control flags, input/output values, and (for 4PIO) each channel's DDR and control
+lines. Attached device shows the connected peripheral's identity, or `unknown`
+when unconnected, using the same naming convention as 88-SIO. Viewing status does
+not acknowledge data or clear interrupt flags. Manual
+input strobes and ready/control-line changes are available; 4PIO manual input is
+disabled while a peripheral owns the connector, and C2 cannot be changed when it
+is configured as an output.
+
+Settings has General settings, Connection with CPU, and Interrupts tabs. Select
+the board, populated PIAs, base port, and RST vector. The channel-port list follows
+the selected board and base. Save validates and persists the draft; ESC discards
+it. Changes take effect after reopening the computer, and switching boards also
+requires compatible peripheral connections. Defaults are 04h for original PIO,
+A0h with two PIAs for 4PIO, and RST 7 for either board.
+
 References: [original 88-PIO manual](https://deramp.com/downloads/altair/hardware/MITS%2088-PIO.pdf),
 [original 88-4PIO manual](https://deramp.com/downloads/altair/hardware/MITS%2088-4PIO.pdf).

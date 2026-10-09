@@ -61,6 +61,8 @@ public final class Pia6820 {
     public int getOutput(int side) { return output[side] & direction[side]; }
     public int getDirection(int side) { return direction[side]; }
     public int getInput(int side) { return input[side]; }
+    boolean getC1(int side) { return c1[side]; }
+    boolean getC2(int side) { return (control[side] & 0x20) == 0 ? c2[side] : c2Output[side]; }
 
     public void setC1(int side, boolean high) {
         if (c1[side] != high && high == ((control[side] & 2) != 0)) {

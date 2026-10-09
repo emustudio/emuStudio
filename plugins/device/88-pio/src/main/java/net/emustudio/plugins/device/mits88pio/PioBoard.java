@@ -103,6 +103,17 @@ public final class PioBoard implements Context8080.CpuPortDevice, PioContext {
         checkChannel(channel); return pias[channel / 2].getInput(channel & 1);
     }
 
+    synchronized boolean getControlLine1(int channel) {
+        checkChannel(channel); return pias[channel / 2].getC1(channel & 1);
+    }
+
+    synchronized boolean getControlLine2(int channel) {
+        checkChannel(channel); return pias[channel / 2].getC2(channel & 1);
+    }
+
+    synchronized boolean hasPeripheral() { return peripheral != null; }
+    synchronized Peripheral getPeripheral() { return peripheral; }
+
     public synchronized void reset() {
         for (Pia6820 pia : pias) { pia.reset(); }
         irqPending = false;

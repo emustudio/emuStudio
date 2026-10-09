@@ -34,6 +34,8 @@ public final class MhdskController implements PioContext.Peripheral, AutoCloseab
 
     @Override public void outputChanged(int channel, int data, int outputMask) { }
 
+    @Override public String toString() { return "MITS 88-HDSK"; }
+
     @Override
     public void controlOutputChanged(int channel, boolean high) {
         if (high) { return; }
