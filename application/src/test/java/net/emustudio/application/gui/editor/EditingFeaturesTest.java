@@ -172,8 +172,8 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         TextEditorPane mirror = findComponent((java.awt.Container) split.getRightComponent(), TextEditorPane.class, pane -> true);
         runOnEdt(() -> mirror.getFoldManager().reparse());
         assertEquals(1, onEdt(() -> mirror.getFoldManager().getFoldCount()).intValue());
-        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(mirror::getSyntaxEditingStyle));
-        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(original.textPane()::getSyntaxEditingStyle));
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(mirror::getSyntaxEditingStyle));
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(original.textPane()::getSyntaxEditingStyle));
 
         runOnEdt(() -> {
             workspace.unsplit();
@@ -184,7 +184,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
             original.textPane().getFoldManager().reparse();
         });
         assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
-        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(() -> ((org.fife.ui.rsyntaxtextarea.RSyntaxDocument) original.textPane().getDocument()).getSyntaxStyle()));
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(() -> ((org.fife.ui.rsyntaxtextarea.RSyntaxDocument) original.textPane().getDocument()).getSyntaxStyle()));
     }
     @Test public void commentToggleUsesAnUnknownCompilersDelimiter() {
         LexicalAnalyzer lexer = new TokenLexer(List.of()) {

@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -14,6 +15,18 @@ import java.util.*;
 
 /** Adds disjoint selections to the existing Swing editor, keeping one shared undo history. */
 final class MultipleSelection {
+    /** Routes selection gestures before Swing's single-caret mouse handler. */
+    static final class Pane extends TextEditorPane {
+        private MultipleSelection selections;
+        Pane() { super(RTextArea.INSERT_MODE); }
+        @Override protected void processMouseEvent(MouseEvent e) {
+            if (selections == null || !selections.mouse(e)) super.processMouseEvent(e);
+        }
+        @Override protected void processMouseMotionEvent(MouseEvent e) {
+            if (selections == null || !selections.mouse(e)) super.processMouseMotionEvent(e);
+        }
+    }
+
     static final class Range {
         final int start, end, padding;
         Range(int start, int end) { this(start, end, 0); }
@@ -83,7 +96,7 @@ final class MultipleSelection {
             }
             @Override public void mouseReleased(MouseEvent e) { rectangleAnchor = -1; }
         };
-        ((EditingTextPane) pane).selections = this;
+        ((Pane) pane).selections = this;
         bind(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, "copySelections", () -> copy(false));
         bind(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK, "cutSelections", () -> copy(true));
         bind(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK, "pasteSelections", this::paste);
@@ -173,24 +186,26 @@ final class MultipleSelection {
         try {
             int delta = 0;
             for (int i = 0; i < old.size(); i++) {
-                Range r = old.get(i);
-                int start = r.start, end = r.end;
-                if (start == end && deleteDirection < 0 && start > 0) start = originalText.offsetByCodePoints(start, -1);
-                if (start == end && deleteDirection > 0 && end < originalText.length()) end = originalText.offsetByCodePoints(end, 1);
-                int caret = start + delta + replacements.get(i).length();
+                int[] span = span(old.get(i), deleteDirection, originalText);
+                int caret = span[0] + delta + replacements.get(i).length();
                 next.add(new Range(caret, caret));
-                delta += replacements.get(i).length() - (end - start);
+                delta += replacements.get(i).length() - (span[1] - span[0]);
             }
             clear();
             for (int i = old.size() - 1; i >= 0; i--) {
-                Range r = old.get(i);
-                int start = r.start, end = r.end;
-                if (start == end && deleteDirection < 0 && start > 0) start = originalText.offsetByCodePoints(start, -1);
-                if (start == end && deleteDirection > 0 && end < originalText.length()) end = originalText.offsetByCodePoints(end, 1);
-                ((AbstractDocument) pane.getDocument()).replace(start, end - start, replacements.get(i), null);
+                int[] span = span(old.get(i), deleteDirection, originalText);
+                ((AbstractDocument) pane.getDocument()).replace(span[0], span[1] - span[0], replacements.get(i), null);
             }
         } finally { pane.endAtomicEdit(); editing = false; }
         set(next);
+    }
+
+    /** An empty range deletes one code point in the given direction. */
+    private static int[] span(Range r, int deleteDirection, String text) {
+        int start = r.start, end = r.end;
+        if (start == end && deleteDirection < 0 && start > 0) start = text.offsetByCodePoints(start, -1);
+        if (start == end && deleteDirection > 0 && end < text.length()) end = text.offsetByCodePoints(end, 1);
+        return new int[]{start, end};
     }
 
     void rectangle(int anchor, int dot) {

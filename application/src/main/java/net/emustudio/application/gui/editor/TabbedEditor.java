@@ -2,23 +2,30 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.fife.rsta.ui.search.SearchEvent;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class TabbedEditor implements Editor {
@@ -34,8 +41,8 @@ public class TabbedEditor implements Editor {
     private REditor focusedEditor, splitMirror;
     private int splitIndex = -1, secondaryIndex = -1;
     private InlineSearchBar searchBar;
-    private final java.util.Deque<Location> back = new java.util.ArrayDeque<>(), forward = new java.util.ArrayDeque<>();
-    private final java.util.Deque<Location> edits = new java.util.ArrayDeque<>();
+    private final Deque<Location> back = new ArrayDeque<>(), forward = new ArrayDeque<>();
+    private final Deque<Location> edits = new ArrayDeque<>();
     private Location location;
     private boolean navigating;
     private static final class Location {
@@ -159,19 +166,16 @@ public class TabbedEditor implements Editor {
 
     @Override
     public boolean saveFile() {
-        REditor editor = activeEditor();
-        boolean saved = editor.saveFile();
-        if (saved) {
-            updateTitle(editor);
-            notifyOpenFilesChanged();
-        }
-        return saved;
+        return saved(activeEditor(), REditor::saveFile);
     }
 
     @Override
     public boolean saveFileAs() {
-        REditor editor = activeEditor();
-        boolean saved = editor.saveFileAs();
+        return saved(activeEditor(), REditor::saveFileAs);
+    }
+
+    private boolean saved(REditor editor, Predicate<REditor> save) {
+        boolean saved = save.test(editor);
         if (saved) {
             updateTitle(editor);
             notifyOpenFilesChanged();
@@ -321,7 +325,7 @@ public class TabbedEditor implements Editor {
         return focusedEditor != null ? focusedEditor : editors.get(Math.max(0, tabs.getSelectedIndex()));
     }
 
-    public void configure(net.emustudio.application.settings.AppSettings settings) {
+    public void configure(AppSettings settings) {
         state = new EditorState(settings);
         editors.forEach(editor -> editor.configure(state));
     }
@@ -345,11 +349,11 @@ public class TabbedEditor implements Editor {
     private void observe(REditor editor) {
         for (int i = 0; i <= 9; i++) {
             final String number = Integer.toString(i);
-            KeyStroke stroke = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_0 + i,
-                    java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.ALT_DOWN_MASK);
+            KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_0 + i,
+                    InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
             editor.textPane().getInputMap().put(stroke, "workspaceBookmark" + number);
             editor.textPane().getActionMap().put("workspaceBookmark" + number, new AbstractAction() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
+                public void actionPerformed(ActionEvent e) {
                     for (REditor candidate : editors) {
                         if (candidate.commands().bookmarks().containsValue(number)) {
                             activate(candidate); candidate.commands().jumpNamed(number); candidate.grabFocus(); break;
@@ -358,8 +362,8 @@ public class TabbedEditor implements Editor {
                 }
             });
         }
-        editor.textPane().addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override public void focusGained(java.awt.event.FocusEvent e) {
+        editor.textPane().addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
                 focusedEditor = editor;
                 remember(editor, editor.textPane().getCaretPosition());
                 activeEditorChanged.run();
@@ -384,7 +388,7 @@ public class TabbedEditor implements Editor {
         location = new Location(editor, offset);
     }
 
-    private void navigate(java.util.Deque<Location> from, java.util.Deque<Location> to) {
+    private void navigate(Deque<Location> from, Deque<Location> to) {
         if (from.isEmpty()) return;
         if (location != null) to.push(location);
         Location next = from.pop();
@@ -424,12 +428,12 @@ public class TabbedEditor implements Editor {
             addCommand(split, "Close split", this::unsplit);
             menu.add(split);
         };
-        menu.addMenuListener(new javax.swing.event.MenuListener() {
-            public void menuSelected(javax.swing.event.MenuEvent e) {
+        menu.addMenuListener(new MenuListener() {
+            public void menuSelected(MenuEvent e) {
                 refresh.run();
             }
-            public void menuDeselected(javax.swing.event.MenuEvent e) { }
-            public void menuCanceled(javax.swing.event.MenuEvent e) { }
+            public void menuDeselected(MenuEvent e) { }
+            public void menuCanceled(MenuEvent e) { }
         });
         refresh.run();
     }
@@ -438,7 +442,7 @@ public class TabbedEditor implements Editor {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
             try { command.run(); }
-            catch (IllegalArgumentException | java.io.UncheckedIOException ex) {
+            catch (IllegalArgumentException | UncheckedIOException ex) {
                 JOptionPane.showMessageDialog(tabs, ex.getMessage(), name, JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -452,13 +456,13 @@ public class TabbedEditor implements Editor {
                 try {
                     locations.add(new Location(editor, editor.textPane().getLineStartOffset(line)));
                     labels.add(title(editor) + ":" + (line + 1) + (name.isEmpty() ? "" : " — " + name));
-                } catch (javax.swing.text.BadLocationException ignored) { }
+                } catch (BadLocationException ignored) { }
             });
         }
         if (labels.isEmpty()) return;
         JList<String> list = new JList<>(labels.toArray(new String[0])); list.setSelectedIndex(0);
         if (JOptionPane.showConfirmDialog(tabs, new JScrollPane(list), "Bookmarks", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-            java.util.Deque<Location> selected = new java.util.ArrayDeque<>(); selected.push(locations.get(list.getSelectedIndex())); navigate(selected, back);
+            Deque<Location> selected = new ArrayDeque<>(); selected.push(locations.get(list.getSelectedIndex())); navigate(selected, back);
         }
     }
 
@@ -474,7 +478,7 @@ public class TabbedEditor implements Editor {
             String[] labels = options.stream().map(editor -> title(editor) + " (tab " + (editors.indexOf(editor) + 1) + ")").toArray(String[]::new);
             String choice = (String) JOptionPane.showInputDialog(tabs, "File", "Split editor", JOptionPane.PLAIN_MESSAGE, null, labels, labels[0]);
             if (choice == null) return;
-            right = options.get(java.util.Arrays.asList(labels).indexOf(choice)); other = editors.indexOf(right);
+            right = options.get(Arrays.asList(labels).indexOf(choice)); other = editors.indexOf(right);
             tabs.setComponentAt(other, new JLabel("Shown in split editor"));
         }
         splitIndex = left; secondaryIndex = other;
@@ -519,12 +523,7 @@ public class TabbedEditor implements Editor {
         }
         Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
         if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
-            boolean saved = editor.saveFile();
-            if (saved) {
-                updateTitle(editor);
-                notifyOpenFilesChanged();
-            }
-            return saved;
+            return saved(editor, REditor::saveFile);
         }
         return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
     }

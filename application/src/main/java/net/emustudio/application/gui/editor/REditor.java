@@ -47,7 +47,7 @@ import static net.emustudio.application.Constants.FONT_CODE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
-    private final TextEditorPane textPane = new EditingTextPane();
+    private final TextEditorPane textPane = new MultipleSelection.Pane();
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
     private final List<DocumentListener> changeListeners = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
-        FoldSupport.install(textPane, compiler);
+        SourceFoldParser.install(textPane, compiler);
         scrollPane.setFoldIndicatorEnabled(true);
 
         textPane.setCaretPosition(0);
@@ -146,11 +146,25 @@ public class REditor implements Editor {
         commands = new EditorCommands(this, textPane, scrollPane, compiler);
     }
 
-    TextEditorPane textPane() { return textPane; }
-    Compiler compiler() { return compiler; }
-    REditor sourceEditor() { return sharedWith == null ? this : sharedWith; }
-    EditorCommands commands() { return commands; }
-    void configure(EditorState state) { commands.configure(state); }
+    TextEditorPane textPane() {
+        return textPane;
+    }
+
+    Compiler compiler() {
+        return compiler;
+    }
+
+    REditor sourceEditor() {
+        return sharedWith == null ? this : sharedWith;
+    }
+
+    EditorCommands commands() {
+        return commands;
+    }
+
+    void configure(EditorState state) {
+        commands.configure(state);
+    }
 
     REditor mirror() {
         REditor mirror = new REditor(dialogs, compiler);
@@ -283,7 +297,13 @@ public class REditor implements Editor {
     }
 
     void addChangeListener(Runnable listener) {
-        DocumentListener documentListener = new DocumentListener() {
+        DocumentListener documentListener = onChange(listener);
+        changeListeners.add(documentListener);
+        textPane.getDocument().addDocumentListener(documentListener);
+    }
+
+    static DocumentListener onChange(Runnable listener) {
+        return new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 listener.run();
@@ -299,8 +319,6 @@ public class REditor implements Editor {
                 listener.run();
             }
         };
-        changeListeners.add(documentListener);
-        textPane.getDocument().addDocumentListener(documentListener);
     }
 
     void dispose() {
@@ -333,24 +351,31 @@ public class REditor implements Editor {
         String filename = null;
         if (compiler != null) {
             net.emustudio.emulib.plugins.compiler.LexicalAnalyzer lexer = compiler.createLexer();
-            char[] source = textPane.getText().toCharArray(); lexer.reset(source, 0, source.length);
+            char[] source = textPane.getText().toCharArray();
+            lexer.reset(source, 0, source.length);
             while (lexer.hasNext()) {
                 net.emustudio.emulib.plugins.compiler.Token token = lexer.next();
                 if (token.getReferencedFile() != null && offset >= token.getOffset()
                         && offset < token.getOffset() + token.getText().length()) {
-                    filename = token.getReferencedFile(); break;
+                    filename = token.getReferencedFile();
+                    break;
                 }
             }
         } else {
             // Plain text can open any quoted relative file path, without language keywords.
             Matcher matcher = Pattern.compile("([\"'])([^\"']+)\\1").matcher(textPane.getText());
-            while (matcher.find()) if (offset >= matcher.start(2) && offset < matcher.end(2)) { filename = matcher.group(2); break; }
+            while (matcher.find()) if (offset >= matcher.start(2) && offset < matcher.end(2)) {
+                filename = matcher.group(2);
+                break;
+            }
         }
         if (filename == null) return Optional.empty();
         final String path = filename;
         try {
             return getCurrentFile().map(File::toPath).map(Path::getParent).map(parent -> parent.resolve(path).normalize());
-        } catch (InvalidPathException e) { return Optional.empty(); }
+        } catch (InvalidPathException e) {
+            return Optional.empty();
+        }
     }
 
     @Override

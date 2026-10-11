@@ -101,8 +101,7 @@ final class SourceRefactoring {
             for (Map.Entry<SearchWorkspace.Snapshot, List<EditorSearch.Match>> entry : changes.entrySet()) {
                 preview.append(entry.getKey().title()).append('\n');
                 for (EditorSearch.Match change : entry.getValue()) {
-                    int line = 1 + (int) entry.getKey().text.substring(0, change.start).chars().filter(ch -> ch == '\n').count();
-                    preview.append("  ").append(line).append(": ").append(change.before).append(" → ").append(change.after).append('\n');
+                    preview.append("  ").append(entry.getKey().line(change.start)).append(": ").append(change.before).append(" → ").append(change.after).append('\n');
                 }
             }
             JTextArea area = new JTextArea(preview.toString(), 20, 70); area.setEditable(false);

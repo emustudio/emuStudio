@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+
 import java.util.*;
 import java.util.regex.*;
 
@@ -88,5 +90,16 @@ final class EditorSearch {
             result.replace(match.start, match.end, match.after);
         }
         return result.toString();
+    }
+
+    /** Replaces matches in the editor as one undoable edit. */
+    static void apply(RSyntaxTextArea pane, List<Match> matches) {
+        pane.beginAtomicEdit();
+        try {
+            for (int i = matches.size() - 1; i >= 0; i--) {
+                Match match = matches.get(i);
+                pane.replaceRange(match.after, match.start, match.end);
+            }
+        } finally { pane.endAtomicEdit(); }
     }
 }

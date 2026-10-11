@@ -39,7 +39,7 @@ final class FilesSearchDialog extends JDialog {
             switch (column) {
                 case 0: return value.checked;
                 case 1: return value.snapshot.title();
-                case 2: return Integer.toString(1 + (int) value.snapshot.text.substring(0, value.match.start).chars().filter(ch -> ch == '\n').count());
+                case 2: return Integer.toString(value.snapshot.line(value.match.start));
                 case 3: return value.match.before;
                 default: return value.match.after;
             }

@@ -4,7 +4,7 @@ package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.util.List;
@@ -37,11 +37,7 @@ public final class InlineSearchBar extends JPanel {
         button(options, "Files…", preview); options.add(count);
         add(fields); add(options);
         find.addActionListener(e -> next(true)); replace.addActionListener(e -> replaceCurrent());
-        DocumentListener listener = new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { refresh(); }
-            public void removeUpdate(DocumentEvent e) { refresh(); }
-            public void changedUpdate(DocumentEvent e) { refresh(); }
-        };
+        DocumentListener listener = REditor.onChange(this::refresh);
         find.getDocument().addDocumentListener(listener); replace.getDocument().addDocumentListener(listener);
         for (JCheckBox option : new JCheckBox[]{matchCase, word, regex, preserve}) option.addActionListener(e -> refresh());
         selection.addActionListener(e -> {
@@ -86,7 +82,7 @@ public final class InlineSearchBar extends JPanel {
         try {
             List<EditorSearch.Match> matches = matches(); TextEditorPane pane = active.get().textPane();
             int current = 0;
-            for (int i = 0; i < matches.size(); i++) if (matches.get(i).start == pane.getSelectionStart() && matches.get(i).end == pane.getSelectionEnd()) current = i + 1;
+            for (int i = 0; i < matches.size(); i++) if (selected(pane, matches.get(i))) current = i + 1;
             count.setText(current + " of " + matches.size());
         } catch (IllegalArgumentException e) { count.setText("Invalid search: " + e.getMessage()); }
     }
@@ -95,11 +91,12 @@ public final class InlineSearchBar extends JPanel {
         TextEditorPane pane = active.get().textPane(); EditorSearch.Match chosen = forward ? matches.get(0) : matches.get(matches.size() - 1);
         if (forward) {
             for (EditorSearch.Match match : matches) {
-                if (match.start >= pane.getSelectionEnd() && !(match.start == pane.getSelectionStart() && match.end == pane.getSelectionEnd())) { chosen = match; break; }
+                if (match.start >= pane.getSelectionEnd() && !selected(pane, match)) { chosen = match; break; }
             }
         } else {
-            for (int i = matches.size() - 1; i >= 0; i--) if (matches.get(i).end <= pane.getSelectionStart()
-                    && !(matches.get(i).start == pane.getSelectionStart() && matches.get(i).end == pane.getSelectionEnd())) { chosen = matches.get(i); break; }
+            for (int i = matches.size() - 1; i >= 0; i--) {
+                if (matches.get(i).end <= pane.getSelectionStart() && !selected(pane, matches.get(i))) { chosen = matches.get(i); break; }
+            }
         }
         moving = true;
         try { pane.select(chosen.start, chosen.end); }
@@ -110,21 +107,20 @@ public final class InlineSearchBar extends JPanel {
     void replaceCurrent() {
         TextEditorPane pane = active.get().textPane();
         for (EditorSearch.Match match : matches()) {
-            if (match.start == pane.getSelectionStart() && match.end == pane.getSelectionEnd()) {
+            if (selected(pane, match)) {
                 active.get().commands().selections().clear(); TextEdits.replace(pane, match.start, match.end, match.after); next(true); return;
             }
         }
         next(true);
     }
+    private static boolean selected(TextEditorPane pane, EditorSearch.Match match) {
+        return match.start == pane.getSelectionStart() && match.end == pane.getSelectionEnd();
+    }
     void replaceAll() {
         TextEditorPane pane = active.get().textPane(); List<EditorSearch.Match> matches = matches();
         if (matches.isEmpty()) return;
-        active.get().commands().selections().clear(); pane.beginAtomicEdit();
-        try {
-            for (int i = matches.size() - 1; i >= 0; i--) {
-                EditorSearch.Match match = matches.get(i); pane.replaceRange(match.after, match.start, match.end);
-            }
-        } finally { pane.endAtomicEdit(); }
+        active.get().commands().selections().clear();
+        EditorSearch.apply(pane, matches);
         count.setText(matches.size() + " replaced");
     }
 }

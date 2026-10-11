@@ -7,6 +7,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import javax.swing.text.BadLocationException;
 import java.util.*;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 /** Text-only transformations, independent of compiler and filesystem services. */
 final class TextEdits {
@@ -67,14 +68,10 @@ final class TextEdits {
     }
 
     static String tabs(String text, int tabSize) {
-        return text.replaceAll("(?m)^ +", "").equals(text) ? text : mapLines(text, line -> {
+        return Arrays.stream(text.split("\n", -1)).map(line -> {
             int count = 0;
             while (count < line.length() && line.charAt(count) == ' ') count++;
             return "\t".repeat(count / tabSize) + " ".repeat(count % tabSize) + line.substring(count);
-        });
-    }
-
-    static String mapLines(String text, UnaryOperator<String> operation) {
-        return Arrays.stream(text.split("\n", -1)).map(operation).collect(java.util.stream.Collectors.joining("\n"));
+        }).collect(Collectors.joining("\n"));
     }
 }

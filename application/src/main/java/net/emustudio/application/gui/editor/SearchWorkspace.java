@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.editor;
 
 import java.io.*;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -17,6 +18,8 @@ final class SearchWorkspace {
         final List<EditorSearch.Match> matches = new ArrayList<>();
         Snapshot(Path path, REditor buffer, String text) { this.path = path; this.buffer = buffer; this.text = text; }
         String title() { return path == null ? "Untitled" : path.toString(); }
+        /** 1-based line number of the offset in this snapshot. */
+        int line(int offset) { return 1 + (int) text.substring(0, offset).chars().filter(ch -> ch == '\n').count(); }
     }
     static List<Snapshot> open(List<REditor> editors) {
         List<Snapshot> result = new ArrayList<>();
@@ -31,14 +34,14 @@ final class SearchWorkspace {
         try (Stream<Path> paths = Files.walk(root)) {
             Iterator<Path> iterator = paths.filter(Files::isRegularFile).filter(path -> !Files.isSymbolicLink(path)).sorted().iterator();
             while (iterator.hasNext()) {
-                if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("Search cancelled");
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Search cancelled");
                 Path path = iterator.next().toAbsolutePath().normalize(), relative = root.toAbsolutePath().normalize().relativize(path);
                 if (relative.toString().contains(".git" + File.separator) || !include.isEmpty() && !matches(include, relative) || matches(exclude, relative)) continue;
                 Snapshot buffer = buffers.get(path);
                 if (buffer != null) result.add(buffer);
                 else {
                     try { String text = Files.readString(path, StandardCharsets.UTF_8); if (text.indexOf('\0') < 0) result.add(new Snapshot(path, null, text)); }
-                    catch (java.nio.charset.MalformedInputException e) { /* Not a UTF-8 text file. */ }
+                    catch (MalformedInputException e) { /* Not a UTF-8 text file. */ }
                 }
             }
         }
@@ -87,13 +90,8 @@ final class SearchWorkspace {
             for (Map.Entry<Snapshot, List<EditorSearch.Match>> entry : reviewed.entrySet()) {
                 REditor buffer = entry.getKey().buffer;
                 if (buffer == null || entry.getValue().isEmpty()) continue;
-                buffer.commands().selections().clear(); buffer.textPane().beginAtomicEdit();
-                try {
-                    List<EditorSearch.Match> matches = entry.getValue();
-                    for (int i = matches.size() - 1; i >= 0; i--) {
-                        EditorSearch.Match match = matches.get(i); buffer.textPane().replaceRange(match.after, match.start, match.end);
-                    }
-                } finally { buffer.textPane().endAtomicEdit(); }
+                buffer.commands().selections().clear();
+                EditorSearch.apply(buffer.textPane(), entry.getValue());
             }
         } finally {
             for (Path staged : temporary.values()) Files.deleteIfExists(staged);
