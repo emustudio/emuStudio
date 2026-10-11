@@ -37,6 +37,8 @@ public class RTokenMaker extends TokenMakerBase {
             case net.emustudio.emulib.plugins.compiler.Token.RESERVED:
                 return Token.RESERVED_WORD;
             case net.emustudio.emulib.plugins.compiler.Token.PREPROCESSOR:
+            case net.emustudio.emulib.plugins.compiler.Token.BLOCK_START:
+            case net.emustudio.emulib.plugins.compiler.Token.BLOCK_END:
                 return Token.PREPROCESSOR;
             case net.emustudio.emulib.plugins.compiler.Token.REGISTER:
                 return Token.RESERVED_WORD_2;
@@ -47,10 +49,13 @@ public class RTokenMaker extends TokenMakerBase {
             case net.emustudio.emulib.plugins.compiler.Token.COMMENT:
                 return Token.COMMENT_MARKUP;
             case net.emustudio.emulib.plugins.compiler.Token.LITERAL:
+            case net.emustudio.emulib.plugins.compiler.Token.INCLUDE_PATH:
                 return Token.LITERAL_NUMBER_DECIMAL_INT;
             case net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER:
+            case net.emustudio.emulib.plugins.compiler.Token.SYMBOL_REFERENCE:
                 return Token.IDENTIFIER;
             case net.emustudio.emulib.plugins.compiler.Token.LABEL:
+            case net.emustudio.emulib.plugins.compiler.Token.SYMBOL_DEFINITION:
                 return Token.ANNOTATION;
             case net.emustudio.emulib.plugins.compiler.Token.ERROR:
                 return Token.ERROR_IDENTIFIER;
@@ -59,6 +64,11 @@ public class RTokenMaker extends TokenMakerBase {
             default:
                 return Token.WHITESPACE;
         }
+    }
+
+    @Override
+    public String[] getLineCommentStartAndEnd(int languageIndex) {
+        return lexer.getLineCommentStartAndEnd();
     }
 
     @Override

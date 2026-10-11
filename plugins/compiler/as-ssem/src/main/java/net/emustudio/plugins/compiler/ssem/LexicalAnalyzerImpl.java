@@ -46,6 +46,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
+    public String[] getLineCommentStartAndEnd() { return new String[]{";", null}; }
+
+    @Override
     public Token next() {
         return (Token) lexer.nextToken();
     }

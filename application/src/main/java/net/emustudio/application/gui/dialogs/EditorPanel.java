@@ -8,7 +8,6 @@ import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.rsta.ui.search.FindDialog;
@@ -47,7 +46,7 @@ public class EditorPanel extends JPanel {
     private final JSplitPane splitSource;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState, MemoryContext<?> memoryContext, GUI gui) {
+                       Supplier<CPU.RunState> runState, GUI gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -60,13 +59,23 @@ public class EditorPanel extends JPanel {
         compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
-        this.findAction = new FindAction(findDialog, replaceDialog);
-        this.replaceAction = new ReplaceAction(findDialog, replaceDialog);
+        this.findAction = new FindAction(findDialog, replaceDialog) {
+            @Override public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                else super.actionPerformed(event);
+            }
+        };
+        this.replaceAction = new ReplaceAction(findDialog, replaceDialog) {
+            @Override public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                else super.actionPerformed(event);
+            }
+        };
         Supplier<Boolean> confirmReplace = editor instanceof TabbedEditor ? () -> true : this::confirmSave;
         this.newFileAction = new NewFileAction(confirmReplace, editor, compilerOutput, updateTitle);
         this.openFileAction = new OpenFileAction(confirmReplace, editor, compilerOutput, updateTitle);
         this.compileAction = new CompileAction(
-                computer, dialogs, editor, runState, compilerOutput, updateTitle, memoryContext
+                computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
@@ -76,8 +85,10 @@ public class EditorPanel extends JPanel {
 
         JToolBar mainToolBar = setupMainToolbar();
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", "[][grow]"));
+        setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]",
+                editor instanceof TabbedEditor ? "[][][grow]" : "[][grow]"));
         add(mainToolBar, "growx, wrap");
+        if (editor instanceof TabbedEditor) add(((TabbedEditor) editor).searchBar(), "growx, wrap, hidemode 3");
         add(splitSource, "grow, gaptop 0");
     }
 

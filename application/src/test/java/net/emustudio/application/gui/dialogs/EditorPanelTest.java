@@ -29,6 +29,19 @@ import static org.mockito.Mockito.*;
 public class EditorPanelTest extends AbstractSwingTest {
 
     @Test
+    public void inlineSearchLeavesMostOfThePanelForSourceEditing() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        EditorPanel panel = createPanel(dialogs, editor);
+        JFrame frame = showInFrame(panel);
+        try {
+            runOnEdt(() -> { frame.setSize(1000, 650); editor.searchBar().showSearch(); frame.validate(); });
+            assertTrue(onEdt(() -> editor.searchBar().getHeight() < 120));
+            assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
     public void fontZoomSliderTracksShortcutsWheelAndActiveTabs() {
         Dialogs dialogs = mock(Dialogs.class);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
@@ -169,7 +182,6 @@ public class EditorPanelTest extends AbstractSwingTest {
                 () -> {
                 },
                 () -> CPU.RunState.STATE_STOPPED_BREAK,
-                null,
                 new EmuStudioGui()
         ));
     }

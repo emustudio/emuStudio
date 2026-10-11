@@ -25,9 +25,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[INCV] = Token.RESERVED;
         tokenMap[PRINT] = Token.RESERVED;
         tokenMap[LOAD] = Token.RESERVED;
-        tokenMap[LOOP] = Token.RESERVED;
+        tokenMap[LOOP] = Token.BLOCK_START;
         tokenMap[HALT] = Token.RESERVED;
-        tokenMap[ENDL] = Token.RESERVED;
+        tokenMap[ENDL] = Token.BLOCK_END;
     }
 
     private final BraincLexer lexer;
@@ -36,6 +36,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         this.lexer = Objects.requireNonNull(lexer);
         this.lexer.setTokenFactory(new EmuTokenFactory(tokenMap));
     }
+
+    @Override
+    public String[] getLineCommentStartAndEnd() { return new String[]{"//", null}; }
 
     @Override
     public Token next() {

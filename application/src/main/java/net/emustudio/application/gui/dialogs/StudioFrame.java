@@ -68,6 +68,7 @@ public class StudioFrame extends JFrame {
                 computer.getComputerConfig().getOpenSourceFiles(),
                 computer.getComputerConfig()::setOpenSourceFiles
         );
+        this.editor.configure(appSettings);
         this.editor.setActiveEditorChanged(this::updateTitleOfSourceCodePanel);
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
@@ -80,7 +81,7 @@ public class StudioFrame extends JFrame {
         );
         this.editorPanel = new EditorPanel(
                 this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState,
-                memoryContext, gui
+                gui
         );
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);
@@ -183,6 +184,7 @@ public class StudioFrame extends JFrame {
         mnuEdit.add(gui.menuItem(findNextAction));
         mnuEdit.add(gui.menuItem(findPreviousAction));
         mainMenuBar.add(mnuEdit);
+        mainMenuBar.add(editor.editingMenu());
 
         mnuProject.setText("Project");
         mnuProject.add(gui.menuItem(editorPanel.getCompileAction()));

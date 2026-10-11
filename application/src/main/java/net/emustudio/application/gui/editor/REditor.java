@@ -12,7 +12,6 @@ import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.*;
-import org.fife.ui.rtextarea.GutterIconInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -46,21 +44,18 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_BREAKPOINT;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
-    private final static Pattern INCLUDE_PATTERN = Pattern.compile(
-            "(?i)^\\s*#?\\s*include\\s+([\"'])([^\"']+)\\1"
-    );
-
-    private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE);
+    private final TextEditorPane textPane = new EditingTextPane();
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
-    private final List<GutterIconInfo> sourceCodeMarkers = new ArrayList<>();
+    private final List<DocumentListener> changeListeners = new ArrayList<>();
 
     private final Dialogs dialogs;
     private final List<FileExtension> fileExtensions;
+    private final Compiler compiler;
+    private final EditorCommands commands;
+    private REditor sharedWith;
     private Consumer<Path> openFileHandler = path -> {
     };
     private boolean isnew = true;
@@ -73,17 +68,19 @@ public class REditor implements Editor {
     @SuppressWarnings("unused")
     public REditor(Dialogs dialogs, Compiler compiler) {
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.compiler = compiler;
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
         textPane.setFont(FONT_CODE);
 
-        textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAutoIndentEnabled(true);
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
+        FoldSupport.install(textPane, compiler);
+        scrollPane.setFoldIndicatorEnabled(true);
 
         textPane.setCaretPosition(0);
         textPane.requestFocusInWindow();
@@ -147,6 +144,23 @@ public class REditor implements Editor {
             fileExtensions = Collections.emptyList();
         }
         textPane.setDirty(false);
+        commands = new EditorCommands(this, textPane, scrollPane, compiler);
+    }
+
+    TextEditorPane textPane() { return textPane; }
+    Compiler compiler() { return compiler; }
+    REditor sourceEditor() { return sharedWith == null ? this : sharedWith; }
+    EditorCommands commands() { return commands; }
+    void configure(EditorState state) { commands.configure(state); }
+
+    REditor mirror() {
+        REditor mirror = new REditor(dialogs, compiler);
+        mirror.sharedWith = this;
+        mirror.textPane.setDocument(textPane.getDocument());
+        mirror.commands.selections().installFilter();
+        mirror.configure(commands.state());
+        mirror.setOpenFileHandler(openFileHandler);
+        return mirror;
     }
 
     @Override
@@ -209,43 +223,21 @@ public class REditor implements Editor {
     }
 
     @Override
-    public void setSourceCodePositions(Collection<SourceCodePosition> positions) {
-        clearSourceCodeMarkers();
-        Optional<Path> currentFile = getCurrentFile().map(File::toPath);
-        if (currentFile.isEmpty()) {
-            return;
-        }
-
-        Icon marker = loadIcon(ICON_BREAKPOINT);
-        positions.stream()
-                .filter(position -> position.line > 0)
-                .filter(position -> isCurrentFile(position.fileName, currentFile.get()))
-                .map(position -> position.line)
-                .distinct()
-                .sorted()
-                .forEach(line -> {
-                    try {
-                        sourceCodeMarkers.add(scrollPane.getGutter().addLineTrackingIcon(
-                                line - 1, marker, "Compiled source line"
-                        ));
-                    } catch (BadLocationException ignored) {
-                    }
-                });
-    }
-
-    @Override
     public boolean isDirty() {
+        if (sharedWith != null) return sharedWith.isDirty();
         return textPane.isDirty();
     }
 
     @Override
     public boolean saveFile() {
+        if (sharedWith != null) return sharedWith.saveFile();
         Optional<File> fileSource = Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
         if (isnew || fileSource.isEmpty() || fileSource.filter(File::canWrite).isEmpty()) {
             return saveFileAs();
         } else {
             try {
                 textPane.save();
+                commands.persistBookmarks();
                 isnew = false;
                 return true;
             } catch (IOException e) {
@@ -258,17 +250,19 @@ public class REditor implements Editor {
 
     @Override
     public Optional<File> getCurrentFile() {
+        if (sharedWith != null) return sharedWith.getCurrentFile();
         return isnew ? Optional.empty() : Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
     }
 
     @Override
     public boolean saveFileAs() {
+        if (sharedWith != null) return sharedWith.saveFileAs();
         Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", getCurrentBaseDirectory(), true, saveFilters());
         if (savedPath.isPresent()) {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
-                clearSourceCodeMarkers();
+                commands.persistBookmarks();
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
@@ -290,7 +284,7 @@ public class REditor implements Editor {
     }
 
     void addChangeListener(Runnable listener) {
-        textPane.getDocument().addDocumentListener(new DocumentListener() {
+        DocumentListener documentListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 listener.run();
@@ -305,7 +299,20 @@ public class REditor implements Editor {
             public void changedUpdate(DocumentEvent e) {
                 listener.run();
             }
-        });
+        };
+        changeListeners.add(documentListener);
+        textPane.getDocument().addDocumentListener(documentListener);
+    }
+
+    void dispose() {
+        changeListeners.forEach(textPane.getDocument()::removeDocumentListener);
+        changeListeners.clear();
+        commands.selections().clear();
+        if (textPane.getDocument().getProperty("activeSelections") == commands.selections()) {
+            textPane.getDocument().putProperty("activeSelections", null);
+        }
+        // Detach Swing's document, undo and syntax listeners from a shared split document.
+        textPane.setDocument(new RSyntaxDocument(SyntaxConstants.SYNTAX_STYLE_NONE));
     }
 
     void setOpenFileHandler(Consumer<Path> openFileHandler) {
@@ -324,29 +331,27 @@ public class REditor implements Editor {
     }
 
     private Optional<Path> resolveIncludeAt(int offset) {
-        Token token = textPane.modelToToken(offset);
-        if (token == null || !token.containsPosition(offset)) {
-            return Optional.empty();
+        String filename = null;
+        if (compiler != null) {
+            net.emustudio.emulib.plugins.compiler.LexicalAnalyzer lexer = compiler.createLexer();
+            char[] source = textPane.getText().toCharArray(); lexer.reset(source, 0, source.length);
+            while (lexer.hasNext()) {
+                net.emustudio.emulib.plugins.compiler.Token token = lexer.next();
+                if (token.getReferencedFile() != null && offset >= token.getOffset()
+                        && offset < token.getOffset() + token.getText().length()) {
+                    filename = token.getReferencedFile(); break;
+                }
+            }
+        } else {
+            // Plain text can open any quoted relative file path, without language keywords.
+            Matcher matcher = Pattern.compile("([\"'])([^\"']+)\\1").matcher(textPane.getText());
+            while (matcher.find()) if (offset >= matcher.start(2) && offset < matcher.end(2)) { filename = matcher.group(2); break; }
         }
+        if (filename == null) return Optional.empty();
+        final String path = filename;
         try {
-            int line = textPane.getLineOfOffset(offset);
-            int lineStart = textPane.getLineStartOffset(line);
-            int lineEnd = textPane.getLineEndOffset(line);
-            Matcher matcher = INCLUDE_PATTERN.matcher(textPane.getText(lineStart, lineEnd - lineStart));
-            if (!matcher.find()) {
-                return Optional.empty();
-            }
-
-            int filenameStart = lineStart + matcher.start(2);
-            int filenameEnd = lineStart + matcher.end(2);
-            if (offset < filenameStart || offset >= filenameEnd) {
-                return Optional.empty();
-            }
-            return getCurrentFile().map(File::toPath).map(Path::getParent)
-                    .map(parent -> parent.resolve(matcher.group(2)).normalize());
-        } catch (BadLocationException | InvalidPathException e) {
-            return Optional.empty();
-        }
+            return getCurrentFile().map(File::toPath).map(Path::getParent).map(parent -> parent.resolve(path).normalize());
+        } catch (InvalidPathException e) { return Optional.empty(); }
     }
 
     @Override
@@ -355,7 +360,7 @@ public class REditor implements Editor {
             textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
-            clearSourceCodeMarkers();
+            commands.restoreBookmarks();
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
@@ -370,7 +375,7 @@ public class REditor implements Editor {
         textPane.discardAllEdits();
         textPane.setDirty(false);
         isnew = true;
-        clearSourceCodeMarkers();
+        commands.clearBookmarks();
     }
 
     @Override
@@ -435,24 +440,6 @@ public class REditor implements Editor {
                 .map(Path::of)
                 .map(Path::getParent)
                 .orElseGet(() -> Path.of(System.getProperty("user.dir")));
-    }
-
-    private boolean isCurrentFile(String fileName, Path currentFile) {
-        try {
-            Path sourceFile = Path.of(fileName);
-            Path normalizedCurrentFile = currentFile.toAbsolutePath().normalize();
-            if (sourceFile.getNameCount() == 1) {
-                return sourceFile.equals(normalizedCurrentFile.getFileName());
-            }
-            return sourceFile.toAbsolutePath().normalize().equals(normalizedCurrentFile);
-        } catch (RuntimeException ignored) {
-            return false;
-        }
-    }
-
-    private void clearSourceCodeMarkers() {
-        sourceCodeMarkers.forEach(scrollPane.getGutter()::removeTrackingIcon);
-        sourceCodeMarkers.clear();
     }
 
     private List<FileExtensionsFilter> saveFilters() {

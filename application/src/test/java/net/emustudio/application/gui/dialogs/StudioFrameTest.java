@@ -48,8 +48,9 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Emulator", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals("File", onEdt(() -> menuBar.getMenu(0).getText()));
         assertEquals("Edit", onEdt(() -> menuBar.getMenu(1).getText()));
-        assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));
-        assertEquals("Help", onEdt(() -> menuBar.getMenu(3).getText()));
+        assertEquals("Editor", onEdt(() -> menuBar.getMenu(2).getText()));
+        assertEquals("Project", onEdt(() -> menuBar.getMenu(3).getText()));
+        assertEquals("Help", onEdt(() -> menuBar.getMenu(4).getText()));
     }
 
     @Test
@@ -86,7 +87,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(model.getLocationAt(0)).thenReturn(12);
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
-                computer, mock(AppSettings.class), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
+                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
         ));
         showFrame(frame);
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
@@ -119,7 +120,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         return onEdt(() -> new StudioFrame(
                 computer,
-                mock(AppSettings.class),
+                new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false),
                 mock(Dialogs.class),
                 createDebugTableModel(),
                 null,
