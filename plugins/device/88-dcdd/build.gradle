@@ -31,11 +31,6 @@ compileJava {
 }
 
 copy {
-  from('src/main/scripts')
-  into "$buildDir/libs/scripts"
-}
-
-copy {
   from('src/main/files')
   into "$buildDir/libs/files"
 }

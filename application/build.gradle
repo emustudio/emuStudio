@@ -151,12 +151,48 @@ def examples(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs/examples"
 }
 
-def scripts(String name) {
-  return project(name).buildDir.getAbsolutePath() + "/libs/scripts"
-}
-
 def rawfiles(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs/files"
+}
+
+// Command-line tools: name -> [main class, jars relative to the distribution root, optional JVM options variable]
+def launchers = [
+        'as-8080'         : ['net.emustudio.plugins.compiler.as8080.Runner', ['compiler/as-8080.jar']],
+        'as-z80'          : ['net.emustudio.plugins.compiler.asZ80.Runner', ['compiler/as-z80.jar', 'compiler/as-8080.jar']],
+        'as-ssem'         : ['net.emustudio.plugins.compiler.ssem.Runner', ['compiler/as-ssem.jar']],
+        'brainc-brainduck': ['net.emustudio.plugins.compiler.brainduck.Runner', ['compiler/brainc-brainduck.jar']],
+        'ramc-ram'        : ['net.emustudio.plugins.compiler.ram.Runner', ['compiler/ramc-ram.jar', 'memory/ram-mem.jar']],
+        'raspc-rasp'      : ['net.emustudio.plugins.compiler.rasp.Runner', ['compiler/raspc-rasp.jar', 'memory/rasp-mem.jar']],
+        '88-dcdd'         : ['net.emustudio.plugins.device.mits88dcdd.cmdline.Runner', ['device/88-dcdd.jar'], 'M88_DCDD_OPTS']
+]
+
+def generateLaunchers = tasks.register('generateLaunchers') {
+  def templates = file('src/main/launchers')
+  def outputDir = layout.buildDirectory.dir('launchers')
+  inputs.dir(templates)
+  inputs.property('launchers', launchers.toString())
+  outputs.dir(outputDir)
+
+  doLast {
+    def dir = outputDir.get().asFile
+    project.delete(dir)
+    dir.mkdirs()
+    launchers.each { name, launcher ->
+      def (mainClass, jars, opts) = launcher
+      def tokens = [
+              '@NAME@'         : name,
+              '@OPTS@'         : opts ?: name.toUpperCase().replace('-', '_') + '_OPTS',
+              '@MAIN_CLASS@'   : mainClass,
+              '@CLASSPATH_SH@' : (jars + ['lib/*']).collect { '$APP_HOME/' + it }.join(':'),
+              '@CLASSPATH_BAT@': (jars + ['lib/*']).collect { '%APP_HOME%\\' + it.replace('/', '\\') }.join(';')
+      ]
+      def expand = { String text -> tokens.inject(text) { result, token -> result.replace(token.key, token.value) } }
+      def unix = new File(dir, name)
+      unix.text = expand(new File(templates, 'launcher.sh').text)
+      unix.setExecutable(true, false)
+      new File(dir, name + '.bat').text = expand(new File(templates, 'launcher.bat').text).replace('\n', '\r\n')
+    }
+  }
 }
 
 distZip {
@@ -297,18 +333,10 @@ distributions {
         }
       }
 
-      // Scripts
-      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"].collect { compiler ->
-        from(scripts(":plugins:compiler:$compiler")) {
-          into "bin"
-        }
+      from(generateLaunchers) {
+        into "bin"
       }
-      ["88-dcdd"].collect { device ->
-        from(scripts(":plugins:device:$device")) {
-          into "bin"
-        }
-        from(rawfiles(":plugins:device:$device"))
-      }
+      from(rawfiles(":plugins:device:88-dcdd"))
     }
   }
 }

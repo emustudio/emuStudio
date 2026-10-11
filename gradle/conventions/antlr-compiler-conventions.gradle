@@ -46,8 +46,3 @@ copy {
   from('src/main/examples')
   into "$buildDir/libs/examples"
 }
-
-copy {
-  from('src/main/scripts')
-  into "$buildDir/libs/scripts"
-}
