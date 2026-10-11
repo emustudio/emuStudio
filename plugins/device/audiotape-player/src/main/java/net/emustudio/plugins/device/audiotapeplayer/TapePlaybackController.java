@@ -1,0 +1,147 @@
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
+package net.emustudio.plugins.device.audiotapeplayer;
+
+import net.emustudio.emulib.runtime.io.FileLoader;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.*;
+
+@ThreadSafe
+public class TapePlaybackController implements AutoCloseable {
+    private final static Logger LOGGER = LoggerFactory.getLogger(TapePlaybackController.class);
+
+    public enum CassetteState {
+        UNLOADED,
+        PLAYING,
+        STOPPED,
+        CLOSED // terminal state
+    }
+
+    private final TapePlayback listener;
+    private final ExecutorService playPool = Executors.newFixedThreadPool(1);
+
+    private final Object stateLock = new Object();
+    @GuardedBy("stateLock")
+    private CassetteState state = CassetteState.UNLOADED;
+    @GuardedBy("stateLock")
+    private FileLoader loader;
+    @GuardedBy("stateLock")
+    private Path path;
+    @GuardedBy("stateLock")
+    private Future<?> playFuture;
+
+    private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
+
+    public TapePlaybackController(TapePlayback listener) {
+        this.listener = Objects.requireNonNull(listener);
+    }
+
+    public void reset() {
+        stop(true);
+    }
+
+    @Override
+    public void close() {
+        synchronized (stateLock) {
+            this.state = CassetteState.CLOSED;
+            Future<?> tmpFuture = this.playFuture;
+            this.playFuture = null;
+            if (tmpFuture != null) {
+                tmpFuture.cancel(true);
+            }
+            playPool.shutdown();
+            stateNotifications.add(this.state);
+        }
+        notifyStateChange();
+        try {
+            if (!playPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                playPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            playPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public void load(Path path) {
+        FileLoader.forPath(path).filter(l -> l.getFormat().isTape()).ifPresent(tmpLoader -> {
+            synchronized (stateLock) {
+                switch (state) {
+                    case UNLOADED:
+                    case STOPPED:
+                        this.loader = tmpLoader;
+                        this.path = path;
+                        this.state = CassetteState.STOPPED;
+                }
+                stateNotifications.add(this.state);
+            }
+        });
+        notifyStateChange();
+    }
+
+    public void play() {
+        synchronized (stateLock) {
+            if (this.state == CassetteState.STOPPED) {
+                FileLoader tmpLoader = this.loader;
+                Path tmpPath = this.path;
+                if (tmpLoader != null) {
+                    this.state = CassetteState.PLAYING;
+                    this.playFuture = playPool.submit(() -> {
+                        try {
+                            tmpLoader.load(tmpPath, listener, FileLoader.Options.playback());
+                            synchronized (stateLock) {
+                                this.state = CassetteState.STOPPED;
+                                stateNotifications.add(this.state);
+                            }
+                            notifyStateChange();
+                        } catch (IOException e) {
+                            LOGGER.error("Could not load cassette", e);
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+                }
+            }
+            stateNotifications.add(this.state);
+        }
+        notifyStateChange();
+    }
+
+    public void stop(boolean unload) {
+        synchronized (stateLock) {
+            if (this.state == CassetteState.PLAYING) {
+                Future<?> tmpFuture = this.playFuture;
+                this.playFuture = null;
+                if (tmpFuture != null) {
+                    tmpFuture.cancel(true);
+                }
+                this.state = CassetteState.STOPPED;
+            }
+            if (unload && this.state == CassetteState.STOPPED) {
+                this.loader = null;
+                this.path = null;
+                this.state = CassetteState.UNLOADED;
+            }
+            stateNotifications.add(this.state);
+        }
+        notifyStateChange();
+    }
+
+    public CassetteState getState() {
+        synchronized (stateLock) {
+            return this.state;
+        }
+    }
+
+    private void notifyStateChange() {
+        Optional.ofNullable(stateNotifications.poll()).ifPresent(listener::onStateChange);
+    }
+}
