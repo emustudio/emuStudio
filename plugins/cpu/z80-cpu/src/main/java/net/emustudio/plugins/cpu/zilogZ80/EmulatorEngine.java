@@ -1781,7 +1781,7 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,ss:3
         int bc = regs[REG_B] << 8 | regs[REG_C];
         regs[REG_A] = memory.read(bc) & 0xFF;
-        memptr = bc;
+        memptr = (bc + 1) & 0xFFFF;
         advanceCycles(3);
     }
 
@@ -2501,11 +2501,11 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
-        int portAddress = (decB << 8) | regs[REG_C];
         byte io = context.readIO(portAddress);
         advanceCycles(4);
+        regs[REG_B] = decB;
         memory.write(hl++, io);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
@@ -2527,11 +2527,11 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
-        int portAddress = (decB << 8) | regs[REG_C];
         byte io = context.readIO(portAddress);
         advanceCycles(4);
+        regs[REG_B] = decB;
         memory.write(hl++, io);
         advanceCycles(3);
 
@@ -2552,6 +2552,7 @@ public class EmulatorEngine implements CpuEngine {
             return;
         }
         PC = (PC - 2) & 0xFFFF;
+        memptr = (PC + 1) & 0xFFFF;
         flags = ((flags & ~FLAG_XY) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
 
         int flagP = flags & FLAG_PV;
@@ -2577,11 +2578,11 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
-        int portAddress = (decB << 8) | regs[REG_C];
         byte io = context.readIO(portAddress);
         advanceCycles(4);
+        regs[REG_B] = decB;
         memory.write(hl--, io);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
@@ -2603,11 +2604,11 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
-        int portAddress = (decB << 8) | regs[REG_C];
         byte io = context.readIO(portAddress);
         advanceCycles(4);
+        regs[REG_B] = decB;
         memory.write(hl--, io);
         advanceCycles(3);
 
@@ -2628,6 +2629,7 @@ public class EmulatorEngine implements CpuEngine {
             return;
         }
         PC = (PC - 2) & 0xFFFF;
+        memptr = (PC + 1) & 0xFFFF;
         flags = ((flags & ~FLAG_XY) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
 
         int flagP = flags & FLAG_PV;
@@ -2709,6 +2711,7 @@ public class EmulatorEngine implements CpuEngine {
             return;
         }
         PC = (PC - 2) & 0xFFFF;
+        memptr = (PC + 1) & 0xFFFF;
         flags = (flags & ~FLAG_XY) | ((PC >>> 8) & FLAG_XY);
 
         int flagP = flags & FLAG_PV;
@@ -2784,6 +2787,7 @@ public class EmulatorEngine implements CpuEngine {
             return;
         }
         PC = (PC - 2) & 0xFFFF;
+        memptr = (PC + 1) & 0xFFFF;
 
         flags = ((flags & (~FLAG_XY)) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
 
@@ -3909,6 +3913,7 @@ public class EmulatorEngine implements CpuEngine {
         int result = memory.read(tmp) & 0xFF;
         advanceCycles(3);
         result = ((memory.read((tmp + 1) & 0xFFFF) << 8) | result) & 0xFFFF;
+        memptr = (tmp + 1) & 0xFFFF;
         advanceCycles(3);
 
         return result;

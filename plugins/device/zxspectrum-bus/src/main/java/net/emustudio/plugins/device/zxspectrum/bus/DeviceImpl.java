@@ -70,6 +70,11 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
+    public void reset() {
+        bus.reset();
+    }
+
+    @Override
     public void showGUI(JFrame parent) {
 
     }

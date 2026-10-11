@@ -5,10 +5,14 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import org.easymock.Capture;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -787,6 +791,44 @@ public class ZxSpectrumBusImplTest {
     // ========== Frame cycle management tests ==========
 
     @Test
+    public void testDeviceResetRestartsMemoryAndPortContentionTiming() throws Exception {
+        TestEnvironment env = newTestEnvironment();
+        Capture<ZxSpectrumBus> registeredBus = newCapture();
+        DeviceImpl device = newDevice(registeredBus);
+        ZxSpectrumBusImpl bus = (ZxSpectrumBusImpl) registeredBus.getValue();
+        bus.initialize(env.cpu, env.memory);
+
+        bus.passedCycles(60_140);
+        device.reset();
+        bus.passedCycles(FIRST_CONTENDED);
+        bus.read(0x4000);
+        assertEquals(6L, env.addedCycles.get());
+
+        device.reset();
+        env.addedCycles.set(0);
+        bus.passedCycles(FIRST_CONTENDED);
+        env.cpuPortDispatchers.get(0xFF).read(0x40FF);
+        assertEquals(12L, env.addedCycles.get());
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testDeviceResetRestartsFloatingBusTiming() throws Exception {
+        TestEnvironment env = newTestEnvironment();
+        Capture<ZxSpectrumBus> registeredBus = newCapture();
+        DeviceImpl device = newDevice(registeredBus);
+        ZxSpectrumBusImpl bus = (ZxSpectrumBusImpl) registeredBus.getValue();
+        bus.initialize(env.cpu, env.memory);
+        env.memoryValues.put(0x4000, (byte) 0x42);
+
+        bus.passedCycles(60_140);
+        device.reset();
+        bus.passedCycles(FIRST_FLOATING_BUS - 3);
+        assertEquals((byte) 0x42, env.cpuPortDispatchers.get(0xFF).read(0x00FF));
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
     public void testPassedCyclesWrapsAroundFrameTstates() {
         TestEnvironment env = newTestEnvironment();
         ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
@@ -966,6 +1008,19 @@ public class ZxSpectrumBusImplTest {
         env.cpu = cpu;
         env.memory = memory;
         return env;
+    }
+
+    private DeviceImpl newDevice(Capture<ZxSpectrumBus> registeredBus) throws Exception {
+        ContextPool pool = createNiceMock(ContextPool.class);
+        pool.register(eq(0L), capture(registeredBus), eq(ZxSpectrumBus.class));
+        expectLastCall().once();
+        ApplicationApi application = createNiceMock(ApplicationApi.class);
+        expect(application.getContextPool()).andStubReturn(pool);
+        PluginSettings settings = createNiceMock(PluginSettings.class);
+        replay(pool, application, settings);
+        DeviceImpl device = new DeviceImpl(0L, application, settings);
+        verify(pool);
+        return device;
     }
 
     private TestEnvironment newTestEnvironmentWithMultipleListeners(int expectedListenerCalls) {

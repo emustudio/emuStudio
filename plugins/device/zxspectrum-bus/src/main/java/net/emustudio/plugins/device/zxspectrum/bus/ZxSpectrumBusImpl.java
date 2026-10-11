@@ -124,6 +124,11 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         return timing;
     }
 
+    public void reset() {
+        // The ULA frame/interrupt clock also restarts at zero when the computer is reset.
+        frameCycles = 0;
+    }
+
     @Override
     public boolean attachDevice(int port, Context8080.CpuPortDevice device) {
         Context8080.CpuPortDevice checked = Objects.requireNonNull(device);
