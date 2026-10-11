@@ -12,6 +12,7 @@ dependencies {
   cpuLib project(":plugins:cpu:8080-cpu")
 
   testImplementation libs.junit
+  testImplementation libs.easyMock
   testImplementation libs.slf4JSimple
 }
 

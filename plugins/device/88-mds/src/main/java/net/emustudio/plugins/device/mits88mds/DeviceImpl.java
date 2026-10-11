@@ -86,7 +86,7 @@ public final class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                gui = new MdsGui(parent, controller);
+                gui = new MdsGui(parent, controller, applicationApi.getDialogs(), applicationApi.getGUI());
             }
             gui.setVisible(true);
         }

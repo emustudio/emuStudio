@@ -2,58 +2,68 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88mds;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.Timer;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
+
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
-final class MdsGui extends JFrame {
+final class MdsGui extends DialogBase {
+    private static final String TITLE = "MITS 88-MDS minidisk";
+
     private final MdsController controller;
+    private final Dialogs dialogs;
+    private final GUI gui;
     private final JComboBox<Integer> drive = new JComboBox<>();
     private final JLabel image = new JLabel();
     private final JLabel position = new JLabel();
     private final JLabel status = new JLabel();
     private final Timer refreshTimer = new Timer(100, event -> refresh());
 
-    MdsGui(JFrame parent, MdsController controller) {
-        super("MITS 88-MDS minidisk");
+    MdsGui(JFrame parent, MdsController controller, Dialogs dialogs, GUI gui) {
+        super(parent, TITLE, false);
         this.controller = controller;
+        this.dialogs = dialogs;
+        this.gui = gui;
         for (int i = 0; i < MdsController.DRIVE_COUNT; i++) {
             drive.addItem(i);
         }
         drive.addActionListener(event -> refresh());
-
-        JPanel details = new JPanel(new GridLayout(4, 1));
-        details.add(drive);
-        details.add(image);
-        details.add(position);
-        details.add(status);
-        add(details, BorderLayout.CENTER);
-
-        JPanel actions = new JPanel(new FlowLayout());
-        JButton attach = new JButton("Attach image");
-        attach.addActionListener(event -> attach());
-        actions.add(attach);
-        JButton detach = new JButton("Detach");
-        detach.addActionListener(event -> detach());
-        actions.add(detach);
-        add(actions, BorderLayout.SOUTH);
-
-        setDefaultCloseOperation(HIDE_ON_CLOSE);
-        pack();
+        refresh();
+        buildContent();
         setSize(560, getHeight());
         setLocationRelativeTo(parent);
-        refreshTimer.start();
-        refresh();
+    }
+
+    @Override
+    protected JComponent initializeComponents() {
+        JPanel content = gui.panel("insets dialog, fillx", "[grow]", "[][][][][]");
+        content.add(drive, "growx, wrap");
+        content.add(image, "growx, wrap");
+        content.add(position, "growx, wrap");
+        content.add(status, "growx, wrap");
+        content.add(gui.button("Attach image", this::attach), "split 2, align center");
+        content.add(gui.button("Detach", this::detach));
+        return content;
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible) {
+            refresh();
+            refreshTimer.start();
+        } else {
+            refreshTimer.stop();
+        }
+        super.setVisible(visible);
+    }
+
+    @Override
+    public void dispose() {
+        refreshTimer.stop();
+        super.dispose();
     }
 
     private int selectedDrive() {
@@ -61,16 +71,14 @@ final class MdsGui extends JFrame {
     }
 
     private void attach() {
-        JFileChooser chooser = new JFileChooser();
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-        try {
-            controller.attach(selectedDrive(), chooser.getSelectedFile().toPath());
-            refresh();
-        } catch (IOException e) {
-            showError(e);
-        }
+        dialogs.chooseFile("Attach minidisk image", "Attach", false).ifPresent(path -> {
+            try {
+                controller.attach(selectedDrive(), path);
+                refresh();
+            } catch (IOException e) {
+                dialogs.showError(e.getMessage(), TITLE);
+            }
+        });
     }
 
     private void detach() {
@@ -78,7 +86,7 @@ final class MdsGui extends JFrame {
             controller.detach(selectedDrive());
             refresh();
         } catch (IOException e) {
-            showError(e);
+            dialogs.showError(e.getMessage(), TITLE);
         }
     }
 
@@ -87,15 +95,5 @@ final class MdsGui extends JFrame {
         image.setText(controller.imagePath(selected).map(Path::toString).orElse("No image attached"));
         position.setText("Track " + controller.track(selected) + ", sector " + controller.sector(selected));
         status.setText(controller.isSelected(selected) ? "Selected" : "Idle");
-    }
-
-    private void showError(IOException error) {
-        JOptionPane.showMessageDialog(this, error.getMessage(), "88-MDS error", JOptionPane.ERROR_MESSAGE);
-    }
-
-    @Override
-    public void dispose() {
-        refreshTimer.stop();
-        super.dispose();
     }
 }

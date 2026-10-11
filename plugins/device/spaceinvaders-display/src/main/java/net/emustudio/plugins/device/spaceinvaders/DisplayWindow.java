@@ -8,6 +8,7 @@ import net.emustudio.emulib.runtime.audio.SamplePlayer;
 import net.emustudio.emulib.runtime.recording.RecordingSession;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
@@ -15,13 +16,11 @@ import javax.swing.border.BevelBorder;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-final class DisplayWindow extends JFrame {
+final class DisplayWindow extends DialogBase {
     private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME);
     private static final ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD);
     private static final ImageIcon STOP_ICON = GUI.loadIcon(StandardIcons.ICON_STOP);
@@ -32,28 +31,27 @@ final class DisplayWindow extends JFrame {
     private final DisplayPanel display;
     private final SamplePlayer<SoundOutput.Sample> sound;
     private final Dialogs dialogs;
+    private final GUI gui;
     private JButton btnRecord;
     private volatile RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
     DisplayWindow(JFrame parent, MemoryContext<Byte> memory, SpaceInvadersHardware hardware,
                   int scale, boolean colorOverlay, SamplePlayer<SoundOutput.Sample> sound, GUI gui, Dialogs dialogs) {
-        super("Space Invaders");
+        super(parent, "Space Invaders", false);
         this.sound = sound;
         this.dialogs = dialogs;
+        this.gui = gui;
         display = new DisplayPanel(memory, hardware, scale, colorOverlay);
-        add(display, BorderLayout.CENTER);
-        add(createSoundBar(sound, gui), BorderLayout.SOUTH);
-        setDefaultCloseOperation(HIDE_ON_CLOSE);
-        setResizable(true);
-        pack();
-        setLocationRelativeTo(parent);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                stopRecording(false);
-            }
-        });
+        buildContent();
+    }
+
+    @Override
+    protected JComponent initializeComponents() {
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(display, BorderLayout.CENTER);
+        content.add(createSoundBar(sound, gui), BorderLayout.SOUTH);
+        return content;
     }
 
     private JPanel createSoundBar(SamplePlayer<SoundOutput.Sample> sound, GUI gui) {

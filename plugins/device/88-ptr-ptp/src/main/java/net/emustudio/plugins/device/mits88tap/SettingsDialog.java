@@ -18,7 +18,7 @@ final class SettingsDialog extends DialogBase {
     private final JCheckBox showGuiAtStartup = new JCheckBox("Show GUI at startup");
 
     SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, GUI gui) {
-        super(parent, "Altair PTR/PTP - Settings", true);
+        super(parent, "Altair PTR/PTP Settings", true);
         this.settings = settings;
         this.dialogs = dialogs;
         this.gui = gui;

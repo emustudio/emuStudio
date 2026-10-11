@@ -25,7 +25,7 @@ public class SettingsDialog extends DialogBase {
     private final JCheckBox chkShowAtStartup = new JCheckBox("Show GUI at startup");
 
     public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui tapeGui, String title, GUI gui) {
-        super(parent, title + " settings", true);
+        super(parent, title + " Settings", true);
         this.gui = Objects.requireNonNull(gui);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);

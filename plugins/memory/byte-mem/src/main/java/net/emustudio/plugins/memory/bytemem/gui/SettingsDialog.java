@@ -125,15 +125,13 @@ public class SettingsDialog extends DialogBase {
         panelImages.add(scrollImages, "grow");
         panelImages.add(btnPanel, "top");
 
-        // OK button
-        JButton btnOK = gui.button("OK");
-        btnOK.addActionListener(this::btnOKActionPerformed);
+        JButton btnSave = gui.buttonMakePrimary(gui.button("Save", this::btnSaveActionPerformed));
 
         JPanel content = gui.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
         content.add(panelBanks, "grow");
         content.add(panelROM, "grow, wrap");
         content.add(panelImages, "span, growx, wrap");
-        content.add(btnOK, "span, w 99!, align right");
+        content.add(btnSave, "span, align right");
         return content;
     }
 
@@ -202,7 +200,7 @@ public class SettingsDialog extends DialogBase {
         }
     }
 
-    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             int bCount = getPositiveIntegerOrThrow("Banks count", txtBanksCount);
             int bCommon = getPositiveIntegerOrThrow("Common boundary", txtCommonBoundary);

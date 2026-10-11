@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -24,12 +23,14 @@ public class SettingsDialog extends DialogBase {
 
     private final PluginSettings settings;
     private final Dialogs dialogs;
+    private final GUI gui;
     private final JCheckBox chkShowGuiAtStartup = new JCheckBox("Show GUI at startup");
 
     public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, GUI gui) {
-        super(parent, "Audio Tape Player - Settings", true);
+        super(parent, "Audio Tape Player Settings", true);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
 
         chkShowGuiAtStartup.setSelected(settings.getBoolean(SETTINGS_KEY_SHOW_GUI_AT_STARTUP, false));
         buildContent();
@@ -46,25 +47,15 @@ public class SettingsDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JButton btnSave = new JButton("Save");
-        btnSave.addActionListener(e -> {
+        JButton btnSave = gui.buttonMakePrimary(gui.button("Save", () -> {
             saveSettings();
             dispose();
-        });
+        }));
+        getRootPane().setDefaultButton(btnSave);
 
-        JButton btnCancel = new JButton("Cancel");
-        btnCancel.addActionListener(e -> dispose());
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(btnSave);
-        buttonPanel.add(btnCancel);
-
-        JPanel content = new JPanel(new BorderLayout(8, 8));
-        content.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-        content.add(chkShowGuiAtStartup, BorderLayout.CENTER);
-        content.add(buttonPanel, BorderLayout.SOUTH);
-
-        setPreferredSize(new Dimension(350, 150));
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][]");
+        content.add(chkShowGuiAtStartup, "wrap");
+        content.add(btnSave, "align right, gaptop 12");
         return content;
     }
 }

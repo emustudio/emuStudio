@@ -14,7 +14,6 @@ import net.miginfocom.swing.MigLayout;
 import org.junit.Test;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -215,12 +214,9 @@ public class EmuStudioGuiTest {
         JSplitPane leftRight = gui.splitPaneLeftToRight(left, right, 0.25);
         JSplitPane topBottom = gui.splitPaneTopToBottom(top, bottom, 0.75);
         JScrollPane scrollPane = gui.scrollPane(new JTextArea("scroll"));
-        JPanel verticalPanel = gui.panelVertical();
         JPanel customPanel = gui.panel("fill", "[grow]", "[]");
         JPanel horizontalPanel = gui.panelHorizontal();
-        JPanel buttonsPanel = gui.panelButtons();
         JPanel section = gui.section("Section", "fill", "[grow]", "[]");
-        Border border = gui.fadingBorder(6, Color.BLUE);
 
         gui.styleTable(table);
         assertTrue(table.getRowHeight() >= Icons.SIZE + 4);
@@ -239,16 +235,13 @@ public class EmuStudioGuiTest {
         assertSame(top, topBottom.getTopComponent());
         assertSame(bottom, topBottom.getBottomComponent());
         assertTrue(scrollPane.getBorder() instanceof EmptyBorder);
-        assertTrue(verticalPanel.getLayout() instanceof MigLayout);
         assertTrue(customPanel.getLayout() instanceof MigLayout);
         assertTrue(horizontalPanel.getLayout() instanceof MigLayout);
-        assertTrue(buttonsPanel.getLayout() instanceof MigLayout);
         assertTrue(section.getBorder() instanceof TitledBorder);
         assertEquals("Section", ((TitledBorder) section.getBorder()).getTitle());
         assertFalse(table.getShowHorizontalLines());
         assertFalse(table.getShowVerticalLines());
         assertEquals(new Dimension(0, 0), table.getIntercellSpacing());
         assertTrue(list.getBorder() instanceof EmptyBorder);
-        assertTrue(border instanceof FadingBorder);
     }
 }

@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -355,11 +354,6 @@ public class EmuStudioGui implements GUI {
     }
 
     @Override
-    public JPanel panelVertical() {
-        return new JPanel(new MigLayout("insets dialog, fillx", "[grow]", "[]"));
-    }
-
-    @Override
     public JPanel panel(String layoutConstraints, String colConstraints, String rowConstraints) {
         return new JPanel(new MigLayout(layoutConstraints, colConstraints, rowConstraints));
     }
@@ -367,11 +361,6 @@ public class EmuStudioGui implements GUI {
     @Override
     public JPanel panelHorizontal() {
         return new JPanel(new MigLayout("insets dialog, filly", "[]", "[grow]"));
-    }
-
-    @Override
-    public JPanel panelButtons() {
-        return new JPanel(new MigLayout("insets dialog", "[grow, right]", "[]"));
     }
 
     @Override
@@ -391,10 +380,5 @@ public class EmuStudioGui implements GUI {
         JPanel panel = new JPanel(new MigLayout(layoutConstraints, colConstraints, rowConstraints));
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
-    }
-
-    @Override
-    public Border fadingBorder(int thickness, Color color) {
-        return new FadingBorder(thickness, color);
     }
 }
