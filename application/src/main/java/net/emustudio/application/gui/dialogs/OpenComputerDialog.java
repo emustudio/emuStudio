@@ -2,12 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -47,6 +50,7 @@ public class OpenComputerDialog extends DialogBase {
     private final SaveSchemaAction saveSchemaAction;
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
+    private JPanel configurationPanel;
 
     public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer, EmuStudioGui gui) {
         super((java.awt.Frame) null, "emuStudio - Open virtual computer", true);
@@ -86,6 +90,11 @@ public class OpenComputerDialog extends DialogBase {
         JButton btnRename = gui.toolbarButton(renameComputerAction);
         JButton btnSaveSchemaImage = gui.toolbarButton(saveSchemaAction);
         JScrollPane scrollPreview = gui.scrollPane(preview);
+        configurationPanel = gui.panel("insets 10, fillx, wrap 1", "[grow]", "");
+        JScrollPane scrollConfiguration = gui.scrollPane(configurationPanel);
+        scrollPreview.setMinimumSize(new Dimension(0, 100));
+        scrollConfiguration.setMinimumSize(new Dimension(0, 100));
+        JSplitPane splitPreview = gui.splitPaneTopToBottom(scrollPreview, scrollConfiguration, 0.5);
         JButton btnClose = new JButton();
         JLabel lblLogo = gui.createLogoJLabel();
 
@@ -113,7 +122,7 @@ public class OpenComputerDialog extends DialogBase {
 
         splitConfig.setResizeWeight(0.3);
         splitConfig.setLeftComponent(panelConfig);
-        splitConfig.setRightComponent(scrollPreview);
+        splitConfig.setRightComponent(splitPreview);
 
         JLabel lblIntroduction = gui.labelPadded("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>", 5, 10, 5, 10);
 
@@ -135,7 +144,10 @@ public class OpenComputerDialog extends DialogBase {
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 
-        SwingUtilities.invokeLater(() -> splitConfig.setDividerLocation(270));
+        SwingUtilities.invokeLater(() -> {
+            splitConfig.setDividerLocation(270);
+            splitPreview.setDividerLocation(0.5);
+        });
 
         // Center Panel: Header + SplitPane
         JPanel centerPanel = gui.panel("insets 0, fill", "[grow]", "[]0[grow]");
@@ -162,11 +174,55 @@ public class OpenComputerDialog extends DialogBase {
     }
 
     private void lstConfigValueChanged(ListSelectionEvent evt) {
+        configurationPanel.removeAll();
         Optional.ofNullable(lstConfig.getSelectedValue()).ifPresentOrElse(computer -> {
             Schema schema = new Schema(computer, appSettings);
             preview.setSchema(schema);
+            computer.getCPU().ifPresent(plugin -> addPluginConfiguration("CPU", plugin));
+            computer.getMemory().ifPresent(plugin -> addPluginConfiguration("Memory", plugin));
+            computer.getCompiler().ifPresent(plugin -> addPluginConfiguration("Compiler", plugin));
+            computer.getDevices().forEach(plugin ->
+                    addPluginConfiguration("Device (" + plugin.getPluginName() + ")", plugin));
         }, () -> preview.setSchema(null));
         preview.repaint();
+        configurationPanel.revalidate();
+        configurationPanel.repaint();
+    }
+
+    private void addPluginConfiguration(String title, PluginConfig plugin) {
+        DefaultTableModel model = new DefaultTableModel(new String[]{"Key", "Value"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        model.addRow(new Object[]{"name", plugin.getPluginName()});
+        model.addRow(new Object[]{"path", plugin.getPluginFile()});
+        plugin.getConfig().<UnmodifiableConfig>getOptional("settings")
+                .ifPresent(settings -> addSettingsRows(model, "", settings));
+
+        JTable table = new JTable(model);
+        table.setName(title);
+        gui.styleTable(table);
+        table.setTableHeader(null);
+
+        JLabel header = new JLabel(title);
+        header.setFont(header.getFont().deriveFont(Font.BOLD));
+        configurationPanel.add(header, "gaptop 5");
+        configurationPanel.add(table, "growx");
+    }
+
+    private void addSettingsRows(DefaultTableModel model, String prefix, UnmodifiableConfig settings) {
+        settings.entrySet().stream().sorted(java.util.Comparator.comparing(UnmodifiableConfig.Entry::getKey))
+                .forEach(entry -> {
+                    String key = prefix + entry.getKey();
+                    Object value = entry.getValue();
+                    if (value instanceof UnmodifiableConfig) {
+                        addSettingsRows(model, key + ".", (UnmodifiableConfig) value);
+                    } else {
+                        model.addRow(new Object[]{key, String.valueOf(value)});
+                    }
+                });
     }
 
     private void btnCloseActionPerformed(ActionEvent evt) {
