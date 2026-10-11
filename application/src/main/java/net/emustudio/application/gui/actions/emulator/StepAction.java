@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.util.Optional;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_STEP;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class StepAction extends AbstractAction {
 

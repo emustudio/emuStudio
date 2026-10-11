@@ -9,8 +9,10 @@ import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.miginfocom.swing.MigLayout;
+import org.junit.After;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -18,6 +20,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.MultiResolutionImage;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +40,59 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class EmuStudioGuiTest {
+    private final String originalLookAndFeel = UIManager.getLookAndFeel().getClass().getName();
+
+    @After
+    public void restoreLookAndFeel() throws Exception {
+        UIManager.setLookAndFeel(originalLookAndFeel);
+        UIManager.put(EmuStudioGui.customKey(ICON_RUN), null);
+    }
+
+    @Test
+    public void bundledIconsKeepTheirSizeAndArtworkAcrossThemes() throws Exception {
+        for (String theme : new String[]{UIManager.getCrossPlatformLookAndFeelClassName(),
+                "javax.swing.plaf.nimbus.NimbusLookAndFeel"}) {
+            UIManager.setLookAndFeel(theme);
+            for (Field field : StandardIcons.class.getFields()) {
+                if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
+                    Icon icon = EmuStudioGui.loadIcon((String) field.get(null));
+                    assertNotNull(field.getName(), icon);
+                    assertEquals(field.getName(), 22, icon.getIconWidth());
+                    assertEquals(field.getName(), 22, icon.getIconHeight());
+                }
+            }
+            assertNotSame(UIManager.getIcon("Tree.openIcon"), EmuStudioGui.loadIcon(ICON_OPEN_FILE));
+            assertNotSame(UIManager.getIcon("InternalFrame.closeIcon"),
+                    EmuStudioGui.loadIcon(StandardIcons.ICON_REMOVE));
+        }
+    }
+
+    @Test
+    public void bundledIconsUseHighResolutionArtworkWithoutChangingLayoutSize() throws Exception {
+        for (Field field : StandardIcons.class.getFields()) {
+            if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
+                ImageIcon icon = (ImageIcon) EmuStudioGui.loadIcon((String) field.get(null));
+                assertNotNull(field.getName(), icon);
+                assertEquals(field.getName(), 22, icon.getIconWidth());
+                assertEquals(field.getName(), 22, icon.getIconHeight());
+                assertTrue(field.getName(), icon.getImage() instanceof MultiResolutionImage);
+                MultiResolutionImage image = (MultiResolutionImage) icon.getImage();
+                for (double scale : new double[]{1.25, 1.5, 2}) {
+                    Image variant = image.getResolutionVariant(22 * scale, 22 * scale);
+                    assertEquals(field.getName(), 44, variant.getWidth(null));
+                    assertEquals(field.getName(), 44, variant.getHeight(null));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void customIconCanBeOverriddenThroughUiManager() {
+        Icon override = new ImageIcon(new byte[]{0});
+        UIManager.put(EmuStudioGui.customKey(ICON_RUN), override);
+        assertSame(override, EmuStudioGui.loadIcon(ICON_RUN));
+        assertNotNull(EmuStudioGui.loadIcon(ICON_OPEN_FILE));
+    }
 
     @Test
     public void createLogoJLabelUsesExpectedStyling() {
@@ -219,7 +276,7 @@ public class EmuStudioGuiTest {
         JPanel section = gui.section("Section", "fill", "[grow]", "[]");
 
         gui.styleTable(table);
-        assertTrue(table.getRowHeight() >= Icons.SIZE + 4);
+        assertTrue(table.getRowHeight() >= 22 + 4);
         gui.styleList(list);
 
         assertFalse(toolBar.isFloatable());

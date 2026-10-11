@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_RUN_TIMED;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
 public class RunTimedAction extends AbstractAction {

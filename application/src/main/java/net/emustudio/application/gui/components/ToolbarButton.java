@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.components;
 
-import net.emustudio.application.gui.framework.Icons;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,7 +27,7 @@ public class ToolbarButton extends JButton {
     public ToolbarButton(Action action, String iconResource, String tooltipText, Class<?> callerClass) {
         super(action);
         action.putValue(SHORT_DESCRIPTION, tooltipText);
-        action.putValue(SMALL_ICON, Icons.loadIcon(iconResource, callerClass));
+        action.putValue(SMALL_ICON, EmuStudioGui.loadIcon(iconResource, callerClass));
         setHideActionText(true);
         setToolTipText(tooltipText);
         setFocusable(false);

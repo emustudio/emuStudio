@@ -28,15 +28,38 @@ import java.util.function.Consumer;
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 import static net.emustudio.emulib.runtime.ui.StandardIcons.LOGO_FILE;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.
  */
 public class EmuStudioGui implements GUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
+    private static final int ICON_SIZE = 22;
+    private static final String CUSTOM_PREFIX = "emuStudio.icon.";
 
     private AppSettings.Theme currentTheme = AppSettings.Theme.INTELLIJ;
+
+    public static Icon loadIcon(String resource) {
+        return loadIcon(resource, EmuStudioGui.class);
+    }
+
+    public static Icon loadIcon(String resource, Class<?> callerClass) {
+        String customKey = customKey(resource);
+        Icon customIcon = UIManager.getIcon(customKey);
+        if (customIcon != null) {
+            return customIcon;
+        }
+
+        Icon fallback = GUI.loadIcon(resource, callerClass);
+        if (fallback != null) {
+            UIManager.put(customKey, fallback);
+        }
+        return fallback;
+    }
+
+    static String customKey(String resource) {
+        return CUSTOM_PREFIX + resource;
+    }
 
     public void initialize(AppSettings config) {
         AppSettings.Theme theme = config.getTheme().orElse(AppSettings.Theme.INTELLIJ);
@@ -254,7 +277,7 @@ public class EmuStudioGui implements GUI {
     @Override
     public JButton button(String iconResource, String text, Runnable action) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        JButton btn = new JButton(text, Icons.loadIcon(iconResource, callerClass));
+        JButton btn = new JButton(text, loadIcon(iconResource, callerClass));
         btn.addActionListener(e -> action.run());
         return btn;
     }
@@ -367,7 +390,7 @@ public class EmuStudioGui implements GUI {
     public void styleTable(JTable table) {
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setRowHeight(Math.max(table.getRowHeight(), Icons.SIZE) + 4);
+        table.setRowHeight(Math.max(table.getRowHeight(), ICON_SIZE) + 4);
     }
 
     @Override

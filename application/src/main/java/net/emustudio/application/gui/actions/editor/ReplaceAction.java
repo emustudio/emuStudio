@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_REPLACE;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class ReplaceAction extends AbstractAction {
     private final FindDialog findDialog;

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.components;
 
-import net.emustudio.application.gui.framework.Icons;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -16,7 +16,7 @@ public class ActionFromEvent extends AbstractAction {
 
     public ActionFromEvent(Consumer<ActionEvent> action, String name, String iconResource, String tooltipText,
                            Class<?> callerClass) {
-        super(name, Icons.loadIcon(iconResource, callerClass));
+        super(name, EmuStudioGui.loadIcon(iconResource, callerClass));
         putValue(SHORT_DESCRIPTION, tooltipText);
         this.action = action;
     }

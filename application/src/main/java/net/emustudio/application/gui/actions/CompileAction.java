@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_COMPILER;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
 public class CompileAction extends AbstractAction {
