@@ -186,6 +186,36 @@ public class DisplayFontCoverageTest {
     }
 
     @Test
+    public void testOriginalFontRendersContinuousVerticalStrokesAtDifferentDesktopScales() {
+        Font font = GUI.loadFontResource(
+                DisplayFont.FONT_ORIGINAL.path, DisplayFontCoverageTest.class, DisplayFont.FONT_ORIGINAL.fontSize
+        );
+        for (double scale : new double[]{1, 1.25, 1.5, 2}) {
+            BufferedImage image = new BufferedImage((int) (16 * scale), (int) (24 * scale), BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = image.createGraphics();
+            try {
+                graphics.scale(scale, scale);
+                graphics.setFont(font);
+                graphics.setColor(Color.WHITE);
+                graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DisplayFont.FONT_ORIGINAL.antiAliasing);
+                graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, DisplayFont.FONT_ORIGINAL.fractionalMetrics);
+                DisplayCanvas.drawCharacters(graphics, DisplayFont.FONT_ORIGINAL, new char[]{'H'}, 0, 1, 18);
+            } finally {
+                graphics.dispose();
+            }
+
+            double fontScale = font.getSize2D() / 1680.0;
+            int stemX = (int) Math.floor((DisplayFont.FONT_ORIGINAL.xCursorOffset + 1.5 * 137 * fontScale) * scale);
+            int top = (int) Math.ceil((18 - 6.5 * 240 * fontScale) * scale);
+            int bottom = (int) Math.floor((18 - 0.5 * 240 * fontScale) * scale);
+            for (int y = top; y <= bottom; y++) {
+                assertTrue("Continuous stem at scale " + scale + " row " + y,
+                        (image.getRGB(stemX, y) & 0xff) >= 200);
+            }
+        }
+    }
+
+    @Test
     public void testOriginalFontMatchesAllCharacterGeneratorRows() throws Exception {
         Font font = GUI.loadFontResource(
                 DisplayFont.FONT_ORIGINAL.path, DisplayFontCoverageTest.class, 1680
@@ -214,8 +244,18 @@ public class DisplayFontCoverageTest {
                             assertEquals("Dot in " + values[0] + " row " + row + " column " + column,
                                     lit, outline.contains((column + 1 + position) * 137, -(7.5 - row) * 240));
                         }
-                        assertTrue("Scanline gap in " + values[0],
-                                !outline.contains((column + 1.5) * 137, -(8 - row) * 240));
+                        if (row > 0 && lit) {
+                            int previous = Integer.parseInt(values[row], 16);
+                            for (int above = Math.max(0, column - 1); above <= Math.min(4, column + 1); above++) {
+                                if ((previous & (1 << (4 - above))) != 0) {
+                                    for (double position : new double[]{0.15, 0.5, 0.85}) {
+                                        assertTrue("Joined dots in " + values[0] + " row " + row,
+                                                outline.contains(((column + above) / 2.0 + 1 + position) * 137,
+                                                        -(8 - row) * 240));
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

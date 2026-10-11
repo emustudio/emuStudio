@@ -28,7 +28,7 @@ BEZIER_CIRCLE = 0.5522847498307936
 
 
 def scanline(pen, left, right, center):
-    """Draw a video pulse with elliptical CRT spot caps, never diagonal joins."""
+    """Draw a video pulse with elliptical CRT spot caps."""
     rx = X_PITCH / 2
     ry = SCANLINE_HEIGHT / 2
     k = BEZIER_CIRCLE
@@ -40,6 +40,20 @@ def scanline(pen, left, right, center):
     pen.curveTo((left + rx - k * rx, center + ry), (left, center + k * ry), (left, center))
     pen.curveTo((left, center - k * ry), (left + rx - k * rx, center - ry), (left + rx, center - ry))
     pen.closePath()
+
+
+def join_rows(pen, previous, current, center):
+    """Connect neighboring lit dots without changing the ROM row centers."""
+    for column in range(5):
+        if not current & (1 << (4 - column)):
+            continue
+        for above in range(max(0, column - 1), min(5, column + 2)):
+            if previous & (1 << (4 - above)):
+                pen.moveTo(((column + 1) * X_PITCH, center))
+                pen.lineTo(((column + 2) * X_PITCH, center))
+                pen.lineTo(((above + 2) * X_PITCH, center + Y_PITCH))
+                pen.lineTo(((above + 1) * X_PITCH, center + Y_PITCH))
+                pen.closePath()
 
 
 def main():
@@ -62,11 +76,11 @@ def main():
         setattr(font, name, ASCENT)
     for name in ('os2_typodescent', 'os2_windescent', 'hhea_descent'):
         setattr(font, name, 0)
-    font.version = '1.2'
+    font.version = '1.3'
     font.comment = ('ASCII dot positions verified against ADM-3A 2513 ROMs; '
                     'other characters retain emuStudio extensions. '
                     '5x7 glyphs, 7x9 cells, 137x240 dot pitch. '
-                    'Rounded vector scanlines approximate the CRT spot. '
+                    'Connected vector strokes with rounded CRT spot caps. '
                     'Rebuild with generate.py; masks are in adm3a-charset.txt.')
 
     for glyph in font.glyphs():
@@ -77,6 +91,8 @@ def main():
         glyph.foreground = fontforge.layer()
         pen = glyph.glyphPen()
         for row, mask in enumerate(masks[glyph.unicode][1:], 1):
+            center = (7.5 - row) * Y_PITCH
+            join_rows(pen, masks[glyph.unicode][row - 1], mask, center)
             column = 0
             while column < 5:
                 if not mask & (1 << (4 - column)):
@@ -86,8 +102,9 @@ def main():
                 while column < 5 and mask & (1 << (4 - column)):
                     column += 1
                 scanline(pen, (start + 1) * X_PITCH, (column + 1) * X_PITCH,
-                         (7.5 - row) * Y_PITCH)
+                         center)
         del pen
+        glyph.removeOverlap()
         glyph.correctDirection()
         glyph.width = CELL_WIDTH
 
