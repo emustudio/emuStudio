@@ -6,7 +6,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
@@ -22,7 +22,7 @@ public class ExprId extends Node {
     }
 
     public ExprId(String fileName, Token id) {
-        this(new SourceCodePosition(id.getLine(), id.getCharPositionInLine(), fileName), id.getText());
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
@@ -31,7 +31,7 @@ public class ExprId extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

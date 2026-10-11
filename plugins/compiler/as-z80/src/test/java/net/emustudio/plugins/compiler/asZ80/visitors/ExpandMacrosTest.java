@@ -3,14 +3,15 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroArgument;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroCall;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroDef;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroParameter;
-import net.emustudio.plugins.compiler.asZ80.exceptions.FatalError;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroDef;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroParameter;
+import net.emustudio.plugins.compiler.as8080.exceptions.FatalError;
+import net.emustudio.plugins.compiler.as8080.visitors.ExpandMacrosVisitor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -18,7 +19,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_NOT_DEFINED;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_NOT_DEFINED;
 import static net.emustudio.plugins.compiler.asZ80.Utils.*;
 import static org.junit.Assert.assertTrue;
 

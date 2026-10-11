@@ -3,10 +3,10 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoInclude;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Lexer;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Parser;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoInclude;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -15,8 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static net.emustudio.plugins.compiler.asZ80.CompileError.couldNotReadFile;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.infiniteLoopDetected;
+import static net.emustudio.plugins.compiler.as8080.CompileError.couldNotReadFile;
+import static net.emustudio.plugins.compiler.as8080.CompileError.infiniteLoopDetected;
 
 /**
  * Integrate "include" files and remove PseudoInclude

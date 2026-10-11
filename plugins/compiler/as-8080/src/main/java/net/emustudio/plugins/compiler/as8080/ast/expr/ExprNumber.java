@@ -6,7 +6,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.function.Function;
@@ -20,7 +20,7 @@ public class ExprNumber extends Node {
     }
 
     public ExprNumber(String fileName, Token number, Function<Token, Integer> parser) {
-        this(new SourceCodePosition(number.getLine(), number.getCharPositionInLine(), fileName), parser.apply(number));
+        this(positionFromToken(fileName, number), parser.apply(number));
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ExprNumber extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

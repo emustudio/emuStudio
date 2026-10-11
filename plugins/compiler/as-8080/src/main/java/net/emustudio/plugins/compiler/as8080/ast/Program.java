@@ -3,7 +3,7 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ public class Program extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

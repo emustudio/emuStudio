@@ -4,6 +4,7 @@ package net.emustudio.plugins.compiler.as8080.ast.instr;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
@@ -30,8 +31,12 @@ public class InstrRegReg extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
-        visitor.visit(this);
+    public void accept(BaseNodeVisitor visitor) {
+        if (visitor instanceof NodeVisitor) {
+            ((NodeVisitor) visitor).visit(this);
+        } else {
+            visitor.visit(this);
+        }
     }
 
     @Override

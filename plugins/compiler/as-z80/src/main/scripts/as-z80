@@ -64,7 +64,7 @@ case "`uname`" in
     ;;
 esac
 
-CLASSPATH="$APP_HOME/compiler/as-z80.jar:$APP_HOME/lib/*"
+CLASSPATH="$APP_HOME/compiler/as-z80.jar:$APP_HOME/compiler/as-8080.jar:$APP_HOME/lib/*"
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then

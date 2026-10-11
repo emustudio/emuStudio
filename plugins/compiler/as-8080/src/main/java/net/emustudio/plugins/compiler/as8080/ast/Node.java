@@ -3,7 +3,8 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +13,11 @@ import java.util.Optional;
 
 public abstract class Node {
     public final SourceCodePosition position;
-
     protected final List<Node> children = new ArrayList<>();
     protected Node parent;
     private int address;
+    private Integer maxValue;
+    private Integer sizeBytes;
 
     public Node(SourceCodePosition position) {
         this.position = Objects.requireNonNull(position);
@@ -104,7 +106,7 @@ public abstract class Node {
         return null;
     }
 
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -116,7 +118,12 @@ public abstract class Node {
     private String toString(int indent) {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
-        builder.append(address).append("> ").append(toStringShallow());
+        builder
+                .append(Integer.toHexString(address))
+                .append("> ")
+                .append(toStringShallow())
+                .append(sizeBytes != null ? "(size=" + sizeBytes + ")" : "");
+
         for (Node child : children) {
             builder.append("\n").append(child.toString(indent + 2));
         }
@@ -131,6 +138,9 @@ public abstract class Node {
 
     public Node copy() {
         Node copied = mkCopy();
+        if (maxValue != null) {
+            copied.setMaxValue(maxValue);
+        }
         for (Node child : children) {
             copied.addChild(child.copy());
         }
@@ -141,5 +151,36 @@ public abstract class Node {
     public boolean equals(Object o) {
         if (this == o) return true;
         return !(o == null || getClass() != o.getClass());
+    }
+
+    public Integer getMaxValue() {
+        return maxValue;
+    }
+
+    public Node setMaxValue(int maxValue) {
+        int wasBits = (int) Math.floor(Math.log10(Math.abs(maxValue)) / Math.log10(2)) + 1;
+        this.sizeBytes = (int) Math.ceil(wasBits / 8.0);
+        this.maxValue = maxValue;
+        return this;
+    }
+
+    public Integer getSizeBytes() {
+        return sizeBytes;
+    }
+
+    public Node setSizeBytes(int bytes) {
+        int value = 0;
+        for (int i = 0; i < bytes; i++) {
+            value <<= 8;
+            value |= 0xFF;
+        }
+
+        this.sizeBytes = bytes;
+        this.maxValue = value;
+        return this;
+    }
+
+    public static SourceCodePosition positionFromToken(String fileName, Token token) {
+        return new SourceCodePosition(token.getLine(), token.getCharPositionInLine(), fileName);
     }
 }

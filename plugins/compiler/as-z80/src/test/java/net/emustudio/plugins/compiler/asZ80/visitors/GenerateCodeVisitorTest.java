@@ -4,14 +4,14 @@ package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.runtime.io.IntelHEX;
-import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoOrg;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroCall;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoOrg;
 import org.junit.Test;
 
 import java.util.Map;

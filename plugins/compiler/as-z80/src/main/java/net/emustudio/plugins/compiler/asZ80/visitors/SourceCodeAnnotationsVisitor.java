@@ -4,10 +4,10 @@ package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
 
 import java.util.Objects;

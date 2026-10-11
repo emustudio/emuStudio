@@ -7,59 +7,21 @@ import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
-import org.antlr.v4.runtime.Token;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
-
-import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class ExprInfix extends Node {
-    private final static Map<Integer, BiFunction<Integer, Integer, Integer>> infixOps = new HashMap<>();
+    public final InfixOperator operation;
 
-    static {
-        infixOps.put(OP_ADD, Integer::sum);
-        infixOps.put(OP_SUBTRACT, (x, y) -> x - y);
-        infixOps.put(OP_DIVIDE, (x, y) -> x / y);
-        infixOps.put(OP_MULTIPLY, (x, y) -> x * y);
-        infixOps.put(OP_MOD, (x, y) -> x % y);
-        infixOps.put(OP_MOD_2, (x, y) -> x % y);
-        infixOps.put(OP_AND, (x, y) -> x & y);
-        infixOps.put(OP_AND_2, (x, y) -> x & y);
-        infixOps.put(OP_OR, (x, y) -> x | y);
-        infixOps.put(OP_OR_2, (x, y) -> x | y);
-        infixOps.put(OP_XOR, (x, y) -> x ^ y);
-        infixOps.put(OP_XOR_2, (x, y) -> x ^ y);
-        infixOps.put(OP_SHL, (x, y) -> x << y);
-        infixOps.put(OP_SHL_2, (x, y) -> x << y);
-        infixOps.put(OP_SHR, (x, y) -> x >>> y);
-        infixOps.put(OP_SHR_2, (x, y) -> x >>> y);
-        infixOps.put(OP_EQUAL, (x, y) -> ((x.equals(y)) ? 1 : 0));
-        infixOps.put(OP_LT, (x, y) -> (x < y) ? 1 : 0);
-        infixOps.put(OP_LTE, (x, y) -> (x <= y) ? 1 : 0);
-        infixOps.put(OP_GT, (x, y) -> (x > y) ? 1 : 0);
-        infixOps.put(OP_GTE, (x, y) -> (x >= y) ? 1 : 0);
-    }
-
-    public final int operationCode;
-    private final BiFunction<Integer, Integer, Integer> operation;
-
-    public ExprInfix(SourceCodePosition position, int op) {
+    public ExprInfix(SourceCodePosition position, InfixOperator operation) {
         super(position);
-        this.operationCode = op;
-        this.operation = Objects.requireNonNull(infixOps.get(op), "Unknown infix operation");
+        this.operation = Objects.requireNonNull(operation, "Unknown infix operation");
         // children are: left, right
     }
 
-    public ExprInfix(String fileName, Token op) {
-        this(new SourceCodePosition(op.getLine(), op.getCharPositionInLine(), fileName), op.getType());
-    }
-
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -72,10 +34,8 @@ public class ExprInfix extends Node {
         Evaluated right = rightChild.eval(currentAddress, env);
 
         if (left != null && right != null) {
-            int l = left.value;
-            int r = right.value;
             try {
-                return new Evaluated(position, operation.apply(l, r));
+                return new Evaluated(position, operation.apply(left.value, right.value));
             } catch (ArithmeticException e) {
                 throw new CompileException(position, "Arithmetic error: " + e.getMessage());
             }
@@ -86,12 +46,12 @@ public class ExprInfix extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "ExprInfix(" + operationCode + ")";
+        return "ExprInfix(" + operation + ")";
     }
 
     @Override
     protected Node mkCopy() {
-        return new ExprInfix(position, operationCode);
+        return new ExprInfix(position, operation);
     }
 
     @Override
@@ -100,6 +60,6 @@ public class ExprInfix extends Node {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         ExprInfix exprInfix = (ExprInfix) o;
-        return operationCode == exprInfix.operationCode;
+        return operation == exprInfix.operation;
     }
 }

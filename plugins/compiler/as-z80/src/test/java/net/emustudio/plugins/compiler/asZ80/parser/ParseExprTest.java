@@ -3,11 +3,13 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprUnary;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprUnary;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
+import net.emustudio.plugins.compiler.as8080.ast.expr.UnaryOperator;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
@@ -23,9 +25,9 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                         .addChild(new ExprNumber(POSITION, 2))
-                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
                                                 .addChild(new ExprNumber(POSITION, 3))
                                                 .addChild(new ExprNumber(POSITION, 4))))),
                 program
@@ -38,8 +40,8 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_ADD)
-                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
                                                 .addChild(new ExprNumber(POSITION, 2))
                                                 .addChild(new ExprNumber(POSITION, 3)))
                                         .addChild(new ExprNumber(POSITION, 4)))),
@@ -53,9 +55,9 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
-                                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
                                                         .addChild(new ExprNumber(POSITION, 2))
                                                         .addChild(new ExprNumber(POSITION, 3)))
                                                 .addChild(new ExprNumber(POSITION, 4)))
@@ -70,9 +72,9 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
-                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
-                                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.DIVIDE)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.DIVIDE)
                                                         .addChild(new ExprNumber(POSITION, 2))
                                                         .addChild(new ExprNumber(POSITION, 3)))
                                                 .addChild(new ExprNumber(POSITION, 4)))
@@ -87,14 +89,14 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprNumber(POSITION, 2))
-                                                .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
                                                         .addChild(new ExprNumber(POSITION, 3))
                                                         .addChild(new ExprNumber(POSITION, 4))))
-                                        .addChild(new ExprInfix(POSITION, OP_MOD)
-                                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.MOD)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.DIVIDE)
                                                         .addChild(new ExprNumber(POSITION, 9))
                                                         .addChild(new ExprNumber(POSITION, 2)))
                                                 .addChild(new ExprNumber(POSITION, 3))))),
@@ -108,17 +110,17 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
-                                        .addChild(new ExprInfix(POSITION, OP_ADD) // 1 + 2 + 2 associates to left
-                                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD) // 1 + 2 + 2 associates to left
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                         .addChild(new ExprNumber(POSITION, 1))
                                                         .addChild(new ExprNumber(POSITION, 2)))
                                                 .addChild(new ExprNumber(POSITION, 2)))
-                                        .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                                 .addChild(new ExprNumber(POSITION, 5)) // ... = 5 associates to right
-                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                                         .addChild(new ExprNumber(POSITION, 5))
-                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT) // minus has > precedence than =
+                                                        .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT) // minus has > precedence than =
                                                                 .addChild(new ExprNumber(POSITION, 6))
                                                                 .addChild(new ExprNumber(POSITION, 1))))))),
                 program
@@ -131,22 +133,22 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_OR)
-                                        .addChild(new ExprInfix(POSITION, OP_AND)
-                                                .addChild(new ExprUnary(POSITION, OP_NOT)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.OR)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.AND)
+                                                .addChild(new ExprUnary(POSITION, UnaryOperator.NOT)
                                                         .addChild(new ExprNumber(POSITION, 1)))
                                                 .addChild(new ExprNumber(POSITION, 2)))
-                                        .addChild(new ExprInfix(POSITION, OP_XOR)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.XOR)
                                                 .addChild(new ExprNumber(POSITION, 2))
-                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                                         .addChild(new ExprNumber(POSITION, 5))
-                                                        .addChild(new ExprInfix(POSITION, OP_SHR)
-                                                                .addChild(new ExprInfix(POSITION, OP_SHL)
-                                                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
-                                                                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                                        .addChild(new ExprInfix(POSITION, InfixOperator.SHR)
+                                                                .addChild(new ExprInfix(POSITION, InfixOperator.SHL)
+                                                                        .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
+                                                                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                                                                         .addChild(new ExprNumber(POSITION, 5)))
                                                                                 .addChild(new ExprNumber(POSITION, 6)))
-                                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                                        .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
                                                                                 .addChild(new ExprNumber(POSITION, 4))
                                                                                 .addChild(new ExprNumber(POSITION, 1))))
                                                                 .addChild(new ExprNumber(POSITION, 2))))))),
@@ -161,22 +163,22 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_OR)
-                                        .addChild(new ExprInfix(POSITION, OP_AND)
-                                                .addChild(new ExprUnary(POSITION, OP_NOT_2)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.OR)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.AND)
+                                                .addChild(new ExprUnary(POSITION, UnaryOperator.NOT)
                                                         .addChild(new ExprNumber(POSITION, 1)))
                                                 .addChild(new ExprNumber(POSITION, 2)))
-                                        .addChild(new ExprInfix(POSITION, OP_XOR)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.XOR)
                                                 .addChild(new ExprNumber(POSITION, 2))
-                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                                         .addChild(new ExprNumber(POSITION, 5))
-                                                        .addChild(new ExprInfix(POSITION, OP_SHR_2)
-                                                                .addChild(new ExprInfix(POSITION, OP_SHL_2)
-                                                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
-                                                                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                                        .addChild(new ExprInfix(POSITION, InfixOperator.SHR)
+                                                                .addChild(new ExprInfix(POSITION, InfixOperator.SHL)
+                                                                        .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
+                                                                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                                                                         .addChild(new ExprNumber(POSITION, 5)))
                                                                                 .addChild(new ExprNumber(POSITION, 6)))
-                                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                                        .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
                                                                                 .addChild(new ExprNumber(POSITION, 4))
                                                                                 .addChild(new ExprNumber(POSITION, 1))))
                                                                 .addChild(new ExprNumber(POSITION, 2))))))),
@@ -190,11 +192,11 @@ public class ParseExprTest {
         assertTrees(
                 new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.MULTIPLY)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprNumber(POSITION, 2))
                                                 .addChild(new ExprNumber(POSITION, 3)))
-                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.SUBTRACT)
                                                 .addChild(new ExprNumber(POSITION, 4))
                                                 .addChild(new ExprNumber(POSITION, 2))))),
                 program

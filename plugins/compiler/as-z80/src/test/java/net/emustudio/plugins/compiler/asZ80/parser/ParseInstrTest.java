@@ -3,15 +3,16 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
 import net.emustudio.plugins.compiler.asZ80.CompilerTables;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprCurrentAddress;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoLabel;
 import org.junit.Test;
 
 import java.util.Random;
@@ -312,7 +313,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrEDExpr(String instrPrefix, String instrPostfix, int y) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -330,7 +331,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrExpr(String instrPrefix, String instrPostfix, int instrType, int x, int y, int z) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -358,7 +359,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrXDCBExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -369,7 +370,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrXDCBExprBit(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -396,7 +397,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrXDExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int x, int y, int z) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -409,7 +410,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrXDExprExpr(String instrPrefix, int prefix) {
-        Node disp = new ExprInfix(POSITION, OP_ADD)
+        Node disp = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 

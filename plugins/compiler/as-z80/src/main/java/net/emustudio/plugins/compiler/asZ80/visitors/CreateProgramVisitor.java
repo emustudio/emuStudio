@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Parser.RLineContext;
 import net.emustudio.plugins.compiler.asZ80.AsZ80ParserBaseVisitor;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
 
 import java.util.Objects;
 

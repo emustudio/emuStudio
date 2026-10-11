@@ -4,19 +4,20 @@ package net.emustudio.plugins.compiler.as8080.ast.data;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 /**
  * "Data Store" node. Inserts some space.
  * Child is an expression which must not use forward references and must not be negative.
  */
 public class DataDS extends Node {
+
     public DataDS(SourceCodePosition position) {
         super(position);
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

@@ -3,18 +3,21 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
+import net.emustudio.plugins.compiler.as8080.visitors.SortMacroArgumentsVisitor;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OPCODE_LD;
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OP_ADD;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 
@@ -42,7 +45,7 @@ public class SortMacroArgumentsVisitorTest {
                                 .addChild(new Instr(POSITION, OPCODE_LD, 0, 7, 6)
                                         .addChild(new ExprId(POSITION, "q")))
                                 .addChild(new PseudoEqu(POSITION, "uu")
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprId(POSITION, "r"))
                                                 .addChild(new ExprId(POSITION, "t"))))));
 
@@ -63,7 +66,7 @@ public class SortMacroArgumentsVisitorTest {
                                 .addChild(new Instr(POSITION, OPCODE_LD, 0, 7, 6)
                                         .addChild(new ExprId(POSITION, "q")))
                                 .addChild(new PseudoEqu(POSITION, "uu")
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprId(POSITION, "r"))
                                                 .addChild(new ExprId(POSITION, "t"))))),
                 program

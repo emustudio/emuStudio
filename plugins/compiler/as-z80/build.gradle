@@ -18,6 +18,7 @@ dependencies {
   antlr libs.antlr
   implementation libs.antlrRuntime
 
+  compilerLib project(':plugins:compiler:as-8080')
   implementation libs.emuLib
   implementation libs.slf4JApi
 

@@ -3,14 +3,16 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
+import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
-import net.emustudio.plugins.compiler.asZ80.exceptions.SyntaxErrorException;
 import org.junit.Test;
 
 import java.util.List;
@@ -48,7 +50,7 @@ public class ParsePseudoTest {
         Program program = parseProgram("org 55+88");
         assertTrees(new Program("")
                         .addChild(new PseudoOrg(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                         .addChild(new ExprNumber(POSITION, 55))
                                         .addChild(new ExprNumber(POSITION, 88)))),
                 program

@@ -4,7 +4,7 @@ package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
@@ -20,11 +20,11 @@ public class PseudoMacroDef extends Node {
     }
 
     public PseudoMacroDef(String fileName, Token id) {
-        this(new SourceCodePosition(id.getLine(), id.getCharPositionInLine(), fileName), id.getText());
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

@@ -8,6 +8,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import org.junit.Test;
 
@@ -112,7 +113,7 @@ public class ParseInstrTest {
 
     @Test
     public void testMVI() {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -134,7 +135,7 @@ public class ParseInstrTest {
 
     @Test
     public void testLXI() {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
@@ -200,7 +201,7 @@ public class ParseInstrTest {
     }
 
     private void assertInstrExpr(String instr, int instrType) {
-        Node expr = new ExprInfix(POSITION, OP_ADD)
+        Node expr = new ExprInfix(POSITION, InfixOperator.ADD)
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 

@@ -3,12 +3,12 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
+import net.emustudio.plugins.compiler.as8080.exceptions.FatalError;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoLabel;
-import net.emustudio.plugins.compiler.asZ80.exceptions.FatalError;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -19,7 +19,7 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_CANNOT_READ_FILE;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_CANNOT_READ_FILE;
 import static net.emustudio.plugins.compiler.asZ80.Utils.*;
 import static org.junit.Assert.assertTrue;
 

@@ -1,6 +1,6 @@
 set CMD_LINE_ARGS=%*
 
-java -cp "compiler\as-z80.jar:lib\*" net.emustudio.plugins.compiler.asZ80.Runner %CMD_LINE_ARGS%
+java -cp "compiler\as-z80.jar;compiler\as-8080.jar;lib\*" net.emustudio.plugins.compiler.asZ80.Runner %CMD_LINE_ARGS%
 
 @if "%DEBUG%" == "" @echo off
 @rem ##########################################################################
@@ -72,7 +72,7 @@ set CMD_LINE_ARGS=%*
 
 set CMD_LINE_ARGS=%*
 
-set CLASSPATH="%APP_HOME%\compiler\as-z80.jar;%APP_HOME%\lib\*"
+set CLASSPATH="%APP_HOME%\compiler\as-z80.jar;%APP_HOME%\compiler\as-8080.jar;%APP_HOME%\lib\*"
 
 @rem Execute as-z80
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %AS_Z80_OPTS%  -classpath "%CLASSPATH%" net.emustudio.plugins.compiler.asZ80.Runner %CMD_LINE_ARGS%

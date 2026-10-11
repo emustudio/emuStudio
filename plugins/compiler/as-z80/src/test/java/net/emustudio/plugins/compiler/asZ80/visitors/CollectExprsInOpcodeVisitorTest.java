@@ -3,8 +3,8 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXDCB;
@@ -12,7 +12,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoVar;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_VALUE_OUT_OF_BOUNDS;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_VALUE_OUT_OF_BOUNDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

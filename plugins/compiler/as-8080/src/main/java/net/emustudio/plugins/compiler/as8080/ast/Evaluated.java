@@ -3,23 +3,29 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 public class Evaluated extends Node {
     public final int value;
+    public final boolean isAddress;
 
-    public Evaluated(SourceCodePosition position, int value) {
+    public Evaluated(SourceCodePosition position, int value, boolean isAddress) {
         super(position);
         this.value = value;
+        this.isAddress = isAddress;
+    }
+
+    public Evaluated(SourceCodePosition position, int value) {
+        this(position, value, false);
     }
 
     @Override
     protected Node mkCopy() {
-        return new Evaluated(position, value);
+        return new Evaluated(position, value, isAddress);
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

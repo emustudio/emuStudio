@@ -14,8 +14,13 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.exceptions.CompileException;
+import net.emustudio.plugins.compiler.as8080.CompileError;
+import net.emustudio.plugins.compiler.as8080.ParserErrorListener;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.ExpandMacrosVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.SortMacroArgumentsVisitor;
 import net.emustudio.plugins.compiler.asZ80.visitors.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -96,7 +101,8 @@ public class AssemblerZ80 extends AbstractCompiler {
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
-            NodeVisitor[] visitors = new NodeVisitor[]{
+            BaseNodeVisitor[] visitors =
+                    new BaseNodeVisitor[]{
                     new ExpandIncludesVisitor(),
                     new CheckDeclarationsVisitor(),
                     new ExpandMacrosVisitor(),
@@ -110,7 +116,7 @@ public class AssemblerZ80 extends AbstractCompiler {
                     new GenerateCodeVisitor(hex)
             };
 
-            for (NodeVisitor visitor : visitors) {
+            for (BaseNodeVisitor visitor : visitors) {
                 visitor.visit(program);
             }
 

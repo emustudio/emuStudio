@@ -46,7 +46,7 @@ import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.normalize
  *   ...
  * </pre>
  */
-public class SortMacroArgumentsVisitor extends NodeVisitor {
+public class SortMacroArgumentsVisitor extends BaseNodeVisitor {
 
     private final Map<String, List<Node>> macroArguments = new HashMap<>();
     private final Map<String, List<Node>> macroParameters = new HashMap<>();

@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
 import org.junit.Test;
 
-import static net.emustudio.plugins.compiler.asZ80.CompileError.*;
+import static net.emustudio.plugins.compiler.as8080.CompileError.*;
 import static net.emustudio.plugins.compiler.asZ80.Utils.parseProgram;
 import static org.junit.Assert.assertTrue;
 

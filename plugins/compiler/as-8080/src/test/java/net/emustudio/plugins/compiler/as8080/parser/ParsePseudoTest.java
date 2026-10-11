@@ -8,6 +8,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
@@ -48,7 +49,7 @@ public class ParsePseudoTest {
         Program program = parseProgram("org 55+88");
         assertTrees(new Program("")
                         .addChild(new PseudoOrg(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                         .addChild(new ExprNumber(POSITION, 55))
                                         .addChild(new ExprNumber(POSITION, 88)))),
                 program

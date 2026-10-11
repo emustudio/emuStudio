@@ -6,7 +6,10 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CompileError {
     public static final int ERROR_ALREADY_DECLARED = 1;
@@ -21,9 +24,9 @@ public class CompileError {
     public static final int ERROR_VALUE_MUST_BE_POSITIVE = 10;
     public static final int ERROR_VALUE_OUT_OF_BOUNDS = 11;
 
-    public final SourceCodePosition position;
     public final String msg;
     public final int errorCode;
+    public final SourceCodePosition position;
 
     private CompileError(SourceCodePosition position, int errorCode, String msg) {
         this.position = Objects.requireNonNull(position);
@@ -91,6 +94,20 @@ public class CompileError {
                 node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (min=" + min + ", max=" + max + ")"
         );
     }
+
+    public static CompileError valueOutOfBounds(Node node, Set<Integer> allowedValues) {
+        List<String> hexaValues = allowedValues
+                .stream()
+                .sorted()
+                .map(Integer::toHexString)
+                .map(x -> "0x" + x)
+                .collect(Collectors.toList());
+
+        return new CompileError(
+                node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (allowed values=" + hexaValues + ")"
+        );
+    }
+
 
     @Override
     public String toString() {

@@ -4,7 +4,7 @@ package net.emustudio.plugins.compiler.as8080.ast.data;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 public class DataDW extends Node {
 
@@ -14,7 +14,7 @@ public class DataDW extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

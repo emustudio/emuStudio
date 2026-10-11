@@ -4,7 +4,7 @@ package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 /**
  * Macro call arguments are passed when macro is called.
@@ -17,7 +17,7 @@ public class PseudoMacroArgument extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

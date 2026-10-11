@@ -2,11 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprUnary;
+import net.emustudio.plugins.compiler.as8080.ast.expr.UnaryOperator;
 import net.emustudio.plugins.compiler.asZ80.AsZ80ParserBaseVisitor;
 import net.emustudio.plugins.compiler.asZ80.CompilerTables;
 import net.emustudio.plugins.compiler.asZ80.Pair;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprUnary;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
 
 import java.util.HashMap;
@@ -47,7 +49,10 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     private Node visitDisplacementExpr(RDisplacementContext d) {
         Node expr = exprVisitor().visit(d.n);
         if (d.op.getType() == OP_SUBTRACT) {
-            ExprUnary unary = new ExprUnary(sourceFileName, d.op);
+            ExprUnary unary = new ExprUnary(
+                    new SourceCodePosition(d.op.getLine(), d.op.getCharPositionInLine(), sourceFileName),
+                    UnaryOperator.SUBTRACT
+            );
             unary.addChild(expr);
             return unary.setSizeBytes(1);
         }

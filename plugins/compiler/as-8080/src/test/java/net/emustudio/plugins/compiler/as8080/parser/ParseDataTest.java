@@ -10,6 +10,7 @@ import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprUnary;
+import net.emustudio.plugins.compiler.as8080.ast.expr.UnaryOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import org.junit.Test;
 
@@ -57,7 +58,7 @@ public class ParseDataTest {
         Program program = parseProgram("db -1,2,3");
         assertTrees(new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 1)))
                                 .addChild(new ExprNumber(POSITION, 2))
                                 .addChild(new ExprNumber(POSITION, 3))),
@@ -70,7 +71,7 @@ public class ParseDataTest {
         Program program = parseProgram("db -1");
         assertTrees(new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 1)))),
                 program
         );
@@ -81,7 +82,7 @@ public class ParseDataTest {
         Program program = parseProgram("db -1,'hello',3");
         assertTrees(new Program("")
                         .addChild(new DataDB(POSITION)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 1)))
                                 .addChild(new ExprString(POSITION, "hello"))
                                 .addChild(new ExprNumber(POSITION, 3))),
@@ -94,7 +95,7 @@ public class ParseDataTest {
         Program program = parseProgram("dw -1,2,3");
         assertTrees(new Program("")
                         .addChild(new DataDW(POSITION)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 1)))
                                 .addChild(new ExprNumber(POSITION, 2))
                                 .addChild(new ExprNumber(POSITION, 3))),
@@ -107,7 +108,7 @@ public class ParseDataTest {
         Program program = parseProgram("dw -1");
         assertTrees(new Program("")
                         .addChild(new DataDW(POSITION)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 1)))),
                 program
         );

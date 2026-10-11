@@ -19,7 +19,7 @@ import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.normalize
  * <p>
  * It doesn't mean the macro expansion will be used in code yet.
  */
-public class ExpandMacrosVisitor extends NodeVisitor {
+public class ExpandMacrosVisitor extends BaseNodeVisitor {
     private final Map<String, Node> macros = new HashMap<>();
     private final Map<String, List<PseudoMacroCall>> forwardMacroCalls = new HashMap<>();
 

@@ -3,7 +3,7 @@
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;

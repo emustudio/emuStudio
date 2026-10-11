@@ -6,7 +6,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 public class ExprCurrentAddress extends Node {
 
@@ -15,7 +15,7 @@ public class ExprCurrentAddress extends Node {
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -26,9 +26,6 @@ public class ExprCurrentAddress extends Node {
 
     @Override
     public Evaluated eval(Integer currentAddress, NameSpace env) {
-        if (currentAddress != null) {
-            return new Evaluated(position, currentAddress);
-        }
-        return null;
+        return currentAddress != null ? new Evaluated(position, currentAddress, true) : null;
     }
 }

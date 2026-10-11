@@ -8,6 +8,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class SortMacroArgumentsVisitorTest {
                                 .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
                                         .addChild(new ExprId(POSITION, "q")))
                                 .addChild(new PseudoEqu(POSITION, "uu")
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprId(POSITION, "r"))
                                                 .addChild(new ExprId(POSITION, "t"))))));
 
@@ -61,7 +62,7 @@ public class SortMacroArgumentsVisitorTest {
                                 .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
                                         .addChild(new ExprId(POSITION, "q")))
                                 .addChild(new PseudoEqu(POSITION, "uu")
-                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                                 .addChild(new ExprId(POSITION, "r"))
                                                 .addChild(new ExprId(POSITION, "t"))))),
                 program

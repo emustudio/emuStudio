@@ -10,11 +10,11 @@ import org.antlr.v4.runtime.Recognizer;
 
 import java.util.Objects;
 
-class ParserErrorListener extends BaseErrorListener {
-    private final String fileName;
+public class ParserErrorListener extends BaseErrorListener {
+    private final String sourceFileName;
 
-    ParserErrorListener(String fileName) {
-        this.fileName = Objects.requireNonNull(fileName);
+    public ParserErrorListener(String sourceFileName) {
+        this.sourceFileName = Objects.requireNonNull(sourceFileName);
     }
 
     // TODO: parse message expected tokens to token categories
@@ -28,9 +28,9 @@ class ParserErrorListener extends BaseErrorListener {
             RecognitionException e) {
 
         if (e == null) {
-            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, fileName), msg);
+            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, sourceFileName), msg);
         } else {
-            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, fileName), msg, e);
+            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, sourceFileName), msg, e);
         }
     }
 }

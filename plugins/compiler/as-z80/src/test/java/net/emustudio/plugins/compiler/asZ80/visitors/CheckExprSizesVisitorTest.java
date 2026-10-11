@@ -3,21 +3,21 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
-import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoOrg;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroArgument;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroCall;
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoOrg;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_VALUE_OUT_OF_BOUNDS;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED;
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_VALUE_OUT_OF_BOUNDS;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 

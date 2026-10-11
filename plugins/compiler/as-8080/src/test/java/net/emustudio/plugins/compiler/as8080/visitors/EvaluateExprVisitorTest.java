@@ -12,6 +12,7 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
@@ -34,7 +35,7 @@ public class EvaluateExprVisitorTest {
         Program program = new Program("");
         program
                 .addChild(new DataDB(POSITION)
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprNumber(POSITION, 1))
                                 .addChild(new ExprNumber(POSITION, 2)))
                         .addChild(new ExprNumber(POSITION, 'h'))
@@ -65,7 +66,7 @@ public class EvaluateExprVisitorTest {
         Program program = new Program("");
         program
                 .addChild(new DataDW(POSITION)
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprNumber(POSITION, 1))
                                 .addChild(new ExprNumber(POSITION, 2))))
                 .addChild(new DataDW(POSITION)
@@ -91,7 +92,7 @@ public class EvaluateExprVisitorTest {
         Program program = new Program("");
         program
                 .addChild(new DataDS(POSITION)
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprNumber(POSITION, 1))
                                 .addChild(new ExprNumber(POSITION, 2))))
                 .addChild(new DataDB(POSITION)
@@ -190,13 +191,13 @@ public class EvaluateExprVisitorTest {
                         .addChild(new ExprId(POSITION, "const")))
                 .addChild(new PseudoIf(POSITION)
                         .addChild(new PseudoIfExpression(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                         .addChild(new ExprCurrentAddress(POSITION))
                                         .addChild(new ExprNumber(POSITION, 2))))
                         .addChild(new InstrExpr(POSITION, OPCODE_RST)
                                 .addChild(new ExprNumber(POSITION, 0))))
                 .addChild(new PseudoEqu(POSITION, "const")
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprCurrentAddress(POSITION))
                                 .addChild(new ExprCurrentAddress(POSITION))));
 
@@ -221,13 +222,13 @@ public class EvaluateExprVisitorTest {
         program
                 .addChild(new PseudoIf(POSITION)
                         .addChild(new PseudoIfExpression(POSITION)
-                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                .addChild(new ExprInfix(POSITION, InfixOperator.EQUAL)
                                         .addChild(new ExprCurrentAddress(POSITION))
                                         .addChild(new ExprId(POSITION, "const"))))
                         .addChild(new InstrExpr(POSITION, OPCODE_RST)
                                 .addChild(new ExprNumber(POSITION, 0))))
                 .addChild(new PseudoEqu(POSITION, "const")
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprCurrentAddress(POSITION))
                                 .addChild(new ExprCurrentAddress(POSITION))));
 
@@ -344,13 +345,13 @@ public class EvaluateExprVisitorTest {
         Program program = new Program("");
         program
                 .addChild(new DataDB(POSITION)
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprCurrentAddress(POSITION))
                                 .addChild(new ExprId(POSITION, "label")))
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprCurrentAddress(POSITION))
                                 .addChild(new ExprId(POSITION, "label")))
-                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                        .addChild(new ExprInfix(POSITION, InfixOperator.ADD)
                                 .addChild(new ExprCurrentAddress(POSITION))
                                 .addChild(new ExprId(POSITION, "label"))))
                 .addChild(new PseudoLabel(POSITION, "label"));

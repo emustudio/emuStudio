@@ -3,11 +3,12 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprUnary;
+import net.emustudio.plugins.compiler.as8080.ast.expr.UnaryOperator;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXD;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprUnary;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
@@ -71,7 +72,7 @@ public class ParseProgramTest {
         Program program = parseProgram("ld a, (ix - 5)");
         assertTrees(new Program("")
                         .addChild(new InstrXD(POSITION, OPCODE_LD, 0xDD, 1, 7, 6)
-                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                .addChild(new ExprUnary(POSITION, UnaryOperator.SUBTRACT)
                                         .addChild(new ExprNumber(POSITION, 5)))),
                 program);
     }

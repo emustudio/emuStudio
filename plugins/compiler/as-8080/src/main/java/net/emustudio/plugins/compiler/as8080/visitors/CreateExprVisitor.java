@@ -3,9 +3,9 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.As8080Parser;
 import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
-import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
 import org.antlr.v4.runtime.Token;
@@ -57,14 +57,22 @@ public class CreateExprVisitor extends As8080ParserBaseVisitor<Node> {
 
     @Override
     public Node visitExprUnary(As8080Parser.ExprUnaryContext ctx) {
-        ExprUnary unary = new ExprUnary(sourceFileName, ctx.unaryop);
+        Token token = ctx.unaryop;
+        ExprUnary unary = new ExprUnary(
+                new SourceCodePosition(token.getLine(), token.getCharPositionInLine(), sourceFileName),
+                unaryOperator(token.getType())
+        );
         unary.addChild(visit(ctx.expr));
         return unary;
     }
 
     @Override
     public Node visitExprInfix(As8080Parser.ExprInfixContext ctx) {
-        ExprInfix infix = new ExprInfix(sourceFileName, ctx.op);
+        Token token = ctx.op;
+        ExprInfix infix = new ExprInfix(
+                new SourceCodePosition(token.getLine(), token.getCharPositionInLine(), sourceFileName),
+                infixOperator(token.getType())
+        );
         infix.addChild(visit(ctx.expr1));
         infix.addChild(visit(ctx.expr2));
         return infix;
@@ -79,5 +87,62 @@ public class CreateExprVisitor extends As8080ParserBaseVisitor<Node> {
     public Node visitExprCurrentAddress(As8080Parser.ExprCurrentAddressContext ctx) {
         Token start = ctx.getStart();
         return new ExprCurrentAddress(new SourceCodePosition(start.getLine(), start.getCharPositionInLine(), sourceFileName));
+    }
+
+    private UnaryOperator unaryOperator(int tokenType) {
+        switch (tokenType) {
+            case As8080Parser.OP_ADD:
+                return UnaryOperator.ADD;
+            case As8080Parser.OP_SUBTRACT:
+                return UnaryOperator.SUBTRACT;
+            case As8080Parser.OP_NOT:
+            case As8080Parser.OP_NOT_2:
+                return UnaryOperator.NOT;
+            default:
+                throw new IllegalArgumentException("Unknown unary operation: " + tokenType);
+        }
+    }
+
+    private InfixOperator infixOperator(int tokenType) {
+        switch (tokenType) {
+            case As8080Parser.OP_ADD:
+                return InfixOperator.ADD;
+            case As8080Parser.OP_SUBTRACT:
+                return InfixOperator.SUBTRACT;
+            case As8080Parser.OP_DIVIDE:
+                return InfixOperator.DIVIDE;
+            case As8080Parser.OP_MULTIPLY:
+                return InfixOperator.MULTIPLY;
+            case As8080Parser.OP_MOD:
+            case As8080Parser.OP_MOD_2:
+                return InfixOperator.MOD;
+            case As8080Parser.OP_AND:
+            case As8080Parser.OP_AND_2:
+                return InfixOperator.AND;
+            case As8080Parser.OP_OR:
+            case As8080Parser.OP_OR_2:
+                return InfixOperator.OR;
+            case As8080Parser.OP_XOR:
+            case As8080Parser.OP_XOR_2:
+                return InfixOperator.XOR;
+            case As8080Parser.OP_SHL:
+            case As8080Parser.OP_SHL_2:
+                return InfixOperator.SHL;
+            case As8080Parser.OP_SHR:
+            case As8080Parser.OP_SHR_2:
+                return InfixOperator.SHR;
+            case As8080Parser.OP_EQUAL:
+                return InfixOperator.EQUAL;
+            case As8080Parser.OP_LT:
+                return InfixOperator.LT;
+            case As8080Parser.OP_LTE:
+                return InfixOperator.LTE;
+            case As8080Parser.OP_GT:
+                return InfixOperator.GT;
+            case As8080Parser.OP_GTE:
+                return InfixOperator.GTE;
+            default:
+                throw new IllegalArgumentException("Unknown infix operation: " + tokenType);
+        }
     }
 }

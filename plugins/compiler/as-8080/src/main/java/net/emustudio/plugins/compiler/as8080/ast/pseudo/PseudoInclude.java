@@ -5,7 +5,7 @@ package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
@@ -19,11 +19,11 @@ public class PseudoInclude extends Node {
     }
 
     public PseudoInclude(String srcFileName, Token fileName) {
-        this(new SourceCodePosition(fileName.getLine(), fileName.getCharPositionInLine(), srcFileName), ParsingUtils.parseLitString(fileName));
+        this(positionFromToken(srcFileName, fileName), ParsingUtils.parseLitString(fileName));
     }
 
     @Override
-    public void accept(NodeVisitor visitor) {
+    public void accept(BaseNodeVisitor visitor) {
         visitor.visit(this);
     }
 

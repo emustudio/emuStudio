@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXDCB;
@@ -11,7 +11,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoVar;
 import java.util.Set;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
-import static net.emustudio.plugins.compiler.asZ80.CompileError.valueOutOfBounds;
+import static net.emustudio.plugins.compiler.as8080.CompileError.valueOutOfBounds;
 
 public class CollectExprsInOpcodeVisitor extends NodeVisitor {
     private final static Set<Integer> allowedRstValues = Set.of(
