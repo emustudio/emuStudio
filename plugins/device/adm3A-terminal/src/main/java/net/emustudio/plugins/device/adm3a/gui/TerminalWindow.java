@@ -7,7 +7,6 @@ import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BaseMultiResolutionImage;
 import java.util.Objects;
 
 import static java.awt.FlowLayout.LEFT;
@@ -110,9 +109,7 @@ public class TerminalWindow extends DialogBase {
     }
 
     private static JButton createControlButton(String text, String tooltip, String iconResource) {
-        Icon icon = new ImageIcon(new BaseMultiResolutionImage(
-                loadIcon(iconResource + ".png").getImage(),
-                loadIcon(iconResource + "@2x.png").getImage()));
+        Icon icon = loadIcon(iconResource + ".png");
         JButton button = new JButton(text, icon);
         button.setToolTipText(tooltip);
         button.getAccessibleContext().setAccessibleName(tooltip);
