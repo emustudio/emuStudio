@@ -38,7 +38,7 @@ public class MemoryGui extends DialogBase {
         });
         this.dumpMemoryAction = new DumpMemoryAction(dialogs, memory);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ram/gui/clear.png"));
+                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ram/gui/memory-clear.png"));
 
         buildContent();
     }

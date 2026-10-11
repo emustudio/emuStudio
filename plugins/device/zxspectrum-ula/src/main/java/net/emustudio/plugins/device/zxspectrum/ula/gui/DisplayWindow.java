@@ -28,10 +28,10 @@ import static javax.swing.Action.SHORT_DESCRIPTION;
 import static javax.swing.Action.SMALL_ICON;
 
 public class DisplayWindow extends DialogBase {
-    private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("toolbar-keyboard.png");
-    private final static ImageIcon VOLUME_ICON = GUI.loadIcon("toolbar-volume.png");
-    private final static ImageIcon RECORD_ICON = GUI.loadIcon("toolbar-record.png");
-    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon("toolbar-stop.png");
+    private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("keyboard.png");
+    private final static ImageIcon VOLUME_ICON = GUI.loadIcon("volume.png");
+    private final static ImageIcon RECORD_ICON = GUI.loadIcon("record.png");
+    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon("stop.png");
 
     public final static int MARGIN = 30;
 

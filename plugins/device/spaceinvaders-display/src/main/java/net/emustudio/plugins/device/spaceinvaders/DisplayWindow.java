@@ -21,9 +21,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 final class DisplayWindow extends JFrame {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon("toolbar-volume.png");
-    private static final ImageIcon RECORD_ICON = GUI.loadIcon("toolbar-record.png");
-    private static final ImageIcon STOP_ICON = GUI.loadIcon("toolbar-stop.png");
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon("volume.png");
+    private static final ImageIcon RECORD_ICON = GUI.loadIcon("record.png");
+    private static final ImageIcon STOP_ICON = GUI.loadIcon("stop.png");
     private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
     private static final int FRAME_RATE = 60;

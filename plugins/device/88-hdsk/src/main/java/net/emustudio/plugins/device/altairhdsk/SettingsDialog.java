@@ -22,8 +22,8 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 final class SettingsDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
-    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/on.png", SettingsDialog.class);
-    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/off.png", SettingsDialog.class);
+    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/disk-on.png", SettingsDialog.class);
+    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/disk-off.png", SettingsDialog.class);
     private final PluginSettings settings;
     private final Dialogs dialogs;
     private final GUI gui;

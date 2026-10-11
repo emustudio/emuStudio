@@ -88,7 +88,7 @@ final class PaperTapeGui extends DialogBase {
         JPanel available = gui.section("Available tapes", "insets 2", "[grow]", "[][grow][]");
         JPanel directories = gui.panel("fillx", "[grow][]", "[]");
         JButton browse = gui.buttonBrowseDirectories(dialogs, "Select tape directory", "Select", this::selectDirectory);
-        browse.setIcon(GUI.loadIcon(ICONS + "browse.png"));
+        browse.setIcon(GUI.loadIcon(ICONS + "document-open.png"));
         browse.setText("");
         browse.setToolTipText("Select directory");
         JToolBar directoryToolbar = gui.toolBar();
@@ -118,7 +118,7 @@ final class PaperTapeGui extends DialogBase {
         punch.add(tapeInfo(punchFile, punchStatus), "growx, wrap");
         punch.add(gui.label("<html>Guest software writes tape through CPU port 13h.<br>Opening an output tape replaces its existing contents."), "growx, wrap");
         JToolBar punchToolbar = gui.toolBar();
-        punchToolbar.add(button("Save tape", "events-save.png", this::choosePunch));
+        punchToolbar.add(button("Save tape", "document-save.png", this::choosePunch));
         punchToolbar.add(Box.createHorizontalGlue());
         punchToolbar.add(closeOutput);
         punch.add(punchToolbar, "growx");

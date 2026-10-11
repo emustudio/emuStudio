@@ -37,14 +37,14 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
     private static final String PLAYBACK_PROGRESS_NOT_AVAILABLE = "N/A";
 
     private final GUI gui;
-    private final static String BROWSE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/browse.png";
+    private final static String BROWSE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-open.png";
     private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/play.png";
     private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/stop.png";
     private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/tape-eject.png";
     private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/refresh.png";
     private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/load.png";
-    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-save.png";
-    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-copy.png";
+    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-save.png";
+    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/edit-copy.png";
     private final static String RESET_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/reset.png";
     private final static String AUTO_ADD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-add.png";
     private final static String AUTO_REMOVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-remove.png";

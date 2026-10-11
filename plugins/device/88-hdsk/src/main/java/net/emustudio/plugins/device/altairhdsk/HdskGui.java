@@ -13,8 +13,8 @@ import java.text.ParseException;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 final class HdskGui extends DialogBase {
-    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/selected.png", HdskGui.class);
-    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/unselected.png", HdskGui.class);
+    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/indicator-green.png", HdskGui.class);
+    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/indicator-red.png", HdskGui.class);
     private final HdskController controller;
     private final MhdskController mitsController;
     private final Dialogs dialogs;

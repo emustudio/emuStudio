@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <!-- Previous toolbar artwork expressed as vector paths, without embedded bitmaps. -->
+  <path fill="#000000" fill-opacity="0.003922" d="M2 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.011765" d="M19 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.019608" d="M3 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.031373" d="M18 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.035294" d="M4 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.050980" d="M17 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.054902" d="M5 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.070588" d="M16 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.078431" d="M6 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.094118" d="M15 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.101961" d="M7 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.117647" d="M14 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.125490" d="M8 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.141176" d="M13 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.152941" d="M9 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.160784" d="M12 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.172549" d="M10 20h1v1h-1z"/>
+  <path fill="#000000" fill-opacity="0.176471" d="M11 20h1v1h-1z"/>
+  <path fill="#4A5153" d="M13 9h5v1h-5z"/>
+  <path fill="#555E61" d="M13 10h5v1h-5z"/>
+  <path fill="#5C686B" d="M4 14h5v1h-5z"/>
+  <path fill="#5F6B6F" d="M13 11h5v1h-5z"/>
+  <path fill="#637073" d="M4 15h5v1h-5z"/>
+  <path fill="#677579" d="M4 16h5v1h-5z"/>
+  <path fill="#9B9B9B" fill-opacity="0.992157" d="M0 4h1v1h-1z M21 4h1v1h-1z M1 3h1v1h-1z M1 19h1v1h-1z M20 3h1v1h-1z M0 18h1v1h-1z M21 18h1v1h-1z"/>
+  <path fill="#9B9B9B" fill-opacity="0.996078" d="M20 19h1v1h-1z"/>
+  <path fill="#9B9B9B" d="M3 9h7v1h-7z M12 12h7v1h-7z M2 3h18v1h-18z M2 19h18v1h-18z M0 5h1v13h-1z M21 5h1v13h-1z M3 13h7v1h-7z M3 10h1v3h-1z M9 10h1v3h-1z M12 16h7v1h-7z M12 13h1v3h-1z M18 13h1v3h-1z"/>
+  <path fill="#9D9D9D" fill-opacity="0.607843" d="M21 19h1v1h-1z"/>
+  <path fill="#9F9F9F" fill-opacity="0.596078" d="M0 3h1v1h-1z M0 19h1v1h-1z M21 3h1v1h-1z"/>
+  <path fill="#C4C4C4" d="M4 6h1v1h-1z"/>
+  <path fill="#C5C5C5" d="M5 6h3v1h-3z"/>
+  <path fill="#C6C6C6" d="M8 6h5v1h-5z M4 7h1v1h-1z"/>
+  <path fill="#C7C7C7" d="M5 7h3v1h-3z"/>
+  <path fill="#C8C8C8" d="M8 7h5v1h-5z"/>
+  <path fill="#CCCCCC" d="M3 6h1v1h-1z"/>
+  <path fill="#CFCFCF" d="M3 7h1v1h-1z"/>
+  <path fill="#D1D1D1" d="M13 6h1v1h-1z"/>
+  <path fill="#D4D4D4" d="M13 7h1v1h-1z"/>
+  <path fill="#DFDFDF" d="M2 5h1v1h-1z"/>
+  <path fill="#E0E0E0" d="M3 5h3v1h-3z M2 6h1v1h-1z"/>
+  <path fill="#E1E1E1" d="M6 5h2v1h-2z"/>
+  <path fill="#E2E2E2" d="M8 5h2v1h-2z M18 5h2v1h-2z M2 7h1v1h-1z"/>
+  <path fill="#E3E3E3" d="M10 5h3v1h-3z M16 5h2v1h-2z"/>
+  <path fill="#E4E4E4" d="M13 5h3v1h-3z M18 6h2v1h-2z M2 8h1v1h-1z"/>
+  <path fill="#E5E5E5" d="M16 6h2v1h-2z M19 7h1v1h-1z M3 8h2v1h-2z M2 9h1v1h-1z"/>
+  <path fill="#E6E6E6" d="M14 6h2v1h-2z M18 7h1v1h-1z M5 8h1v1h-1z M2 10h1v1h-1z"/>
+  <path fill="#E7E7E7" d="M15 7h3v1h-3z M6 8h1v1h-1z M19 8h1v1h-1z"/>
+  <path fill="#E8E8E8" d="M14 7h1v1h-1z M7 8h2v1h-2z M17 8h2v1h-2z M2 11h1v1h-1z"/>
+  <path fill="#E9E9E9" d="M9 8h2v1h-2z M15 8h2v1h-2z M19 9h1v1h-1z M2 12h1v1h-1z"/>
+  <path fill="#EAEAEA" d="M11 8h4v1h-4z M18 9h1v1h-1z M2 13h1v1h-1z"/>
+  <path fill="#EBEBEB" d="M10 9h2v1h-2z M18 10h2v1h-2z M2 14h1v1h-1z"/>
+  <path fill="#ECECEC" d="M12 9h1v1h-1z M19 11h1v1h-1z M3 14h1v1h-1z M2 15h1v1h-1z"/>
+  <path fill="#EDEDED" d="M10 10h2v1h-2z M18 11h1v1h-1z M3 15h1v1h-1z M2 16h1v2h-1z"/>
+  <path fill="#EEEEEE" d="M12 10h1v1h-1z M19 12h1v1h-1z M3 16h1v1h-1z"/>
+  <path fill="#EFEFED" d="M5 11h3v1h-3z M14 14h3v1h-3z"/>
+  <path fill="#EFEFEF" d="M10 11h3v1h-3z M19 13h1v1h-1z M3 17h1v1h-1z"/>
+  <path fill="#F0F0F0" d="M19 14h1v1h-1z M4 17h1v1h-1z"/>
+  <path fill="#F1F1F1" d="M10 12h2v1h-2z"/>
+  <path fill="#F2F2F2" d="M19 15h1v1h-1z M5 17h1v1h-1z"/>
+  <path fill="#F3F3F3" d="M10 13h2v1h-2z M19 16h1v2h-1z M6 17h1v1h-1z"/>
+  <path fill="#F4F4F4" d="M9 14h2v1h-2z"/>
+  <path fill="#F5F5F5" d="M11 14h1v1h-1z M9 15h1v1h-1z M7 17h1v1h-1z M18 17h1v1h-1z"/>
+  <path fill="#F6F6F6" d="M10 15h1v1h-1z M8 17h1v1h-1z M17 17h1v1h-1z"/>
+  <path fill="#F7F7F7" d="M11 15h1v1h-1z M9 16h1v1h-1z"/>
+  <path fill="#F8F8F8" d="M10 16h1v1h-1z M9 17h1v1h-1z M16 17h1v1h-1z"/>
+  <path fill="#F9F9F9" d="M11 16h1v1h-1z M10 17h1v1h-1z M15 17h1v1h-1z"/>
+  <path fill="#FAFAFA" d="M11 17h1v1h-1z M14 17h1v1h-1z"/>
+  <path fill="#FBFBFB" d="M12 17h2v1h-2z"/>
+  <path fill="#FEFEFD" d="M4 10h5v1h-5z M13 15h5v1h-5z"/>
+  <path fill="#FFFFFF" d="M1 4h20v1h-20z M1 18h20v1h-20z M1 5h1v13h-1z M20 5h1v13h-1z M4 11h1v1h-1z M8 11h1v1h-1z M4 12h5v1h-5z M13 13h5v1h-5z M13 14h1v1h-1z M17 14h1v1h-1z"/>
+</svg>

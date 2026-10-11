@@ -14,8 +14,8 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
-    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear";
-    private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/roll";
+    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/terminal-clear";
+    private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/scroll-up";
     private static final Rectangle DEFAULT_CANVAS_BOUNDS = new Rectangle(150, 170, 725, 530);
     private static final int CANVAS_RIGHT_PADDING = 3;
 

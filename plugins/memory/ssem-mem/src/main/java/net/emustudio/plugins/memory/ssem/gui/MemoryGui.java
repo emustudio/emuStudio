@@ -39,7 +39,7 @@ public class MemoryGui extends DialogBase {
         });
         this.dumpMemoryAction = new DumpMemoryAction(api, memory);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ssem/gui/clear.png"));
+                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ssem/gui/memory-clear.png"));
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));

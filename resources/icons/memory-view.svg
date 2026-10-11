@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
+  <!-- Previous toolbar artwork expressed as vector paths, without embedded bitmaps. -->
+  <path fill="#333366" d="M3 3h17v1h-17z M3 4h1v4h-1z M19 4h1v4h-1z M3 8h17v1h-17z M3 9h1v5h-1z M19 9h1v5h-1z M3 14h17v1h-17z M3 19h17v1h-17z M3 15h1v4h-1z M19 15h1v4h-1z"/>
+  <path fill="#9999CC" d="M8 4h1v4h-1z M14 4h1v4h-1z M8 9h1v5h-1z M14 9h1v5h-1z M8 15h1v4h-1z M14 15h1v4h-1z"/>
+  <path fill="#FFFFFF" d="M4 4h4v4h-4z M9 4h5v4h-5z M15 4h4v4h-4z M4 9h4v5h-4z M9 9h5v5h-5z M15 9h4v5h-4z M4 15h4v4h-4z M9 15h5v4h-5z M15 15h4v4h-4z M20 4h1v16h-1z M4 20h17v1h-17z"/>
+</svg>

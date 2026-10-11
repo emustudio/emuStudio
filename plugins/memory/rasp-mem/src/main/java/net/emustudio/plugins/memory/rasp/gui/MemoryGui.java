@@ -40,7 +40,7 @@ public class MemoryGui extends DialogBase {
         }, api::setProgramLocation);
         this.dumpMemoryAction = new DumpMemoryAction(api.getDialogs(), context, api::getProgramLocation);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon("/net/emustudio/plugins/memory/rasp/gui/clear.png"));
+                tableModel, context, loadIcon("/net/emustudio/plugins/memory/rasp/gui/memory-clear.png"));
 
         buildContent();
     }
