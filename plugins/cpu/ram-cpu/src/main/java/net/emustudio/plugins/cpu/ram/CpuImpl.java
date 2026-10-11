@@ -99,7 +99,8 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public int getAddressSpaceSize() {
-        return memory.getSize();
+        // Program memory grows with the loaded program; addresses are not bounded by its current size.
+        return Integer.MAX_VALUE;
     }
 
     public TapeSymbol getR0() {

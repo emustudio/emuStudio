@@ -212,6 +212,26 @@ public class VirtualComputerTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void constructPluginsCreatesInstancePerConfigurationOfSamePluginFile() throws Exception {
+        PluginConfig first = pluginConfig("plugin", PLUGIN_TYPE.MEMORY);
+        PluginConfig second = pluginConfig("plugin", PLUGIN_TYPE.MEMORY);
+        Map<File, Class<Plugin>> pluginClasses = new LinkedHashMap<>();
+        pluginClasses.put(first.getPluginPath().toFile(), (Class<Plugin>) (Class<?>) TestMemoryPlugin.class);
+
+        Map<Long, PluginMeta> result = VirtualComputer.constructPlugins(
+                pluginClasses,
+                List.of(first, second),
+                mock(ApplicationApi.class),
+                new AppSettings(Config.inMemory(), true, false),
+                () -> {}
+        );
+
+        assertEquals(2, result.size());
+        assertNotSame(result.get(1L).pluginInstance, result.get(2L).pluginInstance);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void constructPluginsRejectsMismatchedPluginCounts() {
         PluginConfig compilerConfig = pluginConfig("compiler", PLUGIN_TYPE.COMPILER);
         Map<File, Class<Plugin>> pluginClasses = new LinkedHashMap<>();

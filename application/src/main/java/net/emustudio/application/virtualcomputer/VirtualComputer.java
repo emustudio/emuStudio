@@ -113,7 +113,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             AppSettings appSettings,
             Runnable save
     ) throws InvalidPluginException {
-        if (pluginClassesByFile.size() != pluginConfigs.size()) {
+        long pluginFileCount = pluginConfigs.stream().map(c -> c.getPluginPath().toFile()).distinct().count();
+        if (pluginClassesByFile.size() != pluginFileCount) {
             throw new InvalidPluginException("Plugin class count does not match plugin configuration count");
         }
 

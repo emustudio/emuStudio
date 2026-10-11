@@ -72,6 +72,11 @@ public class CpuImplTest {
     }
 
     @Test
+    public void testAddressSpaceDoesNotDependOnLoadedProgram() {
+        assertEquals(Integer.MAX_VALUE, cpu.getAddressSpaceSize());
+    }
+
+    @Test
     public void testVersionIsKnown() {
         assertNotEquals("(unknown)", cpu.getVersion());
     }
