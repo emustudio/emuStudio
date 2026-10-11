@@ -28,5 +28,5 @@ There is one CPU-port owner and no hard-disk dependency on desktop internals or 
 Existing 8255-style PIO configs and three byte endpoints must migrate to the selected
 real board model. MITS disk mode requires `88-pio.jar`; this context is an inter-plugin API,
 not a shared emuLib service. Raw-sector media and immediate completion have explicit
-physical-model limits documented in the HDSK README. Earlier local `88-mhdsk.jar`
+physical-model limits documented in the [88-HDSK user documentation](https://www.emustudio.net/documentation/user/altair8800/88-hdsk). Earlier local `88-mhdsk.jar`
 configs migrate to `88-hdsk.jar` with `controllerType = "MITS"`; the separate module is removed.
