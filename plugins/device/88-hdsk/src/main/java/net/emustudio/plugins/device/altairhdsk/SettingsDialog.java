@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.altairhdsk;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -22,8 +23,8 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 final class SettingsDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
-    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/disk-on.png", SettingsDialog.class);
-    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/altairhdsk/gui/disk-off.png", SettingsDialog.class);
+    private static final ImageIcon ICON_ON = GUI.loadIcon(StandardIcons.ICON_DISK_MOUNTED, SettingsDialog.class);
+    private static final ImageIcon ICON_OFF = GUI.loadIcon(StandardIcons.ICON_DISK_EMPTY, SettingsDialog.class);
     private final PluginSettings settings;
     private final Dialogs dialogs;
     private final GUI gui;

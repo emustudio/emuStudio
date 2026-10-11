@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.*;
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_GRID;
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_OPEN_FILE;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_GRID;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_OPEN_FILE;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_COMMON;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static org.junit.Assert.*;

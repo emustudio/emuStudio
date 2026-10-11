@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.*;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
 public class SchemaEditorDialog extends DialogBase implements KeyListener {

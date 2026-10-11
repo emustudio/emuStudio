@@ -9,7 +9,7 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.*;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
 
 public class PagesPanel extends JPanel {
 

@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class GotoAddressAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png";
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/goto-address.png";
     private final Dialogs dialogs;
     private final ByteMemoryContext context;
     private final Consumer<Integer> setPageFromAddress;

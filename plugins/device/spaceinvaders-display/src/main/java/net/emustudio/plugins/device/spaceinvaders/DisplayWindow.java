@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.spaceinvaders;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.audio.SamplePlayer;
 import net.emustudio.emulib.runtime.recording.RecordingSession;
@@ -21,9 +22,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 final class DisplayWindow extends JFrame {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon("volume.png");
-    private static final ImageIcon RECORD_ICON = GUI.loadIcon("record.png");
-    private static final ImageIcon STOP_ICON = GUI.loadIcon("stop.png");
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME);
+    private static final ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD);
+    private static final ImageIcon STOP_ICON = GUI.loadIcon(StandardIcons.ICON_STOP);
     private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
     private static final int FRAME_RATE = 60;

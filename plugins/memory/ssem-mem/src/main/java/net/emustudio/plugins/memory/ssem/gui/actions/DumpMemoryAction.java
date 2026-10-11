@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -24,7 +25,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-save.png";
+    private final static String ICON_FILE = StandardIcons.ICON_SAVE;
     private final ApplicationApi api;
     private final Dialogs dialogs;
     private final MemoryContext<Byte> context;

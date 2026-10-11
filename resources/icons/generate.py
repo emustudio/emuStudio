@@ -17,7 +17,9 @@ def main():
     args = parser.parse_args()
     sources = Path(__file__).resolve().parent
     root = sources.parent.parent
-    manifest = json.loads((sources / "manifest.json").read_text())
+    manifest = [{"target": f"{directory}/{name}", "source": source.split()[0], "flip": source.endswith(" flop")}
+                for directory, icons in json.loads((sources / "manifest.json").read_text()).items()
+                for name, source in icons.items()]
     errors = []
     with tempfile.TemporaryDirectory() as directory:
         cache = {}
@@ -55,7 +57,6 @@ def main():
     expected.update(str(Path(target).with_name(Path(target).stem + "@2x.png"))
                     for target in list(expected))
     backgrounds = {
-        "application/src/main/resources/net/emustudio/application/gui/dialogs/logo.png",
         "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/display.png",
     }
     for module in [root / "application", *(root / "plugins").glob("*/*")]:

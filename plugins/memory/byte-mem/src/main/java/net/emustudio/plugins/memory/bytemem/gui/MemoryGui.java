@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
@@ -80,7 +81,7 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png"));
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
         this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));

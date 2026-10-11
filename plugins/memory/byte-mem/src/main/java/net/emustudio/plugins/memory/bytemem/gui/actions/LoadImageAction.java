@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -26,7 +27,7 @@ import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION
 
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/document-open.png";
+    private final static String ICON_FILE = StandardIcons.ICON_OPEN_FILE;
     private final Dialogs dialogs;
     private final ByteMemoryContext context;
     private final JDialog parent;

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
@@ -16,7 +17,7 @@ import java.util.function.Supplier;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class FindSequenceAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/edit-find.png";
+    private final static String ICON_FILE = StandardIcons.ICON_FIND;
     private final Dialogs dialogs;
     private final MemorySearch search;
     private final Supplier<Integer> getCurrentAddress;

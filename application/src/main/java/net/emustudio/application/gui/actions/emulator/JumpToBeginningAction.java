@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_JUMP_TO_BEGINNING;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_JUMP_TO_BEGINNING;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class JumpToBeginningAction extends AbstractAction {

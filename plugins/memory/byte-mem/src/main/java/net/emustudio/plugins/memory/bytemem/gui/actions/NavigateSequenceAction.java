@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
+
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
@@ -12,7 +14,7 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public final class NavigateSequenceAction extends AbstractAction {
-    private static final String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/edit-find.png";
+    private static final String ICON_FILE = StandardIcons.ICON_FIND;
     private final Runnable navigate;
 
     public NavigateSequenceAction(MemorySearch search, boolean previous) {

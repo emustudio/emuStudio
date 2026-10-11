@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.mits88tap;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
@@ -21,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PaperTapeGui extends DialogBase {
-    private static final String ICONS = "/net/emustudio/plugins/device/mits88tap/gui/";
     private static final FileExtensionsFilter TAPE_FILTER = new FileExtensionsFilter("Paper tape", "pt", "bin", "hex");
 
     private final PaperTapeUnit tape;
@@ -49,13 +49,13 @@ final class PaperTapeGui extends DialogBase {
         this.gui = gui;
         readerStatus = gui.labelBold("No tape loaded");
         punchStatus = gui.labelBold("No output tape");
-        load = button("Load", "load.png", () -> {
+        load = gui.button(StandardIcons.ICON_LOAD, "Load", () -> {
             Path selected = tapeList.getSelectedValue();
             if (selected != null) { loadReader(selected); }
         });
-        rewind = button("Rewind", "reset.png", () -> { tape.rewindReader(); refresh(); });
-        eject = button("Eject", "tape-eject.png", () -> { tape.detachReader(); refresh(); });
-        closeOutput = button("Close output", "stop.png", () -> { tape.detachPunch(); refresh(); });
+        rewind = gui.button(StandardIcons.ICON_RESET, "Rewind", () -> { tape.rewindReader(); refresh(); });
+        eject = gui.button(StandardIcons.ICON_EJECT, "Eject", () -> { tape.detachReader(); refresh(); });
+        closeOutput = gui.button(StandardIcons.ICON_STOP, "Close output", () -> { tape.detachPunch(); refresh(); });
         tapeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tapeList.addListSelectionListener(event -> load.setEnabled(tapeList.getSelectedValue() != null));
         tapeList.setCellRenderer(new DefaultListCellRenderer() {
@@ -76,19 +76,12 @@ final class PaperTapeGui extends DialogBase {
         buildContent();
     }
 
-    private JButton button(String title, String icon, Runnable action) {
-        JButton button = gui.button(title);
-        button.setIcon(GUI.loadIcon(ICONS + icon));
-        button.addActionListener(event -> action.run());
-        return button;
-    }
-
     @Override
     protected JComponent initializeComponents() {
         JPanel available = gui.section("Available tapes", "insets 2", "[grow]", "[][grow][]");
         JPanel directories = gui.panel("fillx", "[grow][]", "[]");
         JButton browse = gui.buttonBrowseDirectories(dialogs, "Select tape directory", "Select", this::selectDirectory);
-        browse.setIcon(GUI.loadIcon(ICONS + "document-open.png"));
+        browse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE));
         browse.setText("");
         browse.setToolTipText("Select directory");
         JToolBar directoryToolbar = gui.toolBar();
@@ -97,7 +90,7 @@ final class PaperTapeGui extends DialogBase {
         directories.add(directoryName, "growx");
         directories.add(directoryToolbar);
         JToolBar availableToolbar = gui.toolBar();
-        availableToolbar.add(button("Refresh", "refresh.png", this::refreshTapes));
+        availableToolbar.add(gui.button(StandardIcons.ICON_REFRESH, "Refresh", this::refreshTapes));
         availableToolbar.add(Box.createHorizontalGlue());
         availableToolbar.add(load);
         available.add(directories, "growx, wrap");
@@ -118,7 +111,7 @@ final class PaperTapeGui extends DialogBase {
         punch.add(tapeInfo(punchFile, punchStatus), "growx, wrap");
         punch.add(gui.label("<html>Guest software writes tape through CPU port 13h.<br>Opening an output tape replaces its existing contents."), "growx, wrap");
         JToolBar punchToolbar = gui.toolBar();
-        punchToolbar.add(button("Save tape", "document-save.png", this::choosePunch));
+        punchToolbar.add(gui.button(StandardIcons.ICON_SAVE, "Save tape", this::choosePunch));
         punchToolbar.add(Box.createHorizontalGlue());
         punchToolbar.add(closeOutput);
         punch.add(punchToolbar, "growx");

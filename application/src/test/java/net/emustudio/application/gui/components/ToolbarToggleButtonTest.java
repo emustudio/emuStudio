@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.components;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -51,7 +51,7 @@ public class ToolbarToggleButtonTest extends AbstractSwingTest {
         };
 
         ToolbarToggleButton button = onEdt(
-                () -> new ToolbarToggleButton(action, EmuStudioGui.ICON_BREAKPOINT, "Toggle breakpoint", getClass())
+                () -> new ToolbarToggleButton(action, StandardIcons.ICON_BREAKPOINT, "Toggle breakpoint", getClass())
         );
 
         showInFrame(button);
@@ -76,7 +76,7 @@ public class ToolbarToggleButtonTest extends AbstractSwingTest {
                     receivedItemEvent.set(event);
                     itemEvents.incrementAndGet();
                 },
-                EmuStudioGui.ICON_BREAKPOINT,
+                StandardIcons.ICON_BREAKPOINT,
                 "Inspect",
                 getClass()
         ));

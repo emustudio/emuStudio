@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.adm3a.api.Display;
 
@@ -14,8 +15,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
-    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/terminal-clear";
-    private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/scroll-up";
+    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear-screen.png";
     private static final Rectangle DEFAULT_CANVAS_BOUNDS = new Rectangle(150, 170, 725, 530);
     private static final int CANVAS_RIGHT_PADDING = 3;
 
@@ -84,7 +84,7 @@ public class TerminalWindow extends DialogBase {
         JButton btnClear = createControlButton("CLEAR", "Clear screen", CLEAR_SCREEN_ICON);
         btnClear.addActionListener(e -> clearScreen());
 
-        JButton btnRoll = createControlButton("ROLL UP", "Roll line up", ROLL_LINE_ICON);
+        JButton btnRoll = createControlButton("ROLL UP", "Roll line up", StandardIcons.ICON_MOVE_UP);
         btnRoll.addActionListener(e -> rollLine());
 
         JPanel panelControl = new JPanel();
@@ -109,7 +109,7 @@ public class TerminalWindow extends DialogBase {
     }
 
     private static JButton createControlButton(String text, String tooltip, String iconResource) {
-        Icon icon = loadIcon(iconResource + ".png");
+        Icon icon = loadIcon(iconResource);
         JButton button = new JButton(text, icon);
         button.setToolTipText(tooltip);
         button.getAccessibleContext().setAccessibleName(tooltip);

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.framework;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import org.junit.After;
 import org.junit.Test;
 
@@ -12,8 +13,8 @@ import java.awt.Image;
 import java.awt.image.MultiResolutionImage;
 import java.lang.reflect.Field;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_OPEN_FILE;
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_RUN;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_OPEN_FILE;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_RUN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -34,7 +35,7 @@ public class IconsTest {
         for (String theme : new String[]{UIManager.getCrossPlatformLookAndFeelClassName(),
                 "javax.swing.plaf.nimbus.NimbusLookAndFeel"}) {
             UIManager.setLookAndFeel(theme);
-            for (Field field : EmuStudioGui.class.getDeclaredFields()) {
+            for (Field field : StandardIcons.class.getFields()) {
                 if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
                     Icon icon = Icons.loadIcon((String) field.get(null));
                     assertNotNull(field.getName(), icon);
@@ -44,13 +45,13 @@ public class IconsTest {
             }
             assertNotSame(UIManager.getIcon("Tree.openIcon"), Icons.loadIcon(ICON_OPEN_FILE));
             assertNotSame(UIManager.getIcon("InternalFrame.closeIcon"),
-                    Icons.loadIcon(EmuStudioGui.ICON_REMOVE));
+                    Icons.loadIcon(StandardIcons.ICON_REMOVE));
         }
     }
 
     @Test
     public void bundledIconsUseHighResolutionArtworkWithoutChangingLayoutSize() throws Exception {
-        for (Field field : EmuStudioGui.class.getDeclaredFields()) {
+        for (Field field : StandardIcons.class.getFields()) {
             if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
                 ImageIcon icon = (ImageIcon) Icons.loadIcon((String) field.get(null));
                 assertNotNull(field.getName(), icon);

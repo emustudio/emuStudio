@@ -1,415 +1,66 @@
-[
-  {
-    "source": "connection-bidirectional.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/connection-bidirectional.png"
-  },
-  {
-    "source": "breakpoint-marker.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/breakpoint-marker.png"
-  },
-  {
-    "source": "breakpoint-toggle.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/breakpoint-toggle.png"
-  },
-  {
-    "source": "preferences-system.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/compiler.png"
-  },
-  {
-    "source": "computer.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/computer.png"
-  },
-  {
-    "source": "network-wired.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/connection.png"
-  },
-  {
-    "source": "cpu.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/cpu.png"
-  },
-  {
-    "source": "input-gaming.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/device.png"
-  },
-  {
-    "source": "document-new.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-new.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-save.png"
-  },
-  {
-    "source": "edit-copy.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-copy.png"
-  },
-  {
-    "source": "edit-cut.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-cut.png"
-  },
-  {
-    "source": "edit-delete.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-delete.png"
-  },
-  {
-    "source": "edit-find-replace.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-find-replace.png"
-  },
-  {
-    "source": "edit-find.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-find.png"
-  },
-  {
-    "source": "edit-paste.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-paste.png"
-  },
-  {
-    "source": "edit-redo.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-redo.png"
-  },
-  {
-    "source": "edit-undo.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-undo.png"
-  },
-  {
-    "source": "go-first.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/jump-to-beginning.png"
-  },
-  {
-    "source": "go-jump.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/jump-to-address.png"
-  },
-  {
-    "source": "go-next.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/step-forward.png"
-  },
-  {
-    "source": "media-playback-pause.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/pause.png"
-  },
-  {
-    "source": "run-timed.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/run-timed.png"
-  },
-  {
-    "source": "media-playback-start.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/run.png"
-  },
-  {
-    "source": "go-previous.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/step-back.png"
-  },
-  {
-    "source": "media-playback-stop.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/stop.png"
-  },
-  {
-    "source": "memory-view.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/memory-view.png"
-  },
-  {
-    "source": "list-add.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/list-add.png"
-  },
-  {
-    "source": "list-remove.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/list-remove.png"
-  },
-  {
-    "source": "motherboard.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/loading.png"
-  },
-  {
-    "source": "motherboard.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/motherboard.png"
-  },
-  {
-    "source": "media-playback-start.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-back.png",
-    "flip": true
-  },
-  {
-    "source": "page-current.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-current.png"
-  },
-  {
-    "source": "media-skip-backward.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-first.png"
-  },
-  {
-    "source": "media-playback-start.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-forward.png"
-  },
-  {
-    "source": "media-skip-forward.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-last.png"
-  },
-  {
-    "source": "media-seek-backward.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-seek-backward.png"
-  },
-  {
-    "source": "media-seek-forward.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-seek-forward.png"
-  },
-  {
-    "source": "memory.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/memory.png"
-  },
-  {
-    "source": "preferences-desktop-font.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/rename-computer.png"
-  },
-  {
-    "source": "view-refresh.png",
-    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/reset.png"
-  },
-  {
-    "source": "emustudio.svg",
-    "target": "application/src/main/resources/net/emustudio/application/gui/emustudio.png"
-  },
-  {
-    "source": "disk-off.svg",
-    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/disk-off.png"
-  },
-  {
-    "source": "disk-on.svg",
-    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/disk-on.png"
-  },
-  {
-    "source": "indicator-green.svg",
-    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/indicator-green.png"
-  },
-  {
-    "source": "indicator-red.svg",
-    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/indicator-red.png"
-  },
-  {
-    "source": "disk-off.svg",
-    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/disk-off.png"
-  },
-  {
-    "source": "disk-on.svg",
-    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/disk-on.png"
-  },
-  {
-    "source": "indicator-green.svg",
-    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/indicator-green.png"
-  },
-  {
-    "source": "indicator-red.svg",
-    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/indicator-red.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/document-save.png"
-  },
-  {
-    "source": "video-x-generic.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/load.png"
-  },
-  {
-    "source": "view-refresh.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/refresh.png"
-  },
-  {
-    "source": "view-refresh.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/reset.png"
-  },
-  {
-    "source": "media-playback-stop.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/stop.png"
-  },
-  {
-    "source": "media-eject.png",
-    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/tape-eject.png"
-  },
-  {
-    "source": "go-down.png",
-    "target": "plugins/device/abstract-tape/src/main/resources/net/emustudio/plugins/device/abstracttape/gui/go-down.png"
-  },
-  {
-    "source": "go-up.png",
-    "target": "plugins/device/abstract-tape/src/main/resources/net/emustudio/plugins/device/abstracttape/gui/go-up.png"
-  },
-  {
-    "source": "terminal-clear.svg",
-    "target": "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/terminal-clear.png"
-  },
-  {
-    "source": "go-up.png",
-    "target": "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/scroll-up.png"
-  },
-  {
-    "source": "audio-volume-high.png",
-    "target": "plugins/device/audio-ay3_8910-chip/src/main/resources/net/emustudio/plugins/device/ay38910/gui/volume.png"
-  },
-  {
-    "source": "list-add.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-add.png"
-  },
-  {
-    "source": "go-down.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-move-down.png"
-  },
-  {
-    "source": "go-up.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-move-up.png"
-  },
-  {
-    "source": "list-remove.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-remove.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/document-open.png"
-  },
-  {
-    "source": "edit-copy.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/edit-copy.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/document-save.png"
-  },
-  {
-    "source": "video-x-generic.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/load.png"
-  },
-  {
-    "source": "media-playback-start.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/play.png"
-  },
-  {
-    "source": "view-refresh.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/refresh.png"
-  },
-  {
-    "source": "view-refresh.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/reset.png"
-  },
-  {
-    "source": "media-playback-stop.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/stop.png"
-  },
-  {
-    "source": "media-eject.png",
-    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/tape-eject.png"
-  },
-  {
-    "source": "media-record.png",
-    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/record.png"
-  },
-  {
-    "source": "media-playback-stop.png",
-    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/stop.png"
-  },
-  {
-    "source": "audio-volume-high.png",
-    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/volume.png"
-  },
-  {
-    "source": "ascii.svg",
-    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/ascii.png"
-  },
-  {
-    "source": "indicator-blue.svg",
-    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/indicator-blue.png"
-  },
-  {
-    "source": "indicator-red.svg",
-    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/indicator-red.png"
-  },
-  {
-    "source": "input-keyboard.png",
-    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/keyboard.png"
-  },
-  {
-    "source": "media-record.png",
-    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/record.png"
-  },
-  {
-    "source": "media-playback-stop.png",
-    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/stop.png"
-  },
-  {
-    "source": "audio-volume-high.png",
-    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/volume.png"
-  },
-  {
-    "source": "ascii.svg",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/document-save.png"
-  },
-  {
-    "source": "edit-clear.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png"
-  },
-  {
-    "source": "edit-find.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/edit-find.png"
-  },
-  {
-    "source": "ascii.svg",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/find-text.png"
-  },
-  {
-    "source": "format-indent-more.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png"
-  },
-  {
-    "source": "preferences-system.png",
-    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png"
-  },
-  {
-    "source": "edit-clear.png",
-    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/memory-clear.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/document-save.png"
-  },
-  {
-    "source": "edit-clear.png",
-    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/memory-clear.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/document-save.png"
-  },
-  {
-    "source": "edit-clear.png",
-    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/memory-clear.png"
-  },
-  {
-    "source": "document-open.png",
-    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/document-open.png"
-  },
-  {
-    "source": "document-save.png",
-    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/document-save.png"
+{
+  "../emuLib/src/main/resources/net/emustudio/emulib/runtime/ui/icons": {
+    "add.png": "list-add.png",
+    "ascii.png": "ascii.svg",
+    "bidirection.png": "connection-bidirectional.svg",
+    "breakpoint.png": "breakpoint-marker.svg",
+    "breakpoints.png": "breakpoint-toggle.svg",
+    "compiler.png": "preferences-system.png",
+    "computer.png": "computer.png",
+    "connection.png": "network-wired.png",
+    "copy.png": "edit-copy.png",
+    "cpu.png": "cpu.svg",
+    "cut.png": "edit-cut.png",
+    "delete.png": "edit-delete.png",
+    "device.png": "input-gaming.png",
+    "disk-empty.png": "disk-off.svg",
+    "disk-mounted.png": "disk-on.svg",
+    "eject.png": "media-eject.png",
+    "erase-memory.png": "edit-clear.png",
+    "favicon.png": "emustudio.svg",
+    "find.png": "edit-find.png",
+    "grid.png": "memory-view.svg",
+    "indicator-blue.png": "indicator-blue.svg",
+    "indicator-green.png": "indicator-green.svg",
+    "indicator-red.png": "indicator-red.svg",
+    "jump-to-beginning.png": "go-first.png",
+    "jump.png": "go-jump.png",
+    "load.png": "video-x-generic.png",
+    "memory.png": "memory.svg",
+    "motherboard.png": "motherboard.svg",
+    "move-down.png": "go-down.png",
+    "move-up.png": "go-up.png",
+    "new-file.png": "document-new.png",
+    "open-file.png": "document-open.png",
+    "page-back.png": "media-playback-start.png flop",
+    "page-current.png": "page-current.svg",
+    "page-first.png": "media-skip-backward.png",
+    "page-seek-backward.png": "media-seek-backward.png",
+    "page-seek-forward.png": "media-seek-forward.png",
+    "paste.png": "edit-paste.png",
+    "pause.png": "media-playback-pause.png",
+    "record.png": "media-record.png",
+    "redo.png": "edit-redo.png",
+    "remove.png": "list-remove.png",
+    "rename.png": "preferences-desktop-font.png",
+    "replace.png": "edit-find-replace.png",
+    "reset.png": "view-refresh.png",
+    "run-timed.png": "run-timed.svg",
+    "run.png": "media-playback-start.png",
+    "save.png": "document-save.png",
+    "step-back.png": "go-previous.png",
+    "step.png": "go-next.png",
+    "stop.png": "media-playback-stop.png",
+    "undo.png": "edit-undo.png",
+    "volume.png": "audio-volume-high.png"
+  },
+  "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui": {
+    "clear-screen.png": "terminal-clear.svg"
+  },
+  "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui": {
+    "keyboard.png": "input-keyboard.png"
+  },
+  "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui": {
+    "goto-address.png": "format-indent-more.png"
   }
-]
+}

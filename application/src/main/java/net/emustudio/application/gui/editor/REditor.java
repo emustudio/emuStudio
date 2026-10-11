@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_BREAKPOINT;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_BREAKPOINT;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
@@ -39,7 +40,7 @@ public class MemoryGui extends DialogBase {
         });
         this.dumpMemoryAction = new DumpMemoryAction(api, memory);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ssem/gui/memory-clear.png"));
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));

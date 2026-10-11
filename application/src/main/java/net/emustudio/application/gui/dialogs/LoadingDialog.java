@@ -7,7 +7,7 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_LOADING;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class LoadingDialog extends DialogBase {
@@ -25,7 +25,7 @@ public class LoadingDialog extends DialogBase {
         JPanel panel = gui.panelHorizontal();
 
         JLabel lblLoading = gui.labelBold("Loading computer, please wait...");
-        lblLoading.setIcon(loadIcon(ICON_LOADING));
+        lblLoading.setIcon(loadIcon(ICON_MOTHERBOARD));
 
         panel.add(lblLoading, "wrap, gapbottom 10");
         panel.add(gui.label("If you see some errors, please see the log file."), "wrap");

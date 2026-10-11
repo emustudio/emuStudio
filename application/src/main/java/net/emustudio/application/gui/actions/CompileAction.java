@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_COMPILER;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_COMPILER;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 

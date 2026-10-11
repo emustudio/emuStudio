@@ -50,6 +50,12 @@ public class PaperTapeGuiTest {
         expect(gui.label(anyString())).andAnswer(() -> new JLabel((String) getCurrentArgument(0))).anyTimes();
         expect(gui.labelBold(anyString())).andAnswer(() -> new JLabel((String) getCurrentArgument(0))).anyTimes();
         expect(gui.button(anyString())).andAnswer(() -> new JButton((String) getCurrentArgument(0))).anyTimes();
+        expect(gui.button(anyString(), anyString(), anyObject(Runnable.class))).andAnswer(() -> {
+            JButton button = new JButton((String) getCurrentArgument(1), GUI.loadIcon(getCurrentArgument(0)));
+            Runnable action = getCurrentArgument(2);
+            button.addActionListener(event -> action.run());
+            return button;
+        }).anyTimes();
         expect(gui.toolBar()).andAnswer(JToolBar::new).anyTimes();
         expect(gui.scrollPane(anyObject(Component.class))).andAnswer(() ->
                 new JScrollPane((Component) getCurrentArgument(0))).anyTimes();

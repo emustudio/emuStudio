@@ -6,6 +6,7 @@ import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.ShortenedString;
 import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
@@ -37,24 +38,11 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
     private static final String PLAYBACK_PROGRESS_NOT_AVAILABLE = "N/A";
 
     private final GUI gui;
-    private final static String BROWSE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-open.png";
-    private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/play.png";
-    private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/stop.png";
-    private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/tape-eject.png";
-    private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/refresh.png";
-    private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/load.png";
-    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-save.png";
-    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/edit-copy.png";
-    private final static String RESET_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/reset.png";
-    private final static String AUTO_ADD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-add.png";
-    private final static String AUTO_REMOVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-remove.png";
-    private final static String AUTO_MOVE_UP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-move-up.png";
-    private final static String AUTO_MOVE_DOWN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-move-down.png";
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
-    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(REFRESH_ICON));
-    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(LOAD_ICON));
+    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(StandardIcons.ICON_REFRESH));
+    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(StandardIcons.ICON_LOAD));
     private final CachedComboBoxModel<ShortenedString<Path>> cmbDirsModel = new CachedComboBoxModel<>();
     private final JComboBox<ShortenedString<Path>> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
@@ -63,13 +51,13 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     private final AtomicReference<ShortenedString<Path>> loadedFileName = new AtomicReference<>();
 
-    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(PLAY_ICON));
-    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(STOP_ICON));
-    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(EJECT_ICON));
-    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(AUTO_ADD_ICON));
-    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(AUTO_REMOVE_ICON));
-    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(AUTO_MOVE_UP_ICON));
-    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(AUTO_MOVE_DOWN_ICON));
+    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY));
+    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP));
+    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(StandardIcons.ICON_EJECT));
+    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(StandardIcons.ICON_ADD));
+    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(StandardIcons.ICON_REMOVE));
+    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_UP));
+    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_DOWN));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
@@ -117,7 +105,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
             cmbDirs.setSelectedIndex(0);
             cmbDirs.setMinimumSize(new Dimension(0, 0));
         });
-        btnBrowse.setIcon(GUI.loadIcon(BROWSE_ICON));
+        btnBrowse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
@@ -522,14 +510,14 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbarTape.add(btnEject);
         toolbarTape.addSeparator();
 
-        JButton btnCopyLogs = new JButton(GUI.loadIcon(COPY_ICON));
+        JButton btnCopyLogs = new JButton(GUI.loadIcon(StandardIcons.ICON_COPY));
         btnCopyLogs.setToolTipText("Copy selected rows");
         btnCopyLogs.setFocusPainted(false);
         btnCopyLogs.addActionListener(e -> copySelectedRows());
         toolbarTape.add(btnCopyLogs);
 
         JButton btnSaveLogs = gui.buttonBrowseFiles(dialogs, "Save event logs", "Save", true, this::saveLogs, new FileExtensionsFilter("Tab-separated values", "tsv"), new FileExtensionsFilter("Text file", "txt"));
-        btnSaveLogs.setIcon(GUI.loadIcon(SAVE_ICON));
+        btnSaveLogs.setIcon(GUI.loadIcon(StandardIcons.ICON_SAVE));
         btnSaveLogs.setText("");
         btnSaveLogs.setToolTipText("Save logs");
         btnSaveLogs.setFocusPainted(false);
@@ -609,16 +597,16 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbar.addSeparator();
         toolbar.add(new JPanel(null)); // spacer
 
-        btnAutoPlay = new JButton("Play", GUI.loadIcon(PLAY_ICON));
+        btnAutoPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY));
         btnAutoPlay.addActionListener(e -> startAutomation());
         toolbar.add(btnAutoPlay);
 
-        btnAutoStop = new JButton("Stop", GUI.loadIcon(STOP_ICON));
+        btnAutoStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP));
         btnAutoStop.setEnabled(false);
         btnAutoStop.addActionListener(e -> stopAutomation());
         toolbar.add(btnAutoStop);
 
-        btnAutoReset = new JButton("Reset", GUI.loadIcon(RESET_ICON));
+        btnAutoReset = new JButton("Reset", GUI.loadIcon(StandardIcons.ICON_RESET));
         btnAutoReset.addActionListener(e -> resetAutomation());
         toolbar.add(btnAutoReset);
 

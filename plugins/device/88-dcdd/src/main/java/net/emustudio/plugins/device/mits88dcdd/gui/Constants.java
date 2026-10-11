@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
+import net.emustudio.emulib.runtime.ui.StandardIcons;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -13,9 +15,9 @@ public class Constants {
 
     public final static Font DRIVE_BUTTON_FONT = FONT_MONOSPACED.deriveFont(14.0f);
 
-    public final static ImageIcon ICON_UNSELECTED = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/indicator-red.png");
-    public final static ImageIcon ICON_SELECTED = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/indicator-green.png");
+    public final static ImageIcon ICON_UNSELECTED = loadIcon(StandardIcons.ICON_INDICATOR_RED);
+    public final static ImageIcon ICON_SELECTED = loadIcon(StandardIcons.ICON_INDICATOR_GREEN);
 
-    public final static ImageIcon ICON_OFF = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/disk-off.png");
-    public final static ImageIcon ICON_ON = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/disk-on.png");
+    public final static ImageIcon ICON_OFF = loadIcon(StandardIcons.ICON_DISK_EMPTY);
+    public final static ImageIcon ICON_ON = loadIcon(StandardIcons.ICON_DISK_MOUNTED);
 }

@@ -28,69 +28,13 @@ import java.util.function.Consumer;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.runtime.ui.StandardIcons.LOGO_FILE;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.
  */
 public class EmuStudioGui implements GUI {
-    // General icons
-    public static final String LOGO_FILE = "/net/emustudio/application/gui/dialogs/logo.png";
-    public static final String ICON_FAVICON = "/net/emustudio/application/gui/emustudio.png";
-
-    // Schema element icons
-    public static final String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compiler.png";
-    public static final String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.png";
-    public static final String ICON_MEMORY = "/net/emustudio/application/gui/dialogs/memory.png";
-    public static final String ICON_DEVICE = "/net/emustudio/application/gui/dialogs/device.png";
-    public static final String ICON_CONNECTION = "/net/emustudio/application/gui/dialogs/connection.png";
-    public static final String ICON_BIDIRECTION = "/net/emustudio/application/gui/dialogs/connection-bidirectional.png";
-    public static final String ICON_GRID = "/net/emustudio/application/gui/dialogs/memory-view.png";
-
-    // Editor icons
-    public static final String ICON_FIND = "/net/emustudio/application/gui/dialogs/edit-find.png";
-    public static final String ICON_REPLACE = "/net/emustudio/application/gui/dialogs/edit-find-replace.png";
-    public static final String ICON_NEW_FILE = "/net/emustudio/application/gui/dialogs/document-new.png";
-    public static final String ICON_OPEN_FILE = "/net/emustudio/application/gui/dialogs/document-open.png";
-    public static final String ICON_SAVE = "/net/emustudio/application/gui/dialogs/document-save.png";
-    public static final String ICON_UNDO = "/net/emustudio/application/gui/dialogs/edit-undo.png";
-    public static final String ICON_REDO = "/net/emustudio/application/gui/dialogs/edit-redo.png";
-    public static final String ICON_CUT = "/net/emustudio/application/gui/dialogs/edit-cut.png";
-    public static final String ICON_COPY = "/net/emustudio/application/gui/dialogs/edit-copy.png";
-    public static final String ICON_PASTE = "/net/emustudio/application/gui/dialogs/edit-paste.png";
-
-    // Emulator icons
-    public static final String ICON_RUN = "/net/emustudio/application/gui/dialogs/run.png";
-    public static final String ICON_RUN_TIMED = "/net/emustudio/application/gui/dialogs/run-timed.png";
-    public static final String ICON_PAUSE = "/net/emustudio/application/gui/dialogs/pause.png";
-    public static final String ICON_STOP = "/net/emustudio/application/gui/dialogs/stop.png";
-    public static final String ICON_STEP = "/net/emustudio/application/gui/dialogs/step-forward.png";
-    public static final String ICON_STEP_BACK = "/net/emustudio/application/gui/dialogs/step-back.png";
-    public static final String ICON_JUMP = "/net/emustudio/application/gui/dialogs/jump-to-address.png";
-    public static final String ICON_JUMP_TO_BEGINNING = "/net/emustudio/application/gui/dialogs/jump-to-beginning.png";
-    public static final String ICON_RESET = "/net/emustudio/application/gui/dialogs/reset.png";
-    public static final String ICON_BREAKPOINT = "/net/emustudio/application/gui/dialogs/breakpoint-marker.png";
-    public static final String ICON_BREAKPOINTS = "/net/emustudio/application/gui/dialogs/breakpoint-toggle.png";
-
-    // Computer management icons
-    public static final String ICON_COMPUTER = "/net/emustudio/application/gui/dialogs/computer.png";
-    public static final String ICON_ADD = "/net/emustudio/application/gui/dialogs/list-add.png";
-    public static final String ICON_REMOVE = "/net/emustudio/application/gui/dialogs/list-remove.png";
-    public static final String ICON_DELETE = "/net/emustudio/application/gui/dialogs/edit-delete.png";
-    public static final String ICON_RENAME = "/net/emustudio/application/gui/dialogs/rename-computer.png";
-
-    // Debug table pagination icons
-    public static final String ICON_PAGE_FIRST = "/net/emustudio/application/gui/dialogs/page-first.png";
-    public static final String ICON_PAGE_BACK = "/net/emustudio/application/gui/dialogs/page-back.png";
-    public static final String ICON_PAGE_CURRENT = "/net/emustudio/application/gui/dialogs/page-current.png";
-    public static final String ICON_PAGE_FORWARD = "/net/emustudio/application/gui/dialogs/page-forward.png";
-    public static final String ICON_PAGE_SEEK_BACKWARD = "/net/emustudio/application/gui/dialogs/page-seek-backward.png";
-    public static final String ICON_PAGE_SEEK_FORWARD = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
-
-    // Dialog icons
-    public static final String ICON_LOADING = "/net/emustudio/application/gui/dialogs/loading.png";
-    public static final String ICON_MOTHERBOARD = "/net/emustudio/application/gui/dialogs/motherboard.png";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
 
     private AppSettings.Theme currentTheme = AppSettings.Theme.INTELLIJ;
