@@ -81,7 +81,6 @@ There are several related projects used by emuStudio that contributors should be
 - Contributing guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Developer documentation: <https://emustudio.github.io/documentation/developer/getting_started/contributing>
 - Release notes: [`RELEASES.md`](RELEASES.md)
-- Plugin-specific notes: README files inside individual plugin directories
 
 ## Acknowledgements
 

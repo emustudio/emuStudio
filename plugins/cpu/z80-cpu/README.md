@@ -1,9 +1,6 @@
-# z80-cpu
+# z80-cpu references
 
-This project is emulator of Zilog Z80 CPU.
-It is part of [emuStudio](https://www.emustudio.net/).
-
-The official documentation can be found [here](https://www.emustudio.net/docuser/mits_altair_8800/index/#CPU-Z80)
+User documentation: <https://www.emustudio.net/documentation/user/altair8800/z80-cpu>
 
 ## Z80 Information
 
@@ -20,7 +17,6 @@ The official documentation can be found [here](https://www.emustudio.net/docuser
 - [RedCode Z80](https://github.com/redcode/Z80) project, for helping with correctly implementing some Z80 instructions
 - [superzazu's Z80](https://github.com/superzazu/z80), includes test ROMs
 - [zxpoly](https://github.com/raydac/zxpoly)
-
 
 ## Z80 Tests
 
