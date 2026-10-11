@@ -53,7 +53,7 @@ public class PassedCyclesMediatorTest {
         PassedCyclesMediator mediator = new PassedCyclesMediator(ula, PROFILE);
         DisplayCanvas canvas = createNiceMock(DisplayCanvas.class);
         // Expect drawNextLine(0) to be called once for the first line boundary
-        canvas.drawNextLine(0);
+        canvas.drawNextLine(0, false);
         expectLastCall().once();
         replay(canvas);
 
@@ -69,9 +69,11 @@ public class PassedCyclesMediatorTest {
         TestULA ula = new TestULA();
         PassedCyclesMediator mediator = new PassedCyclesMediator(ula, PROFILE);
         DisplayCanvas canvas = createStrictMock(DisplayCanvas.class);
+        canvas.drawBorderCycles(anyLong(), eq(1L), anyInt());
+        expectLastCall().asStub();
         // Expect exactly one raster line draw per frame line.
         for (int i = 0; i < PROFILE.frameLineCount; i++) {
-            canvas.drawNextLine(i);
+            canvas.drawNextLine(i, false);
             expectLastCall().once();
         }
         canvas.frameReady();

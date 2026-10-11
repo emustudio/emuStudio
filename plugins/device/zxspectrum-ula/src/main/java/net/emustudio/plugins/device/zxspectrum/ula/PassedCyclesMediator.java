@@ -83,15 +83,18 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
      */
     @Override
     public void passedCycles(long cycles) {
+        DisplayCanvas canvas = this.canvas;
+        if (canvas != null) {
+            canvas.drawBorderCycles(frameCycles, cycles, ula.getBorderColor());
+        }
         ula.passedCycles(cycles);
         frameCycles += cycles;
         lineCycles += cycles;
 
         // Draw completed lines in batch
-        DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
             if (lineCycles >= profile.displayLineTstates && lastLinePainted < profile.frameLineCount) {
-                canvas.drawNextLine(lastLinePainted++);
+                canvas.drawNextLine(lastLinePainted++, false);
             }
         }
         lineCycles = lineCycles % profile.displayLineTstates;
