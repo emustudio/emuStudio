@@ -223,6 +223,7 @@ public class EmuStudioGuiTest {
         Border border = gui.fadingBorder(6, Color.BLUE);
 
         gui.styleTable(table);
+        assertTrue(table.getRowHeight() >= Icons.SIZE + 4);
         gui.styleList(list);
 
         assertFalse(toolBar.isFloatable());

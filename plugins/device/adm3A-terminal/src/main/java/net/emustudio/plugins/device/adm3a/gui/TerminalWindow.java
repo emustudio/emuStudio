@@ -91,7 +91,7 @@ public class TerminalWindow extends DialogBase {
         panelControl.setBorder(null);
         panelControl.setOpaque(false);
         panelControl.setLayout(new FlowLayout(LEFT, 10, 0));
-        panelControl.setBounds(100, bgHeight - 46, 254, 34);
+        panelControl.setBounds(100, bgHeight - 46, 270, 34);
 
         panelControl.add(btnClear);
         panelControl.add(btnRoll);
@@ -116,7 +116,7 @@ public class TerminalWindow extends DialogBase {
         button.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
         button.setBackground(new Color(0x40443B));
         button.setForeground(new Color(0xEBE8D9));
-        button.setPreferredSize(new Dimension(112, 34));
+        button.setPreferredSize(new Dimension(120, 34));
         button.setIconTextGap(8);
         button.setMargin(new Insets(0, 4, 0, 4));
         button.setFocusable(false);

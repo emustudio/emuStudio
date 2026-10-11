@@ -1,0 +1,419 @@
+[
+  {
+    "source": "emustudio/bidirection.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/bidirection.png"
+  },
+  {
+    "source": "emustudio/breakpoint.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/breakpoint.png"
+  },
+  {
+    "source": "emustudio/breakpoints.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/breakpoints.png"
+  },
+  {
+    "source": "tango/preferences-system.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/compile.png"
+  },
+  {
+    "source": "tango/computer.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/computer.png"
+  },
+  {
+    "source": "tango/network-wired.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/connection.png"
+  },
+  {
+    "source": "emustudio/cpu.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/cpu.png"
+  },
+  {
+    "source": "tango/input-gaming.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/device.png"
+  },
+  {
+    "source": "tango/document-new.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-new.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-open.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/document-save.png"
+  },
+  {
+    "source": "tango/edit-copy.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-copy.png"
+  },
+  {
+    "source": "tango/edit-cut.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-cut.png"
+  },
+  {
+    "source": "tango/edit-delete.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-delete.png"
+  },
+  {
+    "source": "tango/edit-find-replace.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-find-replace.png"
+  },
+  {
+    "source": "tango/edit-find.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-find.png"
+  },
+  {
+    "source": "tango/edit-paste.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-paste.png"
+  },
+  {
+    "source": "tango/edit-redo.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-redo.png"
+  },
+  {
+    "source": "tango/edit-undo.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/edit-undo.png"
+  },
+  {
+    "source": "tango/go-first.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-first.png"
+  },
+  {
+    "source": "tango/go-jump.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-jump.png"
+  },
+  {
+    "source": "tango/go-next.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-next.png"
+  },
+  {
+    "source": "tango/media-playback-pause.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-pause.png"
+  },
+  {
+    "source": "emustudio/run-timed.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-play-time.png"
+  },
+  {
+    "source": "tango/media-playback-start.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-play.png"
+  },
+  {
+    "source": "tango/go-previous.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-previous.png"
+  },
+  {
+    "source": "tango/media-playback-stop.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/go-stop.png"
+  },
+  {
+    "source": "emustudio/grid.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/grid_memory.png"
+  },
+  {
+    "source": "tango/list-add.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/list-add.png"
+  },
+  {
+    "source": "tango/list-remove.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/list-remove.png"
+  },
+  {
+    "source": "emustudio/motherboard.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/loading.png"
+  },
+  {
+    "source": "emustudio/motherboard.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/motherboard-icon.png"
+  },
+  {
+    "source": "tango/media-playback-start.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-back.png",
+    "flip": true
+  },
+  {
+    "source": "emustudio/page-current.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-current.png"
+  },
+  {
+    "source": "tango/media-skip-backward.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-first.png"
+  },
+  {
+    "source": "tango/media-playback-start.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-forward.png"
+  },
+  {
+    "source": "tango/media-skip-forward.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-last.png"
+  },
+  {
+    "source": "tango/media-seek-backward.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-seek-backward.png"
+  },
+  {
+    "source": "tango/media-seek-forward.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/page-seek-forward.png"
+  },
+  {
+    "source": "tango/media-skip-backward.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/prage-first.png"
+  },
+  {
+    "source": "emustudio/memory.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/ram.png"
+  },
+  {
+    "source": "tango/preferences-desktop-font.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/rename-computer.png"
+  },
+  {
+    "source": "tango/view-refresh.png",
+    "target": "application/src/main/resources/net/emustudio/application/gui/dialogs/reset.png"
+  },
+  {
+    "source": "emustudio/emustudio.svg",
+    "target": "application/src/main/resources/net/emustudio/application/gui/favicon16.png"
+  },
+  {
+    "source": "emustudio/disk-off.svg",
+    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/off.png"
+  },
+  {
+    "source": "emustudio/disk-on.svg",
+    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/on.png"
+  },
+  {
+    "source": "emustudio/indicator-green.svg",
+    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/selected.png"
+  },
+  {
+    "source": "emustudio/indicator-red.svg",
+    "target": "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/unselected.png"
+  },
+  {
+    "source": "emustudio/disk-off.svg",
+    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/off.png"
+  },
+  {
+    "source": "emustudio/disk-on.svg",
+    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/on.png"
+  },
+  {
+    "source": "emustudio/indicator-green.svg",
+    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/selected.png"
+  },
+  {
+    "source": "emustudio/indicator-red.svg",
+    "target": "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/altairhdsk/gui/unselected.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/browse.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/events-save.png"
+  },
+  {
+    "source": "tango/video-x-generic.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/load.png"
+  },
+  {
+    "source": "tango/view-refresh.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/refresh.png"
+  },
+  {
+    "source": "tango/view-refresh.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/reset.png"
+  },
+  {
+    "source": "tango/media-playback-stop.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/stop.png"
+  },
+  {
+    "source": "tango/media-eject.png",
+    "target": "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/gui/tape-eject.png"
+  },
+  {
+    "source": "tango/go-down.png",
+    "target": "plugins/device/abstract-tape/src/main/resources/net/emustudio/plugins/device/abstracttape/gui/go-down.png"
+  },
+  {
+    "source": "tango/go-up.png",
+    "target": "plugins/device/abstract-tape/src/main/resources/net/emustudio/plugins/device/abstracttape/gui/go-up.png"
+  },
+  {
+    "source": "emustudio/terminal-clear.svg",
+    "target": "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/clear.png"
+  },
+  {
+    "source": "tango/go-up.png",
+    "target": "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/roll.png"
+  },
+  {
+    "source": "tango/audio-volume-high.png",
+    "target": "plugins/device/audio-ay3_8910-chip/src/main/resources/net/emustudio/plugins/device/ay38910/gui/toolbar-volume.png"
+  },
+  {
+    "source": "tango/list-add.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-add.png"
+  },
+  {
+    "source": "tango/go-down.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-move-down.png"
+  },
+  {
+    "source": "tango/go-up.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-move-up.png"
+  },
+  {
+    "source": "tango/list-remove.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/auto-remove.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/browse.png"
+  },
+  {
+    "source": "tango/edit-copy.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/events-copy.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/events-save.png"
+  },
+  {
+    "source": "tango/video-x-generic.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/load.png"
+  },
+  {
+    "source": "tango/media-playback-start.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/play.png"
+  },
+  {
+    "source": "tango/view-refresh.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/refresh.png"
+  },
+  {
+    "source": "tango/view-refresh.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/reset.png"
+  },
+  {
+    "source": "tango/media-playback-stop.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/stop.png"
+  },
+  {
+    "source": "tango/media-eject.png",
+    "target": "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotape_player/gui/tape-eject.png"
+  },
+  {
+    "source": "tango/media-record.png",
+    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/toolbar-record.png"
+  },
+  {
+    "source": "tango/media-playback-stop.png",
+    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/toolbar-stop.png"
+  },
+  {
+    "source": "tango/audio-volume-high.png",
+    "target": "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/toolbar-volume.png"
+  },
+  {
+    "source": "emustudio/ascii.svg",
+    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/16_ascii.png"
+  },
+  {
+    "source": "emustudio/indicator-blue.svg",
+    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/16_circle_blue.png"
+  },
+  {
+    "source": "emustudio/indicator-red.svg",
+    "target": "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/16_circle_red.png"
+  },
+  {
+    "source": "tango/input-keyboard.png",
+    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/toolbar-keyboard.png"
+  },
+  {
+    "source": "tango/media-record.png",
+    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/toolbar-record.png"
+  },
+  {
+    "source": "tango/media-playback-stop.png",
+    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/toolbar-stop.png"
+  },
+  {
+    "source": "tango/audio-volume-high.png",
+    "target": "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/toolbar-volume.png"
+  },
+  {
+    "source": "emustudio/ascii.svg",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/document-open.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/document-save.png"
+  },
+  {
+    "source": "tango/edit-clear.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png"
+  },
+  {
+    "source": "tango/edit-find.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/edit-find.png"
+  },
+  {
+    "source": "emustudio/ascii.svg",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/find-text.png"
+  },
+  {
+    "source": "tango/format-indent-more.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png"
+  },
+  {
+    "source": "tango/preferences-system.png",
+    "target": "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png"
+  },
+  {
+    "source": "tango/edit-clear.png",
+    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/clear.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/document-open.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/document-save.png"
+  },
+  {
+    "source": "tango/edit-clear.png",
+    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/clear.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/document-open.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/document-save.png"
+  },
+  {
+    "source": "tango/edit-clear.png",
+    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/clear.png"
+  },
+  {
+    "source": "tango/document-open.png",
+    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/document-open.png"
+  },
+  {
+    "source": "tango/document-save.png",
+    "target": "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/document-save.png"
+  }
+]

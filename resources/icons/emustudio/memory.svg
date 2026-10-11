@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+<defs>
+ <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#729fcf"/><stop offset="1" stop-color="#3465a4"/></linearGradient>
+ <linearGradient id="green" x2="0" y2="1"><stop stop-color="#8ae234"/><stop offset="1" stop-color="#4e9a06"/></linearGradient>
+ <linearGradient id="gray" x2="0" y2="1"><stop stop-color="#eeeeec"/><stop offset="1" stop-color="#888a85"/></linearGradient>
+ <linearGradient id="red" x2="0" y2="1"><stop stop-color="#ef2929"/><stop offset="1" stop-color="#a40000"/></linearGradient>
+ <linearGradient id="orange" x2="0" y2="1"><stop stop-color="#fce94f"/><stop offset="1" stop-color="#f57900"/></linearGradient>
+ </defs>
+<path d="M3 15.5h16v3H3z" fill="#c4a000" stroke="#8f5902"/><path d="M7 16v2 M11 16v2 M15 16v2" stroke="#fce94f"/><rect x="1.5" y="5.5" width="19" height="10" rx="1" fill="url(#green)" stroke="#4e9a06"/><path d="M3 7h16" stroke="#fff" opacity=".65"/><g fill="#555753" stroke="#2e3436"><rect x="4.5" y="8.5" width="5" height="4"/><rect x="12.5" y="8.5" width="5" height="4"/></g>
+</svg>

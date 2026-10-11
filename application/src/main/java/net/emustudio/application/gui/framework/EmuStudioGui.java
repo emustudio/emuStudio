@@ -40,12 +40,12 @@ public class EmuStudioGui implements GUI {
 
     // Schema element icons
     public static final String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compile.png";
-    public static final String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.gif";
-    public static final String ICON_MEMORY = "/net/emustudio/application/gui/dialogs/ram.gif";
+    public static final String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.png";
+    public static final String ICON_MEMORY = "/net/emustudio/application/gui/dialogs/ram.png";
     public static final String ICON_DEVICE = "/net/emustudio/application/gui/dialogs/device.png";
     public static final String ICON_CONNECTION = "/net/emustudio/application/gui/dialogs/connection.png";
-    public static final String ICON_BIDIRECTION = "/net/emustudio/application/gui/dialogs/bidirection.gif";
-    public static final String ICON_GRID = "/net/emustudio/application/gui/dialogs/grid_memory.gif";
+    public static final String ICON_BIDIRECTION = "/net/emustudio/application/gui/dialogs/bidirection.png";
+    public static final String ICON_GRID = "/net/emustudio/application/gui/dialogs/grid_memory.png";
 
     // Editor icons
     public static final String ICON_FIND = "/net/emustudio/application/gui/dialogs/edit-find.png";
@@ -88,8 +88,8 @@ public class EmuStudioGui implements GUI {
     public static final String ICON_PAGE_SEEK_FORWARD = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
 
     // Dialog icons
-    public static final String ICON_LOADING = "/net/emustudio/application/gui/dialogs/loading.gif";
-    public static final String ICON_MOTHERBOARD = "/net/emustudio/application/gui/dialogs/motherboard-icon.gif";
+    public static final String ICON_LOADING = "/net/emustudio/application/gui/dialogs/loading.png";
+    public static final String ICON_MOTHERBOARD = "/net/emustudio/application/gui/dialogs/motherboard-icon.png";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
 
@@ -434,7 +434,7 @@ public class EmuStudioGui implements GUI {
     public void styleTable(JTable table) {
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setRowHeight(table.getRowHeight() + 4);
+        table.setRowHeight(Math.max(table.getRowHeight(), Icons.SIZE) + 4);
     }
 
     @Override
