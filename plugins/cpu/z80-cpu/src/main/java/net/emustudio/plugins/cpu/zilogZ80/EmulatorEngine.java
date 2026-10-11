@@ -2150,9 +2150,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_I_A() {
-        // pc:4,pc+1:5
+        // pc:4,pc+1:4,IR:1
+        passiveRefreshCycles(1);
         I = regs[REG_A];
-        advanceCycles(1);
     }
 
     void I_RETI() {
@@ -2167,9 +2167,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_R_A() {
-        // pc:4,pc+1:5
+        // pc:4,pc+1:4,IR:1
+        passiveRefreshCycles(1);
         R = regs[REG_A];
-        advanceCycles(1);
     }
 
     void I_IM_1() {
@@ -2183,19 +2183,19 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_A_I() {
-        // pc:4,pc+1:5
+        // pc:4,pc+1:4,IR:1
+        passiveRefreshCycles(1);
         regs[REG_A] = I & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C) | TABLE_XY[regs[REG_A]];
         Q = flags;
-        advanceCycles(1);
     }
 
     void I_LD_A_R() {
-        // pc:4,pc+1:5
+        // pc:4,pc+1:4,IR:1
+        passiveRefreshCycles(1);
         regs[REG_A] = R & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C) | TABLE_XY[regs[REG_A]];
         Q = flags;
-        advanceCycles(1);
     }
 
     void I_RRD() {
@@ -2498,8 +2498,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_INI() {
-        // pc:4,pc+1:5,IO,hl:3
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,IO,hl:3
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
@@ -2524,8 +2524,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_INIR() {
-        // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,IO,hl:3,[hl:1 x 5]
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
@@ -2571,12 +2571,12 @@ public class EmulatorEngine implements CpuEngine {
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
         Q = flags;
-        advanceCycles(5);
+        passedCycles((hl - 1) & 0xFFFF, 5);
     }
 
     void I_IND() {
-        // pc:4,pc+1:5,IO,hl:3
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,IO,hl:3
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
@@ -2601,8 +2601,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_INDR() {
-        // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,IO,hl:3,[hl:1 x 5]
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int portAddress = (regs[REG_B] << 8) | regs[REG_C];
         int decB = (regs[REG_B] - 1) & 0xFF;
@@ -2648,12 +2648,12 @@ public class EmulatorEngine implements CpuEngine {
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
         Q = flags;
-        advanceCycles(5);
+        passedCycles((hl + 1) & 0xFFFF, 5);
     }
 
     void I_OUTI() {
-        // pc:4,pc+1:5,hl:3,IO
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,hl:3,IO
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(hl);
         advanceCycles(3);
@@ -2681,8 +2681,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_OTIR() {
-        // pc:4,pc+1:5,hl:3,IO,[hl:1 x 5]
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,hl:3,IO,[BC:1 x 5]
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(hl);
         advanceCycles(3);
@@ -2729,12 +2729,12 @@ public class EmulatorEngine implements CpuEngine {
             flagP = flagP ^ PARITY_TABLE[decB & 0x07] ^ FLAG_PV;
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH);
-        advanceCycles(5);
+        passedCycles(((decB << 8) | regs[REG_C]), 5);
     }
 
     void I_OUTD() {
-        // pc:4,pc+1:5,hl:3,IO
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,hl:3,IO
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(hl--);
         advanceCycles(3);
@@ -2759,8 +2759,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_OTDR() {
-        // pc:4,pc+1:5,hl:3,IO,[hl:1 x 5]
-        advanceCycles(1);
+        // pc:4,pc+1:4,IR:1,hl:3,IO,[BC:1 x 5]
+        passiveRefreshCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(hl--);
         advanceCycles(3);
@@ -2806,7 +2806,7 @@ public class EmulatorEngine implements CpuEngine {
             flagP = flagP ^ PARITY_TABLE[decB & 0x07] ^ FLAG_PV;
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
-        advanceCycles(5);
+        passedCycles(((decB << 8) | regs[REG_C]), 5);
     }
 
     void I_LD_REF_NN_BC() {
@@ -4218,7 +4218,7 @@ public class EmulatorEngine implements CpuEngine {
         flags = ((flags & FLAG_C)
                 | FLAG_H
                 | ((result == 0) ? (FLAG_Z | FLAG_PV) : 0))
-                | TABLE_XY[special & 0xFF];
+                | TABLE_XY[address >>> 8];
         if (bit == 7) {
             flags |= ((result == 0x80) ? FLAG_S : 0);
         }
