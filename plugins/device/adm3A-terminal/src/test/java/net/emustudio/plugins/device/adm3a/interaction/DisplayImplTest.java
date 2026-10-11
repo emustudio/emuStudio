@@ -7,6 +7,7 @@ import net.emustudio.plugins.device.adm3a.TerminalSettingsTestHelper;
 
 import java.awt.*;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import org.junit.After;
 import org.junit.Before;
@@ -55,6 +56,30 @@ public class DisplayImplTest {
         assertEquals('A', memory[0]);
         // cursor should have moved forward
         assertEquals(new Point(1, 0), display.getCursorPoint());
+    }
+
+    @Test
+    public void testExtendedOutputUsesCodePage437() {
+        byte[] bytes = new byte[128];
+        for (int code = 128; code <= 255; code++) {
+            bytes[code - 128] = (byte) code;
+            display.write((byte) code);
+        }
+        char[] expected = new String(bytes, Charset.forName("IBM437")).toCharArray();
+        assertArrayEquals(expected, java.util.Arrays.copyOf(display.getVideoMemory(), expected.length));
+        assertEquals(new Point(48, 1), display.getCursorPoint());
+    }
+
+    @Test
+    public void testBoxDrawingWithControlCodes() {
+        for (int code : new int[]{201, 205, 187, 13, 10, 186, 32, 186, 13, 10, 200, 205, 188}) {
+            display.write((byte) code);
+        }
+        char[] memory = display.getVideoMemory();
+        assertEquals("╔═╗", new String(memory, 0, 3));
+        assertEquals("║ ║", new String(memory, DEFAULT_COLUMNS, 3));
+        assertEquals("╚═╝", new String(memory, 2 * DEFAULT_COLUMNS, 3));
+        assertEquals(new Point(3, 2), display.getCursorPoint());
     }
 
     @Test

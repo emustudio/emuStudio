@@ -18,12 +18,18 @@ import java.util.Objects;
  * Display implementation.
  * A display is not a canvas! It's a visual "controller" of the terminal, but does not perform rendering.
  * <p>
- * It can interpret ASCII codes from 0-127. Some have special purpose (0-31).
+ * It interprets ASCII control codes (0-31) and printable characters, with CP437 extensions (128-255).
  */
 @PluginContext(id = "LSI ADM-3A Terminal")
 public class DisplayImpl implements Display, Cursor.LineRoller {
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
     private static final String HERE_IS_CONSTANT = DisplayImpl.class.getAnnotation(PluginContext.class).id();
+    private static final char[] EXTENDED_CHARACTERS = (
+            "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ"
+                    + "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐"
+                    + "└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀"
+                    + "αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■\u00a0"
+    ).toCharArray();
 
     // must be synchronized on this object
     private final char[] videoMemory;
@@ -150,7 +156,7 @@ public class DisplayImpl implements Display, Cursor.LineRoller {
         }
 
         if (loadCursorPosition.notAccepted(data) && d >= 32) {
-            drawChar((char) d);
+            drawChar(d < 128 ? (char) d : EXTENDED_CHARACTERS[d - 128]);
             cursor.moveForwardsRolling(this);
         }
     }

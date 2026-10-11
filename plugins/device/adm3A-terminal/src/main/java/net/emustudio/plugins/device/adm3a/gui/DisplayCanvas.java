@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
 import java.util.Arrays;
 import java.util.Objects;
@@ -98,9 +99,18 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                     graphics.getFontRenderContext(), new String(characters, offset, length)
             );
             int cellWidth = graphics.getFontMetrics().charWidth('W');
+            int lineHeight = graphics.getFontMetrics().getHeight() + displayFont.yLineHeightMultiplierOffset;
             // Keep text on the cursor's cell grid even with fractional desktop scaling.
             for (int column = 0; column < glyphs.getNumGlyphs(); column++) {
                 glyphs.setGlyphPosition(column, new Point(column * cellWidth, 0));
+                char character = characters[offset + column];
+                if (character >= '\u2500' && character <= '\u259f') {
+                    // Box and block outlines fill their cell, including the normal inter-line spacing.
+                    glyphs.setGlyphTransform(column, AffineTransform.getScaleInstance(
+                            cellWidth / glyphs.getGlyphMetrics(column).getAdvance(),
+                            lineHeight / graphics.getFont().getSize2D()
+                    ));
+                }
             }
             Shape outline = glyphs.getOutline(displayFont.xCursorOffset, baseline);
             graphics.fill(outline);

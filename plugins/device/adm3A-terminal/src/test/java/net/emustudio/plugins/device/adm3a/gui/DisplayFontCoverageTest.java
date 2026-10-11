@@ -17,12 +17,83 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class DisplayFontCoverageTest {
+
+    @Test
+    public void testOriginalFontSupportsEveryExtendedCodePage437Character() {
+        Font font = GUI.loadFontResource(
+                DisplayFont.FONT_ORIGINAL.path, DisplayFontCoverageTest.class, DisplayFont.FONT_ORIGINAL.fontSize
+        );
+        byte[] codes = new byte[128];
+        for (int code = 128; code <= 255; code++) {
+            codes[code - 128] = (byte) code;
+        }
+        String characters = new String(codes, Charset.forName("IBM437"));
+        assertEquals(-1, font.canDisplayUpTo(characters));
+        FontRenderContext context = new FontRenderContext(null, true, true);
+        for (char character : characters.toCharArray()) {
+            GlyphVector glyph = font.createGlyphVector(context, new char[]{character});
+            assertEquals("Fixed advance for " + character,
+                    font.createGlyphVector(context, "W").getGlyphMetrics(0).getAdvance(),
+                    glyph.getGlyphMetrics(0).getAdvance(), 0.0f);
+            if (character != '\u00a0') {
+                assertTrue("Visible CP437 glyph: " + character, !glyph.getGlyphOutline(0).getBounds2D().isEmpty());
+            }
+        }
+    }
+
+    @Test
+    public void testOriginalFontDrawsConnectedBoxesAtDifferentDesktopScales() {
+        Font font = GUI.loadFontResource(
+                DisplayFont.FONT_ORIGINAL.path, DisplayFontCoverageTest.class, DisplayFont.FONT_ORIGINAL.fontSize
+        );
+        for (String[] box : new String[][]{{"┌──┐", "│  │", "└──┘"}, {"╔══╗", "║  ║", "╚══╝"}}) {
+            for (double scale : new double[]{1, 1.25, 1.5, 2}) {
+                BufferedImage image = new BufferedImage((int) (48 * scale), (int) (80 * scale), BufferedImage.TYPE_INT_RGB);
+                Graphics2D graphics = image.createGraphics();
+                int cellWidth;
+                int lineHeight;
+                try {
+                    graphics.scale(scale, scale);
+                    graphics.setFont(font);
+                    graphics.setColor(Color.WHITE);
+                    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DisplayFont.FONT_ORIGINAL.antiAliasing);
+                    graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, DisplayFont.FONT_ORIGINAL.fractionalMetrics);
+                    cellWidth = graphics.getFontMetrics().charWidth('W');
+                    lineHeight = graphics.getFontMetrics().getHeight() + DisplayFont.FONT_ORIGINAL.yLineHeightMultiplierOffset;
+                    for (int row = 0; row < box.length; row++) {
+                        DisplayCanvas.drawCharacters(graphics, DisplayFont.FONT_ORIGINAL,
+                                box[row].toCharArray(), 0, box[row].length(), (row + 1) * lineHeight);
+                    }
+                } finally {
+                    graphics.dispose();
+                }
+                double left = DisplayFont.FONT_ORIGINAL.xCursorOffset + cellWidth / 2.0;
+                for (int y = (int) Math.ceil(lineHeight * scale); y < (int) (2 * lineHeight * scale); y++) {
+                    int brightness = 0;
+                    for (int x = (int) ((left - 2) * scale); x <= (int) ((left + 2) * scale); x++) {
+                        brightness = Math.max(brightness, image.getRGB(x, y) & 0xff);
+                    }
+                    assertTrue("Connected vertical border at scale " + scale + " row " + y, brightness >= 128);
+                }
+                for (int x = (int) Math.ceil((left + cellWidth) * scale);
+                     x < (int) ((left + 2 * cellWidth) * scale); x++) {
+                    int brightness = 0;
+                    for (int y = (int) ((lineHeight / 2.0 - 3) * scale);
+                         y <= (int) ((lineHeight / 2.0 + 3) * scale); y++) {
+                        brightness = Math.max(brightness, image.getRGB(x, y) & 0xff);
+                    }
+                    assertTrue("Connected horizontal border at scale " + scale + " column " + x, brightness >= 128);
+                }
+            }
+        }
+    }
 
     @Test
     public void testOriginalFontSupportsRepresentativeLatin1Characters() {
