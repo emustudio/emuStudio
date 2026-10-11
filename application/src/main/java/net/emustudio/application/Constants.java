@@ -10,7 +10,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadFontResource;
 public class Constants {
 
     public static final Font FONT_CODE = loadFontResource(
-            "/net/emustudio/application/gui/FiraCode-Regular.ttf", Constants.class, 13);
+            "/net/emustudio/application/gui/JetBrainsMonoNL-Regular.ttf", Constants.class, 14);
 
     public static final Color DEBUGTABLE_COLOR_CURRENT_INSTRUCTION = Color.RED;
 
