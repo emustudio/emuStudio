@@ -22,6 +22,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -47,7 +48,6 @@ import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_BREAKPOINT;
 import static net.emustudio.application.gui.framework.Icons.loadIcon;
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
@@ -100,10 +100,7 @@ public class REditor implements Editor {
         scrollPane.addMouseWheelListener(e -> {
             int wheelRotation = e.getWheelRotation();
             if (wheelRotation != 0 && (e.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
-                Font font = textPane.getFont();
-                int currentSize = font.getSize();
-                float newSize = (wheelRotation > 0) ? Math.max(currentSize - 1, FONT_DEFAULT_SIZE) : (currentSize + 1);
-                textPane.setFont(font.deriveFont(newSize));
+                setFontSize(getFontSize() + (wheelRotation > 0 ? -1 : 1));
                 e.consume();
             } else {
                 for (MouseWheelListener listener : listeners) {
@@ -111,6 +108,15 @@ public class REditor implements Editor {
                 }
             }
         });
+
+        bindFontZoom("zoomIn", 1,
+                KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ADD, CTRL_DOWN_MASK));
+        bindFontZoom("zoomOut", -1,
+                KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, CTRL_DOWN_MASK));
 
         textPane.addKeyListener(new KeyAdapter() {
             @Override
@@ -156,6 +162,36 @@ public class REditor implements Editor {
     @Override
     public void grabFocus() {
         textPane.grabFocus();
+    }
+
+    @Override
+    public float getFontSize() {
+        return textPane.getFont().getSize2D();
+    }
+
+    @Override
+    public void setFontSize(float size) {
+        float minimum = FONT_CODE.getSize2D() * MIN_FONT_ZOOM / 100.0f;
+        float maximum = FONT_CODE.getSize2D() * MAX_FONT_ZOOM / 100.0f;
+        textPane.setFont(textPane.getFont().deriveFont(Math.max(minimum, Math.min(size, maximum))));
+    }
+
+    @Override
+    public void addFontSizeChangeListener(Runnable listener) {
+        Objects.requireNonNull(listener);
+        textPane.addPropertyChangeListener("font", e -> listener.run());
+    }
+
+    private void bindFontZoom(String name, int step, KeyStroke... keys) {
+        textPane.getActionMap().put(name, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setFontSize(getFontSize() + step);
+            }
+        });
+        for (KeyStroke key : keys) {
+            textPane.getInputMap().put(key, name);
+        }
     }
 
     @Override

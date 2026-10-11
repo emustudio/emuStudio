@@ -29,6 +29,7 @@ public class TabbedEditor implements Editor {
     private final Consumer<List<Path>> openFilesChanged;
     private final JTabbedPane tabs = new JTabbedPane();
     private final List<REditor> editors = new ArrayList<>();
+    private final List<Runnable> fontSizeChangeListeners = new ArrayList<>();
     private Runnable activeEditorChanged = () -> {
     };
 
@@ -44,7 +45,12 @@ public class TabbedEditor implements Editor {
         if (editors.isEmpty()) {
             addEditor(createEditor());
         }
-        tabs.addChangeListener(e -> activeEditorChanged.run());
+        tabs.addChangeListener(e -> {
+            if (!editors.isEmpty()) {
+                activeEditorChanged.run();
+                notifyFontSizeChanged();
+            }
+        });
         notifyOpenFilesChanged();
     }
 
@@ -59,13 +65,14 @@ public class TabbedEditor implements Editor {
         }
 
         int index = tabs.getSelectedIndex();
-        tabs.removeTabAt(index);
         editors.remove(index);
+        tabs.removeTabAt(index);
         if (editors.isEmpty()) {
             addEditor(createEditor());
         }
         notifyOpenFilesChanged();
         activeEditorChanged.run();
+        notifyFontSizeChanged();
         return true;
     }
 
@@ -174,6 +181,27 @@ public class TabbedEditor implements Editor {
     }
 
     @Override
+    public float getFontSize() {
+        return activeEditor().getFontSize();
+    }
+
+    @Override
+    public void setFontSize(float size) {
+        activeEditor().setFontSize(size);
+    }
+
+    @Override
+    public void addFontSizeChangeListener(Runnable listener) {
+        fontSizeChangeListeners.add(Objects.requireNonNull(listener));
+    }
+
+    private void notifyFontSizeChanged() {
+        if (!editors.isEmpty()) {
+            fontSizeChangeListeners.forEach(Runnable::run);
+        }
+    }
+
+    @Override
     public void setPosition(SourceCodePosition position) {
         activeEditor().setPosition(position);
     }
@@ -201,6 +229,11 @@ public class TabbedEditor implements Editor {
     private REditor createEditor() {
         REditor editor = new REditor(dialogs, compiler);
         editor.setOpenFileHandler(this::openFile);
+        editor.addFontSizeChangeListener(() -> {
+            if (editors.contains(editor) && editor == activeEditor()) {
+                notifyFontSizeChanged();
+            }
+        });
         editor.addChangeListener(() -> SwingUtilities.invokeLater(() -> {
             if (editors.contains(editor)) {
                 updateTitle(editor);

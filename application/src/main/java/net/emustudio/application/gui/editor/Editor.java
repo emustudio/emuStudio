@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface Editor extends SearchListener {
+    int MIN_FONT_ZOOM = 30;
+    int MAX_FONT_ZOOM = 350;
 
     void newFile();
 
@@ -36,6 +38,13 @@ public interface Editor extends SearchListener {
     Component getView();
 
     void grabFocus();
+
+    float getFontSize();
+
+    void setFontSize(float size);
+
+    /** Called when the active editor's font size changes, including tab switches. */
+    void addFontSizeChangeListener(Runnable listener);
 
     /**
      * Set caret position.

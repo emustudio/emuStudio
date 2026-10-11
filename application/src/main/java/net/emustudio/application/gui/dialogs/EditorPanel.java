@@ -16,11 +16,15 @@ import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
+import java.awt.Dimension;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.application.gui.editor.Editor.MIN_FONT_ZOOM;
+import static net.emustudio.application.gui.editor.Editor.MAX_FONT_ZOOM;
+import static net.emustudio.application.Constants.FONT_CODE;
 
 public class EditorPanel extends JPanel {
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
@@ -167,6 +171,30 @@ public class EditorPanel extends JPanel {
         mainToolBar.add(gui.toolbarButton(replaceAction));
         mainToolBar.addSeparator();
         mainToolBar.add(gui.toolbarButton(compileAction));
+        mainToolBar.addSeparator();
+
+        JSlider fontZoom = new JSlider(MIN_FONT_ZOOM, MAX_FONT_ZOOM, 100);
+        fontZoom.setToolTipText("Font zoom (Ctrl + / Ctrl -)");
+        fontZoom.getAccessibleContext().setAccessibleName("Font zoom");
+        Dimension zoomSize = new Dimension(120, fontZoom.getPreferredSize().height);
+        fontZoom.setPreferredSize(zoomSize);
+        fontZoom.setMaximumSize(zoomSize);
+        JLabel zoomPercentage = new JLabel();
+        zoomPercentage.setLabelFor(fontZoom);
+        Runnable updateZoom = () -> {
+            int zoom = Math.round(editor.getFontSize() * 100.0f / FONT_CODE.getSize2D());
+            fontZoom.setValue(zoom);
+            zoomPercentage.setText(zoom + "%");
+        };
+        updateZoom.run();
+        fontZoom.addChangeListener(e -> {
+            if (fontZoom.getValue() != Math.round(editor.getFontSize() * 100.0f / FONT_CODE.getSize2D())) {
+                editor.setFontSize(FONT_CODE.getSize2D() * fontZoom.getValue() / 100.0f);
+            }
+        });
+        editor.addFontSizeChangeListener(updateZoom);
+        mainToolBar.add(fontZoom);
+        mainToolBar.add(zoomPercentage);
 
         return mainToolBar;
     }
