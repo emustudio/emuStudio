@@ -157,6 +157,35 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         List<Fold> folds = onEdt(() -> new SourceFoldParser().getFolds(editor.textPane()));
         assertEquals(1, folds.size()); assertEquals(0, folds.get(0).getStartLine()); assertEquals(2, folds.get(0).getEndLine());
     }
+    @Test public void compilerFoldingSurvivesOpeningSplittingAndSyntaxChanges() throws Exception {
+        Path source = files.newFile("generic.asm").toPath();
+        Files.writeString(source, "anything\n  body\ndone\n");
+        LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "anything", null, null, null),
+                new SourceToken(Token.BLOCK_END, 16, "done", null, null, null)));
+        TabbedEditor workspace = onEdt(() -> new TabbedEditor(mock(Dialogs.class), new CompilerStub(lexer), List.of(source), paths -> { }));
+        REditor original = workspace.activeEditor();
+        runOnEdt(() -> original.textPane().getFoldManager().reparse());
+        assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
+
+        runOnEdt(() -> workspace.split(true));
+        JSplitPane split = onEdt(() -> (JSplitPane) ((JTabbedPane) workspace.getView()).getSelectedComponent());
+        TextEditorPane mirror = findComponent((java.awt.Container) split.getRightComponent(), TextEditorPane.class, pane -> true);
+        runOnEdt(() -> mirror.getFoldManager().reparse());
+        assertEquals(1, onEdt(() -> mirror.getFoldManager().getFoldCount()).intValue());
+        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(mirror::getSyntaxEditingStyle));
+        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(original.textPane()::getSyntaxEditingStyle));
+
+        runOnEdt(() -> {
+            workspace.unsplit();
+            JMenu display = original.commands().menus().get(4);
+            JMenu syntax = (JMenu) display.getItem(display.getItemCount() - 1);
+            syntax.getItem(1).doClick(0);
+            syntax.getItem(0).doClick(0);
+            original.textPane().getFoldManager().reparse();
+        });
+        assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
+        assertEquals(FoldSupport.COMPILER_STYLE, onEdt(() -> ((org.fife.ui.rsyntaxtextarea.RSyntaxDocument) original.textPane().getDocument()).getSyntaxStyle()));
+    }
     @Test public void commentToggleUsesAnUnknownCompilersDelimiter() {
         LexicalAnalyzer lexer = new TokenLexer(List.of()) {
             public String[] getLineCommentStartAndEnd() { return new String[]{"##", null}; }
@@ -267,11 +296,17 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         assertThrows(IllegalArgumentException.class, () -> SourceRefactoring.rename(root, List.of(root), () -> support, 0, "other"));
     }
     private static class TokenLexer implements LexicalAnalyzer {
-        final List<Token> tokens; int index;
+        final List<Token> tokens; List<Token> current; int index;
         TokenLexer(List<Token> tokens) { this.tokens = tokens; }
-        public Token next() { return tokens.get(index++); }
-        public boolean hasNext() { return index < tokens.size(); }
-        public void reset(char[] chars, int offset, int length) { index = 0; }
+        public Token next() { return current.get(index++); }
+        public boolean hasNext() { return index < current.size(); }
+        public void reset(char[] chars, int offset, int length) {
+            index = 0;
+            String text = new String(chars, offset, length);
+            current = tokens.stream().filter(token -> token.getOffset() >= 0
+                    && token.getOffset() + token.getText().length() <= length
+                    && text.startsWith(token.getText(), token.getOffset())).collect(java.util.stream.Collectors.toList());
+        }
         public boolean isValidSymbolName(String name) { return name.matches("[a-z]+"); }
     }
 }

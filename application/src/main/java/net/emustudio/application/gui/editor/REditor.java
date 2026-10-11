@@ -139,7 +139,6 @@ public class REditor implements Editor {
 
         if (compiler != null) {
             fileExtensions = List.copyOf(compiler.getSourceFileExtensions());
-            ((RSyntaxDocument) textPane.getDocument()).setSyntaxStyle(new RTokenMaker(compiler));
         } else {
             fileExtensions = Collections.emptyList();
         }

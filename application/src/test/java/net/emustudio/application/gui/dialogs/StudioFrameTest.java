@@ -48,9 +48,18 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Emulator", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals("File", onEdt(() -> menuBar.getMenu(0).getText()));
         assertEquals("Edit", onEdt(() -> menuBar.getMenu(1).getText()));
-        assertEquals("Editor", onEdt(() -> menuBar.getMenu(2).getText()));
-        assertEquals("Project", onEdt(() -> menuBar.getMenu(3).getText()));
-        assertEquals("Help", onEdt(() -> menuBar.getMenu(4).getText()));
+        assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));
+        assertEquals("Help", onEdt(() -> menuBar.getMenu(3).getText()));
+        assertEquals(4, onEdt(menuBar::getMenuCount).intValue());
+        List<String> editingItems = onEdt(() -> {
+            List<String> labels = new java.util.ArrayList<>();
+            for (java.awt.Component item : menuBar.getMenu(1).getMenuComponents()) {
+                if (item instanceof JMenuItem) labels.add(((JMenuItem) item).getText());
+            }
+            return labels;
+        });
+        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Selection", "Navigate", "Editing macros",
+                "Editor display", "Find / replace in files…", "Refactor", "Split view")));
     }
 
     @Test

@@ -178,13 +178,14 @@ public class StudioFrame extends JFrame {
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
+        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.SELECT_ALL_ACTION)));
         mnuEdit.addSeparator();
         mnuEdit.add(gui.menuItem(editorPanel.getFindAction()));
         mnuEdit.add(gui.menuItem(editorPanel.getReplaceAction()));
         mnuEdit.add(gui.menuItem(findNextAction));
         mnuEdit.add(gui.menuItem(findPreviousAction));
+        editor.extendEditingMenu(mnuEdit);
         mainMenuBar.add(mnuEdit);
-        mainMenuBar.add(editor.editingMenu());
 
         mnuProject.setText("Project");
         mnuProject.add(gui.menuItem(editorPanel.getCompileAction()));

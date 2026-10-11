@@ -113,7 +113,6 @@ final class EditorCommands {
             JMenuItem item = new JMenuItem(choice[0]); item.setEnabled(compiler != null || !choice[0].equals("Compiler"));
             item.addActionListener(e -> {
                 pane.setSyntaxEditingStyle(choice[1]);
-                if (choice[0].equals("Compiler") && compiler != null) ((RSyntaxDocument) pane.getDocument()).setSyntaxStyle(new RTokenMaker(compiler));
                 applyColors();
             }); syntax.add(item);
         }

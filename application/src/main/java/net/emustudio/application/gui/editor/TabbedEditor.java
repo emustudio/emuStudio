@@ -77,13 +77,17 @@ public class TabbedEditor implements Editor {
 
     public boolean closeCurrent() {
         unsplit();
-        REditor editor = activeEditor();
+        return closeEditor(activeEditor());
+    }
+
+    private boolean closeEditor(REditor editor) {
+        unsplit();
         editor.commands().persistBookmarks();
         if (!confirmSave(editor)) {
             return false;
         }
 
-        int index = tabs.getSelectedIndex();
+        int index = editors.indexOf(editor);
         editors.remove(index);
         tabs.removeTabAt(index);
         editor.dispose();
@@ -93,6 +97,7 @@ public class TabbedEditor implements Editor {
         notifyOpenFilesChanged();
         activeEditorChanged.run();
         notifyFontSizeChanged();
+        grabFocus();
         return true;
     }
 
@@ -271,6 +276,45 @@ public class TabbedEditor implements Editor {
     private void addEditor(REditor editor) {
         editors.add(editor);
         tabs.addTab(title(editor), editor.getView());
+        tabs.setTabComponentAt(editors.size() - 1, new TabHeader(editor));
+    }
+
+    private final class TabHeader extends JPanel {
+        private final JLabel label = new JLabel();
+        private final JButton close = new JButton(new Icon() {
+            public int getIconWidth() { return 10; }
+            public int getIconHeight() { return 10; }
+            public void paintIcon(Component component, Graphics graphics, int x, int y) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                try {
+                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g.setColor(component.getForeground());
+                    g.setStroke(new BasicStroke(1.5f));
+                    g.drawLine(x + 1, y + 1, x + 8, y + 8);
+                    g.drawLine(x + 8, y + 1, x + 1, y + 8);
+                } finally { g.dispose(); }
+            }
+        });
+
+        TabHeader(REditor editor) {
+            super(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            setOpaque(false);
+            label.setOpaque(false);
+            label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+            close.setFocusable(false);
+            close.setContentAreaFilled(false);
+            close.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+            close.setToolTipText("Close tab (Ctrl+W)");
+            close.addActionListener(e -> closeEditor(editor));
+            add(label);
+            add(close);
+            updateTitle(title(editor));
+        }
+
+        void updateTitle(String title) {
+            label.setText(title);
+            close.getAccessibleContext().setAccessibleName("Close " + title);
+        }
     }
 
     REditor activeEditor() {
@@ -355,27 +399,39 @@ public class TabbedEditor implements Editor {
         } finally { navigating = false; }
     }
 
-    public JMenu editingMenu() {
-        JMenu menu = new JMenu("Editor");
+    public void extendEditingMenu(JMenu menu) {
+        int standardItems = menu.getMenuComponentCount();
+        Runnable refresh = () -> {
+            while (menu.getMenuComponentCount() > standardItems) menu.remove(standardItems);
+            menu.addSeparator();
+            List<JMenu> groups = activeEditor().commands().menus();
+            groups.forEach(menu::add);
+            JMenu navigate = groups.get(2);
+            navigate.addSeparator();
+            addCommand(navigate, "Back", () -> navigate(back, forward));
+            addCommand(navigate, "Forward", () -> navigate(forward, back));
+            addCommand(navigate, "Previous edit", () -> navigate(edits, back));
+            addCommand(navigate, "Bookmarks…", this::showBookmarks);
+            menu.addSeparator();
+            addCommand(menu, "Find / replace in files…", () -> new FilesSearchDialog(this, searchBar()).setVisible(true));
+            JMenu refactor = new JMenu("Refactor");
+            addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this));
+            addCommand(refactor, "Extract selection…", () -> SourceRefactoring.extract(this));
+            menu.add(refactor);
+            JMenu split = new JMenu("Split view");
+            addCommand(split, "Split with another file…", () -> split(false));
+            addCommand(split, "Split current file", () -> split(true));
+            addCommand(split, "Close split", this::unsplit);
+            menu.add(split);
+        };
         menu.addMenuListener(new javax.swing.event.MenuListener() {
             public void menuSelected(javax.swing.event.MenuEvent e) {
-                menu.removeAll();
-                activeEditor().commands().menus().forEach(menu::add);
-                addCommand(menu, "Back", () -> navigate(back, forward));
-                addCommand(menu, "Forward", () -> navigate(forward, back));
-                addCommand(menu, "Previous edit", () -> navigate(edits, back));
-                addCommand(menu, "Bookmarks…", TabbedEditor.this::showBookmarks);
-                addCommand(menu, "Find / replace in files…", () -> new FilesSearchDialog(TabbedEditor.this, searchBar()).setVisible(true));
-                addCommand(menu, "Rename symbol…", () -> SourceRefactoring.rename(TabbedEditor.this));
-                addCommand(menu, "Extract selection…", () -> SourceRefactoring.extract(TabbedEditor.this));
-                addCommand(menu, "Split with another file…", () -> split(false));
-                addCommand(menu, "Split current file", () -> split(true));
-                addCommand(menu, "Close split", TabbedEditor.this::unsplit);
+                refresh.run();
             }
             public void menuDeselected(javax.swing.event.MenuEvent e) { }
             public void menuCanceled(javax.swing.event.MenuEvent e) { }
         });
-        return menu;
+        refresh.run();
     }
 
     private void addCommand(JMenu menu, String name, Runnable command) {
@@ -478,6 +534,7 @@ public class TabbedEditor implements Editor {
         int index = editors.indexOf(editor);
         if (index >= 0) {
             tabs.setTitleAt(index, title(editor));
+            ((TabHeader) tabs.getTabComponentAt(index)).updateTitle(title(editor));
         }
     }
 
