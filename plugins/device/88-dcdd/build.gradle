@@ -1,27 +1,14 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 
-plugins {
-  id 'java'
-  id 'com.adarshr.test-logger' version '4.0.0'
-  id 'jacoco'
-}
-
 ext.moduleMainClass = 'net.emustudio.plugins.device.mits88dcdd.cmdline.Runner'
 
 dependencies {
-  implementation libs.emuLib
-  implementation libs.jcipAnnotations
-  implementation libs.slf4JApi
   implementation libs.picocli
   annotationProcessor libs.picocliAnnotation
   implementation libs.tomlj
 
   cpuLib project(":plugins:cpu:8080-cpu")
-
-  testImplementation libs.junit
-  testImplementation libs.easyMock
-  testImplementation libs.slf4JSimple
 }
 
 apply from: "$rootDir/gradle/conventions/java-conventions.gradle"
@@ -33,12 +20,4 @@ compileJava {
 copy {
   from('src/main/files')
   into "$buildDir/libs/files"
-}
-
-test {
-  finalizedBy jacocoTestReport // report is always generated after tests run
-}
-
-jacocoTestReport {
-  dependsOn test // tests are required to run before generating the report
 }

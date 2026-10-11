@@ -1,37 +1,11 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 
-plugins {
-  id 'java'
-  id 'com.adarshr.test-logger' version '4.0.0'
-  id 'jacoco'
-}
-
-repositories {
-  mavenLocal()
-  mavenCentral()
-}
-
 dependencies {
-  implementation libs.emuLib
-  implementation libs.jcipAnnotations
-  implementation libs.slf4JApi
-
   memoryLib project(":plugins:memory:ram-mem")
   deviceLib project(":plugins:device:abstract-tape")
 
-  testImplementation libs.junit
-  testImplementation libs.easyMock
   testImplementation libs.mockito
-  testImplementation libs.slf4JSimple
 }
 
 apply from: "$rootDir/gradle/conventions/java-conventions.gradle"
-
-test {
-  finalizedBy jacocoTestReport // report is always generated after tests run
-}
-
-jacocoTestReport {
-  dependsOn test // tests are required to run before generating the report
-}

@@ -2,11 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 
 plugins {
-  id 'java'
   id 'idea'
   id 'antlr'
-  id 'com.adarshr.test-logger' version '4.0.0'
-  id 'jacoco'
 }
 
 ext {
@@ -18,21 +15,7 @@ dependencies {
   antlr libs.antlr
   implementation libs.antlrRuntime
 
-  implementation libs.emuLib
   implementation project.rootProject.project(":plugins:memory:rasp-mem")
-  implementation libs.slf4JApi
-
-  testImplementation libs.junit
-  testImplementation libs.easyMock
-  testImplementation libs.slf4JSimple
 }
 
 apply from: "$rootDir/gradle/conventions/antlr-compiler-conventions.gradle"
-
-test {
-  finalizedBy jacocoTestReport // report is always generated after tests run
-}
-
-jacocoTestReport {
-  dependsOn test // tests are required to run before generating the report
-}

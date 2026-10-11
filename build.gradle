@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 
 plugins {
   id 'org.asciidoctor.jvm.convert' version '4.0.4'
+  id 'com.adarshr.test-logger' version '4.0.0' apply false
 }
 
 apply from: 'test_report.gradle'
@@ -95,6 +96,31 @@ subprojects {
       url = 'https://central.sonatype.com/repository/maven-snapshots/'
     }
     mavenCentral()
+  }
+}
+
+// Common setup of plugin modules (plugins/<type>/<name>)
+configure(subprojects.findAll { it.parent?.parent?.path == ':plugins' }) {
+  apply plugin: 'java'
+  apply plugin: 'jacoco'
+  apply plugin: 'com.adarshr.test-logger'
+
+  dependencies {
+    implementation libs.emuLib
+    implementation libs.slf4JApi
+    implementation libs.jcipAnnotations
+
+    testImplementation libs.junit
+    testImplementation libs.easyMock
+    testImplementation libs.slf4JSimple
+  }
+
+  test {
+    finalizedBy jacocoTestReport
+  }
+
+  jacocoTestReport {
+    dependsOn test
   }
 }
 
