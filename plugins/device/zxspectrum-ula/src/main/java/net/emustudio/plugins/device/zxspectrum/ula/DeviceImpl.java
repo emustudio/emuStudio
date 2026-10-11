@@ -8,7 +8,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
@@ -25,7 +25,7 @@ public class DeviceImpl extends AbstractDevice {
     private boolean guiIOset = false;
 
     private ULA ula;
-    private TimingProfile timing;
+    private ModelProfile profile;
     private PassedCyclesMediator passedCyclesMediator;
     private DisplayWindow gui;
 
@@ -38,15 +38,17 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
-        this.timing = bus.getProfile();
+        this.profile = bus.getProfile();
         // Bus exposes CPU frequency in kHz (forwarded from CPUContext); convert to Hz for the Beeper
         // sample-rate conversion math, and consult on every sample so a runtime clock change is
-        // immediately reflected in audio timing.
-        this.ula = new ULA(bus, Beeper.createDefault(() -> bus.getCPUFrequency() * 1000L));
-        this.passedCyclesMediator = new PassedCyclesMediator(ula, timing);
+        // immediately reflected in audio profile.
+        this.ula = new ULA(bus, Beeper.createDefault(profile, () -> bus.getCPUFrequency() * 1000L));
+        this.passedCyclesMediator = new PassedCyclesMediator(ula, profile);
         bus.addPassedCyclesListener(passedCyclesMediator);
-        for (int port = 0; port < 0x100; port += 2) {
-            bus.attachDevice(port, ula);
+        for (int port = 0; port < 0x100; port++) {
+            if (profile.isUlaPort(port)) {
+                bus.attachDevice(port, ula);
+            }
         }
     }
 
@@ -83,7 +85,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new DisplayWindow(parent, ula, timing, applicationApi.getDialogs(), applicationApi.getGUI());
+                this.gui = new DisplayWindow(parent, ula, profile, applicationApi.getDialogs(), applicationApi.getGUI());
                 this.gui.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosed(WindowEvent e) {

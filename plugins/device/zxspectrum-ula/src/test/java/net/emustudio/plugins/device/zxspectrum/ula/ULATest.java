@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.emulib.runtime.audio.AudioSink;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import org.junit.Test;
@@ -19,8 +19,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ULATest {
-    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
-    private static final long ZX_48K_CPU_FREQUENCY = 3_500_000L;
+    private static final ModelProfile PROFILE = ModelProfile.ZX_SPECTRUM_48K;
+    private static final long ZX_48K_CPU_FREQUENCY = ModelProfile.ZX_SPECTRUM_48K.cpuFrequencyKHz * 1000L;
 
     @Test
     public void testPortFeSpeakerLevelUsesEarAndMicBits() {
@@ -141,7 +141,7 @@ public class ULATest {
     public void testFrameInterruptAndFlashToggleAreDrivenByNextFrame() {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
-        int videoFlashFrame = ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1;
+        int videoFlashFrame = PROFILE.flashSwapFrameCount - 1;
 
         for (int i = 0; i < videoFlashFrame; i++) {
             ula.onNextFrame();
@@ -214,7 +214,7 @@ public class ULATest {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
 
-        assertEquals("ZX-Spectrum48K ULA", ula.getName());
+        assertEquals("ZX Spectrum 48K ULA", ula.getName());
     }
 
     @Test
@@ -222,7 +222,7 @@ public class ULATest {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
 
-        assertEquals("ZX-Spectrum48K ULA", ula.toString());
+        assertEquals("ZX Spectrum 48K ULA", ula.toString());
     }
 
     @Test
@@ -308,7 +308,7 @@ public class ULATest {
     @Test
     public void testGetAudioSampleRateDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 22_050, () -> ZX_48K_CPU_FREQUENCY);
+        Beeper beeper = new Beeper(ModelProfile.ZX_SPECTRUM_48K, AudioSink.NULL, 22_050, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(22_050, ula.getAudioSampleRate());
@@ -317,7 +317,7 @@ public class ULATest {
     @Test
     public void testGetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
+        Beeper beeper = new Beeper(ModelProfile.ZX_SPECTRUM_48K, AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(100, ula.getAudioVolumePercent());
@@ -326,7 +326,7 @@ public class ULATest {
     @Test
     public void testSetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
+        Beeper beeper = new Beeper(ModelProfile.ZX_SPECTRUM_48K, AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         ula.setAudioVolumePercent(42);
@@ -455,7 +455,7 @@ public class ULATest {
         private long cycles;
 
         private RecordingBeeper() {
-            super(AudioSink.NULL, 120, () -> ZX_48K_CPU_FREQUENCY);
+            super(ModelProfile.ZX_SPECTRUM_48K, AudioSink.NULL, 120, () -> ZX_48K_CPU_FREQUENCY);
         }
 
         @Override
@@ -479,7 +479,7 @@ public class ULATest {
         private int interruptClears;
 
         private MockBus() {
-            expect(bus.getProfile()).andStubReturn(TIMING);
+            expect(bus.getProfile()).andStubReturn(PROFILE);
             expect(bus.readData()).andStubAnswer(() -> lineIn);
             expect(bus.readMemoryNotContended(anyInt())).andStubAnswer(() -> {
                 int address = (int) getCurrentArguments()[0];

@@ -10,7 +10,7 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import org.easymock.Capture;
 import org.junit.Test;
@@ -26,14 +26,14 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class ZxSpectrumBusImplTest {
-    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
-    private static final int DEFAULT_CPU_FREQUENCY_KHZ = 3500;
-    private static final int SCREEN_HEIGHT_PIXELS = ZxSpectrumBus.SCREEN_HEIGHT_PIXELS;
-    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
-    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
-    private static final int INTERRUPT_TSTATES = TIMING.interruptTstates;
-    private static final long FIRST_CONTENDED = TIMING.firstContendedTstate;
-    private static final long FIRST_FLOATING_BUS = TIMING.firstFloatingBusTstate;
+    private static final ModelProfile PROFILE = ModelProfile.ZX_SPECTRUM_48K;
+    private static final int DEFAULT_CPU_FREQUENCY_KHZ = PROFILE.cpuFrequencyKHz;
+    private static final int SCREEN_HEIGHT_PIXELS = PROFILE.screenHeightPixels;
+    private static final int DISPLAY_LINE_TSTATES = PROFILE.displayLineTstates;
+    private static final int DISPLAY_FRAME_TSTATES = PROFILE.displayFrameTstates;
+    private static final int INTERRUPT_TSTATES = PROFILE.interruptTstates;
+    private static final long FIRST_CONTENDED = PROFILE.firstContendedTstate;
+    private static final long FIRST_FLOATING_BUS = PROFILE.firstFloatingBusTstate;
 
     @Test
     public void testAllCpuPortsAreDispatchedAndDeferredDeviceIsRouted() {
@@ -1017,6 +1017,7 @@ public class ZxSpectrumBusImplTest {
         ApplicationApi application = createNiceMock(ApplicationApi.class);
         expect(application.getContextPool()).andStubReturn(pool);
         PluginSettings settings = createNiceMock(PluginSettings.class);
+        expect(settings.getString("model", ModelProfile.DEFAULT.name())).andStubReturn(ModelProfile.DEFAULT.name());
         replay(pool, application, settings);
         DeviceImpl device = new DeviceImpl(0L, application, settings);
         verify(pool);

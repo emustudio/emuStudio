@@ -3,42 +3,58 @@
 package net.emustudio.plugins.device.zxspectrum.bus.api;
 
 /**
- * ZX Spectrum model-specific timing and layout constants used by emuStudio.
+ * Immutable ZX Spectrum hardware definitions used by the bus, ULA, display, and beeper.
  *
- * <p>Each enum entry stores the raw machine timings taken from the target model and precomputes
- * a few derived values that the bus and ULA use often enough to make caching worthwhile. The raw
- * values describe one frame worth of contention, floating-bus sampling, and screen layout; the
- * derived values keep the call sites free from repeating the same arithmetic.
+ * <p>Each entry defines one model. Runtime state, such as cycle counters and selected memory
+ * banks, belongs to the bus and devices, never to these shared enum instances. The CPU context
+ * remains authoritative for the current clock; {@link #cpuFrequencyKHz} describes the nominal clock.
  */
-public enum TimingProfile {
+public enum ModelProfile {
 
     /**
-     * ZX Spectrum 48K timings.
-     *
-     * <p>Constructor arguments, in order:
-     * <ol>
-     * <li>contended RAM start address</li>
-     * <li>contended RAM end address</li>
-     * <li>border lines before the visible screen</li>
-     * <li>border lines after the visible screen</li>
-     * <li>T-states per raster line</li>
-     * <li>length of the frame interrupt pulse in T-states</li>
-     * <li>frame T-state where the first contended screen fetch starts</li>
-     * <li>extra T-states between that fetch and the first floating-bus sample</li>
-     * <li>8-T-state contention pattern repeated across each visible line</li>
-     * </ol>
+     * ZX Spectrum 48K with Issue 3 beeper levels.
      */
     ZX_SPECTRUM_48K(
-            0x4000,
-            0x7FFF,
-            64,
-            56,
-            224,
-            32,
-            14335,
-            3,
+            "ZX Spectrum 48K", 3500,
+            256, 192, 48,                 // bitmap width, height, horizontal border pixels
+            0x4000, 0x5800,               // bitmap and attribute addresses
+            7, 16, 0xFF,                  // reset border, FLASH period, undriven bus byte
+            new double[]{0.34, 0.66, 3.56, 3.70}, // EAR/MIC voltages: 00, 01, 10, 11
+            0x4000, 0x7FFF,               // contended RAM range, inclusive
+            64, 56,                       // lines before and after visible bitmap
+            224, 32,                      // raster line and interrupt pulse T-states
+            14335, 3,                     // first contention T-state and floating-bus offset
             new int[]{6, 5, 4, 3, 2, 1, 0, 0}
     );
+
+    /** Model used when the bus configuration omits its model setting. */
+    public static final ModelProfile DEFAULT = ZX_SPECTRUM_48K;
+
+    /** Model name used in device descriptions. */
+    public final String displayName;
+    /** Nominal CPU clock in kHz; the CPU context supplies the live clock. */
+    public final int cpuFrequencyKHz;
+    /** Visible bitmap dimensions in pixels. */
+    public final int screenWidthPixels;
+    /** Visible bitmap height in pixels. */
+    public final int screenHeightPixels;
+    /** Number of 8-pixel attribute cells per row. */
+    public final int attributesWidth;
+    /** Number of 8-pixel attribute rows. */
+    public final int attributeHeight;
+    /** Displayed border width on each horizontal side, in pixels. */
+    public final int borderWidthPixels;
+    /** CPU address of the bitmap in the current unbanked model. */
+    public final int screenMemoryBase;
+    /** CPU address of the attribute area in the current unbanked model. */
+    public final int attributeMemoryBase;
+    /** Border color selected on reset. */
+    public final int defaultBorderColor;
+    /** Number of frames between FLASH attribute swaps. */
+    public final int flashSwapFrameCount;
+    /** Value returned by an undriven bus and during interrupt acknowledge. */
+    public final int undrivenBusDataByte;
+    private final double[] beeperLevels;
 
     /**
      * Inclusive start of the RAM range slowed down by ULA screen fetches.
@@ -94,7 +110,18 @@ public enum TimingProfile {
     private final int[] contentionPattern;
     private final int[] contentionDelays;
 
-    TimingProfile(
+    ModelProfile(
+            String displayName,
+            int cpuFrequencyKHz,
+            int screenWidthPixels,
+            int screenHeightPixels,
+            int borderWidthPixels,
+            int screenMemoryBase,
+            int attributeMemoryBase,
+            int defaultBorderColor,
+            int flashSwapFrameCount,
+            int undrivenBusDataByte,
+            double[] beeperVoltages,
             int contendedMemoryStart,
             int contendedMemoryEnd,
             int preScreenLines,
@@ -105,6 +132,19 @@ public enum TimingProfile {
             int floatingBusSampleOffsetTstates,
             int[] contentionPattern
     ) {
+        this.displayName = displayName;
+        this.cpuFrequencyKHz = cpuFrequencyKHz;
+        this.screenWidthPixels = screenWidthPixels;
+        this.screenHeightPixels = screenHeightPixels;
+        this.attributesWidth = screenWidthPixels / 8;
+        this.attributeHeight = screenHeightPixels / 8;
+        this.borderWidthPixels = borderWidthPixels;
+        this.screenMemoryBase = screenMemoryBase;
+        this.attributeMemoryBase = attributeMemoryBase;
+        this.defaultBorderColor = defaultBorderColor;
+        this.flashSwapFrameCount = flashSwapFrameCount;
+        this.undrivenBusDataByte = undrivenBusDataByte;
+        this.beeperLevels = normalizeBeeperVoltages(beeperVoltages);
         this.contendedMemoryStart = contendedMemoryStart;
         this.contendedMemoryEnd = contendedMemoryEnd;
         this.preScreenLines = preScreenLines;
@@ -114,9 +154,9 @@ public enum TimingProfile {
         this.firstContendedTstate = firstContendedTstate;
         this.floatingBusSampleOffsetTstates = floatingBusSampleOffsetTstates;
         this.contentionPattern = contentionPattern.clone();
-        this.frameLineCount = preScreenLines + ZxSpectrumBus.SCREEN_HEIGHT_PIXELS + postScreenLines;
+        this.frameLineCount = preScreenLines + screenHeightPixels + postScreenLines;
         this.displayFrameTstates = frameLineCount * displayLineTstates;
-        this.screenFetchCycles = ZxSpectrumBus.ATTRIBUTES_WIDTH * 4;
+        this.screenFetchCycles = attributesWidth * 4;
         this.firstFloatingBusTstate = (long) firstContendedTstate + floatingBusSampleOffsetTstates;
         this.contentionDelays = buildContentionDelays();
     }
@@ -165,7 +205,7 @@ public enum TimingProfile {
 
         cycle++; // T1
 
-        if ((portAddress & 1) == 0) {
+        if (isUlaPort(portAddress)) {
             return delay + contentionDelayAt(cycle);
         }
 
@@ -206,7 +246,7 @@ public enum TimingProfile {
         int[] contentionDelays = new int[displayFrameTstates];
         int patternSize = contentionPattern.length;
 
-        for (int line = 0; line < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; line++) {
+        for (int line = 0; line < screenHeightPixels; line++) {
             int lineStart = firstContendedTstate + line * displayLineTstates;
             for (int cycle = 0; cycle < screenFetchCycles; cycle += patternSize) {
                 for (int phase = 0; phase < patternSize; phase++) {
@@ -224,7 +264,7 @@ public enum TimingProfile {
      */
     public int screenAddressAt(int line, int column) {
         int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
-        return ZxSpectrumBus.SCREEN_MEMORY_BASE + lineOffset + column;
+        return screenMemoryBase + lineOffset + column;
     }
 
     /**
@@ -232,7 +272,7 @@ public enum TimingProfile {
      */
     public int attributeAddressAt(int line, int column) {
         int attributeOffset = ((line >>> 3) << 5) | column;
-        return ZxSpectrumBus.ATTRIBUTE_MEMORY_BASE + attributeOffset;
+        return attributeMemoryBase + attributeOffset;
     }
 
     /**
@@ -240,5 +280,53 @@ public enum TimingProfile {
      */
     public int attributeAddressAtRow(int row, int column) {
         return attributeAddressAt(row << 3, column);
+    }
+
+    /** Returns whether the ULA handles this I/O address. */
+    public boolean isUlaPort(int portAddress) {
+        return (portAddress & 1) == 0;
+    }
+
+    /** Preserves the current keyboard read decoding, including port aliases. */
+    public boolean isKeyboardReadPort(int portAddress) {
+        return (portAddress & 0xFE) == 0xFE;
+    }
+
+    /** Idle ULA read value with the EAR input bit cleared. */
+    public byte ulaIdleReadData() {
+        return (byte) (undrivenBusDataByte & ~0x40);
+    }
+
+    public int borderColorFrom(byte data) {
+        return data & 7;
+    }
+
+    public boolean earOutputFrom(byte data) {
+        return (data & 0x10) != 0;
+    }
+
+    public boolean micOutputFrom(byte data) {
+        return (data & 0x08) == 0;
+    }
+
+    public byte earInputFrom(byte tapeData) {
+        return (byte) ((tapeData & 1) << 6);
+    }
+
+    /** Hardware beeper level centered and scaled to [-1, 1], independent of host PCM format. */
+    public double beeperLevel(boolean earOn, boolean micOn) {
+        return beeperLevels[(earOn ? 2 : 0) | (micOn ? 1 : 0)];
+    }
+
+    private static double[] normalizeBeeperVoltages(double[] voltages) {
+        double min = voltages[0];
+        double max = voltages[voltages.length - 1];
+        double mid = (min + max) / 2.0;
+        double halfRange = (max - min) / 2.0;
+        double[] levels = new double[voltages.length];
+        for (int i = 0; i < levels.length; i++) {
+            levels[i] = (voltages[i] - mid) / halfRange;
+        }
+        return levels;
     }
 }

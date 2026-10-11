@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 
 import java.util.Objects;
@@ -11,12 +11,12 @@ import java.util.Objects;
 /**
  * Converts CPU T-state notifications into ULA frame, line, paint, and interrupt events.
  *
- * <p>The active {@link TimingProfile} is regular enough that the mediator can work purely from
+ * <p>The active {@link ModelProfile} is regular enough that the mediator can work purely from
  * accumulated T-states:
  * <ul>
- * <li>one display line = {@code timing.displayLineTstates}</li>
- * <li>one frame = {@code timing.displayFrameTstates}</li>
- * <li>the ULA holds {@code /INT} low for {@code timing.interruptTstates} T-states</li>
+ * <li>one display line = {@code profile.displayLineTstates}</li>
+ * <li>one frame = {@code profile.displayFrameTstates}</li>
+ * <li>the ULA holds {@code /INT} low for {@code profile.interruptTstates} T-states</li>
  * </ul>
  *
  * <p>Mechanically, each {@link #passedCycles(long)} call does four things in order:
@@ -26,7 +26,7 @@ import java.util.Objects;
  * <li>adds the cycles to {@code lineCycles} and {@code frameCycles}</li>
  * <li>when a line boundary is crossed, draws the next line and keeps only the modulo remainder</li>
  * <li>when a frame boundary is crossed, starts the next frame, requests a repaint, and later clears
- * the interrupt exactly {@code timing.interruptTstates} after the boundary</li>
+ * the interrupt exactly {@code profile.interruptTstates} after the boundary</li>
  * </ol>
  *
  * <p>The modulo operations are the same idea as in fixed-point resampling: they preserve leftover
@@ -53,11 +53,11 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
 
     private volatile DisplayCanvas canvas;
     private final ULA ula;
-    private final TimingProfile timing;
+    private final ModelProfile profile;
 
-    public PassedCyclesMediator(ULA ula, TimingProfile timing) {
+    public PassedCyclesMediator(ULA ula, ModelProfile profile) {
         this.ula = Objects.requireNonNull(ula);
-        this.timing = Objects.requireNonNull(timing);
+        this.profile = Objects.requireNonNull(profile);
     }
 
     public void setCanvas(DisplayCanvas canvas) {
@@ -90,15 +90,15 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         // Draw completed lines in batch
         DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
-            if (lineCycles >= timing.displayLineTstates && lastLinePainted < timing.frameLineCount) {
+            if (lineCycles >= profile.displayLineTstates && lastLinePainted < profile.frameLineCount) {
                 canvas.drawNextLine(lastLinePainted++);
             }
         }
-        lineCycles = lineCycles % timing.displayLineTstates;
-        if (frameCycles >= timing.displayFrameTstates) {
+        lineCycles = lineCycles % profile.displayLineTstates;
+        if (frameCycles >= profile.displayFrameTstates) {
             lastLinePainted = 0;
             ula.onNextFrame();
-            frameCycles = frameCycles % timing.displayFrameTstates;
+            frameCycles = frameCycles % profile.displayFrameTstates;
             lineCycles = 0; // keep line timing in sync with frame timing
             interruptActive = true;
             if (canvas != null) {
@@ -107,7 +107,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             }
         }
         // ULA releases INT exactly INT_DURATION T-states after frame boundary.
-        if (interruptActive && frameCycles >= timing.interruptTstates) {
+        if (interruptActive && frameCycles >= profile.interruptTstates) {
             ula.clearInterrupt();
             interruptActive = false;
         }

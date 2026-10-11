@@ -2,8 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
-import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
@@ -44,7 +43,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private final Dimension minimumSize;
 
     private final ULA ula;
-    private final TimingProfile timing;
+    private final ModelProfile profile;
     private final KeyboardCanvas keyboardCanvas;
     private final int borderWidth;
     private final int screenImageWidth;
@@ -55,13 +54,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private volatile Consumer<BufferedImage> frameListener;
     private volatile BufferedImage backBuffer;
 
-    public DisplayCanvas(ULA ula, TimingProfile timing, KeyboardCanvas keyboardCanvas) {
+    public DisplayCanvas(ULA ula, ModelProfile profile, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
-        this.timing = Objects.requireNonNull(timing);
+        this.profile = Objects.requireNonNull(profile);
         this.keyboardCanvas = Objects.requireNonNull(keyboardCanvas);
-        this.borderWidth = ZxSpectrumBus.BORDER_WIDTH_PIXELS;
-        this.screenImageWidth = ZxSpectrumBus.SCREEN_WIDTH_PIXELS + 2 * ZxSpectrumBus.BORDER_WIDTH_PIXELS;
-        this.screenImageHeight = timing.frameLineCount;
+        this.borderWidth = profile.borderWidthPixels;
+        this.screenImageWidth = profile.screenWidthPixels + 2 * profile.borderWidthPixels;
+        this.screenImageHeight = profile.frameLineCount;
         this.keyboardTop = (int) (ZOOM * screenImageHeight - KEYBOARD_HEIGHT + MARGIN);
         this.screenImage = new BufferedImage(screenImageWidth, screenImageHeight, BufferedImage.TYPE_INT_RGB);
         this.screenImage.setAccelerationPriority(1.0f);
@@ -123,7 +122,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
      *
      * <p>The screen image is laid out as a 1-D array of RGB ints, {@code screenImageWidth} pixels wide and
      * {@code screenImageHeight} lines tall. Lines are numbered {@code 0 .. screenImageHeight - 1} and divided
-     * into three vertical zones defined by the active timing profile:
+     * into three vertical zones defined by the active model profile:
      *
      * <pre>
      *   line 0 .. preScreenLines-1                               → upper border (solid border color)
@@ -151,20 +150,20 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             return;
         }
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
-        if (line < timing.preScreenLines || line >= (timing.preScreenLines + ZxSpectrumBus.SCREEN_HEIGHT_PIXELS)) {
+        if (line < profile.preScreenLines || line >= (profile.preScreenLines + profile.screenHeightPixels)) {
             for (int i = 0; i < screenImageWidth; i++) {
                 screenImageData[line * screenImageWidth + i] = borderColor;
             }
-            if (line < timing.preScreenLines) {
+            if (line < profile.preScreenLines) {
                 for (int i = screenImageWidth; i < screenImageWidth + borderWidth; i++) {
                     screenImageData[line * screenImageWidth + i] = borderColor;
                 }
             }
         } else {
-            int y = line - timing.preScreenLines;
+            int y = line - profile.preScreenLines;
             ula.readLine(y);
             int screenX = 0;
-            for (int byteX = 0; byteX < ZxSpectrumBus.ATTRIBUTES_WIDTH; byteX++) {
+            for (int byteX = 0; byteX < profile.attributesWidth; byteX++) {
                 byte row = ula.videoMemory[byteX][y];
                 int attr = ula.attributeMemory[byteX][y / 8];
                 Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
@@ -185,7 +184,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 screenX += 8;
             }
             for (int i = 0; i < 2 * borderWidth; i++) {
-                int offset = line * screenImageWidth + borderWidth + ZxSpectrumBus.SCREEN_WIDTH_PIXELS + i;
+                int offset = line * screenImageWidth + borderWidth + profile.screenWidthPixels + i;
                 screenImageData[offset] = borderColor;
             }
         }

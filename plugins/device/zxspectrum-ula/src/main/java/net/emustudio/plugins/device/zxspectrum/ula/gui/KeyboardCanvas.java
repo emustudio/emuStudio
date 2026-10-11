@@ -2,8 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
-import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
@@ -60,9 +59,9 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
     private boolean hostShift = false;
     private KeyboardButton pressedMouseButton = null;
 
-    public KeyboardCanvas(TimingProfile timing, int alpha) {
+    public KeyboardCanvas(ModelProfile profile, int alpha) {
         this.alpha = alpha;
-        int xOuter = (int) ((ZOOM * (ZxSpectrumBus.SCREEN_WIDTH_PIXELS + 2 * ZxSpectrumBus.BORDER_WIDTH_PIXELS)
+        int xOuter = (int) ((ZOOM * (profile.screenWidthPixels + 2 * profile.borderWidthPixels)
                 + 2 * MARGIN - KEYBOARD_WIDTH) / 2.0);
         int xInner = xOuter + margin;
         Shape keyboardOutline = roundButton(xOuter, -STROKE_WIDTH, KEYBOARD_WIDTH, KEYBOARD_HEIGHT);

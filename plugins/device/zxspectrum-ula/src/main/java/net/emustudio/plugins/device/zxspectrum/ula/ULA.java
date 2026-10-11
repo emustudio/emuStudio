@@ -5,7 +5,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 import net.emustudio.emulib.runtime.audio.AudioSink;
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardDispatcher;
@@ -30,7 +30,7 @@ import static java.awt.event.KeyEvent.*;
  * <li>maps host keyboard events onto the 8-line Spectrum keyboard matrix</li>
  * <li>tracks border colour and the EAR/MIC output bits written by the CPU</li>
  * <li>mixes the tape EAR input from {@link ZxSpectrumBus#readData()} into the beeper output</li>
- * <li>reads bitmap and attribute bytes from RAM using the active {@link TimingProfile}</li>
+ * <li>reads bitmap and attribute bytes from RAM using the active {@link ModelProfile}</li>
  * <li>signals frame interrupts and toggles FLASH state at frame boundaries</li>
  * </ul>
  *
@@ -82,8 +82,6 @@ import static java.awt.event.KeyEvent.*;
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
-    private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
-
     @GuardedBy("keymapLock")
     private final byte[] keymap = new byte[8]; // effective keyboard state
     // Guards keymap[]. Written by AWT thread (keyboard/mouse events), read by CPU thread (port reads).
@@ -169,7 +167,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private int flashFramesCount = 0;
 
     private final ZxSpectrumBus bus;
-    private final TimingProfile timing;
+    private final ModelProfile profile;
     private final Beeper beeper;
     private final byte[] interruptData;
 
@@ -184,21 +182,21 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private volatile boolean lastTapeIn;
 
     public ULA(ZxSpectrumBus bus) {
-        this(bus, Beeper.silent(() -> bus.getCPUFrequency() * 1000L));
+        this(bus, Beeper.silent(bus.getProfile(), () -> bus.getCPUFrequency() * 1000L));
     }
 
     public ULA(ZxSpectrumBus bus, Beeper beeper) {
         this.bus = Objects.requireNonNull(bus);
-        this.timing = Objects.requireNonNull(bus.getProfile());
+        this.profile = Objects.requireNonNull(bus.getProfile());
         this.beeper = Objects.requireNonNull(beeper);
-        this.videoMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
-        this.attributeMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.ATTRIBUTE_HEIGHT];
-        this.interruptData = new byte[]{(byte) ZxSpectrumBus.UNDRIVEN_BUS_DATA_BYTE};
+        this.videoMemory = new byte[profile.attributesWidth][profile.screenHeightPixels];
+        this.attributeMemory = new byte[profile.attributesWidth][profile.attributeHeight];
+        this.interruptData = new byte[]{(byte) profile.undrivenBusDataByte};
         resetKeyboard();
     }
 
     public void reset() {
-        borderColor = ZxSpectrumBus.DEFAULT_BORDER_COLOR;
+        borderColor = profile.defaultBorderColor;
         lastEarOut = false;
         lastMicOut = false;
         lastTapeIn = false;
@@ -223,13 +221,12 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void onNextFrame() {
-        // The active timing profile supplies the byte seen on the floating bus during interrupt
-        // acknowledge, so the bus can model profile-specific IM 2 behavior.
+        // The model supplies the byte seen during interrupt acknowledge (including IM 2).
         bus.signalInterrupt(interruptData);
-        if (flashFramesCount == ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1) {
+        if (flashFramesCount == profile.flashSwapFrameCount - 1) {
             videoFlash.set(!videoFlash.get());
         }
-        flashFramesCount = (flashFramesCount + 1) % ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT;
+        flashFramesCount = (flashFramesCount + 1) % profile.flashSwapFrameCount;
     }
 
     public void clearInterrupt() {
@@ -237,16 +234,16 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void readScreen() {
-        for (int y = 0; y < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; y++) {
+        for (int y = 0; y < profile.screenHeightPixels; y++) {
             readLine(y);
         }
     }
 
     public void readLine(int y) {
-        for (int x = 0; x < ZxSpectrumBus.ATTRIBUTES_WIDTH; x++) {
-            videoMemory[x][y] = bus.readMemoryNotContended(timing.screenAddressAt(y, x));
-            if (y < ZxSpectrumBus.ATTRIBUTE_HEIGHT) {
-                attributeMemory[x][y] = bus.readMemoryNotContended(timing.attributeAddressAtRow(y, x));
+        for (int x = 0; x < profile.attributesWidth; x++) {
+            videoMemory[x][y] = bus.readMemoryNotContended(profile.screenAddressAt(y, x));
+            if (y < profile.attributeHeight) {
+                attributeMemory[x][y] = bus.readMemoryNotContended(profile.attributeAddressAtRow(y, x));
             }
         }
     }
@@ -292,8 +289,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         // A zero in one of the five lowest bits means that the corresponding key is pressed.
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
-        byte result = (byte) 0xBF; // 1011 1111   // no EAR input
-        if ((portAddress & ZxSpectrumBus.ULA_PORT_ADDRESS) == ZxSpectrumBus.ULA_PORT_ADDRESS) {
+        byte result = profile.ulaIdleReadData();
+        if (profile.isKeyboardReadPort(portAddress)) {
             int lineMask = (portAddress >>> 8) & 0xFF;
 
             // FE = 0  1111 1110
@@ -316,14 +313,14 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         }
 
         // LINE IN?
-        return (byte) (result | ((bus.readData() & 1) << 6));
+        return (byte) (result | profile.earInputFrom(bus.readData()));
     }
 
     @Override
     public void write(int portAddress, byte data) {
-        this.borderColor = data & 7;
-        lastEarOut = (data & 0x10) != 0;
-        lastMicOut = (data & 0x08) == 0;
+        this.borderColor = profile.borderColorFrom(data);
+        lastEarOut = profile.earOutputFrom(data);
+        lastMicOut = profile.micOutputFrom(data);
         beeper.setLevel(lastEarOut, lastMicOut, lastTapeIn);
     }
 
@@ -334,7 +331,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     @Override
     public String toString() {
-        return "ZX-Spectrum48K ULA";
+        return profile.displayName + " ULA";
     }
 
     @Override
@@ -389,7 +386,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     private void resetKeyboard() {
-        keymapLock.lockWrite(() -> Arrays.fill(keymap, KEY_RELEASED_STATE));
+        keymapLock.lockWrite(() -> Arrays.fill(keymap, profile.ulaIdleReadData()));
     }
 
     public void pressKey(byte key, byte value) {

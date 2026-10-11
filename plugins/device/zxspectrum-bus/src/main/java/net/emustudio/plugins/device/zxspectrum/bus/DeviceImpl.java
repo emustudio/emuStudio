@@ -16,6 +16,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +34,14 @@ import javax.swing.*;
  * a cassette player plays a tape = puts data on the bus in given time intervals. Z80 CPU reads the data from the bus
  * when convenient.
  */
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum48K Bus")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum Bus")
 public class DeviceImpl extends AbstractDevice {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
-    private final ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+    private final ZxSpectrumBusImpl bus;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        this.bus = new ZxSpectrumBusImpl(ModelProfile.valueOf(settings.getString("model", ModelProfile.DEFAULT.name())));
 
         try {
             ContextPool contextPool = applicationApi.getContextPool();
@@ -106,7 +108,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "ZX Spectrum48K Bus";
+        return bus.getProfile().displayName + " Bus";
     }
 
 }

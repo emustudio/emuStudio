@@ -69,10 +69,12 @@ name = "ZX Spectrum 48K + AY"
 [[DEVICE]]
 	schemaPoint = "300,240"
 	path = "zxspectrum-bus.jar"
-	settings = {}
 	name = "zxspectrum-bus"
 	id = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
 	type = "DEVICE"
+
+	[DEVICE.settings]
+		model = "ZX_SPECTRUM_48K"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
 #        printCode = true

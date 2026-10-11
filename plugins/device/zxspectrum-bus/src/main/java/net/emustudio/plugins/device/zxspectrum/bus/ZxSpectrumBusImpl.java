@@ -8,65 +8,24 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
-import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.util.*;
 
 /**
- * ZX Spectrum bus (for 48K ZX spectrum).
- * <p>
- * - Adds memory & I/O port contention
- * - Adds "floating bus" behavior
- * - Sets CPU interrupt request to last 32 t-states
- * <p>It is implemented as memory context, because "bus" behavior is also reading/writing data on specific address.
- * <p>
- * <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Contended_memory#Timing_differences">ZX Spectrum48 timing</a>
- * On the 16K and 48K models of ZX Spectrum, the memory from 0x4000 to 0x7fff is contended. If the contended
- * memory is accessed 14335[2] or 14336 tstates after an interrupt (see the timing differences section below
- * for information on the 14335/14336 issue), the Z80 will be delayed for 6 tstates. After 14336 tstates,
- * the delay is 5 tstates:
- * <p>
- * Cycle #    Delay
- * -------    -----
- * 14335       6 (until 14341)
- * 14336       5 (  "     "  )
- * 14337       4 (  "     "  )
- * 14338       3 (  "     "  )
- * 14339       2 (  "     "  )
- * 14340       1 (  "     "  )
- * 14341   No delay
- * 14342   No delay
- * 14343       6 (until 14349)
- * 14344       5 (  "     "  )
- * 14345       4 (  "     "  )
- * 14346       3 (  "     "  )
- * 14347       2 (  "     "  )
- * 14348       1 (  "     "  )
- * 14349   No delay
- * 14350   No delay
- * <p>
- * This pattern (6,5,4,3,2,1,0,0) continues until 14463 tstates after interrupt, at which point there is no
- * delay for 96 tstates while the border and horizontal refresh are drawn. The pattern starts again at 14559
- * tstates and continues for all 192 lines of screen data. After this, there is no delay until the end of the
- * frame as the bottom border and vertical refresh happen, and no delay until 14335 tstates after the start of
- * the next frame as the top border is drawn.
- * <p>
- * Contended I/O
- * High byte   |         |
- * in 40 - 7F? | Low bit | Contention pattern
- * ------------+---------+-------------------
- * No          |  Reset  | N:1, C:3
- * No          |   Set   | N:4
- * Yes         |  Reset  | C:1, C:3
- * Yes         |   Set   | C:1, C:1, C:1, C:1
+ * Connects the ZX Spectrum CPU, memory, and devices.
+ *
+ * <p>The active {@link ModelProfile} supplies memory and I/O contention, floating-bus
+ * sampling, and interrupt timing. This memory context proxies CPU accesses to the backing
+ * byte memory while keeping cycle counters and device attachments local to the machine.
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
     private static final int IO_PORTS = 0x100;
 
-    private final TimingProfile timing;
+    private final ModelProfile profile;
     private final int displayLineTstates;
     private final int displayFrameTstates;
     private final long firstFloatingBusTstate;
@@ -86,14 +45,14 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
 
     public ZxSpectrumBusImpl() {
-        this(TimingProfile.ZX_SPECTRUM_48K);
+        this(ModelProfile.DEFAULT);
     }
 
-    ZxSpectrumBusImpl(TimingProfile timing) {
-        this.timing = Objects.requireNonNull(timing);
-        this.displayLineTstates = timing.displayLineTstates;
-        this.displayFrameTstates = timing.displayFrameTstates;
-        this.firstFloatingBusTstate = timing.firstFloatingBusTstate;
+    public ZxSpectrumBusImpl(ModelProfile profile) {
+        this.profile = Objects.requireNonNull(profile);
+        this.displayLineTstates = profile.displayLineTstates;
+        this.displayFrameTstates = profile.displayFrameTstates;
+        this.firstFloatingBusTstate = profile.firstFloatingBusTstate;
     }
 
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
@@ -102,8 +61,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         this.busData = 0;
         this.tapeEarLineDriven = false;
 
-        // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
-        cpu.setInterruptDuration(timing.interruptTstates);
+        // Configure the CPU interrupt pulse from the active model.
+        cpu.setInterruptDuration(profile.interruptTstates);
 
         attachPortDispatchers();
 
@@ -120,8 +79,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
-    public TimingProfile getProfile() {
-        return timing;
+    public ModelProfile getProfile() {
+        return profile;
     }
 
     public void reset() {
@@ -296,8 +255,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     private void applyMemoryContention(int location) {
-        if (timing.isContendedMemoryAddress(location)) {
-            int cycles = timing.contentionDelayAt(frameCycles);
+        if (profile.isContendedMemoryAddress(location)) {
+            int cycles = profile.contentionDelayAt(frameCycles);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
@@ -372,7 +331,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         }
 
         private void applyPortContention(int portAddress) {
-            int cycles = timing.portContentionDelay(frameCycles, portAddress);
+            int cycles = profile.portContentionDelay(frameCycles, portAddress);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
@@ -391,23 +350,23 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         private byte readFloatingBus(long sampleCycle) {
             long visibleCycles = sampleCycle - firstFloatingBusTstate;
             if (visibleCycles < 0) {
-                return (byte) UNDRIVEN_BUS_DATA_BYTE;
+                return (byte) profile.undrivenBusDataByte;
             }
 
             int line = (int) (visibleCycles / displayLineTstates);
-            if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
-                return (byte) UNDRIVEN_BUS_DATA_BYTE;
+            if (line < 0 || line >= profile.screenHeightPixels) {
+                return (byte) profile.undrivenBusDataByte;
             }
 
             int cycleInLine = (int) (visibleCycles % displayLineTstates);
-            if (!timing.isFloatingBusDrivenAtCycle(cycleInLine)) {
-                return (byte) UNDRIVEN_BUS_DATA_BYTE;
+            if (!profile.isFloatingBusDrivenAtCycle(cycleInLine)) {
+                return (byte) profile.undrivenBusDataByte;
             }
 
-            int column = timing.floatingBusColumnAt(cycleInLine);
-            int floatingBusAddress = timing.isFloatingBusAttributePhase(cycleInLine)
-                    ? timing.attributeAddressAt(line, column)
-                    : timing.screenAddressAt(line, column);
+            int column = profile.floatingBusColumnAt(cycleInLine);
+            int floatingBusAddress = profile.isFloatingBusAttributePhase(cycleInLine)
+                    ? profile.attributeAddressAt(line, column)
+                    : profile.screenAddressAt(line, column);
 
             return memory.read(floatingBusAddress);
         }
