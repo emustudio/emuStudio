@@ -4,7 +4,7 @@ name = "MITS Altair8800 (Z80)"
 # Original 88-PIO is selectable in the same plugin (boardType = "88-PIO").
 
 [MEMORY]
-schemaPoint = "80,220"
+schemaPoint = "100,240"
 path = "byte-mem.jar"
 name = "byte-mem"
 id = "1e13a25d-fb23-4061-853a-5fe996b03281"
@@ -30,7 +30,7 @@ commonBoundary = 49152
 #imageBankN = 0
 
 [COMPILER]
-schemaPoint = "80,60"
+schemaPoint = "100,380"
 path = "as-z80.jar"
 settings = { }
 name = "as-z80"
@@ -38,7 +38,7 @@ id = "9233e0c2-b53c-41e7-9eca-bbb264fcd9da"
 type = "COMPILER"
 
 [CPU]
-schemaPoint = "220,220"
+schemaPoint = "280,240"
 path = "z80-cpu.jar"
 settings = { }
 name = "z80-cpu"
@@ -52,7 +52,7 @@ type = "CPU"
 #printCodeFileName = "filename"   # (optional)
 
 [[DEVICE]]
-schemaPoint = "340,140"
+schemaPoint = "460,240"
 path = "88-dcdd.jar"
 name = "88-dcdd"
 id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
@@ -97,7 +97,7 @@ sectorSize12 = 137
 sectorSize10 = 137
 
 [[DEVICE]]
-schemaPoint = "340,220"
+schemaPoint = "280,380"
 path = "88-sio.jar"
 name = "88-sio"
 id = "de2ce2e7-4365-406e-864a-b60f353d3fba"
@@ -116,7 +116,7 @@ inputInterruptVector = 7
 outputInterruptVector = 7
 
 [[DEVICE]]
-schemaPoint = "480,220"
+schemaPoint = "460,380"
 path = "adm3A-terminal.jar"
 name = "adm3A-terminal"
 id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
@@ -131,7 +131,7 @@ inputFileName = "adm3A-terminal.in"
 font = "original"
 
 [[DEVICE]]
-schemaPoint = "340,300"
+schemaPoint = "280,520"
 path = "88-pio.jar"
 name = "88-pio"
 id = "7e7f84b5-d958-41d6-968b-d50f93600369"
@@ -144,7 +144,7 @@ piaCount = 2
 interruptVector = 7
 
 [[DEVICE]]
-schemaPoint = "480,300"
+schemaPoint = "460,80"
 path = "88-ptr-ptp.jar"
 settings = { }
 name = "88-ptr-ptp"
@@ -152,7 +152,7 @@ id = "d5f4104a-a803-47ba-b867-603408ef04ae"
 type = "DEVICE"
 
 [[DEVICE]]
-schemaPoint = "220,60"
+schemaPoint = "280,80"
 path = "simh-pseudo.jar"
 settings = { }
 name = "simh-pseudo"
@@ -160,7 +160,7 @@ id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 type = "DEVICE"
 
 [[DEVICE]]
-schemaPoint = "480,380"
+schemaPoint = "460,520"
 path = "88-hdsk.jar"
 name = "88-hdsk"
 id = "f4cd9b5d-6c99-4f60-a92f-0727a9d1b266"
@@ -183,7 +183,7 @@ points = []
 bidirectional = true
 from = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-points = ["240,140"]
+points = []
 
 [[connections]]
 bidirectional = true
@@ -213,13 +213,13 @@ points = []
 bidirectional = true
 from = "7e7f84b5-d958-41d6-968b-d50f93600369"
 to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-points = []
+points = ["180,520", "180,320", "260,320"]
 
 [[connections]]
 bidirectional = true
 from = "d5f4104a-a803-47ba-b867-603408ef04ae"
 to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-points = []
+points = ["460,160", "300,160"]
 
 [[connections]]
 bidirectional = true
@@ -231,7 +231,7 @@ points = []
 bidirectional = true
 from = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 to = "1e13a25d-fb23-4061-853a-5fe996b03281"
-points = ["200,140", "120,140"]
+points = ["100,80"]
 
 [[connections]]
 bidirectional = true

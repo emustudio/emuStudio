@@ -1,7 +1,7 @@
 name = "Space Invaders"
 
 [MEMORY]
-schemaPoint = "80,180"
+schemaPoint = "100,240"
 path = "byte-mem.jar"
 name = "byte-mem"
 id = "66d7906b-1815-470f-8473-07f49c6dbf0f"
@@ -36,7 +36,7 @@ ROMto3 = 57343
 #imageBank3 = 0
 
 [COMPILER]
-schemaPoint = "80,60"
+schemaPoint = "100,380"
 path = "as-8080.jar"
 settings = { }
 name = "as-8080"
@@ -44,7 +44,7 @@ id = "be00bc93-ef40-422d-b891-acf141b294aa"
 type = "COMPILER"
 
 [CPU]
-schemaPoint = "220,180"
+schemaPoint = "280,240"
 path = "8080-cpu.jar"
 settings = { }
 name = "8080-cpu"
@@ -52,7 +52,7 @@ id = "916ec602-826f-4150-bb24-b8016b1f38a7"
 type = "CPU"
 
 [[DEVICE]]
-schemaPoint = "220,60"
+schemaPoint = "280,80"
 path = "spaceinvaders-display.jar"
 name = "spaceinvaders-display"
 id = "543fbb19-f066-40ba-a4c7-8a845b5500ef"
@@ -88,4 +88,4 @@ points = []
 bidirectional = true
 from = "543fbb19-f066-40ba-a4c7-8a845b5500ef"
 to = "66d7906b-1815-470f-8473-07f49c6dbf0f"
-points = []
+points = ["100,80"]

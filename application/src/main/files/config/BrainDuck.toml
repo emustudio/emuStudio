@@ -1,7 +1,7 @@
 name = "BrainDuck"
 
 [MEMORY]
-schemaPoint = "100,180"
+schemaPoint = "100,240"
 path = "byte-mem.jar"
 settings = { }
 name = "byte-mem"
@@ -9,7 +9,7 @@ id = "300555eb-2e6b-422f-a954-cfe1905f911a"
 type = "MEMORY"
 
 [COMPILER]
-schemaPoint = "100,60"
+schemaPoint = "100,80"
 path = "brainc-brainduck.jar"
 settings = { }
 name = "brainc-brainduck"
@@ -17,7 +17,7 @@ id = "de251cec-e053-4e2c-a647-9b71eb0f1b70"
 type = "COMPILER"
 
 [CPU]
-schemaPoint = "320,180"
+schemaPoint = "320,240"
 path = "brainduck-cpu.jar"
 settings = { }
 name = "brainduck-cpu"
@@ -25,7 +25,7 @@ id = "6c5df0df-4497-4a9d-b9dd-9a3f901864c1"
 type = "CPU"
 
 [[DEVICE]]
-schemaPoint = "320,60"
+schemaPoint = "320,80"
 path = "vt100-terminal.jar"
 name = "VT100-terminal"
 id = "1d858668-d63d-4127-b881-226174a2b368"

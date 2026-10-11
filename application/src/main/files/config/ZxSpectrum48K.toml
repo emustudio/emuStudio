@@ -1,7 +1,7 @@
 name = "ZX Spectrum 48K + AY"
 
 [MEMORY]
-	schemaPoint = "100,180"
+	schemaPoint = "100,240"
 	path = "byte-mem.jar"
 	name = "byte-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
@@ -32,7 +32,7 @@ name = "ZX Spectrum 48K + AY"
 #       imageAddressN = ...
 #       imageBankN = 0
 [COMPILER]
-	schemaPoint = "100,60"
+	schemaPoint = "100,80"
 	path = "as-z80.jar"
 	settings = {}
 	name = "as-z80"
@@ -40,7 +40,7 @@ name = "ZX Spectrum 48K + AY"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "280,300"
+	schemaPoint = "300,400"
 	path = "z80-cpu.jar"
 	name = "z80-cpu"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
@@ -55,7 +55,7 @@ name = "ZX Spectrum 48K + AY"
 #        printCodeUseCache = true
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
-	schemaPoint = "460,80"
+	schemaPoint = "500,80"
 	path = "zxspectrum-ula.jar"
 	settings = {}
 	name = "zxspectrum-ula"
@@ -67,7 +67,7 @@ name = "ZX Spectrum 48K + AY"
 #        printCodeUseCache = true
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
-	schemaPoint = "280,180"
+	schemaPoint = "300,240"
 	path = "zxspectrum-bus.jar"
 	settings = {}
 	name = "zxspectrum-bus"
@@ -79,7 +79,7 @@ name = "ZX Spectrum 48K + AY"
 #        printCodeUseCache = true
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
-	schemaPoint = "460,180"
+	schemaPoint = "500,240"
 	path = "audiotape-player.jar"
 	settings = {}
 	name = "audiotape-player"
@@ -91,7 +91,7 @@ name = "ZX Spectrum 48K + AY"
 #        printCodeUseCache = true
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
-	schemaPoint = "470,260"
+	schemaPoint = "500,400"
 	path = "audio-ay3_8910-chip.jar"
 	settings = {}
 	name = "audio-ay3_8910-chip"
@@ -114,7 +114,7 @@ name = "ZX Spectrum 48K + AY"
 	bidirectional = true
 	from = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
 	to = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
-	points = ["320,80"]
+	points = ["300,80"]
 
 [[connections]]
 	bidirectional = true
@@ -132,4 +132,4 @@ name = "ZX Spectrum 48K + AY"
 	bidirectional = true
 	from = "060662e2-17d8-4dbc-9bde-98797ecd4e76"
 	to = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
-	points = ["320,250"]
+	points = ["500,320", "320,320"]
