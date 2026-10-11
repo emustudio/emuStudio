@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.GlyphVector;
 import java.awt.image.BufferStrategy;
 import java.util.Arrays;
 import java.util.Objects;
@@ -89,6 +90,27 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         painting.set(false);
     }
 
+    static void drawCharacters(Graphics2D graphics, DisplayFont displayFont,
+                               char[] characters, int offset, int length, int baseline) {
+        if (displayFont == DisplayFont.FONT_ORIGINAL) {
+            // Rasterize the outlines without font hinting, which distorts the thin ROM scanlines.
+            GlyphVector glyphs = graphics.getFont().createGlyphVector(
+                    graphics.getFontRenderContext(), new String(characters, offset, length)
+            );
+            int cellWidth = graphics.getFontMetrics().charWidth('W');
+            // Keep text on the cursor's cell grid even with fractional desktop scaling.
+            for (int column = 0; column < glyphs.getNumGlyphs(); column++) {
+                glyphs.setGlyphPosition(column, new Point(column * cellWidth, 0));
+            }
+            Shape outline = glyphs.getOutline(displayFont.xCursorOffset, baseline);
+            graphics.fill(outline);
+            // Brighten partially covered pixels without widening the ROM strokes or removing antialiasing.
+            graphics.fill(outline);
+        } else {
+            graphics.drawChars(characters, offset, length, displayFont.xCursorOffset, baseline);
+        }
+    }
+
     public class PaintCycle implements Runnable {
         private BufferStrategy strategy;
         private char[] videoMemory = new char[0];
@@ -157,12 +179,8 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setRenderingHint(KEY_ANTIALIASING, renderFont.antiAliasing);
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
                         for (int y = 0; y < rows; y++) {
-                            graphics.drawChars(
-                                    videoMemory,
-                                    y * columns,
-                                    columns,
-                                    1,
-                                    (y + 1) * lineHeight);
+                            drawCharacters(graphics, renderFont, videoMemory, y * columns,
+                                    columns, (y + 1) * lineHeight);
                         }
                         paintCursor(graphics, lineHeight, cursorPoint, renderFont);
                         graphics.dispose();

@@ -11,7 +11,7 @@ public class DisplayFont {
 
     public static final DisplayFont FONT_ORIGINAL = new DisplayFont(
             "/net/emustudio/plugins/device/adm3a/gui/adm-3a.ttf",
-            2, 2, 5, 14, 5,
+            2, 2, 5, 16, 5,
             RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
             RenderingHints.VALUE_ANTIALIAS_ON,
             RenderingHints.VALUE_FRACTIONALMETRICS_OFF
