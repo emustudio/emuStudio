@@ -7,6 +7,7 @@ import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BaseMultiResolutionImage;
 import java.util.Objects;
 
 import static java.awt.FlowLayout.LEFT;
@@ -14,8 +15,8 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
-    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear.png";
-    private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/roll.png";
+    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear";
+    private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/roll";
     private static final Rectangle DEFAULT_CANVAS_BOUNDS = new Rectangle(150, 170, 725, 530);
     private static final int CANVAS_RIGHT_PADDING = 3;
 
@@ -81,21 +82,17 @@ public class TerminalWindow extends DialogBase {
         lblBack.setBounds(0, 0, bgWidth, bgHeight);
         lblBack.setDoubleBuffered(true);
 
-        JButton btnClear = new JButton(loadIcon(CLEAR_SCREEN_ICON));
-        btnClear.setFocusable(false);
-        btnClear.setToolTipText("Clear screen");
+        JButton btnClear = createControlButton("CLEAR", "Clear screen", CLEAR_SCREEN_ICON);
         btnClear.addActionListener(e -> clearScreen());
 
-        JButton btnRoll = new JButton(loadIcon(ROLL_LINE_ICON));
-        btnRoll.setFocusable(false);
-        btnRoll.setToolTipText("Roll line up");
+        JButton btnRoll = createControlButton("ROLL UP", "Roll line up", ROLL_LINE_ICON);
         btnRoll.addActionListener(e -> rollLine());
 
         JPanel panelControl = new JPanel();
         panelControl.setBorder(null);
         panelControl.setOpaque(false);
-        panelControl.setLayout(new FlowLayout(LEFT));
-        panelControl.setBounds(0, 790, 150, 70);
+        panelControl.setLayout(new FlowLayout(LEFT, 10, 0));
+        panelControl.setBounds(100, bgHeight - 46, 254, 34);
 
         panelControl.add(btnClear);
         panelControl.add(btnRoll);
@@ -110,6 +107,29 @@ public class TerminalWindow extends DialogBase {
         layeredPane.add(panelControl, JLayeredPane.PALETTE_LAYER);
 
         return layeredPane;
+    }
+
+    private static JButton createControlButton(String text, String tooltip, String iconResource) {
+        Icon icon = new ImageIcon(new BaseMultiResolutionImage(
+                loadIcon(iconResource + ".png").getImage(),
+                loadIcon(iconResource + "@2x.png").getImage()));
+        JButton button = new JButton(text, icon);
+        button.setToolTipText(tooltip);
+        button.getAccessibleContext().setAccessibleName(tooltip);
+        button.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
+        button.setBackground(new Color(0x40443B));
+        button.setForeground(new Color(0xEBE8D9));
+        button.setPreferredSize(new Dimension(112, 34));
+        button.setIconTextGap(8);
+        button.setMargin(new Insets(0, 4, 0, 4));
+        button.setFocusable(false);
+        button.setFocusPainted(false);
+        button.setRolloverEnabled(true);
+        button.putClientProperty("FlatLaf.style",
+                "arc: 6; focusWidth: 0; innerFocusWidth: 0; borderColor: #252821; "
+                        + "hoverBorderColor: #252821; pressedBorderColor: #252821; "
+                        + "hoverBackground: #55594e; pressedBackground: #30332c");
+        return button;
     }
 
     static Rectangle computeCanvasBounds(DisplayFont displayFont, int columns, int cellWidth) {
