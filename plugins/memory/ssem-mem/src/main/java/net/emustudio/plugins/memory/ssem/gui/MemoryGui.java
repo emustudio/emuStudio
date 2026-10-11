@@ -5,7 +5,6 @@ package net.emustudio.plugins.memory.ssem.gui;
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;

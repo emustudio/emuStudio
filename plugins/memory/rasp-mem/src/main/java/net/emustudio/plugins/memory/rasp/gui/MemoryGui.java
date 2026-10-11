@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;

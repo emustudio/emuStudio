@@ -5,7 +5,6 @@ package net.emustudio.plugins.memory.bytemem.gui;
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
