@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.adm3a.api.Display;
 
@@ -15,7 +14,6 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
-    private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear-screen.png";
     private static final Rectangle DEFAULT_CANVAS_BOUNDS = new Rectangle(150, 170, 725, 530);
     private static final int CANVAS_RIGHT_PADDING = 3;
 
@@ -81,10 +79,10 @@ public class TerminalWindow extends DialogBase {
         lblBack.setBounds(0, 0, bgWidth, bgHeight);
         lblBack.setDoubleBuffered(true);
 
-        JButton btnClear = createControlButton("CLEAR", "Clear screen", CLEAR_SCREEN_ICON);
+        JButton btnClear = createControlButton("CLEAR", "Clear screen");
         btnClear.addActionListener(e -> clearScreen());
 
-        JButton btnRoll = createControlButton("ROLL UP", "Roll line up", StandardIcons.ICON_MOVE_UP);
+        JButton btnRoll = createControlButton("ROLL UP", "Roll line up");
         btnRoll.addActionListener(e -> rollLine());
 
         JPanel panelControl = new JPanel();
@@ -108,16 +106,14 @@ public class TerminalWindow extends DialogBase {
         return layeredPane;
     }
 
-    private static JButton createControlButton(String text, String tooltip, String iconResource) {
-        Icon icon = loadIcon(iconResource);
-        JButton button = new JButton(text, icon);
+    private static JButton createControlButton(String text, String tooltip) {
+        JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.getAccessibleContext().setAccessibleName(tooltip);
         button.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
         button.setBackground(new Color(0x40443B));
         button.setForeground(new Color(0xEBE8D9));
         button.setPreferredSize(new Dimension(120, 34));
-        button.setIconTextGap(8);
         button.setMargin(new Insets(0, 4, 0, 4));
         button.setFocusable(false);
         button.setFocusPainted(false);
