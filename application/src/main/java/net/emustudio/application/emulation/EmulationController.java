@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
@@ -22,17 +23,26 @@ public class EmulationController implements Closeable {
     private final CPU cpu;
     private final Memory memory;
     private final List<Device> devices;
+    private final DebugSession debugger;
 
     private volatile CountDownLatch countDownLatch;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
     private volatile boolean timedRunning = false;
 
-    public EmulationController(CPU cpu, Memory memory, List<Device> devices) {
+    public EmulationController(CPU cpu, Memory memory, List<Device> devices, DebugSession debugger) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = memory;
         this.devices = Objects.requireNonNull(devices);
+        this.debugger = debugger;
 
         cpu.addCPUListener(new TheCPUListener());
+    }
+
+    private void submitMutation(Runnable operation) {
+        executor.submit(() -> {
+            if (debugger == null) operation.run();
+            else debugger.runMutation(operation);
+        });
     }
 
     private void awaitLatch() {
@@ -44,7 +54,7 @@ public class EmulationController implements Closeable {
     }
 
     public void start() {
-        executor.submit(() -> {
+        submitMutation(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
                 return; // invalid state
             }
@@ -55,7 +65,7 @@ public class EmulationController implements Closeable {
     }
 
     public void stop() {
-        executor.submit(() -> {
+        submitMutation(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK && runState != CPU.RunState.STATE_RUNNING) {
                 return; // invalid state
             }
@@ -66,7 +76,7 @@ public class EmulationController implements Closeable {
     }
 
     public void step() {
-        executor.submit(() -> {
+        submitMutation(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
                 return; // invalid state
             }
@@ -86,7 +96,7 @@ public class EmulationController implements Closeable {
     }
 
     private void internalStep(final long sleep, final TimeUnit timeUnit) {
-        executor.submit(() -> {
+        submitMutation(() -> {
             if (runState == CPU.RunState.STATE_STOPPED_BREAK && timedRunning) {
                 countDownLatch = new CountDownLatch(1);
                 cpu.step();
@@ -102,7 +112,7 @@ public class EmulationController implements Closeable {
 
     public void pause() {
         timedRunning = false;
-        executor.submit(() -> {
+        submitMutation(() -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 countDownLatch = new CountDownLatch(1);
                 cpu.pause();
@@ -113,19 +123,18 @@ public class EmulationController implements Closeable {
 
     public void reset() {
         timedRunning = false;
-        executor.submit(() -> {
-            countDownLatch = new CountDownLatch(1);
-
+        submitMutation(() -> {
+            // pause() acknowledges execution exit, even if natural completion won the race.
+            cpu.pause();
             if (memory != null) {
                 memory.reset();
             }
-            cpu.reset();
-
-            awaitLatch();
-
             for (Device device : devices) {
                 device.reset();
             }
+            countDownLatch = new CountDownLatch(1);
+            cpu.reset();
+            awaitLatch();
         });
     }
 

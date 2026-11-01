@@ -14,7 +14,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +49,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private final Map<Long, PluginMeta> pluginsById = new HashMap<>();
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
     private boolean destroyed;
+    private net.emustudio.application.debugger.DebugSession debugger;
 
     public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins) {
         this(computerConfig, plugins, null);
@@ -73,7 +73,13 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
                                          AppSettings appSettings) throws IOException, InvalidPluginException {
         LoadedPlugins loadedPlugins = loadPlugins(computerConfig, applicationApi, appSettings);
-        return new VirtualComputer(computerConfig, loadedPlugins.plugins, loadedPlugins.pluginClassLoader);
+        try {
+            return new VirtualComputer(computerConfig, loadedPlugins.plugins, loadedPlugins.pluginClassLoader);
+        } catch (RuntimeException | Error failure) {
+            destroyPlugins(loadedPlugins.plugins.values());
+            closeAfterFailure(loadedPlugins.pluginClassLoader, failure);
+            throw failure;
+        }
     }
 
     private static LoadedPlugins loadPlugins(
@@ -99,10 +105,15 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         PluginLoader pluginLoader = new PluginLoader();
         PluginLoader.LoadResult loadResult = pluginLoader.loadPlugins(filesToLoad);
 
-        Map<Long, PluginMeta> plugins = constructPlugins(
-                loadResult.getPluginClasses(), pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save
-        );
-        return new LoadedPlugins(loadResult.getClassLoader(), plugins);
+        try {
+            Map<Long, PluginMeta> plugins = constructPlugins(
+                    loadResult.getPluginClasses(), pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save
+            );
+            return new LoadedPlugins(loadResult.getClassLoader(), plugins);
+        } catch (InvalidPluginException | RuntimeException | Error failure) {
+            closeAfterFailure(loadResult.getClassLoader(), failure);
+            throw failure;
+        }
     }
 
     // package-private for testing
@@ -121,28 +132,31 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         Map<Long, PluginMeta> plugins = new LinkedHashMap<>();
         AtomicLong pluginIdCounter = new AtomicLong(1); // 0 is reserved for emuStudio
 
-        for (PluginConfig pluginConfig : pluginConfigs) {
-            Class<Plugin> pluginClass = pluginClassesByFile.get(pluginConfig.getPluginPath().toFile());
-            if (pluginClass == null) {
-                throw new InvalidPluginException("Missing loaded plugin class for " + pluginConfig.getPluginPath());
-            }
-            PluginSettings pluginSettings = new PluginSettingsImpl(
-                    pluginConfig.getPluginSettings(), appSettings, save
-            );
-
-            if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
-                throw new InvalidPluginException(
-                        "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
+        try {
+            for (PluginConfig pluginConfig : pluginConfigs) {
+                Class<Plugin> pluginClass = pluginClassesByFile.get(pluginConfig.getPluginPath().toFile());
+                if (pluginClass == null) {
+                    throw new InvalidPluginException("Missing loaded plugin class for " + pluginConfig.getPluginPath());
+                }
+                PluginSettings pluginSettings = new PluginSettingsImpl(
+                        pluginConfig.getPluginSettings(), appSettings, save
                 );
+
+                if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
+                    throw new InvalidPluginException(
+                            "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
+                    );
+                }
+
+                long pluginId = pluginIdCounter.getAndIncrement();
+                Plugin pluginInstance = createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings);
+
+                PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
+                plugins.put(pluginId, pluginMeta);
             }
-
-            long pluginId = pluginIdCounter.getAndIncrement();
-            Plugin pluginInstance = Unchecked.call(
-                    () -> createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings)
-            );
-
-            PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
-            plugins.put(pluginId, pluginMeta);
+        } catch (InvalidPluginException | RuntimeException | Error failure) {
+            destroyPlugins(plugins.values());
+            throw failure;
         }
 
         return plugins;
@@ -167,24 +181,44 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     }
 
     public void initialize(ContextPoolImpl contextPool) throws PluginInitializationException {
-        contextPool.setComputer(this);
-        List<PluginMeta> pluginsToInitialize = Stream.of(
-                pluginsByType.getOrDefault(PLUGIN_TYPE.COMPILER, Collections.emptyList()),
-                pluginsByType.getOrDefault(PLUGIN_TYPE.MEMORY, Collections.emptyList()),
-                pluginsByType.getOrDefault(PLUGIN_TYPE.CPU, Collections.emptyList()),
-                pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
-        ).flatMap(Collection::stream).collect(Collectors.toList());
+        try {
+            contextPool.setComputer(this);
+            List<PluginMeta> pluginsToInitialize = Stream.of(
+                    pluginsByType.getOrDefault(PLUGIN_TYPE.COMPILER, Collections.emptyList()),
+                    pluginsByType.getOrDefault(PLUGIN_TYPE.MEMORY, Collections.emptyList()),
+                    pluginsByType.getOrDefault(PLUGIN_TYPE.CPU, Collections.emptyList()),
+                    pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
+            ).flatMap(Collection::stream).collect(Collectors.toList());
 
-        for (PluginMeta pluginMeta : pluginsToInitialize) {
-            pluginMeta.pluginInstance.initialize();
+            for (PluginMeta pluginMeta : pluginsToInitialize) {
+                pluginMeta.pluginInstance.initialize();
+            }
+            if (getCPU().isPresent()) {
+                net.emustudio.emulib.plugins.memory.MemoryContext<?> memory = null;
+                try { memory = contextPool.getMemoryContext(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
+                catch (net.emustudio.emulib.runtime.InvalidContextException | net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
+                try {
+                    java.nio.file.Path path = computerConfig.getPath();
+                    debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
+                            path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"));
+                } catch (IOException e) {
+                    throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
+                }
+            }
+        } catch (PluginInitializationException | RuntimeException | Error failure) {
+            closeAfterFailure(this, failure);
+            throw failure;
         }
     }
 
+    public Optional<net.emustudio.application.debugger.DebugSession> getDebugger() { return Optional.ofNullable(debugger); }
+
     public void reset() {
+        getCPU().ifPresent(CPU::pause);
         getCompiler().ifPresent(Compiler::reset);
         getMemory().ifPresent(Plugin::reset);
-        getCPU().ifPresent(Plugin::reset);
         getDevices().forEach(Device::reset);
+        getCPU().ifPresent(Plugin::reset);
     }
 
     @Override
@@ -226,20 +260,41 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             return;
         }
         destroyed = true;
+        if (debugger != null) {
+            try {
+                debugger.close();
+            } catch (Throwable e) {
+                LOGGER.error("Debugger failed to close", e);
+            }
+        }
         List<PluginMeta> devices = new ArrayList<>(pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList()));
         Collections.reverse(devices);
         devices.forEach(meta -> safeDestroy(meta.pluginInstance));
-        getCPU().ifPresent(this::safeDestroy);
-        getMemory().ifPresent(this::safeDestroy);
-        getCompiler().ifPresent(this::safeDestroy);
+        getCPU().ifPresent(VirtualComputer::safeDestroy);
+        getMemory().ifPresent(VirtualComputer::safeDestroy);
+        getCompiler().ifPresent(VirtualComputer::safeDestroy);
         safeCloseClassLoader();
         computerConfig.close();
     }
 
-    private void safeDestroy(Plugin plugin) {
+    private static void closeAfterFailure(AutoCloseable resource, Throwable failure) {
+        try {
+            resource.close();
+        } catch (Throwable closeError) {
+            if (closeError != failure) failure.addSuppressed(closeError);
+        }
+    }
+
+    private static void destroyPlugins(Collection<PluginMeta> plugins) {
+        List<PluginMeta> reversed = new ArrayList<>(plugins);
+        Collections.reverse(reversed);
+        reversed.forEach(meta -> safeDestroy(meta.pluginInstance));
+    }
+
+    private static void safeDestroy(Plugin plugin) {
         try {
             plugin.destroy();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Plugin {} failed to destroy", plugin, e);
         }
     }
@@ -250,7 +305,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
         try {
             pluginClassLoader.close();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Plugin class loader failed to close", e);
         }
     }

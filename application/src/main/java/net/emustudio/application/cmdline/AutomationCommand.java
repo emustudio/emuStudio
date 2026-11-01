@@ -45,6 +45,9 @@ public class AutomationCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--program-location"}, description = "program start location", paramLabel = "LOCATION")
     private String programLocation = "-1";
 
+    @CommandLine.Option(names = "--debug-script", description = "run bounded STEP/RUN/ASSERT/CAPTURE operations after compile/reset")
+    private java.nio.file.Path debugScript;
+
 
     @Override
     public Integer call() {
@@ -93,7 +96,9 @@ public class AutomationCommand implements Callable<Integer> {
                         progress
                 );
                 splash.ifPresent(Window::dispose);
+                automation.setDebugScript(debugScript);
                 automation.run();
+                if (!automation.isSuccessful()) return 1;
             }
             return 0;
         } catch (Exception e) {

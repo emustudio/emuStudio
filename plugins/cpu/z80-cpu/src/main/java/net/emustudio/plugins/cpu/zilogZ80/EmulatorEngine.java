@@ -7,6 +7,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
@@ -45,7 +46,9 @@ public class EmulatorEngine implements CpuEngine {
     };
 
     private final ContextZ80Impl context;
-    private final MemoryContext<Byte> memory;
+    private MemoryContext<Byte> memory;
+    public final DebugProbe debugger;
+    private boolean debuggerActive;
     private final CPUContext.PassedCyclesListener passiveMemoryCycleListener;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
@@ -84,11 +87,61 @@ public class EmulatorEngine implements CpuEngine {
     private boolean dispatching = false;
 
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
-        this.memory = Objects.requireNonNull(memory);
+        this.debugger = new DebugProbe("Z80", memory);
+        this.memory = memory;
+        MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
+        debugger.onActivityChanged(
+                active -> {
+                    this.memory = active ? tracedMemory : memory;
+                    this.debuggerActive = active;
+                });
+        String[] names = {"B", "C", "D", "E", "H", "L", "M", "A"};
+        for (int i = 0; i < names.length; i++) {
+            if (i == 6) continue;
+            final int index = i;
+            debugger.register(names[i], 8, () -> regs[index], v -> regs[index] = (int) v);
+        }
+        debugger.register("PC", 16, () -> PC, v -> PC = (int) v);
+        debugger.register("SP", 16, () -> SP, v -> SP = (int) v);
+        debugger.register("F", 8, () -> flags & 255, v -> flags = (int) v);
+        for (int i = 0; i < 3; i++) {
+            final int index = i * 2;
+            debugger.register(
+                    new String[] {"BC", "DE", "HL"}[i],
+                    16,
+                    () -> (regs[index] << 8) | regs[index + 1],
+                    v -> {
+                        regs[index] = ((int) v >>> 8) & 255;
+                        regs[index + 1] = (int) v & 255;
+                    });
+        }
+        debugger.register("IFF1", 1, () -> IFF[0] ? 1 : 0, v -> IFF[0] = v != 0);
+        debugger.register("IFF2", 1, () -> IFF[1] ? 1 : 0, v -> IFF[1] = v != 0);
+        debugger.register(
+                "IM",
+                2,
+                () -> interruptMode,
+                v -> {
+                    if (v > 2) throw new IllegalArgumentException("IM must be 0..2");
+                    interruptMode = (byte) v;
+                });
+        debugger.register("MEMPTR", 16, () -> memptr, v -> memptr = (int) v);
+        debugger.register("IX", 16, () -> IX, v -> IX = (int) v);
+        debugger.register("IY", 16, () -> IY, v -> IY = (int) v);
+        debugger.register("I", 8, () -> I, v -> I = (int) v);
+        debugger.register("R", 8, () -> R, v -> R = (int) v);
+        debugger.register("F2", 8, () -> flags2, v -> flags2 = (int) v);
+        for (int i = 0; i < names.length; i++) {
+            if (i == 6) continue;
+            final int index = i;
+            debugger.register(names[i] + "2", 8, () -> regs2[index], v -> regs2[index] = (int) v);
+        }
+
         this.context = Objects.requireNonNull(context);
-        this.passiveMemoryCycleListener = (memory instanceof CPUContext.PassedCyclesListener)
-                ? (CPUContext.PassedCyclesListener) memory
-                : null;
+        this.passiveMemoryCycleListener =
+                (memory instanceof CPUContext.PassedCyclesListener)
+                        ? (CPUContext.PassedCyclesListener) memory
+                        : null;
         LOGGER.info("Sleep precision: {} nanoseconds.", SleepUtils.SLEEP_PRECISION);
     }
 
@@ -269,6 +322,24 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void dispatch() throws Throwable {
+        if (!debuggerActive) {
+            dispatchRaw();
+            return;
+        }
+        if (!debugger.begin(PC)) {
+            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            return;
+        }
+        boolean completed = false;
+        try {
+            dispatchRaw();
+            completed = true;
+        } finally {
+            if (debugger.end(completed)) currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+        }
+    }
+
+    private void dispatchRaw() throws Throwable {
         DispatchListener tmpListener = dispatchListener;
         if (tmpListener != null) {
             tmpListener.beforeDispatch();

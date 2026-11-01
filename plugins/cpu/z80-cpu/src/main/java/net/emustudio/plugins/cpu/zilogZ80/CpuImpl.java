@@ -78,8 +78,10 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = initializer.getDisassembler();
+        disassembler = new net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler(
+                initializer.getDisassembler(), initializer.getEngine().debugger.memory(), true);
         engine = initializer.getEngine();
+        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
@@ -96,6 +98,11 @@ public class CpuImpl extends AbstractCPU {
         if (statusPanel != null) {
             statusPanel.updateGUI();
         }
+    }
+
+    @Override
+    public java.util.Optional<net.emustudio.emulib.plugins.cpu.debug.DebugCPU> getDebugger() {
+        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
     }
 
     public EmulatorEngine getEngine() {

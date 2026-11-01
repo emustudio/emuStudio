@@ -3,10 +3,10 @@
 package net.emustudio.application.virtualcomputer;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
+import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
@@ -248,6 +248,48 @@ public class VirtualComputerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void constructionFailureDestroysAlreadyConstructedPluginsInReverseOrder() {
+        TestCompilerPlugin.destroyedIds.clear();
+        List<PluginConfig> configs = List.of(pluginConfig("first", PLUGIN_TYPE.COMPILER),
+                pluginConfig("second", PLUGIN_TYPE.COMPILER), pluginConfig("broken", PLUGIN_TYPE.COMPILER));
+        InvalidPluginException failure = assertThrows(InvalidPluginException.class,
+                () -> VirtualComputer.constructPlugins(pluginClassesByFile(configs, List.of(
+                        (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
+                        (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
+                        (Class<Plugin>) (Class<?>) BrokenCompilerPlugin.class)), configs,
+                        mock(ApplicationApi.class), new AppSettings(Config.inMemory(), true, false), () -> {}));
+        assertEquals("Plug-in main class does not have proper constructor", failure.getMessage());
+        assertEquals(List.of(2L, 1L), TestCompilerPlugin.destroyedIds);
+    }
+
+    @Test
+    public void initializationFailureClosesAllOwnedPluginsLoaderAndConfig() throws Exception {
+        Compiler compiler = mock(Compiler.class);
+        Memory memory = mock(Memory.class);
+        Device device = mock(Device.class);
+        AutoCloseable loader = mock(AutoCloseable.class);
+        ComputerConfig config = mock(ComputerConfig.class);
+        net.emustudio.emulib.plugins.PluginInitializationException failure =
+                new net.emustudio.emulib.plugins.PluginInitializationException(memory, "bad memory");
+        doThrow(failure).when(memory).initialize();
+        // Even a broken cleanup must not hide the original initialization failure.
+        doThrow(new AssertionError("destroy failed")).when(device).destroy();
+        VirtualComputer computer = new VirtualComputer(config, plugins(
+                plugin(1, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
+                plugin(2, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory),
+                plugin(3, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)), loader);
+        assertSame(failure, assertThrows(net.emustudio.emulib.plugins.PluginInitializationException.class,
+                () -> computer.initialize(new ContextPoolImpl(0))));
+        computer.close();
+        verify(device).destroy();
+        verify(memory).destroy();
+        verify(compiler).destroy();
+        verify(loader).close();
+        verify(config).close();
+    }
+
+    @Test
     public void createPluginInstanceRejectsMissingProperConstructor() {
         assertThrows(InvalidPluginException.class, () ->
                 VirtualComputer.createPluginInstance(1L, BrokenCompilerPlugin.class, mock(ApplicationApi.class), PluginSettings.UNAVAILABLE)
@@ -324,7 +366,7 @@ public class VirtualComputerTest {
     }
 
     private static PluginConfig pluginConfig(String id, PLUGIN_TYPE pluginType) {
-        return PluginConfig.create(id, pluginType, id, "/tmp/" + id + ".jar", P.of(0, 0), Config.inMemory());
+        return PluginConfig.create(id, pluginType, id, "/tmp/" + id + ".jar", SchemaPoint.of(0, 0), Config.inMemory());
     }
 
     private static Map<File, Class<Plugin>> pluginClassesByFile(List<PluginConfig> pluginConfigs, List<Class<Plugin>> pluginClasses) {
@@ -365,8 +407,11 @@ public class VirtualComputerTest {
         static long lastPluginId = -1;
         static ApplicationApi lastApplicationApi;
         static PluginSettings lastSettings;
+        static final List<Long> destroyedIds = new ArrayList<>();
+        private final long pluginId;
 
         public TestCompilerPlugin(long pluginId, ApplicationApi applicationApi, PluginSettings settings) {
+            this.pluginId = pluginId;
             lastPluginId = pluginId;
             lastApplicationApi = applicationApi;
             lastSettings = settings;
@@ -379,7 +424,7 @@ public class VirtualComputerTest {
         @Override public List<FileExtension> getSourceFileExtensions() { return List.of(); }
         @Override public void reset() {}
         @Override public void initialize() {}
-        @Override public void destroy() {}
+        @Override public void destroy() { destroyedIds.add(pluginId); }
         @Override public void showSettings(JFrame parent) {}
         @Override public boolean isShowSettingsSupported() { return false; }
         @Override public boolean isAutomationSupported() { return false; }

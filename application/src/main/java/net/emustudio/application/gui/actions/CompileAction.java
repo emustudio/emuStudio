@@ -77,13 +77,16 @@ public class CompileAction extends AbstractAction {
                 editor.getCurrentFile().ifPresent(file -> {
                     compilerOutput.setText("");
 
-                    try {
-                        computer.getMemory().ifPresent(Memory::reset);
-                        compiler.compile(file.toPath(), Optional.empty());
-                        computer.getCPU().ifPresent(Plugin::reset);
-                    } catch (Exception e) {
-                        compilerOutput.append("Could not compile file: " + e + "\n");
-                    }
+                    Runnable compile = () -> {
+                        try {
+                            computer.getMemory().ifPresent(Memory::reset);
+                            compiler.compile(file.toPath(), Optional.empty());
+                            computer.getCPU().ifPresent(Plugin::reset);
+                        } catch (Exception e) {
+                            compilerOutput.append("Could not compile file: " + e + "\n");
+                        }
+                    };
+                    computer.getDebugger().ifPresentOrElse(debugger -> debugger.runMutation(compile), compile);
                 });
             }
         }, () -> dialogs.showError("Compiler is not set", "Compile"));

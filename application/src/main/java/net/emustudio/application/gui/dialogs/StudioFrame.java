@@ -74,7 +74,7 @@ public class StudioFrame extends JFrame {
         this.editor.setActiveEditorChanged(this::updateWindowTitle);
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
-                cpu, computer.getMemory().orElse(null), computer.getDevices()
+                cpu, computer.getMemory().orElse(null), computer.getDevices(), computer.getDebugger().orElse(null)
         )).orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(

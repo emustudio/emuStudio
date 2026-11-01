@@ -21,7 +21,7 @@ import java.util.Map;
  * <p>
  * The opcode &rarr; {@link EmulatorEngine} method mappings live in the
  * {@code dispatch-tables.txt} classpath resource and are bound to {@link MethodHandle}s
- * at class initialization. See ADR-0010.
+ * at class initialization.
  */
 public class DispatchTables {
     public final static MethodHandle[] DISPATCH_TABLE = new MethodHandle[256];
