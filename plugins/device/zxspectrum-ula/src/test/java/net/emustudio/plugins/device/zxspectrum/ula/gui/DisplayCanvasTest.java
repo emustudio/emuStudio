@@ -16,6 +16,55 @@ import static org.junit.Assert.*;
 
 public class DisplayCanvasTest {
     @Test
+    public void borderChangesLatchInEightPixelCellsWithinOneLine() {
+        ModelProfile profile = ModelProfile.DEFAULT;
+        ULA ula = createNiceMock(ULA.class);
+        replay(ula);
+        DisplayCanvas canvas = new DisplayCanvas(ula, profile, new KeyboardCanvas(profile, 0));
+        List<BufferedImage> frames = new ArrayList<>();
+        canvas.setFrameListener(frames::add);
+        canvas.drawBorderCycles(0, profile.displayFrameTstates, 0);
+        long lineStart = 16L * profile.displayLineTstates - profile.borderWidthPixels / 2;
+        canvas.drawBorderCycles(lineStart, 2, 2); // color register changes before latch
+        canvas.drawBorderCycles(lineStart + 2, 1, 2); // latch first cell: red
+        canvas.drawBorderCycles(lineStart + 3, 3, 1); // blue waits for next latch
+        canvas.drawBorderCycles(lineStart + 6, 1, 1); // latch next cell: blue
+        canvas.frameReady();
+        BufferedImage frame = frames.get(0);
+        for (int x = 0; x < 8; x++) {
+            assertEquals(0xD80000, frame.getRGB(x, 16) & 0xFFFFFF);
+            assertEquals(0x0000D8, frame.getRGB(x + 8, 16) & 0xFFFFFF);
+        }
+        assertEquals(0, frame.getRGB(16, 16) & 0xFFFFFF);
+        assertEquals(0, frame.getRGB(0, 15) & 0xFFFFFF);
+        assertEquals(0, frame.getRGB(0, 17) & 0xFFFFFF);
+    }
+
+    @Test
+    public void timedBorderWrapsToNextLineWithoutPaintingPaper() {
+        ModelProfile profile = ModelProfile.DEFAULT;
+        ULA ula = createNiceMock(ULA.class);
+        replay(ula);
+        DisplayCanvas canvas = new DisplayCanvas(ula, profile, new KeyboardCanvas(profile, 0));
+        List<BufferedImage> frames = new ArrayList<>();
+        canvas.setFrameListener(frames::add);
+        canvas.drawBorderCycles(0, profile.displayFrameTstates, 0);
+        canvas.drawBorderCycles(profile.preScreenLines * (long) profile.displayLineTstates
+                - profile.borderWidthPixels / 2, profile.displayLineTstates, 2);
+        canvas.frameReady();
+        BufferedImage frame = frames.get(0);
+        int y = profile.preScreenLines;
+        assertEquals(0xD80000, frame.getRGB(0, y) & 0xFFFFFF);
+        assertEquals(0xD80000, frame.getRGB(frame.getWidth() - 1, y) & 0xFFFFFF);
+        assertEquals(0, frame.getRGB(profile.borderWidthPixels, y) & 0xFFFFFF);
+        assertEquals(0, frame.getRGB(0, y + 1) & 0xFFFFFF);
+        canvas.drawBorderCycles(profile.displayFrameTstates - 24, 24, 1);
+        canvas.frameReady();
+        assertEquals(0x0000D8, frames.get(1).getRGB(0, 0) & 0xFFFFFF);
+        assertEquals(0, frames.get(0).getRGB(0, 0) & 0xFFFFFF);
+    }
+
+    @Test
     public void capturesNativeCompletedFramesWithoutDependingOnPaintOrResize() {
         for (ModelProfile profile : ModelProfile.values()) {
             AtomicInteger border = new AtomicInteger(1);

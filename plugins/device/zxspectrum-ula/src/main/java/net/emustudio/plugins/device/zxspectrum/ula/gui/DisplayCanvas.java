@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -117,47 +118,48 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         }
     }
 
-    /**
-     * Renders a single raster line into the {@link #screenImageData} pixel buffer.
-     *
-     * <p>The screen image is laid out as a 1-D array of RGB ints, {@code screenImageWidth} pixels wide and
-     * {@code screenImageHeight} lines tall. Lines are numbered {@code 0 .. screenImageHeight - 1} and divided
-     * into three vertical zones defined by the active model profile:
-     *
-     * <pre>
-     *   line 0 .. preScreenLines-1                               → upper border (solid border color)
-     *   line preScreenLines .. preScreenLines+screenHeightPixels-1 → active area  (left border + bitmap + right border)
-     *   line preScreenLines+screenHeightPixels .. end             → lower border (solid border color)
-     * </pre>
-     *
-     * <p><b>Border lines</b> (upper / lower): every pixel in the row is filled with the current ULA border color.
-     * Upper-border lines also extend an extra {@code BORDER_WIDTH} pixels to compensate for array alignment.
-     *
-     * <p><b>Active-area lines</b>: the ULA's {@code readLine(y)} is called to populate
-     * {@code videoMemory[][]} and {@code attributeMemory[][]}. Then each byte column (0..31) is decoded:
-     * <ul>
-     *   <li>8 pixels are extracted from the bitmap byte (MSB first).</li>
-     *   <li>The attribute byte selects ink/paper color, brightness palette, and flash state.</li>
-     *   <li>When the flash flag is set and the ULA flash clock is active, ink and paper are swapped.</li>
-     * </ul>
-     * After the active bitmap area, both left and right border regions ({@code 2 × borderWidth} pixels) are
-     * filled with the border color.
-     *
-     * @param line raster line index (0-based, covering borders and active area)
-     */
+    /** Paints the border at the beam position, preserving changes within a raster line. */
+    public void drawBorderCycles(long frameCycle, long cycles, int color) {
+        int rgb = COLOR_MAP[color].getRGB();
+        long origin = profile.firstContendedTstate + 1L
+                - (long) profile.preScreenLines * profile.displayLineTstates;
+        for (long cycle = frameCycle; cycle < frameCycle + cycles; cycle++) {
+            long position = Math.floorMod(cycle - origin + borderWidth / 2, profile.displayFrameTstates);
+            int line = (int) (position / profile.displayLineTstates);
+            int x = (int) (position % profile.displayLineTstates) * 2;
+            // The 48K ULA latches color once per 8-pixel (4T) cell, at its third T-state.
+            // An OUT changes the port register immediately, but cannot split this color cell.
+            if ((x & 7) != 4) {
+                continue;
+            }
+            x &= ~7;
+            if (x >= screenImageWidth) {
+                continue; // horizontal blanking
+            }
+            boolean paperLine = line >= profile.preScreenLines
+                    && line < profile.preScreenLines + profile.screenHeightPixels;
+            if (!paperLine || x < borderWidth || x >= borderWidth + profile.screenWidthPixels) {
+                int offset = line * screenImageWidth + x;
+                Arrays.fill(screenImageData, offset, offset + 8, rgb);
+            }
+        }
+    }
+
+    /** Renders a complete line for a paused display or an explicit redraw. */
     public void drawNextLine(int line) {
+        drawNextLine(line, true);
+    }
+
+    /** Renders the bitmap; live border pixels are painted separately as the beam advances. */
+    public void drawNextLine(int line, boolean drawBorder) {
         if (line < 0 || line >= screenImageHeight) {
             return;
         }
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
         if (line < profile.preScreenLines || line >= (profile.preScreenLines + profile.screenHeightPixels)) {
-            for (int i = 0; i < screenImageWidth; i++) {
-                screenImageData[line * screenImageWidth + i] = borderColor;
-            }
-            if (line < profile.preScreenLines) {
-                for (int i = screenImageWidth; i < screenImageWidth + borderWidth; i++) {
-                    screenImageData[line * screenImageWidth + i] = borderColor;
-                }
+            if (drawBorder) {
+                Arrays.fill(screenImageData, line * screenImageWidth,
+                        (line + 1) * screenImageWidth, borderColor);
             }
         } else {
             int y = line - profile.preScreenLines;
@@ -183,9 +185,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 }
                 screenX += 8;
             }
-            for (int i = 0; i < 2 * borderWidth; i++) {
-                int offset = line * screenImageWidth + borderWidth + profile.screenWidthPixels + i;
-                screenImageData[offset] = borderColor;
+            if (drawBorder) {
+                int start = line * screenImageWidth;
+                Arrays.fill(screenImageData, start, start + borderWidth, borderColor);
+                Arrays.fill(screenImageData, start + borderWidth + profile.screenWidthPixels,
+                        start + screenImageWidth, borderColor);
             }
         }
     }
