@@ -33,11 +33,11 @@ At first, download a packaged release from <https://www.emustudio.net/download/>
 
 Prerequisite is to have:
 - Java 11 or newer
-- Linux, Windows or Mac 
+- Linux or Windows (the distributed launchers); macOS operation is unverified for the development version.
 
 After unpacking the release package, start emuStudio with:
 
-- Linux, Mac: `./emuStudio`
+- Linux: `./emuStudio`
 - Windows: `emuStudio.bat`
 
 Useful CLI entry points:

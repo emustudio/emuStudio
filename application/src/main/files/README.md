@@ -15,15 +15,15 @@ since 2007.
 
 ## Available emulators
 
-* [MITS Altair8800](https://www.emustudio.net/docuser/mits_altair_8800/index/)
+* [MITS Altair8800](https://www.emustudio.net/documentation/user/altair8800/)
 
-* [Manchester SSEM](https://www.emustudio.net/docuser/ssem/index/)
+* [Manchester SSEM](https://www.emustudio.net/documentation/user/ssem/)
 
-* [Random Access Machine (RAM)](https://www.emustudio.net/docuser/ram/index/)
+* [Random Access Machine (RAM)](https://www.emustudio.net/documentation/user/ram/)
 
-* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/)
+* [Random Access Stored Program (RASP)](https://www.emustudio.net/documentation/user/rasp/)
 
-* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/docuser/brainduck/index/)
+* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/documentation/user/brainduck/)
 
 # License
 
@@ -31,12 +31,13 @@ This project is released under GNU GPL v3 license.
 
 # Supported host platform
 
-Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
+The distributed launchers support Linux and Windows. macOS operation has not been verified for this development version.
 
 # Installation
 
 Please follow the instructions on [project's web page](https://www.emustudio.net/download/).
-To run the project from the command line, type the following:
+Install Java 11 or later, then run the launcher from the unpacked distribution directory:
 
-        java -jar "emuStudio.jar" 
+- Linux: `./emuStudio`
+- Windows: `emuStudio.bat`
 

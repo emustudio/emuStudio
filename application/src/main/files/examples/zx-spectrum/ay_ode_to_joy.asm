@@ -1,7 +1,7 @@
 ; ZX Spectrum 48K AY-3-8910 example
 ; Plays a short three-voice arrangement of the opening phrase of "Ode to Joy".
 ;
-; Use the ZxSpectrum48KAY.toml configuration, assemble as code at 32768 (8000H),
+; Use the ZxSpectrum48K.toml (ZX Spectrum 48K + AY) configuration, assemble as code at 32768 (8000H),
 ; then run with:
 ;   RANDOMIZE USR 32768
 ;
