@@ -151,3 +151,8 @@ gradle-app.setting
 
 # Generated architecture documentation (./gradlew doc)
 docs/output/
+
+# Local agent and design-tool state
+.agents/
+.apex/
+.impeccable/
