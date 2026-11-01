@@ -115,6 +115,27 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         runOnEdt(() -> editor.textPane().select(0, 5)); command(editor, "Toggle comment");
         assertTrue(onEdt(editor.textPane()::getText).startsWith("##block\n"));
     }
+    @Test public void compilerSyntaxMatchesNestedBracketsInBothDirections() {
+        String source = "([{}])";
+        List<Token> tokens = new ArrayList<>();
+        for (int i = 0; i < source.length(); i++)
+            tokens.add(new SourceToken(Token.SEPARATOR, i, source.substring(i, i + 1), null, null, null));
+        REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(new TokenLexer(tokens))));
+        runOnEdt(() -> editor.textPane().setText(source));
+        for (int i = 0; i < source.length(); i++) {
+            final int bracket = i;
+            java.awt.Point match = onEdt(() -> {
+                editor.textPane().setCaretPosition(bracket + 1);
+                return org.fife.ui.rsyntaxtextarea.RSyntaxUtilities.getMatchingBracketPosition(editor.textPane(), null);
+            });
+            assertEquals(new java.awt.Point(i, source.length() - 1 - i), match);
+        }
+        REditor comment = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(new TokenLexer(
+                List.of(new SourceToken(Token.COMMENT, 0, "()", null, null, null))))));
+        runOnEdt(() -> { comment.textPane().setText("()"); comment.textPane().setCaretPosition(1); });
+        assertEquals(-1, onEdt(() -> org.fife.ui.rsyntaxtextarea.RSyntaxUtilities
+                .getMatchingBracketPosition(comment.textPane(), null).y).intValue());
+    }
     @Test public void savingUntitledSourceAndSaveAsKeepItsSyntaxChoice() throws Exception {
         Path first = files.newFile("first.txt").toPath(), second = files.newFile("second.txt").toPath();
         Dialogs dialogs = mock(Dialogs.class);

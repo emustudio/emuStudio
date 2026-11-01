@@ -36,8 +36,8 @@ ext.libs = [
 
         tomlj            : "com.electronwill.night-config:toml:3.8.3",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.6.2",
-        editorDialogs    : "com.fifesoft:rstaui:3.3.2",
+        editor           : "com.fifesoft:rsyntaxtextarea:4.0.1",
+        editorDialogs    : "com.fifesoft:rstaui:4.0.0",
 
         cacioTta         : "com.github.caciocavallosilano:cacio-tta:1.11.1",
         junit            : "junit:junit:4.13.2",
