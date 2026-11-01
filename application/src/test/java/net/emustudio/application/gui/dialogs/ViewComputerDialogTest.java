@@ -51,6 +51,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
             findLabel(dialog, "cpu.jar");
             findLabel(dialog, "1.0");
             findLabel(dialog, "CPU copyright");
+            findLabel(dialog, "CPU information");
         }
     }
 
@@ -73,6 +74,34 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
             findLabel(dialog, "device.jar");
             findLabel(dialog, "2.0");
             findLabel(dialog, "Device copyright");
+            findLabel(dialog, "Device information");
+        }
+    }
+
+    @Test
+    public void descriptionUsesNaturalShortHeightAndScrollsLongContent() throws Exception {
+        try (ComputerConfig computerConfig = createComputerConfig()) {
+            DialogFixture fixture = createFixture(computerConfig);
+            when(fixture.computer.getDevices().get(0).getDescription()).thenReturn(
+                    "Long plugin description with enough words to wrap across the available width. ".repeat(200));
+            ViewComputerDialog dialog = createDialog(fixture.computer, fixture.appSettings);
+            showDialog(dialog);
+            JTextArea description = findComponent(dialog, JTextArea.class, area -> true);
+            JScrollPane scroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, description);
+            int shortHeight = onEdt(scroll::getHeight);
+            assertTrue("One-line descriptions should stay compact", shortHeight < 60);
+
+            triggerButton(findToggleButtonByTooltip(dialog, "Devices information"));
+            runOnEdt(dialog::validate);
+            int longHeight = onEdt(scroll::getHeight);
+            assertTrue("Long descriptions should get more room", longHeight > shortHeight);
+            assertTrue("Long descriptions must remain bounded", longHeight <= 240);
+            assertTrue("Overflow must remain scrollable", onEdt(() ->
+                    scroll.getVerticalScrollBar().getMaximum() > scroll.getVerticalScrollBar().getVisibleAmount()));
+
+            triggerButton(findToggleButtonByTooltip(dialog, "CPU information"));
+            runOnEdt(dialog::validate);
+            assertTrue("Returning to short content should shrink the description", onEdt(scroll::getHeight) < 60);
         }
     }
 

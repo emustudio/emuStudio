@@ -73,6 +73,8 @@ public class SourceAddressMapTest {
         assertEquals(4, symbols.get("entry").location.get().address);
         assertEquals(a.toString(), symbols.get("VALUE").position.fileName);
         assertFalse(symbols.get("VALUE").location.isPresent());
+        assertTrue(symbols.get("VALUE").sourceOnly);
+        assertFalse(symbols.get("entry").sourceOnly);
         assertEquals(b.toString(), symbols.get("OTHER").position.fileName);
         assertFalse(symbols.get("OTHER").location.isPresent());
         assertTrue(map.matches(a, aText));
@@ -204,11 +206,14 @@ public class SourceAddressMapTest {
         assertEquals(1, symbols.get("stand").location.get().address);
         assertEquals(1, map.addressOf(at(source, 2, 0)).get().address);
         assertFalse(symbols.get("beforeOrg").location.isPresent());
+        assertFalse(symbols.get("beforeOrg").sourceOnly);
+        assertTrue(symbols.get("beforeOrg").toString().contains("address unavailable"));
         assertFalse(symbols.get("VALUE").location.isPresent());
         assertFalse(symbols.get("mac").location.isPresent());
         assertFalse(map.addressOf(at(source, 5, 0)).isPresent());
         assertTrue(symbols.get("stand").toString().contains("symbols.asm:2"));
-        assertTrue(symbols.get("VALUE").toString().contains("unmapped"));
+        assertTrue(symbols.get("VALUE").toString().contains("source only"));
+        assertTrue(symbols.get("VALUE").sourceOnly);
     }
 
     @Test

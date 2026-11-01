@@ -41,6 +41,74 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
+    public void editsWhileRunningStillExposeStaleSourcesWithoutMovingInspection() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            runOnEdt(f.debugger::showMemory);
+            f.sourceLine(2);
+            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
+            f.running(true);
+            runOnEdt(() -> f.pane.insert("; edited while running\n", 0));
+            JLabel status = findComponent(f.debugger, JLabel.class,
+                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(status::getText).contains("Source changed"));
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            f.running(false);
+            assertTrue(onEdt(status::getText).contains("Source changed"));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void pinAndStaleSourceStatesExplainWhyFollowingStops() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            runOnEdt(f.debugger::showMemory);
+            f.sourceLine(2);
+            JLabel context = findComponent(f.debugger, JLabel.class,
+                    label -> "Inspection context".equals(label.getAccessibleContext().getAccessibleName()));
+            JLabel source = findComponent(f.debugger, JLabel.class,
+                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(context::getText).contains("0002"));
+            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
+            f.sourceLine(3);
+            assertTrue(onEdt(context::getText).contains("Pinned"));
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            runOnEdt(() -> f.pane.insert("; edited\n", 0));
+            assertTrue(onEdt(source::getText).contains("Source changed"));
+            JList<?> symbols = findComponent(f.debugger, JList.class,
+                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
+            assertFalse(onEdt(symbols::isEnabled));
+            runOnEdt(() -> { f.pane.setText(f.text); assertTrue(f.editor.saveFile()); });
+            f.compile(false);
+            assertTrue(onEdt(symbols::isEnabled));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void symbolFilteringPreservesTheQueryAndUsesFullMappingsForSourceFollowing() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            runOnEdt(f.debugger::showMemory);
+            JTextField filter = findComponent(f.debugger, JTextField.class,
+                    field -> "Filter symbols".equals(field.getAccessibleContext().getAccessibleName()));
+            JList<?> symbols = findComponent(f.debugger, JList.class,
+                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
+            setText(filter, "third");
+            assertEquals(1, onEdt(() -> symbols.getModel().getSize()).intValue());
+            f.sourceLine(2);
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals("third", onEdt(filter::getText));
+            JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, pane -> true);
+            runOnEdt(() -> { tabs.setSelectedIndex(tabs.indexOfTab("Symbols")); symbols.setSelectedIndex(0); });
+            assertEquals(3, f.line());
+            assertEquals("Symbols", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
     public void sourceMemorySymbolsAndBothHistoriesStaySynchronized() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -308,7 +376,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 return new DebuggerPanel(session, listing, scroll, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
             });
             table = findComponent(debugger, JTable.class, t -> true);
-            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger));
+            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger, status -> {}));
             ArgumentCaptor<CompilerListener> captor = ArgumentCaptor.forClass(CompilerListener.class);
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();

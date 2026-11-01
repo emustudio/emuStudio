@@ -26,5 +26,7 @@ public class AboutDialogTest extends AbstractSwingTest {
         assertEquals("About emuStudio", onEdt(dialog::getTitle));
         assertNotNull(findLabel(dialog, "emuStudio"));
         assertNotNull(findLabel(dialog, "Version: "));
+        assertNotNull(findButton(dialog, "emuStudio website"));
+        assertNotNull(findButton(dialog, "GNU General Public License"));
     }
 }

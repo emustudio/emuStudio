@@ -16,7 +16,9 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.awt.event.HierarchyEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -39,6 +41,8 @@ public class EditorPanel extends JPanel {
     private final NewFileAction newFileAction;
     private final OpenFileAction openFileAction;
     private final CompileAction compileAction;
+    private final PropertyChangeListener compilationStatusListener;
+    private final JLabel sourceNavigationStatus = new JLabel();
 
     private final ReplaceDialog replaceDialog;
     private final FindDialog findDialog;
@@ -80,8 +84,28 @@ public class EditorPanel extends JPanel {
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
-
-        splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        JLabel compilationStatus = gui.label((String) compileAction.getValue(CompileAction.STATUS_PROPERTY));
+        compilationStatus.getAccessibleContext().setAccessibleName("Compilation status");
+        compilationStatus.getAccessibleContext().setAccessibleDescription(compilationStatus.getText());
+        compilationStatus.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        compilationStatusListener = event -> {
+            if (!CompileAction.STATUS_PROPERTY.equals(event.getPropertyName())) return;
+            Runnable update = () -> {
+                compilationStatus.setText((String) compileAction.getValue(CompileAction.STATUS_PROPERTY));
+                compilationStatus.getAccessibleContext().setAccessibleDescription(compilationStatus.getText());
+            };
+            if (SwingUtilities.isEventDispatchThread()) update.run(); else SwingUtilities.invokeLater(update);
+        };
+        compileAction.addPropertyChangeListener(compilationStatusListener);
+        sourceNavigationStatus.getAccessibleContext().setAccessibleName("Source synchronization status");
+        sourceNavigationStatus.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        JPanel outputStatus = new JPanel(new BorderLayout());
+        outputStatus.add(compilationStatus, BorderLayout.WEST);
+        outputStatus.add(sourceNavigationStatus, BorderLayout.CENTER);
+        JPanel output = new JPanel(new BorderLayout());
+        output.add(outputStatus, BorderLayout.NORTH);
+        output.add(compilerPane);
+        splitSource = gui.splitPaneTopToBottom(editor.getView(), output, 1.0);
         splitSource.setOneTouchExpandable(true);
         addHierarchyListener(event -> {
             if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
@@ -129,7 +153,14 @@ public class EditorPanel extends JPanel {
         return compileAction;
     }
 
+    public void setSourceNavigationStatus(String status) {
+        sourceNavigationStatus.setText(status);
+        sourceNavigationStatus.setToolTipText(status);
+        sourceNavigationStatus.getAccessibleContext().setAccessibleDescription(status);
+    }
+
     public void dispose() {
+        compileAction.removePropertyChangeListener(compilationStatusListener);
         findDialog.dispose();
         replaceDialog.dispose();
     }
@@ -168,7 +199,7 @@ public class EditorPanel extends JPanel {
         mainToolBar.add(gui.toolbarButton(findAction));
         mainToolBar.addSeparator();
         JButton compileButton = gui.toolbarButton(compileAction);
-        compileButton.setHideActionText(false);
+        compileButton.getAccessibleContext().setAccessibleName("Save & Compile source file");
         mainToolBar.add(compileButton);
         mainToolBar.addSeparator();
 

@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Files;
@@ -249,6 +250,54 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertSame(split, onEdt(tabs::getSelectedComponent));
         assertTrue(selected.isEmpty());
         assertEquals(3, onEdt(() -> editor.currentSourcePosition().orElseThrow().line).intValue());
+    }
+
+    @Test
+    public void splitFocusAndDebuggerFollowingKeepTheSearchTargetOnTheActivePane() throws Exception {
+        Path file = source("panes.asm", "nop\ninr a\nhlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        InlineSearchBar search = onEdt(editor::searchBar);
+        runOnEdt(() -> editor.split(true));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        JSplitPane split = onEdt(() -> (JSplitPane) tabs.getSelectedComponent());
+        TextEditorPane right = findComponent((Container) split.getRightComponent(), TextEditorPane.class, pane -> true);
+        findLabel((Container) split.getLeftComponent(), "Left — panes.asm — Active");
+        runOnEdt(() -> {
+            for (java.awt.event.FocusListener listener : right.getFocusListeners())
+                if (listener.getClass().getEnclosingClass() == TabbedEditor.class)
+                    listener.focusGained(new FocusEvent(right, FocusEvent.FOCUS_GAINED));
+        });
+        findLabel((Container) split.getRightComponent(), "Right — panes.asm — Active");
+        findLabel(search, "Right pane: panes.asm");
+        List<SourceCodePosition> notifications = new ArrayList<>();
+        runOnEdt(() -> {
+            editor.setSourcePositionChanged(notifications::add);
+            editor.synchronizePosition(SourceCodePosition.of(3, 0, file.toString()));
+        });
+        assertSame(split, onEdt(tabs::getSelectedComponent));
+        assertEquals(2, onEdt(() -> right.getLineOfOffset(right.getCaretPosition())).intValue());
+        assertTrue(notifications.isEmpty());
+        findLabel(search, "Right pane: panes.asm");
+        runOnEdt(editor::unsplit);
+        findLabel(search, "File: panes.asm");
+    }
+
+    @Test
+    public void aFullWidthTabOutsideAnExistingSplitIsNotReportedAsItsRightPane() throws Exception {
+        Path splitFile = source("split.asm", "nop\n"), otherFile = source("other.asm", "hlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
+                List.of(splitFile, otherFile), paths -> {}));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        InlineSearchBar search = onEdt(editor::searchBar);
+        runOnEdt(() -> { tabs.setSelectedIndex(0); editor.split(true); });
+        Component split = onEdt(tabs::getSelectedComponent);
+        findLabel(search, "Left pane: split.asm");
+        runOnEdt(() -> tabs.setSelectedIndex(1));
+        findLabel(search, "File: other.asm");
+        assertEquals(otherFile, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+        runOnEdt(() -> tabs.setSelectedIndex(0));
+        assertSame(split, onEdt(tabs::getSelectedComponent));
+        findLabel(search, "Left pane: split.asm");
     }
 
     private Path source(String name, String text) throws Exception {

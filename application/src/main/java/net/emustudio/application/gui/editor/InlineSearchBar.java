@@ -3,6 +3,8 @@
 package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.emulib.runtime.ui.GUI;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
@@ -10,32 +12,46 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+
 /** Inline search scoped to the active source view or a captured selection. */
 public final class InlineSearchBar extends JPanel {
     final JTextField find = new JTextField(18), replace = new JTextField(14);
-    final JCheckBox matchCase = new JCheckBox("Case"), word = new JCheckBox("Word"), regex = new JCheckBox("Regex"),
+    final JCheckBox matchCase = new JCheckBox("Match case"), word = new JCheckBox("Whole word"), regex = new JCheckBox("Regex"),
             preserve = new JCheckBox("Preserve case"), selection = new JCheckBox("Selection");
     private final JLabel count = new JLabel("0 matches");
+    private final JLabel target = new JLabel();
     private final Supplier<REditor> active;
-    private final Runnable preview;
     private TextEditorPane scopedPane;
     private Position scopeStart, scopeEnd;
     private boolean scopeStartsAtZero;
     private boolean moving;
 
     InlineSearchBar(Supplier<REditor> active, Runnable preview) {
-        this.active = active; this.preview = preview;
-        setLayout(new GridLayout(2, 1));
-        JPanel fields = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 2));
-        JPanel options = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 2));
+        this.active = active;
+        GUI gui = new EmuStudioGui();
+        setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][100:180:260,fill][][][grow,fill][]", "[][]"));
         find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
-        fields.add(new JLabel("Find")); fields.add(find); fields.add(new JLabel("Replace")); fields.add(replace);
-        button(fields, "Previous", () -> next(false)); button(fields, "Next", () -> next(true));
-        button(fields, "×", () -> { setVisible(false); active.get().grabFocus(); });
-        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex, preserve, selection}) options.add(option);
-        button(options, "Replace", this::replaceCurrent); button(options, "Replace all", this::replaceAll);
-        button(options, "Files…", preview); options.add(count);
-        add(fields); add(options);
+        JLabel findLabel = new JLabel("Find"), replaceLabel = new JLabel("Replace");
+        findLabel.setLabelFor(find); replaceLabel.setLabelFor(replace);
+        JToolBar navigation = gui.toolBar();
+        button(gui, navigation, ICON_MOVE_UP, "Previous match", () -> next(false));
+        button(gui, navigation, ICON_MOVE_DOWN, "Next match", () -> next(true));
+        JPanel matching = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 0));
+        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex}) matching.add(option);
+        JToolBar closing = gui.toolBar();
+        button(gui, closing, ICON_REMOVE, "Close search", () -> { setVisible(false); active.get().grabFocus(); });
+        add(findLabel); add(find); add(navigation); add(matching); add(count); add(closing, "wrap");
+        JToolBar replacements = gui.toolBar();
+        button(gui, replacements, ICON_REPLACE, "Replace current match", this::replaceCurrent);
+        button(gui, replacements, ICON_REPLACE, "Replace all matches in this pane", this::replaceAll);
+        JPanel replacementOptions = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 0));
+        replacementOptions.add(preserve); replacementOptions.add(selection);
+        JToolBar files = gui.toolBar();
+        button(gui, files, ICON_FIND, "Find / replace in files", preview);
+        target.getAccessibleContext().setAccessibleName("Search target");
+        selection.setToolTipText("Search only the captured selection in this pane");
+        add(replaceLabel); add(replace); add(replacements); add(replacementOptions); add(target); add(files);
         find.addActionListener(e -> next(true)); replace.addActionListener(e -> replaceCurrent());
         DocumentListener listener = REditor.onChange(this::refresh);
         find.getDocument().addDocumentListener(listener); replace.getDocument().addDocumentListener(listener);
@@ -54,11 +70,19 @@ public final class InlineSearchBar extends JPanel {
         });
         setVisible(false);
     }
-    private void button(JPanel row, String label, Runnable runnable) {
-        JButton button = new JButton(label); button.addActionListener(e -> {
+    private void button(GUI gui, JToolBar toolbar, String icon, String tooltip, Runnable runnable) {
+        JButton button = gui.toolbarButton(e -> {
             try { runnable.run(); }
             catch (IllegalArgumentException ex) { count.setText(ex.getMessage()); }
-        }); row.add(button);
+        }, icon, tooltip);
+        button.setFocusable(true);
+        button.getAccessibleContext().setAccessibleName(tooltip);
+        toolbar.add(button);
+    }
+    void setTarget(String description, String file) {
+        target.setText(description);
+        target.setToolTipText(file);
+        target.getAccessibleContext().setAccessibleDescription(description + " — " + file);
     }
     public void showSearch() {
         String selected = active.get().getSelectedText();

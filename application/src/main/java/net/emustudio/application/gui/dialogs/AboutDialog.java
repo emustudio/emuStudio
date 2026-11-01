@@ -8,6 +8,7 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 import java.util.Objects;
 
 import static net.emustudio.application.Resources.getCopyright;
@@ -36,20 +37,43 @@ public class AboutDialog extends DialogBase {
         infoPanel.add(gui.label("Version: "), "split 2");
         infoPanel.add(gui.labelBold(getVersion()), "wrap, gapbottom 10");
 
-        JLabel licenseInfo = gui.label(
-                "<html><p>This program comes with ABSOLUTELY NO WARRANTY. " +
-                        "This is free software, and you are welcome to redistribute it " +
-                        "under certain conditions; for details see " +
-                        "https://www.gnu.org/licenses/gpl-3.0.html.<br/>" +
-                        "For more information about emuStudio, see https://www.emustudio.net/.</p></html>"
-        );
-        licenseInfo.setPreferredSize(new Dimension(400, 80));
-        infoPanel.add(licenseInfo, "wrap, grow");
+        JTextArea licenseInfo = gui.textAreaReadOnly(4, 42);
+        licenseInfo.setText("This program comes with ABSOLUTELY NO WARRANTY. "
+                + "This is free software, and you are welcome to redistribute it under certain conditions.");
+        licenseInfo.setFont(UIManager.getFont("Label.font"));
+        licenseInfo.setLineWrap(true);
+        licenseInfo.setWrapStyleWord(true);
+        licenseInfo.setOpaque(false);
+        licenseInfo.getAccessibleContext().setAccessibleName("License notice");
+        infoPanel.add(licenseInfo, "wrap, growx");
+        JPanel links = gui.panel("insets 0", "[]12[]", "[]");
+        links.add(link("emuStudio website", "https://www.emustudio.net/"));
+        links.add(link("GNU General Public License", "https://www.gnu.org/licenses/gpl-3.0.html"));
+        infoPanel.add(links, "growx");
 
         // Combine panels
         mainPanel.add(lblLogo, "");
         mainPanel.add(infoPanel, "grow");
 
         return mainPanel;
+    }
+
+    private JButton link(String text, String address) {
+        JButton button = new JButton(text);
+        button.setToolTipText(address);
+        button.addActionListener(event -> {
+            try {
+                if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE))
+                    throw new UnsupportedOperationException();
+                Desktop.getDesktop().browse(URI.create(address));
+            } catch (Exception e) {
+                JTextField location = new JTextField(address);
+                location.setEditable(false);
+                location.selectAll();
+                JOptionPane.showMessageDialog(this,
+                        new Object[]{"Open this address in your browser:", location}, text, JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        return button;
     }
 }

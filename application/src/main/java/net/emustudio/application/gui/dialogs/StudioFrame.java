@@ -88,7 +88,7 @@ public class StudioFrame extends JFrame {
         );
         this.sourceNavigation = emulatorPanel.getDebuggerPanel()
                 .flatMap(panel -> computer.getDebugger().map(session ->
-                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel)))
+                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel, editorPanel::setSourceNavigationStatus)))
                 .orElse(null);
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateWindowTitle);

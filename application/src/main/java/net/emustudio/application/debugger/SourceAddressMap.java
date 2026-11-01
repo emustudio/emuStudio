@@ -163,7 +163,7 @@ public final class SourceAddressMap {
         for (Declaration declaration : declarations) {
             Entry entry = declaration.entry;
             result.add(new Symbol(declaration.name, declaration.position,
-                    live(entry) ? Optional.of(entry.location) : Optional.empty()));
+                    live(entry) ? Optional.of(entry.location) : Optional.empty(), declaration.sourceOnly));
         }
         return List.copyOf(result);
     }
@@ -186,7 +186,7 @@ public final class SourceAddressMap {
             }
             // Constants, macros and macro parameters are navigable source symbols, not addresses.
             if (!token.getText().endsWith(":")) entry = null;
-            declarations.add(new Declaration(token.getSymbolName(), position, entry));
+            declarations.add(new Declaration(token.getSymbolName(), position, entry, !token.getText().endsWith(":")));
         }
     }
 
@@ -232,16 +232,18 @@ public final class SourceAddressMap {
         public final String name;
         public final SourceCodePosition position;
         public final Optional<Location> location;
+        public final boolean sourceOnly;
 
-        private Symbol(String name, SourceCodePosition position, Optional<Location> location) {
+        private Symbol(String name, SourceCodePosition position, Optional<Location> location, boolean sourceOnly) {
             this.name = name;
             this.position = position;
             this.location = location;
+            this.sourceOnly = sourceOnly;
         }
 
         @Override public String toString() {
             String at = location.map(value -> String.format("bank %d:%04X", value.bank, value.address))
-                    .orElse("unmapped");
+                    .orElse(sourceOnly ? "source only" : "address unavailable");
             return name + " — " + Path.of(position.fileName).getFileName() + ":" + position.line + " — " + at;
         }
     }
@@ -265,11 +267,13 @@ public final class SourceAddressMap {
         final String name;
         final SourceCodePosition position;
         final Entry entry;
+        final boolean sourceOnly;
 
-        Declaration(String name, SourceCodePosition position, Entry entry) {
+        Declaration(String name, SourceCodePosition position, Entry entry, boolean sourceOnly) {
             this.name = name;
             this.position = position;
             this.entry = entry;
+            this.sourceOnly = sourceOnly;
         }
     }
 

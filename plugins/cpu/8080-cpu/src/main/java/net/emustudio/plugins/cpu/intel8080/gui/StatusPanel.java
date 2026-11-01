@@ -63,6 +63,7 @@ public class StatusPanel extends JPanel {
             @Override
             public void runStateChanged(RunState state) {
                 runState = state;
+                updateGUI();
             }
 
             @Override
@@ -110,14 +111,15 @@ public class StatusPanel extends JPanel {
             txtRegPC.setText(formatWordHexString(pc));
             txtFlags.setText(formatByteHexString(flags));
             flagModel.update(flags);
-            lblRun.setText(state.toString());
+            lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString());
             spnFrequency.setEnabled(state != RunState.STATE_RUNNING);
         });
     }
 
     private void initComponents() {
         tblFlags.setAutoCreateRowSorter(true);
-        tblFlags.setBackground(Color.white);
+        tblFlags.setBackground(UIManager.getColor("Table.background"));
+        tblFlags.setForeground(UIManager.getColor("Table.foreground"));
         tblFlags.setBorder(null);
         tblFlags.setRowSelectionAllowed(false);
 
@@ -171,7 +173,7 @@ public class StatusPanel extends JPanel {
         spnFrequency.setModel(spFrequencyModel);
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
-        lblRun.setForeground(new Color(0, 102, 0));
+        lblRun.setForeground(UIManager.getColor("Label.foreground"));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
 
         JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[grow]6[]", "[][][][]");

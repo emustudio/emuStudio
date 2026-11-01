@@ -67,6 +67,21 @@ Recompile to establish new mappings. Symbols include source-only declarations fr
 remain unmapped. Only proven instruction starts align the disassembly; data and operand bytes do not create speculative
 instruction starts. Existing sidecar annotations alone do not establish source-text or bank provenance.
 
+The context row shows the inspected address, logical bank, following/pinned state and source-map status. Changed sources
+disable symbol interaction and explain that recompilation is required; editor compile outcomes remain visible beside the
+compiler output. Symbols can be filtered by name, source file or address. Constants and macros are marked source-only;
+labels whose address is no longer available are distinguished from those declarations.
+
+The instruction table uses an independent PC triangle, theme selection and keyboard focus border. Valid instructions
+start at the top near memory boundaries. Memory strings are optional, while labels and comments share the available
+width. Snapshot status describes a memory/metadata capture. Breakpoint creation offers All banks and reveals conditions,
+hit counts and keep-inspection through advanced options; the address dialog shows the existing breakpoint state.
+
+History lists changed registers first in a stable order and can reveal unchanged values. Its label context comes from
+current annotations, not a reconstructed historical source map. Flow nodes distinguish selection from the live PC and
+support keyboard inspection without changing execution state. Split-editor headers identify file, side and active pane;
+search shows the target pane, and file replacement previews include surrounding code.
+
 ## Validation
 
 Application, 8080/Z80, byte-memory, Spectrum bus/ULA and emuLib suites passed with the local composite build.

@@ -46,6 +46,106 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
+    public void boundaryPageFillsFromFirstKnownInstructionAndNextPageOverlapsOnce() {
+        int[] successors = new int[256];
+        java.util.Arrays.fill(successors, -1);
+        int at = 0;
+        for (int n = 0; at < 250; n++) {
+            int next = at + n % 3 + 1;
+            successors[at] = next;
+            at = next;
+        }
+        PaginatingDisassembler asm = new PaginatingDisassembler(new CallFlow(makeDisassembler(successors)), 256);
+        asm.setInstructionsPerPage(9);
+        assertEquals(0, asm.rowToLocation(0, 0));
+        assertEquals(0, asm.getCurrentInstructionRow());
+        int last = asm.rowToLocation(0, 8);
+        assertTrue(last > 0);
+        asm.pageNext();
+        assertEquals(last, asm.rowToLocation(0, 0));
+        assertTrue(asm.rowToLocation(0, 8) > last);
+        asm.pagePrevious();
+        assertEquals(0, asm.rowToLocation(0, 0));
+        assertEquals(last, asm.rowToLocation(0, 8));
+    }
+
+    @Test
+    public void boundaryRowsRemainValidAfterResizeAndFirstLastPageTravel() {
+        CallFlow flow = new CallFlow(makeDisassembler(80, 2));
+        flow.updateCache(0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(flow, 80);
+        asm.setInstructionsPerPage(7);
+        assertEquals(0, asm.rowToLocation(4, 0));
+        assertEquals(4, asm.rowToLocation(4, asm.getCurrentInstructionRow()));
+        assertEquals(12, asm.rowToLocation(4, 6));
+        asm.setInstructionsPerPage(11);
+        assertEquals(0, asm.rowToLocation(4, 0));
+        assertEquals(20, asm.rowToLocation(4, 10));
+        asm.pageLast();
+        assertTrue(asm.rowToLocation(4, 0) >= 0);
+        asm.pageFirst();
+        assertEquals(0, asm.rowToLocation(4, 0));
+    }
+
+    @Test(timeout = 2000)
+    public void singleVisibleRowCanPageToBothAddressBoundaries() {
+        PaginatingDisassembler asm = new PaginatingDisassembler(new CallFlow(makeDisassembler(8, 2)), 8);
+        asm.setInstructionsPerPage(1);
+        assertEquals(0, asm.rowToLocation(0, 0));
+        asm.pageNext();
+        assertEquals(2, asm.rowToLocation(0, 0));
+        asm.pageLast();
+        assertEquals(6, asm.rowToLocation(0, 0));
+        asm.pageFirst();
+        assertEquals(0, asm.rowToLocation(0, 0));
+    }
+
+    @Test
+    public void steppedCpuRetainsPartialFirstPageOverlapAfterNeighborCacheIsInvalidated() {
+        CallFlow flow = new CallFlow(makeDisassembler(MEMORY_SIZE, 2));
+        flow.updateCache(0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
+        asm.rowToLocation(50, 0);
+        asm.rowToLocation(50, INSTR_PER_PAGE - 1);
+        asm.pagePrevious();
+        assertEquals(0, asm.rowToLocation(52, 0));
+        assertEquals(32, asm.rowToLocation(52, 16));
+        assertEquals(-1, asm.rowToLocation(52, 17));
+        asm.pageNext();
+        assertEquals(32, asm.rowToLocation(52, 0));
+    }
+
+    @Test
+    public void overlapOnlyPreviousPageCanReturnToCurrentPageAfterCpuMovesNearZero() {
+        CallFlow flow = new CallFlow(makeDisassembler(MEMORY_SIZE, 2));
+        flow.updateCache(0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
+        asm.rowToLocation(50, 0);
+        asm.rowToLocation(50, INSTR_PER_PAGE - 1);
+        asm.pagePrevious();
+        assertEquals(0, asm.rowToLocation(2, 0));
+        assertEquals(-1, asm.rowToLocation(2, INSTR_PER_PAGE - 1));
+        asm.pageNext();
+        assertEquals(0, asm.getPageIndex());
+        assertEquals(0, asm.rowToLocation(2, 0));
+    }
+
+    @Test
+    public void singleVisibleRowCanPageToPredecessorOfPositiveCpuAddress() {
+        CallFlow flow = new CallFlow(makeDisassembler(8, 2));
+        flow.updateCache(0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(flow, 8);
+        asm.setInstructionsPerPage(1);
+        assertEquals(4, asm.rowToLocation(4, 0));
+        asm.pagePrevious();
+        assertEquals(2, asm.rowToLocation(4, 0));
+        asm.pagePrevious();
+        assertEquals(0, asm.rowToLocation(4, 0));
+        asm.pageNext();
+        assertEquals(2, asm.rowToLocation(4, 0));
+    }
+
+    @Test
     public void testPageCurrentReturnsToPageZero() {
         CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
@@ -252,11 +352,11 @@ public class PaginatingDisassemblerTest {
 
     @Test
     public void testPageOneFirstRowWhenCurrentInstructionIs0AndInstructionSizeIs4() {
-        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
-                0, 1, 4, true
-        );
-
-        int page1min = INSTR_PER_HALF_PAGE * 4;
+        PaginatingDisassembler asm = new PaginatingDisassembler(new CallFlow(makeDisassembler(MEMORY_SIZE, 4)), MEMORY_SIZE);
+        asm.rowToLocation(0, 0);
+        int page1min = (INSTR_PER_PAGE - 1) * 4;
+        assertEquals(page1min, asm.rowToLocation(0, INSTR_PER_PAGE - 1));
+        asm.pageNext();
         assertEquals(
                 page1min,
                 asm.rowToLocation(0, 0)
@@ -284,18 +384,17 @@ public class PaginatingDisassemblerTest {
 
     @Test
     public void testPageMinusOneLastRowNotEnoughInstructions() {
-        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
-                10, -1, LONGEST_INSTR, false
-        );
-
-        int pageM1max = 10 - LONGEST_INSTR * INSTR_PER_HALF_PAGE;
-        int missingInstructions = 10 - LONGEST_INSTR * (INSTR_PER_PAGE - 1);
-
-        assertTrue(true);
-        assertEquals(
-                pageM1max - missingInstructions, // prefer number of instructions shown must fit
-                asm.rowToLocation(10, INSTR_PER_PAGE - 1)
-        );
+        CallFlow flow = new CallFlow(makeDisassembler(MEMORY_SIZE, LONGEST_INSTR));
+        flow.updateCache(0);
+        PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
+        int pageZeroMin = asm.rowToLocation(50, 0);
+        asm.rowToLocation(50, INSTR_PER_PAGE - 1);
+        asm.pagePrevious();
+        assertEquals(0, asm.rowToLocation(50, 0));
+        assertEquals(pageZeroMin, asm.rowToLocation(50, pageZeroMin / LONGEST_INSTR));
+        assertEquals(-1, asm.rowToLocation(50, INSTR_PER_PAGE - 1));
+        asm.pageNext();
+        assertEquals(pageZeroMin, asm.rowToLocation(50, 0));
     }
 
     @Test

@@ -23,6 +23,7 @@ import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
 public class CompileAction extends AbstractAction {
+    public static final String STATUS_PROPERTY = "compileStatus";
 
     private final VirtualComputer computer;
     private final Dialogs dialogs;
@@ -46,15 +47,21 @@ public class CompileAction extends AbstractAction {
         putValue(MNEMONIC_KEY, KeyEvent.VK_C);
 
         setEnabled(computer.getCompiler().isPresent());
+        putValue(STATUS_PROPERTY, isEnabled() ? "Ready to compile." : "No compiler configured.");
         computer.getCompiler().ifPresent(c -> c.addCompilerListener(new CompilerListener() {
+            private int errors, warnings;
 
             @Override
             public void onStart() {
+                errors = warnings = 0;
+                putValue(STATUS_PROPERTY, "Compiling…");
                 compilerOutput.append("Compiling started...\n");
             }
 
             @Override
             public void onMessage(CompilerMessage message) {
+                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) errors++;
+                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_WARNING) warnings++;
                 compilerOutput.append(message.getFormattedMessage() + "\n");
                 message.getPosition().ifPresent(editor::setPosition);
             }
@@ -62,6 +69,10 @@ public class CompileAction extends AbstractAction {
             @Override
             public void onFinish() {
                 compilerOutput.append("Compiling has finished.\n");
+                putValue(STATUS_PROPERTY, errors > 0
+                        ? "Compilation failed (" + errors + (errors == 1 ? " error)." : " errors).") + " Fix source and compile again."
+                        : warnings > 0 ? "Compilation complete (" + warnings + (warnings == 1 ? " warning)." : " warnings).")
+                        : "Compilation complete.");
             }
         }));
     }
@@ -70,6 +81,7 @@ public class CompileAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState.get() == CPU.RunState.STATE_RUNNING) {
+                putValue(STATUS_PROPERTY, "Pause emulation before compiling.");
                 dialogs.showError("Emulation must be stopped first.", "Compile");
             } else if (editor.saveFile()) {
                 updateTitle.run();
@@ -78,17 +90,22 @@ public class CompileAction extends AbstractAction {
                     compilerOutput.setText("");
 
                     Runnable compile = () -> {
+                        putValue(STATUS_PROPERTY, "Compiling…");
                         try {
                             computer.getMemory().ifPresent(Memory::reset);
                             compiler.compile(file.toPath(), Optional.empty());
                             computer.getCPU().ifPresent(Plugin::reset);
                         } catch (Exception e) {
+                            putValue(STATUS_PROPERTY, "Compilation failed. See compiler output and compile again.");
                             compilerOutput.append("Could not compile file: " + e + "\n");
                         }
                     };
                     computer.getDebugger().ifPresentOrElse(debugger -> debugger.runMutation(compile), compile);
                 });
-            }
-        }, () -> dialogs.showError("Compiler is not set", "Compile"));
+            } else putValue(STATUS_PROPERTY, "Source not saved — compilation cancelled.");
+        }, () -> {
+            putValue(STATUS_PROPERTY, "No compiler configured.");
+            dialogs.showError("Compiler is not set", "Compile");
+        });
     }
 }

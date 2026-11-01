@@ -149,5 +149,28 @@ public class CompileActionTest {
 
         assertTrue(compilerOutput.getText().contains("Could not compile file:"));
         assertTrue(compilerOutput.getText().contains("compile failed"));
+        assertEquals("Compilation failed. See compiler output and compile again.", action.getValue(CompileAction.STATUS_PROPERTY));
+    }
+
+    @Test
+    public void statusDistinguishesFailureWarningsAndSuccessfulRecompilation() {
+        when(computer.getCompiler()).thenReturn(Optional.of(compiler));
+        ArgumentCaptor<CompilerListener> events = ArgumentCaptor.forClass(CompilerListener.class);
+        CompileAction action = new CompileAction(computer, dialogs, editor,
+                () -> CPU.RunState.STATE_STOPPED_NORMAL, compilerOutput, () -> {});
+        verify(compiler).addCompilerListener(events.capture());
+        CompilerListener listener = events.getValue();
+        listener.onStart();
+        assertEquals("Compiling…", action.getValue(CompileAction.STATUS_PROPERTY));
+        listener.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "Unknown instruction"));
+        listener.onFinish();
+        assertEquals("Compilation failed (1 error). Fix source and compile again.", action.getValue(CompileAction.STATUS_PROPERTY));
+        listener.onStart();
+        listener.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_WARNING, "Unused symbol"));
+        listener.onFinish();
+        assertEquals("Compilation complete (1 warning).", action.getValue(CompileAction.STATUS_PROPERTY));
+        listener.onStart();
+        listener.onFinish();
+        assertEquals("Compilation complete.", action.getValue(CompileAction.STATUS_PROPERTY));
     }
 }
