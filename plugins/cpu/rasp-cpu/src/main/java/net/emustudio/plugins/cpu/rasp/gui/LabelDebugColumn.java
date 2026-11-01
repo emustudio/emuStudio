@@ -27,16 +27,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
     }
 
     @Override
-    public boolean isEditable() {
-        return false;
-    }
-
-    @Override
-    public void setValue(int position, Object value) {
-
-    }
-
-    @Override
     public String getValue(int position) {
         return memory.getLabel(position).map(RaspLabel::getLabel).orElse("");
     }

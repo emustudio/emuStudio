@@ -18,16 +18,6 @@ public class LineColumn implements DebuggerColumn<String> {
     }
 
     @Override
-    public boolean isEditable() {
-        return false;
-    }
-
-    @Override
-    public void setValue(int location, Object value) {
-
-    }
-
-    @Override
     public String getValue(int location) {
         return String.format(LINE_FORMAT, location / 4);
     }

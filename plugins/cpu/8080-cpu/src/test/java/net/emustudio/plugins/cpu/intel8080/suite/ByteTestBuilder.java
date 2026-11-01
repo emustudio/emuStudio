@@ -33,16 +33,7 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     }
 
     public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = operator;
-        return verifyRegister(register);
-    }
-
-    public ByteTestBuilder verifyRegister(int register) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        Function<RunnerContext<Byte>, Integer> operation = lastOperation;
-        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operator.apply(context)));
         return this;
     }
 

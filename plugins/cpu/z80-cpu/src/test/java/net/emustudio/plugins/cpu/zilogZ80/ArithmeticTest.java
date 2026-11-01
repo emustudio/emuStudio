@@ -293,15 +293,15 @@ public class ArithmeticTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyR(1).verifyCycles(4)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome8bitUnary(
                 test.firstIsRegister(REG_B).verifyRegister(REG_B, op).run(opB),
-                test.firstIsRegister(REG_C).verifyRegister(REG_C).run(opC),
-                test.firstIsRegister(REG_D).verifyRegister(REG_D).run(opD),
-                test.firstIsRegister(REG_E).verifyRegister(REG_E).run(opE),
-                test.firstIsRegister(REG_H).verifyRegister(REG_H).run(opH),
-                test.firstIsRegister(REG_L).verifyRegister(REG_L).run(opL),
-                test.firstIsRegister(REG_A).verifyRegister(REG_A).run(opA)
+                test.firstIsRegister(REG_C).verifyRegister(REG_C, op).run(opC),
+                test.firstIsRegister(REG_D).verifyRegister(REG_D, op).run(opD),
+                test.firstIsRegister(REG_E).verifyRegister(REG_E, op).run(opE),
+                test.firstIsRegister(REG_H).verifyRegister(REG_H, op).run(opH),
+                test.firstIsRegister(REG_L).verifyRegister(REG_L, op).run(opL),
+                test.firstIsRegister(REG_A).verifyRegister(REG_A, op).run(opA)
         );
     }
 
@@ -368,7 +368,7 @@ public class ArithmeticTest extends InstructionsTest {
                              int opBC, int opDE, int opHL, int opSP) {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyR(1).verifyCycles(6)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitUnary(
                 test.firstIsPair(REG_PAIR_BC).verifyPair(REG_PAIR_BC, op).run(opBC),
                 test.firstIsPair(REG_PAIR_DE).verifyPair(REG_PAIR_DE, op).run(opDE),
@@ -383,7 +383,7 @@ public class ArithmeticTest extends InstructionsTest {
     private void runIncDecII16(Function<RunnerContext<Integer>, Integer> op, int opcode) {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyR(2).verifyCycles(10)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitUnary(
                 test.firstIsIX().verifyIX(op).run(0xDD, opcode),
                 test.firstIsIY().verifyIY(op).run(0xFD, opcode)

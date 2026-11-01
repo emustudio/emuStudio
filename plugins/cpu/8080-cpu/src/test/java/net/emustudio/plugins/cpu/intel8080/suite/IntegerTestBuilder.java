@@ -42,33 +42,21 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
     }
 
     public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
-        lastOperation = operation;
         runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPairPSW(registerPair, operation.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyRegister(int register, Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = operator;
-        return verifyRegister(register);
-    }
-
-    public IntegerTestBuilder verifyRegister(int register) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        Function<RunnerContext<Integer>, Integer> operation = lastOperation;
-        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = operator;
         runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = operator;
         runner.verifyAfterTest(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }

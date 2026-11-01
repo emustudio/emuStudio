@@ -111,8 +111,10 @@ annotated `@PluginRoot` and implements the `Plugin` contract. The
 
 ContextPool:: The mediator through which plugins communicate. Plugins *register*
 the contexts they provide and *request* the contexts they need; the pool matches
-them by an interface hash and only shares a context between plugins that are
+them by exact Java interface identity and only shares a context between plugins that are
 connected in the current configuration (emuStudio itself is always allowed).
+Subinterfaces and separately declared interfaces must be registered explicitly, even when
+their methods are identical; a compatible method shape does not establish Java type identity.
 
 ApplicationApi:: The facade handed to every plugin at construction time. It
 exposes the `ContextPool`, the `Dialogs` and `GUI` services, the `DebuggerTable`

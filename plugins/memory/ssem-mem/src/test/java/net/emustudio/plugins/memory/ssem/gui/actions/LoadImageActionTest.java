@@ -15,6 +15,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
+import java.beans.PropertyChangeListener;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryActionTest.mockApi;
 import static org.easymock.EasyMock.*;
 
@@ -60,14 +64,24 @@ public class LoadImageActionTest {
         verify(memory, repaint);
     }
 
-    private void waitForCompletion(Action action) throws InterruptedException {
-        for (int i = 0; i < 200; i++) {
-            if (action.isEnabled()) {
-                return;
+    private void waitForCompletion(Action action) throws Exception {
+        CountDownLatch completed = new CountDownLatch(1);
+        PropertyChangeListener listener = event -> {
+            if ("enabled".equals(event.getPropertyName()) && Boolean.TRUE.equals(event.getNewValue())) {
+                completed.countDown();
             }
-            Thread.sleep(10);
+        };
+        SwingUtilities.invokeAndWait(() -> {
+            action.addPropertyChangeListener(listener);
+            if (action.isEnabled()) completed.countDown();
+        });
+        try {
+            if (!completed.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Memory action did not complete");
+            }
+        } finally {
+            SwingUtilities.invokeAndWait(() -> action.removePropertyChangeListener(listener));
         }
-        throw new AssertionError("Memory action did not complete");
     }
 
 

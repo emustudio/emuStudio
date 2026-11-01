@@ -48,7 +48,7 @@ public class IOTest extends InstructionsTest {
                 .verifyCycles(12)
                 .verifyFlags(inCFlags(), read)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome8bitBinary(
                 test.verifyRegister(REG_A, read).runWithSecondOperand(0xED, 0x78),
@@ -73,7 +73,7 @@ public class IOTest extends InstructionsTest {
                 .verifyCycles(12)
                 .verifyFlags(inCFlags(), context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome8bitBinary(test.runWithSecondOperand(0xED, 0x70));
     }

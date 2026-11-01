@@ -3,7 +3,6 @@
 package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.components.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +60,7 @@ public class ComputerConfigTest {
     @Test
     public void testChangePluginConfig() {
         PluginConfig cpu = PluginConfig.create(
-                "someId", PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", P.of(10, 10), Config.inMemory()
+                "someId", PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", SchemaPoint.of(10, 10), Config.inMemory()
         );
         config.setCPU(cpu);
 

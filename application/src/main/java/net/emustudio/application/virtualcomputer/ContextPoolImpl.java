@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.internal.Hashing;
-import net.emustudio.application.internal.Reflection;
 import net.emustudio.emulib.plugins.Context;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.compiler.CompilerContext;
@@ -17,15 +15,13 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ContextPoolImpl implements ContextPool {
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextPoolImpl.class);
 
-    private final Map<String, List<Context>> contexts = new HashMap<>();
+    private final Map<Class<? extends Context>, List<Context>> contexts = new HashMap<>();
     private final Map<Long, List<Context>> contextOwners = new HashMap<>();
 
     private final AtomicReference<PluginConnections> computer = new AtomicReference<>();
@@ -35,47 +31,20 @@ public class ContextPoolImpl implements ContextPool {
         this.alwaysAllowedPluginId = alwaysAllowedPluginId;
     }
 
-    /**
-     * Compute emuStudio-specific hash of the context interface.
-     * The name of the interface is not important, only method names and their signatures.
-     *
-     * @param contextInterface interface to compute hash of
-     * @return hash representing the interface
-     */
-    private static <T extends Context> String computeHash(Class<T> contextInterface) throws InvalidContextException {
-        List<Method> contextMethods = Arrays.asList(contextInterface.getMethods());
-        contextMethods.sort(Comparator.comparing(Method::getName));
-
-        StringBuilder hash = new StringBuilder();
-        for (Method method : contextMethods.toArray(new Method[0])) {
-            hash.append(method.getGenericReturnType()).append(" ").append(method.getName()).append("(");
-            for (Class<?> param : method.getParameterTypes()) {
-                hash.append(param.getName()).append(",");
-            }
-            hash.append(");");
-        }
-        try {
-            return Hashing.SHA1(hash.toString());
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidContextException("Could not compute hash for interface " + contextInterface, e);
-        }
-    }
-
     @Override
     public void register(long pluginID, Context context, Class<? extends Context> contextInterface) throws ContextAlreadyRegisteredException, InvalidContextException {
         verifyPluginContext(contextInterface);
-        String contextHash = computeHash(contextInterface);
 
         // check if the contextInterface is implemented by the context
-        if (!Reflection.doesImplement(context.getClass(), contextInterface)) {
+        if (!contextInterface.isInstance(context)) {
             throw new InvalidContextException("Context does not implement context interface");
         }
 
         // check if the context is already registered
-        List<Context> contextsByHash = contexts.get(contextHash);
-        if (contextsByHash != null) {
+        List<Context> contextsByInterface = contexts.get(contextInterface);
+        if (contextsByInterface != null) {
             // Test if the context instance is already there
-            if (contextsByHash.contains(context)) {
+            if (contextsByInterface.contains(context)) {
                 throw new ContextAlreadyRegisteredException();
             }
         }
@@ -84,30 +53,29 @@ public class ContextPoolImpl implements ContextPool {
         List<Context> contextsByOwner = contextOwners.computeIfAbsent(pluginID, k -> new ArrayList<>());
         contextsByOwner.add(context);
 
-        if (contextsByHash == null) {
-            contextsByHash = new ArrayList<>();
-            contexts.put(contextHash, contextsByHash);
+        if (contextsByInterface == null) {
+            contextsByInterface = new ArrayList<>();
+            contexts.put(contextInterface, contextsByInterface);
         }
-        contextsByHash.add(context);
+        contextsByInterface.add(context);
     }
 
     @Override
     public boolean unregister(long pluginID, Class<? extends Context> contextInterface) throws InvalidContextException {
         verifyPluginContext(contextInterface);
-        String contextHash = computeHash(contextInterface);
 
         List<Context> contextsByOwner = contextOwners.get(pluginID);
         if (contextsByOwner == null) {
             return false;
         }
 
-        List<Context> contextsByHash = contexts.get(contextHash);
+        List<Context> contextsByInterface = contexts.get(contextInterface);
 
-        if (contextsByHash == null) {
+        if (contextsByInterface == null) {
             return false;
         }
 
-        Iterator<Context> contextIterator = contextsByHash.iterator();
+        Iterator<Context> contextIterator = contextsByInterface.iterator();
         while (contextIterator.hasNext()) {
             Context context = contextIterator.next();
             if (contextsByOwner.contains(context)) {
@@ -115,34 +83,33 @@ public class ContextPoolImpl implements ContextPool {
                 contextIterator.remove();
             }
         }
-        if (contextsByHash.isEmpty()) {
-            contexts.remove(contextHash);
+        if (contextsByInterface.isEmpty()) {
+            contexts.remove(contextInterface);
         }
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T extends Context> T getContext(long pluginID, Class<T> contextInterface, int index)
             throws InvalidContextException, ContextNotFoundException {
 
         verifyPluginContext(contextInterface);
         // find the requested context
-        List<Context> contextsByHash = contexts.get(computeHash(contextInterface));
-        if ((contextsByHash == null) || contextsByHash.isEmpty()) {
+        List<Context> contextsByInterface = contexts.get(contextInterface);
+        if ((contextsByInterface == null) || contextsByInterface.isEmpty()) {
             throw new ContextNotFoundException(
                     "Context " + contextInterface + " is not found in registered contexts list."
             );
         }
-        LOGGER.debug("Matching context {} from {} option(s)", contextInterface, contextsByHash.size());
+        LOGGER.debug("Matching context {} from {} option(s)", contextInterface, contextsByInterface.size());
 
         // find context based on contextID
         int currentIndex = 0;
-        for (Context context : contextsByHash) {
+        for (Context context : contextsByInterface) {
             if (pluginID == alwaysAllowedPluginId || hasPermission(pluginID, context)) {
                 if ((index == -1) || (currentIndex == index)) {
                     LOGGER.debug("Found context with index {}", currentIndex);
-                    return (T) context;
+                    return contextInterface.cast(context);
                 }
             }
             currentIndex++;

@@ -26,16 +26,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
     }
 
     @Override
-    public boolean isEditable() {
-        return false;
-    }
-
-    @Override
-    public void setValue(int location, Object o) {
-
-    }
-
-    @Override
     public String getValue(int location) {
         return memory.getLabel(location).map(RamLabel::getLabel).orElse("");
     }

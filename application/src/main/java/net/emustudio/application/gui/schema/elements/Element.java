@@ -291,7 +291,7 @@ public abstract class Element {
     }
 
     public PluginConfig save() {
-        return PluginConfig.create(pluginId, pluginType, pluginName, pluginFileName, schemaPoint, pluginSettings);
+        return PluginConfig.create(pluginId, pluginType, pluginName, pluginFileName, schemaPoint.toSchemaPoint(), pluginSettings);
     }
 
     @Override

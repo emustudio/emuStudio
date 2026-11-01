@@ -99,39 +99,31 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     }
 
     public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
-        return verifyRegister(register);
+        Objects.requireNonNull(operation);
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        return this;
     }
 
     public ByteTestBuilder verifyRegisterI(Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkI(operator.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyRegisterR(Function<RunnerContext<Byte>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
+        Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkR(operation.apply(context)));
         return this;
     }
 
-    public ByteTestBuilder verifyRegister(int register) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        Function<RunnerContext<Byte>, Integer> operation = lastOperation;
-        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
-        return this;
-    }
-
     public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
+        Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkPC(operation.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyDeviceWhenSecondIsPort(Function<RunnerContext<Byte>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
+        Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkDeviceValue(context.second, operation.apply(context)));
         return this;
     }
@@ -160,7 +152,7 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     }
 
     public ByteTestBuilder verifyMemptr(Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(operator.apply(context)));
         return this;
     }

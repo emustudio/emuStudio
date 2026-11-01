@@ -66,7 +66,7 @@ public class StackTest extends InstructionsTest {
                 .verifyR(1)
                 .verifyCycles(10)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome16bitBinary(3,
                 test.secondIsPair(REG_PAIR_BC).verifyPair(REG_PAIR_BC, context -> context.second).run(0xC1),
@@ -88,7 +88,7 @@ public class StackTest extends InstructionsTest {
                 .verifyR(2)
                 .verifyCycles(14)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome16bitBinary(4,
                 test.verifyIX(context -> context.second).run(0xDD, 0xE1),

@@ -103,7 +103,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsPair(REG_PAIR_HL)
                 .verifyR(1).verifyCycles(7)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitBinary(1,
                 testHL.verifyByte(c -> c.first, c -> (c.first >>> 8) & 0xFF).run(0x74),
                 testHL.verifyByte(c -> c.first, c -> c.first & 0xFF).run(0x75)
@@ -293,7 +293,7 @@ public class TransferTest extends InstructionsTest {
     public void testLD__rr__nn() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyR(1).verifyCycles(10)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_PAIR_BC, c -> c.first).runWithFirstOperand(0x01),
                 test.verifyPair(REG_PAIR_DE, c -> c.first).runWithFirstOperand(0x11),
@@ -306,7 +306,7 @@ public class TransferTest extends InstructionsTest {
     public void testLD__II__nn() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyR(2).verifyCycles(14)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitUnary(
                 test.verifyIX(c -> c.first).runWithFirstOperand(0xDD, 0x21),
                 test.verifyIY(c -> c.first).runWithFirstOperand(0xFD, 0x21)
@@ -330,7 +330,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsAddressAndSecondIsMemoryWord()
                 .verifyR(2).verifyCycles(20)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitBinary(4,
                 test.verifyPair(REG_PAIR_BC, c -> c.second).runWithFirstOperand(0xED, 0x4B),
                 test.verifyPair(REG_PAIR_DE, c -> c.second).runWithFirstOperand(0xED, 0x5B),
@@ -345,7 +345,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsAddressAndSecondIsMemoryWord()
                 .verifyR(2).verifyCycles(20)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitBinary(4,
                 test.verifyIX(c -> c.second).runWithFirstOperand(0xDD, 0x2A),
                 test.verifyIY(c -> c.second).runWithFirstOperand(0xFD, 0x2A)
@@ -406,7 +406,7 @@ public class TransferTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_SP, c -> c.first)
                 .verifyR(2).verifyCycles(10)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitUnary(
                 test.firstIsIX().run(0xDD, 0xF9),
                 test.firstIsIY().run(0xFD, 0xF9)
@@ -559,7 +559,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyWord(c -> c.first, c -> c.first)
                 .verifyR(2).verifyCycles(23)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Generator.forSome16bitBinary(2,
                 test.firstIsIX().verifyIX(c -> c.second).run(0xDD, 0xE3),
                 test.firstIsIY().verifyIY(c -> c.second).run(0xFD, 0xE3)
