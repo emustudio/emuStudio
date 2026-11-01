@@ -10,7 +10,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_SAVE;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class SaveFileAction extends AbstractAction {
     private final Editor editor;

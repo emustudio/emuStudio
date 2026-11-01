@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_FAVICON;
-import static net.emustudio.application.gui.framework.Icons.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
 public class StudioFrame extends JFrame {
