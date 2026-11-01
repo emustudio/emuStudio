@@ -6,10 +6,10 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
+import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -121,7 +121,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
     }
 
     private PluginConfig pluginConfig(String id, PLUGIN_TYPE type, String pluginFile, int x, int y) {
-        return PluginConfig.create(id, type, id, pluginFile, P.of(x, y), Config.inMemory());
+        return PluginConfig.create(id, type, id, pluginFile, SchemaPoint.of(x, y), Config.inMemory());
     }
 
     private static final class DialogFixture {

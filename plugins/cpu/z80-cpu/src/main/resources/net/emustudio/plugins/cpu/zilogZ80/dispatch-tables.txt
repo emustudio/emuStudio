@@ -4,7 +4,7 @@
 # Z80 opcode dispatch tables. Format:
 #   [TABLE_FIELD] <retVoid|retVoidByte>
 #   <hexOpcode> <EmulatorEngine method name>
-# Loaded by DispatchTables via MethodHandles.findVirtual. See ADR-0010.
+# Loaded by DispatchTables via MethodHandles.findVirtual.
 [DISPATCH_TABLE] retVoid
 00 I_NOP
 01 I_LD_BC_NN

@@ -14,18 +14,20 @@ import java.util.function.Function;
 public class ArithmeticTest extends InstructionsTest {
 
     private ByteTestBuilder additionTestBuilder() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) + (context.second & 0xFF);
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity())
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected)
                 .keepCurrentInjectorsAfterRun();
     }
 
     private ByteTestBuilder subtractionTestBuilder() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) - (context.second & 0xFF);
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity())
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected)
                 .keepCurrentInjectorsAfterRun();
     }
 
@@ -58,10 +60,11 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testADC() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity())
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
@@ -80,10 +83,11 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testACI() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected);
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xCE)
@@ -119,10 +123,11 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSBB() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity())
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
@@ -141,10 +146,11 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSBI() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().carry().auxCarry().parity(), expected);
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xDE)
@@ -153,46 +159,48 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testINR() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> context.first + 1;
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().auxCarry(), context -> context.first + 1)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().auxCarry(), expected)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(EmulatorEngine.REG_B).firstIsRegister(EmulatorEngine.REG_B).run(0x04),
-                test.verifyRegister(EmulatorEngine.REG_C).firstIsRegister(EmulatorEngine.REG_C).run(0x0C),
-                test.verifyRegister(EmulatorEngine.REG_D).firstIsRegister(EmulatorEngine.REG_D).run(0x14),
-                test.verifyRegister(EmulatorEngine.REG_E).firstIsRegister(EmulatorEngine.REG_E).run(0x1C),
-                test.verifyRegister(EmulatorEngine.REG_H).firstIsRegister(EmulatorEngine.REG_H).run(0x24),
-                test.verifyRegister(EmulatorEngine.REG_L).firstIsRegister(EmulatorEngine.REG_L).run(0x2C),
-                test.verifyRegister(EmulatorEngine.REG_A).firstIsRegister(EmulatorEngine.REG_A).run(0x3C),
-                test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x34)
+                test.verifyRegister(EmulatorEngine.REG_B, expected).firstIsRegister(EmulatorEngine.REG_B).run(0x04),
+                test.verifyRegister(EmulatorEngine.REG_C, expected).firstIsRegister(EmulatorEngine.REG_C).run(0x0C),
+                test.verifyRegister(EmulatorEngine.REG_D, expected).firstIsRegister(EmulatorEngine.REG_D).run(0x14),
+                test.verifyRegister(EmulatorEngine.REG_E, expected).firstIsRegister(EmulatorEngine.REG_E).run(0x1C),
+                test.verifyRegister(EmulatorEngine.REG_H, expected).firstIsRegister(EmulatorEngine.REG_H).run(0x24),
+                test.verifyRegister(EmulatorEngine.REG_L, expected).firstIsRegister(EmulatorEngine.REG_L).run(0x2C),
+                test.verifyRegister(EmulatorEngine.REG_A, expected).firstIsRegister(EmulatorEngine.REG_A).run(0x3C),
+                test.verifyByte(1, expected).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x34)
         );
     }
 
     @Test
     public void testDCR() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> context.first - 1;
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().auxCarry(), context -> context.first - 1)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().auxCarry(), expected)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(EmulatorEngine.REG_B).firstIsRegister(EmulatorEngine.REG_B).run(0x05),
-                test.verifyRegister(EmulatorEngine.REG_C).firstIsRegister(EmulatorEngine.REG_C).run(0x0D),
-                test.verifyRegister(EmulatorEngine.REG_D).firstIsRegister(EmulatorEngine.REG_D).run(0x15),
-                test.verifyRegister(EmulatorEngine.REG_E).firstIsRegister(EmulatorEngine.REG_E).run(0x1D),
-                test.verifyRegister(EmulatorEngine.REG_H).firstIsRegister(EmulatorEngine.REG_H).run(0x25),
-                test.verifyRegister(EmulatorEngine.REG_L).firstIsRegister(EmulatorEngine.REG_L).run(0x2D),
-                test.verifyRegister(EmulatorEngine.REG_A).firstIsRegister(EmulatorEngine.REG_A).run(0x3D),
-                test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x35)
+                test.verifyRegister(EmulatorEngine.REG_B, expected).firstIsRegister(EmulatorEngine.REG_B).run(0x05),
+                test.verifyRegister(EmulatorEngine.REG_C, expected).firstIsRegister(EmulatorEngine.REG_C).run(0x0D),
+                test.verifyRegister(EmulatorEngine.REG_D, expected).firstIsRegister(EmulatorEngine.REG_D).run(0x15),
+                test.verifyRegister(EmulatorEngine.REG_E, expected).firstIsRegister(EmulatorEngine.REG_E).run(0x1D),
+                test.verifyRegister(EmulatorEngine.REG_H, expected).firstIsRegister(EmulatorEngine.REG_H).run(0x25),
+                test.verifyRegister(EmulatorEngine.REG_L, expected).firstIsRegister(EmulatorEngine.REG_L).run(0x2D),
+                test.verifyRegister(EmulatorEngine.REG_A, expected).firstIsRegister(EmulatorEngine.REG_A).run(0x3D),
+                test.verifyByte(1, expected).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x35)
         );
     }
 
     @Test
     public void testINX() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first + 1;
 
         Generator.forSome16bitUnary(
@@ -206,7 +214,7 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testDCX() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first - 1;
 
         Generator.forSome16bitUnary(
@@ -219,10 +227,11 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testDAD() {
+        Function<RunnerContext<Integer>, Integer> expected = context -> context.first + context.second;
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsPair(REG_PAIR_HL)
-                .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carry15())
+                .verifyPair(REG_PAIR_HL, expected)
+                .verifyFlags(new FlagsCheckImpl<Integer>().carry15(), expected)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(

@@ -36,41 +36,6 @@ When a task requires a sibling repository, first look for it as a local checkout
 
 If it is not available locally, do not guess. Report that it is unavailable and continue with what can be done in the current repository.
 
-## ADRs
-
-Architecture Decision Records must be placed in `docs/adr`.
-
-Create or update an ADR when changing:
-
-* public plugin API;
-* module boundaries;
-* responsibilities between repositories;
-* plugin loading;
-* runtime services;
-* project format;
-* generated-code behavior;
-* major dependencies.
-
-Use a short ADR format:
-
-```text
-# ADR-NNN: Title
-
-## Status
-Proposed | Accepted | Superseded
-
-## Context
-Why is this needed?
-
-## Decision
-What are we changing?
-
-## Consequences
-What improves, what gets harder, and what must be migrated?
-```
-
-Do not create ADRs for trivial local implementation details.
-
 ## Tickets And Commits
 
 Every change must have an existing GitHub ticket.

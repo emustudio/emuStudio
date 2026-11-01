@@ -15,12 +15,14 @@ public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
     private CPU cpu;
     private PaginatingDisassembler ida;
+    private Integer inspectedLocation;
 
     public DebugTableModelImpl() {
     }
 
     public void setCPU(CPU cpu) {
         this.cpu = Objects.requireNonNull(cpu);
+        inspectedLocation = null;
         CallFlow callFlow = new CallFlow(cpu.getDisassembler());
         this.ida = new PaginatingDisassembler(callFlow, cpu.getAddressSpaceSize());
         setDefaultColumns();
@@ -28,7 +30,7 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     public void setMaxRows(int maxRows) {
         if (ida != null) {
-            ida.setInstructionsPerPage(maxRows);
+            ida.setInstructionsPerPage(Math.max(1, maxRows));
             fireTableChanged(new TableModelEvent(this));
         }
     }
@@ -113,15 +115,33 @@ public class DebugTableModelImpl extends DebugTableModel {
     @Override
     public void currentPage() {
         if (ida != null) {
+            inspectedLocation = null;
             ida.pageCurrent();
             fireTableDataChanged();
         }
     }
 
     @Override
+    public void showAddress(int address) {
+        if (cpu == null) return;
+        if (address < 0 || address >= cpu.getAddressSpaceSize()) {
+            throw new IllegalArgumentException("Address outside CPU");
+        }
+        inspectedLocation = address;
+        ida.pageCurrent();
+        ida.rowToLocation(address, 0);
+        ida.rowToLocation(address, ida.getInstructionsPerPage() - 1);
+        fireTableDataChanged();
+    }
+
+    private int viewLocation() {
+        return inspectedLocation == null ? cpu.getInstructionLocation() : inspectedLocation;
+    }
+
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (ida == null) return null;
-        int location = ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+        int location = ida.rowToLocation(viewLocation(), rowIndex);
         if (location == -1) {
             return getEmptyValue(columns[columnIndex]);
         }
@@ -131,7 +151,7 @@ public class DebugTableModelImpl extends DebugTableModel {
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         if (ida == null) return;
-        int location = ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+        int location = ida.rowToLocation(viewLocation(), rowIndex);
         if (location == -1) return;
         
         DebuggerColumn<?> column = columns[columnIndex];
@@ -149,17 +169,17 @@ public class DebugTableModelImpl extends DebugTableModel {
             return false;
         }
 
-        return ida.rowToLocation(cpu.getInstructionLocation(), rowIndex) != -1;
+        return ida.rowToLocation(viewLocation(), rowIndex) != -1;
     }
 
     @Override
     public boolean isRowAtCurrentInstruction(int rowIndex) {
-        return ida != null && ida.isRowAtCurrentInstruction(rowIndex);
+        return ida != null && getLocationAt(rowIndex) == cpu.getInstructionLocation();
     }
 
     @Override
     public int getLocationAt(int rowIndex) {
-        return ida == null ? -1 : ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+        return ida == null ? -1 : ida.rowToLocation(viewLocation(), rowIndex);
     }
 
     @Override

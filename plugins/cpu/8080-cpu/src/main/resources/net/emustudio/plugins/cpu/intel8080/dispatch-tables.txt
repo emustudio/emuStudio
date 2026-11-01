@@ -4,7 +4,7 @@
 # Intel 8080 opcode dispatch table. Format:
 #   [TABLE_FIELD] <retInt>
 #   <hexOpcode> <EmulatorEngine method name>
-# Loaded by DispatchTables via MethodHandles.findVirtual. See ADR-0010.
+# Loaded by DispatchTables via MethodHandles.findVirtual.
 [DISPATCH_TABLE] retInt
 00 I_NOP
 01 I_LXI

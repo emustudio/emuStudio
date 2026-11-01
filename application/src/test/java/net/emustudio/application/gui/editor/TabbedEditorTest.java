@@ -63,11 +63,104 @@ public class TabbedEditorTest extends AbstractSwingTest {
         runOnEdt(() -> textPane.setText("NOP"));
 
         assertEquals("Untitled*", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("Untitled*", findLabel((Container) onEdt(() -> tabs.getTabComponentAt(0)), "Untitled*").getText());
         assertFalse(onEdt(editor::closeCurrent));
         assertEquals(1, onEdt(tabs::getTabCount).intValue());
         assertTrue(onEdt(editor::closeCurrent));
         assertEquals("Untitled", onEdt(() -> tabs.getTitleAt(0)));
         verify(dialogs, times(2)).ask("File is not saved yet. Do you want to save it?");
+    }
+
+    @Test
+    public void closeButtonsTargetTheirFileAfterTabIndicesShift() throws Exception {
+        Path first = source("first.asm", "NOP");
+        Path second = source("second.asm", "HLT");
+        Path third = source("third.asm", "RET");
+        List<List<Path>> persisted = new ArrayList<>();
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
+                List.of(first, second, third), files -> persisted.add(List.copyOf(files))));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        JButton closeFirst = closeButton(tabs, 0);
+        JButton closeSecond = closeButton(tabs, 1);
+
+        triggerButton(closeFirst);
+        assertEquals(2, onEdt(tabs::getTabCount).intValue());
+        assertEquals(third, editor.getCurrentFile().orElseThrow().toPath());
+        triggerButton(closeSecond);
+        assertEquals(List.of(third), persisted.get(persisted.size() - 1));
+        assertEquals("third.asm", onEdt(() -> tabs.getTitleAt(0)));
+
+        triggerButton(closeButton(tabs, 0));
+        assertEquals(1, onEdt(tabs::getTabCount).intValue());
+        assertEquals("Untitled", onEdt(() -> tabs.getTitleAt(0)));
+        assertNotNull(closeButton(tabs, 0));
+    }
+
+    @Test
+    public void closingDirtyInactiveTabCanBeCanceledOrSaved() throws Exception {
+        Path first = source("first.asm", "NOP");
+        Path second = source("second.asm", "HLT");
+        Dialogs dialogs = mock(Dialogs.class);
+        when(dialogs.ask(anyString())).thenReturn(Dialogs.DialogAnswer.ANSWER_CANCEL, Dialogs.DialogAnswer.ANSWER_YES);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(first, second), files -> { }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        REditor firstEditor = editor.editors().get(0);
+        runOnEdt(() -> firstEditor.textPane().append("\nRET"));
+        JButton close = closeButton(tabs, 0);
+
+        triggerButton(close);
+        assertEquals(2, onEdt(tabs::getTabCount).intValue());
+        assertEquals(second, editor.getCurrentFile().orElseThrow().toPath());
+        assertEquals("NOP", Files.readString(first));
+        triggerButton(close);
+        assertEquals(1, onEdt(tabs::getTabCount).intValue());
+        assertEquals(second, editor.getCurrentFile().orElseThrow().toPath());
+        assertEquals("NOP\nRET", Files.readString(first));
+    }
+
+    @Test
+    public void closeButtonClosesSplitDocumentAndRestoresOtherTab() throws Exception {
+        Path first = source("first.asm", "NOP");
+        Path second = source("second.asm", "HLT");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(first, second), files -> { }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        runOnEdt(() -> editor.split(true));
+        triggerButton(closeButton(tabs, 1));
+        assertEquals(1, onEdt(tabs::getTabCount).intValue());
+        assertEquals(first, editor.getCurrentFile().orElseThrow().toPath());
+        assertSame(editor.activeEditor().getView(), onEdt(() -> tabs.getComponentAt(0)));
+    }
+
+    @Test
+    public void extendedEditMenuPreservesStandardItemsAndUsesSelectedEditor() {
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(), files -> { }));
+        REditor first = editor.activeEditor();
+        runOnEdt(() -> {
+            first.textPane().setText("first");
+            editor.newFile();
+            editor.activeEditor().textPane().setText("second");
+        });
+        JMenu menu = onEdt(() -> {
+            JMenu edit = new JMenu("Edit");
+            edit.add("Undo");
+            editor.extendEditingMenu(edit);
+            return edit;
+        });
+        int count = onEdt(menu::getMenuComponentCount);
+        runOnEdt(() -> {
+            for (int i = 0; i < 2; i++) {
+                for (javax.swing.event.MenuListener listener : menu.getMenuListeners()) {
+                    listener.menuSelected(new javax.swing.event.MenuEvent(menu));
+                }
+            }
+        });
+        assertEquals(count, onEdt(menu::getMenuComponentCount).intValue());
+        assertEquals("Undo", onEdt(() -> menu.getItem(0).getText()));
+        JMenu text = onEdt(() -> (JMenu) menu.getItem(2));
+        assertEquals("Text", onEdt(text::getText));
+        runOnEdt(() -> text.getItem(0).doClick(0));
+        assertEquals("first", onEdt(() -> first.textPane().getText()));
+        assertEquals("second\nsecond", onEdt(() -> editor.activeEditor().textPane().getText()));
     }
 
     @Test
@@ -119,5 +212,9 @@ public class TabbedEditorTest extends AbstractSwingTest {
     private Path source(String name, String text) throws Exception {
         Path file = temporaryFolder.newFile(name).toPath().toAbsolutePath();
         return Files.writeString(file, text);
+    }
+
+    private JButton closeButton(JTabbedPane tabs, int index) {
+        return findButtonByTooltip((Container) onEdt(() -> tabs.getTabComponentAt(index)), "Close tab (Ctrl+W)");
     }
 }

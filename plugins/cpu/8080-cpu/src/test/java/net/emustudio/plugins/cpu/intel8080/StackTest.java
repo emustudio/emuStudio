@@ -43,7 +43,7 @@ public class StackTest extends InstructionsTest {
                 .firstIsPair(REG_SP)
                 .firstIsAddressAndSecondIsMemoryWord()
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.second;
 

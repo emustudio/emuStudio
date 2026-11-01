@@ -3,10 +3,13 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.Generator;
+import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.intel8080.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.intel8080.suite.IntegerTestBuilder;
 import org.junit.Test;
+
+import java.util.function.Function;
 
 import static net.emustudio.plugins.cpu.intel8080.EmulatorEngine.*;
 
@@ -14,20 +17,21 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testMVI() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> context.first & 0xFF;
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_A, context -> context.first & 0xFF)
+                test.verifyRegister(REG_A, expected)
                         .runWithFirstOperand(0x3E),
-                test.verifyRegister(REG_B).runWithFirstOperand(0x06),
-                test.verifyRegister(REG_C).runWithFirstOperand(0x0E),
-                test.verifyRegister(REG_D).runWithFirstOperand(0x16),
-                test.verifyRegister(REG_E).runWithFirstOperand(0x1E),
-                test.verifyRegister(REG_H).runWithFirstOperand(0x26),
-                test.verifyRegister(REG_L).runWithFirstOperand(0x2E),
+                test.verifyRegister(REG_B, expected).runWithFirstOperand(0x06),
+                test.verifyRegister(REG_C, expected).runWithFirstOperand(0x0E),
+                test.verifyRegister(REG_D, expected).runWithFirstOperand(0x16),
+                test.verifyRegister(REG_E, expected).runWithFirstOperand(0x1E),
+                test.verifyRegister(REG_H, expected).runWithFirstOperand(0x26),
+                test.verifyRegister(REG_L, expected).runWithFirstOperand(0x2E),
                 test.setPair(REG_PAIR_HL, 0x20)
-                        .verifyByte(0x20, context -> context.first & 0xFF)
+                        .verifyByte(0x20, expected)
                         .runWithFirstOperand(0x36)
         );
     }

@@ -3,7 +3,6 @@
 package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.components.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.nio.file.Path;
@@ -19,13 +18,13 @@ public class PluginConfig {
     }
 
     public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
-                                      P schemaLocation, Config pluginSettings) {
+                                      SchemaPoint schemaLocation, Config pluginSettings) {
         Config config = Config.inMemory();
         config.set("id", id);
         config.set("type", pluginType.toString());
         config.set("name", pluginName);
         config.set("path", pluginFile);
-        config.set("schemaPoint", schemaLocation.toSchemaPoint().toString());
+        config.set("schemaPoint", schemaLocation.toString());
         config.set("settings", pluginSettings);
 
         return new PluginConfig(config);

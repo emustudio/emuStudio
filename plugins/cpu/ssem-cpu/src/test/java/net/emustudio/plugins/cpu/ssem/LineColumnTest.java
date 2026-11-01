@@ -45,7 +45,7 @@ public class LineColumnTest {
     }
 
     @Test
-    public void testSetValueDoesNotThrow() {
+    public void testSetValueDoesNotThrow() throws Exception {
         LineColumn column = new LineColumn();
         column.setValue(0, "anything"); // no-op, should not throw
     }

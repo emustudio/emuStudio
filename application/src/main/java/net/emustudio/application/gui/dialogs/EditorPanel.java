@@ -8,7 +8,6 @@ import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.rsta.ui.search.FindDialog;
@@ -17,6 +16,7 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.Dimension;
+import java.awt.event.HierarchyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -27,8 +27,7 @@ import static net.emustudio.application.gui.editor.Editor.MAX_FONT_ZOOM;
 import static net.emustudio.application.Constants.FONT_CODE;
 
 public class EditorPanel extends JPanel {
-    private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
-    private final static double GOLDEN_RATIO = 1.6180339887;
+    private final static int COMPILER_OUTPUT_HEIGHT = 120;
 
     private final Editor editor;
     private final Dialogs dialogs;
@@ -45,9 +44,10 @@ public class EditorPanel extends JPanel {
     private final FindDialog findDialog;
 
     private final JSplitPane splitSource;
+    private boolean dividerInitialized;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState, MemoryContext<?> memoryContext, GUI gui) {
+                       Supplier<CPU.RunState> runState, GUI gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -60,34 +60,48 @@ public class EditorPanel extends JPanel {
         compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
-        this.findAction = new FindAction(findDialog, replaceDialog);
-        this.replaceAction = new ReplaceAction(findDialog, replaceDialog);
+        this.findAction = new FindAction(findDialog, replaceDialog) {
+            @Override public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                else super.actionPerformed(event);
+            }
+        };
+        this.replaceAction = new ReplaceAction(findDialog, replaceDialog) {
+            @Override public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                else super.actionPerformed(event);
+            }
+        };
         Supplier<Boolean> confirmReplace = editor instanceof TabbedEditor ? () -> true : this::confirmSave;
         this.newFileAction = new NewFileAction(confirmReplace, editor, compilerOutput, updateTitle);
         this.openFileAction = new OpenFileAction(confirmReplace, editor, compilerOutput, updateTitle);
         this.compileAction = new CompileAction(
-                computer, dialogs, editor, runState, compilerOutput, updateTitle, memoryContext
+                computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
 
         splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
+        addHierarchyListener(event -> {
+            if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                resizeComponents(getHeight());
+            }
+        });
 
         JToolBar mainToolBar = setupMainToolbar();
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", "[][grow]"));
+        setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", ""));
         add(mainToolBar, "growx, wrap");
-        add(splitSource, "grow, gaptop 0");
+        if (editor instanceof TabbedEditor) add(((TabbedEditor) editor).searchBar(), "growx, wrap, hidemode 3");
+        add(splitSource, "grow, push, gaptop 0");
     }
 
     public void resizeComponents(int height) {
-        int newHeight = (int) (((double) height) / GOLDEN_RATIO);
-
-        if (height - newHeight < MIN_COMPILER_OUTPUT_HEIGHT) {
-            splitSource.setDividerLocation(height - MIN_COMPILER_OUTPUT_HEIGHT);
-        } else {
-            splitSource.setDividerLocation(newHeight);
+        if (!dividerInitialized && isShowing() && splitSource.getHeight() > 0) {
+            splitSource.setDividerLocation(Math.max(0,
+                    splitSource.getHeight() - splitSource.getDividerSize() - COMPILER_OUTPUT_HEIGHT));
+            dividerInitialized = true;
         }
     }
 
@@ -151,26 +165,11 @@ public class EditorPanel extends JPanel {
                 "Redo"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(gui.toolbarButton(
-                RTextArea.getAction(RTextArea.CUT_ACTION),
-                ICON_CUT,
-                "Cut selection"
-        ));
-        mainToolBar.add(gui.toolbarButton(
-                RTextArea.getAction(RTextArea.COPY_ACTION),
-                ICON_COPY,
-                "Copy selection"
-        ));
-        mainToolBar.add(gui.toolbarButton(
-                RTextArea.getAction(RTextArea.PASTE_ACTION),
-                ICON_PASTE,
-                "Paste from clipboard"
-        ));
-        mainToolBar.addSeparator();
         mainToolBar.add(gui.toolbarButton(findAction));
-        mainToolBar.add(gui.toolbarButton(replaceAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(gui.toolbarButton(compileAction));
+        JButton compileButton = gui.toolbarButton(compileAction);
+        compileButton.setHideActionText(false);
+        mainToolBar.add(compileButton);
         mainToolBar.addSeparator();
 
         JSlider fontZoom = new JSlider(MIN_FONT_ZOOM, MAX_FONT_ZOOM, 100);

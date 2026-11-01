@@ -15,6 +15,11 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import javax.swing.SwingUtilities;
+import java.beans.PropertyChangeListener;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 public class DumpMemoryActionTest {
@@ -105,13 +110,23 @@ public class DumpMemoryActionTest {
         // No exception = pass
     }
 
-    private void waitForCompletion(DumpMemoryAction action) throws InterruptedException {
-        for (int i = 0; i < 200; i++) {
-            if (action.isEnabled()) {
-                return;
+    private void waitForCompletion(DumpMemoryAction action) throws Exception {
+        CountDownLatch completed = new CountDownLatch(1);
+        PropertyChangeListener listener = event -> {
+            if ("enabled".equals(event.getPropertyName()) && Boolean.TRUE.equals(event.getNewValue())) {
+                completed.countDown();
             }
-            Thread.sleep(10);
+        };
+        SwingUtilities.invokeAndWait(() -> {
+            action.addPropertyChangeListener(listener);
+            if (action.isEnabled()) completed.countDown();
+        });
+        try {
+            if (!completed.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Memory action did not complete");
+            }
+        } finally {
+            SwingUtilities.invokeAndWait(() -> action.removePropertyChangeListener(listener));
         }
-        fail("Memory dump did not complete");
     }
 }

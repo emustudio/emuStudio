@@ -25,6 +25,8 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
 
     public abstract void currentPage();
 
+    public abstract void showAddress(int address);
+
     public abstract boolean isRowAtCurrentInstruction(int rowIndex);
 
     public abstract int getLocationAt(int rowIndex);

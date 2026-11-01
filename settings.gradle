@@ -23,6 +23,15 @@ if (providers.gradleProperty('emuLibPath').isPresent()) {
     }
 }
 
+// Use the matching test-builder API when developing CPU consumers locally or in CI.
+if (providers.gradleProperty('cpuTestSuitePath').isPresent()) {
+    includeBuild(providers.gradleProperty('cpuTestSuitePath').get()) {
+        dependencySubstitution {
+            substitute module('net.emustudio:cpu-testsuite_12') using project(':')
+        }
+    }
+}
+
 include ':application'
 
 include ':plugins:compiler:as-8080'

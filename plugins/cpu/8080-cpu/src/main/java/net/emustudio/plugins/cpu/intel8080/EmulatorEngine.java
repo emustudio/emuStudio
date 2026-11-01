@@ -5,6 +5,7 @@ package net.emustudio.plugins.cpu.intel8080;
 import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import org.slf4j.Logger;
@@ -36,7 +37,9 @@ public class EmulatorEngine implements CpuEngine {
             0xF7, 0x30,
             0xFF, 0x38
     );
-    private final MemoryContext<Byte> memory;
+    private MemoryContext<Byte> memory;
+    public final DebugProbe debugger;
+    private boolean debuggerActive;
     private final Context8080Impl context;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
@@ -55,7 +58,35 @@ public class EmulatorEngine implements CpuEngine {
     private volatile DispatchListener dispatchListener;
 
     public EmulatorEngine(MemoryContext<Byte> memory, Context8080Impl context) {
+        this.debugger = new DebugProbe("8080", memory);
         this.memory = memory;
+        MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
+        debugger.onActivityChanged(
+                active -> {
+                    this.memory = active ? tracedMemory : memory;
+                    this.debuggerActive = active;
+                });
+        String[] names = {"B", "C", "D", "E", "H", "L", "M", "A"};
+        for (int i = 0; i < names.length; i++) {
+            if (i == 6) continue;
+            final int index = i;
+            debugger.register(names[i], 8, () -> regs[index], v -> regs[index] = (int) v);
+        }
+        debugger.register("INTE", 1, () -> INTE ? 1 : 0, v -> INTE = v != 0);
+        debugger.register("PC", 16, () -> PC, v -> PC = (int) v);
+        debugger.register("SP", 16, () -> SP, v -> SP = (int) v);
+        debugger.register("F", 8, () -> flags & 255, v -> flags = (short) v);
+        for (int i = 0; i < 3; i++) {
+            final int index = i * 2;
+            debugger.register(
+                    new String[] {"BC", "DE", "HL"}[i],
+                    16,
+                    () -> (regs[index] << 8) | regs[index + 1],
+                    v -> {
+                        regs[index] = ((int) v >>> 8) & 255;
+                        regs[index + 1] = (int) v & 255;
+                    });
+        }
         this.context = context;
     }
 
@@ -111,6 +142,24 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int dispatch() throws Throwable {
+        if (!debuggerActive) {
+            return dispatchRaw();
+        }
+        if (!debugger.begin(PC)) {
+            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            return 0;
+        }
+        boolean completed = false;
+        try {
+            int cycles = dispatchRaw();
+            completed = true;
+            return cycles;
+        } finally {
+            if (debugger.end(completed)) currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+        }
+    }
+
+    private int dispatchRaw() throws Throwable {
         DispatchListener tmpListener = dispatchListener;
         if (tmpListener != null) {
             tmpListener.beforeDispatch();

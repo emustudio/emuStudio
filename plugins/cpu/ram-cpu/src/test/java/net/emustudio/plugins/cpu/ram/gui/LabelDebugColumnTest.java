@@ -65,7 +65,7 @@ public class LabelDebugColumnTest {
     }
 
     @Test
-    public void testSetValueDoesNotThrow() {
+    public void testSetValueDoesNotThrow() throws Exception {
         replay(memory);
         column = new LabelDebugColumn(memory);
         column.setValue(0, "anything");

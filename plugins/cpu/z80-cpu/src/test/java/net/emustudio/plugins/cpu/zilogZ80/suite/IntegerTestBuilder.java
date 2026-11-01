@@ -148,57 +148,49 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
     }
 
     public IntegerTestBuilder verifyPSW(Function<RunnerContext<Integer>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
+        Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPairPSW(3, operation.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyRegister(int register, Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
-        return verifyRegister(register);
-    }
-
-    public IntegerTestBuilder verifyRegister(int register) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        Function<RunnerContext<Integer>, Integer> operation = lastOperation;
-        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        Objects.requireNonNull(operator);
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPair2(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPair2(registerPair, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyIX(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkIX(operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyIY(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkIY(operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyR(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkR(operator.apply(context)));
         return this;
     }
@@ -209,19 +201,19 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
     }
 
     public IntegerTestBuilder verifyAF(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkAF(operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyAF2(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkAF2(operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyDeviceWhenFirst8LSBisPort(Function<RunnerContext<Integer>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
+        Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkDeviceValue(context.first & 0xFF, operation.apply(context)));
         return this;
     }
@@ -249,7 +241,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
     }
 
     public IntegerTestBuilder verifyMemptr(Function<RunnerContext<Integer>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+        Objects.requireNonNull(operator);
         runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(operator.apply(context)));
         return this;
     }

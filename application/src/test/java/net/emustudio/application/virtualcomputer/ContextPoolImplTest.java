@@ -280,14 +280,35 @@ public class ContextPoolImplTest {
     //
 
     @Test
-    public void testRegisterWithDifferentInterfaceThanGetCompiler() throws Exception {
+    public void testRejectsUnregisteredSubinterface() throws Exception {
         TestCompilerContext compilerContextMock = niceMock(TestCompilerContext.class);
 
         contextPool.register(0, compilerContextMock, TestCompilerContext.class);
 
         assertEquals(compilerContextMock, contextPool.getCompilerContext(1, TestCompilerContext.class));
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, DifferentTestCompilerContext.class));
+        assertThrows(ContextNotFoundException.class,
+                () -> contextPool.getCompilerContext(1, DifferentTestCompilerContext.class));
     }
+
+    @Test
+    public void sameShapeInterfacesHaveIndependentRegistrationAndRemoval() throws Exception {
+        FirstContext first = () -> 1;
+        SecondContext second = () -> 2;
+        contextPool.register(0, first, FirstContext.class);
+        assertThrows(ContextNotFoundException.class,
+                () -> contextPool.getContext(emuStudioId, SecondContext.class, -1));
+        contextPool.register(0, second, SecondContext.class);
+        assertEquals(1, contextPool.getContext(emuStudioId, FirstContext.class, -1).value());
+        assertEquals(2, contextPool.getContext(emuStudioId, SecondContext.class, -1).value());
+        assertTrue(contextPool.unregister(0, FirstContext.class));
+        assertEquals(2, contextPool.getContext(emuStudioId, SecondContext.class, -1).value());
+    }
+
+    @PluginContext
+    interface FirstContext extends Context { int value(); }
+
+    @PluginContext
+    interface SecondContext extends Context { int value(); }
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredCPU() throws Exception {
@@ -322,9 +343,10 @@ public class ContextPoolImplTest {
     //
 
     @Test
-    public void testRegisterWithDifferentDataTypeThanGetMemory() throws Exception {
+    public void testRejectsUnregisteredMemorySpecialization() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, GenericByteMemoryContext.class));
+        assertThrows(ContextNotFoundException.class,
+                () -> contextPool.getMemoryContext(1, GenericByteMemoryContext.class));
     }
 
     @Test(expected = InvalidContextException.class)

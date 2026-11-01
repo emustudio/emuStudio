@@ -197,6 +197,26 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
+    public int getBanksCount() {
+        return memory.getBanksCount();
+    }
+
+    @Override
+    public int getSelectedBank() {
+        return memory.getSelectedBank();
+    }
+
+    @Override
+    public int getCommonBoundary() {
+        return memory.getCommonBoundary();
+    }
+
+    @Override
+    public Byte readBank(int at, int bank) {
+        return memory.readBank(at, bank);
+    }
+
+    @Override
     public Byte read(int location) {
         applyMemoryContention(location);
         return memory.read(location);

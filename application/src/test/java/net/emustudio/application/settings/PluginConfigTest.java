@@ -3,7 +3,6 @@
 package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.components.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import org.junit.Test;
 
@@ -18,7 +17,7 @@ public class PluginConfigTest {
     public void testAbsolutePathInPluginConfigWontBeRelativized() {
         PluginConfig config = PluginConfig.create(
                 "xx", PLUGIN_TYPE.CPU, "myName", System.getProperty("user.dir") + File.separator + "path.jar",
-                P.of(0, 0), Config.inMemory()
+                SchemaPoint.of(0, 0), Config.inMemory()
         );
         assertEquals(Path.of(System.getProperty("user.dir") + File.separator + "path.jar"), config.getPluginPath());
     }
@@ -26,7 +25,7 @@ public class PluginConfigTest {
     @Test
     public void testRelativePathInPluginConfigWillBeRelativized() {
         PluginConfig config = PluginConfig.create(
-                "xx", PLUGIN_TYPE.CPU, "myName", "relativepath.jar", P.of(0, 0), Config.inMemory()
+                "xx", PLUGIN_TYPE.CPU, "myName", "relativepath.jar", SchemaPoint.of(0, 0), Config.inMemory()
         );
         assertEquals(Path.of(System.getProperty("user.dir"), "cpu", "relativepath.jar"), config.getPluginPath());
     }

@@ -6,12 +6,15 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.device.Device;
+import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -22,6 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 public class EmulationControllerTest {
@@ -172,7 +177,7 @@ public class EmulationControllerTest {
         Device dev2 = mock(Device.class);
 
         EmulationController controller = new EmulationController(
-                cpuStub, null, Arrays.asList(dev1, dev2)
+                cpuStub, null, Arrays.asList(dev1, dev2), null
         );
 
         awaitFor(controller::reset, 1);
@@ -182,6 +187,52 @@ public class EmulationControllerTest {
         assertEquals(1, cpuStub.resetCalled.get());
         verify(dev1).reset();
         verify(dev2).reset();
+    }
+
+    @Test(timeout = 2000)
+    public void runningResetStopsCpuBeforeMemoryAndDevicesAndPublishesResetLast() {
+        CPU cpu = mock(CPU.class);
+        Memory memory = mock(Memory.class);
+        Device device = mock(Device.class);
+        List<String> order = new ArrayList<>();
+        CPU.CPUListener[] observer = new CPU.CPUListener[1];
+        doAnswer(call -> { observer[0] = call.getArgument(0); return null; }).when(cpu).addCPUListener(any());
+        doAnswer(call -> {
+            order.add("pause");
+            observer[0].runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
+            return null;
+        }).when(cpu).pause();
+        doAnswer(call -> { order.add("memory"); return null; }).when(memory).reset();
+        doAnswer(call -> { order.add("device"); return null; }).when(device).reset();
+        doAnswer(call -> {
+            order.add("cpu");
+            observer[0].runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
+            return null;
+        }).when(cpu).reset();
+        try (EmulationController controller = new EmulationController(cpu, memory, List.of(device), null)) {
+            observer[0].runStateChanged(CPU.RunState.STATE_RUNNING);
+            controller.reset();
+        }
+        assertEquals(List.of("pause", "memory", "device", "cpu"), order);
+    }
+
+    @Test(timeout = 2000)
+    public void resetDoesNotWaitForPauseEventWhenExecutionAlreadyFinished() throws Exception {
+        CPU cpu = mock(CPU.class);
+        CPU.CPUListener[] observer = new CPU.CPUListener[1];
+        CountDownLatch reset = new CountDownLatch(1);
+        doAnswer(call -> { observer[0] = call.getArgument(0); return null; }).when(cpu).addCPUListener(any());
+        // Natural execution completion can make pause() a no-op with no state event.
+        doAnswer(call -> {
+            observer[0].runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
+            reset.countDown();
+            return null;
+        }).when(cpu).reset();
+        try (EmulationController controller = new EmulationController(cpu, null, List.of(), null)) {
+            observer[0].runStateChanged(CPU.RunState.STATE_RUNNING);
+            controller.reset();
+            org.junit.Assert.assertTrue(reset.await(1, TimeUnit.SECONDS));
+        }
     }
 
     @Test(expected = RejectedExecutionException.class)
@@ -220,7 +271,7 @@ public class EmulationControllerTest {
     }
 
     private EmulationController createPlainEmulationController() {
-        return new EmulationController(cpuStub, null, Collections.emptyList());
+        return new EmulationController(cpuStub, null, Collections.emptyList(), null);
     }
 
     private void awaitFor(Runnable runnable, int times) throws InterruptedException {

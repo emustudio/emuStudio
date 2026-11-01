@@ -520,7 +520,7 @@ public class ControlTest extends InstructionsTest {
                 .verifyPair(REG_SP, context -> (context.first - 2) & 0xFFFF)
                 .verifyWord(context -> (context.first - 2) & 0xFFFF, context -> context.PC + 1)
                 .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
+                .keepCurrentVerifiersAfterRun();
 
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0).run(0xC7),

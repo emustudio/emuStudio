@@ -59,11 +59,19 @@ public class Utils {
         ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs, gui);
 
         VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, appConfig);
-        computer.initialize(contextPool);
-        computer.reset();
-
-        computer.getCPU().ifPresent(debugTableModel::setCPU);
-        return computer;
+        try {
+            computer.initialize(contextPool);
+            computer.reset();
+            computer.getCPU().ifPresent(debugTableModel::setCPU);
+            return computer;
+        } catch (PluginInitializationException | RuntimeException | Error failure) {
+            try {
+                computer.close();
+            } catch (Throwable closeError) {
+                if (closeError != failure) failure.addSuppressed(closeError);
+            }
+            throw failure;
+        }
     }
 
     public static Optional<ComputerConfig> loadComputerConfigFromGui(

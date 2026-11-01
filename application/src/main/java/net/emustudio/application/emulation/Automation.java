@@ -36,6 +36,10 @@ public class Automation implements Runnable {
     private final Integer programLocation;
     private final EmulationProgress progress;
     private volatile CPU.RunState resultState;
+    private Path debugScript;
+    private boolean successful=true;
+    public void setDebugScript(Path path) { debugScript=path; }
+    public boolean isSuccessful() { return successful; }
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
                       Dialogs dialogs, int waitForFinishMillis, Integer programLocation,
@@ -83,6 +87,7 @@ public class Automation implements Runnable {
         try {
             computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
+            if (debugScript != null && computer.getCPU().isEmpty()) { throw new IllegalStateException("Debug script requires a CPU"); }
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
                 if (programLocation != null) {
@@ -91,9 +96,14 @@ public class Automation implements Runnable {
                 } else {
                     cpu.reset();
                 }
-                autoEmulate(cpu);
+                if (debugScript != null) {
+                    try { net.emustudio.application.debugger.DebugScript.run(computer.getDebugger().orElseThrow(), debugScript); }
+                    catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IllegalStateException(e); }
+                    catch (java.io.IOException e) { throw new IllegalStateException(e); }
+                } else { autoEmulate(cpu); }
             });
         } catch (Exception e) {
+            successful=false;
             LOGGER.error("Error during automation", e);
             dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
         } finally {

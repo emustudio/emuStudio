@@ -16,7 +16,7 @@ public class LogicTest extends InstructionsTest {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
                 .verifyRegister(EmulatorEngine.REG_A, operation)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().parity().carryIsReset().auxCarryIsReset())
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().carryIsReset().auxCarryIsReset(), operation)
                 .keepCurrentInjectorsAfterRun();
     }
 
@@ -103,24 +103,25 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testDAA() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> {
+            int result = ((int) context.first) & 0xFF;
+            if (((context.flags & EmulatorEngine.FLAG_AC) == EmulatorEngine.FLAG_AC) || (result & 0x0F) > 9) {
+                result += 6;
+            }
+            if ((context.flags & EmulatorEngine.FLAG_C) == EmulatorEngine.FLAG_C || (result & 0xF0) > 0x90) {
+                result += 0x60;
+            }
+            return result;
+        };
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyRegister(EmulatorEngine.REG_A, context -> {
-                    int result = ((int) context.first) & 0xFF;
-                    if (((context.flags & EmulatorEngine.FLAG_AC) == EmulatorEngine.FLAG_AC) || (result & 0x0F) > 9) {
-                        result += 6;
-                    }
-                    if ((context.flags & EmulatorEngine.FLAG_C) == EmulatorEngine.FLAG_C || (result & 0xF0) > 0x90) {
-                        result += 0x60;
-                    }
-                    return result;
-                })
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().parity().carry()
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().carry()
                         .expectFlagOnlyWhen(EmulatorEngine.FLAG_AC, (context, result) -> {
                             int firstInt = context.first.intValue();
                             int diff = (result.intValue() - firstInt) & 0x0F;
 
                             return ((diff == 6) && FlagsCheckImpl.isAuxCarry(firstInt, 6));
-                        }))
+                        }), expected)
                 .firstIsRegister(EmulatorEngine.REG_A);
 
         Generator.forSome8bitUnary(
@@ -161,10 +162,11 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testRLC() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first << 1) | ((context.first >>> 7) & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first << 1) | ((context.first >>> 7) & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().carryIsFirstOperandMSB());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().carryIsFirstOperandMSB(), expected);
 
         Generator.forSome8bitUnary(
                 test.run(0x07)
@@ -173,10 +175,11 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testRRC() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (((context.first & 0xFF) >>> 1) | ((context.first & 1) << 7)) & 0xFF;
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (((context.first & 0xFF) >>> 1) | ((context.first & 1) << 7)) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().carryIsFirstOperandLSB());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().carryIsFirstOperandLSB(), expected);
 
         Generator.forSome8bitUnary(
                 test.run(0x0F)
@@ -185,10 +188,11 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testRAL() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (context.first << 1) | (context.flags & 1);
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (context.first << 1) | (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().carryIsFirstOperandMSB());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().carryIsFirstOperandMSB(), expected);
 
         Generator.forSome8bitUnary(
                 test.run(0x17)
@@ -197,10 +201,11 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testRAR() {
+        Function<RunnerContext<Byte>, Integer> expected = context -> (((context.first & 0xFF) >>> 1) | ((context.flags & 1) << 7)) & 0xFF;
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(EmulatorEngine.REG_A)
-                .verifyRegister(EmulatorEngine.REG_A, context -> (((context.first & 0xFF) >>> 1) | ((context.flags & 1) << 7)) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().carryIsFirstOperandLSB());
+                .verifyRegister(EmulatorEngine.REG_A, expected)
+                .verifyFlags(new FlagsCheckImpl<Byte>().carryIsFirstOperandLSB(), expected);
 
         Generator.forSome8bitUnary(
                 test.run(0x1F)

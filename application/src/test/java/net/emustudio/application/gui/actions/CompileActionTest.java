@@ -10,9 +10,6 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +18,6 @@ import org.mockito.ArgumentCaptor;
 import javax.swing.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,7 +45,7 @@ public class CompileActionTest {
         when(computer.getCompiler()).thenReturn(Optional.empty());
 
         CompileAction action = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}, null
+                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
 
@@ -60,15 +56,11 @@ public class CompileActionTest {
     @Test
     public void constructorRegistersCompilerListenerThatAppendsMessagesAndMovesEditorCaret() {
         SourceCodePosition position = SourceCodePosition.of(1, 2, "program.asm");
-        MemoryContext<?> memoryContext = mock(MemoryContext.class);
-        Annotations annotations = new Annotations();
-        annotations.add(0, new SourceCodeAnnotation(1, position));
-        when(memoryContext.annotations()).thenReturn(annotations);
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
         ArgumentCaptor<CompilerListener> listenerCaptor = ArgumentCaptor.forClass(CompilerListener.class);
 
         new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}, memoryContext
+                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         verify(compiler).addCompilerListener(listenerCaptor.capture());
 
@@ -81,7 +73,7 @@ public class CompileActionTest {
         assertTrue(compilerOutput.getText().contains("Warn"));
         assertTrue(compilerOutput.getText().contains("Compiling has finished."));
         verify(editor).setPosition(position);
-        verify(editor).setSourceCodePositions(argThat(positions -> positions.equals(List.of(position))));
+        verifyNoMoreInteractions(editor);
     }
 
     @Test
@@ -89,7 +81,7 @@ public class CompileActionTest {
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
 
         CompileAction action = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_RUNNING, compilerOutput, () -> {}, null
+                computer, dialogs, editor, () -> CPU.RunState.STATE_RUNNING, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
 
@@ -104,7 +96,7 @@ public class CompileActionTest {
 
         CompileAction action = new CompileAction(
                 computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput,
-                titleUpdates::incrementAndGet, null
+                titleUpdates::incrementAndGet
         );
         action.actionPerformed(null);
 
@@ -128,7 +120,7 @@ public class CompileActionTest {
 
         CompileAction action = new CompileAction(
                 computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput,
-                titleUpdates::incrementAndGet, null
+                titleUpdates::incrementAndGet
         );
         action.actionPerformed(null);
 
@@ -151,7 +143,7 @@ public class CompileActionTest {
         doThrow(new RuntimeException("compile failed")).when(compiler).compile(Path.of("program.asm"), Optional.empty());
 
         CompileAction action = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}, null
+                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
 

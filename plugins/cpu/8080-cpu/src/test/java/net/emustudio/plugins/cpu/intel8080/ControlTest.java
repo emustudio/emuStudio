@@ -128,7 +128,7 @@ public class ControlTest extends InstructionsTest {
                 .firstIsPair(REG_SP)
                 .verifyPair(REG_SP, context -> context.first - 2)
                 .verifyWord(context -> context.SP - 2, context -> 1)
-                .clearOtherVerifiersAfterRun()
+                .keepCurrentVerifiersAfterRun()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(3,

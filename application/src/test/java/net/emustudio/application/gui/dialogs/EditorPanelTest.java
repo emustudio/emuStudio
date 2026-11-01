@@ -29,6 +29,25 @@ import static org.mockito.Mockito.*;
 public class EditorPanelTest extends AbstractSwingTest {
 
     @Test
+    public void inlineSearchLeavesMostOfThePanelForSourceEditing() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        EditorPanel panel = createPanel(dialogs, editor);
+        JFrame frame = showInFrame(panel);
+        try {
+            runOnEdt(() -> {
+                findComponent(panel, TextEditorPane.class, text -> true).setText("NOP\nHLT\n");
+                frame.setSize(1000, 650);
+                frame.validate();
+            });
+            assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
+            runOnEdt(() -> { editor.searchBar().showSearch(); frame.validate(); });
+            assertTrue(onEdt(() -> editor.searchBar().getHeight() < 120));
+            assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
     public void fontZoomSliderTracksShortcutsWheelAndActiveTabs() {
         Dialogs dialogs = mock(Dialogs.class);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
@@ -140,16 +159,20 @@ public class EditorPanelTest extends AbstractSwingTest {
     }
 
     @Test
-    public void resizeComponentsKeepsMinimumCompilerOutputHeight() {
+    public void resizingKeepsUserChosenCompilerOutputHeight() {
         EditorPanel panel = createPanel(mock(Dialogs.class), createEditor(false, true));
 
         try {
             showInFrame(panel);
             JSplitPane splitPane = findComponent(panel, JSplitPane.class, split -> true);
 
-            runOnEdt(() -> panel.resizeComponents(300));
+            runOnEdt(() -> {
+                panel.resizeComponents(650);
+                splitPane.setDividerLocation(250);
+                panel.resizeComponents(900);
+            });
 
-            assertEquals(100, onEdt(splitPane::getDividerLocation).intValue());
+            assertEquals(250, onEdt(splitPane::getDividerLocation).intValue());
         } finally {
             runOnEdt(panel::dispose);
         }
@@ -169,7 +192,6 @@ public class EditorPanelTest extends AbstractSwingTest {
                 () -> {
                 },
                 () -> CPU.RunState.STATE_STOPPED_BREAK,
-                null,
                 new EmuStudioGui()
         ));
     }
