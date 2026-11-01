@@ -364,4 +364,19 @@ public class CpuImplTest {
         assertEquals(3, output.size());
     }
 
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactGuestInstruction() {
+        setupEmulator(new byte[] {3, 3, 0}, null, null);
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(1, cpu.getInstructionLocation());
+        assertEquals(1, memory.read(cpu.getEngine().P).intValue());
+    }
 }

@@ -3,6 +3,14 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
+import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
+import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.ArrayDeque;
@@ -23,16 +31,55 @@ public class EmulatorEngine {
     final static byte I_SCANLOOP = (byte) 0xA2; // [<] or [>]
 
     private final Byte[] rawMemory;
+    public final DebugProbe debugger;
+    boolean debugStopped;
+    private boolean recording;
     private final BrainCPUContextImpl context;
     private final Deque<Integer> loopPointers = new ArrayDeque<>();
     private final Profiler profiler;
 
     public volatile int IP, P; // registers of the CPU
 
+    /** The engine executes raw bank zero even when a different bank is selected in the memory UI. */
+    private static MemoryContext<Byte> rawBankZero(ByteMemoryContext memory, Byte[] raw) {
+        return new AbstractMemoryContext<Byte>() {
+            @Override public Byte read(int address) { return raw[address]; }
+            @Override public Byte[] read(int address, int count) {
+                java.util.Objects.checkFromToIndex(address, address, raw.length);
+                if (count < 0) throw new IndexOutOfBoundsException("Negative read count");
+                int available = Math.min(count, raw.length - address);
+                return java.util.Arrays.copyOfRange(raw, address, address + available);
+            }
+            @Override public void write(int address, Byte value) { throw new UnsupportedOperationException("Inspection only"); }
+            @Override public void write(int address, Byte[] values, int count) { throw new UnsupportedOperationException("Inspection only"); }
+            @Override public void clear() { throw new UnsupportedOperationException("Inspection only"); }
+            @Override public Class<Byte> getCellTypeClass() { return Byte.class; }
+            @Override public int getSize() { return raw.length; }
+            @Override public MemoryContextAnnotations annotations() { return memory.annotations(); }
+        };
+    }
+
+    private static Disassembler recordingDisassembler(MemoryContext<Byte> memory) {
+        DecoderImpl decoder = new DecoderImpl(memory);
+        return new Disassembler() {
+            @Override public DisassembledInstruction disassemble(int address) {
+                // Generated disassemblers cache by address; each capture must see current code.
+                return new DisassemblerImpl(memory, decoder).disassemble(address);
+            }
+            @Override public int getNextInstructionPosition(int address) {
+                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(address);
+            }
+        };
+    }
+
     EmulatorEngine(ByteMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
         this.rawMemory = Objects.requireNonNull(Objects.requireNonNull(memory.getRawMemory())[0]);
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
+        debugger = new DebugProbe("BrainDuck", memory, recordingDisassembler(rawBankZero(memory, rawMemory)));
+        debugger.register("PC", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
+        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
+        debugger.register("P", 32, () -> Integer.toUnsignedLong(P), value -> P = (int) value);
     }
 
     public void reset(int adr) {
@@ -57,8 +104,29 @@ public class EmulatorEngine {
         return P;
     }
 
-    @SuppressWarnings("empty-statement")
     CPU.RunState step(boolean optimize) {
+        debugStopped = false;
+        if (!debugger.isActive()) return stepInstruction(optimize);
+        if (!debugger.begin(IP, 0)) {
+            debugStopped = true;
+            return CPU.RunState.STATE_STOPPED_BREAK;
+        }
+        boolean completed = false;
+        CPU.RunState result;
+        recording = true;
+        try {
+            result = stepInstruction(false); // Grouped operations would hide guest instructions.
+            completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
+                    && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+        } finally {
+            recording = false;
+            debugStopped = debugger.end(completed);
+        }
+        return debugStopped && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+    }
+
+    @SuppressWarnings("empty-statement")
+    private CPU.RunState stepInstruction(boolean optimize) {
         short OP;
 
         // FETCH
@@ -70,7 +138,7 @@ public class EmulatorEngine {
             IP = operation.nextIP;
             argument = operation.argument;
         } else {
-            OP = rawMemory[IP++];
+            OP = readRaw(IP++);
         }
 
         // DECODE
@@ -90,26 +158,26 @@ public class EmulatorEngine {
                 }
                 break;
             case I_INCV: /* + */
-                rawMemory[P] = (byte) ((rawMemory[P] + argument) & 0xFF);
+                writeRaw(P, (byte) ((readRaw(P) + argument) & 0xFF));
                 break;
             case I_DECV: /* - */
-                rawMemory[P] = (byte) ((rawMemory[P] - argument) & 0xFF);
+                writeRaw(P, (byte) ((readRaw(P) - argument) & 0xFF));
                 break;
             case I_PRINT: /* . */
                 while (argument > 0) {
-                    context.writeToDevice(rawMemory[P]);
+                    context.writeToDevice(readRaw(P));
                     argument--;
                 }
                 break;
             case I_READ: /* , */
                 while (argument > 0) {
-                    rawMemory[P] = context.readFromDevice();
+                    writeRaw(P, context.readFromDevice());
                     argument--;
                 }
                 break;
             case I_LOOP_START: /* [ */
                 int startingBrace = IP - 1;
-                if (rawMemory[P] != 0) {
+                if (readRaw(P) != 0) {
                     loopPointers.push(startingBrace);
                     break;
                 }
@@ -117,7 +185,7 @@ public class EmulatorEngine {
                 break;
             case I_LOOP_END: /* ] */
                 int tmpIP = loopPointers.pop();
-                if (rawMemory[P] != 0) {
+                if (readRaw(P) != 0) {
                     IP = tmpIP;
                 }
                 break;
@@ -125,9 +193,9 @@ public class EmulatorEngine {
                 Profiler.CachedOperation copyLoopOperation = Objects.requireNonNull(operation);
                 for (Profiler.CopyLoop copyLoop : copyLoopOperation.copyLoops) {
                     if (copyLoop.specialOP == I_PRINT) {
-                        context.writeToDevice(rawMemory[P]);
+                        context.writeToDevice(readRaw(P));
                     } else if (copyLoop.specialOP == I_READ) {
-                        rawMemory[P] = context.readFromDevice();
+                        writeRaw(P, context.readFromDevice());
                     } else {
                         rawMemory[P + copyLoop.relativePosition] = (byte) ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
                     }
@@ -142,6 +210,17 @@ public class EmulatorEngine {
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
         return CPU.RunState.STATE_STOPPED_BREAK;
+    }
+
+    private byte readRaw(int address) {
+        byte value = rawMemory[address];
+        if (recording) debugger.access(address, 0, value & 255, false);
+        return value;
+    }
+
+    private void writeRaw(int address, byte value) {
+        rawMemory[address] = value;
+        if (recording) debugger.access(address, 0, value & 255, true);
     }
 
     public int getLoopLevel() {

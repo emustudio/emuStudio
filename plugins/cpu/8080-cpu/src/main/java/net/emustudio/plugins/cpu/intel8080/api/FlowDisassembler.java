@@ -15,9 +15,11 @@ public final class FlowDisassembler implements Disassembler {
     private final MemoryContext<Byte> memory;
     private final boolean z80;
 
-    public FlowDisassembler(Disassembler delegate, MemoryContext<Byte> memory, boolean z80) {
+    @SuppressWarnings("unchecked")
+    public FlowDisassembler(Disassembler delegate, MemoryContext<?> memory, boolean z80) {
         this.delegate = delegate;
-        this.memory = memory;
+        if (memory.getCellTypeClass() != Byte.class) throw new IllegalArgumentException("Byte memory required");
+        this.memory = (MemoryContext<Byte>) memory;
         this.z80 = z80;
     }
 

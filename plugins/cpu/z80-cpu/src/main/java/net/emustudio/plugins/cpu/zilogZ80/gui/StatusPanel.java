@@ -9,7 +9,6 @@ import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
-import net.emustudio.plugins.cpu.zilogZ80.InstructionPrinter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,11 +71,10 @@ public class StatusPanel extends JPanel {
     private final JLabel lblRunState = new JLabel("BREAKPOINT");
     private final JLabel lblFrequency = new JLabel("0.00 kHz");
     private final JSpinner spnFrequency;
-    private final JCheckBox chkPrintInstructions = new JCheckBox("Dump instructions history");
     private final JButton btnLoadSnapshot;
     private Path recentSnapshotPath = Path.of(System.getProperty("user.dir"));
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, Dialogs dialogs, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, Dialogs dialogs, GUI gui) {
         this.gui = gui;
         this.dialogs = dialogs;
         this.cpu = cpu;
@@ -87,7 +85,6 @@ public class StatusPanel extends JPanel {
         this.btnLoadSnapshot = gui.button("Load snapshot...");
 
         initComponents();
-        chkPrintInstructions.setSelected(dumpInstructions);
         btnLoadSnapshot.addActionListener(e -> loadSnapshot());
         tblFlags1.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
@@ -231,8 +228,6 @@ public class StatusPanel extends JPanel {
         panelRun.add(gui.labelBold("kHz"), "wrap");
         panelRun.add(gui.label("Runtime frequency:"));
         panelRun.add(lblFrequency, "span, wrap");
-        chkPrintInstructions.addActionListener(this::chkPrintInstructionsActionPerformed);
-        panelRun.add(chkPrintInstructions, "span, wrap");
         panelRun.add(btnLoadSnapshot, "span");
 
         setLayout(new BorderLayout());
@@ -286,14 +281,6 @@ public class StatusPanel extends JPanel {
         panel.add(scrollPane, "span, growx, h 54!");
 
         return panel;
-    }
-
-    private void chkPrintInstructionsActionPerformed(java.awt.event.ActionEvent evt) {
-        if (chkPrintInstructions.isSelected()) {
-            cpu.getEngine().setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), cpu.getEngine(), true, System.err));
-        } else {
-            cpu.getEngine().setDispatchListener(null);
-        }
     }
 
     private void loadSnapshot() {

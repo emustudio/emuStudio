@@ -110,6 +110,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     private final Deque<DebugCPU.Instruction> history = new ArrayDeque<>();
     private int historyLimit;
+    private InstructionRecording.Writer recording;
+    private Path recordingPath;
+    private String recordingError = "";
     private boolean attached;
     private int stoppedAddress = -1, stoppedBank = -1;
     public volatile String status = "";
@@ -214,10 +217,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         requirePaused();
         if (limit > 0 && debug == null)
             throw new IllegalStateException("Instruction recording unsupported by this CPU");
-        if (limit < 0 || limit > 10000)
-            throw new IllegalArgumentException("History limit must be 0..10000");
+        if (limit < 0 || limit > 1000000)
+            throw new IllegalArgumentException("History limit must be 0..1000000");
         historyLimit = limit;
-        while (history.size() > limit) history.removeFirst();
+        if (limit > 0) while (history.size() > limit) history.removeFirst();
         updateProbe();
     }
 
@@ -229,8 +232,49 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         return List.copyOf(history);
     }
 
+    public synchronized InstructionRecording.Header recordingHeader() {
+        if (debug == null) throw new IllegalStateException("Instruction recording unsupported by this CPU");
+        return new InstructionRecording.Header(debug.processor(), debug.registers());
+    }
+
+    public synchronized void recordTo(Path path) throws IOException {
+        requirePaused();
+        if (recording != null) throw new IllegalStateException("Stop the current file recording first");
+        InstructionRecording.Writer writer = new InstructionRecording.Writer(path, recordingHeader());
+        recording = writer;
+        recordingPath = path.toAbsolutePath().normalize();
+        recordingError = "";
+        updateProbe();
+    }
+
+    public synchronized void stopRecordingFile() throws IOException {
+        requirePaused();
+        InstructionRecording.Writer writer = recording;
+        recording = null;
+        recordingPath = null;
+        try {
+            if (writer != null) writer.close();
+        } catch (IOException e) {
+            recordingError = "Incomplete recording: " + e.getMessage();
+            status = recordingError;
+            throw e;
+        } finally { updateProbe(); }
+        if (!recordingError.isBlank()) throw new IOException(recordingError);
+    }
+
+    public synchronized Path recordingPath() { return recordingPath; }
+    public synchronized String recordingError() { return recordingError; }
+
+    public void saveHistory(Path path, boolean text) throws IOException {
+        requirePaused();
+        InstructionRecording.Header header = recordingHeader();
+        List<DebugCPU.Instruction> events = history();
+        if (text) InstructionRecording.exportText(path, header, events);
+        else InstructionRecording.write(path, header, events);
+    }
+
     public void updateProbe() {
-        boolean needed = historyLimit > 0 || rules.stream().anyMatch(r -> r.enabled);
+        boolean needed = recording != null || historyLimit > 0 || rules.stream().anyMatch(r -> r.enabled);
         if (debug != null && needed != attached) {
             if (needed) debug.addListener(this);
             else debug.removeListener(this);
@@ -293,6 +337,15 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (historyLimit > 0) {
             history.addLast(event);
             while (history.size() > historyLimit) history.removeFirst();
+        }
+        if (recording != null) {
+            try { recording.append(event); }
+            catch (IOException e) {
+                recordingError = "Incomplete recording: " + e.getMessage();
+                status = recordingError;
+                // Return through the CPU probe to pause safely; listener changes wait for a paused boundary.
+                return true;
+            }
         }
         try {
             for (Rule rule : rules)
@@ -489,6 +542,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     public void close() {
         // Probe listeners and execution memory may only be changed at a paused boundary.
         if (state == CPU.RunState.STATE_RUNNING) cpu.pause();
+        try { stopRecordingFile(); }
+        catch (IOException e) {
+            org.slf4j.LoggerFactory.getLogger(DebugSession.class).error("Could not finish instruction recording", e);
+        }
         if (settings != null)
             try {
                 writeSettings();

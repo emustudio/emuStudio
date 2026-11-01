@@ -52,9 +52,6 @@ name = "ZX Spectrum 48K + AY"
 
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,80"
 	path = "zxspectrum-ula.jar"
@@ -64,9 +61,6 @@ name = "ZX Spectrum 48K + AY"
 	type = "DEVICE"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "300,240"
 	path = "zxspectrum-bus.jar"
@@ -78,9 +72,6 @@ name = "ZX Spectrum 48K + AY"
 		model = "ZX_SPECTRUM_48K"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,240"
 	path = "audiotape-player.jar"
@@ -90,9 +81,6 @@ name = "ZX Spectrum 48K + AY"
 	type = "DEVICE"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,400"
 	path = "audio-ay3_8910-chip.jar"

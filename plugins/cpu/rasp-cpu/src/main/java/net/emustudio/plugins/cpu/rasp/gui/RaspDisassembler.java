@@ -24,16 +24,18 @@ public class RaspDisassembler implements Disassembler {
         int opcode = memory.read(address);
         Optional<String> mnemo = memory.disassembleMnemo(opcode);
         String operand = "";
+        String encoding = Integer.toHexString(opcode);
 
         if (mnemo.isPresent() && opcode != HALT) {
             boolean isJump = (opcode == JMP) || (opcode == JZ) || (opcode == JGTZ);
             int intOperand = memory.read(address + 1);
+            encoding += " " + Integer.toHexString(intOperand);
             String strOperand = String.valueOf(intOperand);
             operand = isJump ? memory.getLabel(intOperand).map(RaspLabel::getLabel).orElse(strOperand) : strOperand;
         }
 
         String strMnemo = String.format("%s %s", mnemo.orElse("").toLowerCase(), operand.toUpperCase()).trim();
-        return new DisassembledInstruction(address, strMnemo, Integer.toHexString(opcode));
+        return new DisassembledInstruction(address, strMnemo, encoding);
     }
 
     @Override

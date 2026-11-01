@@ -29,7 +29,7 @@ public class DebuggerStateTest {
     public void persistentRulesWatchesAndSourceBreakpointsResolveCurrentMappings()
             throws Exception {
         DebugMemory m = new DebugMemory(32, 2, 16);
-        DebugProbe probe = new DebugProbe("Z80", m);
+        DebugProbe probe = new DebugProbe("Z80", m, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         probe.register("PC", 16, () -> 4, v -> {});
         Path file = Files.createTempDirectory("debugger-test").resolve("computer.debugger");
         try (DebugSession session = new DebugSession(cpu(probe), m, file)) {
@@ -65,7 +65,7 @@ public class DebuggerStateTest {
     public void watchpointsUseGuestAccessBankAndHistoryIsBounded() throws Exception {
         DebugMemory m = new DebugMemory(32, 2, 16);
         m.selected = 1;
-        DebugProbe probe = new DebugProbe("Z80", m);
+        DebugProbe probe = new DebugProbe("Z80", m, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         probe.register("PC", 16, () -> 2, v -> {});
         Path file = Files.createTempDirectory("debugger-test").resolve("computer.debugger");
         try (DebugSession s = new DebugSession(cpu(probe), m, file)) {
@@ -83,11 +83,11 @@ public class DebuggerStateTest {
             assertEquals(1, hit.bank);
             int count = s.history().size();
             probe.memory().read(3);
-            probe.memory().write(3, (byte) 12);
+            m.write(3, (byte) 12);
             assertEquals(count, s.history().size());
             assertEquals(1, s.history().get(0).accesses.get(0).bank);
             s.record(0);
-            assertTrue(s.history().isEmpty());
+            assertEquals(count, s.history().size()); // Stopping retains evidence for saving.
         }
         assertFalse(probe.isActive());
     }
@@ -95,7 +95,7 @@ public class DebuggerStateTest {
     @Test
     public void mutationDropsUndeliveredHitButRetainsNewHitGeneratedByStep() throws Exception {
         DebugMemory memory = new DebugMemory(32, 2, 16);
-        try (DebugSession session = new DebugSession(cpu(new DebugProbe("Z80", memory)), memory, null)) {
+        try (DebugSession session = new DebugSession(cpu(new DebugProbe("Z80", memory, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class))), memory, null)) {
             session.rules.add(new DebugSession.Rule("first", "EXEC", 3, -1, "", 1));
             session.rules.add(new DebugSession.Rule("second", "EXEC", 5, -1, "", 1));
             assertTrue(session.beforeInstruction(3, 0));
@@ -111,7 +111,7 @@ public class DebuggerStateTest {
     @Test
     public void nativeKeepStatePersistsAndRemovalResetsIt() throws Exception {
         DebugMemory memory = new DebugMemory(32, 2, 16);
-        DebugProbe probe = new DebugProbe("Z80", memory);
+        DebugProbe probe = new DebugProbe("Z80", memory, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         Path file = Files.createTempDirectory("breakpoint-states").resolve("computer.debugger");
         for (int pass = 0; pass < 2; pass++) {
             CPU cpu = cpu(probe);
@@ -142,7 +142,7 @@ public class DebuggerStateTest {
     @Test
     public void portableHitWinsOverNativePcAndNewRunDiscardsPendingHit() throws Exception {
         DebugMemory memory = new DebugMemory(32, 2, 16);
-        CPU cpu = cpu(new DebugProbe("Z80", memory));
+        CPU cpu = cpu(new DebugProbe("Z80", memory, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class)));
         when(cpu.isBreakpointSupported()).thenReturn(true);
         when(cpu.getInstructionLocation()).thenReturn(6);
         when(cpu.isBreakpointSet(6)).thenReturn(true);
@@ -152,7 +152,7 @@ public class DebuggerStateTest {
             CPU.CPUListener events = listener.getValue();
             session.rules.add(new DebugSession.Rule("data", "WRITE", 3, 1, "", 1));
             events.runStateChanged(CPU.RunState.STATE_RUNNING);
-            assertTrue(session.afterInstruction(new DebugCPU.Instruction(2, 0, Map.of(), Map.of(),
+            assertTrue(session.afterInstruction(new DebugCPU.Instruction(1, 2, 0, "test", "", Map.of(), Map.of(),
                     List.of(new DebugCPU.Access(3, 1, 42, true)), true)));
             assertNull(session.takeBreakpointHit()); // Never inspect execution memory while running.
             events.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
@@ -176,7 +176,7 @@ public class DebuggerStateTest {
         DebugMemory memory = new DebugMemory(32, 2, 16);
         memory.selected = 1;
         memory.values[1][3] = 42;
-        DebugProbe probe = new DebugProbe("Z80", memory);
+        DebugProbe probe = new DebugProbe("Z80", memory, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         try (DebugSession session = new DebugSession(cpu(probe), memory, null)) {
             session.rules.add(new DebugSession.Rule("condition", "EXEC", 20, 0, "mem[3] == 42", 1));
             assertTrue(session.beforeInstruction(20, 0));
@@ -185,8 +185,7 @@ public class DebuggerStateTest {
             assertTrue(
                     session.afterInstruction(
                             new DebugCPU.Instruction(
-                                    20,
-                                    0,
+                                    1, 20, 0, "test", "",
                                     Map.of(),
                                     Map.of(),
                                     List.of(new DebugCPU.Access(3, 1, 42, true)),
@@ -278,7 +277,7 @@ public class DebuggerStateTest {
     @Test
     public void scriptRunAssertCaptureAndFailureExitContract() throws Exception {
         DebugMemory m = new DebugMemory(8, 1, 0);
-        DebugProbe probe = new DebugProbe("8080", m);
+        DebugProbe probe = new DebugProbe("8080", m, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         int[] pc = {0};
         probe.register("PC", 16, () -> pc[0], v -> pc[0] = (int) v);
         CPU cpu = cpu(probe);

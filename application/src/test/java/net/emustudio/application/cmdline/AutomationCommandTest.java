@@ -35,6 +35,15 @@ public class AutomationCommandTest {
     }
 
     @Test
+    public void parsesHeadlessInstructionRecordingAlongsideDebugScript() throws Exception {
+        AutomationCommand command = parseAutomationCommand("auto", "--no-gui",
+                "--record-instructions", "run.emutrace", "--debug-script", "check.debug");
+        assertEquals(Path.of("run.emutrace"), getField(command, "instructionRecording", Path.class));
+        assertEquals(Path.of("check.debug"), getField(command, "debugScript", Path.class));
+        assertFalse(getField(command, "gui", Boolean.class));
+    }
+
+    @Test
     public void defaultWaitForFinishMillisIsDontWait() throws Exception {
         AutomationCommand command = parseAutomationCommand("automation");
         int waitForFinishMillis = getField(command, "waitForFinishMillis", Integer.class);

@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
-import net.emustudio.plugins.cpu.intel8080.InstructionPrinter;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
@@ -40,11 +39,10 @@ public class StatusPanel extends JPanel {
     private final JTextField txtRegL = regField("00");
     private final JTextField txtRegPC = regField("0000");
     private final JTextField txtRegSP = regField("0000");
-    private final JCheckBox chkPrintInstructions = new JCheckBox("Dump instructions history");
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui) {
         this.gui = gui;
         this.cpu = cpu;
         this.context = context;
@@ -52,7 +50,6 @@ public class StatusPanel extends JPanel {
         this.flagModel = new FlagsModel(engine);
 
         initComponents();
-        chkPrintInstructions.setSelected(dumpInstructions);
         tblFlags.setModel(flagModel);
 
         setupListeners();
@@ -123,14 +120,6 @@ public class StatusPanel extends JPanel {
         tblFlags.setBorder(null);
         tblFlags.setRowSelectionAllowed(false);
 
-        chkPrintInstructions.addActionListener(e -> {
-            if (chkPrintInstructions.isSelected()) {
-                engine.setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), engine, true, System.err));
-            } else {
-                engine.setDispatchListener(null);
-            }
-        });
-
         // Registers panel
         JPanel paneRegisters = gui.panel("insets dialog", "[][grow]6[][grow]6[][grow]", "[][][][][][]6[][grow]");
         paneRegisters.add(gui.labelBold("B"));
@@ -183,7 +172,6 @@ public class StatusPanel extends JPanel {
         panelRun.add(gui.labelBold("kHz"), "wrap");
         panelRun.add(gui.label("Runtime frequency:"));
         panelRun.add(lblFrequency, "span, wrap");
-        panelRun.add(chkPrintInstructions, "span");
 
         // Main layout
         setBorder(null);

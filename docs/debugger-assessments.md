@@ -87,6 +87,23 @@ in either mode. Healthy source-map status is available in the compile-status too
 messages stay visible. Memory's Compare / strings controls include the optional String column. Annotation editing address,
 filter and actions share a row, and History keeps one read-only warning above the recorded values.
 
+## Persistent instruction recording (#457)
+
+The existing `DebugCPU` events supply one recording path for interactive History and automation. Events preserve a
+sequence number, execution-time opcode/disassembly text, before/after registers, physical bank, guest accesses and
+completion status. The host owns the versioned file format, bounded recent buffer, continuous writer, offline reader
+and text export. CPU-specific printers and their settings are removed.
+
+Continuous output uses synchronous buffered writes on the execution thread. This keeps memory bounded and applies
+backpressure rather than silently dropping events. Clean closure flushes the file and writes a completion marker;
+readers distinguish incomplete files and do not declare completeness until they reach that marker. Offline inspection
+uses bounded pages and the captured values instead of current source annotations or memory. Filters and previous-write
+navigation operate within the retained recent buffer or displayed page. Repeated-row folding affects presentation only.
+
+Automation's `--record-instructions FILE` attaches the same recorder after optional compilation/reset and before the
+first instruction, including `--no-gui` and `--debug-script` runs. Recording remains opt-in. Reverse execution,
+full-machine checkpoints, deterministic input replay, trace comparison and bus/cycle tracing remain separate work.
+
 ## Validation
 
 Application, 8080/Z80, byte-memory, Spectrum bus/ULA and emuLib suites passed with the local composite build.

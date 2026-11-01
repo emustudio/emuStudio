@@ -8,6 +8,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -53,6 +54,7 @@ public class CpuImpl extends AbstractCPU {
         Decoder decoder = new DecoderImpl(memory);
         disassembler = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this::isBreakpointSet);
+        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
             automaticEmulation = new AutomaticEmulation(this, engine, memory);
@@ -110,6 +112,11 @@ public class CpuImpl extends AbstractCPU {
         }
         engine.CI.set(Math.max(0, location * 4 - 4));
         return true;
+    }
+
+    @Override
+    public java.util.Optional<DebugCPU> getDebugger() {
+        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
     }
 
     @Override
