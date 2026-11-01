@@ -48,10 +48,24 @@ maps, runtime traces, bank-switch semantics or patched binaries. Comparison capt
 
 ## Debugger workspace
 
-Inspection belongs to the existing Debugger tab. The instruction-aligned listing remains the primary view, with a
-resizable inspection pane beneath it. CPU status/registers, watches and peripheral-device selection share the right
-column in that order. Selecting an inspection address does not alter the PC or CPU bank. Memory is a byte view rather
-than a second speculative instruction listing. History remains read-only; its controls must not imply reverse execution.
+Inspection belongs to the existing Debugger tab. Instructions and Memory share one full-height table; Symbols,
+Annotations, Breakpoints, References and History provide additional views. CPU status/registers, watches and
+peripheral-device selection remain in the right column. Selecting an inspection address does not alter the PC or CPU
+bank. Memory is a byte view rather than a second speculative instruction listing. History remains read-only; its
+controls must not imply reverse execution.
+
+After a successful compilation, source caret, bookmark and editor-history navigation follow mapped addresses. Selecting
+an instruction, memory byte or compiled symbol follows its source position without switching the outer workspace tab
+or closing an editor split. Explicit debugger and symbol visits join the existing source-editor navigation history
+from #453; automatic following adds no source-history entries. Debugger Back/Forward retains address, bank and listing
+mode. The table context menu's Pin inspection stops automatic source/PC following while allowing explicit debugger
+navigation. A breakpoint hit always inspects its address; Keep inspection retains that address while stepping.
+
+Source synchronization uses the compiled source text, include closure, annotations and physical bank captured before
+CPU reset. Changed open buffers or saved files, failed compilations and replaced annotations cannot reuse old mappings.
+Recompile to establish new mappings. Symbols include source-only declarations from included files; ambiguous addresses
+remain unmapped. Only proven instruction starts align the disassembly; data and operand bytes do not create speculative
+instruction starts. Existing sidecar annotations alone do not establish source-text or bank provenance.
 
 ## Validation
 

@@ -32,6 +32,18 @@ import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
 
 /** Unified debugger workspace. Instruction and byte modes share one table; browsing never changes PC. */
 public final class DebuggerPanel extends JPanel implements AutoCloseable {
+    @FunctionalInterface public interface AddressSelectionListener {
+        void selected(int address, int bank, boolean visit);
+    }
+
+    private AddressSelectionListener addressSelectionListener = (address, bank, visit) -> {};
+    private Runnable inspectionReadyListener = () -> {};
+    private boolean pinnedSelection, changingView, updatingSymbols;
+    private final JCheckBoxMenuItem pinInspection = new JCheckBoxMenuItem("Pin inspection");
+    private final DefaultListModel<SourceAddressMap.Symbol> symbolRows = new DefaultListModel<>();
+    private final JList<SourceAddressMap.Symbol> symbols = new JList<>(symbolRows);
+    private final JLabel symbolContext = new JLabel("Compile sources to browse symbols.");
+    private Consumer<SourceAddressMap.Symbol> symbolSelected = symbol -> {};
     private final DebugSession session;
     private final GUI gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
@@ -117,10 +129,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     }
                                     if (image == null) { initializeImage(); return; }
                                     changedWatches.clear();
-                                    instructionModel.currentPage();
-                                    lastInstructionAddress = session.cpu.getInstructionLocation();
                                     if (inspectBreakpointHit()) { refresh(); return; }
-                                    if (!session.keepsInspection(heldInspection))
+                                    if (!pinnedSelection) {
+                                        instructionModel.currentPage();
+                                        lastInstructionAddress = session.cpu.getInstructionLocation();
+                                    }
+                                    if (!isInspectionPinned())
                                         guard(
                                                 () ->
                                                         navigate(
@@ -197,6 +211,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Instructions", instructionView);
+        tabs.addTab("Symbols", symbolsPanel());
         if (byteMemory) {
             inspectionBank = session.memory.getSelectedBank();
             memoryView = memoryPanel();
@@ -224,17 +239,37 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         activateView();
         session.cpu.addCPUListener(stateListener);
         setMinimumSize(new Dimension(300, 160));
+        JPopupMenu selectionMenu = new JPopupMenu();
+        selectionMenu.add(pinInspection);
+        pinInspection.addActionListener(event -> {
+            pinnedSelection = pinInspection.isSelected();
+            if (!pinnedSelection) heldInspection = null;
+        });
+        selectionMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent event) {
+                pinInspection.setSelected(isInspectionPinned());
+                pinInspection.setEnabled(!running && !tasks.isBusy());
+            }
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent event) {}
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent event) {}
+        });
+        table.setComponentPopupMenu(selectionMenu);
         table
                 .getSelectionModel()
                 .addListSelectionListener(
                         e -> {
-                            if (table.getModel() == model && !e.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
+                            if (!navigating && !changingView && table.getModel() == model
+                                    && !e.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
                                 int at =
                                         model.addressAt(
                                                 table.convertRowIndexToModel(
                                                         table.getSelectedRow()));
+                                if (at == inspectedAddress) return;
+                                rememberAddress(at, selectedBank());
+                                heldInspection = null;
                                 lastMemoryAddress = at;
                                 inspectedAddress = at;
+                                notifyAddressSelection(true);
                             }
                         });
         table.addMouseListener(
@@ -261,6 +296,92 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public JComponent navigationToolbar() {
         return navigationToolbar;
+    }
+
+    public void setAddressSelectionListener(AddressSelectionListener listener) {
+        addressSelectionListener = Objects.requireNonNull(listener);
+    }
+
+    public void setInspectionReadyListener(Runnable listener) {
+        inspectionReadyListener = Objects.requireNonNull(listener);
+    }
+
+    public boolean isInspectionPinned() {
+        return pinnedSelection || session.keepsInspection(heldInspection);
+    }
+
+    private void notifyAddressSelection(boolean visit) {
+        if (!disposed && !running && !tasks.isBusy())
+            addressSelectionListener.selected(inspectedAddress, selectedBank(), visit);
+    }
+
+    /** Automatic source following keeps the active analysis tab and respects a pinned inspection. */
+    public void synchronizeSourceAddress(SourceAddressMap.Location location) {
+        if (isInspectionPinned()) return;
+        if (!location.instruction && memoryView == null) return;
+        if (location.instruction && location.bank == instructionBank())
+            alignInstructionAddress(location.address);
+        navigate(location.address, location.bank, true,
+                location.instruction ? NavigationTarget.SOURCE_INSTRUCTION : NavigationTarget.SOURCE_DATA);
+    }
+
+    public void alignInstructionAddress(int address) {
+        if (lastInstructionAddress == address) return;
+        lastInstructionAddress = address;
+        instructionModel.showAddress(address);
+    }
+
+    private void selectInstructionAddress() {
+        if (table.getModel() != instructionRows || running || disposed) return;
+        boolean wasNavigating = navigating;
+        navigating = true;
+        try {
+            for (int row = 0; row < instructionModel.getRowCount(); row++) {
+                if (instructionModel.getLocationAt(row) == lastInstructionAddress) {
+                    table.setRowSelectionInterval(row, row);
+                    break;
+                }
+            }
+        } finally { navigating = wasNavigating; }
+    }
+
+    public void setSymbols(List<SourceAddressMap.Symbol> values, Consumer<SourceAddressMap.Symbol> selection) {
+        updatingSymbols = true;
+        try {
+            symbolSelected = Objects.requireNonNull(selection);
+            symbolRows.clear();
+            values.forEach(symbolRows::addElement);
+            symbolContext.setText(values.isEmpty() ? "Compile sources to browse symbols." : values.size() + " compiled symbols");
+        } finally { updatingSymbols = false; }
+    }
+
+    public void selectSymbol(SourceCodePosition position, int address, int bank) {
+        SourceAddressMap.Symbol selected = null;
+        for (int i = 0; i < symbolRows.size(); i++) {
+            SourceAddressMap.Symbol symbol = symbolRows.get(i);
+            if (!symbol.position.fileName.equals(position.fileName)) continue;
+            if (symbol.position.line == position.line) { selected = symbol; break; }
+            if (symbol.location.filter(location -> location.bank == bank && location.address <= address).isPresent()
+                    && (selected == null || symbol.position.line > selected.position.line)) selected = symbol;
+        }
+        updatingSymbols = true;
+        try { symbols.setSelectedValue(selected, true); if (selected == null) symbols.clearSelection(); }
+        finally { updatingSymbols = false; }
+    }
+
+    private JPanel symbolsPanel() {
+        JPanel panel = borderPanel(4);
+        symbols.getAccessibleContext().setAccessibleName("Compiled symbols");
+        symbols.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        symbols.setToolTipText("Definitions from the last successful compilation. Recompile changed sources to synchronize addresses.");
+        gui.styleList(symbols);
+        symbols.addListSelectionListener(event -> {
+            if (!updatingSymbols && !event.getValueIsAdjusting() && symbols.getSelectedValue() != null)
+                symbolSelected.accept(symbols.getSelectedValue());
+        });
+        panel.add(gui.scrollPane(symbols));
+        panel.add(symbolContext, BorderLayout.SOUTH);
+        return panel;
     }
 
     @Override
@@ -315,6 +436,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (!disposed) initializeImage();
             }
             if (image != null && !tasks.isBusy()) guard(this::inspectBreakpointHit);
+            if (!disposed && image != null && !tasks.isBusy() && !running) inspectionReadyListener.run();
         }
     }
 
@@ -426,51 +548,58 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void activateView() {
-        if (isInstructionView()) {
-            if (selectedBank() != instructionBank()) {
-                navigating = true;
-                try { inspectionBank = instructionBank(); resetMemoryView(); }
-                finally { navigating = false; }
-            }
-            instructionTableHolder.add(tableScroll);
-            table.showInstructions(instructionRows);
-            if (byteMemory) {
-                table.getColumnModel().getColumn(instructionRows.baseCount()).setPreferredWidth(110);
-                table.getColumnModel().getColumn(instructionRows.baseCount() + 1).setPreferredWidth(200);
-            }
-            inspectedAddress = lastInstructionAddress;
-            table.getAccessibleContext().setAccessibleName("Instruction listing");
-            tableScroll.getViewport().setViewPosition(new Point());
-            tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        } else if (memoryView != null && tabs.getSelectedComponent() == memoryView) {
-            if (session.keepsInspection(heldInspection)) {
-                navigating = true;
-                try {
+        boolean wasNavigating = navigating;
+        navigating = true;
+        changingView = true;
+        try {
+            if (isInstructionView()) {
+                if (selectedBank() != instructionBank()) {
+                    inspectionBank = instructionBank();
+                    resetMemoryView();
+                }
+                instructionTableHolder.add(tableScroll);
+                table.showInstructions(instructionRows);
+                if (byteMemory) {
+                    table.getColumnModel().getColumn(instructionRows.baseCount()).setPreferredWidth(110);
+                    table.getColumnModel().getColumn(instructionRows.baseCount() + 1).setPreferredWidth(200);
+                }
+                inspectedAddress = lastInstructionAddress;
+                selectInstructionAddress();
+                table.getAccessibleContext().setAccessibleName("Instruction listing");
+                tableScroll.getViewport().setViewPosition(new Point());
+                tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            } else if (memoryView != null && tabs.getSelectedComponent() == memoryView) {
+                if (session.keepsInspection(heldInspection)) {
                     if (selectedBank() != heldInspection.bank) resetMemoryView();
                     inspectionBank = heldInspection.bank;
                     lastMemoryAddress = heldInspection.address;
-                } finally { navigating = false; }
+                }
+                memoryView.add(tableScroll, BorderLayout.CENTER);
+                table.setModel(model);
+                table.setDefaultRenderer(Object.class, memoryRenderer);
+                table.setDefaultRenderer(String.class, memoryRenderer);
+                table.getAccessibleContext().setAccessibleName("Memory bytes");
+                tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+                int target = lastMemoryAddress < 0 ? lastInstructionAddress : lastMemoryAddress;
+                if (target >= 0 && target < session.memory.getSize() && model.rowAt(target) < 0) {
+                    resetMemoryView();
+                    lastMemoryAddress = target;
+                }
+                inspectedAddress = target;
+                int row = model.rowAt(target);
+                if (target >= 0 && row >= 0) {
+                    table.setRowSelectionInterval(row, row);
+                    SwingUtilities.invokeLater(() -> {
+                        if (!disposed && table.getModel() == model && table.getSelectedRow() >= 0)
+                            table.scrollRectToVisible(table.getCellRect(table.getSelectedRow(), 0, true));
+                    });
+                }
             }
-            memoryView.add(tableScroll, BorderLayout.CENTER);
-            table.setModel(model);
-            table.setDefaultRenderer(Object.class, memoryRenderer);
-            table.setDefaultRenderer(String.class, memoryRenderer);
-            table.getAccessibleContext().setAccessibleName("Memory bytes");
-            tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            int target = lastMemoryAddress < 0 ? lastInstructionAddress : lastMemoryAddress;
-            inspectedAddress = target;
-            int row = model.rowAt(target);
-            if (target >= 0 && row >= 0) {
-                table.setRowSelectionInterval(row, row);
-                SwingUtilities.invokeLater(() -> {
-                    if (!disposed && table.getModel() == model && table.getSelectedRow() >= 0)
-                        table.scrollRectToVisible(table.getCellRect(table.getSelectedRow(), 0, true));
-                });
-            }
-        }
-        updateExecutionState();
-        revalidate();
-        repaint();
+            updateExecutionState();
+            revalidate();
+            repaint();
+        } finally { changingView = false; navigating = wasNavigating; }
+        if (!navigating) notifyAddressSelection(false);
     }
 
     public void showBreakpoints() {
@@ -537,6 +666,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!byteMemory || image == null || tasks.isBusy()) return false;
         DebugSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
+        instructionModel.currentPage();
+        lastInstructionAddress = session.cpu.getInstructionLocation();
         inspectLive(hit.address, hit.bank);
         heldInspection = hit;
         return true;
@@ -544,10 +675,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void followAddress(int at, int selected) {
         if (navigating || tasks.isBusy()) return;
-        if (!session.keepsInspection(heldInspection)) navigate(at, selected, true);
+        navigate(at, selected, true);
     }
 
     public void navigate(int at, int selected, boolean remember) {
+        navigate(at, selected, remember, NavigationTarget.LISTING);
+    }
+
+    private void rememberAddress(int at, int selected) {
+        if (inspectedAddress == at && selectedBank() == selected) return;
+        backward.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
+        while (backward.size() > 100) backward.removeFirst();
+        forward.clear();
+    }
+
+    private enum NavigationTarget { LISTING, SOURCE_INSTRUCTION, SOURCE_DATA }
+
+    private void navigate(int at, int selected, boolean remember, NavigationTarget target) {
         if (tasks.isBusy()) return;
         session.requirePaused();
         if (session.memory == null) return;
@@ -556,16 +700,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 || selected < 0
                 || selected >= (byteMemory ? session.memory.getBanksCount() : 1))
             throw new IllegalArgumentException("Address/bank outside memory");
-        if (remember && (inspectedAddress != at || selectedBank() != selected)) {
-            backward.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
-            while (backward.size() > 100) backward.removeFirst();
-            forward.clear();
-        }
+        if (table.getModel() == model && model.rowAt(at) < 0 && !remember) return;
+        if (remember) { rememberAddress(at, selected); heldInspection = null; lastMemoryAddress = at; }
         navigating = true;
         try {
             if (selectedBank() != selected) resetMemoryView();
             inspectionBank = selected;
-            if (selected != instructionBank() && memoryView != null) showMemory();
+            if (memoryView != null && (isInstructionView() || target == NavigationTarget.LISTING)
+                    && (selected != instructionBank() || target == NavigationTarget.SOURCE_DATA)) showMemory();
             inspectedAddress = at;
             if (table.getModel() == model && tabs.getSelectedComponent() == memoryView) {
                 int row = model.rowAt(at);
@@ -574,25 +716,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     row = at;
                 }
                 if (row >= 0) {
+                    lastMemoryAddress = at;
                     table.setRowSelectionInterval(row, row);
                     table.scrollRectToVisible(table.getCellRect(row, 0, true));
                 }
-            } else {
-                if (remember) showInstructions();
+            } else if (target != NavigationTarget.SOURCE_DATA && selected == instructionBank()) {
+                if (remember && target == NavigationTarget.LISTING) showInstructions();
                 lastInstructionAddress = at;
                 inspectedAddress = at;
                 instructionModel.showAddress(at);
-                for (int row = 0; table.getModel() == instructionRows && row < instructionModel.getRowCount(); row++) {
-                    if (instructionModel.getLocationAt(row) == at) {
-                        table.setRowSelectionInterval(row, row);
-                        table.scrollRectToVisible(table.getCellRect(row, 0, true));
-                        break;
-                    }
-                }
+                selectInstructionAddress();
             }
         } finally {
             navigating = false;
         }
+        notifyAddressSelection(remember);
     }
 
     private void travel(Deque<int[]> from, Deque<int[]> to) {
@@ -1477,6 +1615,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public void tableChanged(TableModelEvent event) {
             if (event.getFirstRow() == TableModelEvent.HEADER_ROW) fireTableStructureChanged();
             else fireTableDataChanged();
+            selectInstructionAddress();
         }
     }
 

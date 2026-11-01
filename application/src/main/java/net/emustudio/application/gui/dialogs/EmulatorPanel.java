@@ -319,6 +319,10 @@ public class EmulatorPanel extends JPanel {
         return column >= 0 && debugTable.getColumnClass(column) == BreakpointState.class;
     }
 
+    public Optional<DebuggerPanel> getDebuggerPanel() {
+        return Optional.ofNullable(inspection);
+    }
+
     public void resizeComponents(int height) {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
         if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {

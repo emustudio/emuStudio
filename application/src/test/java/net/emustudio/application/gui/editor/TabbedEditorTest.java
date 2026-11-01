@@ -4,6 +4,7 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -207,6 +208,47 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(2, onEdt(tabs::getTabCount).intValue());
         assertEquals("library.asm", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals(include, editor.getCurrentFile().orElseThrow().toPath());
+    }
+
+    @Test
+    public void tabVisitThenDebuggerVisitReturnsToTheSelectedFileInSourceHistory() throws Exception {
+        Path first = source("a.asm", "nop\nhlt\n");
+        Path second = source("b.asm", "nop\nret\n");
+        Path third = source("c.asm", "nop\ninr a\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
+                List.of(first, second), paths -> {}));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        runOnEdt(() -> {
+            tabs.setSelectedIndex(0);
+            editor.setPosition(SourceCodePosition.of(2, 0, first.toString()));
+            tabs.setSelectedIndex(1); // No native-focus event needed to remember this visit.
+            editor.visitPosition(SourceCodePosition.of(2, 0, third.toString()));
+            JMenu menu = new JMenu("Edit");
+            editor.extendEditingMenu(menu);
+            JMenu navigate = (JMenu) java.util.Arrays.stream(menu.getMenuComponents())
+                    .filter(c -> c instanceof JMenu && "Navigate".equals(((JMenu) c).getText())).findFirst().orElseThrow();
+            for (Component component : navigate.getMenuComponents())
+                if (component instanceof JMenuItem && "Back".equals(((JMenuItem) component).getText()))
+                    ((JMenuItem) component).doClick(0);
+        });
+        assertEquals(second, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+    }
+
+    @Test
+    public void synchronizedPositionsKeepSplitAndDoNotEmitSourceFeedback() throws Exception {
+        Path file = source("split.asm", "nop\ninr a\nhlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        List<SourceCodePosition> selected = new ArrayList<>();
+        runOnEdt(() -> {
+            editor.setSourcePositionChanged(selected::add);
+            editor.split(true);
+        });
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        Component split = onEdt(tabs::getSelectedComponent);
+        runOnEdt(() -> editor.synchronizePosition(SourceCodePosition.of(3, 0, file.toString())));
+        assertSame(split, onEdt(tabs::getSelectedComponent));
+        assertTrue(selected.isEmpty());
+        assertEquals(3, onEdt(() -> editor.currentSourcePosition().orElseThrow().line).intValue());
     }
 
     private Path source(String name, String text) throws Exception {

@@ -19,6 +19,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +46,8 @@ public class TabbedEditor implements Editor {
     private final Deque<Location> edits = new ArrayDeque<>();
     private Location location;
     private boolean navigating;
+    private boolean synchronizingPosition;
+    private Consumer<SourceCodePosition> sourcePositionChanged = position -> {};
 
     private static final class Location {
         final REditor editor;
@@ -77,6 +80,8 @@ public class TabbedEditor implements Editor {
             if (!editors.isEmpty()) {
                 activeEditorChanged.run();
                 notifyFontSizeChanged();
+                remember(activeEditor(), activeEditor().textPane().getCaretPosition());
+                notifySourcePosition(activeEditor());
             }
         });
         notifyOpenFilesChanged();
@@ -84,6 +89,84 @@ public class TabbedEditor implements Editor {
 
     public void setActiveEditorChanged(Runnable activeEditorChanged) {
         this.activeEditorChanged = Objects.requireNonNull(activeEditorChanged);
+    }
+
+    public void setSourcePositionChanged(Consumer<SourceCodePosition> listener) {
+        sourcePositionChanged = Objects.requireNonNull(listener);
+    }
+
+    public Optional<SourceCodePosition> currentSourcePosition() {
+        if (editors.isEmpty()) return Optional.empty();
+        REditor active = activeEditor();
+        return active.getCurrentFile().flatMap(file -> {
+            try {
+                int offset = active.textPane().getCaretPosition();
+                int line = active.textPane().getLineOfOffset(offset);
+                return Optional.of(SourceCodePosition.of(line + 1,
+                        offset - active.textPane().getLineStartOffset(line), file.toPath().toAbsolutePath().normalize().toString()));
+            } catch (BadLocationException e) { return Optional.empty(); }
+        });
+    }
+
+    /** Open buffers take precedence over disk, including unsaved edits and split mirrors. */
+    public Optional<String> sourceText(Path path) {
+        Path normalized = path.toAbsolutePath().normalize();
+        for (REditor candidate : editors) {
+            if (candidate.getCurrentFile().map(File::toPath).map(Path::toAbsolutePath)
+                    .map(Path::normalize).filter(normalized::equals).isPresent())
+                return Optional.of(candidate.textPane().getText());
+        }
+        try { return Optional.of(Files.readString(normalized)); }
+        catch (IOException e) { return Optional.empty(); }
+    }
+
+    /** Follow a debugger selection without stealing focus, closing a split or recording an editor visit. */
+    public boolean synchronizePosition(SourceCodePosition position) {
+        boolean wasNavigating = navigating;
+        synchronizingPosition = true;
+        navigating = true;
+        try {
+            Path path = Path.of(position.fileName).toAbsolutePath().normalize();
+            REditor target = null;
+            for (REditor candidate : editors)
+                if (candidate.getCurrentFile().map(File::toPath).map(Path::toAbsolutePath)
+                        .map(Path::normalize).filter(path::equals).isPresent()) { target = candidate; break; }
+            if (target == null) {
+                target = createEditor();
+                if (!target.openFile(path)) { target.dispose(); return false; }
+                addEditor(target);
+                tabs.setSelectedIndex(editors.indexOf(target));
+                notifyOpenFilesChanged();
+            } else if (target != activeEditor().sourceEditor()) {
+                int index = editors.indexOf(target);
+                if (index != secondaryIndex) tabs.setSelectedIndex(index);
+                focusedEditor = target;
+            } else target = activeEditor();
+            target.setPosition(position);
+            location = new Location(target.sourceEditor(), target.textPane().getCaretPosition());
+            activeEditorChanged.run();
+            return true;
+        } finally {
+            navigating = wasNavigating;
+            synchronizingPosition = false;
+        }
+    }
+
+    /** Explicit symbol/debugger visits participate in the existing #453 source history. */
+    public boolean visitPosition(SourceCodePosition position) {
+        Location previous = location;
+        if (!synchronizePosition(position)) return false;
+        if (previous != null && (previous.editor != location.editor || previous.offset != location.offset)) {
+            back.push(previous);
+            while (back.size() > 200) back.removeLast();
+            forward.clear();
+        }
+        return true;
+    }
+
+    private void notifySourcePosition(REditor changed) {
+        if (!synchronizingPosition && !editors.isEmpty() && changed == activeEditor())
+            currentSourcePosition().ifPresent(sourcePositionChanged);
     }
 
     public boolean closeCurrent() {
@@ -386,14 +469,19 @@ public class TabbedEditor implements Editor {
                 focusedEditor = editor;
                 remember(editor, editor.textPane().getCaretPosition());
                 activeEditorChanged.run();
+                notifySourcePosition(editor);
             }
         });
-        editor.textPane().addCaretListener(e -> remember(editor, e.getDot()));
+        editor.textPane().addCaretListener(e -> {
+            remember(editor, e.getDot());
+            notifySourcePosition(editor);
+        });
         editor.addChangeListener(() -> {
             if (!navigating) {
                 edits.push(new Location(editor.sourceEditor(), editor.textPane().getCaretPosition()));
                 while (edits.size() > 200) edits.removeLast();
             }
+            notifySourcePosition(editor);
         });
         if (searchBar != null) searchBar.observe(editor);
     }
