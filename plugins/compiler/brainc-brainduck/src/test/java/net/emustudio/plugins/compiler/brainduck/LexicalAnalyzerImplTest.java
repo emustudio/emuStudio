@@ -112,9 +112,9 @@ public class LexicalAnalyzerImplTest {
         // , (LOAD)
         assertEquals(Token.RESERVED, analyzer.next().getType());
         // [ (LOOP)
-        assertEquals(Token.RESERVED, analyzer.next().getType());
+        assertEquals(Token.BLOCK_START, analyzer.next().getType());
         // ] (ENDL)
-        assertEquals(Token.RESERVED, analyzer.next().getType());
+        assertEquals(Token.BLOCK_END, analyzer.next().getType());
     }
 
     @Test

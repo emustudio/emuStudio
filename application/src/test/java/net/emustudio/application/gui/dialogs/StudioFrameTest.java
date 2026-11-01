@@ -50,10 +50,20 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Edit", onEdt(() -> menuBar.getMenu(1).getText()));
         assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));
         assertEquals("Help", onEdt(() -> menuBar.getMenu(3).getText()));
+        assertEquals(4, onEdt(menuBar::getMenuCount).intValue());
+        List<String> editingItems = onEdt(() -> {
+            List<String> labels = new java.util.ArrayList<>();
+            for (java.awt.Component item : menuBar.getMenu(1).getMenuComponents()) {
+                if (item instanceof JMenuItem) labels.add(((JMenuItem) item).getText());
+            }
+            return labels;
+        });
+        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Selection", "Navigate", "Editing macros",
+                "Editor display", "Find / replace in files…", "Refactor", "Split view")));
     }
 
     @Test
-    public void constructorUpdatesEditorTabTitleFromOpenedFile() throws IOException {
+    public void openedFileUpdatesWindowTitleAndKeepsWorkspaceTabStable() throws IOException {
         Path sourceFile = temporaryFolder.newFile("program.asm").toPath();
         Files.writeString(sourceFile, "NOP");
 
@@ -62,7 +72,8 @@ public class StudioFrameTest extends AbstractSwingTest {
         showFrame(frame);
 
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
-        assertEquals("program.asm", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("emuStudio [Demo computer] — program.asm", onEdt(frame::getTitle));
     }
 
     @Test
@@ -86,7 +97,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(model.getLocationAt(0)).thenReturn(12);
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
-                computer, mock(AppSettings.class), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
+                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
         ));
         showFrame(frame);
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
@@ -102,7 +113,8 @@ public class StudioFrameTest extends AbstractSwingTest {
         });
 
         assertEquals(0, onEdt(tabs::getSelectedIndex).intValue());
-        assertEquals("linked.asm", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("emuStudio [Demo computer] — linked.asm", onEdt(frame::getTitle));
         assertEquals(onEdt(() -> textEditor.getLineStartOffset(1)), onEdt(textEditor::getCaretPosition));
     }
 
@@ -119,7 +131,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         return onEdt(() -> new StudioFrame(
                 computer,
-                mock(AppSettings.class),
+                new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false),
                 mock(Dialogs.class),
                 createDebugTableModel(),
                 null,

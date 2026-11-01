@@ -48,7 +48,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[LIT_STRING_2] = Token.LITERAL;
 
         tokenMap[ID_IDENTIFIER] = Token.IDENTIFIER;
-        tokenMap[ID_LABEL] = Token.IDENTIFIER;
+        tokenMap[ID_LABEL] = Token.LABEL;
 
         tokenMap[ERROR] = Token.ERROR;
     }
@@ -60,6 +60,42 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         this.lexer = Objects.requireNonNull(lexer);
         this.lexer.setTokenFactory(new EmuTokenFactory(tokenMap));
     }
+
+    @Override
+    public java.util.List<Token> analyze(String source) {
+        char[] sourceChars = source.toCharArray();
+        RAMLexer editingLexer = new RAMLexer(new CharArrayCharStream(sourceChars, 0, sourceChars.length));
+        editingLexer.removeErrorListeners();
+        RAMParser parser = new RAMParser(new org.antlr.v4.runtime.CommonTokenStream(editingLexer));
+        parser.removeErrorListeners(); parser.rStart();
+        if (parser.getNumberOfSyntaxErrors() > 0) throw new IllegalArgumentException("Fix syntax errors before refactoring");
+        char[] chars = source.toCharArray(); reset(chars, 0, chars.length);
+        java.util.List<Token> result = new java.util.ArrayList<>();
+        while (hasNext()) {
+            Token token = next();
+            String name = token.getType() == Token.LABEL ? token.getText().substring(0, token.getText().length() - 1)
+                    : token.getType() == Token.IDENTIFIER ? token.getText() : null;
+            int type = token.getType() == Token.LABEL ? Token.SYMBOL_DEFINITION
+                    : token.getType() == Token.IDENTIFIER ? Token.SYMBOL_REFERENCE : token.getType();
+            result.add(new net.emustudio.emulib.plugins.compiler.SourceToken(type, token.getOffset(), token.getText(), name,
+                    name == null ? null : "", name == null ? null : ""));
+        }
+        return result;
+    }
+
+    @Override
+    public String normalizeSymbolName(String name) { return name.toLowerCase(java.util.Locale.ROOT); }
+
+    @Override
+    public boolean isValidSymbolName(String name) {
+        RAMLexer validation = new RAMLexer(org.antlr.v4.runtime.CharStreams.fromString(name));
+        validation.removeErrorListeners();
+        return validation.nextToken().getType() == RAMLexer.ID_IDENTIFIER
+                && validation.nextToken().getType() == org.antlr.v4.runtime.Token.EOF;
+    }
+
+    @Override
+    public String[] getLineCommentStartAndEnd() { return new String[]{";", null}; }
 
     @Override
     public Token next() {

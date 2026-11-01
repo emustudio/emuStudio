@@ -104,10 +104,10 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[PREP_EQU] = Token.PREPROCESSOR;
         tokenMap[PREP_SET] = Token.PREPROCESSOR;
         tokenMap[PREP_INCLUDE] = Token.PREPROCESSOR;
-        tokenMap[PREP_IF] = Token.PREPROCESSOR;
-        tokenMap[PREP_ENDIF] = Token.PREPROCESSOR;
-        tokenMap[PREP_MACRO] = Token.PREPROCESSOR;
-        tokenMap[PREP_ENDM] = Token.PREPROCESSOR;
+        tokenMap[PREP_IF] = Token.BLOCK_START;
+        tokenMap[PREP_ENDIF] = Token.BLOCK_END;
+        tokenMap[PREP_MACRO] = Token.BLOCK_START;
+        tokenMap[PREP_ENDM] = Token.BLOCK_END;
         tokenMap[PREP_DB] = Token.PREPROCESSOR;
         tokenMap[PREP_DW] = Token.PREPROCESSOR;
         tokenMap[PREP_DS] = Token.PREPROCESSOR;
@@ -162,11 +162,12 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[LIT_STRING_2] = Token.LITERAL;
 
         tokenMap[ID_IDENTIFIER] = Token.IDENTIFIER;
-        tokenMap[ID_LABEL] = Token.IDENTIFIER;
+        tokenMap[ID_LABEL] = Token.LABEL;
 
         tokenMap[ERROR] = Token.ERROR;
     }
 
+    private boolean includePath;
     private final As8080Lexer lexer;
 
 
@@ -176,8 +177,49 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
+    public java.util.List<Token> analyze(String source) {
+        char[] sourceChars = source.toCharArray();
+        As8080Lexer editingLexer = new As8080Lexer(new CharArrayCharStream(sourceChars, 0, sourceChars.length));
+        editingLexer.removeErrorListeners();
+        As8080Parser parser = new As8080Parser(new org.antlr.v4.runtime.CommonTokenStream(editingLexer));
+        parser.removeErrorListeners();
+        return net.emustudio.plugins.compiler.as8080.SourceAnalysis.analyze(parser, parser.rStart(), tokenMap);
+    }
+
+    @Override
+    public String normalizeSymbolName(String name) { return name.toLowerCase(java.util.Locale.ROOT); }
+
+    @Override
+    public boolean isValidSymbolName(String name) {
+        As8080Lexer validation = new As8080Lexer(org.antlr.v4.runtime.CharStreams.fromString(name));
+        validation.removeErrorListeners();
+        return validation.nextToken().getType() == As8080Lexer.ID_IDENTIFIER
+                && validation.nextToken().getType() == org.antlr.v4.runtime.Token.EOF;
+    }
+
+    @Override
+    public java.util.List<String> getExtractionKinds() { return java.util.List.of("Macro", "Subroutine (uses stack)"); }
+
+    @Override
+    public String extract(String source, int start, int end, String name, String kind) {
+        return net.emustudio.plugins.compiler.as8080.SourceAnalysis.extract(source, start, end, name, kind, this::analyze, "jmp");
+    }
+
+    @Override
+    public String[] getLineCommentStartAndEnd() { return new String[]{";", null}; }
+
+    @Override
     public Token next() {
-        return (Token) lexer.nextToken();
+        Token token = (Token) lexer.nextToken();
+        if (token.getType() == Token.WHITESPACE) return token;
+        if (includePath && token.getType() == Token.LITERAL && token.getText().length() >= 2) {
+            includePath = false;
+            String text = token.getText();
+            return new net.emustudio.emulib.plugins.compiler.SourceToken(Token.INCLUDE_PATH, token.getOffset(), text,
+                    null, null, null, text.substring(1, text.length() - 1));
+        }
+        includePath = token.getType() == Token.PREPROCESSOR && token.getText().equalsIgnoreCase("include");
+        return token;
     }
 
     @Override
@@ -187,6 +229,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
     @Override
     public void reset(char[] array, int offset, int length) {
+        includePath = false;
         lexer.setInputStream(new CharArrayCharStream(array, offset, length));
     }
 

@@ -39,6 +39,7 @@ public class StudioFrame extends JFrame {
     private final GUI gui;
     private final Dialogs dialogs;
     private final TabbedEditor editor;
+    private final String computerTitle;
 
     private final EditorPanel editorPanel;
     private final EmulatorPanel emulatorPanel;
@@ -61,6 +62,7 @@ public class StudioFrame extends JFrame {
         Objects.requireNonNull(computer);
         this.gui = Objects.requireNonNull(gui);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.computerTitle = "emuStudio [" + computer.getComputerConfig().getName() + "]";
 
         this.editor = new TabbedEditor(
                 dialogs,
@@ -68,7 +70,8 @@ public class StudioFrame extends JFrame {
                 computer.getComputerConfig().getOpenSourceFiles(),
                 computer.getComputerConfig()::setOpenSourceFiles
         );
-        this.editor.setActiveEditorChanged(this::updateTitleOfSourceCodePanel);
+        this.editor.configure(appSettings);
+        this.editor.setActiveEditorChanged(this::updateWindowTitle);
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
                 cpu, computer.getMemory().orElse(null), computer.getDevices()
@@ -79,12 +82,12 @@ public class StudioFrame extends JFrame {
                 this::navigateToSource, gui
         );
         this.editorPanel = new EditorPanel(
-                this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState,
-                memoryContext, gui
+                this, dialogs, editor, computer, this::updateWindowTitle, emulatorPanel::getRunState,
+                gui
         );
 
-        this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);
-        this.closeTabAction = new CloseTabAction(editor, this::updateTitleOfSourceCodePanel);
+        this.saveFileAsAction = new SaveFileAsAction(editor, this::updateWindowTitle);
+        this.closeTabAction = new CloseTabAction(editor, this::updateWindowTitle);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
         this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
@@ -95,7 +98,7 @@ public class StudioFrame extends JFrame {
 
         initComponents();
 
-        this.setTitle("emuStudio [" + computer.getComputerConfig().getName() + "]");
+        setTitle(computerTitle);
 
         pack();
         setLocationRelativeTo(null);
@@ -110,7 +113,7 @@ public class StudioFrame extends JFrame {
         if (fileName != null) {
             editor.openFile(fileName);
         }
-        updateTitleOfSourceCodePanel();
+        updateWindowTitle();
         editor.grabFocus();
     }
 
@@ -177,11 +180,13 @@ public class StudioFrame extends JFrame {
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
         mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
+        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.SELECT_ALL_ACTION)));
         mnuEdit.addSeparator();
         mnuEdit.add(gui.menuItem(editorPanel.getFindAction()));
         mnuEdit.add(gui.menuItem(editorPanel.getReplaceAction()));
         mnuEdit.add(gui.menuItem(findNextAction));
         mnuEdit.add(gui.menuItem(findPreviousAction));
+        editor.extendEditingMenu(mnuEdit);
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
@@ -201,11 +206,10 @@ public class StudioFrame extends JFrame {
         dispose();
     }
 
-    private void updateTitleOfSourceCodePanel() {
-        editor.getCurrentFile().ifPresentOrElse(
-                file -> tabbedPane.setTitleAt(0, file.getName() + (editor.isDirty() ? "*" : "")),
-                () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
-        );
+    private void updateWindowTitle() {
+        setTitle(editor.getCurrentFile()
+                .map(file -> computerTitle + " — " + file.getName() + (editor.isDirty() ? "*" : ""))
+                .orElse(computerTitle));
     }
 
     private void navigateToSource(SourceCodePosition position) {
@@ -219,7 +223,7 @@ public class StudioFrame extends JFrame {
                 return;
             }
 
-            updateTitleOfSourceCodePanel();
+            updateWindowTitle();
             tabbedPane.setSelectedIndex(0);
             editor.setPosition(position);
             editor.grabFocus();
