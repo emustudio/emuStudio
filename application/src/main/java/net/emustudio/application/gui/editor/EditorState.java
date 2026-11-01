@@ -28,6 +28,8 @@ final class EditorState {
     private String key(Path path) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(path.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8));
     }
+    String syntax(Path path) { return text("Syntax" + key(path), SourceFoldParser.COMPILER_STYLE); }
+    void syntax(Path path, String style) { setText("Syntax" + key(path), style); }
     String bookmarks(Path path) { return bookmarks.getProperty(key(path), ""); }
     void bookmarks(Path path, String value) {
         bookmarks.setProperty(key(path), value);
