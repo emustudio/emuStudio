@@ -182,7 +182,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             f.byteValue.set(7);
             f.selectiveValue.set(true);
             JTextField value = findComponent(f.panel, JTextField.class,
-                    field -> "Value".equals(field.getAccessibleContext().getAccessibleName()) && field.getColumns() == 12);
+                    field -> "Search value".equals(field.getAccessibleContext().getAccessibleName()) && field.getColumns() == 12);
             setText(value, "07");
             triggerButton(findButtonByTooltip(f.panel, "Find"));
             awaitReady(f.panel);
@@ -575,6 +575,8 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             assertEquals(4, onEdt(table::getColumnCount).intValue());
             runOnEdt(() -> table.moveColumn(3, 0));
             JCheckBox strings = findComponent(f.panel, JCheckBox.class, box -> "String column".equals(box.getText()));
+            triggerButton(findComponent(f.panel, JToggleButton.class,
+                    button -> "Compare / strings".equals(button.getToolTipText())));
             triggerButton(strings);
             assertEquals(5, onEdt(table::getColumnCount).intValue());
             assertEquals("Comment", onEdt(() -> table.getColumnName(0)));
@@ -582,8 +584,6 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             triggerButton(strings);
             assertEquals(4, onEdt(table::getColumnCount).intValue());
             f.byteValue.set(65);
-            triggerButton(findComponent(f.panel, JToggleButton.class,
-                    button -> "Compare / strings".equals(button.getToolTipText())));
             triggerButton(findButtonByTooltip(f.panel, "Find strings"));
             awaitReady(f.panel);
             assertTrue(onEdt(strings::isSelected));

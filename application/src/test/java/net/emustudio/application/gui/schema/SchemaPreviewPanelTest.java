@@ -13,13 +13,13 @@ import org.junit.rules.TemporaryFolder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -56,8 +56,8 @@ public class SchemaPreviewPanelTest {
 
             panel.saveSchemaImage();
 
-            assertTrue(waitForImage(output));
-            BufferedImage saved = javax.imageio.ImageIO.read(output.toFile());
+            BufferedImage saved = waitForImage(output);
+            assertNotNull("Schema image export did not finish", saved);
             assertEquals(panel.getPreferredSize().width, saved.getWidth());
             assertEquals(panel.getPreferredSize().height, saved.getHeight());
             assertTrue(saved.getWidth() > panel.getWidth());
@@ -116,13 +116,14 @@ public class SchemaPreviewPanelTest {
         throw new AssertionError("Missing compiler element");
     }
 
-    private boolean waitForImage(Path image) throws Exception {
+    private BufferedImage waitForImage(Path image) throws Exception {
         for (int i = 0; i < 200; i++) {
-            if (Files.size(image) > 0) {
-                return true;
-            }
+            try {
+                BufferedImage saved = javax.imageio.ImageIO.read(image.toFile());
+                if (saved != null) return saved;
+            } catch (IOException incomplete) { /* The export worker may still be writing. */ }
             Thread.sleep(10);
         }
-        return false;
+        return null;
     }
 }

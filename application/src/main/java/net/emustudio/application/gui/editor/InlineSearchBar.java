@@ -21,6 +21,8 @@ public final class InlineSearchBar extends JPanel {
             preserve = new JCheckBox("Preserve case"), selection = new JCheckBox("Selection");
     private final JLabel count = new JLabel("0 matches");
     private final JLabel target = new JLabel();
+    private final JToggleButton replacementToggle;
+    private final List<Component> replacementControls;
     private final Supplier<REditor> active;
     private TextEditorPane scopedPane;
     private Position scopeStart, scopeEnd;
@@ -30,28 +32,33 @@ public final class InlineSearchBar extends JPanel {
     InlineSearchBar(Supplier<REditor> active, Runnable preview) {
         this.active = active;
         GUI gui = new EmuStudioGui();
-        setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][100:180:260,fill][][][grow,fill][]", "[][]"));
+        setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][100:180:260,fill][][][][grow,fill][]", "[][]"));
         find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
         JLabel findLabel = new JLabel("Find"), replaceLabel = new JLabel("Replace");
         findLabel.setLabelFor(find); replaceLabel.setLabelFor(replace);
         JToolBar navigation = gui.toolBar();
+        replacementToggle = gui.toolbarToggleButton(e -> setReplacementVisible(
+                ((JToggleButton) e.getSource()).isSelected()), ICON_REPLACE, "Show replacement controls");
+        replacementToggle.setFocusable(true);
+        replacementToggle.getAccessibleContext().setAccessibleName("Show replacement controls");
+        navigation.add(replacementToggle);
+        navigation.addSeparator();
         button(gui, navigation, ICON_MOVE_UP, "Previous match", () -> next(false));
         button(gui, navigation, ICON_MOVE_DOWN, "Next match", () -> next(true));
         JPanel matching = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 0));
-        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex}) matching.add(option);
+        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex, selection}) matching.add(option);
         JToolBar closing = gui.toolBar();
+        button(gui, closing, ICON_FIND, "Find / replace in files", preview);
         button(gui, closing, ICON_REMOVE, "Close search", () -> { setVisible(false); active.get().grabFocus(); });
-        add(findLabel); add(find); add(navigation); add(matching); add(count); add(closing, "wrap");
+        add(findLabel); add(find); add(navigation); add(matching); add(count); add(target); add(closing, "wrap");
         JToolBar replacements = gui.toolBar();
         button(gui, replacements, ICON_REPLACE, "Replace current match", this::replaceCurrent);
         button(gui, replacements, ICON_REPLACE, "Replace all matches in this pane", this::replaceAll);
-        JPanel replacementOptions = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 0));
-        replacementOptions.add(preserve); replacementOptions.add(selection);
-        JToolBar files = gui.toolBar();
-        button(gui, files, ICON_FIND, "Find / replace in files", preview);
         target.getAccessibleContext().setAccessibleName("Search target");
         selection.setToolTipText("Search only the captured selection in this pane");
-        add(replaceLabel); add(replace); add(replacements); add(replacementOptions); add(target); add(files);
+        add(replaceLabel); add(replace); add(replacements); add(preserve, "span 4, wrap");
+        replacementControls = List.of(replaceLabel, replace, replacements, preserve);
+        setReplacementVisible(false);
         find.addActionListener(e -> next(true)); replace.addActionListener(e -> replaceCurrent());
         DocumentListener listener = REditor.onChange(this::refresh);
         find.getDocument().addDocumentListener(listener); replace.getDocument().addDocumentListener(listener);
@@ -84,7 +91,22 @@ public final class InlineSearchBar extends JPanel {
         target.setToolTipText(file);
         target.getAccessibleContext().setAccessibleDescription(description + " — " + file);
     }
-    public void showSearch() {
+    private void setReplacementVisible(boolean visible) {
+        replacementToggle.setSelected(visible);
+        replacementToggle.setToolTipText(visible ? "Hide replacement controls" : "Show replacement controls");
+        replacementToggle.getAccessibleContext().setAccessibleName(replacementToggle.getToolTipText());
+        for (Component control : replacementControls) control.setVisible(visible);
+        revalidate();
+        repaint();
+    }
+    public void showFind() {
+        showSearch(false);
+    }
+    public void showReplace() {
+        showSearch(true);
+    }
+    private void showSearch(boolean replacements) {
+        setReplacementVisible(replacements);
         String selected = active.get().getSelectedText();
         if (selected != null && !selected.isEmpty()) find.setText(selected);
         setVisible(true); find.requestFocusInWindow(); find.selectAll(); refresh();

@@ -60,7 +60,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private boolean disposed;
     private boolean initializationPending;
     private JToggleButton recordingControl;
-    private final JLabel imageContext;
+    private final JLabel annotationContext;
     private final Dialogs dialogs;
     private final JTabbedPane tabs = new JTabbedPane();
     private final JPanel breakpointPanel;
@@ -198,7 +198,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.instructionRows = new InstructionAnnotationsModel();
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
-        imageContext = gui.label("No program capture yet");
+        annotationContext = gui.label("");
         memoryContext = gui.label("Live bytes — paused CPU");
         baselineContext = gui.label("Baseline: initial capture");
         resultContext = gui.label("All addresses");
@@ -342,10 +342,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         sourceContext.setText(message);
         sourceContext.setToolTipText(message);
         sourceContext.getAccessibleContext().setAccessibleDescription(message);
+        sourceContext.setVisible(!"Source mapping current".equals(message));
         sourceMappingsCurrent = current;
         symbols.setEnabled(current && !running && !tasks.isBusy());
-        if (!current) symbolContext.setText(message);
-        else updateSymbolCount();
+        updateSymbolCount();
     }
 
     private void updateInspectionContext() {
@@ -461,12 +461,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void updateSymbolCount() {
-        if (!sourceMappingsCurrent) {
-            symbolContext.setText(sourceContext.getText());
-            return;
-        }
-        symbolContext.setText(compiledSymbols.isEmpty() ? "Compile sources to browse symbols."
-                : symbolRows.size() + " of " + compiledSymbols.size() + " symbols · source-only declarations have no memory address");
+        symbolContext.setVisible(!compiledSymbols.isEmpty());
+        symbolContext.setText(symbolRows.size() == compiledSymbols.size() ? compiledSymbols.size() + " symbols"
+                : symbolRows.size() + " of " + compiledSymbols.size() + " symbols");
+        symbolContext.setToolTipText("Source-only declarations have no memory address. Names and addresses come from the last successful compilation.");
     }
 
     @Override
@@ -483,8 +481,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         session.installImage(captured);
         image = captured.image;
         if (initial) baseline = image;
-        imageContext.setText("Memory snapshot");
-        imageContext.setToolTipText("Annotations belong to memory image " + image.identity());
+        annotationContext.setToolTipText("Annotations belong to memory image " + image.identity());
         index = captured.annotations;
         resetAnnotationEditor.run();
         refreshAnnotations(annotationFilter.getText());
@@ -927,8 +924,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
         });
         pattern.addActionListener(e -> find.doClick());
-        line(controls, label("Find", findKind), findKind, label("Value", pattern), pattern,
+        findKind.getAccessibleContext().setAccessibleName("Search type");
+        line(controls, label("Find", pattern), findKind, pattern,
                 widthLabel, width, bigEndian, find);
+        pattern.getAccessibleContext().setAccessibleName("Search value");
         JComboBox<String> rescan = new JComboBox<>(new String[] {"Changed", "Equal", "Increased", "Decreased"});
         JToolBar resultTools = line(controls, resultContext, button(ICON_MOVE_UP, "Previous", () -> selectResult(-1)),
                 button(ICON_MOVE_DOWN, "Next", () -> selectResult(1)), rescan,
@@ -966,7 +965,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         resultTools.add(memoryContext);
         capturedStrings.setToolTipText("Show or hide the captured-string column without changing memory or results");
         capturedStrings.addActionListener(event -> configureMemoryColumns());
-        resultTools.add(capturedStrings);
         JToolBar compareActions = line(compareTools, button(ICON_ASCII, "Find strings", () -> {
             int selected = selectedBank();
             runAnalysis(() -> {
@@ -1018,6 +1016,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             });
         }));
         compareActions.add(button(ICON_COMPILER, "Show source", () -> showSource(inspectedAddress)));
+        compareActions.add(capturedStrings);
         controls.add(compareTools, "span, growx, wrap");
         compareActions.add(baselineContext);
         panel.add(scrollTools(controls), BorderLayout.NORTH);
@@ -1098,9 +1097,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JCheckBox bookmark = new JCheckBox("Bookmark");
         JComboBox<String> kind = new JComboBox<>(new String[] {"UNKNOWN", "CODE", "DATA"});
         int[] editingTarget = {selectedBank(), 0};
-        JLabel editingContext = gui.label("Editing bank 0:0000");
-        Runnable updateEditingContext = () -> editingContext.setText(
-                String.format("Editing bank %d:%04X", editingTarget[0], editingTarget[1]));
+        annotationContext.getAccessibleContext().setAccessibleName("Annotation editing address");
+        Runnable updateEditingContext = () -> annotationContext.setText(
+                String.format("Edit %04X · Bank %d", editingTarget[1], editingTarget[0]));
         resetAnnotationEditor = () -> {
             annotations.clearSelection();
             editingTarget[0] = selectedBank();
@@ -1112,8 +1111,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             kind.setSelectedItem(entry == null ? "UNKNOWN" : entry.kind);
             updateEditingContext.run();
         };
-        line(tools, imageContext, editingContext,
-                button(ICON_RENAME, "Annotate inspected address", () -> resetAnnotationEditor.run()));
         annotations.addListSelectionListener(e -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (!e.getValueIsAdjusting() && entry != null) {
@@ -1127,7 +1124,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 guard(() -> navigate(entry.address, entry.bank, true));
             }
         });
-        line(tools, label("Filter", annotationFilter), annotationFilter, bookmarksOnly,
+        JToolBar filterTools = line(tools, label("Filter", annotationFilter), annotationFilter, bookmarksOnly,
                 button(ICON_JUMP, "Go to annotation", () -> {
                     AnnotationIndex.Entry entry = annotations.getSelectedValue();
                     if (entry != null) navigate(entry.address, entry.bank, true);
@@ -1140,6 +1137,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         model.refreshData();
                     }
                 }));
+        filterTools.addSeparator();
+        filterTools.add(annotationContext);
+        filterTools.add(button(ICON_RENAME, "Annotate inspected address", () -> resetAnnotationEditor.run()));
         annotationFilter.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
@@ -1158,7 +1158,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             session.saveAnnotations();
             refreshAnnotations(annotationFilter.getText());
             model.refreshData();
-        }), button(ICON_SAVE, "Save", () -> {
+        }), button(ICON_SAVE, "Export annotations", () -> {
             Path path = choose(true, false);
             if (path != null) index.save(path);
         }), button(ICON_LOAD, "Import", () -> {
@@ -1214,7 +1214,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         watchFormat.setToolTipText("Watch value format");
         watchFormat.getAccessibleContext().setAccessibleName("Watch value format");
 
-        line(tools, label("Expression", expression), expression, add);
+        JPanel entry = gui.panel("insets 4, fillx", "[][grow][]", "");
+        entry.add(label("Expression", expression));
+        entry.add(expression, "growx");
+        JToolBar entryActions = toolBar();
+        entryActions.add(add);
+        entry.add(entryActions);
+        tools.add(entry, "span, growx, wrap");
         JToolBar watchTools = line(tools, button(ICON_REMOVE, "Remove", () -> {
             int selected = watches.getSelectedIndex();
             if (selected >= 0) {
@@ -1517,8 +1523,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(button(ICON_STEP, "Go to instruction", () -> {
             if (nodes.getSelectedItem() != null) navigate((Integer) nodes.getSelectedItem(), selectedBank(), true);
         }));
-        tools.add(gui.label("Analyze an address, then select a reference or instruction. Indirect targets may be unresolved."), "span, wrap");
-        tools.add(gui.label("Graph: arrows select instructions; Enter follows. PC marks the live instruction."), "span, wrap");
+        JLabel flowHint = gui.label("Select a reference or instruction to inspect. Indirect targets may be unresolved.");
+        flowHint.setToolTipText("Graph: arrow keys select instructions; Enter follows. PC marks the live instruction.");
+        graph.getAccessibleContext().setAccessibleDescription(flowHint.getToolTipText());
+        tools.add(flowHint, "span, wrap");
         references.getAccessibleContext().setAccessibleName("Static references");
         references.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "followReference");
         references.getActionMap().put("followReference", new AbstractAction() {
@@ -1567,8 +1575,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tools.add(actions, BorderLayout.NORTH);
         tools.add(
                 gui.label(
-                        "Historical state is read-only. Move PC Back does not restore machine"
-                                + " state."),
+                        "Read-only history. Moving PC does not restore machine state."),
                 BorderLayout.SOUTH);
         historicalState.setEditable(false);
         historicalState.setFont(new Font(Font.MONOSPACED, Font.PLAIN, historicalState.getFont().getSize()));
@@ -1587,7 +1594,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void showHistoricalState(int selected) {
         if (selected < 0 || selected >= displayedHistory.size()) return;
         DebugCPU.Instruction event = displayedHistory.get(selected);
-        StringBuilder text = new StringBuilder("Historical state — live CPU unchanged\n\nChanged registers\n");
+        StringBuilder text = new StringBuilder("Changed registers\n");
         List<String> names = new ArrayList<>(event.before.keySet());
         names.sort(String::compareTo);
         boolean changed = false;

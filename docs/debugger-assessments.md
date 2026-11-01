@@ -82,6 +82,11 @@ current annotations, not a reconstructed historical source map. Flow nodes disti
 support keyboard inspection without changing execution state. Split-editor headers identify file, side and active pane;
 search shows the target pane, and file replacement previews include surrounding code.
 
+Find opens a single search row; Replace or its toolbar toggle reveals replacement controls. File search remains available
+in either mode. Healthy source-map status is available in the compile-status tooltip; stale-source and other actionable
+messages stay visible. Memory's Compare / strings controls include the optional String column. Annotation editing address,
+filter and actions share a row, and History keeps one read-only warning above the recorded values.
+
 ## Validation
 
 Application, 8080/Z80, byte-memory, Spectrum bus/ULA and emuLib suites passed with the local composite build.

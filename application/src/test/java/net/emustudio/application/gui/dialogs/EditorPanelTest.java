@@ -6,6 +6,7 @@ import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.TabbedEditor;
+import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -41,9 +42,57 @@ public class EditorPanelTest extends AbstractSwingTest {
                 frame.validate();
             });
             assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
-            runOnEdt(() -> { editor.searchBar().showSearch(); frame.validate(); });
+            runOnEdt(() -> { editor.searchBar().showReplace(); frame.validate(); });
             assertTrue(onEdt(() -> editor.searchBar().getHeight() < 120));
             assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
+    public void findShowsOneRowAndReplacementCanBeRevealedWithoutLosingTheQuery() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        EditorPanel panel = createPanel(dialogs, editor);
+        JFrame frame = showInFrame(panel);
+        try {
+            runOnEdt(() -> panel.getFindAction().actionPerformed(new ActionEvent(panel, 0, "Find")));
+            JTextField find = findComponent(panel, JTextField.class,
+                    field -> "Find text".equals(field.getAccessibleContext().getAccessibleName()));
+            JTextField replacement = findComponent(panel, JTextField.class,
+                    field -> "Replacement text".equals(field.getAccessibleContext().getAccessibleName()));
+            assertFalse(onEdt(replacement::isVisible));
+            int findHeight = onEdt(() -> { frame.validate(); return editor.searchBar().getHeight(); });
+            setText(find, "counter");
+            triggerButton(findComponent(panel, JToggleButton.class,
+                    button -> "Show replacement controls".equals(button.getToolTipText())));
+            assertTrue(onEdt(replacement::isVisible));
+            assertEquals("counter", onEdt(find::getText));
+            assertTrue(onEdt(() -> { frame.validate(); return editor.searchBar().getHeight(); }) > findHeight);
+            runOnEdt(() -> panel.getFindAction().actionPerformed(new ActionEvent(panel, 0, "Find")));
+            assertFalse(onEdt(replacement::isVisible));
+            runOnEdt(() -> panel.getReplaceAction().actionPerformed(new ActionEvent(panel, 0, "Replace")));
+            assertTrue(onEdt(replacement::isVisible));
+            assertEquals("counter", onEdt(find::getText));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
+    public void compilerStatusKeepsSourceWarningsButDoesNotRepeatSuccessOrFailure() {
+        EditorPanel panel = createPanel(mock(Dialogs.class), createEditor(false, true));
+        try {
+            JLabel source = findComponent(panel, JLabel.class,
+                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> panel.setSourceNavigationStatus("Source mapping current"));
+            assertFalse(onEdt(source::isVisible));
+            runOnEdt(() -> panel.setSourceNavigationStatus("Source changed — compile the program to synchronize"));
+            assertTrue(onEdt(source::isVisible));
+            runOnEdt(() -> {
+                panel.getCompileAction().putValue(CompileAction.STATUS_PROPERTY, "Compilation failed (1 error).");
+                panel.setSourceNavigationStatus("Compilation failed — fix the source and compile again");
+            });
+            assertFalse(onEdt(source::isVisible));
+            runOnEdt(() -> panel.setSourceNavigationStatus("Source inputs unavailable — save files and compile the program"));
+            assertTrue(onEdt(source::isVisible));
         } finally { runOnEdt(panel::dispose); }
     }
 

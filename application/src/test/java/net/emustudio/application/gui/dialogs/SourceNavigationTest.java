@@ -76,12 +76,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
             assertTrue(onEdt(source::getText).contains("Source changed"));
+            assertTrue(onEdt(source::isVisible));
             JList<?> symbols = findComponent(f.debugger, JList.class,
                     list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
             assertFalse(onEdt(symbols::isEnabled));
             runOnEdt(() -> { f.pane.setText(f.text); assertTrue(f.editor.saveFile()); });
             f.compile(false);
             assertTrue(onEdt(symbols::isEnabled));
+            f.sourceLine(2);
+            assertFalse(onEdt(source::isVisible));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }
