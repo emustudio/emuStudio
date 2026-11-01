@@ -19,8 +19,8 @@ public class StepBackAction extends AbstractAction {
     private final Runnable refreshDebugTable;
 
     public StepBackAction(VirtualComputer computer, DebugTableModel debugTableModel, Runnable refreshDebugTable) {
-        super("Step Back", loadIcon(ICON_STEP_BACK));
-        putValue(SHORT_DESCRIPTION, "Step back");
+        super("Move PC Back", loadIcon(ICON_STEP_BACK));
+        putValue(SHORT_DESCRIPTION, "Move program counter backward (registers and memory remain unchanged)");
         this.computer = Objects.requireNonNull(computer);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

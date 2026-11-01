@@ -45,7 +45,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         assertEquals("emuStudio [Demo computer]", onEdt(frame::getTitle));
         assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
-        assertEquals("Emulator", onEdt(() -> tabs.getTitleAt(1)));
+        assertEquals("Debugger", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals("File", onEdt(() -> menuBar.getMenu(0).getText()));
         assertEquals("Edit", onEdt(() -> menuBar.getMenu(1).getText()));
         assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));

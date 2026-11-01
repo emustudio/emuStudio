@@ -120,7 +120,7 @@ public class StudioFrame extends JFrame {
     private void resizeComponents() {
         int height = getHeight();
         editorPanel.resizeComponents(height);
-        emulatorPanel.resizeComponents(height);
+        if (emulatorPanel.isShowing()) emulatorPanel.resizeComponents(height);
     }
 
     private void initComponents() {
@@ -146,7 +146,7 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.setFocusable(false);
         tabbedPane.addTab(SOURCE_CODE_EDITOR, editorPanel);
-        tabbedPane.addTab("Emulator", emulatorPanel);
+        tabbedPane.addTab("Debugger", emulatorPanel);
 
         JMenuBar mainMenu = setupMainMenu();
         setJMenuBar(mainMenu);
@@ -202,6 +202,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void formWindowClosing() {
+        emulatorPanel.close();
         editorPanel.dispose();
         dispose();
     }

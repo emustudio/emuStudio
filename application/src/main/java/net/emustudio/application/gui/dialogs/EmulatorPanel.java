@@ -3,6 +3,8 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.application.debugger.DebuggerPanel;
+import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -19,6 +21,8 @@ import net.emustudio.emulib.runtime.ui.GUI;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -26,16 +30,19 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
-    private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
 
     private final GUI gui;
     private final JPanel statusWindow;
     private final JToolBar toolDebug;
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
+    private final JLabel listingState;
 
     private final JList<String> lstDevices = new JList<>();
-    private final JSplitPane splitPerDebug;
+    private final JSplitPane splitLeftRight;
+    private final JSplitPane sidebar;
+    private final JSplitPane cpuWatches;
+    private boolean dividersInitialized;
 
     private final DebugTableModel debugTableModel;
     private final JTable debugTable;
@@ -57,6 +64,10 @@ public class EmulatorPanel extends JPanel {
 
     private final MemoryContext<?> memoryContext;
     private final MemoryContext.MemoryListener memoryListener;
+    private final DebuggerPanel inspection;
+    private final CPU cpu;
+    private CPU.CPUListener cpuListener;
+    private boolean closed;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
@@ -66,9 +77,14 @@ public class EmulatorPanel extends JPanel {
         Objects.requireNonNull(sourceNavigator);
         this.memoryContext = memoryContext;
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
-        this.statusWindow = gui.section("Status", "insets 0, fill", "[grow]", "[grow]");
+        this.statusWindow = gui.section("CPU status / registers", "insets 0, fill", "[grow]", "[grow]");
+        this.listingState = gui.label("Running — pause to inspect instructions.");
+        this.listingState.setHorizontalAlignment(SwingConstants.CENTER);
         this.debugTable = new DebugTableImpl(debugTableModel);
+        this.debugTable.getAccessibleContext().setAccessibleName("Instruction listing");
+        this.debugTable.setToolTipText("Select to inspect; double-click or press Enter to open mapped source.");
         this.toolDebug = gui.toolBar();
+        this.toolDebug.putClientProperty("FlatLaf.style", "focusableButtons: true");
 
         paneDebug = gui.scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -79,23 +95,16 @@ public class EmulatorPanel extends JPanel {
         debugTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event) || memoryContext == null) {
+                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event) || memoryContext == null
+                        || isBreakpointCellSelected()
+                        || (inspection != null && !inspection.isInstructionView())) {
                     return;
                 }
                 int viewRow = debugTable.rowAtPoint(event.getPoint());
                 if (viewRow < 0) {
                     return;
                 }
-                int address = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(viewRow));
-                if (address < 0) {
-                    return;
-                }
-                Optional.ofNullable(memoryContext.annotations())
-                        .map(annotations -> annotations.get(address, SourceCodeAnnotation.class))
-                        .flatMap(annotations -> annotations.stream()
-                                .min(Comparator.comparingLong(SourceCodeAnnotation::getPluginId)))
-                        .map(SourceCodeAnnotation::getPosition)
-                        .ifPresent(sourceNavigator);
+                navigateToSource(viewRow, sourceNavigator);
             }
         });
 
@@ -106,7 +115,9 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        computer.getCPU().flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel())).ifPresent(this::setStatusPanel);
+        computer.getCPU().flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel())).ifPresentOrElse(
+                this::setStatusPanel,
+                () -> statusWindow.add(gui.label("CPU status is unavailable for this virtual computer."), "growx"));
 
         this.stepBackAction = new StepBackAction(computer, debugTableModel, this::refreshDebugTable);
         this.resetAction = new ResetAction(emulationController);
@@ -117,24 +128,62 @@ public class EmulatorPanel extends JPanel {
         this.runTimedAction = new RunTimedAction(emulationController, dialogs);
         this.stepAction = new StepAction(emulationController);
         this.jumpAction = new JumpAction(computer, dialogs, this::refreshDebugTable);
-        this.breakpointAction = new BreakpointAction(parent, computer, dialogs, this::refreshDebugTable, gui);
+        this.cpu = computer.getCPU().orElse(null);
+        panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
+        JPanel debuggerPanel = gui.panel("insets 0, fill", "[grow]", "[grow][]");
+        JPanel listing = new JPanel();
+        listing.setLayout(new OverlayLayout(listing));
+        listingState.setAlignmentX(0.5f);
+        listingState.setAlignmentY(0.5f);
+        listingState.setVisible(false);
+        listing.add(listingState);
+        listing.add(paneDebug);
+        debuggerPanel.add(listing, "grow, wrap, hmin 0");
+        debuggerPanel.add(panelPages, "growx");
+
+        this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
+                session, (DebugTableImpl) debugTable, paneDebug, debuggerPanel,
+                sourceNavigator, this::refreshDebugTable, gui, dialogs)).orElse(null);
+        this.breakpointAction = new BreakpointAction(() -> {
+            if (inspection != null) inspection.showBreakpointDialog(parent);
+        });
         this.showMemoryAction = new ShowMemoryAction(parent, computer, dialogs);
 
         showMemoryAction.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
-        breakpointAction.setEnabled(computer.getCPU().filter(CPU::isBreakpointSupported).isPresent());
+        breakpointAction.setEnabled(inspection != null && inspection.isBreakpointDialogSupported());
 
         setupDebugToolbar();
-
-        panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
-
-        JPanel debuggerPanel = gui.section("Debugger", "insets dialog", "[grow]", "[][grow][]");
-        debuggerPanel.add(toolDebug, "growx, wrap");
-        debuggerPanel.add(paneDebug, "grow, wrap");
-        debuggerPanel.add(panelPages, "growx");
+        debugTable.getSelectionModel().addListSelectionListener(event -> {
+            if (!event.getValueIsAdjusting() && inspection != null && inspection.isInstructionView()
+                    && !isBreakpointCellSelected()
+                    && runState != CPU.RunState.STATE_RUNNING && debugTable.getSelectedRow() >= 0) {
+                int location = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(debugTable.getSelectedRow()));
+                if (location >= 0) inspection.followAddress(location, memoryContext == null ? 0 : memoryContext.getSelectedBank());
+            }
+        });
+        debugTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "showSource");
+        debugTable.getActionMap().put("showSource", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) {
+                if (isBreakpointCellSelected()) {
+                    if (debugTable.editCellAt(debugTable.getSelectedRow(), debugTable.getSelectedColumn()))
+                        ((AbstractButton) debugTable.getEditorComponent()).doClick(0);
+                    return;
+                }
+                if (inspection != null && !inspection.isInstructionView()) {
+                    inspection.showSelectedSource();
+                    return;
+                }
+                int row = debugTable.getSelectedRow();
+                if (row >= 0) navigateToSource(row, sourceNavigator);
+            }
+        });
 
         this.showDeviceSettingsAction = new ShowDeviceSettingsAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
         this.showDeviceGuiAction = new ShowDeviceGuiAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
 
+        lstDevices.setName("devices");
+        lstDevices.getAccessibleContext().setAccessibleName("Peripheral devices");
+        lstDevices.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         lstDevices.setModel(new AbstractListModel<>() {
             private final List<Device> devices = computer.getDevices();
 
@@ -158,11 +207,14 @@ public class EmulatorPanel extends JPanel {
         lstDevices.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
+                if (e.getClickCount() == 2 && lstDevices.getSelectedIndex() >= 0) {
                     showDeviceGuiAction.actionPerformed(new ActionEvent(this, 0, ""));
                 }
             }
         });
+
+        lstDevices.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "showDevice");
+        lstDevices.getActionMap().put("showDevice", showDeviceGuiAction);
 
         JPanel peripheralPanel = gui.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
         JScrollPane paneDevices = gui.scrollPane(lstDevices);
@@ -171,25 +223,58 @@ public class EmulatorPanel extends JPanel {
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
 
+        if (computer.getDevices().isEmpty()) {
+            peripheralPanel.add(gui.label("No peripheral devices configured."), "wrap");
+        }
         peripheralPanel.add(paneDevices, "grow, wrap");
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        splitPerDebug = gui.splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
-        splitPerDebug.setDividerLocation(500);
-        splitPerDebug.setAutoscrolls(true);
+        JScrollPane statusScroll = gui.scrollPane(statusWindow);
+        statusScroll.setMinimumSize(new Dimension(280, 140));
+        JPanel watches = gui.section("Watches", "insets 0, fill", "[grow]", "[grow]");
+        watches.add(inspection != null ? inspection.watchesPanel() : gui.label("Watches need a CPU."), "grow");
+        watches.setMinimumSize(new Dimension(280, 170));
+        cpuWatches = gui.splitPaneTopToBottom(statusScroll, watches, 0.55);
+        cpuWatches.setName("debuggerCpuWatches");
+        peripheralPanel.setMinimumSize(new Dimension(280, 110));
+        sidebar = gui.splitPaneTopToBottom(cpuWatches, peripheralPanel, 1.0);
+        sidebar.setName("debuggerSidebar");
+        sidebar.setPreferredSize(new Dimension(360, 650));
+        sidebar.setMinimumSize(new Dimension(280, 420));
 
-        JSplitPane splitLeftRight = gui.splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
-        splitLeftRight.setFocusable(false);
-        splitLeftRight.setDividerLocation(1.0);
+        JComponent workspace = inspection != null ? inspection : debuggerPanel;
+        workspace.setMinimumSize(new Dimension(360, 180));
+        workspace.setPreferredSize(new Dimension(680, 650));
+        splitLeftRight = gui.splitPaneLeftToRight(workspace, sidebar, 0.75);
+        splitLeftRight.setName("debuggerColumns");
+        splitLeftRight.setDividerLocation(700);
+        splitLeftRight.addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent event) {
+                if (isShowing()) resizeComponents(getHeight());
+            }
+        });
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[grow]"));
+        setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[][grow]"));
+        JPanel header = gui.panel("insets 0, fillx, hidemode 3", "[][grow]", "[]");
+        header.add(toolDebug);
+        if (inspection != null) header.add(inspection.navigationToolbar(), "growx");
+        JScrollPane headerScroll = gui.scrollPane(header);
+        headerScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        headerScroll.setMinimumSize(new Dimension(0, 0));
+        add(headerScroll, "growx, hmin pref, wrap");
         add(splitLeftRight, "grow");
+        addHierarchyListener(event -> {
+            if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                resizeComponents(getHeight());
+            }
+        });
 
         this.memoryListener = new MemoryContext.MemoryListener() {
             @Override
             public void memoryContentChanged(int fromLocation, int toLocation) {
                 runOnEdt(() -> {
+                    if (closed) return;
                     debugTableModel.memoryChanged(fromLocation, toLocation + 1);
                     refreshDebugTable();
                 });
@@ -201,7 +286,8 @@ public class EmulatorPanel extends JPanel {
             }
         };
 
-        computer.getCPU().ifPresent(cpu -> cpu.addCPUListener(new CPU.CPUListener() {
+        if (cpu != null) {
+            cpuListener = new CPU.CPUListener() {
 
             @Override
             public void internalStateChanged() {
@@ -212,6 +298,7 @@ public class EmulatorPanel extends JPanel {
             public void runStateChanged(CPU.RunState state) {
                 runState = state;
                 runOnEdt(() -> {
+                    if (closed) return;
                     if (state == CPU.RunState.STATE_RUNNING) {
                         setStateRunning();
                     } else {
@@ -219,26 +306,39 @@ public class EmulatorPanel extends JPanel {
                     }
                 });
             }
-        }));
+            };
+            cpu.addCPUListener(cpuListener);
+        }
 
         // initial state
         setStateNotRunning(runState, false);
     }
 
+    private boolean isBreakpointCellSelected() {
+        int column = debugTable.getSelectedColumn();
+        return column >= 0 && debugTable.getColumnClass(column) == BreakpointState.class;
+    }
+
     public void resizeComponents(int height) {
-        if (height <= 0) {
-            return;
+        // Establish the initial proportions once; resizing must preserve the user's dividers.
+        if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {
+            splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
+            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - 140));
+            cpuWatches.setDividerLocation(Math.max(140, (splitLeftRight.getHeight() - 140) / 2));
+            dividersInitialized = true;
         }
-        double rowHeight = debugTable.getRowHeight();
-        double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
-        double heightTogether = additionalHeight + rowHeight * debugTableModel.getRowCount();
+    }
 
-        if (heightTogether + MIN_PERIPHERAL_PANEL_HEIGHT > height) {
-            heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
-        }
-
-        double dividerLocation = Math.min(1.0, heightTogether / (double) height);
-        splitPerDebug.setDividerLocation(dividerLocation);
+    private void navigateToSource(int viewRow, Consumer<SourceCodePosition> sourceNavigator) {
+        if (memoryContext == null) return;
+        int address = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(viewRow));
+        if (address < 0) return;
+        Optional.ofNullable(memoryContext.annotations())
+                .map(annotations -> annotations.get(address, SourceCodeAnnotation.class))
+                .flatMap(annotations -> annotations.stream()
+                        .min(Comparator.comparingLong(SourceCodeAnnotation::getPluginId)))
+                .map(SourceCodeAnnotation::getPosition)
+                .ifPresent(sourceNavigator);
     }
 
     public CPU.RunState getRunState() {
@@ -253,26 +353,45 @@ public class EmulatorPanel extends JPanel {
         statusWindow.repaint();
     }
 
+    @Override
+    public void removeNotify() {
+        close();
+        super.removeNotify();
+    }
+
+    public void close() {
+        if (closed) return;
+        closed = true;
+        if (inspection != null) inspection.close();
+        if (cpu != null && cpuListener != null) cpu.removeCPUListener(cpuListener);
+        if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
+    }
+
     private void setupDebugToolbar() {
-        toolDebug.add(gui.toolbarButton(resetAction));
-        toolDebug.addSeparator();
-        toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
-        toolDebug.add(gui.toolbarButton(stepBackAction));
-        toolDebug.add(gui.toolbarButton(stopAction));
-        toolDebug.add(gui.toolbarButton(pauseAction));
         toolDebug.add(gui.toolbarButton(runAction));
+        toolDebug.add(gui.toolbarButton(pauseAction));
+        toolDebug.add(gui.toolbarButton(stopAction));
         toolDebug.add(gui.toolbarButton(runTimedAction));
         toolDebug.add(gui.toolbarButton(stepAction));
         toolDebug.addSeparator();
+        toolDebug.add(gui.toolbarButton(resetAction));
+        toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
+        toolDebug.add(gui.toolbarButton(stepBackAction));
         toolDebug.add(gui.toolbarButton(jumpAction));
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(breakpointAction));
-        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(showMemoryAction));
+        for (java.awt.Component component : toolDebug.getComponents()) {
+            if (component instanceof JButton) {
+                JButton button = (JButton) component;
+                button.setFocusable(true);
+                button.getAccessibleContext().setAccessibleName(button.getToolTipText());
+            }
+        }
     }
 
     private void refreshDebugTable() {
-        if (debugTable.isEnabled()) {
+        if (!closed && debugTable.isEnabled()) {
             debugTable.repaint();
         }
     }
@@ -285,7 +404,10 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setEnabled(true);
         debugTable.setEnabled(true);
         debugTable.setVisible(true);
+        listingState.setVisible(false);
+        paneDebug.setVisible(true);
         panelPages.setVisible(true);
+        if (inspection != null) inspection.setExecutionRunning(false);
 
         if (state == CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) {
             stopAction.setEnabled(true);
@@ -325,8 +447,11 @@ public class EmulatorPanel extends JPanel {
         runTimedAction.setEnabled(false);
         debugTable.setEnabled(false);
         debugTable.setVisible(false);
+        paneDebug.setVisible(false);
+        listingState.setVisible(true);
         paneDebug.setEnabled(false);
         panelPages.setVisible(false);
+        if (inspection != null) inspection.setExecutionRunning(true);
 
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
     }

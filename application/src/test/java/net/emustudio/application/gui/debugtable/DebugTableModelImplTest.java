@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -212,7 +213,6 @@ public class DebugTableModelImplTest {
         when(ida.rowToLocation(20, 1)).thenReturn(-1);
         when(ida.rowToLocation(20, 2)).thenReturn(100);
         when(ida.rowToLocation(20, 3)).thenReturn(-1);
-        when(ida.isRowAtCurrentInstruction(2)).thenReturn(true);
         when(ida.getCurrentInstructionRow()).thenReturn(4);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
@@ -220,12 +220,38 @@ public class DebugTableModelImplTest {
         assertFalse(model.isCellEditable(1, 0));
         assertFalse(model.isCellEditable(2, 1));
         assertTrue(model.isCellEditable(2, 0));
-        assertTrue(model.isRowAtCurrentInstruction(2));
+        assertFalse(model.isRowAtCurrentInstruction(2));
         assertEquals(100, model.getLocationAt(2));
         assertEquals(19, model.guessPreviousInstructionLocation());
 
         when(ida.rowToLocation(20, 3)).thenReturn(18);
         assertEquals(18, model.guessPreviousInstructionLocation());
+    }
+
+    @Test
+    public void browsingAndPagingLeaveCpuLocationAndCurrentInstructionMarkerIndependent() {
+        CPU cpu = createCpu(true, 20);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(cpu);
+        model.setMaxRows(5);
+
+        model.showAddress(100);
+        assertEquals(100, model.getLocationAt(2));
+        assertFalse(model.isRowAtCurrentInstruction(2));
+        model.nextPage();
+        assertTrue(model.getLocationAt(2) > 100);
+
+        model.currentPage();
+        assertEquals(20, model.getLocationAt(2));
+        assertTrue(model.isRowAtCurrentInstruction(2));
+        assertEquals(20, cpu.getInstructionLocation());
+        verify(cpu, org.mockito.Mockito.never()).setInstructionLocation(anyInt());
+        assertThrows(IllegalArgumentException.class, () -> model.showAddress(-1));
+        assertThrows(IllegalArgumentException.class, () -> model.showAddress(256));
+        model.setMaxRows(0);
+        model.showAddress(255);
+        assertEquals(1, model.getRowCount());
+        assertEquals(255, model.getLocationAt(0));
     }
 
     private CPU createCpu(boolean breakpointSupported, int instructionLocation) {
