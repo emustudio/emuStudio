@@ -88,14 +88,14 @@ public class StudioFrame extends JFrame {
         );
         this.sourceNavigation = emulatorPanel.getDebuggerPanel()
                 .flatMap(panel -> computer.getDebugger().map(session ->
-                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel, editorPanel::setSourceNavigationStatus)))
+                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel)))
                 .orElse(null);
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateWindowTitle);
         this.closeTabAction = new CloseTabAction(editor, this::updateWindowTitle);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
-        this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
+        this.exitAction = new ExitAction(this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
 
         this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings, gui);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);
@@ -151,7 +151,7 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.setFocusable(false);
         tabbedPane.addTab(SOURCE_CODE_EDITOR, editorPanel);
-        tabbedPane.addTab("Debugger", emulatorPanel);
+        tabbedPane.addTab("Emulator", emulatorPanel);
 
         JMenuBar mainMenu = setupMainMenu();
         setJMenuBar(mainMenu);
@@ -204,6 +204,11 @@ public class StudioFrame extends JFrame {
         mnuHelp.add(gui.menuItem(aboutAction));
         mainMenuBar.add(mnuHelp);
         return mainMenuBar;
+    }
+
+    boolean confirmSaveBeforeExit() {
+        return emulatorPanel.getDebuggerPanel().map(panel -> panel.confirmSaveAnnotations()).orElse(true)
+                && editorPanel.confirmSave();
     }
 
     private void formWindowClosing() {

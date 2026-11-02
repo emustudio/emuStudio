@@ -15,7 +15,6 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /** Coordinates view selections; execution state and source editing histories remain their owners'. */
 final class SourceNavigation implements AutoCloseable {
@@ -23,13 +22,12 @@ final class SourceNavigation implements AutoCloseable {
     private final DebugSession session;
     private final TabbedEditor editor;
     private final DebuggerPanel debugger;
-    private final Consumer<String> sourceStatus;
     private volatile SourceAddressMap mappings = SourceAddressMap.empty();
     private volatile boolean closed;
     private boolean synchronizing;
     private volatile long compilation;
     private volatile boolean compiling;
-    private volatile String mappingStatus = "Compile sources to synchronize navigation";
+    private volatile String mappingStatus = "";
     private boolean failed, inputCaptureFailed;
     private Map<Path, String> inputs = Map.of();
     private volatile Path activeSource;
@@ -108,12 +106,11 @@ final class SourceNavigation implements AutoCloseable {
         }
     };
 
-    SourceNavigation(Compiler compiler, DebugSession session, TabbedEditor editor, DebuggerPanel debugger, Consumer<String> sourceStatus) {
+    SourceNavigation(Compiler compiler, DebugSession session, TabbedEditor editor, DebuggerPanel debugger) {
         this.compiler = compiler;
         this.session = session;
         this.editor = editor;
         this.debugger = debugger;
-        this.sourceStatus = java.util.Objects.requireNonNull(sourceStatus);
         activeSource = editor.getCurrentFile().map(java.io.File::toPath).orElse(null);
         editor.setSourcePositionChanged(this::sourceSelected);
         debugger.setAddressSelectionListener(this::addressSelected);
@@ -155,7 +152,6 @@ final class SourceNavigation implements AutoCloseable {
 
     private void showStatus(String message, boolean current) {
         debugger.setSourceNavigationStatus(message, current);
-        sourceStatus.accept(message);
     }
 
     private void publishStatus(long generation, String message, boolean current) {

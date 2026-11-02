@@ -140,6 +140,42 @@ public class DebuggerStateTest {
     }
 
     @Test
+    public void disabledNativeBreakpointsPersistWithoutBeingInstalledOnCpu() throws Exception {
+        Path file = Files.createTempDirectory("disabled-breakpoints").resolve("computer.debugger");
+        for (int pass = 0; pass < 2; pass++) {
+            CPU cpu = mock(CPU.class);
+            Set<Integer> addresses = new HashSet<>();
+            when(cpu.getDebugger()).thenReturn(Optional.empty());
+            when(cpu.getTitle()).thenReturn("Native CPU");
+            when(cpu.getAddressSpaceSize()).thenReturn(32);
+            if (pass == 1) addresses.add(3); // Computer configuration may already install a breakpoint.
+            when(cpu.isBreakpointSupported()).thenReturn(true);
+            when(cpu.isBreakpointSet(anyInt())).thenAnswer(c -> addresses.contains(c.getArgument(0)));
+            when(cpu.getBreakpoints()).thenAnswer(c -> Set.copyOf(addresses));
+            doAnswer(c -> addresses.add(c.getArgument(0))).when(cpu).setBreakpoint(anyInt());
+            doAnswer(c -> addresses.remove(c.getArgument(0))).when(cpu).unsetBreakpoint(anyInt());
+            try (DebugSession session = new DebugSession(cpu, null, file)) {
+                if (pass == 0) {
+                    session.setBreakpointState(3, BreakpointState.KEEP_INSPECTION);
+                    session.setBreakpointState(5, BreakpointState.ON);
+                    session.toggleOrdinaryBreakpoint(3);
+                    session.toggleOrdinaryBreakpoint(5);
+                    session.save();
+                }
+                assertEquals(List.of(3, 5), session.ordinaryBreakpoints());
+                assertTrue(addresses.isEmpty());
+                assertEquals(BreakpointState.OFF, session.breakpointState(3));
+                if (pass == 1) {
+                    session.toggleOrdinaryBreakpoint(3);
+                    session.toggleOrdinaryBreakpoint(5);
+                    assertEquals(BreakpointState.KEEP_INSPECTION, session.breakpointState(3));
+                    assertEquals(BreakpointState.ON, session.breakpointState(5));
+                }
+            }
+        }
+    }
+
+    @Test
     public void portableHitWinsOverNativePcAndNewRunDiscardsPendingHit() throws Exception {
         DebugMemory memory = new DebugMemory(32, 2, 16);
         CPU cpu = cpu(new DebugProbe("Z80", memory, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class)));

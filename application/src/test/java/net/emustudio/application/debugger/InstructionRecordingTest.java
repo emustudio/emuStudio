@@ -75,6 +75,167 @@ public class InstructionRecordingTest {
     }
 
     @Test
+    public void filteredPagesFindMatchesBeyondFirstRawPageAndPreserveSeekCursors() throws Exception {
+        Path path = destination();
+        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
+            for (int i = 1; i <= 2052; i++) writer.append(event(i));
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            InstructionRecording.Reader.Cursor start = reader.cursor();
+            List<DebugCPU.Instruction> first = reader.nextPage(2, event -> event.sequence > 2048);
+            assertEquals(2, first.size());
+            assertEquals(2049, first.get(0).sequence);
+            assertEquals(2050, first.get(1).sequence);
+            assertFalse(reader.finished());
+            InstructionRecording.Reader.Cursor next = reader.cursor();
+
+            reader.seek(start);
+            assertEquals(2049, reader.nextPage(2, event -> event.sequence > 2048).get(0).sequence);
+            reader.seek(next);
+            List<DebugCPU.Instruction> last = reader.nextPage(2, event -> event.sequence > 2048);
+            assertEquals(2, last.size());
+            assertEquals(2051, last.get(0).sequence);
+            assertEquals(2052, last.get(1).sequence);
+            assertTrue(reader.complete());
+            assertTrue(reader.finished());
+            assertEquals("Complete recording: 2052 instructions", reader.status());
+        }
+    }
+
+    @Test
+    public void noMatchesScanWholeRecordingAndValidateAllEventCounts() throws Exception {
+        Path path = destination();
+        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
+            for (int i = 1; i <= 2052; i++) writer.append(event(i));
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertTrue(reader.nextPage(1, event -> false).isEmpty());
+            assertTrue(reader.complete());
+            assertTrue(reader.finished());
+            assertEquals("Complete recording: 2052 instructions", reader.status());
+        }
+    }
+
+    @Test
+    public void fullFilteredPageScansTrailingNonmatchesAndVerifiesFooter() throws Exception {
+        Path path = destination();
+        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
+            for (int i = 1; i <= 2052; i++) writer.append(event(i));
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            List<DebugCPU.Instruction> page = reader.nextPage(1024, event -> event.sequence <= 1024);
+            assertEquals(1024, page.size());
+            assertEquals(1024, page.get(1023).sequence);
+            assertTrue(reader.complete());
+            assertTrue(reader.finished());
+            assertEquals("Complete recording: 2052 instructions", reader.status());
+        }
+    }
+
+    @Test
+    public void fullFilteredPageLeavesCursorBeforeNextMatchAfterSkippedEvents() throws Exception {
+        Path path = destination();
+        InstructionRecording.write(path, header, List.of(event(1), event(2), event(3), event(4), event(5)));
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertEquals(1, reader.nextPage(1, event -> event.sequence == 1 || event.sequence == 4).get(0).sequence);
+            assertFalse(reader.finished());
+            InstructionRecording.Reader.Cursor next = reader.cursor();
+            assertEquals(4, reader.nextPage(1).get(0).sequence);
+            reader.seek(next);
+            assertEquals(4, reader.nextPage(1, event -> event.sequence == 4).get(0).sequence);
+            assertTrue(reader.complete());
+            assertTrue(reader.finished());
+            assertEquals("Complete recording: 5 instructions", reader.status());
+        }
+    }
+
+    @Test
+    public void noMatchesStillReportsMissingFooter() throws Exception {
+        Path path = destination();
+        InstructionRecording.write(path, header, List.of(event(1), event(2)));
+        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+            file.setLength(file.length() - 17);
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertTrue(reader.nextPage(1, event -> false).isEmpty());
+            assertTrue(reader.finished());
+            assertFalse(reader.complete());
+            assertTrue(reader.status().contains("Incomplete"));
+        }
+    }
+
+    @Test
+    public void filteredScanCancellationPreservesCursorAndCompletenessState() throws Exception {
+        Path path = destination();
+        InstructionRecording.write(path, header, List.of(event(1), event(2), event(3)));
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            try {
+                assertThrows(InterruptedIOException.class, () -> reader.nextPage(1, event -> {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }));
+                assertTrue(Thread.currentThread().isInterrupted());
+                assertFalse(reader.finished());
+                assertFalse(reader.complete());
+                assertTrue(reader.status().contains("unverified"));
+            } finally {
+                Thread.interrupted();
+            }
+            assertEquals(2, reader.nextPage(1).get(0).sequence);
+            assertEquals(3, reader.nextPage(1).get(0).sequence);
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void filteredScanPropagatesPredicateFailuresWithoutInvalidatingRecording() throws Exception {
+        Path path = destination();
+        InstructionRecording.write(path, header, List.of(event(1), event(2)));
+        IllegalStateException failure = new IllegalStateException("filter failed");
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertSame(failure, assertThrows(IllegalStateException.class,
+                    () -> reader.nextPage(1, event -> { throw failure; })));
+            assertFalse(reader.finished());
+            assertEquals(2, reader.nextPage(1).get(0).sequence);
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void filteredScanRejectsInvalidSkippedSequenceAndMismatchedFooter() throws Exception {
+        Path path = destination();
+        InstructionRecording.write(path, header, List.of(event(1), event(2)));
+        byte[] valid = Files.readAllBytes(path);
+        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+            file.readInt();
+            file.readInt();
+            file.readUTF();
+            int registers = file.readInt();
+            for (int i = 0; i < registers; i++) {
+                file.readUTF();
+                file.readInt();
+            }
+            assertEquals(1, file.readUnsignedByte());
+            file.writeLong(0);
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertThrows(IOException.class, () -> reader.nextPage(1, event -> false));
+            assertFalse(reader.complete());
+            assertTrue(reader.status().contains("sequence"));
+        }
+        Files.write(path, valid);
+        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+            file.seek(file.length() - 16);
+            file.writeLong(1);
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertThrows(IOException.class, () -> reader.nextPage(1, event -> false));
+            assertFalse(reader.complete());
+            assertTrue(reader.status().contains("footer"));
+        }
+    }
+
+    @Test
     public void retainsCompleteEventsAndReportsTruncatedOrMissingFooter() throws Exception {
         Path path = destination();
         InstructionRecording.write(path, header, List.of(event(10), event(11)));

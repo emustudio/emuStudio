@@ -8,6 +8,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 /** Versioned execution recordings. Buffered writes apply backpressure; readers retain only one page. */
 public final class InstructionRecording {
@@ -169,16 +170,18 @@ public final class InstructionRecording {
         public String status() { return status; }
 
         public List<DebugCPU.Instruction> nextPage(int limit) throws IOException {
+            return nextPage(limit, event -> true);
+        }
+
+        public List<DebugCPU.Instruction> nextPage(int limit, Predicate<DebugCPU.Instruction> matches) throws IOException {
             if (limit < 1 || limit > 10000) throw new IllegalArgumentException("Page size must be 1..10000");
+            Objects.requireNonNull(matches);
             List<DebugCPU.Instruction> page = new ArrayList<>();
             while (!finished) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Recording scan interrupted");
                 try {
                     long position = in.getFilePointer();
                     int marker = in.readUnsignedByte();
-                    if (marker == EVENT && page.size() == limit) {
-                        in.seek(position);
-                        break;
-                    }
                     if (marker == END) {
                         if (in.readLong() != count || in.readLong() != lastSequence || in.read() != -1)
                             throw new IOException("Recording footer does not match its events");
@@ -186,6 +189,7 @@ public final class InstructionRecording {
                         finished = true;
                         status = "Complete recording: " + count + " instructions";
                     } else if (marker == EVENT) {
+                        long previousSequence = lastSequence;
                         long sequence = in.readLong();
                         int address = in.readInt(), bank = in.readInt();
                         if (sequence <= lastSequence || bank < 0)
@@ -202,10 +206,20 @@ public final class InstructionRecording {
                                 throw new IOException("Invalid recorded memory access");
                             accesses.add(new DebugCPU.Access(at, accessBank, value, write));
                         }
-                        page.add(new DebugCPU.Instruction(sequence, address, bank, mnemonic, opcodes,
-                                before, after, accesses, completed));
+                        DebugCPU.Instruction event = new DebugCPU.Instruction(sequence, address, bank, mnemonic, opcodes,
+                                before, after, accesses, completed);
                         count++;
                         lastSequence = sequence;
+                        if (matches.test(event)) {
+                            if (page.size() == limit) {
+                                // Skipped events belong to this page; the next match belongs to the next page.
+                                in.seek(position);
+                                count--;
+                                lastSequence = previousSequence;
+                                break;
+                            }
+                            page.add(event);
+                        }
                     } else throw new IOException("Invalid recording event marker");
                 } catch (EOFException e) {
                     finished = true;

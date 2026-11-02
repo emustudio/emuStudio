@@ -132,13 +132,54 @@ public class DebuggerPanelTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
+    public void enableDisableTogglesOrdinaryBreakpointWithoutLosingRowOrInspectionPolicy() throws Exception {
+        try (Fixture f = new Fixture()) {
+            java.util.Set<Integer> breakpoints = new java.util.HashSet<>();
+            when(f.cpu.isBreakpointSupported()).thenReturn(true);
+            when(f.cpu.getBreakpoints()).thenAnswer(call -> java.util.Set.copyOf(breakpoints));
+            when(f.cpu.isBreakpointSet(anyInt())).thenAnswer(call -> breakpoints.contains(call.getArgument(0)));
+            doAnswer(call -> breakpoints.add(call.getArgument(0))).when(f.cpu).setBreakpoint(anyInt());
+            doAnswer(call -> breakpoints.remove(call.getArgument(0))).when(f.cpu).unsetBreakpoint(anyInt());
+            f.session.rules.add(new DebugSession.Rule("Advanced", "EXEC", 1, -1, "", 1));
+            f.session.setBreakpointState(3, BreakpointState.KEEP_INSPECTION);
+            f.refresh();
+            JList<?> rules = findComponent(f.panel, JList.class,
+                    list -> "Breakpoints".equals(list.getAccessibleContext().getAccessibleName()));
+            JButton toggle = findButtonByTooltip(f.panel, "Enable / disable");
+            runOnEdt(() -> rules.setSelectedIndex(1));
+            triggerButton(toggle);
+            assertFalse(f.cpu.isBreakpointSet(3));
+            assertEquals(2, onEdt(() -> rules.getModel().getSize()).intValue());
+            assertEquals(1, onEdt(rules::getSelectedIndex).intValue());
+            assertTrue(onEdt(() -> rules.getSelectedValue().toString()).startsWith("Disabled"));
+            assertTrue(onEdt(() -> rules.getSelectedValue().toString()).contains("keep inspection"));
+            assertTrue(f.session.rules.get(0).enabled);
+            triggerButton(toggle);
+            assertEquals(BreakpointState.KEEP_INSPECTION, f.session.breakpointState(3));
+            assertTrue(onEdt(() -> rules.getSelectedValue().toString()).startsWith("Enabled"));
+            runOnEdt(() -> rules.setSelectedIndex(0));
+            triggerButton(toggle);
+            assertFalse(f.session.rules.get(0).enabled);
+            assertTrue(f.cpu.isBreakpointSet(3));
+            runOnEdt(() -> rules.setSelectedIndex(1));
+            triggerButton(toggle);
+            triggerButton(findButtonByTooltip(f.panel, "Remove"));
+            assertEquals(List.of(), f.session.ordinaryBreakpoints());
+            assertFalse(f.cpu.isBreakpointSet(3));
+            f.session.setBreakpointState(3, BreakpointState.ON);
+            assertEquals(BreakpointState.ON, f.session.breakpointState(3));
+            verifyNoInteractions(f.dialogs);
+        }
+    }
+
+    @Test(timeout = 10000)
     public void annotationFilterAndWatchSelectionSurviveRefresh() throws Exception {
         try (Fixture f = new Fixture()) {
             AnnotationIndex annotations = f.session.annotations();
             annotations.put(new AnnotationIndex.Entry(0, 1, "counter", "", false, "DATA"));
             annotations.put(new AnnotationIndex.Entry(0, 2, "other", "", false, "DATA"));
             JTextField filter = findComponent(f.panel, JTextField.class,
-                    field -> "Filter".equals(field.getAccessibleContext().getAccessibleName()));
+                    field -> "Search annotations".equals(field.getAccessibleContext().getAccessibleName()));
             setText(filter, "counter");
             JList<?> rows = findComponent(f.panel, JList.class,
                     list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
@@ -170,9 +211,226 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             setText(label, "renamed");
             // Stepping or browsing must not retarget an annotation draft.
             runOnEdt(() -> f.panel.navigate(0, 0, false));
-            triggerButton(findButtonByTooltip(f.panel, "Save annotation"));
+            triggerButton(annotationSave(f.panel));
             assertEquals("renamed", annotations.get(0, 3).label);
             assertNull(annotations.get(0, 0));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void annotationOptionsStayHiddenUntilNeededAndSaveWithTheDraft() throws Exception {
+        try (Fixture f = new Fixture()) {
+            JTabbedPane tabs = findComponent(f.panel, JTabbedPane.class,
+                    pane -> "debuggerViews".equals(pane.getName()));
+            runOnEdt(() -> {
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(f.panel);
+                frame.setSize(960, 600);
+                frame.setVisible(true);
+            });
+            JButton save = annotationSave(f.panel);
+            JToggleButton more = findToggleButtonByTooltip(f.panel, "Annotation options");
+            assertThrows(AssertionError.class, () -> findButtonByTooltip(f.panel, "Export annotations"));
+            setText(findComponent(f.panel, JTextField.class,
+                    field -> "Label".equals(field.getAccessibleContext().getAccessibleName())), "entry");
+            triggerButton(more);
+            JComboBox<?> type = findComponent(f.panel, JComboBox.class,
+                    combo -> "Type".equals(combo.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(type::isShowing));
+            assertEquals("Unspecified", onEdt(type::getSelectedItem));
+            runOnEdt(() -> type.setSelectedItem("Code"));
+            triggerButton(findComponent(f.panel, JCheckBox.class, check -> "Bookmark".equals(check.getText())));
+            triggerButton(more);
+            triggerButton(save);
+            AnnotationIndex.Entry entry = f.session.annotations().get(0, 0);
+            assertEquals("entry", entry.label);
+            assertEquals("CODE", entry.kind);
+            assertTrue(entry.bookmark);
+            assertFalse(onEdt(type::isShowing));
+            assertEquals("Saved at 0000", onEdt(save::getText));
+            assertFalse(onEdt(save::isEnabled));
+        }
+    }
+
+    private JButton annotationSave(DebuggerPanel panel) {
+        return findComponent(panel, JButton.class, button -> "saveAnnotation".equals(button.getName()));
+    }
+
+    private JTextField annotationField(DebuggerPanel panel, String name) {
+        return findComponent(panel, JTextField.class,
+                field -> name.equals(field.getAccessibleContext().getAccessibleName()));
+    }
+
+    private void answerDraftPrompt(Runnable action, String answer) throws Exception {
+        java.util.concurrent.CompletableFuture<Void> pending = java.util.concurrent.CompletableFuture.runAsync(
+                () -> runOnEdt(action));
+        JDialog prompt = waitForWindow(JDialog.class, dialog -> "Unsaved annotation".equals(dialog.getTitle()));
+        triggerButton(findButton(prompt, answer));
+        pending.get(3, TimeUnit.SECONDS);
+    }
+
+    @Test(timeout = 20000)
+    public void selectingAnotherAnnotationOffersSaveDiscardAndCancel() throws Exception {
+        for (String answer : List.of("Save", "Discard", "Cancel")) {
+            try (Fixture f = new Fixture(temporary.newFolder(answer).toPath().resolve("debugger"))) {
+                f.session.annotations().put(new AnnotationIndex.Entry(0, 1, "first", "", false, "DATA"));
+                f.session.annotations().put(new AnnotationIndex.Entry(0, 2, "second", "", false, "DATA"));
+                f.refresh();
+                JList<?> rows = findComponent(f.panel, JList.class,
+                        list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
+                runOnEdt(() -> rows.setSelectedIndex(0));
+                JTextField label = annotationField(f.panel, "Label");
+                setText(label, "draft");
+                answerDraftPrompt(() -> rows.setSelectedIndex(1), answer);
+                boolean cancelled = answer.equals("Cancel");
+                assertEquals(cancelled ? "draft" : "second", onEdt(label::getText));
+                assertEquals(cancelled ? 0 : 1, onEdt(rows::getSelectedIndex).intValue());
+                assertEquals(answer.equals("Save") ? "draft" : "first", f.session.annotations().get(0, 1).label);
+                if (answer.equals("Save")) {
+                    AnnotationIndex persisted = new AnnotationIndex(f.session.captureMemory());
+                    String identity = persisted.properties().getProperty("image.identity");
+                    persisted.load(temporary.getRoot().toPath().resolve(answer)
+                            .resolve("debugger." + identity + ".annotations"));
+                    assertEquals("draft", persisted.get(0, 1).label);
+                }
+            }
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void refreshAndFilteringKeepTheDraftAndItsOriginalTarget() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.annotations().put(new AnnotationIndex.Entry(0, 3, "counter", "", false, "DATA"));
+            f.refresh();
+            JList<?> rows = findComponent(f.panel, JList.class,
+                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> rows.setSelectedIndex(0));
+            setText(annotationField(f.panel, "Label"), "draft");
+            setText(annotationField(f.panel, "Comment"), "Keep this note");
+            f.refresh();
+            setText(annotationField(f.panel, "Search annotations"), "nothing matches");
+            f.refresh();
+            runOnEdt(() -> f.panel.navigate(5, 1, false));
+            assertEquals("draft", onEdt(annotationField(f.panel, "Label")::getText));
+            assertEquals("Keep this note", onEdt(annotationField(f.panel, "Comment")::getText));
+            JButton save = annotationSave(f.panel);
+            assertEquals("Save at 0003", onEdt(save::getText));
+            assertTrue(onEdt(save::getToolTipText).contains("bank 0"));
+            triggerButton(save);
+            assertEquals("draft", f.session.annotations().get(0, 3).label);
+            assertEquals("Keep this note", f.session.annotations().get(0, 3).comment);
+            assertNull(f.session.annotations().get(1, 5));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void newSnapshotAndExitPreflightRespectCancelledDrafts() throws Exception {
+        try (Fixture f = new Fixture()) {
+            setText(annotationField(f.panel, "Label"), "draft");
+            AnnotationIndex original = f.session.annotations();
+            runOnEdt(() -> f.panel.navigate(4, 1, false));
+            answerDraftPrompt(() -> findButton(f.panel, "New").doClick(0), "Cancel");
+            answerDraftPrompt(() -> findButtonByTooltip(f.panel.navigationToolbar(), "Take snapshot").doClick(0), "Cancel");
+            AtomicBoolean closeAllowed = new AtomicBoolean(true);
+            answerDraftPrompt(() -> closeAllowed.set(f.panel.confirmSaveAnnotations()), "Cancel");
+            assertFalse(closeAllowed.get());
+            assertSame(original, f.session.annotations());
+            assertEquals("draft", onEdt(annotationField(f.panel, "Label")::getText));
+            assertEquals("Save at 0000", onEdt(annotationSave(f.panel)::getText));
+            answerDraftPrompt(() -> findButton(f.panel, "New").doClick(0), "Discard");
+            assertEquals("", onEdt(annotationField(f.panel, "Label")::getText));
+            assertEquals("Save at 0004", onEdt(annotationSave(f.panel)::getText));
+            assertNull(f.session.annotations().get(0, 0));
+            assertTrue(onEdt(f.panel::confirmSaveAnnotations));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void failedAnnotationSaveKeepsTheDraftAndPreviousStoredEntry() throws Exception {
+        java.nio.file.Path directory = temporary.newFolder("save-failure").toPath();
+        try (Fixture f = new Fixture(directory.resolve("debugger"))) {
+            String identity = f.session.annotations().properties().getProperty("image.identity");
+            java.nio.file.Path destination = java.nio.file.Files.createDirectory(
+                    directory.resolve("debugger." + identity + ".annotations"));
+            java.nio.file.Files.writeString(destination.resolve("block"), "Cannot replace this directory");
+            f.session.annotations().put(new AnnotationIndex.Entry(0, 0, "original", "", false, "DATA"));
+            f.refresh();
+            JList<?> rows = findComponent(f.panel, JList.class,
+                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> rows.setSelectedIndex(0));
+            setText(annotationField(f.panel, "Label"), "draft");
+            triggerButton(annotationSave(f.panel));
+            assertEquals("original", f.session.annotations().get(0, 0).label);
+            assertEquals("draft", onEdt(annotationField(f.panel, "Label")::getText));
+            assertTrue(onEdt(annotationSave(f.panel)::isEnabled));
+            verify(f.dialogs).showError(anyString(), eq("Debugger"));
+            AtomicBoolean closeAllowed = new AtomicBoolean(true);
+            answerDraftPrompt(() -> closeAllowed.set(f.panel.confirmSaveAnnotations()), "Save");
+            assertFalse(closeAllowed.get());
+            assertEquals("draft", onEdt(annotationField(f.panel, "Label")::getText));
+            assertEquals("original", f.session.annotations().get(0, 0).label);
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void snapshotSaveRetainsMetadataAndAlignsTheNewEditingTarget() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.annotations().put(new AnnotationIndex.Entry(0, 3, "entry", "", false, "CODE"));
+            f.refresh();
+            JList<?> rows = findComponent(f.panel, JList.class,
+                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> rows.setSelectedIndex(0));
+            setText(annotationField(f.panel, "Label"), "saved before snapshot");
+            runOnEdt(() -> f.panel.navigate(5, 0, false));
+            answerDraftPrompt(() -> findButtonByTooltip(f.panel.navigationToolbar(), "Take snapshot").doClick(0), "Save");
+            awaitReady(f.panel);
+            assertEquals("saved before snapshot", f.session.annotations().get(0, 3).label);
+            assertEquals("Save at 0005", onEdt(annotationSave(f.panel)::getText));
+            assertEquals(-1, onEdt(rows::getSelectedIndex).intValue());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void annotationManagementConfirmsDeletionAndExplainsEmptyResults() throws Exception {
+        try (Fixture f = new Fixture()) {
+            JTabbedPane tabs = findComponent(f.panel, JTabbedPane.class,
+                    pane -> "debuggerViews".equals(pane.getName()));
+            runOnEdt(() -> {
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(f.panel);
+                frame.setSize(960, 600);
+                frame.setVisible(true);
+            });
+            JLabel empty = findComponent(f.panel, JLabel.class,
+                    label -> label.getText() != null && label.getText().contains("No annotations yet"));
+            assertTrue(onEdt(empty::isShowing));
+            JButton bundle = findButton(f.panel, "Memory bundle…");
+            assertTrue(onEdt(() -> SwingUtilities.isDescendingFrom(bundle,
+                    tabs.getComponentAt(tabs.indexOfTab("Memory")))));
+            f.session.annotations().put(new AnnotationIndex.Entry(0, 1, "entry", "", false, "DATA"));
+            f.refresh();
+            assertFalse(onEdt(empty::isShowing));
+            JList<?> rows = findComponent(f.panel, JList.class,
+                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> rows.setSelectedIndex(0));
+            assertEquals("Annotations", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
+            for (String answer : List.of("Cancel", "OK")) {
+                triggerButton(findButton(f.panel, "Manage…"));
+                JPopupMenu menu = onEdt(() -> {
+                    for (MenuElement element : MenuSelectionManager.defaultManager().getSelectedPath())
+                        if (element instanceof JPopupMenu) return (JPopupMenu) element;
+                    throw new AssertionError("Annotation management menu is not open");
+                });
+                JMenuItem delete = findComponent(menu, JMenuItem.class,
+                        item -> "Delete selected annotation…".equals(item.getText()));
+                java.util.concurrent.CompletableFuture<Void> pending = java.util.concurrent.CompletableFuture.runAsync(
+                        () -> triggerButton(delete));
+                JDialog prompt = waitForWindow(JDialog.class, dialog -> "Delete annotation".equals(dialog.getTitle()));
+                triggerButton(findButton(prompt, answer));
+                pending.get(3, TimeUnit.SECONDS);
+                assertEquals(answer.equals("OK"), f.session.annotations().entries().isEmpty());
+            }
+            assertTrue(onEdt(empty::isShowing));
         }
     }
 
@@ -686,13 +944,12 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             setText(historyField(f.panel, "Changed register"), "a");
             setText(historyField(f.panel, "Memory address"), "3");
             setText(historyField(f.panel, "Memory bank"), "1");
-            triggerButton(findButtonByTooltip(f.panel, "Apply history filters"));
+            triggerButton(findButton(f.panel, "Apply filters"));
             assertEquals(1, onEdt(history::getRowCount).intValue());
             assertEquals("12", onEdt(() -> history.getValueAt(0, 0)));
-            assertEquals("ld a, 3", onEdt(() -> history.getValueAt(0, 4)));
-            assertEquals("3E 03", onEdt(() -> history.getValueAt(0, 3)));
+            assertEquals("ld a, 3", onEdt(() -> history.getValueAt(0, 2)));
             runOnEdt(() -> history.setRowSelectionInterval(0, 0));
-            triggerButton(findButtonByTooltip(f.panel, "Previous recorded write"));
+            triggerButton(findButton(f.panel, "Find earlier write"));
             assertEquals(2, onEdt(history::getRowCount).intValue());
             assertEquals("10", onEdt(() -> history.getValueAt(history.getSelectedRow(), 0)));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
@@ -722,7 +979,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
     public void recentHistoryLimitIsConfigurableAndPreservesVisibleSequence() throws Exception {
         try (Fixture f = new Fixture()) {
             JSpinner limit = findComponent(f.panel, JSpinner.class,
-                    spinner -> "Recent limit".equals(spinner.getAccessibleContext().getAccessibleName()));
+                    spinner -> "Keep last".equals(spinner.getAccessibleContext().getAccessibleName()));
             runOnEdt(() -> limit.setValue(2));
             triggerButton(findToggleButtonByTooltip(f.panel, "Record recent instructions"));
             for (int i = 1; i <= 3; i++) f.session.afterInstruction(historyEvent(i, 0, i, 3));
@@ -739,7 +996,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             java.nio.file.Path file = temporary.getRoot().toPath().resolve("offline.emutrace");
             InstructionRecording.Header header = new InstructionRecording.Header("Z80 capture", List.of(new DebugCPU.Register("A", 8)));
             java.util.ArrayList<DebugCPU.Instruction> events = new java.util.ArrayList<>();
-            for (int i = 1; i <= 1025; i++) events.add(historyEvent(i, 0x8000, 42, 0x9000));
+            for (int i = 1; i <= 2049; i++) events.add(historyEvent(i, 0x8000, 42, 0x9000));
             InstructionRecording.write(file, header, events);
             f.session.annotations().put(new AnnotationIndex.Entry(0, 0, "unrelated-live-label", "", false, "CODE"));
             f.byteValue.set(99);
@@ -747,14 +1004,22 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             awaitReady(f.panel);
             JTable history = historyTable(f.panel);
             assertEquals(1024, onEdt(history::getRowCount).intValue());
-            assertEquals("8000", onEdt(() -> history.getValueAt(0, 2)));
-            assertEquals("ld a, 42", onEdt(() -> history.getValueAt(0, 4)));
+            assertEquals("1:8000", onEdt(() -> history.getValueAt(0, 1)));
+            assertEquals("ld a, 42", onEdt(() -> history.getValueAt(0, 2)));
             JLabel status = findComponent(f.panel, JLabel.class,
                     label -> "Recording status".equals(label.getAccessibleContext().getAccessibleName()));
             assertTrue(onEdt(status::getText).contains("Z80 capture"));
             triggerButton(findButtonByTooltip(f.panel, "Next page"));
             awaitReady(f.panel);
+            assertEquals(1024, onEdt(history::getRowCount).intValue());
+            assertEquals("1025", onEdt(() -> history.getValueAt(0, 0)));
+            triggerButton(findButton(f.panel, "Next page"));
+            awaitReady(f.panel);
             assertEquals(1, onEdt(history::getRowCount).intValue());
+            assertEquals("2049", onEdt(() -> history.getValueAt(0, 0)));
+            assertFalse(onEdt(findButton(f.panel, "Next page")::isEnabled));
+            triggerButton(findButton(f.panel, "Previous page"));
+            awaitReady(f.panel);
             assertEquals("1025", onEdt(() -> history.getValueAt(0, 0)));
             runOnEdt(() -> history.setRowSelectionInterval(0, 0));
             JTextArea state = findComponent(f.panel, JTextArea.class,
@@ -764,7 +1029,159 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             triggerButton(findButtonByTooltip(f.panel, "First page"));
             awaitReady(f.panel);
             assertEquals("1", onEdt(() -> history.getValueAt(0, 0)));
+            assertFalse(onEdt(findButton(f.panel, "First page")::isEnabled));
+            assertFalse(onEdt(findButton(f.panel, "Previous page")::isEnabled));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void historyGuidesFirstCaptureAndKeepsSecondaryControlsCollapsed() throws Exception {
+        try (Fixture f = new Fixture()) {
+            JTabbedPane tabs = findComponent(f.panel, JTabbedPane.class, pane -> "debuggerViews".equals(pane.getName()));
+            runOnEdt(() -> {
+                tabs.setSelectedIndex(tabs.indexOfTab("History"));
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(f.panel);
+                frame.setSize(1000, 720);
+                frame.setVisible(true);
+            });
+            JLabel empty = findComponent(f.panel, JLabel.class,
+                    label -> "History empty state".equals(label.getAccessibleContext().getAccessibleName()));
+            assertEquals("No instructions recorded", onEdt(empty::getText));
+            assertTrue(onEdt(empty::isShowing));
+            assertFalse(onEdt(historyField(f.panel, "PC from")::isShowing));
+            assertFalse(onEdt(findButton(f.panel, "Save recent execution…")::isShowing));
+            assertFalse(onEdt(findButton(f.panel, "Next page")::isShowing));
+            triggerButton(findButton(f.panel, "Start recording"));
+            assertTrue(f.session.isRecording());
+            assertEquals("Stop recording", onEdt(() -> findToggleButtonByTooltip(f.panel, "Record recent instructions")
+                    .getAccessibleContext().getAccessibleName()));
+            assertEquals("Ready to capture instructions", onEdt(empty::getText));
+            f.session.afterInstruction(historyEvent(1, 0, 1, 3));
+            f.refresh();
+            assertFalse(onEdt(empty::isShowing));
+            assertTrue(onEdt(historyTable(f.panel)::isShowing));
+            triggerButton(findToggleButtonByTooltip(f.panel, "History options"));
+            assertTrue(onEdt(findButton(f.panel, "Save recent execution…")::isShowing));
+            triggerButton(findToggleButtonByTooltip(f.panel, "History filters"));
+            assertTrue(onEdt(historyField(f.panel, "PC from")::isShowing));
+            assertFalse(onEdt(findButton(f.panel, "Save recent execution…")::isShowing));
+            setText(historyField(f.panel, "Memory address"), "99");
+            triggerButton(findButton(f.panel, "Apply filters"));
+            assertTrue(onEdt(empty::isShowing));
+            assertEquals("No instructions match these filters", onEdt(empty::getText));
+            triggerButton(findToggleButtonByTooltip(f.panel, "History filters"));
+            JLabel summary = findComponent(f.panel, JLabel.class,
+                    label -> "Active history filters".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(summary::isShowing));
+            assertTrue(onEdt(summary::getText).contains("Memory 0063"));
+            triggerButton(findButton(f.panel, "Clear filters"));
+            assertEquals(1, onEdt(historyTable(f.panel)::getRowCount).intValue());
+            assertFalse(onEdt(empty::isShowing));
+            verifyNoInteractions(f.dialogs);
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void savedHistoryFiltersAndEarlierWritesSearchBeyondStoragePages() throws Exception {
+        try (Fixture f = new Fixture()) {
+            java.nio.file.Path file = temporary.getRoot().toPath().resolve("long-history.emutrace");
+            java.util.ArrayList<DebugCPU.Instruction> events = new java.util.ArrayList<>();
+            for (int i = 1; i <= 2051; i++) events.add(historyEvent(i, i == 2050 ? 0x9000 : 0x8000, i, 0x9000));
+            InstructionRecording.write(file, new InstructionRecording.Header("Captured CPU", List.of()), events);
+            runOnEdt(() -> f.panel.openRecording(file));
+            awaitReady(f.panel);
+            setText(historyField(f.panel, "PC from"), "0x9000");
+            runOnEdt(() -> historyField(f.panel, "PC from").postActionEvent());
+            awaitReady(f.panel);
+            JTable history = historyTable(f.panel);
+            assertEquals(1, onEdt(history::getRowCount).intValue());
+            assertEquals("2050", onEdt(() -> history.getValueAt(0, 0)));
+            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
+            triggerButton(findButton(f.panel, "Find earlier write"));
+            awaitReady(f.panel);
+            assertEquals("2049", onEdt(() -> history.getValueAt(history.getSelectedRow(), 0)));
+            triggerButton(findButton(f.panel, "Find earlier write"));
+            awaitReady(f.panel);
+            assertEquals("2048", onEdt(() -> history.getValueAt(history.getSelectedRow(), 0)));
+            JLabel summary = findComponent(f.panel, JLabel.class,
+                    label -> "Active history filters".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(summary::getText).contains("whole recording"));
+            assertEquals("", onEdt(historyField(f.panel, "PC from")::getText));
+            setText(historyField(f.panel, "Memory address"), "0xFFFF");
+            triggerButton(findButton(f.panel, "Apply filters"));
+            awaitReady(f.panel);
+            assertEquals(0, onEdt(history::getRowCount).intValue());
+            findLabel(f.panel, "Searched whole recording. Clear or change the filters.");
+            triggerButton(findButton(f.panel, "Clear filters"));
+            awaitReady(f.panel);
+            assertEquals("1", onEdt(() -> history.getValueAt(0, 0)));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+            verifyNoInteractions(f.dialogs);
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void cancellingRecordingLoadKeepsPreviousSourceAndResults() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.record(10);
+            f.session.afterInstruction(historyEvent(11, 0, 1, 3));
+            f.refresh();
+            java.nio.file.Path file = temporary.getRoot().toPath().resolve("cancelled.emutrace");
+            InstructionRecording.write(file, new InstructionRecording.Header("Other CPU", List.of()),
+                    List.of(historyEvent(22, 0x8000, 42, 0x9000)));
+            JButton cancel = findButton(f.panel, "Cancel");
+            runOnEdt(() -> {
+                f.panel.openRecording(file);
+                assertTrue(cancel.isEnabled());
+                assertTrue(cancel.isVisible());
+                assertFalse(findButton(f.panel, "Open recording…").isEnabled());
+                cancel.doClick(0);
+            });
+            awaitReady(f.panel);
+            JComboBox<?> source = findComponent(f.panel, JComboBox.class,
+                    combo -> "History source".equals(combo.getAccessibleContext().getAccessibleName()));
+            assertEquals("Recent execution", onEdt(source::getSelectedItem));
+            assertEquals("11", onEdt(() -> historyTable(f.panel).getValueAt(0, 0)));
+            verifyNoInteractions(f.dialogs);
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void savedHistoryExportsCapturedSourceAndCannotSaveDifferentLiveBuffer() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.record(10);
+            f.session.afterInstruction(historyEvent(1, 0, 99, 3));
+            f.refresh();
+            java.nio.file.Path recent = temporary.getRoot().toPath().resolve("recent.emutrace");
+            runOnEdt(() -> f.panel.saveHistory(recent, false));
+            awaitReady(f.panel);
+            try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recent)) {
+                assertEquals("Test CPU", reader.header().processor);
+                assertEquals(1, reader.nextPage(10).get(0).sequence);
+            }
+            java.nio.file.Path captured = temporary.getRoot().toPath().resolve("captured.emutrace");
+            InstructionRecording.write(captured, new InstructionRecording.Header("Captured CPU", List.of()),
+                    List.of(historyEvent(50, 0x8000, 42, 0x9000), historyEvent(51, 0x8002, 43, 0x9000)));
+            runOnEdt(() -> f.panel.openRecording(captured));
+            awaitReady(f.panel);
+            assertFalse(onEdt(findButton(f.panel, "Save recent execution…")::isVisible));
+            java.nio.file.Path wrong = temporary.getRoot().toPath().resolve("wrong-source.emutrace");
+            assertThrows(IllegalStateException.class, () -> runOnEdt(() -> f.panel.saveHistory(wrong, false)));
+            assertFalse(java.nio.file.Files.exists(wrong));
+            setText(historyField(f.panel, "PC from"), "0x8002");
+            triggerButton(findButton(f.panel, "Apply filters"));
+            awaitReady(f.panel);
+            java.nio.file.Path text = temporary.getRoot().toPath().resolve("shown.txt");
+            runOnEdt(() -> f.panel.saveHistory(text, true));
+            awaitReady(f.panel);
+            String exported = java.nio.file.Files.readString(text);
+            assertTrue(exported.contains("Captured CPU"));
+            assertTrue(exported.contains("#51 |"));
+            assertFalse(exported.contains("#50 |"));
+            assertFalse(exported.contains("Test CPU"));
+            assertFalse(exported.contains("#1 |"));
+            verifyNoInteractions(f.dialogs);
         }
     }
 
@@ -780,7 +1197,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
             try {
                 runOnEdt(() -> panel.openRecording(file));
-                JButton open = findButtonByTooltip(panel, "Open recording");
+                JButton open = findButton(panel, "Open recording…");
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(open::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
                 assertTrue(onEdt(open::isEnabled));

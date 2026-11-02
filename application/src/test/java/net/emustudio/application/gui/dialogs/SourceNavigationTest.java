@@ -65,14 +65,12 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false);
             runOnEdt(f.debugger::showMemory);
             f.sourceLine(2);
-            JLabel context = findComponent(f.debugger, JLabel.class,
-                    label -> "Inspection context".equals(label.getAccessibleContext().getAccessibleName()));
             JLabel source = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(context::getText).contains("0002"));
+            assertFalse(onEdt(f.debugger::isInspectionPinned));
             triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
             f.sourceLine(3);
-            assertTrue(onEdt(context::getText).contains("Pinned"));
+            assertTrue(onEdt(f.debugger::isInspectionPinned));
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
             assertTrue(onEdt(source::getText).contains("Source changed"));
@@ -379,7 +377,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 return new DebuggerPanel(session, listing, scroll, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
             });
             table = findComponent(debugger, JTable.class, t -> true);
-            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger, status -> {}));
+            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger));
             ArgumentCaptor<CompilerListener> captor = ArgumentCaptor.forClass(CompilerListener.class);
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();

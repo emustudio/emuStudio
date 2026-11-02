@@ -342,6 +342,11 @@ distributions {
 }
 
 test {
+  // Cacio uses OpenJDK AWT internals that differ in IntelliJ's JetBrains Runtime.
+  javaLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(11)
+    vendor = JvmVendorSpec.ADOPTIUM
+  }
   systemProperty 'java.awt.headless', 'false'
   systemProperty 'awt.toolkit', 'com.github.caciocavallosilano.cacio.ctc.CTCToolkit'
   systemProperty 'java.awt.graphicsenv', 'com.github.caciocavallosilano.cacio.ctc.CTCGraphicsEnvironment'

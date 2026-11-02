@@ -26,6 +26,7 @@ public class MhdskBootTest {
         Byte[] ram = new Byte[65536];
         Arrays.fill(ram, (byte) 0);
         @SuppressWarnings("unchecked") MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
         expect(memory.read(anyInt())).andAnswer(() -> ram[(int) getCurrentArguments()[0]]).anyTimes();
         expect(memory.read(anyInt(), anyInt())).andAnswer(() -> {
             int address = (int) getCurrentArguments()[0], count = (int) getCurrentArguments()[1];

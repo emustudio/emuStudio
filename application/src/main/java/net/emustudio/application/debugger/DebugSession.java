@@ -26,6 +26,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private boolean closed;
     private int activeMutations;
     private final Set<Integer> keptBreakpoints = new HashSet<>();
+    private final Set<Integer> disabledBreakpoints = new HashSet<>();
     private BreakpointHit pendingHit;
 
     public MemoryAnalysis image() throws IOException {
@@ -397,6 +398,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (cpu.isBreakpointSupported()) {
             if (value == BreakpointState.OFF) cpu.unsetBreakpoint(address);
             else cpu.setBreakpoint(address);
+            disabledBreakpoints.remove(address);
             if (value == BreakpointState.KEEP_INSPECTION) keptBreakpoints.add(address);
             else keptBreakpoints.remove(address);
         } else if (debug != null) {
@@ -413,6 +415,27 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             }
             updateProbe();
         } else throw new IllegalStateException("Breakpoints unavailable for this CPU");
+    }
+
+    List<Integer> ordinaryBreakpoints() {
+        Set<Integer> addresses = new TreeSet<>(cpu.getBreakpoints());
+        addresses.addAll(disabledBreakpoints);
+        return new ArrayList<>(addresses);
+    }
+
+    boolean ordinaryBreakpointKeepsInspection(int address) {
+        return keptBreakpoints.contains(address);
+    }
+
+    void toggleOrdinaryBreakpoint(int address) {
+        requirePaused();
+        if (cpu.isBreakpointSet(address)) {
+            cpu.unsetBreakpoint(address);
+            disabledBreakpoints.add(address);
+        } else {
+            cpu.setBreakpoint(address);
+            disabledBreakpoints.remove(address);
+        }
     }
 
     private boolean isSimpleBreakpoint(Rule rule, int address) {
@@ -471,11 +494,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             p.setProperty(k + "source", r.source);
             p.setProperty(k + "keepInspection", Boolean.toString(r.keepInspection));
         }
-        List<Integer> ordinary = new ArrayList<>(cpu.getBreakpoints());
-        Collections.sort(ordinary);
+        List<Integer> ordinary = ordinaryBreakpoints();
         p.setProperty("ordinary", Integer.toString(ordinary.size()));
         for (int i = 0; i < ordinary.size(); i++) {
             p.setProperty("ordinary." + i, Integer.toString(ordinary.get(i)));
+            p.setProperty("ordinary." + i + ".enabled", Boolean.toString(cpu.isBreakpointSet(ordinary.get(i))));
             p.setProperty("ordinary." + i + ".keepInspection", Boolean.toString(keptBreakpoints.contains(ordinary.get(i))));
         }
         if (!p.equals(lastSaved)) {
@@ -496,7 +519,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 int address = Integer.parseInt(p.getProperty("ordinary." + i));
                 if (address < 0 || address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
-                addresses.add(address);
+                if (Boolean.parseBoolean(p.getProperty("ordinary." + i + ".enabled", "true"))) addresses.add(address);
+                else disabledBreakpoints.add(address);
                 if (Boolean.parseBoolean(p.getProperty("ordinary." + i + ".keepInspection"))) keptBreakpoints.add(address);
             }
             int count = count(p, "watches");
@@ -526,6 +550,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 rules.add(r);
             }
             addresses.forEach(cpu::setBreakpoint);
+            disabledBreakpoints.forEach(cpu::unsetBreakpoint);
             lastSaved = p;
         } catch (RuntimeException e) {
             throw new IOException("Invalid debugger settings", e);
