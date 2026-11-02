@@ -152,6 +152,10 @@ public class StudioFrame extends JFrame {
         tabbedPane.setFocusable(false);
         tabbedPane.addTab(SOURCE_CODE_EDITOR, editorPanel);
         tabbedPane.addTab("Emulator", emulatorPanel);
+        tabbedPane.addChangeListener(event -> {
+            if (tabbedPane.getSelectedComponent() == emulatorPanel)
+                emulatorPanel.getDebuggerPanel().ifPresent(panel -> panel.showInstructions());
+        });
 
         JMenuBar mainMenu = setupMainMenu();
         setJMenuBar(mainMenu);
