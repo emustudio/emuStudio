@@ -39,7 +39,7 @@ public class SparseDebugSessionTest {
             assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-                update.putAnnotation(1, 1, new ProgramIndex.Range(0, address, Integer.MAX_VALUE),
+                update.putAnnotation(99, 1, new ProgramIndex.Range(0, address, Integer.MAX_VALUE),
                         ProgramIndex.Kinds.LABEL, "last cell");
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
@@ -47,6 +47,9 @@ public class SparseDebugSessionTest {
                 update.put(1, address, true, "");
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
+            session.annotations().put(new AnnotationIndex.Entry(0, address, "metadata", "word memory", false, "CODE"));
+            assertEquals("metadata", session.annotations().get(0, address).label);
+            assertThrows(IllegalArgumentException.class, session::liveMemory);
 
             occupancy.set(1);
             listener.get().memorySizeChanged();

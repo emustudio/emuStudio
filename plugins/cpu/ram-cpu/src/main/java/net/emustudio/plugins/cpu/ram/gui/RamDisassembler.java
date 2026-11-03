@@ -8,8 +8,6 @@ import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,10 +20,7 @@ public class RamDisassembler implements Disassembler {
 
     @Override
     public DisassembledInstruction disassemble(int memLocation) {
-        return render(memLocation, memory.read(memLocation));
-    }
-
-    private static DisassembledInstruction render(int memLocation, RamInstruction in) {
+        RamInstruction in = memory.read(memLocation);
         if (in == null) {
             return new DisassembledInstruction(memLocation, "", "");
         }
@@ -40,21 +35,9 @@ public class RamDisassembler implements Disassembler {
     }
 
     @Override
-    public Optional<Disassembler> capture(int bank) {
+    public Optional<Disassembler> forBank(int bank) {
         if (bank != 0) throw new IllegalArgumentException("RAM has one memory bank");
-        RamMemoryContext.RamMemory captured = memory.getSnapshot();
-        Map<Integer, DisassembledInstruction> rendered = new HashMap<>();
-        // RAM cells, operands and labels are interfaces without an immutability guarantee.
-        // Freeze every decoder-visible value into immutable strings; retain no guest objects.
-        captured.programMemory.forEach((address, instruction) -> rendered.put(address, render(address, instruction)));
-        Map<Integer, DisassembledInstruction> instructions = Map.copyOf(rendered);
-        return Optional.of(new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int address) {
-                DisassembledInstruction instruction = instructions.get(address);
-                return instruction == null ? new DisassembledInstruction(address, "", "") : instruction;
-            }
-            @Override public int getNextInstructionPosition(int address) { return address + 1; }
-        });
+        return Optional.of(this);
     }
 
     @Override

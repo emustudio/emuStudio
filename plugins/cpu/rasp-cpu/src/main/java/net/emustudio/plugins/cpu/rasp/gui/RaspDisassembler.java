@@ -7,7 +7,8 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 
@@ -25,11 +26,6 @@ public class RaspDisassembler implements Disassembler {
         Integer intOperand = mnemo.isPresent() && opcode != HALT ? memory.read(address + 1) : null;
         String label = intOperand != null && isJump(opcode)
                 ? memory.getLabel(intOperand).map(RaspLabel::getLabel).orElse(null) : null;
-        return render(address, opcode, mnemo, intOperand, label);
-    }
-
-    private static DisassembledInstruction render(int address, int opcode, Optional<String> mnemo,
-                                                  Integer intOperand, String label) {
         String operand = "";
         String encoding = Integer.toHexString(opcode);
 
@@ -46,25 +42,9 @@ public class RaspDisassembler implements Disassembler {
     private static boolean isJump(int opcode) { return opcode == JMP || opcode == JZ || opcode == JGTZ; }
 
     @Override
-    public Optional<Disassembler> capture(int bank) {
+    public Optional<Disassembler> forBank(int bank) {
         if (bank != 0) throw new IllegalArgumentException("RASP has one memory bank");
-        RaspMemoryContext.RaspMemory captured = memory.getSnapshot();
-        Map<Integer, Integer> cells = captured.programMemory;
-        Map<Integer, String> copiedLabels = new HashMap<>();
-        for (RaspLabel label : captured.labels) copiedLabels.put(label.getAddress(), label.getLabel());
-        Map<Integer, String> labels = Map.copyOf(copiedLabels);
-        return Optional.of(new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int address) {
-                int opcode = cells.getOrDefault(address, 0);
-                Optional<String> mnemonic = net.emustudio.plugins.memory.rasp.gui.Disassembler.disassembleMnemo(opcode);
-                Integer operand = mnemonic.isPresent() && opcode != HALT ? cells.getOrDefault(address + 1, 0) : null;
-                return render(address, opcode, mnemonic, operand, operand == null ? null : labels.get(operand));
-            }
-            @Override public int getNextInstructionPosition(int address) {
-                int opcode = cells.getOrDefault(address, 0);
-                return address + (!isInstruction(opcode) || opcode == HALT ? 1 : 2);
-            }
-        });
+        return Optional.of(this);
     }
 
     @Override

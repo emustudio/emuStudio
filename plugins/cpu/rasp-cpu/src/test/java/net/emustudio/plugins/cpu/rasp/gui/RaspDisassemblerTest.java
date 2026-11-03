@@ -8,8 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Optional;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
@@ -26,28 +24,28 @@ public class RaspDisassemblerTest {
     }
 
     @Test
-    public void capturedDecoderFreezesWordCellsAndMutableLabelNames() throws Exception {
+    public void explicitBankDecoderReadsLiveWordCellsAndLabelNames() throws Exception {
         AtomicReference<String> name = new AtomicReference<>("OLD");
         RaspLabel label = createNiceMock(RaspLabel.class);
         expect(label.getAddress()).andReturn(10).anyTimes();
         expect(label.getLabel()).andAnswer(name::get).anyTimes();
         replay(label);
-        expect(memory.getSnapshot()).andReturn(new RaspMemoryContext.RaspMemory(
-                List.of(label), Map.of(0, JMP, 1, 10), List.of()));
         expect(memory.read(0)).andReturn(JMP).anyTimes();
         expect(memory.read(1)).andReturn(10).anyTimes();
         expect(memory.disassembleMnemo(JMP)).andReturn(Optional.of("JMP")).anyTimes();
+        expect(memory.isInstruction(JMP)).andReturn(true).anyTimes();
         expect(memory.getLabel(10)).andReturn(Optional.of(label)).anyTimes();
         replay(memory);
         RaspDisassembler live = new RaspDisassembler(memory);
-        net.emustudio.emulib.plugins.cpu.Disassembler captured = live.capture(0).orElseThrow();
+        net.emustudio.emulib.plugins.cpu.Disassembler bank = live.forBank(0).orElseThrow();
+        assertTrue(bank.disassemble(0).mnemo.contains("OLD"));
 
         name.set("NEW");
 
-        assertTrue(captured.disassemble(0).mnemo.contains("OLD"));
+        assertTrue(bank.disassemble(0).mnemo.contains("NEW"));
         assertTrue(live.disassemble(0).mnemo.contains("NEW"));
-        assertEquals(2, captured.getNextInstructionPosition(0));
-        assertThrows(IllegalArgumentException.class, () -> live.capture(1));
+        assertEquals(2, bank.getNextInstructionPosition(0));
+        assertThrows(IllegalArgumentException.class, () -> live.forBank(1));
     }
 
     @Test

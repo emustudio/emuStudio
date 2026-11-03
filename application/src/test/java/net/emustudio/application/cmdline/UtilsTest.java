@@ -34,12 +34,12 @@ import static org.mockito.Mockito.*;
 public class UtilsTest extends AbstractSwingTest {
 
     @Test(timeout = 10000)
-    public void mainThreadStartupCapturesInitialDebuggerImageWithoutErrors() throws Exception {
+    public void mainThreadStartupInitializesDebuggerWithoutReadingMemory() throws Exception {
         assertMainWindowStarts(false);
     }
 
     @Test(timeout = 10000)
-    public void eventThreadStartupCapturesInitialDebuggerImageWithoutErrors() throws Exception {
+    public void eventThreadStartupInitializesDebuggerWithoutReadingMemory() throws Exception {
         assertMainWindowStarts(true);
     }
 
@@ -74,10 +74,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getSize()).thenReturn(8);
         when(memory.getAddressSpaceSize()).thenReturn(8);
         when(memory.getBanksCount()).thenReturn(1);
-        when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation -> {
-            assertFalse("Memory capture must stay off Swing event thread", SwingUtilities.isEventDispatchThread());
-            return (byte) 7;
-        });
+        when(memory.readBank(anyInt(), anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).getMemoryContext(Utils.EMUSTUDIO_ID, MemoryContext.class);
         try (DebugSession session = new DebugSession(cpu, memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -94,8 +91,8 @@ public class UtilsTest extends AbstractSwingTest {
                 JButton find = findButtonByTooltip(debugger, "Find");
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-                assertTrue("Initial snapshot must finish", onEdt(find::isEnabled));
-                verify(memory, atLeastOnce()).readBank(anyInt(), anyInt());
+                assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));
+                verify(memory, never()).readBank(anyInt(), anyInt());
                 verify(dialogs, never()).showError(anyString(), anyString());
             } finally {
                 runOnEdt(debugger::close);

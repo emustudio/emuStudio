@@ -77,18 +77,6 @@ public class DebugScriptTest {
     }
 
     @Test
-    public void captureWithoutFilenameReportsArgumentFailure() throws Exception {
-        Path script = script("CAPTURE\n");
-        CPU cpu = cpuWithoutDebugger();
-
-        try (DebugSession session = new DebugSession(cpu, null, null)) {
-            IOException failure = assertThrows(IOException.class, () -> DebugScript.run(session, script));
-
-            assertEquals("Script line 1: CAPTURE filename", failure.getMessage());
-        }
-    }
-
-    @Test
     public void runningCpuIsRejectedBeforeOpeningScriptFile() throws Exception {
         CPU cpu = cpuWithoutDebugger();
         AtomicReference<CPU.CPUListener> listener = new AtomicReference<>();

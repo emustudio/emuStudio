@@ -10,6 +10,7 @@ import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.emulib.plugins.cpu.*;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
@@ -72,7 +73,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private boolean updatingAnnotations;
     private final JPanel annotationList = new JPanel(new CardLayout());
     private final JLabel annotationEmpty = new JLabel("", SwingConstants.CENTER);
-    private final JLabel baselineContext;
     private final JLabel resultContext;
     private final JTextField annotationFilter;
     private final JCheckBox bookmarksOnly = new JCheckBox("Bookmarks only");
@@ -126,7 +126,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JComboBox<String> width = new JComboBox<>(new String[] {"1", "2", "4", "8"});
     private final JComboBox<String> watchFormat = new JComboBox<>(new String[] {"Hex + decimal", "Binary", "ASCII"});
     private final JCheckBox bigEndian = new JCheckBox("Big endian");
-    private final JCheckBox capturedStrings = new JCheckBox("String column");
+    private final JCheckBox showStrings = new JCheckBox("String column");
     private final JCheckBox showUnchangedRegisters = new JCheckBox("Show unchanged registers");
     private final DefaultListModel<String> watchRows = new DefaultListModel<>();
     private final DefaultListModel<String> ruleRows = new DefaultListModel<>();
@@ -156,14 +156,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final GraphPanel graph = new GraphPanel();
     private final Deque<int[]> backward = new ArrayDeque<>(), forward = new ArrayDeque<>();
     private final Map<String, Long> watchValues = new HashMap<>();
-    private final Set<Integer> differences = new HashSet<>();
     private Map<Integer, String> discoveredStrings = Map.of();
-    private int differenceBank = -1, stringBank = -1;
-    private MemoryAnalysis image, baseline, viewCapture, searchCapture;
+    private int stringBank = -1;
+    private LiveMemory memoryResults;
     private AnnotationIndex index;
-    private List<Integer> results = List.of();
-    private int searchBank, searchWidth = 1;
-    private boolean searchLittle = true, navigating;
+    private boolean navigating;
+    private final MemoryContext.MemoryListener memoryListener = new MemoryContext.MemoryListener() {
+        @Override public void memoryContentChanged(int from, int to) { requestRefresh(); }
+        @Override public void memorySizeChanged() { requestRefresh(); }
+    };
     private final CPU.CPUListener stateListener =
             new CPU.CPUListener() {
                 @Override
@@ -178,10 +179,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 }
                                 try { session.requirePaused(); } catch (IllegalStateException ignored) { return; }
                                 if (tasks.isBusy()) {
-                                    if (image == null) initializationPending = true;
+                                    if (index == null) initializationPending = true;
                                     return;
                                 }
-                                if (byteMemory && image == null) { initializeImage(); return; }
+                                if (byteMemory && index == null) { initializeAnnotations(); return; }
                                 changedWatches.clear();
                                 if (inspectBreakpointHit()) { refresh(); return; }
                                 if (!pinnedSelection) {
@@ -224,7 +225,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.instructionRows = new InstructionAnnotationsModel();
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
-        baselineContext = gui.label("Baseline: initial capture");
         resultContext = gui.label("All addresses");
         annotationFilter = gui.textField("", 14);
         lastInstructionAddress = session.cpu.getInstructionLocation();
@@ -244,7 +244,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JToolBar navigationActions = line(navigationToolbar, button(ICON_UNDO, "Back", () -> travel(backward, forward)),
                 button(ICON_REDO, "Forward", () -> travel(forward, backward)),
                 new JToolBar.Separator());
-        navigationActions.getAccessibleContext().setAccessibleName("Inspected address history and memory snapshot");
+        navigationActions.getAccessibleContext().setAccessibleName("Inspected address history");
         ((JComponent) navigationActions.getComponent(0)).getAccessibleContext()
                 .setAccessibleDescription("Previous inspected address; does not reverse CPU execution");
         ((JComponent) navigationActions.getComponent(1)).getAccessibleContext()
@@ -272,18 +272,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         sourceContext.getAccessibleContext().setAccessibleName("Source synchronization status");
         context.add(sourceContext, "growx");
         add(context, BorderLayout.NORTH);
-        JButton currentProgram = button(ICON_SNAPSHOT, "Take snapshot", () -> {
-            if (!confirmSaveAnnotations()) return;
-            if (index != null) session.saveAnnotations();
-            runAnalysis(session::captureImage, this::showImage);
-        });
-        currentProgram.setEnabled(session.memory != null && session.memory.getCellTypeClass() == Byte.class);
-        currentProgram.getAccessibleContext().setAccessibleDescription(
-                "Save this image's annotations, then capture current memory and load matching annotations");
-        navigationActions.add(currentProgram);
         tabs.addChangeListener(event -> activateView());
         activateView();
         session.cpu.addCPUListener(stateListener);
+        if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
         JPopupMenu selectionMenu = new JPopupMenu();
         selectionMenu.add(pinInspection);
@@ -327,12 +319,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 });
         refresh();
         if (session.memory != null && session.memory.getCellTypeClass() == Byte.class && session.memory.getSize() > 0)
-            initializeImage();
+            initializeAnnotations();
     }
 
-    private void initializeImage() {
+    private void initializeAnnotations() {
         if (session.memory == null || session.memory.getCellTypeClass() != Byte.class || session.memory.getSize() == 0) return;
-        guard(() -> runAnalysis(session::imageCapture, this::showImage));
+        guard(() -> tasks.submit(session::annotations, this::showAnnotations, true));
     }
 
     public JComponent watchesPanel() {
@@ -485,19 +477,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         disposed = true;
         tasks.close();
         session.cpu.removeCPUListener(stateListener);
+        if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
+        discoveredStrings = Map.of();
+        memoryResults = null;
         instructionModel.removeTableModelListener(instructionRows);
     }
 
-    private void showImage(DebugSession.ImageCapture captured) {
-        boolean initial = image == null;
-        index = session.installImage(captured);
-        image = captured.image;
-        if (initial) baseline = image;
+    private void showAnnotations(AnnotationIndex loaded) {
+        boolean initial = index == null;
+        index = loaded;
         if (annotationForm != null) annotationForm.load(selectedBank(), inspectedAddress);
         refreshAnnotations(annotationFilter.getText());
         if (annotationForm != null) selectAnnotationTarget();
         if (initial) model.showAll();
         else model.refreshData();
+        requestRefresh();
     }
 
     private void showFailure(Throwable failure) {
@@ -528,20 +522,22 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         else {
             enabledControls.forEach(Component::setEnabled);
             enabledControls.clear();
+            discardStaleMemoryResults();
             historyAnalysis = historyCancelRequested = false;
             if (historyWorkControls != null) historyWorkControls.setVisible(false);
             updateExecutionState();
-            if (recordingControl != null) {
-                boolean paused = true;
-                try { session.requirePaused(); } catch (IllegalStateException ignored) { paused = false; }
-                updateRecordingControls(paused);
-            }
-            if (initializationPending && image == null) {
+            boolean paused = true;
+            try { session.requirePaused(); } catch (IllegalStateException ignored) { paused = false; }
+            if (recordingControl != null) updateRecordingControls(paused);
+            if (initializationPending && index == null) {
                 initializationPending = false;
-                if (!disposed) initializeImage();
+                if (!disposed && paused) initializeAnnotations();
             }
-            if (image != null && !tasks.isBusy()) guard(this::inspectBreakpointHit);
-            if (!disposed && image != null && !tasks.isBusy() && !running) inspectionReadyListener.run();
+            if (paused && index != null && !tasks.isBusy()) guard(this::inspectBreakpointHit);
+            if (paused && !disposed && index != null && !tasks.isBusy() && !running) {
+                try { session.applyPaused(session.pausedGeneration(), inspectionReadyListener); }
+                catch (IllegalStateException unavailable) { /* A concurrent change discards the notification. */ }
+            }
         }
     }
 
@@ -644,6 +640,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void setExecutionRunning(boolean running) {
         this.running = running;
+        discardStaleMemoryResults();
         updateExecutionState();
     }
 
@@ -772,7 +769,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private boolean inspectBreakpointHit() {
-        if (!byteMemory || image == null || tasks.isBusy()) return false;
+        if (!byteMemory || index == null || tasks.isBusy()) return false;
         DebugSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
         instructionModel.currentPage();
@@ -851,10 +848,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void resetMemoryView() {
         lastMemoryAddress = -1;
-        viewCapture = null;
-        searchCapture = null;
-        results = List.of();
-        differences.clear();
+        memoryResults = null;
         discoveredStrings = Map.of();
         stringBank = -1;
         resultContext.setText("All addresses");
@@ -867,10 +861,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         for (int c = 0; c < table.getColumnCount(); c++)
             if (table.getColumnModel().getColumn(c).getModelIndex() == 4)
                 strings = table.getColumnModel().getColumn(c);
-        if (!capturedStrings.isSelected() && strings != null) table.removeColumn(strings);
-        else if (capturedStrings.isSelected() && strings == null) {
+        if (!showStrings.isSelected() && strings != null) table.removeColumn(strings);
+        else if (showStrings.isSelected() && strings == null) {
             strings = new javax.swing.table.TableColumn(4);
-            strings.setHeaderValue("Captured string");
+            strings.setHeaderValue("String");
             strings.setPreferredWidth(180);
             table.addColumn(strings);
         }
@@ -893,16 +887,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             public Component getTableCellRendererComponent(JTable table, Object value,
                     boolean selected, boolean focus, int row, int column) {
                 Component cell = super.getTableCellRendererComponent(table, value, selected, focus, row, column);
-                if (!selected) {
-                    boolean changed = selectedBank() == differenceBank
-                            && differences.contains(model.addressAt(table.convertRowIndexToModel(row)));
-                    Color accent = UIManager.getColor("Table.selectionBackground");
-                    Color base = table.getBackground();
-                    cell.setBackground(changed && accent != null
-                            ? new Color((base.getRed() * 3 + accent.getRed()) / 4,
-                                    (base.getGreen() * 3 + accent.getGreen()) / 4,
-                                    (base.getBlue() * 3 + accent.getBlue()) / 4) : base);
-                }
                 setToolTipText(value == null ? null : value.toString());
                 return cell;
             }
@@ -939,10 +923,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JButton find = button(ICON_FIND, "Find", () -> {
             if (findKind.getSelectedIndex() == 1) {
                 int bytesWide = Integer.parseInt((String) width.getSelectedItem());
-                byte[] bytes = MemoryAnalysis.integer(Long.decode(pattern.getText()), bytesWide, !bigEndian.isSelected());
+                byte[] bytes = LiveMemory.integer(Long.decode(pattern.getText()), bytesWide, !bigEndian.isSelected());
                 byte[] mask = new byte[bytesWide];
                 Arrays.fill(mask, (byte) 255);
-                startSearch(selectedBank(), bytesWide, !bigEndian.isSelected(), bytes, mask);
+                startSearch(selectedBank(), bytes, mask);
             } else if (findKind.getSelectedIndex() == 2) {
                 String text = pattern.getText();
                 if (text.isEmpty())
@@ -950,10 +934,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 byte[] bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 byte[] mask = new byte[bytes.length];
                 Arrays.fill(mask, (byte) 255);
-                startSearch(selectedBank(), 1, true, bytes, mask);
+                startSearch(selectedBank(), bytes, mask);
             } else {
-                byte[][] parsed = MemoryAnalysis.pattern(pattern.getText());
-                startSearch(selectedBank(), 1, true, parsed[0], parsed[1]);
+                byte[][] parsed = LiveMemory.pattern(pattern.getText());
+                startSearch(selectedBank(), parsed[0], parsed[1]);
             }
         });
         pattern.addActionListener(e -> find.doClick());
@@ -961,154 +945,71 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         line(controls, label("Find", pattern), findKind, pattern,
                 widthLabel, width, bigEndian, find);
         pattern.getAccessibleContext().setAccessibleName("Search value");
-        JComboBox<String> rescan = new JComboBox<>(new String[] {"Changed", "Equal", "Increased", "Decreased"});
-        JToolBar resultTools = line(controls, resultContext, button(ICON_MOVE_UP, "Previous", () -> selectResult(-1)),
-                button(ICON_MOVE_DOWN, "Next", () -> selectResult(1)), rescan,
-                button(ICON_REFRESH, "Rescan", () -> {
-                    if (searchCapture == null) throw new IllegalStateException("Find a value before rescanning");
-                    if (selectedBank() != searchBank) throw new IllegalStateException("Select bank " + searchBank + " to rescan these results");
-                    MemoryAnalysis before = searchCapture;
-                    int selected = searchBank, bytesWide = searchWidth;
-                    boolean little = searchLittle;
-                    List<Integer> candidates = results;
-                    String mode = (String) rescan.getSelectedItem();
-                    runAnalysis(() -> {
-                        MemoryAnalysis now = session.captureMemory();
-                        return new SearchResult(now, before.rescan(now, selected, candidates, bytesWide, little, mode));
-                    }, found -> {
-                        searchCapture = found.capture;
-                        viewCapture = found.capture;
-                        discoveredStrings = Map.of();
-                        stringBank = -1;
-                        showResults(found.addresses);
-                    });
-                }));
-        JToggleButton more = toggleButton(ICON_BIDIRECTION, "Compare / strings");
-        JPanel compareTools = row();
-        compareTools.setVisible(false);
-        more.addActionListener(e -> {
-            compareTools.setVisible(more.isSelected());
-            controls.revalidate();
-            controls.getParent().revalidate();
-        });
-        resultTools.addSeparator();
-        resultTools.add(button(ICON_MEMORY, "Live memory", this::resetMemoryView));
-        resultTools.add(more);
-        capturedStrings.setToolTipText("Show or hide the captured-string column without changing memory or results");
-        capturedStrings.addActionListener(event -> configureMemoryColumns());
-        JToolBar compareActions = line(compareTools, button(ICON_ASCII, "Find strings", () -> {
+        line(controls, resultContext, button(ICON_MOVE_UP, "Previous", () -> selectResult(-1)),
+                button(ICON_MOVE_DOWN, "Next", () -> selectResult(1)),
+                button(ICON_MEMORY, "Show all addresses", this::resetMemoryView));
+        showStrings.setToolTipText("Show or hide strings found in live paused memory");
+        showStrings.addActionListener(event -> configureMemoryColumns());
+        line(controls, button(ICON_ASCII, "Find strings", () -> {
             int selected = selectedBank();
             runAnalysis(() -> {
-                MemoryAnalysis capture = session.captureMemory();
-                return new StringResult(capture, capture.strings(selected, 4));
+                LiveMemory memory = session.liveMemory();
+                Map<Integer, String> found = memory.strings(selected, 4);
+                memory.requireCurrent();
+                return new MemoryResult<>(memory, found);
             }, found -> {
-                viewCapture = found.capture;
-                discoveredStrings = found.strings;
+                found.memory.requireCurrent();
+                memoryResults = found.memory;
+                discoveredStrings = found.value;
                 stringBank = selected;
-                capturedStrings.setSelected(true);
+                showStrings.setSelected(true);
                 configureMemoryColumns();
-                differences.clear();
-                model.show(new ArrayList<>(discoveredStrings.keySet()));
-                resultContext.setText(discoveredStrings.size() + " strings");
+                model.show(new ArrayList<>(found.value.keySet()));
+                resultContext.setText(found.value.size() + " strings");
             });
-        }), button(ICON_COPY, "Capture baseline", () -> runAnalysis(session::captureMemory, captured -> {
-            baseline = captured;
-            baselineContext.setText("Baseline: captured now");
-        })), button(ICON_BIDIRECTION, "Compare baseline", () -> {
-            if (baseline == null) throw new IllegalStateException("Capture a baseline first");
-            MemoryAnalysis before = baseline;
-            int selected = selectedBank();
-            runAnalysis(() -> {
-                MemoryAnalysis now = session.captureMemory();
-                return new SearchResult(now, before.differences(now, selected));
-            }, found -> {
-                viewCapture = found.capture;
-                        discoveredStrings = Map.of();
-                        stringBank = -1;
-                showDifferences(found.addresses, selected);
-            });
-        }));
-        compareActions.add(button(ICON_OPEN_FILE, "Compare binary", () -> {
-            Path file = choose(false, false);
-            if (file == null) return;
-            int selected = selectedBank(), size = image.size();
-            runAnalysis(() -> {
-                byte[] bytes = MemoryAnalysis.readBinary(file, size);
-                MemoryAnalysis now = session.captureMemory();
-                return new SearchResult(now, now.differences(bytes, selected));
-            }, found -> {
-                viewCapture = found.capture;
-                        discoveredStrings = Map.of();
-                        stringBank = -1;
-                showDifferences(found.addresses, selected);
-            });
-        }));
-        compareActions.add(button(ICON_COMPILER, "Show source", () -> showSource(inspectedAddress)));
-        compareActions.add(capturedStrings);
-        JButton memoryBundle = button(ICON_DISK_MOUNTED, "Export memory and metadata", () -> {
-            if (!confirmSaveAnnotations()) return;
-            Path path = choose(true, true);
-            if (path != null) MetadataExport.export(path, image, index,
-                    session.debug == null ? session.cpu.getTitle() : session.debug.processor(), selectedBank(), 0);
-        });
-        memoryBundle.setText("Memory bundle…");
-        compareActions.add(memoryBundle);
-        controls.add(compareTools, "span, growx, wrap");
-        compareActions.add(baselineContext);
+        }), button(ICON_COMPILER, "Show source", () -> showSource(inspectedAddress)), showStrings);
         panel.add(scrollTools(controls), BorderLayout.NORTH);
         return panel;
     }
 
-    private static final class StringResult {
-        final MemoryAnalysis capture;
-        final Map<Integer, String> strings;
-        StringResult(MemoryAnalysis capture, Map<Integer, String> strings) {
-            this.capture = capture;
-            this.strings = strings;
+    private void startSearch(int selected, byte[] bytes, byte[] mask) {
+        runAnalysis(() -> {
+            LiveMemory memory = session.liveMemory();
+            List<Integer> found = memory.search(selected, bytes, mask);
+            memory.requireCurrent();
+            return new MemoryResult<>(memory, found);
+        }, found -> {
+            found.memory.requireCurrent();
+            memoryResults = found.memory;
+            discoveredStrings = Map.of();
+            stringBank = -1;
+            model.show(found.value);
+            resultContext.setText(found.value.size() + " matches");
+        });
+    }
+
+    private static final class MemoryResult<T> {
+        final LiveMemory memory;
+        final T value;
+
+        MemoryResult(LiveMemory memory, T value) {
+            this.memory = memory;
+            this.value = value;
         }
     }
 
-    private void startSearch(int selected, int bytesWide, boolean little, byte[] bytes, byte[] mask) {
-        runAnalysis(
-                () -> {
-                    MemoryAnalysis capture = session.captureMemory();
-                    return new SearchResult(capture, capture.search(selected, bytes, mask));
-                },
-                found -> {
-                    searchCapture = found.capture;
-                    viewCapture = found.capture;
-                    discoveredStrings = Map.of();
-                    stringBank = -1;
-                    searchBank = selected;
-                    searchWidth = bytesWide;
-                    searchLittle = little;
-                    differences.clear();
-                    showResults(found.addresses);
-                });
-    }
-
-    private void showResults(List<Integer> found) {
-        results = found;
-        model.show(results);
-        resultContext.setText(results.size() + " matches");
-    }
-
-    private void showDifferences(List<Integer> found, int selected) {
-        differences.clear();
-        differences.addAll(found);
-        differenceBank = selected;
-        model.show(found);
-        resultContext.setText(found.size() + " changed bytes");
-    }
-
-    private static final class SearchResult {
-        final MemoryAnalysis capture;
-        final List<Integer> addresses;
-
-        SearchResult(MemoryAnalysis capture, List<Integer> addresses) {
-            this.capture = capture;
-            this.addresses = addresses;
+    private boolean memoryResultsCurrent() {
+        if (memoryResults == null) return true;
+        try {
+            memoryResults.requireCurrent();
+            return true;
+        } catch (IllegalStateException unavailable) {
+            return false;
         }
+    }
+
+    private void discardStaleMemoryResults() {
+        if (!memoryResultsCurrent()) resetMemoryView();
     }
 
     private void selectResult(int delta) {
@@ -1217,6 +1118,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             throw failure;
         }
         refreshAnnotations(annotationFilter.getText());
+        discardStaleMemoryResults();
         model.refreshData();
     }
 
@@ -1297,7 +1199,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         void load(int selected, int at) {
             loading = true;
             try {
-                bank = image == null ? selected : image.physicalBank(at, selected);
+                bank = index == null ? selected : index.programIndex().snapshot().layout().physicalBank(selected, at);
                 address = at;
                 original = index == null ? null : index.get(bank, address);
                 if (original == null && index != null)
@@ -1748,18 +1650,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void analyzeFlow(boolean sweep, JComboBox<Integer> nodes, JLabel hint) {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        ProgramIndex captured = session.programIndex();
-        long generation = session.pausedGeneration();
         int bank = selectedBank(), address = inspectedAddress;
-        tasks.submit(() -> {
-            DebugSession.AnalysisCapture capture = session.captureAnalysis(generation, captured, bank);
-            FlowAnalysis.Pending pending = sweep
-                    ? FlowAnalysis.sweep(capture.decoder, 100000, captured, capture.base, bank)
-                    : FlowAnalysis.reachable(capture.decoder, address, 256, captured, capture.base, bank);
-            FlowAnalysis[] published = new FlowAnalysis[1];
-            session.applyPaused(generation, () -> published[0] = pending.publish());
-            return published[0];
-        }, flow -> {
+        tasks.submit(() -> session.analyzeFlow(bank, address, sweep ? 100000 : 256, sweep), flow -> {
             if (!flow.isCurrent(session.programIndex()))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
             referenceFlow = flow;
@@ -2517,8 +2409,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private AnnotationIndex.Entry annotationAt(int at, int bank) {
-        return index != null && image != null && at >= 0 && at < image.size()
-                && bank >= 0 && bank < image.bankCount() ? index.get(bank, at) : null;
+        if (index == null) return null;
+        ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
+        return at >= 0 && at < layout.addressSpaceSize() && bank >= 0 && bank < layout.bankCount()
+                ? index.get(bank, at) : null;
     }
 
     private static <T> void updateRows(DefaultListModel<T> model, List<T> values) {
@@ -2588,14 +2482,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         SwingUtilities.invokeLater(() -> {
             refreshQueued.set(false);
             if (disposed) return;
-            if (image == null && tasks.isBusy()) initializationPending = true;
+            if (index == null && tasks.isBusy()) initializationPending = true;
             refresh();
         });
     }
 
     private void refresh() {
-        if (disposed || tasks.isBusy()) return;
+        if (disposed) return;
+        discardStaleMemoryResults();
+        if (tasks.isBusy()) return;
         try { session.requirePaused(); } catch (IllegalStateException e) { return; }
+        if (index != null && index.programIndex() != session.programIndex()) {
+            index = null;
+            initializeAnnotations();
+            return;
+        }
         updateRecordingControls(true);
         refreshWatches();
         refreshMemoryWatches();
@@ -2779,16 +2680,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
         @Override public int getColumnCount() { return 5; }
         @Override public String getColumnName(int col) {
-            return new String[] {"Address", "Byte", "Label", "Comment", "Captured string"}[col];
+            return new String[] {"Address", "Byte", "Label", "Comment", "String"}[col];
         }
         @Override public Object getValueAt(int row, int col) {
             if (disposed || tasks.isBusy()) return "";
+            if (!memoryResultsCurrent()) { requestRefresh(); return ""; }
             int at = addressAt(row), selected = selectedBank();
             AnnotationIndex.Entry entry = annotationAt(at, selected);
             try {
                 if (col == 0) return String.format("%04X", at);
                 if (col == 1) {
-                    if (viewCapture != null) return String.format("%02X", viewCapture.value(at, selected));
                     session.requirePaused();
                     return String.format("%02X", (Byte) session.memory.readBank(at, selected) & 255);
                 }

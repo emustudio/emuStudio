@@ -41,14 +41,14 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
-    public void replacingSameLayoutImageRejectsOldSourceNavigationInBothDirections() throws Exception {
+    public void replacingMemoryLayoutRejectsOldSourceNavigationInBothDirections() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showMemory);
             f.sourceLine(2);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             net.emustudio.application.debugger.index.ProgramIndex previous = f.session.programIndex();
-            onEdt(() -> { f.session.replaceImage(); return null; });
+            when(f.memory.getAddressSpaceSize()).thenReturn(64);
             assertNotSame(previous, f.session.programIndex());
 
             f.sourceLine(3);

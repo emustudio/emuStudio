@@ -4,7 +4,7 @@ package net.emustudio.application.debugger.bench;
 
 import net.emustudio.application.debugger.AnnotationIndex;
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
-import net.emustudio.application.debugger.MemoryAnalysis;
+import net.emustudio.application.debugger.index.ProgramIndex;
 import org.openjdk.jmh.annotations.*;
 
 import java.io.IOException;
@@ -24,13 +24,13 @@ public class ProgramIndexAdapterBenchmark {
         BenchmarkData data;
         AnnotationIndex adapter;
         BaselineAnnotationIndex baseline;
-        MemoryAnalysis image;
+        ProgramIndex.Layout layoutMetadata;
 
         @Setup public void setup() throws IOException {
             data = new BenchmarkData(layout, entries);
-            image = new MemoryAnalysis(new byte[data.banks][data.size], data.common);
-            baseline = data.baseline(image);
-            adapter = new AnnotationIndex(image);
+            layoutMetadata = ProgramIndex.create("bench", data.size, data.banks, data.common).snapshot().layout();
+            baseline = data.baseline(layoutMetadata);
+            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size, data.banks, data.common));
             adapter.importProperties(baseline.properties());
             // Build the adapter's immutable projection before timing steady-state point queries.
             adapter.get(data.bank[0], data.address[0]);

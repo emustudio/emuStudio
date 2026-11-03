@@ -4,13 +4,20 @@ package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.cpu.InstructionFlow;
+import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 /** Per-computer debug state. UI mutates rules/watches only while paused. */
@@ -22,7 +29,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     public final List<Rule> rules = new ArrayList<>();
     private final Path settings;
     private Properties lastSaved;
-    private MemoryAnalysis image;
+    private final String metadataNamespace;
     private AnnotationIndex annotations;
     private volatile ProgramIndex programIndex;
     // Never acquire the session monitor while holding this lock in a memory notification.
@@ -56,11 +63,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         int common = memory == null ? 0 : memory.getCommonBoundary();
         if (layout == null || layout.addressSpaceSize() != size
                 || layout.bankCount() != banks || layout.commonBoundary() != common) {
-            ProgramIndex replacement = ProgramIndex.create("session:" + UUID.randomUUID(), size, banks, common);
+            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size, banks, common), size, banks, common);
             synchronized (indexPublicationLock) {
                 programIndex = replacement;
             }
-            image = null;
             annotations = null;
             sourceMappings = SourceAddressMap.empty();
             sourceBindings.clear();
@@ -78,128 +84,51 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         bindSourceRules();
     }
 
-    public MemoryAnalysis image() throws IOException {
-        requirePaused();
-        programIndex();
-        if (image == null) installImage(imageCapture());
-        return image;
+    /** Live reads never retain a copy of memory cells. Reacquire after a machine or metadata edit. */
+    public LiveMemory liveMemory() {
+        if (memory == null) throw new IllegalStateException("Memory unavailable");
+        LiveWork work = liveWork();
+        return new LiveMemory(memory, work.base.layout(), work::requireCurrent);
     }
 
+    /** User metadata loads without reading or storing memory cells. */
     public AnnotationIndex annotations() throws IOException {
-        image();
-        return annotations;
-    }
-
-    public void replaceImage() throws IOException {
-        installImage(captureImage());
-    }
-
-    ImageCapture imageCapture() throws IOException {
-        programIndex();
-        long current = pausedGeneration();
+        LiveWork work = liveWork();
         synchronized (this) {
-            if (image != null) return new ImageCapture(image, annotations, current, programIndex, programIndex.snapshot());
+            if (annotations != null) return annotations;
         }
-        return captureImage(programIndex());
-    }
-
-    ImageCapture captureImage() throws IOException {
-        ProgramIndex.Layout layout = programIndex().snapshot().layout();
-        return captureImage(ProgramIndex.create("image:" + UUID.randomUUID(), layout.addressSpaceSize(),
-                layout.bankCount(), layout.commonBoundary()));
-    }
-
-    private ImageCapture captureImage(ProgramIndex targetIndex) throws IOException {
-        long current = pausedGeneration();
-        ProgramIndex.Snapshot base = programIndex().snapshot();
-        MemoryAnalysis captured = captureMemory();
-        // Read persistence into detached storage. A rejected capture must not mutate this session.
-        AnnotationIndex loaded = new AnnotationIndex(captured);
-        Path path = annotationPath(captured);
-        if (path != null && Files.isRegularFile(path)) loaded.load(path);
-        applyPaused(current, () -> {});
-        return new ImageCapture(captured, loaded, current, targetIndex, base);
-    }
-
-    synchronized AnnotationIndex installImage(ImageCapture captured) {
-        applyPaused(captured.generation, () -> {});
-        programIndex();
-        requireImageBase(captured);
-        if (captured.image == image && captured.annotations == annotations && captured.targetIndex == programIndex)
-            return annotations;
-
-        boolean replacing = programIndex != captured.targetIndex;
-        AnnotationIndex installed = new AnnotationIndex(captured.image, captured.targetIndex);
-        ProgramIndex.Snapshot targetBase = replacing ? captured.targetBase : captured.base;
-        if (installed.installCaptured(captured.annotations, targetBase) != ProgramIndex.CommitResult.PUBLISHED)
-            throw new IllegalStateException("Analysis discarded: source, metadata or memory image changed");
-        // The same-index content CAS is its linearization point. New-image content is still
-        // detached; recheck the live image and adopt it atomically with observed write invalidation.
-        if (replacing) {
-            synchronized (indexPublicationLock) {
-                requireImageBase(captured);
-                programIndex = captured.targetIndex;
-                image = captured.image;
+        Path path = annotationPath(work.base.layout().imageId());
+        Properties loaded = path != null && Files.isRegularFile(path) ? AtomicProperties.load(path) : null;
+        synchronized (this) {
+            work.requireCurrent();
+            if (annotations == null) {
+                AnnotationIndex installed = new AnnotationIndex(work.index);
+                if (loaded != null && installed.installProperties(loaded, work.base) != ProgramIndex.CommitResult.PUBLISHED)
+                    throw new IllegalStateException("Metadata discarded: machine or metadata changed while loading");
                 annotations = installed;
             }
-            sourceMappings = SourceAddressMap.empty();
-            sourceBindings.clear();
-            indexedBreakpointIds.clear();
-            synchronizeBreakpoints();
-            generation++;
-        } else {
-            image = captured.image;
-            annotations = installed;
-        }
-        return annotations;
-    }
-
-    private void requireImageBase(ImageCapture captured) {
-        ProgramIndex.Snapshot current = programIndex.snapshot();
-        if (current.contentRevision() != captured.base.contentRevision()
-                || current.memoryRevision() != captured.base.memoryRevision()
-                || current.layout() != captured.base.layout())
-            throw new IllegalStateException("Analysis discarded: source, metadata or memory image changed");
-    }
-
-    MemoryAnalysis captureMemory() {
-        if (memory == null) throw new IllegalStateException("Memory unavailable");
-        long current = pausedGeneration();
-        MemoryAnalysis captured = MemoryAnalysis.capture(memory);
-        applyPaused(current, () -> {});
-        return captured;
-    }
-
-    static final class ImageCapture {
-        final MemoryAnalysis image;
-        final AnnotationIndex annotations;
-        final long generation;
-        final ProgramIndex targetIndex;
-        final ProgramIndex.Snapshot base;
-        final ProgramIndex.Snapshot targetBase;
-
-        ImageCapture(MemoryAnalysis image, AnnotationIndex annotations, long generation,
-                     ProgramIndex targetIndex, ProgramIndex.Snapshot base) {
-            this.image = image;
-            this.annotations = annotations;
-            this.generation = generation;
-            this.targetIndex = targetIndex;
-            this.base = base;
-            this.targetBase = targetIndex.snapshot();
+            return annotations;
         }
     }
 
-    private Path annotationPath(MemoryAnalysis image) {
-        return settings == null
-                ? null
-                : settings.resolveSibling(
-                        settings.getFileName() + "." + image.identity() + ".annotations");
+    private String metadataIdentity(int size, int banks, int common) {
+        try {
+            String identity = cpu.getTitle() + ":" + metadataNamespace + ":" + size + ":" + banks + ":" + common;
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8));
+            StringBuilder text = new StringBuilder();
+            for (byte value : digest) text.append(String.format("%02x", value & 255));
+            return text.toString();
+        } catch (NoSuchAlgorithmException e) { throw new AssertionError(e); }
+    }
+
+    private Path annotationPath(String identity) {
+        return settings == null ? null : settings.resolveSibling(settings.getFileName() + "." + identity + ".annotations");
     }
 
     public void saveAnnotations() throws IOException {
-        requirePaused();
-        Path path = annotationPath(image);
-        if (path != null) annotations.save(path);
+        AnnotationIndex current = annotations();
+        Path path = annotationPath(current.programIndex().snapshot().layout().imageId());
+        if (path != null) current.save(path);
     }
 
     public void clearAnnotations() throws IOException {
@@ -264,6 +193,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         this.debug = cpu.getDebugger().orElse(null);
         this.memory = debug == null ? memory : debug.memory();
         this.settings = settings;
+        metadataNamespace = settings == null ? "session:" + UUID.randomUUID() : settings.toAbsolutePath().normalize().toUri().toString();
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) programIndex();
         load();
         cpu.addCPUListener(stateListener);
@@ -323,29 +253,89 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         requirePaused();
         requireNoMutation();
         if (generation != expectedGeneration)
-            throw new IllegalStateException("Analysis discarded: machine changed during capture");
+            throw new IllegalStateException("Analysis discarded: machine changed during analysis");
         apply.run();
     }
 
-    /** Capture only under the paused lease; expensive graph discovery uses this decoder outside it. */
-    synchronized AnalysisCapture captureAnalysis(long expectedGeneration, ProgramIndex expectedIndex, int bank) {
-        applyPaused(expectedGeneration, () -> {});
-        if (programIndex() != expectedIndex) throw new IllegalStateException("Analysis discarded: memory image changed");
-        ProgramIndex.Snapshot base = expectedIndex.snapshot();
-        Disassembler decoder = cpu.getDisassembler().capture(bank)
-                .orElseThrow(() -> new IllegalStateException("Stable flow analysis unsupported by this CPU"));
-        applyPaused(expectedGeneration, () -> {});
-        ProgramIndex.Snapshot current = expectedIndex.snapshot();
-        if (programIndex() != expectedIndex || current.memoryRevision() != base.memoryRevision()
-                || current.contentRevision() != base.contentRevision())
-            throw new IllegalStateException("Analysis discarded: memory or metadata changed during capture");
-        return new AnalysisCapture(decoder, base);
+    private synchronized LiveWork liveWork() {
+        requirePaused();
+        requireNoMutation();
+        ProgramIndex index = programIndex();
+        return new LiveWork(index, index.snapshot(), generation);
     }
 
-    static final class AnalysisCapture {
-        final Disassembler decoder;
+    private final class LiveWork {
+        final ProgramIndex index;
         final ProgramIndex.Snapshot base;
-        AnalysisCapture(Disassembler decoder, ProgramIndex.Snapshot base) { this.decoder = decoder; this.base = base; }
+        final long expectedGeneration;
+
+        LiveWork(ProgramIndex index, ProgramIndex.Snapshot base, long expectedGeneration) {
+            this.index = index;
+            this.base = base;
+            this.expectedGeneration = expectedGeneration;
+        }
+
+        void requireCurrent() {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            synchronized (DebugSession.this) {
+                applyPaused(expectedGeneration, () -> {});
+                ProgramIndex.Snapshot current = index.snapshot();
+                if (programIndex() != index || current.memoryRevision() != base.memoryRevision()
+                        || current.contentRevision() != base.contentRevision())
+                    throw new IllegalStateException("Analysis discarded: memory, source or metadata changed");
+            }
+        }
+    }
+
+    /** Decode live, explicit-bank memory off the UI thread; publish only while its paused root is current. */
+    public FlowAnalysis analyzeFlow(int bank, int start, int limit, boolean sweep) {
+        LiveWork work = liveWork();
+        work.base.layout().physicalBank(bank, start);
+        Disassembler original = cpu.getDisassembler();
+        Optional<Disassembler> explicit = original.forBank(bank);
+        Disassembler selected = explicit.orElseGet(() -> {
+            if (bank != (memory == null ? 0 : memory.getSelectedBank()))
+                throw new IllegalStateException("Flow analysis for this inspection bank is unsupported by this CPU");
+            return original;
+        });
+        Runnable validate = () -> {
+            work.requireCurrent();
+            if (explicit.isEmpty() && bank != (memory == null ? 0 : memory.getSelectedBank()))
+                throw new IllegalStateException("Analysis discarded: mapped memory bank changed");
+        };
+        Disassembler decoder = guardedDecoder(selected, validate);
+        FlowAnalysis.Pending pending = sweep
+                ? FlowAnalysis.sweep(decoder, limit, work.index, work.base, bank)
+                : FlowAnalysis.reachable(decoder, start, limit, work.index, work.base, bank);
+        synchronized (this) {
+            validate.run();
+            return pending.publish();
+        }
+    }
+
+    private static Disassembler guardedDecoder(Disassembler decoder, Runnable validate) {
+        return new Disassembler() {
+            @Override public Optional<InstructionFlow> getFlow(int address) {
+                validate.run();
+                Optional<InstructionFlow> flow = decoder.getFlow(address);
+                validate.run();
+                return flow;
+            }
+
+            @Override public DisassembledInstruction disassemble(int address) throws InvalidInstructionException {
+                validate.run();
+                DisassembledInstruction instruction = decoder.disassemble(address);
+                validate.run();
+                return instruction;
+            }
+
+            @Override public int getNextInstructionPosition(int address) {
+                validate.run();
+                int next = decoder.getNextInstructionPosition(address);
+                validate.run();
+                return next;
+            }
+        };
     }
 
     /** Associates a compiler callback with its enclosing machine mutation, including its reset. */

@@ -120,8 +120,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     }
 
     @Override
-    public RaspMemory getSnapshot() {
-        return rwl.lockRead(() -> new RaspMemory(labels.values(), memory, inputs));
+    public List<Integer> getInputs() {
+        return rwl.lockRead(() -> List.copyOf(inputs));
     }
 
     // Keep throws IOException, ClassNotFoundException due to lock sneaky throw

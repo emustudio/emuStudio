@@ -3,7 +3,6 @@
 package net.emustudio.application.debugger.bench;
 
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
-import net.emustudio.application.debugger.MemoryAnalysis;
 import net.emustudio.application.debugger.index.ProgramIndex;
 
 import java.util.Random;
@@ -71,12 +70,11 @@ final class BenchmarkData {
     }
 
     BaselineAnnotationIndex baseline() {
-        if (layout.equals("sparse")) throw new IllegalArgumentException("Old MemoryAnalysis requires a flat image");
-        return baseline(new MemoryAnalysis(new byte[banks][size], common));
+        return baseline(ProgramIndex.create("bench", size, banks, common).snapshot().layout());
     }
 
-    BaselineAnnotationIndex baseline(MemoryAnalysis image) {
-        BaselineAnnotationIndex index = new BaselineAnnotationIndex(image);
+    BaselineAnnotationIndex baseline(ProgramIndex.Layout layout) {
+        BaselineAnnotationIndex index = new BaselineAnnotationIndex(layout);
         for (int i = 0; i < count; i++) index.put(new BaselineAnnotationIndex.Entry(
                 bank[i], address[i], labels[i], "", false, "UNKNOWN"));
         return index;

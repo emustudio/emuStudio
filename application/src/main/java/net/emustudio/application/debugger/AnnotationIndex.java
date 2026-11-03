@@ -16,22 +16,12 @@ public final class AnnotationIndex {
     private static final long TYPE_OWNER = 3;
     private static final String USER_KIND = "emuStudio.user/";
     private static final AtomicLong IDS = new AtomicLong();
-    private final MemoryAnalysis image;
     private final ProgramIndex index;
     private volatile View cached;
     private final ThreadLocal<Lookup> lookups = ThreadLocal.withInitial(Lookup::new);
 
-    public AnnotationIndex(MemoryAnalysis image) {
-        this(image, ProgramIndex.create(image.identity(), image.size(), image.bankCount(), image.common));
-    }
-
-    AnnotationIndex(MemoryAnalysis image, ProgramIndex index) {
-        this.image = Objects.requireNonNull(image);
+    public AnnotationIndex(ProgramIndex index) {
         this.index = Objects.requireNonNull(index);
-        ProgramIndex.Layout layout = index.snapshot().layout();
-        if (layout.addressSpaceSize() != image.size() || layout.bankCount() != image.bankCount()
-                || layout.commonBoundary() != image.common)
-            throw new IllegalArgumentException("Memory layout differs from program index");
     }
 
     public ProgramIndex programIndex() { return index; }
@@ -72,11 +62,9 @@ public final class AnnotationIndex {
         }
     }
 
-    /** Captured image results commit once against their exact base; unlike editor commands, never replay. */
-    ProgramIndex.CommitResult installCaptured(AnnotationIndex captured, ProgramIndex.Snapshot base) {
-        if (!image.identity().equals(captured.image.identity()))
-            throw new IllegalArgumentException("Annotations belong to another memory image/layout");
-        List<Entry> entries = captured.entries();
+    /** Disk-loaded metadata commits only against the root from before the I/O. */
+    ProgramIndex.CommitResult installProperties(Properties properties, ProgramIndex.Snapshot base) throws IOException {
+        List<Entry> entries = importedEntries(properties);
         try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
             stage(update, base, entries, false);
             return update.commit();
@@ -142,7 +130,7 @@ public final class AnnotationIndex {
     public Properties properties() {
         Properties p = new Properties();
         p.setProperty("version", "1");
-        p.setProperty("image.identity", image.identity());
+        p.setProperty("image.identity", index.snapshot().layout().imageId());
         List<Entry> entries = entries();
         p.setProperty("entries", Integer.toString(entries.size()));
         int i = 0;
@@ -162,7 +150,12 @@ public final class AnnotationIndex {
     public void load(Path path) throws IOException { importProperties(AtomicProperties.load(path)); }
 
     public void importProperties(Properties p) throws IOException {
-        if (!"1".equals(p.getProperty("version")) || !image.identity().equals(p.getProperty("image.identity")))
+        edit(importedEntries(p), false);
+    }
+
+    private List<Entry> importedEntries(Properties p) throws IOException {
+        if (!"1".equals(p.getProperty("version"))
+                || !index.snapshot().layout().imageId().equals(p.getProperty("image.identity")))
             throw new IOException("Annotations belong to another memory image/layout");
         Map<Long, Entry> imported = new LinkedHashMap<>();
         try {
@@ -178,7 +171,7 @@ public final class AnnotationIndex {
                 int bank = index.snapshot().layout().physicalBank(entry.bank, entry.address);
                 imported.put(((long) bank << 32) | (entry.address & 0xffffffffL), entry);
             }
-            edit(new ArrayList<>(imported.values()), false);
+            return new ArrayList<>(imported.values());
         } catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
     }
 

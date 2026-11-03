@@ -40,8 +40,8 @@ final class AnalysisTasks implements AutoCloseable {
         requireEdt();
         if (closed) throw new IllegalStateException("Analysis window closed");
         if (active != null) throw new IllegalStateException("Analysis already in progress");
+        ProgramIndex index = session.memory != null || session.cpu.getAddressSpaceSize() > 0 ? session.programIndex() : null;
         long generation = session.pausedGeneration();
-        ProgramIndex index = session.memory == null ? null : session.programIndex();
         ProgramIndex.Snapshot base = index == null ? null : index.snapshot();
         long memoryRevision = base == null ? 0 : base.memoryRevision();
         long contentRevision = base == null ? 0 : base.contentRevision();

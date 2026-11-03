@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
-import net.emustudio.application.debugger.MemoryAnalysis;
+import net.emustudio.application.debugger.index.ProgramIndex;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -18,14 +18,14 @@ public final class IndexFootprint {
 
     public static void main(String[] arguments) throws Exception {
         System.out.println("# " + System.getProperty("java.vm.name") + " " + System.getProperty("java.version"));
-        System.out.println("# Reachable object-graph bytes. Shared captured image and Class objects excluded; aliases counted once.");
+        System.out.println("# Reachable object-graph bytes. Shared layout metadata and Class objects excluded; aliases counted once.");
         System.out.println("layout,entries,structure,bytes");
         for (String layout : new String[] {"single", "banked", "sparse"}) {
             for (int count : new int[] {1, 1000, 10000, 50000}) {
                 BenchmarkData data = new BenchmarkData(layout, count);
                 if (!layout.equals("sparse")) {
-                    MemoryAnalysis image = new MemoryAnalysis(new byte[data.banks][data.size], data.common);
-                    System.out.printf("%s,%d,old_annotations,%d%n", layout, count, bytes(data.baseline(image), image));
+                    ProgramIndex.Layout layoutMetadata = ProgramIndex.create("bench", data.size, data.banks, data.common).snapshot().layout();
+                    System.out.printf("%s,%d,old_annotations,%d%n", layout, count, bytes(data.baseline(layoutMetadata), layoutMetadata));
                 }
                 System.out.printf("%s,%d,index_annotations,%d%n", layout, count, bytes(data.index(false)));
                 System.out.printf("%s,%d,index_annotations_and_sources,%d%n", layout, count, bytes(data.index()));

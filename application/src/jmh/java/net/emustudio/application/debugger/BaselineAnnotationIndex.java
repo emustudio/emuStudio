@@ -2,23 +2,25 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-// Benchmark-only baseline from 184f8d5a49fd40d99e553a80496c508e2e699618; class names only changed.
+import net.emustudio.application.debugger.index.ProgramIndex;
+
+// Benchmark-only baseline from 184f8d5a49fd40d99e553a80496c508e2e699618; string-key storage preserved; image dependency reduced to layout metadata.
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-/** User metadata kept separate from compiler annotations and bound to a captured image. */
+/** User metadata kept separate from compiler annotations and bound to computer/layout metadata. */
 public final class BaselineAnnotationIndex {
     private final Map<String, Entry> entries = new LinkedHashMap<>();
-    private final MemoryAnalysis image;
+    private final ProgramIndex.Layout layout;
 
-    public BaselineAnnotationIndex(MemoryAnalysis image) {
-        this.image = image;
+    public BaselineAnnotationIndex(ProgramIndex.Layout layout) {
+        this.layout = layout;
     }
 
     private String key(int bank, int address) {
-        return image.physicalBank(address, bank) + ":" + address;
+        return layout.physicalBank(bank, address) + ":" + address;
     }
 
     public Entry get(int bank, int address) {
@@ -26,7 +28,7 @@ public final class BaselineAnnotationIndex {
     }
 
     public void put(Entry entry) {
-        int bank = image.physicalBank(entry.address, entry.bank);
+        int bank = layout.physicalBank(entry.bank, entry.address);
         if (!List.of("UNKNOWN", "CODE", "DATA").contains(entry.kind))
             throw new IllegalArgumentException("Invalid annotation kind");
         entries.put(
@@ -60,7 +62,7 @@ public final class BaselineAnnotationIndex {
     public Properties properties() {
         Properties p = new Properties();
         p.setProperty("version", "1");
-        p.setProperty("image.identity", image.identity());
+        p.setProperty("image.identity", layout.imageId());
         p.setProperty("entries", Integer.toString(entries.size()));
         int i = 0;
         for (Entry e : entries.values()) {
@@ -85,9 +87,9 @@ public final class BaselineAnnotationIndex {
 
     public void importProperties(Properties p) throws IOException {
         if (!"1".equals(p.getProperty("version"))
-                || !image.identity().equals(p.getProperty("image.identity")))
+                || !layout.imageId().equals(p.getProperty("image.identity")))
             throw new IOException("Annotations belong to another memory image/layout");
-        BaselineAnnotationIndex imported = new BaselineAnnotationIndex(image);
+        BaselineAnnotationIndex imported = new BaselineAnnotationIndex(layout);
         try {
             int count = Integer.parseInt(p.getProperty("entries"));
             if (count < 0 || count > 100000)

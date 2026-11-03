@@ -375,18 +375,20 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setupDebugToolbar() {
-        toolDebug.add(gui.toolbarButton(runAction));
-        toolDebug.add(gui.toolbarButton(pauseAction));
-        toolDebug.add(gui.toolbarButton(stopAction));
-        toolDebug.add(gui.toolbarButton(runTimedAction));
-        toolDebug.add(gui.toolbarButton(stepAction));
-        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(resetAction));
+        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
         toolDebug.add(gui.toolbarButton(stepBackAction));
+        toolDebug.add(gui.toolbarButton(stopAction));
+        toolDebug.add(gui.toolbarButton(pauseAction));
+        toolDebug.add(gui.toolbarButton(stepAction));
+        toolDebug.add(gui.toolbarButton(runTimedAction));
+        toolDebug.add(gui.toolbarButton(runAction));
+        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(jumpAction));
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(breakpointAction));
+        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(showMemoryAction));
         for (java.awt.Component component : toolDebug.getComponents()) {
             if (component instanceof JButton) {

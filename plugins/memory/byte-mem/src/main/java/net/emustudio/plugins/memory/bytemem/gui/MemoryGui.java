@@ -40,7 +40,6 @@ public class MemoryGui extends DialogBase {
     private final JToggleButton btnAsciiMode = new JToggleButton();
 
     private final LoadImageAction loadImageAction;
-    private final DumpMemoryAction dumpMemoryAction;
     private final GotoAddressAction gotoAddressAction;
     private final FindSequenceAction findSequenceAction;
     private final NavigateSequenceAction findNextAction;
@@ -66,7 +65,6 @@ public class MemoryGui extends DialogBase {
             table.revalidate();
             table.repaint();
         }, gui);
-        this.dumpMemoryAction = new DumpMemoryAction(dialogs, context);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
         this.findSequenceAction = new FindSequenceAction(dialogs, search, this::getCurrentAddress, this, gui);
@@ -133,7 +131,6 @@ public class MemoryGui extends DialogBase {
     protected JComponent initializeComponents() {
         JToolBar toolBar = gui.toolBar();
         toolBar.add(gui.toolbarButton(loadImageAction));
-        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(gotoAddressAction));
         toolBar.add(gui.toolbarButton(findSequenceAction));

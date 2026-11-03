@@ -42,18 +42,19 @@ public class FlowMetadataTest {
     }
 
     @Test
-    public void capturedOperandAndDisassemblyRemainStableAfterMemoryWrite() throws Exception {
+    public void explicitBankDecoderReadsUpdatedOperandsAndDisassembly() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0xcd);
         memory.write(1, (byte) 0x34);
         memory.write(2, (byte) 0x12);
-        Disassembler live = new SnapshotDisassembler<>(memory, value -> value, captured ->
-                new FlowDisassembler(new DisassemblerImpl(captured, new DecoderImpl(captured)), captured, false));
-        Disassembler captured = live.capture(0).orElseThrow();
-        String mnemonic = captured.disassemble(0).mnemo;
+        Disassembler live = new BankedDisassembler<>(memory, cells ->
+                new FlowDisassembler(new DisassemblerImpl(cells, new DecoderImpl(cells)), cells, false));
+        Disassembler bank = live.forBank(0).orElseThrow();
+        assertEquals(java.util.List.of(0x1234), bank.getFlow(0).orElseThrow().targets);
+        String mnemonic = bank.disassemble(0).mnemo;
         memory.write(1, (byte) 0x78);
-        assertEquals(java.util.List.of(0x1234), captured.getFlow(0).orElseThrow().targets);
-        assertEquals(mnemonic, captured.disassemble(0).mnemo);
+        assertEquals(java.util.List.of(0x1278), bank.getFlow(0).orElseThrow().targets);
+        assertNotEquals(mnemonic, bank.disassemble(0).mnemo);
         assertEquals(java.util.List.of(0x1278), live.getFlow(0).orElseThrow().targets);
     }
 }

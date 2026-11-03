@@ -27,8 +27,8 @@ public final class FlowAnalysis {
     }
 
     /**
-     * Decode an immutable memory capture on a worker. The decoder must not consult live memory.
-     * Publication is separate so the adapter can reject a changed machine or disposed session.
+     * Decode live memory on a worker while the machine is paused. The session adapter must reject
+     * a changed machine, memory revision, or disposed session before publishing the staged graph.
      * The limit bounds attempted undecodable addresses as well as scheduled instructions.
      */
     public static Pending reachable(Disassembler disassembler, int start, int limit,
@@ -36,7 +36,7 @@ public final class FlowAnalysis {
         return reachable(disassembler, start, limit, index, index.snapshot(), bank);
     }
 
-    /** Uses the exact root captured together with the immutable decoder. */
+    /** Uses the metadata root from before live decoding. */
     public static Pending reachable(Disassembler disassembler, int start, int limit,
                                     ProgramIndex index, ProgramIndex.Snapshot base, int bank) {
         Builder builder = new Builder(disassembler, limit, index, base, bank);
@@ -71,7 +71,7 @@ public final class FlowAnalysis {
         return sweep(disassembler, limit, index, index.snapshot(), bank);
     }
 
-    /** Uses the exact root captured together with the immutable decoder. */
+    /** Uses the metadata root from before live decoding. */
     public static Pending sweep(Disassembler disassembler, int limit, ProgramIndex index,
                                 ProgramIndex.Snapshot base, int bank) {
         Builder builder = new Builder(disassembler, limit, index, base, bank);

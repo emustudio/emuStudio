@@ -3,7 +3,6 @@
 package net.emustudio.application.debugger.bench;
 
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
-import net.emustudio.application.debugger.MemoryAnalysis;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import org.openjdk.jmh.annotations.*;
 
@@ -23,13 +22,13 @@ public class ProgramIndexPointBenchmark {
         BenchmarkData data;
         BaselineAnnotationIndex baseline;
         ProgramIndex.Snapshot snapshot;
-        MemoryAnalysis image;
+        ProgramIndex.Layout layoutMetadata;
         final BenchmarkData.AnnotationSink sink = new BenchmarkData.AnnotationSink();
 
         @Setup public void setup() {
             data = new BenchmarkData(layout, entries);
-            image = new MemoryAnalysis(new byte[data.banks][data.size], data.common);
-            baseline = data.baseline(image);
+            layoutMetadata = ProgramIndex.create("bench", data.size, data.banks, data.common).snapshot().layout();
+            baseline = data.baseline(layoutMetadata);
             snapshot = data.index(false).snapshot();
         }
     }
@@ -58,7 +57,7 @@ public class ProgramIndexPointBenchmark {
     }
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public Object oldFullRebuild(Points state) { return state.data.baseline(state.image); }
+    public Object oldFullRebuild(Points state) { return state.data.baseline(state.layoutMetadata); }
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Object indexedFullRebuild(Points state) { return state.data.index(false); }

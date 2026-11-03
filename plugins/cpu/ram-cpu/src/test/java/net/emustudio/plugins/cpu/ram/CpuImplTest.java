@@ -56,10 +56,7 @@ public class CpuImplTest {
 
     private void initCpu() throws Exception {
         if (!initialized) {
-            RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                    Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-            );
-            expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+            expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
             replay(memory, inputTape, outputTape, storageTape);
             cpu.initialize();
             initialized = true;
@@ -147,10 +144,7 @@ public class CpuImplTest {
         expect(storageTape.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol(42))).anyTimes();
         replay(storageTape);
 
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory, inputTape, outputTape);
 
         cpu.initialize();
@@ -173,10 +167,7 @@ public class CpuImplTest {
         replay(haltInstr);
 
         expect(memory.read(0)).andReturn(haltInstr).anyTimes();
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory);
 
         storageTape.setLeftBounded(true);
@@ -262,10 +253,7 @@ public class CpuImplTest {
         replay(haltInstr);
 
         expect(memory.read(anyInt())).andReturn(haltInstr).anyTimes();
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory);
 
         storageTape.setLeftBounded(anyBoolean());

@@ -3,6 +3,9 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import org.junit.Rule;
@@ -54,7 +57,7 @@ public class DebugSessionTest {
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             session.setBreakpoint(7, false);
             assertFalse(index.snapshot().hasExecutionBreakpoint(7));
-            assertThrows(IllegalStateException.class, session::image);
+            assertThrows(IllegalStateException.class, session::liveMemory);
         }
         verifyNoInteractions(machine.memory);
     }
@@ -142,94 +145,165 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void initialCaptureKeepsSharedIndexButExplicitReplacementCreatesNewInstance() throws Exception {
+    public void annotationsUseSharedMetadataIndexWithoutReadingMemory() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2, false);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             ProgramIndex initial = session.programIndex();
-            session.installImage(session.imageCapture());
-            assertSame(initial, session.programIndex());
             assertSame(initial, session.annotations().programIndex());
-            DebugSession.ImageCapture replacement = session.captureImage();
-            session.installImage(replacement);
-            assertNotSame(initial, session.programIndex());
-            assertSame(session.programIndex(), session.annotations().programIndex());
-            assertThrows(IllegalStateException.class, () -> session.installImage(replacement));
+            session.annotations().put(new AnnotationIndex.Entry(0, 1, "user", "", false, "DATA"));
+            machine.memoryChanged(1);
+            assertEquals("user", session.annotations().get(0, 1).label);
+            assertSame(initial, session.programIndex());
+            verify(machine.memory, never()).read(anyInt());
+            verify(machine.memory, never()).readBank(anyInt(), anyInt());
         }
     }
 
     @Test
-    public void metadataChangeRejectsCapturedImageWithoutPublishingDetachedAnnotations() throws Exception {
+    public void liveCellReadDoesNotHoldSessionMonitorAndRejectsAnObservedWrite() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            ProgramIndex index = session.programIndex();
-            DebugSession.ImageCapture captured = session.captureImage();
-            captured.annotations.put(new AnnotationIndex.Entry(0, 0, "detached", "", false, "CODE"));
-            try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-                edit.putAnnotation(9, 1, new ProgramIndex.Range(0, 0, 1), "comment", "keep").commit();
-            }
-            assertThrows(IllegalStateException.class, () -> session.installImage(captured));
-            assertSame(index, session.programIndex());
-            java.util.ArrayList<ProgramIndex.Annotation> current = new java.util.ArrayList<>();
-            index.snapshot().forEachAnnotation(current::add);
-            assertEquals(1, current.size());
-            assertEquals("keep", current.get(0).text());
-        }
-    }
-
-    @Test
-    public void rawWriteDuringInitialImageInstallationRejectsCapturedAnnotationsWithoutReplay() throws Exception {
-        rawWriteDuringImageInstallation(false);
-    }
-
-    @Test
-    public void rawWriteDuringReplacementInstallationPreventsAdoptingDetachedIndex() throws Exception {
-        rawWriteDuringImageInstallation(true);
-    }
-
-    private void rawWriteDuringImageInstallation(boolean replacing) throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2, false);
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            CountDownLatch staged = new CountDownLatch(1), invalidate = new CountDownLatch(1), resume = new CountDownLatch(1);
-            AtomicBoolean armed = new AtomicBoolean();
-            Runnable pauseStaging = () -> {
-                if (armed.get()) { staged.countDown(); await(resume); }
-            };
-            ProgramIndex live = interceptIndex(session.programIndex(), replacing ? () -> {} : pauseStaging, invalidate::countDown);
-            java.lang.reflect.Field field = DebugSession.class.getDeclaredField("programIndex");
-            field.setAccessible(true);
-            field.set(session, live);
-            DebugSession.ImageCapture capture = replacing ? session.captureImage() : session.imageCapture();
-            capture.annotations.put(new AnnotationIndex.Entry(0, 0, "must stay detached", "", false, "CODE"));
-            if (replacing) capture = new DebugSession.ImageCapture(capture.image, capture.annotations, capture.generation,
-                    interceptIndex(capture.targetIndex, pauseStaging, () -> {}), capture.base);
-            DebugSession.ImageCapture captured = capture;
-            armed.set(true);
-            Future<AnnotationIndex> installation = executor.submit(() -> session.installImage(captured));
-            await(staged);
-            Future<?> write = executor.submit(() -> machine.memoryChanged(1));
-            // The callback advances memory revision while installation still holds the session monitor.
-            await(invalidate);
-            resume.countDown();
-            ExecutionException failure = assertThrows(ExecutionException.class,
-                    () -> installation.get(5, TimeUnit.SECONDS));
-            assertTrue(failure.getCause() instanceof IllegalStateException);
-            write.get(5, TimeUnit.SECONDS);
-            assertSame(live, session.programIndex());
-            live.snapshot().forEachAnnotation(annotation -> fail("Rejected capture published " + annotation.text()));
-        } finally { executor.shutdownNow(); }
+            LiveMemory live = session.liveMemory();
+            when(machine.memory.readBank(0, 0)).thenAnswer(call -> {
+                entered.countDown(); await(release); return (byte) 1;
+            });
+            Future<Integer> read = executor.submit(() -> live.value(0, 0));
+            await(entered);
+            executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
+            machine.memoryChanged(0);
+            release.countDown();
+            ExecutionException rejected = assertThrows(ExecutionException.class, () -> read.get(2, TimeUnit.SECONDS));
+            assertTrue(rejected.getCause() instanceof IllegalStateException);
+        } finally { release.countDown(); executor.shutdownNow(); }
     }
 
-    private static ProgramIndex interceptIndex(ProgramIndex delegate, Runnable beforeStaging, Runnable invalidated) {
-        ProgramIndex index = mock(ProgramIndex.class);
-        when(index.snapshot()).thenAnswer(call -> delegate.snapshot());
-        when(index.updateContent(any())).thenAnswer(call -> {
-            beforeStaging.run();
-            return delegate.updateContent(call.getArgument(0));
+    @Test
+    public void liveFlowDecodeDoesNotHoldSessionMonitorAndRejectsLateMetadata() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
+        net.emustudio.emulib.plugins.cpu.Disassembler decoder = mock(net.emustudio.emulib.plugins.cpu.Disassembler.class);
+        when(machine.cpu.getDisassembler()).thenReturn(decoder);
+        when(decoder.forBank(0)).thenReturn(Optional.of(decoder));
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        when(decoder.getFlow(0)).thenAnswer(call -> {
+            entered.countDown(); await(release);
+            return Optional.of(new net.emustudio.emulib.plugins.cpu.InstructionFlow(
+                    net.emustudio.emulib.plugins.cpu.InstructionFlow.Kind.STOP, 1, false, List.of()));
         });
-        when(index.updateBreakpoints(any())).thenAnswer(call -> delegate.updateBreakpoints(call.getArgument(0)));
-        doAnswer(call -> { delegate.memoryChanged(); invalidated.run(); return null; }).when(index).memoryChanged();
-        return index;
+        when(decoder.getNextInstructionPosition(0)).thenReturn(1);
+        when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10, false));
+            await(entered);
+            executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
+            session.annotations().put(new AnnotationIndex.Entry(0, 1, "new", "", false, "DATA"));
+            release.countDown();
+            ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
+            assertTrue(rejected.getCause() instanceof IllegalStateException);
+            assertEquals(ProgramIndex.FlowState.NOT_BUILT, session.programIndex().snapshot().flowState());
+        } finally { release.countDown(); executor.shutdownNow(); }
+    }
+
+    @Test
+    public void flowUsesLiveExplicitBankAndRestrictsMappedDecoderFallback() throws Exception {
+        byte[][] cells = {{1, 0}, {7, 0}};
+        DebuggerTestMachine machine = new DebuggerTestMachine(cells, 1, false);
+        Disassembler original = mock(Disassembler.class), explicit = mock(Disassembler.class);
+        when(machine.cpu.getDisassembler()).thenReturn(original);
+        when(original.forBank(1)).thenReturn(Optional.of(explicit));
+        stopAtZero(explicit);
+        stopAtZero(original);
+        when(explicit.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
+                "VALUE " + machine.memory.readBank(0, 1), ""));
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            assertEquals("VALUE 7", session.analyzeFlow(1, 0, 10, false).mnemonic(0));
+            cells[1][0] = 8;
+            machine.memoryChanged(0);
+            assertEquals("VALUE 8", session.analyzeFlow(1, 0, 10, false).mnemonic(0));
+            verify(original, never()).getFlow(anyInt());
+            when(original.forBank(1)).thenReturn(Optional.empty());
+            assertThrows(IllegalStateException.class, () -> session.analyzeFlow(1, 0, 10, false));
+            assertEquals("STOP", session.analyzeFlow(0, 0, 10, false).mnemonic(0));
+        }
+        assertEquals(0, machine.memory.getSelectedBank());
+    }
+
+    @Test
+    public void lateFlowCannotPublishAfterMemoryExecutionOrDisposalChanges() throws Exception {
+        for (int change = 0; change < 3; change++) {
+            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
+            Disassembler decoder = mock(Disassembler.class);
+            when(machine.cpu.getDisassembler()).thenReturn(decoder);
+            when(decoder.forBank(0)).thenReturn(Optional.of(decoder));
+            stopAtZero(decoder);
+            CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+            when(decoder.getFlow(0)).thenAnswer(call -> {
+                entered.countDown(); await(release);
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+            });
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            DebugSession session = new DebugSession(machine.cpu, machine.memory, null);
+            boolean disposed = false;
+            try {
+                ProgramIndex index = session.programIndex();
+                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10, false));
+                await(entered);
+                if (change == 0) machine.memoryChanged(1);
+                else if (change == 1) {
+                    machine.state(CPU.RunState.STATE_RUNNING);
+                    machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+                } else {
+                    session.close();
+                    disposed = true;
+                }
+                release.countDown();
+                ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
+                assertTrue(rejected.getCause() instanceof IllegalStateException);
+                assertNull(index.snapshot().instructionAt(0, 0));
+                verify(decoder, never()).getNextInstructionPosition(anyInt());
+                verify(decoder, never()).disassemble(anyInt());
+            } finally {
+                release.countDown();
+                if (!disposed) session.close();
+                executor.shutdownNow();
+            }
+        }
+    }
+
+    private static void stopAtZero(Disassembler decoder) throws Exception {
+        when(decoder.getFlow(0)).thenReturn(Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of())));
+        when(decoder.getNextInstructionPosition(0)).thenReturn(1);
+        when(decoder.disassemble(0)).thenReturn(new DisassembledInstruction(0, "STOP", "00"));
+    }
+
+    @Test
+    public void mappedDecoderRejectsBankChangesAndInterruptedWorkBeforeAnotherRead() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {1, 0}}, 1, false);
+        Disassembler decoder = mock(Disassembler.class);
+        when(machine.cpu.getDisassembler()).thenReturn(decoder);
+        java.util.concurrent.atomic.AtomicInteger bank = new java.util.concurrent.atomic.AtomicInteger();
+        when(machine.memory.getSelectedBank()).thenAnswer(call -> bank.get());
+        stopAtZero(decoder);
+        when(decoder.getFlow(0)).thenAnswer(call -> {
+            bank.set(1);
+            return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+        });
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            IllegalStateException changed = assertThrows(IllegalStateException.class,
+                    () -> session.analyzeFlow(0, 0, 10, false));
+            assertTrue(changed.getMessage().contains("bank changed"));
+            verify(decoder, never()).getNextInstructionPosition(anyInt());
+            verify(decoder, never()).disassemble(anyInt());
+            bank.set(0);
+            Thread.currentThread().interrupt();
+            try {
+                assertThrows(java.util.concurrent.CancellationException.class,
+                        () -> session.analyzeFlow(0, 0, 10, false));
+            } finally { Thread.interrupted(); }
+            assertEquals(ProgramIndex.FlowState.NOT_BUILT, session.programIndex().snapshot().flowState());
+        }
     }
 
     private static void await(CountDownLatch latch) {
@@ -243,25 +317,36 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             machine.state(CPU.RunState.STATE_RUNNING);
             assertThrows(IllegalStateException.class, session::requirePaused);
-            assertThrows(IllegalStateException.class, session::image);
+            assertThrows(IllegalStateException.class, session::liveMemory);
             assertThrows(IllegalStateException.class, () -> session.record(2));
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertArrayEquals(new byte[] {1, 2}, session.image().bytes(0));
+            assertEquals(1, session.liveMemory().value(0, 0));
+            assertEquals(2, session.liveMemory().value(1, 0));
         }
     }
 
     @Test
-    public void memoryChangeDiscardsCapturedResultBeforeItCanBeApplied() throws Exception {
+    public void retainedLiveReaderRejectsMemoryMetadataGenerationAndDisposalChanges() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.ImageCapture captured = session.captureImage();
+        DebugSession session = new DebugSession(machine.cpu, machine.memory, null);
+        boolean disposed = false;
+        try {
+            LiveMemory first = session.liveMemory();
             machine.memoryChanged(1);
-
-            IllegalStateException failure = assertThrows(IllegalStateException.class,
-                    () -> session.installImage(captured));
-            assertTrue(failure.getMessage().contains("machine changed"));
-        }
+            assertThrows(IllegalStateException.class, () -> first.value(0, 0));
+            LiveMemory second = session.liveMemory();
+            session.annotations().put(new AnnotationIndex.Entry(0, 1, "changed", "", false, "UNKNOWN"));
+            assertThrows(IllegalStateException.class, second::requireCurrent);
+            LiveMemory third = session.liveMemory();
+            machine.state(CPU.RunState.STATE_RUNNING);
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            assertThrows(IllegalStateException.class, third::requireCurrent);
+            LiveMemory fourth = session.liveMemory();
+            session.close();
+            disposed = true;
+            assertThrows(IllegalStateException.class, fourth::requireCurrent);
+        } finally { if (!disposed) session.close(); }
     }
 
     @Test
@@ -577,21 +662,25 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void annotationsReloadOnlyForMatchingCapturedImage() throws Exception {
+    public void metadataPersistsForComputerLayoutWithoutDependingOnCellContents() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
-        byte[][] bytes = {{1, 2}};
-        DebuggerTestMachine machine = new DebuggerTestMachine(bytes, 2, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, settings)) {
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2, false);
+        String identity;
+        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+            identity = session.programIndex().snapshot().layout().imageId();
             session.annotations().put(new AnnotationIndex.Entry(0, 1, "buffer", "payload", true, "DATA"));
             session.saveAnnotations();
-            session.replaceImage();
+        }
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2, false);
+        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
+            assertEquals(identity, session.programIndex().snapshot().layout().imageId());
             assertEquals("buffer", session.annotations().get(0, 1).label);
-
-            bytes[0][1] = 3;
-            machine.memoryChanged(1);
-            session.replaceImage();
-            assertNull(session.annotations().get(0, 1));
-            assertEquals(3, session.image().value(1, 0));
+            verify(reopened.memory, never()).readBank(anyInt(), anyInt());
+        }
+        DebuggerTestMachine otherLayout = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3, false);
+        try (DebugSession session = new DebugSession(otherLayout.cpu, otherLayout.memory, settings)) {
+            assertNotEquals(identity, session.programIndex().snapshot().layout().imageId());
+            assertTrue(session.annotations().entries().isEmpty());
         }
     }
 

@@ -4,15 +4,11 @@
 
 Implemented instruction history stores before/after registers and guest access values. It cannot reconstruct a complete
 machine: attempted writes may target ROM, reads can have device effects, and bus timing advances devices independently.
-The existing Spectrum image loader covers CPU/RAM image import, not host tape/audio/file/socket state or deterministic
-external-input replay. Restoring just PC/registers/RAM would produce an inconsistent machine.
+Restoring just PC/registers/RAM would omit host tape/audio/file/socket state and deterministic external-input replay,
+producing an inconsistent machine.
 
-A follow-up checkpoint contract should enumerate participating CPU, memory, bus and device components; capture them together
-at a paused instruction boundary; version each state payload; preserve pending interrupts, cycle counters and bank selection;
-and reject restoration when any participant lacks support. Record external inputs and irreversible host-output boundaries.
-A small CPU+RAM-only computer can be the first supported target. Validate forward/replay state parity and interrupt timing,
-then add tape, audio, storage and Spectrum ULA state. Until that exists, history is explicitly read-only and Move PC Back
-explicitly leaves registers/memory/devices unchanged.
+History remains read-only. Move PC Back changes only the program counter; it leaves registers, memory and devices
+unchanged. Whole-memory checkpoint capture and restoration are not supported.
 
 ## Edigen flow and processor semantics
 
@@ -33,18 +29,30 @@ handling flag/cycle/device behavior, and stable consumers. This is a separate pr
 
 ## Scripting
 
-The initial stable surface is a bounded line-oriented STEP/RUN/ASSERT/CAPTURE runner, exposed through automation's
+The initial stable surface is a bounded line-oriented STEP/RUN/ASSERT runner, exposed through automation's
 --debug-script option. Each step waits for CPU completion and checks its resulting state. RUN has an explicit instruction
 limit. Failed operations return an error to automation. This provides repeatable experiments without a language runtime.
 Assess a general scripting engine after these operations have stable asynchronous cancellation/ownership semantics; UI
 and script execution must not race for the same CPU.
 
-## Portable memory and metadata
+## Live memory and user metadata
 
-Export a captured logical bank at an explicit base with processor/layout/image metadata and user labels, comments,
-bookmarks and code/data classifications. Common addresses retain physical bank zero. Imported annotations must match
-the complete emuStudio capture identity. The files have no external application dependency. They do not transfer source
-maps, runtime traces, bank-switch semantics or patched binaries. Comparison captures are independent of annotation identity.
+Memory inspection, byte/integer/text search, string discovery and flow decoding read the paused live memory context.
+Workers retain derived addresses, display strings or instruction metadata and reject results after session, content or
+memory revisions change. The debugger has no memory-image capture, comparison, restoration or binary snapshot export.
+Compiler input text and instruction-recording events retain their existing provenance.
+
+Native memory windows retain program-image loading, editing and erasing; memory-dump actions and RAM/RASP snapshot
+models are removed. Z80 machine-state `.sna`/`.z80` loading and its CPU/RAM restoration path are also removed.
+Compiler-produced program files, HEX/BIN loaders, tape formats and SSEM's final automation output remain available.
+
+Annotation metadata persists independently of memory cells. Its stable identity is a SHA-256 digest of CPU title,
+normalized computer-configuration URI and memory layout. Reopening that configuration preserves annotations without
+reading or hashing memory. Loading another program with the same layout retains the metadata; users keep its labels
+appropriate to the loaded program. Import requires matching configured-machine/layout identity. Former memory-content
+identities and memory-snapshot exports are unsupported, with no compatibility migration or deletion of user files.
+Metadata export transfers labels, comments, bookmarks and code/data classifications, preserving physical bank zero
+for common addresses. Compiler mappings and runtime traces remain separate.
 
 ## Debugger workspace
 
@@ -75,7 +83,7 @@ labels whose address is no longer available are distinguished from those declara
 
 The instruction table uses an independent PC triangle, theme selection and keyboard focus border. Valid instructions
 start at the top near memory boundaries. Memory strings are optional, while labels and comments share the available
-width. Snapshot status describes a memory/metadata capture. Execution breakpoints use the CPU-visible address only;
+width. Execution breakpoints use the CPU-visible address only;
 conditions and hit counts remain advanced options. Bank selection belongs to memory inspection and
 read/write watchpoints. The breakpoint dialog accepts only a CPU address and Set/Unset actions. Direct address and bank
 inspection belongs to the Memory tab's Address, Bank and Inspect address controls.
@@ -89,7 +97,7 @@ search shows the target pane, and file replacement previews include surrounding 
 
 Find opens a single search row; Replace or its toolbar toggle reveals replacement controls. File search remains available
 in either mode. Healthy source-map status is available in the compile-status tooltip; stale-source and other actionable
-messages stay visible. Memory's Compare / strings controls include the optional String column. Annotation editing address,
+messages stay visible. Memory's live string scan includes the optional String column. Annotation editing address,
 filter and actions share a row, and History keeps one read-only warning above the recorded values.
 
 ## Persistent instruction recording (#457)
@@ -113,11 +121,11 @@ full-machine checkpoints, deterministic input replay, trace comparison and bus/c
 
 ### ProgramIndex (#454)
 
-The application owns one `debugger.index.ProgramIndex` per debugger image/layout. This class provides the query
+The application owns one `debugger.index.ProgramIndex` per configured machine/layout. This class provides the query
 and publication seam; plugin objects never depend on application classes. Source navigation, user annotation editing,
 execution-rule presence and the References graph use this index. Persistence, expression evaluation, hit counters,
-source-rule binding and analysis scheduling remain in their adapters. The legacy user-annotation file format and its
-complete captured-image identity check remain unchanged. Compiler owner 2 can replace its mappings/labels without
+source-rule binding and analysis scheduling remain in their adapters. User annotation import checks the configured
+machine/layout identity instead of a captured memory-content hash. Compiler owner 2 can replace its mappings/labels without
 removing user metadata (owners 1 and 3) or other owners.
 
 An immutable layout validates cell addresses and banks; shared cells normalize to bank zero. Addresses count cells,
@@ -172,31 +180,59 @@ bank. Read/write access rules retain their bank selectors and persisted bank key
 CPU addresses across physical banks. Native CPU breakpoint behavior stays native.
 Index maintenance alone never activates instruction/register tracing.
 
-The optional emuLib `Disassembler.capture(bank)` returns a decoder backed by immutable captured cells, independent of
-live memory and selected bank. Bundled decoders implement it; unsupported third-party decoders cannot run static analysis
-until they provide a stable decoder. Analysis runs off Swing's event thread, checks the paused generation and index
-identity/revisions, and rejects late results after changes/disposal. Capturing the index itself never freezes memory.
+The optional emuLib `Disassembler.forBank(bank)` supplies side-effect-free live inspection decoding for an explicit bank
+using the read-only live context returned by `MemoryContext.forBank(bank)`.
+This does not change the selected CPU bank. Bundled decoders implement it; third-party decoders without that view can use
+their logical decoder for the currently selected bank while its mapping remains unchanged. Other inspection banks need
+explicit-bank decoding. Analysis runs off Swing's event thread while paused, checks generation and index
+identity/revisions, and rejects late results after changes/disposal. It retains derived metadata rather than copied cells.
+An immutable index snapshot does not freeze live memory.
 Raw paused writes made with notifications explicitly disabled, or changes through exported raw arrays, remain outside
 the notification contract: callers must use the session mutation seam or explicitly invalidate the index. Global
 invalidation and paused rebuilding are deliberate v1 choices; no per-instruction tracing is added for invalidation.
 
 The instruction table retains discovered boundaries and materializes visible row addresses once per page. Cache identity
-includes image/layout, content/memory revisions and inspection bank; edits to any instruction cell invalidate cached
+includes image/layout, content/memory revisions and the current CPU mapping; edits to any instruction cell invalidate cached
 boundaries. Current indexed instruction lengths can serve pagination without another decode. Table selection and repeated
 column reads reuse the materialized addresses. This addresses the redundant predecessor decoding reproduced in
 `/tmp/emustudio-perf-20261103/analysis.md`; it does not establish the cause of a whole-host freeze.
 Repeated CPU notifications coalesce into one pending paused refresh; controller executors/latches retain their existing
-ordering. Static discovery runs outside the short memory-capture lease, so EDT state checks do not wait for decoding.
+ordering. Live searches and static discovery use paused lifecycle guards and revision checks; their results become
+unavailable after memory or metadata changes.
 
 Benchmarks live in the isolated `application/src/jmh` source set; JMH never enters production runtime dependencies.
 `./gradlew :application:jmh -PjmhArgs='...'` accepts normal JMH arguments. Point/predecessor baselines freeze the actual
 pre-change implementations at `184f8d5a4`; interval/source/bitmap scan oracles are explicitly identified as such. Reused
 callbacks and varying inputs measure query allocation separately from caller-created capturing lambdas. Full rebuild,
 single-entry rebuild and root publication are separate operations. `:application:indexFootprint` uses a benchmark-only
-instrumentation agent to count reachable objects, excluding the shared captured image; this is not a heap-dominator
-retained-size measurement. Benchmark results are workload/environment evidence, not a universal speed claim.
+instrumentation agent to count reachable index metadata; this is not a heap-dominator retained-size measurement. Benchmark results are workload/environment evidence, not a universal speed claim.
 
-#### Verification on 2026-11-03
+#### Live-memory verification on 2026-11-03
+
+The composite `build :emuLib:test :application:jmhClasses :application:indexBenchmarkParity` passed with JDK 21 and
+the Java 11 project toolchains: 4,501 emuStudio tests (zero failures, 57 skipped), including 781 application tests
+(one existing skip), and 427 emuLib tests (zero failures, 21 skipped). All 41 index benchmark parity datasets passed.
+The final build log is `/tmp/emustudio-live-memory-full.log`.
+Consolidating bank views into `MemoryContext.forBank(bank)` passed the same full composite checks; see
+`/tmp/emustudio-memory-context-bank.log`. The standalone bank class is absent from the packaged emuLib JAR.
+
+Coverage includes metadata-only startup with no memory-cell reads, live bank/common-cell inspection, invalidation after
+operand writes, original-revision result guards, cancellation/disposal and concurrent machine/metadata changes. Blocked
+live reads and decoder calls do not hold the session monitor or block paused-state checks on Swing's event thread.
+A deterministic blocked-read test closes the session before completion and verifies that neither results nor the
+inspection-ready callback are published.
+Native compiler program serialization/loading still passes its tests after removing copied-memory transfer models.
+All 53 packaged JARs were inspected: removed snapshot models, dump actions, snapshot loader and capture/export classes
+are absent. Website lint/build and generated-output checks passed for all 14 affected pages; see
+`/tmp/emustudio-live-memory-site-final.log`. These are automated/virtual Swing checks; native desktop interaction was not run.
+
+#### Historical verification on 2026-11-03
+
+The checks and measurements in this subsection predate removal of memory captures and their copied-memory analysis
+setup. They record the earlier ProgramIndex implementation and benchmark fixtures, not verification of the current
+live-only inspection workflow. Raw timings remain useful for the index algorithms; current integration checks must
+be run against the live-memory implementation.
+
 
 The composite build used JDK 21.0.11-amzn, local emuLib/cpu-testsuite/Edigen/Edigen Gradle plugin checkouts, and Temurin
 11.0.32.1 for the application Swing tests. The ProgramIndex composite `build :emuLib:test :application:jmhClasses
@@ -231,13 +267,12 @@ The final UI proof uses Cacio virtual Swing, not a native desktop session:
 The benchmark parity check passed all 41 datasets. Dedicated `ThreadMXBean` checks measured exactly zero allocated bytes
 over 10,000 warmed query batches in both dense and large sparse layouts; callbacks and query values were reused.
 Concurrency tests use barriers/latches, including same-part conflicts, independent publications, memory races and
-image-adoption races. The 50k nested-mapping test passes with a 128 MiB heap.
+the former image-adoption races. The 50k nested-mapping test passes with a 128 MiB heap.
 
 These are local automated and virtual Swing results. Native desktop interactions and the reported whole-computer freeze
 were not profiled. Source navigation still validates saved inputs with synchronous file reads and compares editor text;
-the index does not remove that separate EDT cost. Immutable decoder capture is limited to 16M cells for the general
-byte/word capture helper; RAM/RASP use their existing sparse snapshot contracts. External paused raw-array writes or
-notification-disabled writes require explicit mutation/invalidation, as described above.
+the index does not remove that separate EDT cost. External paused raw-array writes or notification-disabled writes
+require explicit mutation/invalidation, as described above.
 
 JMH 1.37 ran on Temurin 11.0.32.1, Linux aarch64, Apple Blizzard-M2-Max reported by `lscpu` (12 logical CPUs; no affinity
 pinning). Runs use one benchmark thread, two forks, two 200 ms warmup iterations and three 200 ms measurement iterations,
@@ -315,14 +350,14 @@ evidence: `/tmp/program-index-baseline-tests.log`. Raw metadata and graph measur
   -PjmhArgs='ProgramIndexPointBenchmark.(oldPointHit|indexedPointHit|oldPointMiss|indexedPointMiss) -p entries=1,1000,10000,50000 -p layout=single,banked -wi 2 -i 3 -w 200ms -r 200ms -f 2 -prof gc -foe true -jvmArgsAppend=-Xmx512m -rf json -rff /tmp/program-index-point-final.json'
 ```
 
-### Earlier debugger validation
+### Earlier debugger validation (historical)
 
 Application, 8080/Z80, byte-memory, Spectrum bus/ULA and emuLib suites passed with the local composite build.
-Behavior tests cover masked/endian search and rescans, bank identity/common memory, stale source mappings, atomic annotation
+Behavior tests covered the former masked/endian search and rescan implementation, bank identity/common memory, stale source mappings, atomic annotation
 imports, persistent rules, guest/debugger access separation, bounded history, flow metadata, register edit notifications and
 Swing navigation/pinning. User/developer/root documentation builds and
-emuLib Javadoc passed. A packaged headless 8080 experiment compiled MVI/STA, ran to address 5, asserted A/memory, and captured
-64 KiB; its deliberately failing assertion returned exit status 1.
+emuLib Javadoc passed. A packaged headless 8080 experiment compiled MVI/STA, ran to address 5 and asserted A/memory;
+its deliberately failing assertion returned exit status 1.
 
 An ad hoc Java 21 NOP benchmark compared the original dispatch body with disabled-probe dispatch using warmed method handles
 and median batches of one million instructions. 8080 measured 5.04 versus 5.75 ns/instruction; Z80 measured 12.63 versus 12.44.

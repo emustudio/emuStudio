@@ -37,10 +37,65 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void memorySnapshotControlsAreAbsent() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                for (String name : List.of("Take snapshot", "Capture baseline", "Compare baseline", "Compare binary",
+                        "Export memory and metadata", "Rescan", "Compare / strings", "Live memory"))
+                    assertNull(name, findComponent(workspace.panel, AbstractButton.class, name));
+                assertNotNull(findComponent(workspace.panel, AbstractButton.class, "Find strings"));
+                assertNotNull(findComponent(workspace.panel, AbstractButton.class, "Show all addresses"));
+            });
+        }
+    }
+
+    @Test
+    public void memoryInspectionReadsLiveBankAndCommonCellsWithoutCapture() throws Exception {
+        byte[][] cells = {{1, 2, 3, 4}, {9, 8, 7, 6}};
+        try (Workspace workspace = workspace(cells, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.showMemory();
+                workspace.panel.navigate(1, 1, true);
+                assertEquals("08", workspace.table.getValueAt(1, 1));
+                cells[1][1] = 0x41; // Direct read must see the edit even before a UI notification.
+                assertEquals("41", workspace.table.getValueAt(1, 1));
+                cells[0][3] = 0x55;
+                assertEquals("55", workspace.table.getValueAt(3, 1));
+                assertEquals(0, workspace.machine.memory.getSelectedBank());
+            });
+        }
+    }
+
+    @Test
+    public void liveStringResultsAreDiscardedAfterMemoryChanges() throws Exception {
+        byte[][] cells = {{65, 66, 67, 68, 0}};
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(cells, cells[0].length, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.showMemory();
+                workspace.panel.setInspectionReadyListener(shown::countDown);
+                button(workspace.panel, "Find strings").doClick(0);
+            });
+            assertTrue("Live string scan should finish", shown.await(5, TimeUnit.SECONDS));
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals(1, workspace.table.getRowCount());
+                assertEquals("ABCD", workspace.table.getValueAt(0, 4));
+                cells[0][0] = 90;
+                workspace.machine.memoryChanged(0);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals(5, workspace.table.getRowCount());
+                assertEquals("", workspace.table.getValueAt(0, 4));
+                assertEquals("5A", workspace.table.getValueAt(0, 1));
+            });
+        }
+    }
+
+    @Test
     public void repeatedCpuCallbacksQueueOnePausedRefresh() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> session.watches.add("A"))) {
-            clearInvocations(workspace.machine.debug);
             SwingUtilities.invokeAndWait(() -> {
+                clearInvocations(workspace.machine.debug);
                 for (int i = 0; i < 100; i++)
                     for (net.emustudio.emulib.plugins.cpu.CPU.CPUListener listener : workspace.machine.cpuListeners)
                         listener.internalStateChanged();
@@ -49,6 +104,40 @@ public class DebuggerPanelTest {
             verify(workspace.machine.debug, times(1)).readRegister("A");
         }
     }
+
+    @Test
+    public void closingSessionDuringLiveScanDoesNotPublishOrNotifyInspectionReady() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), finished = new CountDownLatch(1);
+        AtomicInteger readyCalls = new AtomicInteger();
+        try (Workspace workspace = workspace(new byte[][] {{65, 66, 67, 68, 0}}, 5, session -> {})) {
+            doAnswer(call -> { finished.countDown(); return null; })
+                    .when(workspace.dialogs).showError(anyString(), eq("Debugger"));
+            SwingUtilities.invokeAndWait(() -> {
+                when(workspace.machine.memory.readBank(anyInt(), anyInt())).thenAnswer(call -> {
+                    if ("debugger-analysis".equals(Thread.currentThread().getName())) {
+                        entered.countDown();
+                        assertTrue("Test should release live read", release.await(5, TimeUnit.SECONDS));
+                    }
+                    return (byte) 65;
+                });
+                workspace.panel.showMemory();
+                workspace.panel.setInspectionReadyListener(readyCalls::incrementAndGet);
+                button(workspace.panel, "Find strings").doClick(0);
+            });
+            try {
+                assertTrue("Live read should start", entered.await(5, TimeUnit.SECONDS));
+                workspace.session.close();
+                workspace.session = null;
+                release.countDown();
+                assertTrue("Closed session should reject scan", finished.await(5, TimeUnit.SECONDS));
+                SwingUtilities.invokeAndWait(() -> {
+                    assertEquals(0, readyCalls.get());
+                    assertEquals(5, workspace.table.getRowCount());
+                });
+            } finally { release.countDown(); }
+        }
+    }
+
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
@@ -304,7 +393,7 @@ public class DebuggerPanelTest {
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
             Disassembler live = session.cpu.getDisassembler();
-            when(live.capture(0)).thenReturn(Optional.of(disassembler));
+            when(live.forBank(0)).thenReturn(Optional.of(disassembler));
             when(disassembler.getFlow(0)).thenAnswer(call -> {
                 decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
                 entered.countDown();
@@ -325,7 +414,7 @@ public class DebuggerPanelTest {
                 assertFalse("Decoder must not run on Swing event thread", decodedOnEdt.get());
                 CountDownLatch responsive = new CountDownLatch(1);
                 SwingUtilities.invokeLater(() -> { workspace.session.requirePaused(); responsive.countDown(); });
-                assertTrue("Paused queries on EDT must not wait for immutable flow decode",
+                assertTrue("Paused queries on EDT must not wait for live flow decode",
                         responsive.await(5, TimeUnit.SECONDS));
                 release.countDown();
                 assertTrue("Published reference should reach UI", shown.await(5, TimeUnit.SECONDS));
@@ -342,14 +431,19 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void unsupportedStableDecoderReportsDiagnosticWithoutUsingLiveFlow() throws Exception {
+    public void unsupportedExplicitBankDecoderReportsDiagnosticWithoutDecodingMappedBank() throws Exception {
         CountDownLatch failed = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2,
-                session -> when(session.cpu.getDisassembler().capture(anyInt())).thenReturn(Optional.empty()))) {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2,
+                session -> when(session.cpu.getDisassembler().forBank(anyInt())).thenReturn(Optional.empty()))) {
             doAnswer(call -> { failed.countDown(); return null; }).when(workspace.dialogs).showError(anyString(), eq("Debugger"));
-            SwingUtilities.invokeAndWait(() -> button(workspace.panel, "Analyze from address").doClick(0));
-            assertTrue("Unsupported capture should be reported", failed.await(5, TimeUnit.SECONDS));
-            verify(workspace.dialogs).showError("Stable flow analysis unsupported by this CPU", "Debugger");
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(0, 1, true);
+                button(workspace.panel, "Analyze from address").doClick(0);
+            });
+            assertTrue("Unsupported bank decoder should be reported", failed.await(5, TimeUnit.SECONDS));
+            org.mockito.ArgumentCaptor<String> message = org.mockito.ArgumentCaptor.forClass(String.class);
+            verify(workspace.dialogs).showError(message.capture(), eq("Debugger"));
+            assertTrue(message.getValue().toLowerCase(java.util.Locale.ROOT).contains("bank"));
             verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
         }
     }
@@ -398,7 +492,7 @@ public class DebuggerPanelTest {
         Workspace workspace = new Workspace();
         workspace.machine = new DebuggerTestMachine(banks, common, false);
         Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.capture(anyInt())).thenReturn(Optional.of(disassembler));
+        when(disassembler.forBank(anyInt())).thenReturn(Optional.of(disassembler));
         when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
@@ -420,7 +514,7 @@ public class DebuggerPanelTest {
                         new EmuStudioGui(), workspace.dialogs);
                 workspace.panel.setInspectionReadyListener(ready::countDown);
             });
-            assertTrue("Initial memory capture should finish", ready.await(5, TimeUnit.SECONDS));
+            assertTrue("Initial annotation loading should finish", ready.await(5, TimeUnit.SECONDS));
             return workspace;
         } catch (Exception | AssertionError failure) {
             workspace.close();

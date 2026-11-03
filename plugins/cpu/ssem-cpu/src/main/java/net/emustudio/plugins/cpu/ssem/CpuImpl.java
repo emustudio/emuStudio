@@ -7,7 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.SnapshotDisassembler;
+import net.emustudio.emulib.plugins.cpu.BankedDisassembler;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -51,8 +51,8 @@ public class CpuImpl extends AbstractCPU {
                     "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
             );
         }
-        disassembler = new SnapshotDisassembler<>(memory, value -> value,
-                captured -> new DisassemblerImpl(captured, new DecoderImpl(captured)));
+        disassembler = new BankedDisassembler<>(memory,
+                cells -> new DisassemblerImpl(cells, new DecoderImpl(cells)));
         engine = new EmulatorEngine(memory, this::isBreakpointSet);
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
 

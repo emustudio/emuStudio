@@ -27,48 +27,29 @@ public class RamMemoryContextTest {
     }
 
     @Test
-    public void testRamMemoryConstructor() {
-        RamLabel label = createLabel(0, "start");
-        RamInstruction instr = createInstruction(RamInstruction.Opcode.HALT);
+    public void configuredInputsAreIsolatedAndReturnedAsAnImmutableList() {
+        MemoryContextImpl context = TestRamMemoryContextFactory.create();
         RamValue value = createValue(42, "42");
-
-        RamMemoryContext.RamMemory memory = new RamMemoryContext.RamMemory(
-                List.of(label),
-                Map.of(0, instr),
-                List.of(value)
-        );
-
-        assertEquals(1, memory.labels.size());
-        assertEquals(1, memory.programMemory.size());
-        assertEquals(1, memory.inputs.size());
-    }
-
-    @Test
-    public void testRamMemoryIsImmutable() {
-        RamMemoryContext.RamMemory memory = new RamMemoryContext.RamMemory(
-                List.of(), Map.of(), List.of()
-        );
-
-        assertEquals(0, memory.labels.size());
-        assertEquals(0, memory.programMemory.size());
-        assertEquals(0, memory.inputs.size());
+        List<RamValue> configured = new ArrayList<>(List.of(value));
+        context.setInputs(configured);
+        configured.clear();
+        List<RamValue> inputs = context.getInputs();
+        assertEquals(List.of(value), inputs);
+        assertThrows(UnsupportedOperationException.class, () -> inputs.add(value));
+        context.setInputs(List.of());
+        assertTrue(context.getInputs().isEmpty());
+        assertEquals(List.of(value), inputs);
     }
 
     @Test
     public void testSerializeAndDeserialize() throws Exception {
-        MemoryContextImpl context = TestRamMemoryContextFactory.create();
-
         RamLabel label = createLabel(0, "start");
         RamValue operand = createSerializableValue(10, "10");
         RamInstruction instr = createSerializableInstruction(0, RamInstruction.Opcode.LOAD,
                 RamInstruction.Direction.CONSTANT, operand, null);
 
-        context.setLabels(List.of(label));
-        context.setInputs(List.of(operand));
-        context.write(0, instr);
-
         File file = tmpFolder.newFile("test.bram");
-        RamMemoryContext.serialize(file.toPath(), context.getSnapshot());
+        RamMemoryContext.serialize(file.toPath(), List.of(label), Map.of(0, instr), List.of(operand));
 
         // Deserialize
         MemoryContextImpl context2 = TestRamMemoryContextFactory.create();
@@ -77,14 +58,13 @@ public class RamMemoryContextTest {
         assertEquals(1, context2.getSize());
         assertTrue(context2.getLabel(0).isPresent());
         assertEquals("start", context2.getLabel(0).get().getLabel());
+        assertEquals(10, context2.read(0).getOperand().getNumberValue());
+        assertEquals(10, context2.getInputs().get(0).getNumberValue());
     }
 
     @Test(expected = IOException.class)
     public void testSerializeToInvalidPathThrows() throws IOException {
-        RamMemoryContext.RamMemory memory = new RamMemoryContext.RamMemory(
-                List.of(), Map.of(), List.of()
-        );
-        RamMemoryContext.serialize(java.nio.file.Path.of("/nonexistent/dir/file.bram"), memory);
+        RamMemoryContext.serialize(java.nio.file.Path.of("/nonexistent/dir/file.bram"), List.of(), Map.of(), List.of());
     }
 
     private RamLabel createLabel(int address, String name) {
@@ -145,13 +125,4 @@ public class RamMemoryContextTest {
         };
     }
 
-    private RamInstruction createInstruction(RamInstruction.Opcode opcode) {
-        RamInstruction instr = createNiceMock(RamInstruction.class);
-        expect(instr.getOpcode()).andReturn(opcode).anyTimes();
-        expect(instr.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(instr.getOperand()).andReturn(null).anyTimes();
-        expect(instr.getLabel()).andReturn(null).anyTimes();
-        replay(instr);
-        return instr;
-    }
 }
