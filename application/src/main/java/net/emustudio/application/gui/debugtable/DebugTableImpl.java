@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
 import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
@@ -38,7 +37,7 @@ public class DebugTableImpl extends JTable {
         setOpaque(true);
 
         setupRenderers();
-        setupBooleanCellEditorAndDefaultWidth();
+        setupColumnWidths();
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -50,14 +49,13 @@ public class DebugTableImpl extends JTable {
         });
     }
 
-    private void setupBooleanCellEditorAndDefaultWidth() {
+    private void setupColumnWidths() {
         int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
             TableColumn tableColumn = getColumn(tableModel.getColumnName(i));
             DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {
-                tableColumn.setCellEditor(new BooleanCellEditor());
                 tableColumn.setMinWidth(32);
             }
             if (debugColumn.getDefaultWidth() != -1) {
@@ -73,17 +71,6 @@ public class DebugTableImpl extends JTable {
                 tableColumn.setPreferredWidth(130);
             }
         }
-        for (int i = 0; i < getColumnCount(); i++) {
-            if (getColumnClass(i) == BreakpointState.class) {
-                TableColumn column = getColumnModel().getColumn(i);
-                BreakpointCell cell = new BreakpointCell();
-                column.setCellRenderer(cell);
-                column.setCellEditor(cell);
-                column.setMinWidth(36);
-                column.setMaxWidth(36);
-                column.setPreferredWidth(36);
-            }
-        }
     }
 
     public DebugTableModel instructionModel() {
@@ -93,7 +80,7 @@ public class DebugTableImpl extends JTable {
     public void showInstructions(TableModel model) {
         setModel(model);
         setupRenderers();
-        setupBooleanCellEditorAndDefaultWidth();
+        setupColumnWidths();
     }
 
     private void setupRenderers() {

@@ -41,6 +41,43 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
+    public void replacingSameLayoutImageRejectsOldSourceNavigationInBothDirections() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            runOnEdt(f.debugger::showMemory);
+            f.sourceLine(2);
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            net.emustudio.application.debugger.index.ProgramIndex previous = f.session.programIndex();
+            onEdt(() -> { f.session.replaceImage(); return null; });
+            assertNotSame(previous, f.session.programIndex());
+
+            f.sourceLine(3);
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            JLabel status = findComponent(f.debugger, JLabel.class,
+                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(status::getText).contains("Memory image changed"));
+            runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
+            assertEquals(3, f.line());
+            assertTrue(onEdt(status::getText).contains("Memory image changed"));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void mutationBeforeDeferredCompilerCaptureCannotPublishOldSourceAsCurrent() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false, () -> f.session.runMutation(() -> {}));
+
+            AtomicInteger mappings = new AtomicInteger();
+            f.session.programIndex().snapshot().forEachMapping(mapping -> mappings.incrementAndGet());
+            assertEquals(0, mappings.get());
+            JLabel status = findComponent(f.debugger, JLabel.class,
+                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(status::getText).contains("Source mappings unavailable"));
+        }
+    }
+
+    @Test(timeout = 10000)
     public void editsWhileRunningStillExposeStaleSourcesWithoutMovingInspection() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -334,6 +371,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             memory = mock(MemoryContext.class);
             when(memory.annotations()).thenReturn(annotations);
             when(memory.getSize()).thenReturn(32);
+            when(memory.getAddressSpaceSize()).thenReturn(32);
             when(memory.getBanksCount()).thenReturn(2);
             when(memory.getCommonBoundary()).thenReturn(16);
             when(memory.getSelectedBank()).thenAnswer(c -> bank.get());
@@ -346,6 +384,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(c -> (Integer) c.getArgument(0) + 2);
             when(cpu.getDisassembler()).thenReturn(disassembler);
             LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
+            when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.CODE_POINT);
             when(compiler.createLexer()).thenReturn(lexer);
             java.util.List<Token> tokens = new java.util.ArrayList<>();
             for (String name : List.of("first:", "second:", "third:")) {
@@ -388,6 +427,10 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         void compile(boolean fail) {
+            compile(fail, () -> {});
+        }
+
+        void compile(boolean fail, Runnable afterFinish) {
             runOnEdt(() -> {
                 compilerEvents.onStart();
                 annotations.clear();
@@ -396,6 +439,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                                 text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
                 if (fail) compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
                 compilerEvents.onFinish();
+                afterFinish.run();
                 bank.set(0);
             });
             runOnEdt(() -> {});

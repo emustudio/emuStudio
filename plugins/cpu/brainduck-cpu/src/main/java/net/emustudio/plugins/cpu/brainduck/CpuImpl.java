@@ -7,6 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.SnapshotDisassembler;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
@@ -53,7 +54,8 @@ public class CpuImpl extends AbstractCPU {
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
 
-        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
+        disassembler = new SnapshotDisassembler<>(memory, value -> value,
+                captured -> new DisassemblerImpl(captured, new DecoderImpl(captured)));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
     }

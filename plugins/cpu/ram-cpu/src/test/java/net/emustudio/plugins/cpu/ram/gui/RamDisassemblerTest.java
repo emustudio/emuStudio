@@ -10,6 +10,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Optional;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -78,6 +81,31 @@ public class RamDisassemblerTest {
         disassembler = new RamDisassembler(memory);
         assertEquals(1, disassembler.getNextInstructionPosition(0));
         assertEquals(6, disassembler.getNextInstructionPosition(5));
+    }
+
+    @Test
+    public void capturedDecoderDoesNotRetainMutableRamOperands() throws Exception {
+        AtomicReference<String> spelling = new AtomicReference<>("5");
+        RamValue value = createNiceMock(RamValue.class);
+        expect(value.getStringRepresentation()).andAnswer(spelling::get).anyTimes();
+        replay(value);
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
+        expect(instruction.getOpcode()).andReturn(RamInstruction.Opcode.READ).anyTimes();
+        expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
+        expect(instruction.getOperand()).andReturn(value).anyTimes();
+        replay(instruction);
+        expect(memory.getSnapshot()).andReturn(new RamMemoryContext.RamMemory(
+                List.of(), Map.of(0, instruction), List.of()));
+        expect(memory.read(0)).andReturn(instruction).anyTimes();
+        replay(memory);
+        RamDisassembler live = new RamDisassembler(memory);
+        net.emustudio.emulib.plugins.cpu.Disassembler captured = live.capture(0).orElseThrow();
+
+        spelling.set("99");
+
+        assertTrue(captured.disassemble(0).mnemo.contains("5"));
+        assertTrue(live.disassemble(0).mnemo.contains("99"));
+        assertThrows(IllegalArgumentException.class, () -> live.capture(1));
     }
 }
 

@@ -8,21 +8,27 @@ import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
@@ -30,6 +36,19 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
+    @Test
+    public void repeatedCpuCallbacksQueueOnePausedRefresh() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> session.watches.add("A"))) {
+            clearInvocations(workspace.machine.debug);
+            SwingUtilities.invokeAndWait(() -> {
+                for (int i = 0; i < 100; i++)
+                    for (net.emustudio.emulib.plugins.cpu.CPU.CPUListener listener : workspace.machine.cpuListeners)
+                        listener.internalStateChanged();
+            });
+            SwingUtilities.invokeAndWait(() -> {});
+            verify(workspace.machine.debug, times(1)).readRegister("A");
+        }
+    }
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
@@ -85,9 +104,9 @@ public class DebuggerPanelTest {
 
     @Test
     public void breakpointListActionsTargetVisibleExecutionRuleAmongMemoryWatches() throws Exception {
-        DebugSession.Rule read = new DebugSession.Rule("read buffer", "READ", 0, -1, "", 1);
-        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, -1, "", 1);
-        DebugSession.Rule write = new DebugSession.Rule("write buffer", "WRITE", 2, -1, "", 1);
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 0, -1, "", 1);
+        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
                 session -> session.rules.addAll(List.of(read, execute, write)))) {
             SwingUtilities.invokeAndWait(() -> {
@@ -111,9 +130,9 @@ public class DebuggerPanelTest {
 
     @Test
     public void memoryWatchActionsTargetVisibleWatchAmongExecutionRules() throws Exception {
-        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 0, -1, "", 1);
-        DebugSession.Rule read = new DebugSession.Rule("read buffer", "READ", 1, -1, "", 1);
-        DebugSession.Rule write = new DebugSession.Rule("write buffer", "WRITE", 2, -1, "", 1);
+        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 0, "", 1);
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 1, -1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
                 session -> session.rules.addAll(List.of(execute, read, write)))) {
             SwingUtilities.invokeAndWait(() -> {
@@ -134,33 +153,71 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void inspectOnlyRequestBrowsesMemoryWithoutAddingBreakpoint() throws Exception {
+    public void executionControlsHaveNoBankSelectorWhileMemoryWatchesKeepTheirBank() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.showBreakpoints();
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
+                assertNull("Execution breakpoint form must not select a bank",
+                        findComponent(breakpoints, JComboBox.class, null));
+                button(breakpoints, "Add breakpoint").doClick(0);
+                JList<?> rows = component(breakpoints, JList.class, "Breakpoints");
+                assertFalse(rows.getModel().getElementAt(0).toString().contains("bank"));
+
+                Container watches = workspace.panel.watchesPanel();
+                JComboBox<?> bank = component(watches, JComboBox.class, "Memory watch bank");
+                bank.setSelectedIndex(2); // All banks, Bank 0, Bank 1.
+                button(watches, "Add memory watch").doClick(0);
+                DebugSession.AccessRule watch = (DebugSession.AccessRule) workspace.session.rules.stream()
+                        .filter(rule -> rule instanceof DebugSession.AccessRule).findFirst().orElseThrow();
+                assertEquals(1, watch.bank);
+                assertEquals("WRITE", watch.kind);
+            });
+        }
+    }
+
+    @Test
+    public void memoryControlsInspectAnExplicitBankWithoutChangingCpuOrBreakpoints() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}, {3, 4}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                        BreakpointDialog.Operation.INSPECT_ONLY, 1, 1, false)));
+                workspace.panel.showMemory();
+                JTextField address = component(workspace.panel, JTextField.class, "Memory address");
+                JComboBox<?> bank = component(workspace.panel, JComboBox.class, "Memory inspection bank");
+                address.setText("0x1");
+                bank.setSelectedIndex(1);
+                button(workspace.panel, "Inspect address").doClick(0);
                 assertFalse(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.table.getSelectedRow());
+                assertEquals("0x0001", address.getText());
+                assertEquals(1, bank.getSelectedItem());
+                assertEquals(0, workspace.machine.memory.getSelectedBank());
                 assertTrue(workspace.session.rules.isEmpty());
                 assertEquals(0, workspace.breakpointChanges.get());
+
+                workspace.panel.navigate(0, 0, true);
+                assertEquals("0x0000", address.getText());
+                assertEquals(0, bank.getSelectedItem());
             });
+            verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
             verify(workspace.machine.cpu, never()).setBreakpoint(anyInt());
         }
     }
 
     @Test
-    public void setAndUnsetRequestsUpdateBreakpointAndInspectionPreference() throws Exception {
+    public void setAndUnsetRequestsOnlyEditTheBreakpoint() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                        BreakpointDialog.Operation.SET, 1, 0, true)));
-                assertEquals(BreakpointState.KEEP_INSPECTION, workspace.session.breakpointState(1));
-                assertTrue(workspace.panel.isInspectionPinned());
+                        BreakpointDialog.Operation.SET, 1)));
+                assertTrue(workspace.session.isBreakpointSet(1));
+                assertFalse(workspace.panel.isInspectionPinned());
+                assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.breakpointChanges.get());
 
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                        BreakpointDialog.Operation.UNSET, 1, 0, false)));
-                assertEquals(BreakpointState.OFF, workspace.session.breakpointState(1));
+                        BreakpointDialog.Operation.UNSET, 1)));
+                assertFalse(workspace.session.isBreakpointSet(1));
                 assertFalse(workspace.panel.isInspectionPinned());
                 assertEquals(2, workspace.breakpointChanges.get());
             });
@@ -172,11 +229,11 @@ public class DebuggerPanelTest {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 assertFalse(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                        BreakpointDialog.Operation.SET, 2, 0, false)));
+                        BreakpointDialog.Operation.SET, 2)));
                 assertTrue(workspace.session.rules.isEmpty());
                 assertEquals(0, workspace.breakpointChanges.get());
             });
-            verify(workspace.dialogs).showError("Address outside memory", "Debugger");
+            verify(workspace.dialogs).showError("Address outside CPU", "Debugger");
         }
     }
 
@@ -193,11 +250,155 @@ public class DebuggerPanelTest {
         }
     }
 
+    @Test
+    public void breakpointHitsFollowTheNextPcUnlessTheUserManuallyPinsInspection() throws Exception {
+        AtomicInteger pc = new AtomicInteger(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4,
+                session -> {
+                    when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+                    session.setBreakpoint(1, true);
+                })) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertTrue(workspace.session.beforeInstruction(1, 0));
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertFalse(workspace.panel.isInstructionView());
+                assertEquals(1, workspace.table.getSelectedRow());
+                assertFalse(workspace.panel.isInspectionPinned());
+            });
+
+            SwingUtilities.invokeAndWait(() -> {
+                pc.set(2);
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals(2, workspace.table.getSelectedRow());
+                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(0);
+                pin.doClick(0);
+                assertTrue(workspace.panel.isInspectionPinned());
+            });
+
+            SwingUtilities.invokeAndWait(() -> {
+                pc.set(3);
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.getSelectedRow());
+                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(0);
+                pin.doClick(0);
+                assertFalse(workspace.panel.isInspectionPinned());
+            });
+            SwingUtilities.invokeAndWait(() -> workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK));
+            SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.getSelectedRow()));
+        }
+    }
+
+    @Test
+    public void reachableFlowDecodesOffEdtAndPublishesReferencesAfterWorkerCompletes() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), shown = new CountDownLatch(1);
+        AtomicBoolean decodedOnEdt = new AtomicBoolean();
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
+        when(disassembler.disassemble(anyInt())).thenAnswer(call ->
+                new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            Disassembler live = session.cpu.getDisassembler();
+            when(live.capture(0)).thenReturn(Optional.of(disassembler));
+            when(disassembler.getFlow(0)).thenAnswer(call -> {
+                decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
+                entered.countDown();
+                assertTrue("Test should release decoder", release.await(10, TimeUnit.SECONDS));
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.CALL, 1, true, List.of(1)));
+            });
+            when(disassembler.getFlow(1)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+        })) {
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    JList<?> references = component(workspace.panel, JList.class, "Static references");
+                    countAdditions(references, shown);
+                    button(workspace.panel, "Analyze from address").doClick(0);
+                    assertFalse("Analysis should disable inspection before worker starts", workspace.table.isEnabled());
+                });
+                assertTrue("Background decoder should start", entered.await(5, TimeUnit.SECONDS));
+                assertFalse("Decoder must not run on Swing event thread", decodedOnEdt.get());
+                CountDownLatch responsive = new CountDownLatch(1);
+                SwingUtilities.invokeLater(() -> { workspace.session.requirePaused(); responsive.countDown(); });
+                assertTrue("Paused queries on EDT must not wait for immutable flow decode",
+                        responsive.await(5, TimeUnit.SECONDS));
+                release.countDown();
+                assertTrue("Published reference should reach UI", shown.await(5, TimeUnit.SECONDS));
+                SwingUtilities.invokeAndWait(() -> {
+                    JList<?> references = component(workspace.panel, JList.class, "Static references");
+                    assertEquals(1, references.getModel().getSize());
+                    FlowAnalysis.Edge edge = (FlowAnalysis.Edge) references.getModel().getElementAt(0);
+                    assertEquals("call", edge.kind);
+                    assertTrue(workspace.table.isEnabled());
+                });
+                verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
+            } finally { release.countDown(); }
+        }
+    }
+
+    @Test
+    public void unsupportedStableDecoderReportsDiagnosticWithoutUsingLiveFlow() throws Exception {
+        CountDownLatch failed = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2,
+                session -> when(session.cpu.getDisassembler().capture(anyInt())).thenReturn(Optional.empty()))) {
+            doAnswer(call -> { failed.countDown(); return null; }).when(workspace.dialogs).showError(anyString(), eq("Debugger"));
+            SwingUtilities.invokeAndWait(() -> button(workspace.panel, "Analyze from address").doClick(0));
+            assertTrue("Unsupported capture should be reported", failed.await(5, TimeUnit.SECONDS));
+            verify(workspace.dialogs).showError("Stable flow analysis unsupported by this CPU", "Debugger");
+            verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
+        }
+    }
+
+    @Test
+    public void incomingReferenceActionUsesCachedIndexedPredecessorsAfterSweep() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        AtomicInteger reads = new AtomicInteger();
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            Disassembler disassembler = session.cpu.getDisassembler();
+            when(disassembler.getFlow(anyInt())).thenAnswer(call -> {
+                reads.incrementAndGet();
+                assertFalse("Reference sweep must run off Swing event thread", SwingUtilities.isEventDispatchThread());
+                int address = call.getArgument(0);
+                return Optional.of(new InstructionFlow(address == 0 ? InstructionFlow.Kind.JUMP : InstructionFlow.Kind.STOP,
+                        address + 1, false, address == 0 ? List.of(1) : List.of()));
+            });
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(1, 0, true);
+                countAdditions(component(workspace.panel, JList.class, "Static references"), shown);
+                button(workspace.panel, "Find incoming references").doClick(0);
+            });
+            assertTrue("Sweep reference should reach UI", shown.await(5, TimeUnit.SECONDS));
+            int afterSweep = reads.get();
+            SwingUtilities.invokeAndWait(() -> {
+                JList<?> references = component(workspace.panel, JList.class, "Static references");
+                assertEquals(1, references.getModel().getSize());
+                button(workspace.panel, "Find incoming references").doClick(0);
+                assertEquals(1, references.getModel().getSize());
+            });
+            assertEquals("Repeated predecessor query must not decode again", afterSweep, reads.get());
+        }
+    }
+
+    private static void countAdditions(JList<?> list, CountDownLatch latch) {
+        list.getModel().addListDataListener(new ListDataListener() {
+            @Override public void intervalAdded(ListDataEvent event) { latch.countDown(); }
+            @Override public void intervalRemoved(ListDataEvent event) { }
+            @Override public void contentsChanged(ListDataEvent event) { }
+        });
+    }
+
     private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");
         Workspace workspace = new Workspace();
         workspace.machine = new DebuggerTestMachine(banks, common, false);
         Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.capture(anyInt())).thenReturn(Optional.of(disassembler));
         when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
@@ -242,7 +443,7 @@ public class DebuggerPanelTest {
             String accessible = child instanceof JComponent
                     ? ((JComponent) child).getAccessibleContext().getAccessibleName() : null;
             String tooltip = child instanceof JComponent ? ((JComponent) child).getToolTipText() : null;
-            if (type.isInstance(child) && (name.equals(child.getName()) || name.equals(accessible)
+            if (type.isInstance(child) && (name == null || name.equals(child.getName()) || name.equals(accessible)
                     || name.equals(tooltip))) return type.cast(child);
             if (child instanceof Container) {
                 T nested = findComponent((Container) child, type, name);

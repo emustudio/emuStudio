@@ -59,7 +59,8 @@ an instruction, memory byte or compiled symbol follows its source position witho
 or closing an editor split. Explicit debugger and symbol visits join the existing source-editor navigation history
 from #453; automatic following adds no source-history entries. Debugger Back/Forward retains address, bank and listing
 mode. The table context menu's Pin inspection stops automatic source/PC following while allowing explicit debugger
-navigation. A breakpoint hit always inspects its address; Keep inspection retains that address while stepping.
+navigation. A breakpoint hit inspects its address. Breakpoints have only enabled/disabled state; they do not hold the
+inspection address during later steps. Manual view pinning remains independent of breakpoint settings.
 
 Source synchronization uses the compiled source text, include closure, annotations and physical bank captured before
 CPU reset. Changed open buffers or saved files, failed compilations and replaced annotations cannot reuse old mappings.
@@ -74,8 +75,12 @@ labels whose address is no longer available are distinguished from those declara
 
 The instruction table uses an independent PC triangle, theme selection and keyboard focus border. Valid instructions
 start at the top near memory boundaries. Memory strings are optional, while labels and comments share the available
-width. Snapshot status describes a memory/metadata capture. Breakpoint creation offers All banks and reveals conditions,
-hit counts and keep-inspection through advanced options; the address dialog shows the existing breakpoint state.
+width. Snapshot status describes a memory/metadata capture. Execution breakpoints use the CPU-visible address only;
+conditions and hit counts remain advanced options. Bank selection belongs to memory inspection and
+read/write watchpoints. The breakpoint dialog accepts only a CPU address and Set/Unset actions. Direct address and bank
+inspection belongs to the Memory tab's Address, Bank and Inspect address controls.
+The caller gates dialog creation and its toolbar action on native CPU breakpoint support or portable debugger support;
+the dialog itself handles only breakpoint state and address validation.
 
 History lists changed registers first in a stable order and can reveal unchanged values. Its label context comes from
 current annotations, not a reconstructed historical source map. Flow nodes distinguish selection from the live PC and
@@ -105,6 +110,212 @@ first instruction, including `--no-gui` and `--debug-script` runs. Recording rem
 full-machine checkpoints, deterministic input replay, trace comparison and bus/cycle tracing remain separate work.
 
 ## Validation
+
+### ProgramIndex (#454)
+
+The application owns one `debugger.index.ProgramIndex` per debugger image/layout. This class provides the query
+and publication seam; plugin objects never depend on application classes. Source navigation, user annotation editing,
+execution-rule presence and the References graph use this index. Persistence, expression evaluation, hit counters,
+source-rule binding and analysis scheduling remain in their adapters. The legacy user-annotation file format and its
+complete captured-image identity check remain unchanged. Compiler owner 2 can replace its mappings/labels without
+removing user metadata (owners 1 and 3) or other owners.
+
+An immutable layout validates cell addresses and banks; shared cells normalize to bank zero. Addresses count cells,
+including Integer and RAM instruction cells. `MemoryContext.getAddressSpaceSize()` distinguishes stable capacity from
+loaded occupancy: RAM/RASP expose their sparse `Integer.MAX_VALUE` domain even before a program is loaded, while bounded
+providers default to `getSize()`. Growing a sparse program therefore neither creates a zero-sized layout nor changes its
+address capacity. Primitive address tables hold IDs into immutable payload/posting pools.
+Each table has an 8 MiB dense-table budget; larger layouts use bounded two-level page directories with lazy pages and
+uniform-page compression. Shared suffixes are stored once. Bitmap word tables use the smaller word-address domain.
+Mapping coverage uses an endpoint sweep and persistent primitive posting trees, sharing unchanged branches instead of
+copying nested active sets or expanding ranges into per-cell references. Annotation ranges and per-document/revision source
+spans use array-backed centered interval trees. Exact labels have their own name index; substring search remains a
+linear user-metadata adapter operation. The graph uses dense node IDs and incoming/outgoing primitive CSR adjacency,
+including known targets without decoded payloads. Predecessors include every explicit edge kind; call sites filter CALL.
+`FlowGraph` also owns the paginator's primitive sequential-boundary storage; production `CallFlow` is removed.
+Its boundary store accepts only proven cell coordinates. Decoder calls and discovery orchestration stay in
+`PaginatingDisassembler.BoundaryDecoder`, and mutable pagination discoveries never enter published immutable snapshots.
+`debugger.InstructionIndex` adapts the physical graph into an immutable CPU-logical instruction view, capturing the
+selected mapping once per pagination operation. The table model and paginator see only logical addresses and exclusive
+instruction ends. View identity changes on image, content, memory or effective mapping changes, invalidating cached pages
+and discovered boundaries; breakpoint-only edits retain the view. Shared memory resolves through ProgramIndex, and an old
+view retains its captured mapping. Missing/stale coverage or a CPU address beyond indexed memory uses the existing
+logical decoder fallback. The view does not freeze that live decoder; the paused/execution lifecycle remains external.
+The small centered `IntervalTable` remains: SDK ordered maps do not index overlapping/nested intervals, while disjoint
+range maps/merged range sets would lose annotation identities. Replacing it requires equivalent overlap/multiplicity and
+allocation behavior, not merely an ordered predecessor lookup.
+
+One atomically published immutable root contains content, breakpoint and memory revisions. `snapshot()` returns that
+root directly. Content edits compare content plus memory revisions; breakpoint edits compare only their own revision,
+sharing the latest unrelated state on publication. Same-part stale edits fail, failed/closed edits publish nothing,
+and old snapshots retain their original meaning. Unchanged specialized indexes are shared. A metadata edit rebuilds
+its affected index; this first version does not patch interval trees or CSR incrementally.
+
+Compiler positions are points, not generated extents. The source adapter therefore publishes exactly one generated cell
+per mapping. It uses the exact captured token span when available, otherwise one valid UTF-16 code unit. It never fills
+an address gap, guesses an instruction/line extent, clamps EOF/invalid coordinates, or identifies a file by basename.
+Bundled ANTLR compiler positions use one-based lines and zero-based code-point columns; editor tokens/offsets use UTF-16.
+Compilers declare their column unit through `getSourcePositionColumnUnit()`; unknown conventions produce diagnostics
+instead of address bindings. The adapter converts against captured raw text, including supplementary characters, CRLF and tabs.
+Unsupported positions are excluded and reported. Compiler publication runs after compilation's CPU reset/mutation exit,
+retaining the original compiler bank. Existing source-file freshness checks remain in the navigation adapter.
+
+`memoryChanged()` makes mappings historical and current graph queries unavailable. The session invokes it before/after
+machine mutations, before execution and on observable memory writes. Notifications disabled during execution therefore
+cannot leave a graph current. Observed writes advance the index before waiting for the session monitor. Source rules
+resolve current mappings into address targets while paused; execution uses those already resolved targets without
+rebinding from historical mappings. Actual notified writes, compilation, editor rule refreshes and image replacement
+discard those bindings. Conditional/global/source and watchpoint evaluation remain adapter work; execution rules use
+one address bitmap and rule postings at each portable instruction boundary. Execution/source rules have no bank fields,
+bank selectors or persisted bank keys: a matching CPU-visible instruction address is independent of physical instruction
+bank. Read/write access rules retain their bank selectors and persisted bank keys. Source bindings deduplicate resolved
+CPU addresses across physical banks. Native CPU breakpoint behavior stays native.
+Index maintenance alone never activates instruction/register tracing.
+
+The optional emuLib `Disassembler.capture(bank)` returns a decoder backed by immutable captured cells, independent of
+live memory and selected bank. Bundled decoders implement it; unsupported third-party decoders cannot run static analysis
+until they provide a stable decoder. Analysis runs off Swing's event thread, checks the paused generation and index
+identity/revisions, and rejects late results after changes/disposal. Capturing the index itself never freezes memory.
+Raw paused writes made with notifications explicitly disabled, or changes through exported raw arrays, remain outside
+the notification contract: callers must use the session mutation seam or explicitly invalidate the index. Global
+invalidation and paused rebuilding are deliberate v1 choices; no per-instruction tracing is added for invalidation.
+
+The instruction table retains discovered boundaries and materializes visible row addresses once per page. Cache identity
+includes image/layout, content/memory revisions and inspection bank; edits to any instruction cell invalidate cached
+boundaries. Current indexed instruction lengths can serve pagination without another decode. Table selection and repeated
+column reads reuse the materialized addresses. This addresses the redundant predecessor decoding reproduced in
+`/tmp/emustudio-perf-20261103/analysis.md`; it does not establish the cause of a whole-host freeze.
+Repeated CPU notifications coalesce into one pending paused refresh; controller executors/latches retain their existing
+ordering. Static discovery runs outside the short memory-capture lease, so EDT state checks do not wait for decoding.
+
+Benchmarks live in the isolated `application/src/jmh` source set; JMH never enters production runtime dependencies.
+`./gradlew :application:jmh -PjmhArgs='...'` accepts normal JMH arguments. Point/predecessor baselines freeze the actual
+pre-change implementations at `184f8d5a4`; interval/source/bitmap scan oracles are explicitly identified as such. Reused
+callbacks and varying inputs measure query allocation separately from caller-created capturing lambdas. Full rebuild,
+single-entry rebuild and root publication are separate operations. `:application:indexFootprint` uses a benchmark-only
+instrumentation agent to count reachable objects, excluding the shared captured image; this is not a heap-dominator
+retained-size measurement. Benchmark results are workload/environment evidence, not a universal speed claim.
+
+#### Verification on 2026-11-03
+
+The composite build used JDK 21.0.11-amzn, local emuLib/cpu-testsuite/Edigen/Edigen Gradle plugin checkouts, and Temurin
+11.0.32.1 for the application Swing tests. The ProgramIndex composite `build :emuLib:test :application:jmhClasses
+:application:indexFootprint :application:indexBenchmarkParity` passed in 42 seconds: 4,545 emuStudio tests (zero failures,
+57 skipped), including 797 application tests (one existing skip), and 427 emuLib tests (zero failures, 21 skipped).
+Two stale breakpoint-manager tests also failed in the unchanged `184f8d5a4` baseline; their expectations and native CPU
+mock were updated with the related breakpoint UI changes. No obsolete production behavior was restored.
+The subsequent dialog capability cleanup passed all 29 dialog, emulator-panel and debugger-panel tests with no skips;
+`/tmp/program-index-breakpoint-caller-gate.log` records that focused run. Unsupported access is tested at the caller,
+while native and portable toolbar support and dialog address validation retain their existing coverage.
+Merging the facade and implementation into one final `ProgramIndex` class subsequently passed all 797 application tests
+(one existing skip), Java 11 strict compilation, JMH compilation and all 41 benchmark parity datasets. See
+`/tmp/program-index-class-merge.log`. Timing matrices below predate this structural cleanup and were not rerun for it.
+
+Focused tests cover the CPU-address-only dialog, independent Memory-tab bank selection, absence of breakpoint-driven
+inspection pinning, and portable execution breakpoints on CPUs that expose no memory context.
+The final UI proof uses Cacio virtual Swing, not a native desktop session:
+
+| Observable behavior | Current evidence |
+| --- | --- |
+| Breakpoint dialog exposes no bank or inspection controls | `BreakpointDialogTest.dialogContainsOnlyBreakpointControls` |
+| Setting/removing a breakpoint leaves inspection alone | `DebuggerPanelTest.setAndUnsetRequestsOnlyEditTheBreakpoint` |
+| Memory controls inspect bank 1 without changing CPU bank or creating breakpoints | `DebuggerPanelTest.memoryControlsInspectAnExplicitBankWithoutChangingCpuOrBreakpoints` |
+| Execution matching and resume skipping ignore physical banks | `DebugSessionTest.executionRuleMatchesAddressInEveryBankAndSkipsOneResumeAcrossBanks` |
+| CPU without a memory context still supports indexed execution breakpoints | `DebugSessionTest.memorylessPortableCpuUsesIndexedAddressBreakpointsAndResumeSkipping` |
+| Execution/source persistence omits banks; access watchpoints retain them | `DebugSessionTest.executionAndSourcePersistenceHaveNoBankWhileWatchpointsKeepRequiredBank` |
+| Breakpoint hits follow the next PC unless manually pinned | `DebuggerPanelTest.breakpointHitsFollowTheNextPcUnlessTheUserManuallyPinsInspection` |
+| One logical PC resolves different indexed lengths after mapping changes, with common-memory ends preserved | `DebugTableModelImplTest.instructionViewChangesLengthsAtTheSamePcAndPreservesSharedInstructionEnds` |
+| Mutating an operand cell discards indexed coverage and refreshes decoder boundaries | `DebugTableModelImplTest.revisionChangeInvalidatesOperandCellAndFallbackWithoutUiNotification` |
+| Breakpoint-only edits retain instruction pages | `DebugTableModelImplTest.breakpointOnlyPublicationKeepsMaterializedInstructionPage` |
+
+The benchmark parity check passed all 41 datasets. Dedicated `ThreadMXBean` checks measured exactly zero allocated bytes
+over 10,000 warmed query batches in both dense and large sparse layouts; callbacks and query values were reused.
+Concurrency tests use barriers/latches, including same-part conflicts, independent publications, memory races and
+image-adoption races. The 50k nested-mapping test passes with a 128 MiB heap.
+
+These are local automated and virtual Swing results. Native desktop interactions and the reported whole-computer freeze
+were not profiled. Source navigation still validates saved inputs with synchronous file reads and compares editor text;
+the index does not remove that separate EDT cost. Immutable decoder capture is limited to 16M cells for the general
+byte/word capture helper; RAM/RASP use their existing sparse snapshot contracts. External paused raw-array writes or
+notification-disabled writes require explicit mutation/invalidation, as described above.
+
+JMH 1.37 ran on Temurin 11.0.32.1, Linux aarch64, Apple Blizzard-M2-Max reported by `lscpu` (12 logical CPUs; no affinity
+pinning). Runs use one benchmark thread, two forks, two 200 ms warmup iterations and three 200 ms measurement iterations,
+with `-prof gc`. Short iterations make these comparative local observations rather than stable capacity guarantees.
+The initial point matrix used the JVM's default heap; subsequent matrices cap forks at 512 MiB.
+
+| Single-bank starting-address query | Previous path | Indexed path | Previous allocation | Indexed profiler allocation |
+| --- | ---: | ---: | ---: | ---: |
+| Hit, 1 entry | 10.39 ns | 9.25 ns | 24 B/op | approximately 0 B/op |
+| Hit, 1k entries | 17.90 ns | 11.02 ns | 24 B/op | approximately 0 B/op |
+| Hit, 50k entries | 29.60 ns | 20.25 ns | 48 B/op | approximately 0 B/op |
+| Miss, 50k entries | 14.61 ns | 4.80 ns | 48 B/op | approximately 0 B/op |
+
+These are final raw-core results with 512 MiB forks. The initial default-heap run measured the tiny indexed hit at
+12.33 ns versus 10.98 ns old, illustrating sensitivity at this scale; the actual production adapter is measured separately
+below. Direct tables also have a retained-memory cost:
+one single-bank annotation has 263,872 reachable indexed bytes versus 424 in the old map; 50k annotations have 13,179,808
+versus 9,716,472 bytes. Adding 50k source mappings brings the combined index to 30,795,040 bytes (there is no equivalent
+old source-range index to compare). A 10k-node sparse graph with listing has 9,211,888 reachable bytes versus 2,267,712
+for the old graph; compact sparse pages reduced its original 50,091,896-byte result. A 10k-node single-bank graph has
+1,370,000 versus 2,278,696 bytes. These figures include reachable immutable payloads and exclude the shared memory image.
+
+The metadata matrix completed 156 cases (13 operations, four metadata counts, three layouts). At 50k single-bank entries,
+point covering measured 248.6 ns, interval overlap 405.1 ns versus the independent scan oracle's 76,584 ns, and reverse
+source overlap 4,253 ns versus its scan oracle's 101,903 ns. Snapshot acquisition measured 2.75 ns. Empty content and
+breakpoint publication measured 17.2 and 13.3 ns, allocating 128 and 88 bytes per new root/edit respectively. These scan
+oracles are not claimed to be previous production paths.
+
+Rebuilding remains a real cost: a single annotation edit at 50k single-bank entries measured 39.2 ms and 46.2 MB allocated;
+a mapping edit measured 36.1 ms and 67.2 MB; full rich-content rebuild measured 71.1 ms and 117.8 MB. Unchanged indexes
+are shared, but the affected index is rebuilt rather than surgically patched. Large bulk metadata edits should remain
+batched. Profiler allocation on multi-microsecond queries includes small background/profiler noise; the separate warmed
+allocation test isolates zero allocation inside the core queries.
+
+After merging graph storage, all 54 graph benchmark cases passed. At 10k single-bank nodes, incoming CSR queries measured
+14.10 ns (99.9% CI 13.96–14.24), compared with the frozen old full-edge scan's 15,172 ns (14,620–15,724). The new primitive
+query allocates approximately zero profiler bytes; the old list-producing scan measured 83.64 B/op. Full graph construction
+measured 7.33 ms and 11.29 MB allocated for the indexed path versus 0.568 ms and 2.454 MB for the old representation.
+This pays construction cost for repeated queries; it is not a graph-build speed improvement.
+
+The address-only breakpoint matrix passed 72 cases across zero/one/1k/10k rules and single-bank, banked and sparse
+memory layouts. At 10k rules in a single-bank layout, presence hit/miss measured 6.92/3.49 ns and candidate visitation
+9.67 ns, with approximately zero profiler allocation. Empty/one-rule hit checks measured 4.74/6.90 ns. Rebuilding one rule
+within a 10k-rule set took 1.94 ms and 3.76 MB allocated; full breakpoint construction took 2.07 ms and 4.09 MB. The
+presence scan is an independent oracle, not a previous production path with an equivalent presence-only contract.
+
+The 48-case pagination matrix uses the real generated Z80 decoder, 65,536 NOP cells, PC `0x8000`, four page sizes
+(21/32/64/128), and absent/built flow. At 21 rows with absent flow, repeated row-location batches measured 0.198 µs
+versus the frozen old model's 39,292 µs; repeated table-cell batches measured 10.19 µs versus 118,879 µs. The new repeated
+row path reads no instruction cells after its page is populated. Initial page fill is still expensive without indexed
+coverage: 12,908 µs versus 45,471 µs old; with built coverage the new fill measured 185 µs. These synthetic results isolate
+the repeated predecessor-decoding problem; they do not measure a complete UI interaction or explain every desktop freeze.
+Page-fill cases use single-shot timing; per-invocation model setup is outside timed work but included in GC allocation
+metrics. The CPU proxy boxes its PC, and rendered table strings allocate, so this harness does not assert zero allocation
+for table operations. Raw core-query allocation is verified separately.
+
+The matched production annotation-adapter matrix passed 32 cases. It exposes a separate latency tradeoff obscured by
+raw-core timings: single-bank hits at one entry measured 14.52 ns versus 10.42 ns old; at 50k entries, 43.74 ns versus
+27.92 ns old. Those hits avoid the old path's approximately 24 B/op allocation, but are slower. Misses at 50k measured
+8.45 ns versus 13.65 ns old. The adapter's immutable projection and thread-local visitor are warmed before measurement;
+rebuilding that projection after a content revision is excluded. Neither these hot queries nor raw-core measurements
+establish end-to-end desktop latency.
+
+Full build, current tests, parity and footprint evidence: `/tmp/program-index-logical-view-final.log`; focused logical-view
+tests: `/tmp/program-index-logical-view-focused.log` (119 tests, zero failures, one skip). Unchanged baseline test
+evidence: `/tmp/program-index-baseline-tests.log`. Raw metadata and graph measurements are in
+`/tmp/program-index-metadata.json`, `/tmp/program-index-graph.json`, `/tmp/program-index-breakpoints.json` and
+`/tmp/program-index-pagination.json` and `/tmp/program-index-adapter.json`, with matching
+`.log` files. Final raw point results: `/tmp/program-index-point-final.json` and `/tmp/program-index-point-final.log`
+(32 cases). All six final matrices contain 394 measurements. Initial default-heap point results remain in
+`/tmp/program-index-point.json` and `/tmp/program-index-point.log`. Reproduce the final point matrix with:
+
+```sh
+./gradlew -PemuLibPath=../emuLib :application:jmh \
+  -PjmhArgs='ProgramIndexPointBenchmark.(oldPointHit|indexedPointHit|oldPointMiss|indexedPointMiss) -p entries=1,1000,10000,50000 -p layout=single,banked -wi 2 -i 3 -w 200ms -r 200ms -f 2 -prof gc -foe true -jvmArgsAppend=-Xmx512m -rf json -rff /tmp/program-index-point-final.json'
+```
+
+### Earlier debugger validation
 
 Application, 8080/Z80, byte-memory, Spectrum bus/ULA and emuLib suites passed with the local composite build.
 Behavior tests cover masked/endian search and rescans, bank identity/common memory, stale source mappings, atomic annotation

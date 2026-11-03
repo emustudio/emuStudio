@@ -64,8 +64,7 @@ public class CpuImpl extends AbstractCPU {
         engine = initializer.getEngine();
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setCpu(engine);
-        disassembler = new net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler(
-                initializer.getDisassembler(), initializer.getEngine().debugger.memory(), false);
+        disassembler = initializer.getDisassembler();
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(this, context, applicationApi.getGUI());

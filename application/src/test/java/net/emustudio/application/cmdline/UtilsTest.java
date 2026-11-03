@@ -72,6 +72,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(8);
+        when(memory.getAddressSpaceSize()).thenReturn(8);
         when(memory.getBanksCount()).thenReturn(1);
         when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation -> {
             assertFalse("Memory capture must stay off Swing event thread", SwingUtilities.isEventDispatchThread());

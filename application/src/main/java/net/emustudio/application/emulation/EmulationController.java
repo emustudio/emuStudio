@@ -51,6 +51,15 @@ public class EmulationController implements Closeable {
         else debugger.runMutation(operation);
     }
 
+    private void submitExecution(Runnable operation) {
+        executor.submit(() -> runExecution(operation));
+    }
+
+    private void runExecution(Runnable operation) {
+        if (debugger == null) operation.run();
+        else debugger.runExecution(operation);
+    }
+
     private void awaitLatch() {
         try {
             countDownLatch.await();
@@ -60,7 +69,7 @@ public class EmulationController implements Closeable {
     }
 
     public void start() {
-        submitMutation(() -> {
+        submitExecution(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
                 return; // invalid state
             }
@@ -83,7 +92,7 @@ public class EmulationController implements Closeable {
     }
 
     public void step() {
-        submitMutation(() -> {
+        submitExecution(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
                 return; // invalid state
             }
@@ -112,7 +121,7 @@ public class EmulationController implements Closeable {
                 return;
             }
         }
-        runMutation(() -> {
+        runExecution(() -> {
             countDownLatch = new CountDownLatch(1);
             cpu.step();
             awaitLatch();

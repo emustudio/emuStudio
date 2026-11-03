@@ -78,8 +78,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = new net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler(
-                initializer.getDisassembler(), initializer.getEngine().debugger.memory(), true);
+        disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setEngine(engine);

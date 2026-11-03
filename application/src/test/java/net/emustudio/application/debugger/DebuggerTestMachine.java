@@ -43,6 +43,7 @@ final class DebuggerTestMachine {
         when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(banks[0].length);
+        when(memory.getAddressSpaceSize()).thenReturn(banks[0].length);
         when(memory.getBanksCount()).thenReturn(banks.length);
         when(memory.getCommonBoundary()).thenReturn(commonBoundary);
         when(memory.readBank(anyInt(), anyInt())).thenAnswer(call -> {

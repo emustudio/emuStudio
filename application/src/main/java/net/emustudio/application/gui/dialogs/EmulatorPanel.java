@@ -4,7 +4,6 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.debugger.DebuggerPanel;
-import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -166,8 +165,9 @@ public class EmulatorPanel extends JPanel {
         debugTable.getActionMap().put("showSource", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent event) {
                 if (isBreakpointCellSelected()) {
-                    if (debugTable.editCellAt(debugTable.getSelectedRow(), debugTable.getSelectedColumn()))
-                        ((AbstractButton) debugTable.getEditorComponent()).doClick(0);
+                    int row = debugTable.getSelectedRow(), column = debugTable.getSelectedColumn();
+                    if (row >= 0 && debugTable.isCellEditable(row, column))
+                        debugTable.setValueAt(!Boolean.TRUE.equals(debugTable.getValueAt(row, column)), row, column);
                     return;
                 }
                 if (inspection != null && !inspection.isInstructionView()) {
@@ -316,8 +316,7 @@ public class EmulatorPanel extends JPanel {
     }
 
     private boolean isBreakpointCellSelected() {
-        int column = debugTable.getSelectedColumn();
-        return column >= 0 && debugTable.getColumnClass(column) == BreakpointState.class;
+        return inspection != null && inspection.isBreakpointCellSelected();
     }
 
     public Optional<DebuggerPanel> getDebuggerPanel() {

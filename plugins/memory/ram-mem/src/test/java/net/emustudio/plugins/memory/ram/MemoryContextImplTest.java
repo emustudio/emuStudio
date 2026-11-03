@@ -29,6 +29,19 @@ public class MemoryContextImplTest {
     }
 
     @Test
+    public void addressCapacityRemainsStableAcrossSparseLoadAndClear() {
+        assertEquals(0, memory.getSize());
+        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
+        memory.write(Integer.MAX_VALUE - 1, (RamInstruction) createNiceMock(RamInstruction.class));
+        assertEquals(1, memory.getSize());
+        assertEquals(1, memory.getSnapshot().programMemory.size());
+        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
+        memory.clear();
+        assertEquals(0, memory.getSize());
+        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
+    }
+
+    @Test
     public void testNotifyMemoryChangesOnWrite() {
         AtomicInteger memoryChanges = new AtomicInteger();
         AtomicInteger memorySizeChanges = new AtomicInteger();

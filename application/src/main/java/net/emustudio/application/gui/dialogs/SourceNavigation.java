@@ -12,6 +12,7 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 
 import javax.swing.*;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -83,22 +84,46 @@ final class SourceNavigation implements AutoCloseable {
                 }
                 sourceInputs = inputs;
             }
-            // Assemblers have installed annotations here; capture bank before CompileAction resets CPU.
-            final SourceAddressMap captured;
-            try { captured = SourceAddressMap.capture(compiler, session.memory, session.cpu.getDisassembler(), sourceInputs); }
-            catch (Exception e) {
-                org.slf4j.LoggerFactory.getLogger(SourceNavigation.class).debug("Source navigation unavailable", e);
-                mappingStatus = "Source mappings unavailable — compile the program again";
+            // Capture the compiler bank now; publish after CompileAction's reset/mutation finishes.
+            final int compiledBank;
+            final DebugSession.SourceCaptureGuard guard;
+            try {
+                compiledBank = session.memory == null ? 0 : session.memory.getSelectedBank();
+                guard = session.captureSourceGuard();
+            } catch (RuntimeException e) {
+                mappingStatus = "Source mappings unavailable: " + e.getMessage();
                 publishStatus(current, mappingStatus, false);
                 return;
             }
-            synchronized (SourceNavigation.this) {
-                if (closed || failed || current != compilation) return;
-                mappings = captured;
-                mappingStatus = "Source mapping current";
-            }
             SwingUtilities.invokeLater(() -> {
-                if (closed || mappings != captured) return;
+                synchronized (SourceNavigation.this) {
+                    if (closed || failed || current != compilation) return;
+                }
+                final SourceAddressMap captured;
+                try {
+                    SourceAddressMap[] result = new SourceAddressMap[1];
+                    session.applySourceCapture(guard, () -> {
+                        try {
+                            result[0] = SourceAddressMap.capture(compiler, session.memory, session.cpu.getDisassembler(),
+                                    sourceInputs, session.memory == null ? null : session.programIndex(), compiledBank);
+                        } catch (java.io.IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                        if (session.memory != null) session.setSourceMappings(result[0]);
+                    });
+                    captured = result[0];
+                } catch (Exception e) {
+                    org.slf4j.LoggerFactory.getLogger(SourceNavigation.class).debug("Source navigation unavailable", e);
+                    mappingStatus = "Source mappings unavailable: " + e.getMessage();
+                    publishStatus(current, mappingStatus, false);
+                    return;
+                }
+                synchronized (SourceNavigation.this) {
+                    if (closed || failed || current != compilation) return;
+                    mappings = captured;
+                    mappingStatus = captured.diagnostics().isEmpty() ? "Source mapping current"
+                            : "Source mapping incomplete: " + captured.diagnostics().get(0);
+                }
                 debugger.setSymbols(captured.symbols(), SourceNavigation.this::symbolSelected);
                 showStatus(mappingStatus, !captured.sourceFiles().isEmpty());
                 editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
@@ -132,6 +157,10 @@ final class SourceNavigation implements AutoCloseable {
         if (compiling) return Optional.empty();
         if (snapshot.sourceFiles().isEmpty()) {
             showStatus(mappingStatus, false);
+            return Optional.empty();
+        }
+        if (session.memory != null && snapshot.programIndex() != session.programIndex()) {
+            showStatus("Memory image changed — compile the program to synchronize", false);
             return Optional.empty();
         }
         if (!snapshot.inputsUnchanged()) return stale();

@@ -52,6 +52,20 @@ public class MemoryContextImplTest {
     }
 
     @Test
+    public void addressCapacityRemainsStableAcrossSparseLoadAndClear() {
+        assertEquals(0, context.getSize());
+        assertEquals(Integer.MAX_VALUE, context.getAddressSpaceSize());
+        context.write(Integer.MAX_VALUE - 1, 42);
+        assertEquals(Integer.MAX_VALUE - 1, context.getSize());
+        assertEquals(1, context.getSnapshot().programMemory.size());
+        assertEquals(Integer.valueOf(42), context.read(Integer.MAX_VALUE - 1));
+        assertEquals(Integer.MAX_VALUE, context.getAddressSpaceSize());
+        context.clear();
+        assertEquals(0, context.getSize());
+        assertEquals(Integer.MAX_VALUE, context.getAddressSpaceSize());
+    }
+
+    @Test
     public void readWriteAndBulkAccess() {
         context.write(0, 100);
         context.write(1, 200);

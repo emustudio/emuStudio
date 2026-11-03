@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+// Benchmark-only baseline from 184f8d5a49fd40d99e553a80496c508e2e699618; class names only changed.
+
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -19,8 +21,8 @@ import java.util.function.Consumer;
  * a visible address range.
  */
 @ThreadSafe
-class CallFlow {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CallFlow.class);
+class BaselineCallFlow {
+    private final static Logger LOGGER = LoggerFactory.getLogger(BaselineCallFlow.class);
 
     private final Disassembler disassembler;
     private final NavigableMap<Integer, Integer> flowGraph = new TreeMap<>(); // location -> next location
@@ -32,7 +34,7 @@ class CallFlow {
      * @param disassembler source of instruction boundaries
      * @throws NullPointerException if {@code disassembler} is {@code null}
      */
-    CallFlow(Disassembler disassembler) {
+    BaselineCallFlow(Disassembler disassembler) {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
 

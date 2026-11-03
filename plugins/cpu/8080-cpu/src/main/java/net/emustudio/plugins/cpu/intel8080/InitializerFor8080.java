@@ -3,9 +3,11 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.SnapshotDisassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.plugins.cpu.intel8080.api.DefaultInitializer;
+import net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
 
@@ -28,6 +30,7 @@ public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
 
     @Override
     protected Disassembler createDisassembler(MemoryContext<Byte> memory) {
-        return new DisassemblerImpl(memory, new DecoderImpl(memory));
+        return new SnapshotDisassembler<>(memory, value -> value, captured -> new FlowDisassembler(
+                new DisassemblerImpl(captured, new DecoderImpl(captured)), captured, false));
     }
 }

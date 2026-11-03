@@ -10,11 +10,91 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
+import net.emustudio.application.debugger.index.ProgramIndex;
+import java.util.ArrayList;
+import net.emustudio.application.debugger.index.ProgramIndex;
 
 import static org.junit.Assert.*;
 
 public class AnnotationIndexTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    public void capturedInstallDoesNotReplayAgainstNewMemoryRevision() {
+        MemoryAnalysis image = new MemoryAnalysis(new byte[][] {{1, 2}}, 2);
+        AnnotationIndex live = new AnnotationIndex(image);
+        AnnotationIndex captured = new AnnotationIndex(image);
+        captured.put(new AnnotationIndex.Entry(0, 0, "stale", "", false, "CODE"));
+        ProgramIndex.Snapshot base = live.programIndex().snapshot();
+        live.programIndex().memoryChanged();
+        assertEquals(ProgramIndex.CommitResult.STALE, live.installCaptured(captured, base));
+        assertTrue(live.entries().isEmpty());
+    }
+
+    @Test
+    public void capturedInstallPreservesCompilerMappingsAndOtherOwners() {
+        MemoryAnalysis image = new MemoryAnalysis(new byte[][] {{1, 2}}, 2);
+        AnnotationIndex live = new AnnotationIndex(image);
+        AnnotationIndex captured = new AnnotationIndex(image);
+        captured.put(new AnnotationIndex.Entry(0, 0, "user", "", true, "CODE"));
+        ProgramIndex index = live.programIndex();
+        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+            edit.putMapping(2, 7, new ProgramIndex.Range(0, 0, 1), new ProgramIndex.SourceSpan("file:///test.asm", 0, 0, 1));
+            edit.putAnnotation(9, 8, new ProgramIndex.Range(0, 1, 2), "custom:note", "keep");
+            edit.commit();
+        }
+        assertEquals(ProgramIndex.CommitResult.PUBLISHED, live.installCaptured(captured, index.snapshot()));
+        assertEquals("user", live.get(0, 0).label);
+        java.util.ArrayList<ProgramIndex.Mapping> mappings = new java.util.ArrayList<>();
+        index.snapshot().forEachMapping(mappings::add);
+        assertEquals(1, mappings.size());
+        java.util.ArrayList<ProgramIndex.Annotation> other = new java.util.ArrayList<>();
+        index.snapshot().forEachAnnotation(annotation -> { if (annotation.ownerId() == 9) other.add(annotation); });
+        assertEquals("keep", other.get(0).text());
+    }
+
+    @Test
+    public void duplicateImportedPhysicalAddressesKeepOnlyLastValue() throws Exception {
+        MemoryAnalysis image = new MemoryAnalysis(new byte[][] {{1, 2}, {3, 2}}, 1);
+        AnnotationIndex annotations = new AnnotationIndex(image);
+        Properties input = annotations.properties();
+        input.setProperty("entries", "2");
+        for (int i = 0; i < 2; i++) {
+            input.setProperty("entry." + i + ".bank", Integer.toString(i));
+            input.setProperty("entry." + i + ".address", "1");
+            input.setProperty("entry." + i + ".label", "value" + i);
+        }
+        annotations.importProperties(input);
+        assertEquals(1, annotations.entries().size());
+        assertEquals("value1", annotations.get(0, 1).label);
+        assertSame(annotations.get(0, 1), annotations.get(1, 1));
+    }
+
+    @Test
+    public void clearingUserMetadataPreservesCompilerAndOtherOwners() {
+        MemoryAnalysis image = new MemoryAnalysis(new byte[][] {{1, 2}}, 2);
+        AnnotationIndex annotations = new AnnotationIndex(image);
+        annotations.put(new AnnotationIndex.Entry(0, 0, "user", "notes", true, "DATA"));
+        ProgramIndex index = annotations.programIndex();
+        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
+            update.putMapping(2, 1, new ProgramIndex.Range(0, 0, 1), new ProgramIndex.SourceSpan("file:/test", 1, 0, 1));
+            update.putAnnotation(2, 1, new ProgramIndex.Range(0, 0, 1), ProgramIndex.Kinds.LABEL, "compiler");
+            update.putAnnotation(99, 1, new ProgramIndex.Range(0, 0, 2), "custom:region", "external");
+            assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
+        }
+        List<ProgramIndex.Annotation> labels = new ArrayList<>();
+        index.snapshot().forEachLabelNamed("user", labels::add);
+        assertEquals(1, labels.size());
+        annotations.clear();
+        assertNull(annotations.get(0, 0));
+        assertTrue(annotations.entries().isEmpty());
+        labels.clear();
+        index.snapshot().forEachAnnotation(labels::add);
+        assertEquals(2, labels.size());
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        index.snapshot().forEachMapping(mappings::add);
+        assertEquals(1, mappings.size());
+    }
 
     @Test
     public void commonRegionAnnotationIsSharedAcrossBanksAndRemovedThroughEitherBank() {

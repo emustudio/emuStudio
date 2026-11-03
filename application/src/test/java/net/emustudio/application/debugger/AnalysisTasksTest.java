@@ -3,6 +3,7 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.application.debugger.index.ProgramIndex;
 import org.junit.Test;
 
 import javax.swing.SwingUtilities;
@@ -16,6 +17,45 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.*;
 
 public class AnalysisTasksTest {
+    @Test(timeout = 15000)
+    public void metadataEditRejectsLateResultButBreakpointEditDoesNot() throws Exception {
+        for (boolean metadata : new boolean[] {true, false}) {
+            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+            try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+                Completion completion = new Completion();
+                AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+                CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+                AtomicBoolean applied = new AtomicBoolean();
+                try {
+                    SwingUtilities.invokeAndWait(() -> tasks.submit(() -> {
+                        entered.countDown();
+                        if (!release.await(2, TimeUnit.SECONDS)) throw new IllegalStateException("Missing release");
+                        return 42;
+                    }, value -> applied.set(true)));
+                    assertTrue(entered.await(2, TimeUnit.SECONDS));
+                    ProgramIndex index = session.programIndex();
+                    if (metadata) {
+                        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+                            edit.putAnnotation(7, 1, new ProgramIndex.Range(0, 0, 1), "comment", "changed");
+                            edit.commit();
+                        }
+                    } else {
+                        try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
+                            edit.put(7, 0, true, "").commit();
+                        }
+                    }
+                    release.countDown();
+                    completion.await();
+                    assertEquals(!metadata, applied.get());
+                    if (metadata) assertTrue(completion.failure.get().getMessage().contains("metadata changed"));
+                    else assertNull(completion.failure.get());
+                } finally {
+                    release.countDown();
+                    SwingUtilities.invokeAndWait(tasks::close);
+                }
+            }
+        }
+    }
     @Test(timeout = 15000)
     public void computesOffEventThreadAndAppliesResultOnEventThread() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);

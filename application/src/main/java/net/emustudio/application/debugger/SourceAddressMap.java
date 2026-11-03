@@ -2,12 +2,12 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
@@ -17,25 +17,39 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
 
 /** Source navigation captured after a successful compilation; never changes CPU or memory banks. */
 public final class SourceAddressMap {
+    // One compiler capture belongs to the application, not to a plugin-owned annotation store.
+    private static final long MAPPING_OWNER = 2;
     private final MemoryContext<?> memory;
     private final MemoryContextAnnotations annotations;
     private final int size, bankCount, common;
-    private final NavigableMap<Integer, Entry> addresses = new TreeMap<>();
+    private final ProgramIndex index;
+    private ProgramIndex.Snapshot capturedSnapshot;
+    private final List<Entry> entries = new ArrayList<>();
     private final Map<Path, Source> sources = new LinkedHashMap<>();
     private final List<Declaration> declarations = new ArrayList<>();
+    private final List<String> diagnostics = new ArrayList<>();
 
-    private SourceAddressMap(MemoryContext<?> memory) {
+    private SourceAddressMap(MemoryContext<?> memory, ProgramIndex index) {
         this.memory = memory;
+        this.index = index;
         annotations = memory == null ? null : memory.annotations();
-        size = memory == null ? 0 : memory.getSize();
+        size = memory == null ? 0 : memory.getAddressSpaceSize();
         bankCount = memory == null ? 0 : memory.getBanksCount();
         common = memory == null ? 0 : memory.getCommonBoundary();
     }
 
-    public static SourceAddressMap empty() { return new SourceAddressMap(null); }
+    public static SourceAddressMap empty() { return new SourceAddressMap(null, null); }
+
+    public ProgramIndex programIndex() { return index; }
+
+    public ProgramIndex.Snapshot capturedSnapshot() { return capturedSnapshot; }
+
+    /** Unsupported compiler positions are excluded from bindings, with their reason retained here. */
+    public List<String> diagnostics() { return List.copyOf(diagnostics); }
 
     /** Capture compiler inputs before compilation reads them, including source-only include files. */
     public static Map<Path, String> captureInputs(Compiler compiler, Path root) throws IOException {
@@ -63,22 +77,56 @@ public final class SourceAddressMap {
 
     public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory,
                                            Disassembler disassembler, Map<Path, String> inputs) throws IOException {
-        SourceAddressMap result = new SourceAddressMap(memory);
+        ProgramIndex index = memory == null ? null : ProgramIndex.create("source-capture:" + UUID.randomUUID(),
+                memory.getAddressSpaceSize(), memory.getBanksCount(), memory.getCommonBoundary());
+        return capture(compiler, memory, disassembler, inputs, index);
+    }
+
+    /** Publish source metadata into the session's index; user annotations and other owners survive. */
+    public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory,
+                                           Disassembler disassembler, Map<Path, String> inputs,
+                                           ProgramIndex index) throws IOException {
+        return capture(compiler, memory, disassembler, inputs, index, memory == null ? 0 : memory.getSelectedBank());
+    }
+
+    /** The compiler bank is captured before a subsequent CPU reset can change the selected bank. */
+    public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory,
+                                           Disassembler disassembler, Map<Path, String> inputs,
+                                           ProgramIndex index, int compiledBank) throws IOException {
+        SourceCodePosition.ColumnUnit unit = compiler == null ? SourceCodePosition.ColumnUnit.UNKNOWN
+                : compiler.getSourcePositionColumnUnit();
+        return capture(compiler, memory, disassembler, inputs, index, compiledBank,
+                unit == null ? SourceCodePosition.ColumnUnit.UNKNOWN : unit);
+    }
+
+    /** An explicit convention may be supplied by a trusted source-metadata adapter without a compiler. */
+    public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory,
+                                           Disassembler disassembler, Map<Path, String> inputs,
+                                           ProgramIndex index, int compiledBank,
+                                           SourceCodePosition.ColumnUnit columnUnit) throws IOException {
+        Objects.requireNonNull(columnUnit);
+        SourceAddressMap result = new SourceAddressMap(memory, index);
+        ProgramIndex.Snapshot base = index == null ? null : index.snapshot();
+        if (memory != null && (base == null || base.layout().addressSpaceSize() != result.size
+                || base.layout().bankCount() != result.bankCount || base.layout().commonBoundary() != result.common))
+            throw new IOException("Source index layout differs from memory");
+        long revision = base == null ? 0 : Math.incrementExact(base.contentRevision());
         for (Map.Entry<Path, String> input : inputs.entrySet()) {
             Path path = normalize(input.getKey());
             String text = input.getValue();
             if (!Files.readString(path).equals(text))
                 throw new IOException("Source changed during compilation: " + path);
-            Source previous = result.sources.putIfAbsent(path, new Source(path, text, compiler));
+            Source previous = result.sources.putIfAbsent(path, new Source(path, text, compiler, revision));
             if (previous != null && !previous.text.equals(text))
                 throw new IOException("Conflicting source inputs: " + path);
         }
         if (result.annotations == null) {
             for (Source source : result.sources.values()) result.collectSymbols(source);
+            if (index != null) result.publish(base);
             return result;
         }
-        int compiledBank = memory.getSelectedBank();
-        if (compiledBank < 0 || compiledBank >= result.bankCount) return empty();
+        if (compiledBank < 0 || compiledBank >= result.bankCount)
+            throw new IOException("Compiler selected an invalid memory bank: " + compiledBank);
         Map<Integer, Set<SourceCodeAnnotation>> all = result.annotations.getAll(SourceCodeAnnotation.class);
         NavigableMap<Integer, Set<SourceCodeAnnotation>> mapped = new TreeMap<>(all);
         for (Set<SourceCodeAnnotation> at : mapped.values()) {
@@ -88,37 +136,60 @@ public final class SourceAddressMap {
                     throw new IOException("Source was not captured before compilation: " + path);
             }
         }
-        for (Map.Entry<Integer, Set<SourceCodeAnnotation>> at : mapped.entrySet()) {
-            if (at.getKey() < 0 || at.getKey() >= result.size || at.getValue().size() != 1) continue;
-            SourceCodeAnnotation annotation = at.getValue().iterator().next();
-            SourceCodePosition position = annotation.getPosition();
-            if (position.line < 1 || position.column < 0) continue;
-            Path path = normalize(Path.of(position.fileName));
-            Source source = result.sources.get(path);
-            if (source.offset(position) < 0) continue;
-            int bank = at.getKey() < result.common ? compiledBank : 0;
-            Entry entry = new Entry(at.getKey(), bank, position, annotation, source);
-            result.addresses.put(entry.location.address, entry);
-            source.lines.computeIfAbsent(position.line, line -> new ArrayList<>()).add(entry);
+        if (!mapped.isEmpty() && columnUnit == SourceCodePosition.ColumnUnit.UNKNOWN) {
+            result.diagnostics.add("Compiler does not declare a source column convention; mappings excluded. "
+                    + "Declare getSourcePositionColumnUnit() as UTF16 or CODE_POINT (line 1, column 0).");
+            for (Source source : result.sources.values()) result.collectSymbols(source);
+            result.publish(base);
+            return result;
         }
-        for (Entry entry : result.addresses.values()) {
-            int start = entry.location.address;
-            // Compiler tokens distinguish instruction keywords from data/directive mappings.
-            if (disassembler != null && entry.source.instructionAt(entry.location.position)) {
-                try {
-                    disassembler.disassemble(start);
-                    int end = disassembler.getNextInstructionPosition(start);
-                    Integer next = mapped.higherKey(start);
-                    if (next != null) end = Math.min(end, next);
-                    end = Math.min(end, start < result.common ? result.common : result.size);
-                    if (end > start) entry.end = end;
-                } catch (InvalidInstructionException | RuntimeException ignored) {
-                    // Exact compiler mappings remain usable when no instruction span is proven.
+        for (Map.Entry<Integer, Set<SourceCodeAnnotation>> at : mapped.entrySet()) {
+            List<SourceCodeAnnotation> ordered = new ArrayList<>(at.getValue());
+            ordered.sort(Comparator.comparing((SourceCodeAnnotation a) -> a.getPosition().fileName)
+                    .thenComparingInt(a -> a.getPosition().line).thenComparingInt(a -> a.getPosition().column)
+                    .thenComparingLong(SourceCodeAnnotation::getPluginId));
+            for (SourceCodeAnnotation annotation : ordered) {
+                SourceCodePosition position = annotation.getPosition();
+                Source source = result.sources.get(normalize(Path.of(position.fileName)));
+                int offset = source.compilerOffset(position, columnUnit);
+                if (at.getKey() < 0 || at.getKey() >= result.size || offset < 0) {
+                    result.diagnostics.add("Unsupported source mapping " + position + " at cell " + at.getKey()
+                            + ": address or source coordinate is outside captured content (EOF has no extent)");
+                    continue;
                 }
+                int bank = at.getKey() < result.common ? compiledBank : 0;
+                ProgramIndex.SourceSpan span = source.span(offset);
+                result.entries.add(new Entry(result.entries.size(), at.getKey(), bank, annotation, source, span));
             }
         }
         for (Source source : result.sources.values()) result.collectSymbols(source);
+        result.publish(base);
         return result;
+    }
+
+    private void publish(ProgramIndex.Snapshot base) throws IOException {
+        try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
+            update.removeMappings(MAPPING_OWNER);
+            update.removeAnnotations(MAPPING_OWNER);
+            for (Entry entry : entries) {
+                // Compiler metadata proves a single generated cell, not an instruction's full coverage.
+                update.putMapping(MAPPING_OWNER, entry.id,
+                        new ProgramIndex.Range(entry.location.bank, entry.location.address, entry.location.address + 1),
+                        entry.span);
+            }
+            for (int i = 0; i < declarations.size(); i++) {
+                Declaration declaration = declarations.get(i);
+                if (declaration.entry != null && !declaration.name.isEmpty()) {
+                    Location location = declaration.entry.location;
+                    update.putAnnotation(MAPPING_OWNER, i,
+                            new ProgramIndex.Range(location.bank, location.address, location.address + 1),
+                            ProgramIndex.Kinds.LABEL, declaration.name);
+                }
+            }
+            if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
+                throw new IOException("Source mappings discarded: memory or metadata changed during capture");
+        }
+        capturedSnapshot = index.snapshot();
     }
 
     public boolean matches(Path path, String text) {
@@ -141,45 +212,93 @@ public final class SourceAddressMap {
 
     public Optional<Location> addressOf(SourceCodePosition position) {
         Source source = sources.get(normalize(Path.of(position.fileName)));
-        if (source == null || position.line < 1) return Optional.empty();
-        Entry entry = source.unique(position.line);
-        if (entry == null) entry = source.labels.get(position.line);
-        return live(entry) ? Optional.of(entry.location) : Optional.empty();
+        if (source == null || source.editorOffset(position) < 0 || index == null) return Optional.empty();
+        ProgramIndex.Snapshot snapshot = index.snapshot();
+        Entry entry = unique(source, position.line, snapshot);
+        if (entry != null) return Optional.of(entry.location);
+        entry = source.labels.get(position.line);
+        return live(entry, snapshot) ? Optional.of(entry.location) : Optional.empty();
     }
 
     public Optional<Location> sourceAt(int address, int bank) {
         if (!sameLayout() || address < 0 || address >= size || bank < 0 || bank >= bankCount)
             return Optional.empty();
-        Map.Entry<Integer, Entry> floor = addresses.floorEntry(address);
-        if (floor == null) return Optional.empty();
-        Entry entry = floor.getValue();
-        int physicalBank = address < common ? bank : 0;
-        return address < entry.end && entry.location.bank == physicalBank && live(entry)
-                ? Optional.of(entry.location) : Optional.empty();
+        ProgramIndex.Snapshot snapshot = index.snapshot();
+        List<Entry> matches = new ArrayList<>();
+        snapshot.forEachMappingAt(bank, address, mapping -> {
+            Entry entry = entryFor(mapping);
+            if (live(entry, mapping, snapshot)) matches.add(entry);
+        });
+        return matches.size() == 1 ? Optional.of(matches.get(0).location) : Optional.empty();
+    }
+
+    /** Source rules are line-based, but only explicit current mappings may bind that line. */
+    public boolean matchesCurrentLine(int address, int bank, String file, int line) {
+        if (!sameLayout() || address < 0 || address >= size || bank < 0 || bank >= bankCount) return false;
+        Source source = sources.get(normalize(Path.of(file)));
+        if (source == null) return false;
+        ProgramIndex.Snapshot snapshot = index.snapshot();
+        Entry label = source.labels.get(line);
+        if (label != null && label.location.address == address
+                && label.location.bank == snapshot.layout().physicalBank(bank, address) && live(label, snapshot)) return true;
+        boolean[] matched = {false};
+        snapshot.forEachMappingAt(bank, address, mapping -> {
+            Entry entry = entryFor(mapping);
+            if (live(entry, mapping, snapshot) && entry.source == source && entry.location.position.line == line)
+                matched[0] = true;
+        });
+        return matched[0];
+    }
+
+    /** Resolve all current targets while paused, before a run invalidates memory provenance. */
+    public void forEachCurrentLocation(String file, int line, Consumer<? super Location> visitor) {
+        Objects.requireNonNull(visitor);
+        Source source = sources.get(normalize(Path.of(file)));
+        if (source == null || index == null || !sameLayout()) return;
+        ProgramIndex.Snapshot snapshot = index.snapshot();
+        ProgramIndex.SourceSpan span = source.lineSpan(line);
+        Set<Long> visited = new HashSet<>();
+        if (span != null) snapshot.forEachMappingOverlappingSource(span, mapping -> {
+            Entry entry = entryFor(mapping);
+            if (live(entry, mapping, snapshot) && visited.add(locationKey(entry.location))) visitor.accept(entry.location);
+        });
+        Entry label = source.labels.get(line);
+        if (live(label, snapshot) && visited.add(locationKey(label.location))) visitor.accept(label.location);
+    }
+
+    private static long locationKey(Location location) {
+        return ((long) location.bank << 32) | location.address;
     }
 
     public List<Symbol> symbols() {
         List<Symbol> result = new ArrayList<>();
+        ProgramIndex.Snapshot snapshot = index == null ? null : index.snapshot();
         for (Declaration declaration : declarations) {
             Entry entry = declaration.entry;
             result.add(new Symbol(declaration.name, declaration.position,
-                    live(entry) ? Optional.of(entry.location) : Optional.empty(), declaration.sourceOnly));
+                    live(entry, snapshot) ? Optional.of(entry.location) : Optional.empty(), declaration.sourceOnly));
         }
         return List.copyOf(result);
     }
 
     private void collectSymbols(Source source) {
+        // Capture-time grouping supports label-only lines. It is discarded after publication;
+        // current address/source queries always use ProgramIndex.
+        NavigableMap<Integer, List<Entry>> lines = new TreeMap<>();
+        for (Entry entry : entries) if (entry.source == source)
+            lines.computeIfAbsent(entry.location.position.line, line -> new ArrayList<>()).add(entry);
         for (Token token : source.tokens) {
             if (token.getType() != Token.SYMBOL_DEFINITION || token.getSymbolName() == null) continue;
             SourceCodePosition position = source.position(token.getOffset());
             if (position == null) continue;
-            Entry entry = source.unique(position.line);
-            if (entry == null && !source.lines.containsKey(position.line) && token.getText().endsWith(":")) {
-                Map.Entry<Integer, List<Entry>> next = source.lines.higherEntry(position.line);
+            List<Entry> onLine = lines.getOrDefault(position.line, List.of());
+            Entry entry = onLine.size() == 1 ? onLine.get(0) : null;
+            if (onLine.isEmpty() && token.getText().endsWith(":")) {
+                Map.Entry<Integer, List<Entry>> next = lines.higherEntry(position.line);
                 if (next != null && next.getValue().size() == 1) {
                     Entry candidate = next.getValue().get(0);
                     int from = token.getOffset() + token.getText().length();
-                    int to = source.offset(candidate.location.position);
+                    int to = candidate.span.startOffset;
                     if (source.onlyCommentsOrWhitespace(from, to)) entry = candidate;
                 }
                 if (entry != null) source.labels.put(position.line, entry);
@@ -191,14 +310,40 @@ public final class SourceAddressMap {
     }
 
     private boolean sameLayout() {
-        return memory != null && memory.annotations() == annotations && memory.getSize() == size
+        return memory != null && memory.annotations() == annotations && memory.getAddressSpaceSize() == size
                 && memory.getBanksCount() == bankCount && memory.getCommonBoundary() == common;
     }
 
-    private boolean live(Entry entry) {
-        if (entry == null || !sameLayout()) return false;
+    private Entry unique(Source source, int line, ProgramIndex.Snapshot snapshot) {
+        ProgramIndex.SourceSpan span = source.lineSpan(line);
+        List<Entry> matches = new ArrayList<>();
+        if (span != null && snapshot != null) snapshot.forEachMappingOverlappingSource(span, mapping -> {
+            Entry entry = entryFor(mapping);
+            if (live(entry, mapping, snapshot)) matches.add(entry);
+        });
+        return matches.size() == 1 ? matches.get(0) : null;
+    }
+
+    private Entry entryFor(ProgramIndex.Mapping mapping) {
+        if (mapping.ownerId() != MAPPING_OWNER || mapping.entryId() < 0 || mapping.entryId() >= entries.size()) return null;
+        Entry entry = entries.get((int) mapping.entryId());
+        return entry.span.equals(mapping.source()) ? entry : null;
+    }
+
+    private boolean live(Entry entry, ProgramIndex.Snapshot snapshot) {
+        if (entry == null || snapshot == null) return false;
+        boolean[] found = {false};
+        snapshot.forEachMappingAt(entry.location.bank, entry.location.address, mapping -> {
+            if (entryFor(mapping) == entry && live(entry, mapping, snapshot)) found[0] = true;
+        });
+        return found[0];
+    }
+
+    private boolean live(Entry entry, ProgramIndex.Mapping mapping, ProgramIndex.Snapshot snapshot) {
+        if (entry == null || !sameLayout() || mapping.memoryRevision() != snapshot.memoryRevision()) return false;
         Set<SourceCodeAnnotation> current = annotations.get(entry.location.address, SourceCodeAnnotation.class);
-        return current.size() == 1 && current.iterator().next() == entry.annotation;
+        for (SourceCodeAnnotation annotation : current) if (annotation == entry.annotation) return true;
+        return false;
     }
 
     private static Path normalize(Path path) { return path.toAbsolutePath().normalize(); }
@@ -249,17 +394,18 @@ public final class SourceAddressMap {
     }
 
     private static final class Entry {
+        final long id;
         final Location location;
         final SourceCodeAnnotation annotation;
         final Source source;
-        int end;
+        final ProgramIndex.SourceSpan span;
 
-        Entry(int address, int bank, SourceCodePosition position, SourceCodeAnnotation annotation, Source source) {
-            location = new Location(address, bank, SourceCodePosition.of(position.line, position.column, source.path.toString()),
-                    source.instructionAt(position));
+        Entry(long id, int address, int bank, SourceCodeAnnotation annotation, Source source, ProgramIndex.SourceSpan span) {
+            this.id = id;
+            location = new Location(address, bank, source.position(span.startOffset), source.instructionAt(span.startOffset));
             this.annotation = annotation;
             this.source = source;
-            end = address + 1;
+            this.span = span;
         }
     }
 
@@ -280,42 +426,76 @@ public final class SourceAddressMap {
     private static final class Source {
         final Path path;
         final String text;
+        final String fileId;
+        final long revision;
         final List<Token> tokens;
         final int[] starts;
-        final NavigableMap<Integer, List<Entry>> lines = new TreeMap<>();
         final Map<Integer, Entry> labels = new HashMap<>();
 
-        Source(Path path, String text, Compiler compiler) {
+        Source(Path path, String text, Compiler compiler, long revision) {
             this.path = path;
             this.text = text;
+            fileId = path.toUri().toString();
+            this.revision = revision;
             starts = java.util.stream.IntStream.concat(java.util.stream.IntStream.of(0),
                     java.util.stream.IntStream.range(0, text.length()).filter(i -> text.charAt(i) == '\n').map(i -> i + 1))
                     .toArray();
             tokens = analyze(compiler, text);
         }
 
-        Entry unique(int line) {
-            List<Entry> at = lines.get(line);
-            return at != null && at.size() == 1 ? at.get(0) : null;
+        private int lineEnd(int line) {
+            int end = line == starts.length ? text.length() : starts[line] - 1;
+            if (end > starts[line - 1] && text.charAt(end - 1) == '\r') end--;
+            return end;
         }
 
-        int offset(SourceCodePosition position) {
+        int editorOffset(SourceCodePosition position) {
             if (position.line < 1 || position.line > starts.length || position.column < 0) return -1;
             int start = starts[position.line - 1];
-            int end = position.line == starts.length ? text.length() : starts[position.line] - 1;
-            return position.column <= end - start ? start + position.column : -1;
+            int end = lineEnd(position.line);
+            return position.column < end - start ? start + position.column : -1;
+        }
+
+        // The producer declares column units; editor tokens always use Java String offsets.
+        int compilerOffset(SourceCodePosition position, SourceCodePosition.ColumnUnit unit) {
+            if (unit == SourceCodePosition.ColumnUnit.UTF16) return editorOffset(position);
+            if (unit != SourceCodePosition.ColumnUnit.CODE_POINT) return -1;
+            if (position.line < 1 || position.line > starts.length || position.column < 0) return -1;
+            int start = starts[position.line - 1], end = lineEnd(position.line);
+            if (position.column >= text.codePointCount(start, end)) return -1;
+            return text.offsetByCodePoints(start, position.column);
+        }
+
+        ProgramIndex.SourceSpan lineSpan(int line) {
+            if (line < 1 || line > starts.length || starts[line - 1] == lineEnd(line)) return null;
+            return new ProgramIndex.SourceSpan(fileId, revision, starts[line - 1], lineEnd(line));
+        }
+
+        ProgramIndex.SourceSpan span(int offset) {
+            Token token = tokenAt(offset);
+            int end = token == null ? offset + 1 : offset + token.getText().length();
+            return new ProgramIndex.SourceSpan(fileId, revision, offset, end);
         }
 
         SourceCodePosition position(int offset) {
-            if (offset < 0 || offset > text.length()) return null;
+            if (offset < 0 || offset >= text.length()) return null;
             int line = Arrays.binarySearch(starts, offset);
             if (line < 0) line = -line - 2;
             return SourceCodePosition.of(line + 1, offset - starts[line], path.toString());
         }
 
-        boolean instructionAt(SourceCodePosition position) {
-            int at = offset(position);
-            return tokens.stream().anyMatch(token -> token.getOffset() == at && token.getType() == Token.RESERVED);
+        boolean instructionAt(int offset) {
+            Token token = tokenAt(offset);
+            return token != null && token.getType() == Token.RESERVED;
+        }
+
+        private Token tokenAt(int offset) {
+            for (Token token : tokens) {
+                String tokenText = token.getText();
+                if (token.getOffset() == offset && !tokenText.isEmpty() && token.getType() != Token.EOF
+                        && tokenText.length() <= text.length() - offset && text.startsWith(tokenText, offset)) return token;
+            }
+            return null;
         }
 
         boolean onlyCommentsOrWhitespace(int from, int to) {
