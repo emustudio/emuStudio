@@ -257,10 +257,7 @@ public class EmulatorPanel extends JPanel {
         });
 
         setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[][grow]"));
-        JPanel header = gui.panel("insets 0, fillx, hidemode 3", "[][grow]", "[]");
-        header.add(toolDebug);
-        if (inspection != null) header.add(inspection.navigationToolbar(), "growx");
-        JScrollPane headerScroll = gui.scrollPane(header);
+        JScrollPane headerScroll = gui.scrollPane(toolDebug);
         headerScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         headerScroll.setMinimumSize(new Dimension(0, 0));
         add(headerScroll, "growx, hmin pref, wrap");

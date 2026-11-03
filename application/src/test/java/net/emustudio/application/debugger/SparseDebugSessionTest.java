@@ -59,7 +59,9 @@ public class SparseDebugSessionTest {
             listener.get().memorySizeChanged();
             assertSame(index, session.programIndex());
             List<ProgramIndex.Annotation> labels = new ArrayList<>();
-            index.snapshot().forEachLabelNamed("last cell", labels::add);
+            index.snapshot().forEachAnnotation(a -> {
+                if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("last cell")) labels.add(a);
+            });
             assertEquals(1, labels.size());
             assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
             verify(memory, never()).read(anyInt());

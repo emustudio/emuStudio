@@ -84,9 +84,7 @@ public class ProgramIndexAllocationTest {
     private static final class Workload {
         final ProgramIndex index;
         final int[] addresses;
-        final Range[] ranges;
         final SourceSpan[] sources;
-        final String[] labels = {"label0", "label1", "missing"};
         int cursor;
 
         Workload(int size, int common) {
@@ -97,10 +95,6 @@ public class ProgramIndexAllocationTest {
             addresses[starts.length * 2 + 1] = size / 4 + 17;
             addresses[starts.length * 2 + 2] = common - 1025;
             sources = new SourceSpan[starts.length + 1];
-            ranges = new Range[] {
-                    new Range(0, 0, 2), new Range(1, common - 2, common + 2),
-                    new Range(1, size / 2 - 1, size / 2 + 3), new Range(0, size - 1, size)
-            };
             try (ContentUpdate content = index.updateContent(index.snapshot())) {
                 content.replaceFlow(false);
                 for (int i = 0; i < starts.length; i++) {
@@ -141,8 +135,6 @@ public class ProgramIndexAllocationTest {
                 snapshot.forEachMappingAt(bank, address, VALUES);
                 snapshot.forEachAnnotationStartingAt(bank, address, VALUES);
                 snapshot.forEachAnnotationCovering(bank, address, VALUES);
-                snapshot.forEachAnnotationOverlapping(ranges[selected % ranges.length], VALUES);
-                snapshot.forEachLabelNamed(labels[selected % labels.length], VALUES);
                 snapshot.forEachMappingOverlappingSource(sources[selected % sources.length], VALUES);
                 consumed += snapshot.hasExecutionBreakpoint(address) ? 1 : 0;
                 snapshot.forEachExecutionBreakpoint(address, VALUES);

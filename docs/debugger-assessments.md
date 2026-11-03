@@ -65,8 +65,8 @@ controls must not imply reverse execution.
 After a successful compilation, source caret, bookmark and editor-history navigation follow mapped addresses. Selecting
 an instruction, memory byte or compiled symbol follows its source position without switching the outer workspace tab
 or closing an editor split. Explicit debugger and symbol visits join the existing source-editor navigation history
-from #453; automatic following adds no source-history entries. Debugger Back/Forward retains address, bank and listing
-mode. The table context menu's Pin inspection stops automatic source/PC following while allowing explicit debugger
+from #453; automatic following adds no source-history entries. The table context menu's Pin inspection stops automatic
+source/PC following while allowing explicit debugger
 navigation. A breakpoint hit inspects its address. Breakpoints have only enabled/disabled state; they do not hold the
 inspection address during later steps. Manual view pinning remains independent of breakpoint settings.
 
@@ -137,8 +137,8 @@ Each table has an 8 MiB dense-table budget; larger layouts use bounded two-level
 uniform-page compression. Shared suffixes are stored once. Bitmap word tables use the smaller word-address domain.
 Mapping coverage uses an endpoint sweep and persistent primitive posting trees, sharing unchanged branches instead of
 copying nested active sets or expanding ranges into per-cell references. Annotation ranges and per-document/revision source
-spans use array-backed centered interval trees. Exact labels have their own name index; substring search remains a
-linear user-metadata adapter operation. The graph uses dense node IDs and incoming/outgoing primitive CSR adjacency,
+spans use array-backed centered interval trees. Annotation queries cover starts and individual cells; label search remains
+a linear user-metadata adapter operation. The graph uses dense node IDs and incoming/outgoing primitive CSR adjacency,
 including known targets without decoded payloads. Predecessors include every explicit edge kind; call sites filter CALL.
 `FlowGraph` also owns the paginator's primitive sequential-boundary storage; production `CallFlow` is removed.
 Its boundary store accepts only proven cell coordinates. Decoder calls and discovery orchestration stay in
@@ -295,7 +295,8 @@ old source-range index to compare). A 10k-node sparse graph with listing has 9,2
 for the old graph; compact sparse pages reduced its original 50,091,896-byte result. A 10k-node single-bank graph has
 1,370,000 versus 2,278,696 bytes. These figures include reachable immutable payloads and exclude the shared memory image.
 
-The metadata matrix completed 156 cases (13 operations, four metadata counts, three layouts). At 50k single-bank entries,
+The historical metadata matrix completed 156 cases (13 operations, four metadata counts, three layouts), before unused
+annotation-range overlap and exact-label queries were removed. At 50k single-bank entries,
 point covering measured 248.6 ns, interval overlap 405.1 ns versus the independent scan oracle's 76,584 ns, and reverse
 source overlap 4,253 ns versus its scan oracle's 101,903 ns. Snapshot acquisition measured 2.75 ns. Empty content and
 breakpoint publication measured 17.2 and 13.3 ns, allocating 128 and 88 bytes per new root/edit respectively. These scan

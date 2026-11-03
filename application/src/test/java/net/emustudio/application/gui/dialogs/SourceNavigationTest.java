@@ -147,7 +147,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void sourceMemorySymbolsAndBothHistoriesStaySynchronized() throws Exception {
+    public void sourceMemorySymbolsAndEditorHistoryStaySynchronized() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showMemory);
@@ -161,11 +161,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.sourceHistory("Forward");
             assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
 
-            triggerButton(findButtonByTooltip(f.debugger.navigationToolbar(), "Back"));
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            assertEquals(2, f.line());
-            triggerButton(findButtonByTooltip(f.debugger.navigationToolbar(), "Forward"));
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
             assertEquals(3, f.line());
 
             JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, p -> true);

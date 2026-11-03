@@ -11,17 +11,13 @@ import java.util.function.Consumer;
 
 /** A logical range has one payload, even when its physical postings cross common memory. */
 final class RangeIndex<T> {
-    private final ProgramIndex.Layout layout;
     private final T[] values;
-    private final ProgramIndex.Range[] ranges;
     private final int[] banks;
     private final IntervalTable[] intervals;
     private final AddressPostings<T> starts;
 
     RangeIndex(ProgramIndex.Layout layout, T[] values, ProgramIndex.Range[] ranges) {
-        this.layout = layout;
         this.values = values;
-        this.ranges = ranges;
         Map<Long, List<Integer>> beginning = new TreeMap<>();
         Map<Integer, List<IntervalTable.Entry>> partitioned = new TreeMap<>();
         for (int id = 0; id < ranges.length; id++) {
@@ -56,22 +52,7 @@ final class RangeIndex<T> {
     }
 
     void covering(int physicalBank, int address, Consumer<? super T> visitor) {
-        queryPartition(physicalBank, address, address + 1, visitor, -1, 0, 0);
-    }
-
-    void overlapping(ProgramIndex.Range r, Consumer<? super T> visitor) {
-        int lowerEnd = Math.min(r.end, layout.commonBoundary());
-        if (r.start < lowerEnd) queryPartition(r.bank, r.start, lowerEnd, visitor, -1, 0, 0);
-        int upperStart = Math.max(r.start, layout.commonBoundary());
-        if (upperStart < r.end) {
-            int skipBank = r.start < lowerEnd ? r.bank : -1;
-            queryPartition(0, upperStart, r.end, visitor, skipBank, r.start, lowerEnd);
-        }
-    }
-
-    private void queryPartition(int bank, int start, int end, Consumer<? super T> visitor,
-                                int skipBank, int skipFrom, int skipTo) {
-        int at = Arrays.binarySearch(banks, bank);
-        if (at >= 0) intervals[at].query(start, end, values, visitor, ranges, skipBank, skipFrom, skipTo);
+        int at = Arrays.binarySearch(banks, physicalBank);
+        if (at >= 0) intervals[at].query(address, address + 1, values, visitor);
     }
 }

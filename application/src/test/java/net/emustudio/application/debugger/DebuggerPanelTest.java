@@ -55,7 +55,7 @@ public class DebuggerPanelTest {
         try (Workspace workspace = workspace(cells, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.showMemory();
-                workspace.panel.navigate(1, 1, true);
+                workspace.panel.navigate(1, 1);
                 assertEquals("08", workspace.table.getValueAt(1, 1));
                 cells[1][1] = 0x41; // Direct read must see the edit even before a UI notification.
                 assertEquals("41", workspace.table.getValueAt(1, 1));
@@ -147,7 +147,7 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.setAddressSelectionListener((address, bank, visit) ->
                         selections.add(address + ":" + bank + ":" + visit));
-                workspace.panel.navigate(1, 1, true);
+                workspace.panel.navigate(1, 1);
 
                 assertFalse(workspace.panel.isInstructionView());
                 assertEquals("Memory bytes", workspace.table.getAccessibleContext().getAccessibleName());
@@ -163,9 +163,9 @@ public class DebuggerPanelTest {
     public void navigationRejectsAddressesAndBanksOutsideMemory() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(-1, 0, true));
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(2, 0, true));
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(0, 1, true));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(-1, 0));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(2, 0));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(0, 1));
                 assertTrue(workspace.panel.isInstructionView());
             });
         }
@@ -284,7 +284,7 @@ public class DebuggerPanelTest {
                 assertTrue(workspace.session.rules.isEmpty());
                 assertEquals(0, workspace.breakpointChanges.get());
 
-                workspace.panel.navigate(0, 0, true);
+                workspace.panel.navigate(0, 0);
                 assertEquals("0x0000", address.getText());
                 assertEquals(0, bank.getSelectedItem());
             });
@@ -437,7 +437,7 @@ public class DebuggerPanelTest {
                 session -> when(session.cpu.getDisassembler().forBank(anyInt())).thenReturn(Optional.empty()))) {
             doAnswer(call -> { failed.countDown(); return null; }).when(workspace.dialogs).showError(anyString(), eq("Debugger"));
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.navigate(0, 1, true);
+                workspace.panel.navigate(0, 1);
                 button(workspace.panel, "Analyze from address").doClick(0);
             });
             assertTrue("Unsupported bank decoder should be reported", failed.await(5, TimeUnit.SECONDS));
@@ -463,7 +463,7 @@ public class DebuggerPanelTest {
             });
         })) {
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.navigate(1, 0, true);
+                workspace.panel.navigate(1, 0);
                 countAdditions(component(workspace.panel, JList.class, "Static references"), shown);
                 button(workspace.panel, "Find incoming references").doClick(0);
             });

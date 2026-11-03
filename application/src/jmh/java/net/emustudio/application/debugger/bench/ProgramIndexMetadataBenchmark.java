@@ -38,21 +38,6 @@ public class ProgramIndexMetadataBenchmark {
         return state.annotations.checksum;
     }
 
-    @Benchmark public long rangeOverlap(Metadata state) {
-        int i = state.data.next();
-        state.annotations.checksum = 0;
-        state.snapshot.forEachAnnotationOverlapping(state.data.ranges[i], state.annotations);
-        return state.annotations.checksum;
-    }
-
-    @Benchmark public long scanOverlapOracle(Metadata state) {
-        ProgramIndex.Range query = state.data.ranges[state.data.next()];
-        long result = 0;
-        for (int i = 0; i < state.data.count; i++)
-            if (state.data.overlaps(state.data.ranges[i], query.bank, query.start, query.end)) result += i + 1;
-        return result;
-    }
-
     @Benchmark public long sourcePoint(Metadata state) {
         int i = state.data.next();
         state.mappings.checksum = 0;
@@ -75,12 +60,6 @@ public class ProgramIndexMetadataBenchmark {
                     && source.startOffset < query.endOffset && query.startOffset < source.endOffset) result += i + 1;
         }
         return result;
-    }
-
-    @Benchmark public long exactLabel(Metadata state) {
-        state.annotations.checksum = 0;
-        state.snapshot.forEachLabelNamed(state.data.labels[state.data.next()], state.annotations);
-        return state.annotations.checksum;
     }
 
     @Benchmark public Object snapshot(Metadata state) { return state.index.snapshot(); }

@@ -66,17 +66,6 @@ public class ProgramIndexTest {
         assertEquals(Set.of(2L), annotationsAt(snapshot, 1, 6));
         assertEquals(Set.of(1L, 4L), annotationsAt(snapshot, 0, 9));
         assertEquals(Set.of(1L, 4L), annotationsAt(snapshot, 2, 9));
-        List<Annotation> overlaps = new ArrayList<>();
-        snapshot.forEachAnnotationOverlapping(new Range(2, 6, 12), overlaps::add);
-        assertEquals(3, overlaps.size());
-        assertEquals(Set.of(1L, 3L, 4L), annotationIds(overlaps));
-        List<Annotation> labels = new ArrayList<>();
-        snapshot.forEachLabelNamed("same", labels::add);
-        assertEquals(2, labels.size());
-        assertTrue(labels.stream().allMatch(a -> a.kind().equals(Kinds.LABEL)));
-        List<Annotation> none = new ArrayList<>();
-        snapshot.forEachLabelNamed("Same", none::add);
-        assertTrue(none.isEmpty());
         List<Annotation> starts = new ArrayList<>();
         snapshot.forEachAnnotationStartingAt(1, 9, starts::add);
         assertEquals(0, starts.get(0).range().bank);
@@ -350,22 +339,6 @@ public class ProgramIndexTest {
             }
             assertEquals(expected, annotationsAt(index.snapshot(), bank, address));
             assertEquals(expected, new HashSet<>(mappingIds(index.snapshot(), bank, address)));
-        }
-        for (int test = 0; test < 500; test++) {
-            int start = random.nextInt(64), end = start + 1 + random.nextInt(64 - start);
-            Range query = new Range(random.nextInt(3), start, end);
-            Set<Long> expected = new HashSet<>();
-            for (int i = 0; i < ranges.size(); i++) {
-                Range r = ranges.get(i);
-                boolean overlaps = false;
-                for (int cell = query.start; cell < query.end; cell++)
-                    if (r.start <= cell && cell < r.end && (cell >= 40 || query.bank == r.bank)) overlaps = true;
-                if (overlaps) expected.add((long) i);
-            }
-            List<Annotation> actual = new ArrayList<>();
-            index.snapshot().forEachAnnotationOverlapping(query, actual::add);
-            assertEquals(expected.size(), actual.size());
-            assertEquals(expected, annotationIds(actual));
         }
     }
 

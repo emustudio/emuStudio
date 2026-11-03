@@ -20,11 +20,7 @@ public final class IndexBenchmarkParity {
                 ProgramIndexMetadataBenchmark benchmark = new ProgramIndexMetadataBenchmark();
                 for (int query = 0; query < 16; query++) {
                     state.data.cursor = query;
-                    long indexed = benchmark.rangeOverlap(state);
-                    state.data.cursor = query;
-                    equal(indexed, benchmark.scanOverlapOracle(state), "range overlap " + layout + " " + entries);
-                    state.data.cursor = query;
-                    indexed = benchmark.sourceReverseOverlap(state);
+                    long indexed = benchmark.sourceReverseOverlap(state);
                     state.data.cursor = query;
                     equal(indexed, benchmark.scanSourceOracle(state), "source overlap " + layout + " " + entries);
                     int point = state.data.queries[query];
@@ -32,6 +28,8 @@ public final class IndexBenchmarkParity {
                     for (int i = 0; i < entries; i++)
                         if (state.data.overlaps(state.data.ranges[i], state.data.bank[point],
                                 state.data.address[point], state.data.address[point] + 1)) expected += i + 1;
+                    state.data.cursor = query;
+                    equal(expected, benchmark.pointCovering(state), "annotation covering " + layout + " " + entries);
                     state.data.cursor = query;
                     equal(expected, benchmark.sourcePoint(state), "source point " + layout + " " + entries);
                 }

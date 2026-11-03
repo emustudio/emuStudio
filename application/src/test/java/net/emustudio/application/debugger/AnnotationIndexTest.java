@@ -87,7 +87,9 @@ public class AnnotationIndexTest {
             assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
         }
         List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        index.snapshot().forEachLabelNamed("user", labels::add);
+        index.snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) labels.add(a);
+        });
         assertEquals(1, labels.size());
         annotations.clear();
         assertNull(annotations.get(0, 0));

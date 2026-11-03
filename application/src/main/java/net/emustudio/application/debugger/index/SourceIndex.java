@@ -32,7 +32,7 @@ final class SourceIndex {
         if (revisions == null) return;
         int revision = Arrays.binarySearch(revisions.ids, span.sourceRevision);
         if (revision >= 0) revisions.trees[revision].query(span.startOffset, span.endOffset,
-                values, visitor, null, -1, 0, 0);
+                values, visitor);
     }
 
     private static final class Revisions {

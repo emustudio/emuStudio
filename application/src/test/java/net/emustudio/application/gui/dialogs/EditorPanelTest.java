@@ -14,8 +14,11 @@ import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Test;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
 import java.util.Optional;
@@ -213,6 +216,41 @@ public class EditorPanelTest extends AbstractSwingTest {
         } finally {
             runOnEdt(panel::dispose);
         }
+    }
+
+    @Test
+    public void draggingCompilerDividerResizesEditorOnlyOnRelease() {
+        EditorPanel panel = createPanel(mock(Dialogs.class), createEditor(false, true));
+        JFrame frame = showInFrame(panel);
+        JSplitPane split = findComponent(panel, JSplitPane.class, component -> true);
+        try {
+            runOnEdt(() -> {
+                frame.setSize(1000, 650);
+                frame.validate();
+                split.setDividerLocation(350);
+                frame.validate();
+                BasicSplitPaneDivider divider = ((BasicSplitPaneUI) split.getUI()).getDivider();
+                int height = split.getTopComponent().getHeight();
+                int location = split.getDividerLocation();
+                int x = divider.getWidth() / 2, y = divider.getHeight() / 2;
+                long time = System.currentTimeMillis();
+                divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_PRESSED,
+                        time, MouseEvent.BUTTON1_DOWN_MASK, x, y, 1, false, MouseEvent.BUTTON1));
+                for (int distance : new int[]{20, 40, 60}) {
+                    int dragY = location - distance - divider.getY() + y;
+                    divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_DRAGGED,
+                            time + distance, MouseEvent.BUTTON1_DOWN_MASK, x, dragY, 0, false, MouseEvent.NOBUTTON));
+                    frame.validate();
+                    assertEquals("Dragging must not repeatedly resize the source editor",
+                            height, split.getTopComponent().getHeight());
+                }
+                divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_RELEASED,
+                        time + 61, 0, x, location - 60 - divider.getY() + y, 1, false, MouseEvent.BUTTON1));
+                frame.validate();
+                assertEquals(location - 60, split.getDividerLocation());
+                assertEquals(height - 60, split.getTopComponent().getHeight());
+            });
+        } finally { runOnEdt(panel::dispose); }
     }
 
     @Test

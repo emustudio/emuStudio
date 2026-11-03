@@ -221,7 +221,9 @@ public class SourceAddressMapTest {
         assertEquals("value", map.symbols().get(0).name);
         assertTrue(map.symbols().get(0).sourceOnly);
         List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        index.snapshot().forEachLabelNamed("user", labels::add);
+        index.snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) labels.add(a);
+        });
         assertEquals(1, labels.size());
         SourceAddressMap noCompiler = SourceAddressMap.capture(null, memory, null, Map.of(source, text), index);
         assertTrue(noCompiler.sourceAt(0, 0).isEmpty());
@@ -296,7 +298,9 @@ public class SourceAddressMapTest {
         index.snapshot().forEachMappingAt(0, 3, other::add);
         assertEquals(99, other.get(0).ownerId());
         List<ProgramIndex.Annotation> annotations = new ArrayList<>();
-        index.snapshot().forEachLabelNamed("user", annotations::add);
+        index.snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) annotations.add(a);
+        });
         assertEquals(1, annotations.size());
     }
 
@@ -453,7 +457,9 @@ public class SourceAddressMapTest {
         assertTrue(constant.location.isEmpty());
         assertTrue(constant.sourceOnly);
         List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        map.programIndex().snapshot().forEachLabelNamed("entry", labels::add);
+        map.programIndex().snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("entry")) labels.add(a);
+        });
         assertEquals(1, labels.size());
         assertEquals(0, labels.get(0).range().start);
         assertTrue(map.matchesCurrentLine(0, 0, source.toString(), 1));

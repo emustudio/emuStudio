@@ -68,7 +68,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JTabbedPane tabs = new JTabbedPane();
     private final JPanel breakpointPanel;
     private final JPanel watchPanel;
-    private final JPanel navigationToolbar;
     private AnnotationForm annotationForm;
     private boolean updatingAnnotations;
     private final JPanel annotationList = new JPanel(new CardLayout());
@@ -154,7 +153,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int lastMemoryAddress = -1;
     private int lastInstructionAddress;
     private final GraphPanel graph = new GraphPanel();
-    private final Deque<int[]> backward = new ArrayDeque<>(), forward = new ArrayDeque<>();
     private final Map<String, Long> watchValues = new HashMap<>();
     private Map<Integer, String> discoveredStrings = Map.of();
     private int stringBank = -1;
@@ -190,7 +188,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     lastInstructionAddress = session.cpu.getInstructionLocation();
                                 }
                                 if (!isInspectionPinned())
-                                    guard(() -> navigate(session.cpu.getInstructionLocation(), instructionBank(), false));
+                                    guard(() -> navigate(session.cpu.getInstructionLocation(), instructionBank(), false,
+                                            NavigationTarget.LISTING));
                                 requestRefresh();
                             });
                 }
@@ -240,15 +239,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         tasks = new AnalysisTasks(session, this::setBusy, this::showFailure);
         setLayout(new BorderLayout(6, 6));
-        navigationToolbar = row();
-        JToolBar navigationActions = line(navigationToolbar, button(ICON_UNDO, "Back", () -> travel(backward, forward)),
-                button(ICON_REDO, "Forward", () -> travel(forward, backward)),
-                new JToolBar.Separator());
-        navigationActions.getAccessibleContext().setAccessibleName("Inspected address history");
-        ((JComponent) navigationActions.getComponent(0)).getAccessibleContext()
-                .setAccessibleDescription("Previous inspected address; does not reverse CPU execution");
-        ((JComponent) navigationActions.getComponent(1)).getAccessibleContext()
-                .setAccessibleDescription("Next inspected address; does not advance CPU execution");
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
@@ -303,7 +293,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                                 table.convertRowIndexToModel(
                                                         table.getSelectedRow()));
                                 if (at == inspectedAddress) return;
-                                rememberAddress(at, selectedBank());
                                 lastMemoryAddress = at;
                                 inspectedAddress = at;
                                 notifyAddressSelection(true);
@@ -329,10 +318,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public JComponent watchesPanel() {
         return watchPanel;
-    }
-
-    public JComponent navigationToolbar() {
-        return navigationToolbar;
     }
 
     public void setAddressSelectionListener(AddressSelectionListener listener) {
@@ -510,7 +495,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (busy) {
             rememberAndDisable(this);
             if (watchPanel != null) rememberAndDisable(watchPanel);
-            rememberAndDisable(navigationToolbar);
             if (historyAnalysis && historyWorkControls != null) {
                 historyWorkControls.setVisible(true);
                 historyWorkControls.setEnabled(true);
@@ -765,7 +749,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void inspectLive(int address, int selected) {
         resetMemoryView();
         showMemory();
-        navigate(address, selected, true);
+        navigate(address, selected);
     }
 
     private boolean inspectBreakpointHit() {
@@ -780,23 +764,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void followAddress(int at, int selected) {
         if (navigating || tasks.isBusy()) return;
-        navigate(at, selected, true);
+        navigate(at, selected);
     }
 
-    public void navigate(int at, int selected, boolean remember) {
-        navigate(at, selected, remember, NavigationTarget.LISTING);
-    }
-
-    private void rememberAddress(int at, int selected) {
-        if (inspectedAddress == at && selectedBank() == selected) return;
-        backward.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
-        while (backward.size() > 100) backward.removeFirst();
-        forward.clear();
+    public void navigate(int at, int selected) {
+        navigate(at, selected, true, NavigationTarget.LISTING);
     }
 
     private enum NavigationTarget { LISTING, SOURCE_INSTRUCTION, SOURCE_DATA }
 
-    private void navigate(int at, int selected, boolean remember, NavigationTarget target) {
+    private void navigate(int at, int selected, boolean visit, NavigationTarget target) {
         if (tasks.isBusy()) return;
         session.requirePaused();
         if (session.memory == null) return;
@@ -805,8 +782,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 || selected < 0
                 || selected >= (byteMemory ? session.memory.getBanksCount() : 1))
             throw new IllegalArgumentException("Address/bank outside memory");
-        if (table.getModel() == model && model.rowAt(at) < 0 && !remember) return;
-        if (remember) { rememberAddress(at, selected); lastMemoryAddress = at; }
+        if (table.getModel() == model && model.rowAt(at) < 0 && !visit) return;
+        if (visit) lastMemoryAddress = at;
         navigating = true;
         try {
             if (selectedBank() != selected) resetMemoryView();
@@ -816,7 +793,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             inspectedAddress = at;
             if (table.getModel() == model && tabs.getSelectedComponent() == memoryView) {
                 int row = model.rowAt(at);
-                if (row < 0 && remember) {
+                if (row < 0 && visit) {
                     resetMemoryView();
                     row = at;
                 }
@@ -826,7 +803,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     table.scrollRectToVisible(table.getCellRect(row, 0, true));
                 }
             } else if (target != NavigationTarget.SOURCE_DATA && selected == instructionBank()) {
-                if (remember && target == NavigationTarget.LISTING) showInstructions();
+                if (visit && target == NavigationTarget.LISTING) showInstructions();
                 lastInstructionAddress = at;
                 inspectedAddress = at;
                 instructionModel.showAddress(at);
@@ -835,15 +812,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         } finally {
             navigating = false;
         }
-        notifyAddressSelection(remember);
-    }
-
-    private void travel(Deque<int[]> from, Deque<int[]> to) {
-        if (from.isEmpty()) return;
-        to.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
-        int[] place = from.removeLast();
-        if (place[2] == 1) showMemory(); else showInstructions();
-        navigate(place[0], place[1], false);
+        notifyAddressSelection(visit);
     }
 
     private void resetMemoryView() {
@@ -1016,7 +985,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         int count = table.getRowCount();
         if (count == 0) return;
         int row = Math.floorMod(table.getSelectedRow() + delta, count);
-        navigate(model.addressAt(row), selectedBank(), true);
+        navigate(model.addressAt(row), selectedBank());
     }
 
     private JPanel annotationPanel() {
@@ -1304,7 +1273,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (selected >= 0) {
                 int location = Math.toIntExact(session.evaluate(session.watches.get(selected), selectedBank()));
                 showMemory();
-                navigate(location, selectedBank(), true);
+                navigate(location, selectedBank());
             }
         }), button(ICON_REFRESH, "Refresh", this::refresh));
         if (session.debug != null) {
@@ -1563,17 +1532,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             if (selected >= 0 && selected < displayedRules.size()) {
                                 DebugSession.Rule rule = displayedRules.get(selected);
                                 if (!rule.kind.equals("SOURCE"))
-                                    navigate(
-                                            rule.address,
-                                            selectedBank(),
-                                            true);
+                                    navigate(rule.address, selectedBank());
                             } else if (selected >= displayedRules.size()
                                     && selected
                                             < displayedRules.size() + ordinaryBreakpoints.size()) {
                                 navigate(
                                         ordinaryBreakpoints.get(selected - displayedRules.size()),
-                                        selectedBank(),
-                                        true);
+                                        selectedBank());
                             }
                         }));
         if (session.debug == null) {
@@ -1613,7 +1578,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             FlowAnalysis.Edge e = references.getSelectedValue();
                             if (e != null) {
                                 requireCurrentReferences();
-                                navigate(e.from, e.fromBank, true);
+                                navigate(e.from, e.fromBank);
                             }
                         }));
         actions.add(label("Instruction", nodes));
@@ -1621,7 +1586,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(button(ICON_STEP, "Go to instruction", () -> {
             if (nodes.getSelectedItem() != null) {
                 graph.requireCurrent();
-                navigate((Integer) nodes.getSelectedItem(), graph.bank, true);
+                navigate((Integer) nodes.getSelectedItem(), graph.bank);
             }
         }));
         flowHint.setToolTipText("Graph: arrow keys select instructions; Enter follows. Incoming references list explicit branch/call targets; graph also includes fall-through. Analysis is bounded and reports partial results.");
@@ -1635,7 +1600,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     FlowAnalysis.Edge edge = references.getSelectedValue();
                     if (edge != null) {
                         requireCurrentReferences();
-                        navigate(edge.from, edge.fromBank, true);
+                        navigate(edge.from, edge.fromBank);
                     }
                 });
             }
@@ -2504,7 +2469,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         try { refreshHistory(); } catch (IllegalArgumentException failure) {
             historyContext.setText(failure.getMessage());
         }
-        navigationToolbar.setToolTipText(session.status.isBlank() ? null : session.status);
         model.refreshData();
         refreshAnnotations(annotationFilter.getText());
     }

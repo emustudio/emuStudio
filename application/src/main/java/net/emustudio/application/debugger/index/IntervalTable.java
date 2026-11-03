@@ -68,36 +68,25 @@ final class IntervalTable {
         return node;
     }
 
-    <T> void query(int from, int to, T[] values, Consumer<? super T> visitor,
-                   ProgramIndex.Range[] ranges, int skipBank, int skipFrom, int skipTo) {
-        if (nodes != 0) query(0, from, to, values, visitor, ranges, skipBank, skipFrom, skipTo);
+    <T> void query(int from, int to, T[] values, Consumer<? super T> visitor) {
+        if (nodes != 0) query(0, from, to, values, visitor);
     }
 
-    private <T> void query(int node, int from, int to, T[] values, Consumer<? super T> visitor,
-                          ProgramIndex.Range[] ranges, int skipBank, int skipFrom, int skipTo) {
+    private <T> void query(int node, int from, int to, T[] values, Consumer<? super T> visitor) {
         int offset = offsets[node], count = counts[node], center = centers[node];
         if (to <= center) {
             for (int i = offset; i < offset + count && starts[i] < to; i++)
-                emit(startIds[i], values, visitor, ranges, skipBank, skipFrom, skipTo);
-            if (left[node] >= 0) query(left[node], from, to, values, visitor, ranges, skipBank, skipFrom, skipTo);
+                visitor.accept(values[startIds[i]]);
+            if (left[node] >= 0) query(left[node], from, to, values, visitor);
         } else if (from > center) {
             for (int i = offset; i < offset + count && ends[i] > from; i++)
-                emit(endIds[i], values, visitor, ranges, skipBank, skipFrom, skipTo);
-            if (right[node] >= 0) query(right[node], from, to, values, visitor, ranges, skipBank, skipFrom, skipTo);
+                visitor.accept(values[endIds[i]]);
+            if (right[node] >= 0) query(right[node], from, to, values, visitor);
         } else {
             for (int i = offset; i < offset + count; i++)
-                emit(startIds[i], values, visitor, ranges, skipBank, skipFrom, skipTo);
-            if (left[node] >= 0) query(left[node], from, to, values, visitor, ranges, skipBank, skipFrom, skipTo);
-            if (right[node] >= 0) query(right[node], from, to, values, visitor, ranges, skipBank, skipFrom, skipTo);
+                visitor.accept(values[startIds[i]]);
+            if (left[node] >= 0) query(left[node], from, to, values, visitor);
+            if (right[node] >= 0) query(right[node], from, to, values, visitor);
         }
-    }
-
-    private static <T> void emit(int id, T[] values, Consumer<? super T> visitor,
-                                 ProgramIndex.Range[] ranges, int skipBank, int skipFrom, int skipTo) {
-        if (skipBank >= 0) {
-            ProgramIndex.Range r = ranges[id];
-            if (r.bank == skipBank && r.start < skipTo && r.end > skipFrom) return;
-        }
-        visitor.accept(values[id]);
     }
 }

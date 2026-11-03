@@ -81,6 +81,8 @@ public class EditorPanel extends JPanel {
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
         splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        // Resize the syntax editor once on release rather than repainting it throughout the drag.
+        splitSource.setContinuousLayout(false);
         splitSource.setOneTouchExpandable(true);
         addHierarchyListener(event -> {
             if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {

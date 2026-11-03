@@ -2,10 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -96,10 +93,6 @@ public final class ProgramIndex {
         void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor);
         void forEachAnnotationStartingAt(int bank, int address, Consumer<? super Annotation> visitor);
         void forEachAnnotationCovering(int bank, int address, Consumer<? super Annotation> visitor);
-        /** Crossing common memory reports each logical entry only once. */
-        void forEachAnnotationOverlapping(Range range, Consumer<? super Annotation> visitor);
-        /** Exact, case-sensitive label lookup; substring search belongs in the adapter. */
-        void forEachLabelNamed(String name, Consumer<? super Annotation> visitor);
         /** Enabled execution rules at the CPU-visible address, independent of memory banks. */
         boolean hasExecutionBreakpoint(int address);
         void forEachExecutionBreakpoint(int address, Consumer<? super Breakpoint> visitor);
@@ -122,7 +115,6 @@ public final class ProgramIndex {
     public interface ContentUpdate extends AutoCloseable {
         ContentUpdate removeMappings(long ownerId);
         ContentUpdate putMapping(long ownerId, long entryId, Range range, SourceSpan source);
-        ContentUpdate removeMapping(long ownerId, long entryId);
         ContentUpdate removeAnnotations(long ownerId);
         ContentUpdate putAnnotation(long ownerId, long entryId, Range range, String kind, String text);
         ContentUpdate removeAnnotation(long ownerId, long entryId);
@@ -286,17 +278,6 @@ public final class ProgramIndex {
             Objects.requireNonNull(visitor, "visitor");
             content.annotations.ranges.covering(physical, address, visitor);
         }
-        @Override public void forEachAnnotationOverlapping(Range range, Consumer<? super Annotation> visitor) {
-            layout.check(range);
-            Objects.requireNonNull(visitor, "visitor");
-            content.annotations.ranges.overlapping(range, visitor);
-        }
-        @Override public void forEachLabelNamed(String name, Consumer<? super Annotation> visitor) {
-            Objects.requireNonNull(name, "name");
-            Objects.requireNonNull(visitor, "visitor");
-            Annotation[] found = content.annotations.labels.get(name);
-            if (found != null) for (Annotation value : found) visitor.accept(value);
-        }
         @Override public boolean hasExecutionBreakpoint(int address) {
             layout.checkAddress(address);
             return breakpoints.has(address);
@@ -398,11 +379,6 @@ public final class ProgramIndex {
             required(source, "source");
             mappings().put(new Key(ownerId, entryId), new MappingValue(ownerId, entryId, checked, source, base.memoryRevision));
             metadataChangesFlow = true;
-            return this;
-        }
-        @Override public ContentUpdate removeMapping(long ownerId, long entryId) {
-            requireOpen();
-            if (mappings().remove(new Key(ownerId, entryId)) != null) metadataChangesFlow = true;
             return this;
         }
         @Override public ContentUpdate removeAnnotations(long ownerId) {
@@ -550,18 +526,11 @@ public final class ProgramIndex {
     private static final class Annotations {
         final Annotation[] values;
         final RangeIndex<Annotation> ranges;
-        final Map<String, Annotation[]> labels = new HashMap<>();
         Annotations(Layout layout, Annotation[] values) {
             this.values = values;
             Range[] coverage = new Range[values.length];
-            Map<String, List<Annotation>> names = new HashMap<>();
-            for (int i = 0; i < values.length; i++) {
-                Annotation a = values[i];
-                coverage[i] = a.range();
-                if (a.kind().equals(Kinds.LABEL)) names.computeIfAbsent(a.text(), ignored -> new ArrayList<>()).add(a);
-            }
+            for (int i = 0; i < values.length; i++) coverage[i] = values[i].range();
             ranges = new RangeIndex<>(layout, values, coverage);
-            names.forEach((name, entries) -> labels.put(name, entries.toArray(new Annotation[0])));
         }
     }
 
