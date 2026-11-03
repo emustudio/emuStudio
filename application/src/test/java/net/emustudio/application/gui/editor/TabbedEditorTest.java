@@ -29,6 +29,28 @@ public class TabbedEditorTest extends AbstractSwingTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
+    public void updatesTitleWhileTabHeaderIsAbsent() throws Exception {
+        Path file = source("header.asm", "NOP");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), files -> { }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+
+        runOnEdt(() -> {
+            Component header = tabs.getTabComponentAt(0);
+            tabs.setTabComponentAt(0, null);
+            try {
+                assertTrue(editor.saveFile());
+                assertEquals("header.asm", tabs.getTitleAt(0));
+            } finally {
+                tabs.setTabComponentAt(0, header);
+            }
+            editor.activeEditor().textPane().append("\nHLT");
+        });
+
+        assertEquals("header.asm*", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("header.asm*", findLabel((Container) onEdt(() -> tabs.getTabComponentAt(0)), "header.asm*").getText());
+    }
+
+    @Test
     public void opensFilesInTabsAndRoutesToSelectedTab() throws Exception {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");

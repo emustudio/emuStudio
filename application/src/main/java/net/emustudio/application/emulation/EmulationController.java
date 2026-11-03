@@ -12,22 +12,25 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
+/** Serializes interactive machine commands; CPU callbacks only acknowledge state changes. */
 @ThreadSafe
 public class EmulationController implements Closeable {
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final CPU cpu;
     private final Memory memory;
     private final List<Device> devices;
     private final DebugSession debugger;
+    private final CPU.CPUListener cpuListener = new TheCPUListener();
 
     private volatile CountDownLatch countDownLatch;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
-    private volatile boolean timedRunning = false;
+    // Guarded by this; a cancelled in-flight step must not affect its replacement.
+    private ScheduledFuture<?> timedStep;
+    private long timedStepGeneration;
 
     public EmulationController(CPU cpu, Memory memory, List<Device> devices, DebugSession debugger) {
         this.cpu = Objects.requireNonNull(cpu);
@@ -35,14 +38,17 @@ public class EmulationController implements Closeable {
         this.devices = Objects.requireNonNull(devices);
         this.debugger = debugger;
 
-        cpu.addCPUListener(new TheCPUListener());
+        executor.setRemoveOnCancelPolicy(true);
+        cpu.addCPUListener(cpuListener);
     }
 
     private void submitMutation(Runnable operation) {
-        executor.submit(() -> {
-            if (debugger == null) operation.run();
-            else debugger.runMutation(operation);
-        });
+        executor.submit(() -> runMutation(operation));
+    }
+
+    private void runMutation(Runnable operation) {
+        if (debugger == null) operation.run();
+        else debugger.runMutation(operation);
     }
 
     private void awaitLatch() {
@@ -64,7 +70,8 @@ public class EmulationController implements Closeable {
         });
     }
 
-    public void stop() {
+    public synchronized void stop() {
+        cancelTimedStep();
         submitMutation(() -> {
             if (runState != CPU.RunState.STATE_STOPPED_BREAK && runState != CPU.RunState.STATE_RUNNING) {
                 return; // invalid state
@@ -86,32 +93,44 @@ public class EmulationController implements Closeable {
         });
     }
 
-    public boolean isTimedRunning() {
-        return timedRunning;
+    public synchronized boolean isTimedRunning() {
+        return timedStep != null && !timedStep.isDone();
     }
 
-    public void step(long sleep, TimeUnit timeUnit) {
-        this.timedRunning = true;
-        internalStep(sleep, timeUnit);
+    public synchronized void step(long sleep, TimeUnit timeUnit) {
+        long delay = Math.max(1, timeUnit.toNanos(sleep));
+        cancelTimedStep();
+        long generation = timedStepGeneration;
+        timedStep = executor.scheduleWithFixedDelay(() -> internalStep(generation), 0, delay, TimeUnit.NANOSECONDS);
     }
 
-    private void internalStep(final long sleep, final TimeUnit timeUnit) {
-        submitMutation(() -> {
-            if (runState == CPU.RunState.STATE_STOPPED_BREAK && timedRunning) {
-                countDownLatch = new CountDownLatch(1);
-                cpu.step();
-                awaitLatch();
-
-                LockSupport.parkNanos(timeUnit.toNanos(sleep));
-                internalStep(sleep, timeUnit);
-            } else {
-                timedRunning = false;
+    private void internalStep(long generation) {
+        synchronized (this) {
+            if (generation != timedStepGeneration) return;
+            if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
+                cancelTimedStep();
+                return;
             }
+        }
+        runMutation(() -> {
+            countDownLatch = new CountDownLatch(1);
+            cpu.step();
+            awaitLatch();
         });
+        synchronized (this) {
+            if (generation == timedStepGeneration && runState != CPU.RunState.STATE_STOPPED_BREAK)
+                cancelTimedStep();
+        }
     }
 
-    public void pause() {
-        timedRunning = false;
+    private void cancelTimedStep() {
+        timedStepGeneration++;
+        if (timedStep != null) timedStep.cancel(false);
+        timedStep = null;
+    }
+
+    public synchronized void pause() {
+        cancelTimedStep();
         submitMutation(() -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 countDownLatch = new CountDownLatch(1);
@@ -121,8 +140,8 @@ public class EmulationController implements Closeable {
         });
     }
 
-    public void reset() {
-        timedRunning = false;
+    public synchronized void reset() {
+        cancelTimedStep();
         submitMutation(() -> {
             // pause() acknowledges execution exit, even if natural completion won the race.
             cpu.pause();
@@ -140,7 +159,10 @@ public class EmulationController implements Closeable {
 
     @Override
     public void close() {
-        executor.shutdown();
+        synchronized (this) {
+            cancelTimedStep();
+            executor.shutdown();
+        }
         try {
             if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
                 executor.shutdownNow();
@@ -148,6 +170,8 @@ public class EmulationController implements Closeable {
         } catch (InterruptedException e) {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
+        } finally {
+            cpu.removeCPUListener(cpuListener);
         }
     }
 

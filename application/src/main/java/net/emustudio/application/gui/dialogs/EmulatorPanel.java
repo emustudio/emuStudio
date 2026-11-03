@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
+    private static final int PERIPHERAL_PANEL_HEIGHT = 200;
 
     private final GUI gui;
     private final JPanel statusWindow;
@@ -327,10 +328,10 @@ public class EmulatorPanel extends JPanel {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
         if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {
             splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
-            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - 140));
+            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT));
             JScrollPane status = (JScrollPane) cpuWatches.getTopComponent();
             int preferredStatusHeight = status.getViewport().getView().getPreferredSize().height + 12;
-            int available = Math.max(140, splitLeftRight.getHeight() - 140 - 170);
+            int available = Math.max(140, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT - 170);
             cpuWatches.setDividerLocation(Math.min(Math.max(220, preferredStatusHeight), available));
             dividersInitialized = true;
         }

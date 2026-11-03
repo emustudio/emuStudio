@@ -26,6 +26,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -73,7 +74,9 @@ public class REditor implements Editor {
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
-        textPane.setFont(FONT_CODE);
+        // RSyntaxTextArea 4.0.1 measures an empty suffix after trailing tabs.
+        // Kerning routes that measurement through TextLayout, which rejects empty text.
+        textPane.setFont(FONT_CODE.deriveFont(Collections.singletonMap(TextAttribute.KERNING, 0)));
 
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAutoIndentEnabled(true);

@@ -722,7 +722,10 @@ public class TabbedEditor implements Editor {
         int index = editors.indexOf(editor);
         if (index >= 0) {
             tabs.setTitleAt(index, title(editor));
-            ((TabHeader) tabs.getTabComponentAt(index)).updateTitle(title(editor));
+            TabHeader header = (TabHeader) tabs.getTabComponentAt(index);
+            if (header != null) {
+                header.updateTitle(title(editor));
+            }
         }
         updatePaneContext();
     }

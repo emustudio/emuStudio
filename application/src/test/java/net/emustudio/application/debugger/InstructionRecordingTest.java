@@ -1,365 +1,364 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
-SPDX-License-Identifier: GPL-3.0-or-later */
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.debug.*;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class InstructionRecordingTest {
-    private final InstructionRecording.Header header = new InstructionRecording.Header("word-cpu",
-            List.of(new DebugCPU.Register("PC", 32), new DebugCPU.Register("ACC", 32)));
-
-    private DebugCPU.Instruction event(long sequence) {
-        return new DebugCPU.Instruction(sequence, 4, 2, "load =-123456", "LOAD -123456",
-                Map.of("PC", 4L, "ACC", 0L), Map.of("PC", 6L, "ACC", 0xfffe1dc0L),
-                List.of(new DebugCPU.Access(100, 2, -123456, true)), sequence % 3 != 0);
-    }
-
-    private Path destination() throws IOException {
-        return Files.createTempDirectory("instruction-recording").resolve("run.emutrace");
-    }
+    @Rule
+    public final TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
-    public void recordsWordValuesAndCapturedInstructionsWithBoundedOfflinePages() throws Exception {
-        Path path = destination();
-        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
-            for (long i = 1; i <= 2505; i++) writer.append(event(i));
-        }
-        InstructionRecording.Reader.Cursor cursor;
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertEquals("word-cpu", reader.header().processor);
-            assertEquals(32, reader.header().registers.get(1).bits);
+    public void savedInstructionRetainsPhysicalLocationRegistersAccessesAndFailureState() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("failed-write.emutrace");
+        InstructionRecording.Header header = new InstructionRecording.Header(
+                "Z80", List.of(new DebugCPU.Register("PC", 16), new DebugCPU.Register("A", 8)));
+        DebugCPU.Instruction failedWrite = new DebugCPU.Instruction(
+                7, 0x1234, 2, "LD (HL),A", "77",
+                Map.of("PC", 0x1234L, "A", 0xffL), Map.of("PC", 0x1235L, "A", 0xffL),
+                List.of(new DebugCPU.Access(0x4000, 3, 0xff, true),
+                        new DebugCPU.Access(0x1234, 2, 0x77, false)), false);
+
+        InstructionRecording.write(recording, header, List.of(failedWrite));
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertEquals("Z80", reader.header().processor);
+            assertEquals(2, reader.header().registers.size());
+            assertEquals("PC", reader.header().registers.get(0).name);
+            assertEquals(16, reader.header().registers.get(0).bits);
             assertFalse(reader.complete());
-            List<DebugCPU.Instruction> page = reader.nextPage(1024);
-            assertEquals(1024, page.size());
-            assertEquals(1, page.get(0).sequence);
-            assertEquals("LOAD -123456", page.get(0).opcodes);
-            assertEquals(-123456, page.get(0).accesses.get(0).value);
-            assertEquals(2, page.get(0).accesses.get(0).bank);
-            assertFalse(page.get(2).completed);
-            cursor = reader.cursor();
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            reader.seek(cursor);
-            assertEquals(1025, reader.nextPage(1024).get(0).sequence);
-            List<DebugCPU.Instruction> tail = reader.nextPage(1024);
-            assertEquals(457, tail.size());
-            assertEquals(2505, tail.get(456).sequence);
-            assertTrue(reader.complete());
-            assertTrue(reader.finished());
-            assertTrue(reader.nextPage(1024).isEmpty());
-        }
-    }
-
-    @Test
-    public void exactFullPageStillVerifiesFooterWithoutAnEmptyNextPage() throws Exception {
-        Path path = destination();
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        for (int i = 1; i <= 1024; i++) events.add(event(i));
-        InstructionRecording.write(path, header, events);
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertEquals(1024, reader.nextPage(1024).size());
-            assertTrue(reader.complete());
-            assertTrue(reader.finished());
-        }
-    }
-
-    @Test
-    public void filteredPagesFindMatchesBeyondFirstRawPageAndPreserveSeekCursors() throws Exception {
-        Path path = destination();
-        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
-            for (int i = 1; i <= 2052; i++) writer.append(event(i));
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            InstructionRecording.Reader.Cursor start = reader.cursor();
-            List<DebugCPU.Instruction> first = reader.nextPage(2, event -> event.sequence > 2048);
-            assertEquals(2, first.size());
-            assertEquals(2049, first.get(0).sequence);
-            assertEquals(2050, first.get(1).sequence);
             assertFalse(reader.finished());
-            InstructionRecording.Reader.Cursor next = reader.cursor();
 
-            reader.seek(start);
-            assertEquals(2049, reader.nextPage(2, event -> event.sequence > 2048).get(0).sequence);
-            reader.seek(next);
-            List<DebugCPU.Instruction> last = reader.nextPage(2, event -> event.sequence > 2048);
-            assertEquals(2, last.size());
-            assertEquals(2051, last.get(0).sequence);
-            assertEquals(2052, last.get(1).sequence);
+            List<DebugCPU.Instruction> page = reader.nextPage(10);
+
+            assertEquals(1, page.size());
+            DebugCPU.Instruction restored = page.get(0);
+            assertEquals(7, restored.sequence);
+            assertEquals(0x1234, restored.address);
+            assertEquals(2, restored.bank);
+            assertEquals("LD (HL),A", restored.mnemonic);
+            assertEquals("77", restored.opcodes);
+            assertEquals(Map.of("PC", 0x1234L, "A", 0xffL), restored.before);
+            assertEquals(Map.of("PC", 0x1235L, "A", 0xffL), restored.after);
+            assertFalse(restored.completed);
+            assertEquals(2, restored.accesses.size());
+            DebugCPU.Access write = restored.accesses.get(0);
+            assertEquals(0x4000, write.address);
+            assertEquals(3, write.bank);
+            assertEquals(0xff, write.value);
+            assertTrue(write.write);
+            DebugCPU.Access fetch = restored.accesses.get(1);
+            assertEquals(0x1234, fetch.address);
+            assertEquals(2, fetch.bank);
+            assertEquals(0x77, fetch.value);
+            assertFalse(fetch.write);
             assertTrue(reader.complete());
             assertTrue(reader.finished());
-            assertEquals("Complete recording: 2052 instructions", reader.status());
+            assertEquals("Complete recording: 1 instructions", reader.status());
+            assertTrue(reader.nextPage(10).isEmpty());
         }
     }
 
     @Test
-    public void noMatchesScanWholeRecordingAndValidateAllEventCounts() throws Exception {
-        Path path = destination();
-        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
-            for (int i = 1; i <= 2052; i++) writer.append(event(i));
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertTrue(reader.nextPage(1, event -> false).isEmpty());
-            assertTrue(reader.complete());
-            assertTrue(reader.finished());
-            assertEquals("Complete recording: 2052 instructions", reader.status());
-        }
-    }
+    public void filteredPagesCanBeRevisitedWithoutLosingSkippedInstructionsFromFooterCount() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("pages.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("8080", List.of()),
+                List.of(instruction(1, 0x10), instruction(2, 0x20), instruction(3, 0x10),
+                        instruction(4, 0x20), instruction(5, 0x10)));
 
-    @Test
-    public void fullFilteredPageScansTrailingNonmatchesAndVerifiesFooter() throws Exception {
-        Path path = destination();
-        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(path, header)) {
-            for (int i = 1; i <= 2052; i++) writer.append(event(i));
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            List<DebugCPU.Instruction> page = reader.nextPage(1024, event -> event.sequence <= 1024);
-            assertEquals(1024, page.size());
-            assertEquals(1024, page.get(1023).sequence);
-            assertTrue(reader.complete());
-            assertTrue(reader.finished());
-            assertEquals("Complete recording: 2052 instructions", reader.status());
-        }
-    }
-
-    @Test
-    public void fullFilteredPageLeavesCursorBeforeNextMatchAfterSkippedEvents() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2), event(3), event(4), event(5)));
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertEquals(1, reader.nextPage(1, event -> event.sequence == 1 || event.sequence == 4).get(0).sequence);
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            List<DebugCPU.Instruction> firstPage = reader.nextPage(1, event -> event.address == 0x10);
+            InstructionRecording.Reader.Cursor secondPage = reader.cursor();
+            assertEquals(1, firstPage.get(0).sequence);
             assertFalse(reader.finished());
-            InstructionRecording.Reader.Cursor next = reader.cursor();
-            assertEquals(4, reader.nextPage(1).get(0).sequence);
-            reader.seek(next);
-            assertEquals(4, reader.nextPage(1, event -> event.sequence == 4).get(0).sequence);
+
+            assertEquals(3, reader.nextPage(1, event -> event.address == 0x10).get(0).sequence);
+            assertEquals(5, reader.nextPage(1, event -> event.address == 0x10).get(0).sequence);
             assertTrue(reader.complete());
-            assertTrue(reader.finished());
             assertEquals("Complete recording: 5 instructions", reader.status());
+
+            reader.seek(secondPage);
+
+            assertFalse(reader.finished());
+            assertFalse(reader.complete());
+            List<DebugCPU.Instruction> remaining = reader.nextPage(10);
+            assertEquals(3, remaining.size());
+            assertEquals(3, remaining.get(0).sequence);
+            assertEquals(4, remaining.get(1).sequence);
+            assertEquals(5, remaining.get(2).sequence);
+            assertTrue(reader.complete());
         }
     }
 
     @Test
-    public void noMatchesStillReportsMissingFooter() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2)));
-        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+    public void emptyRecordingBecomesCompleteAfterReadingItsFooter() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("empty.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()), List.of());
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertTrue(reader.nextPage(1).isEmpty());
+            assertTrue(reader.complete());
+            assertEquals("Complete recording: 0 instructions", reader.status());
+        }
+    }
+
+    @Test
+    public void cursorFromAnotherRecordingIsRejected() throws Exception {
+        Path first = temporary.getRoot().toPath().resolve("first.emutrace");
+        Path second = temporary.getRoot().toPath().resolve("second.emutrace");
+        InstructionRecording.Header header = new InstructionRecording.Header("RAM", List.of());
+        InstructionRecording.write(first, header, List.of());
+        InstructionRecording.write(second, header, List.of());
+
+        try (InstructionRecording.Reader firstReader = new InstructionRecording.Reader(first);
+             InstructionRecording.Reader secondReader = new InstructionRecording.Reader(second)) {
+            IOException failure = assertThrows(IOException.class, () -> secondReader.seek(firstReader.cursor()));
+
+            assertTrue(failure.getMessage().contains("Recording changed"));
+        }
+    }
+
+    @Test
+    public void missingFooterPreservesReadableInstructionsButReportsIncompleteRecording() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("missing-footer.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()),
+                List.of(instruction(1, 0x10), instruction(2, 0x20)));
+        try (RandomAccessFile file = new RandomAccessFile(recording.toFile(), "rw")) {
+            // Remove only the completion marker and its two long counters.
             file.setLength(file.length() - 17);
         }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertTrue(reader.nextPage(1, event -> false).isEmpty());
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertEquals(2, reader.nextPage(10).size());
             assertTrue(reader.finished());
             assertFalse(reader.complete());
-            assertTrue(reader.status().contains("Incomplete"));
+            assertTrue(reader.status().contains("Incomplete recording"));
+            assertTrue(reader.status().contains("after 2 instructions"));
         }
     }
 
     @Test
-    public void filteredScanCancellationPreservesCursorAndCompletenessState() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2), event(3)));
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+    public void truncatedLastInstructionDoesNotHideEarlierCompleteInstructions() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("truncated-event.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()),
+                List.of(instruction(1, 0x10), instruction(2, 0x20)));
+        try (RandomAccessFile file = new RandomAccessFile(recording.toFile(), "rw")) {
+            // Remove footer and the final instruction's access-count field.
+            file.setLength(file.length() - 21);
+        }
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            List<DebugCPU.Instruction> readable = reader.nextPage(10);
+
+            assertEquals(1, readable.size());
+            assertEquals(1, readable.get(0).sequence);
+            assertTrue(reader.finished());
+            assertFalse(reader.complete());
+            assertTrue(reader.status().contains("after 1 instructions"));
+        }
+    }
+
+    @Test
+    public void incorrectFooterCountersAreReportedAsInvalid() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("bad-footer.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()),
+                List.of(instruction(1, 0x10)));
+        try (RandomAccessFile file = new RandomAccessFile(recording.toFile(), "rw")) {
+            file.seek(file.length() - 16);
+            file.writeLong(2);
+        }
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            IOException failure = assertThrows(IOException.class, () -> reader.nextPage(10));
+
+            assertTrue(failure.getMessage().contains("footer does not match"));
+            assertTrue(reader.finished());
+            assertFalse(reader.complete());
+            assertTrue(reader.status().startsWith("Invalid recording:"));
+        }
+    }
+
+    @Test
+    public void truncatedHeaderIsRejectedWhenOpening() throws Exception {
+        Path recording = temporary.newFile("bad-header.emutrace").toPath();
+        Files.write(recording, new byte[]{0x45, 0x4d});
+
+        IOException failure = assertThrows(IOException.class, () -> new InstructionRecording.Reader(recording));
+
+        assertEquals("Invalid or incomplete recording header", failure.getMessage());
+    }
+
+    @Test
+    public void repeatedSequenceFailsWriterAndLeavesReadablePrefixIncomplete() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("duplicate-sequence.emutrace");
+        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(
+                recording, new InstructionRecording.Header("RAM", List.of()))) {
+            writer.append(instruction(4, 0x10));
+
+            IOException duplicate = assertThrows(IOException.class, () -> writer.append(instruction(4, 0x20)));
+            IOException failedWriter = assertThrows(IOException.class, () -> writer.append(instruction(5, 0x30)));
+
+            assertTrue(duplicate.getMessage().contains("sequence is not increasing"));
+            assertEquals("Recording is closed or failed", failedWriter.getMessage());
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertEquals(1, reader.nextPage(10).size());
+            assertTrue(reader.finished());
+            assertFalse(reader.complete());
+        }
+    }
+
+    @Test
+    public void closingWriterTwiceDoesNotAddAnotherFooterAndPreventsFurtherAppends() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("closed.emutrace");
+        InstructionRecording.Writer writer = new InstructionRecording.Writer(
+                recording, new InstructionRecording.Header("RAM", List.of()));
+        writer.close();
+
+        writer.close();
+        assertThrows(IOException.class, () -> writer.append(instruction(1, 0x10)));
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertTrue(reader.nextPage(1).isEmpty());
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void writerNeverOverwritesAnExistingFile() throws Exception {
+        Path recording = temporary.newFile("existing.emutrace").toPath();
+        Files.writeString(recording, "keep this recording");
+
+        assertThrows(IOException.class, () -> new InstructionRecording.Writer(
+                recording, new InstructionRecording.Header("RAM", List.of())));
+
+        assertEquals("keep this recording", Files.readString(recording));
+    }
+
+    @Test
+    public void outputFailureOnCloseIsPropagatedAndStreamIsClosed() throws Exception {
+        FailingOutputStream output = new FailingOutputStream();
+        InstructionRecording.Writer writer = new InstructionRecording.Writer(
+                output, new InstructionRecording.Header("RAM", List.of()));
+        writer.append(instruction(1, 0x10));
+        output.failWrites = true;
+
+        IOException failure = assertThrows(IOException.class, writer::close);
+
+        assertEquals("disk full", failure.getMessage());
+        assertTrue(output.closed);
+    }
+
+    @Test
+    public void headerRejectsMissingProcessorDuplicateNamesAndInvalidWidths() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new InstructionRecording.Header(" ", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> new InstructionRecording.Header("Z80", List.of(
+                        new DebugCPU.Register("A", 8), new DebugCPU.Register("A", 8))));
+        assertThrows(IllegalArgumentException.class,
+                () -> new InstructionRecording.Header("Z80", List.of(new DebugCPU.Register("A", 0))));
+        assertThrows(IllegalArgumentException.class,
+                () -> new InstructionRecording.Header("Z80", List.of(new DebugCPU.Register("A", 65))));
+    }
+
+    @Test
+    public void pageSizeMustRemainWithinSupportedBounds() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("page-size.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()), List.of());
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            assertThrows(IllegalArgumentException.class, () -> reader.nextPage(0));
+            assertThrows(IllegalArgumentException.class, () -> reader.nextPage(10001));
+            assertTrue(reader.nextPage(1).isEmpty());
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void interruptedScanLeavesReaderAvailableForLaterUse() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("interrupted.emutrace");
+        InstructionRecording.write(recording, new InstructionRecording.Header("RAM", List.of()),
+                List.of(instruction(1, 0x10)));
+
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(recording)) {
+            Thread.currentThread().interrupt();
             try {
-                assertThrows(InterruptedIOException.class, () -> reader.nextPage(1, event -> {
-                    Thread.currentThread().interrupt();
-                    return false;
-                }));
+                assertThrows(InterruptedIOException.class, () -> reader.nextPage(10));
                 assertTrue(Thread.currentThread().isInterrupted());
-                assertFalse(reader.finished());
-                assertFalse(reader.complete());
-                assertTrue(reader.status().contains("unverified"));
             } finally {
                 Thread.interrupted();
             }
-            assertEquals(2, reader.nextPage(1).get(0).sequence);
-            assertEquals(3, reader.nextPage(1).get(0).sequence);
-            assertTrue(reader.complete());
-        }
-    }
-
-    @Test
-    public void filteredScanPropagatesPredicateFailuresWithoutInvalidatingRecording() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2)));
-        IllegalStateException failure = new IllegalStateException("filter failed");
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertSame(failure, assertThrows(IllegalStateException.class,
-                    () -> reader.nextPage(1, event -> { throw failure; })));
-            assertFalse(reader.finished());
-            assertEquals(2, reader.nextPage(1).get(0).sequence);
-            assertTrue(reader.complete());
-        }
-    }
-
-    @Test
-    public void filteredScanRejectsInvalidSkippedSequenceAndMismatchedFooter() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2)));
-        byte[] valid = Files.readAllBytes(path);
-        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
-            file.readInt();
-            file.readInt();
-            file.readUTF();
-            int registers = file.readInt();
-            for (int i = 0; i < registers; i++) {
-                file.readUTF();
-                file.readInt();
-            }
-            assertEquals(1, file.readUnsignedByte());
-            file.writeLong(0);
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertThrows(IOException.class, () -> reader.nextPage(1, event -> false));
-            assertFalse(reader.complete());
-            assertTrue(reader.status().contains("sequence"));
-        }
-        Files.write(path, valid);
-        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
-            file.seek(file.length() - 16);
-            file.writeLong(1);
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertThrows(IOException.class, () -> reader.nextPage(1, event -> false));
-            assertFalse(reader.complete());
-            assertTrue(reader.status().contains("footer"));
-        }
-    }
-
-    @Test
-    public void retainsCompleteEventsAndReportsTruncatedOrMissingFooter() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(10), event(11)));
-        byte[] full = Files.readAllBytes(path);
-        for (int cut : new int[]{full.length - 17, full.length - 20}) {
-            Path truncated = path.resolveSibling("cut-" + cut);
-            Files.write(truncated, Arrays.copyOf(full, cut));
-            try (InstructionRecording.Reader reader = new InstructionRecording.Reader(truncated)) {
-                List<DebugCPU.Instruction> events = reader.nextPage(100);
-                assertFalse(events.isEmpty());
-                assertTrue(reader.finished());
-                assertFalse(reader.complete());
-                assertTrue(reader.status().contains("Incomplete"));
-            }
-        }
-    }
-
-    @Test
-    public void rejectsChangedFileBetweenPagesAndUnknownVersion() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(1), event(2)));
-        InstructionRecording.Reader.Cursor cursor;
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            reader.nextPage(1);
-            cursor = reader.cursor();
-        }
-        Files.write(path, new byte[]{1}, StandardOpenOption.APPEND);
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertThrows(IOException.class, () -> reader.seek(cursor));
-            assertThrows(IOException.class, () -> reader.nextPage(100)); // Trailing data invalidates footer.
-        }
-        byte[] bytes = Files.readAllBytes(path);
-        bytes[7] = 99;
-        Files.write(path, bytes);
-        assertThrows(IOException.class, () -> new InstructionRecording.Reader(path));
-    }
-
-    @Test
-    public void writerFailsWithoutClobberingExistingRecordingAndRejectsReorderedEvents() throws Exception {
-        Path path = destination();
-        InstructionRecording.write(path, header, List.of(event(5)));
-        byte[] original = Files.readAllBytes(path);
-        assertThrows(FileAlreadyExistsException.class, () -> new InstructionRecording.Writer(path, header));
-        assertArrayEquals(original, Files.readAllBytes(path));
-        Path failed = path.resolveSibling("failed.emutrace");
-        try (InstructionRecording.Writer writer = new InstructionRecording.Writer(failed, header)) {
-            writer.append(event(2));
-            assertThrows(IOException.class, () -> writer.append(event(1)));
-        }
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(failed)) {
             assertEquals(1, reader.nextPage(10).size());
-            assertFalse(reader.complete());
-        }
-    }
-
-    @Test
-    public void fileFailurePropagatesAndCloseStillReleasesResource() throws Exception {
-        class FailingOutput extends OutputStream {
-            boolean fail, closed;
-            @Override public void write(int value) throws IOException {
-                if (fail) throw new IOException("disk full");
-            }
-            @Override public void close() { closed = true; }
-        }
-        FailingOutput output = new FailingOutput();
-        InstructionRecording.Writer writer = new InstructionRecording.Writer(output, header);
-        writer.append(event(1));
-        output.fail = true;
-        assertThrows(IOException.class, writer::close);
-        assertTrue(output.closed);
-        assertThrows(IOException.class, () -> writer.append(event(2)));
-    }
-
-    @Test
-    public void wholeFileTextExportIncludesEveryPageAndItsCompleteness() throws Exception {
-        Path source = destination(), text = source.resolveSibling("all.txt");
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        for (int i = 1; i <= 2049; i++) events.add(event(i));
-        InstructionRecording.write(source, header, events);
-        InstructionRecording.exportText(text, source);
-        String content = Files.readString(text);
-        assertTrue(content.contains("#1 |"));
-        assertTrue(content.contains("#2049 |"));
-        assertTrue(content.contains("Complete recording: 2049 instructions"));
-        assertEquals(2049, content.lines().filter(line -> line.startsWith("#")).count());
-        assertThrows(FileAlreadyExistsException.class, () -> InstructionRecording.exportText(source, source));
-    }
-
-    @Test
-    public void readableExportIncludesAllCapturedState() throws Exception {
-        Path path = destination();
-        InstructionRecording.exportText(path, header, List.of(event(7)));
-        String text = Files.readString(path);
-        assertTrue(text.contains("word-cpu"));
-        assertTrue(text.contains("#7 | bank=2 PC=0004 | LOAD -123456 | load =-123456"));
-        assertTrue(text.contains("before: ACC=0 PC=4"));
-        assertTrue(text.contains("after: ACC=FFFE1DC0 PC=6"));
-        assertTrue(text.contains("WRITE bank=2:0064 value=FFFE1DC0"));
-    }
-
-    @Test
-    public void sessionStreamsBeyondRecentBoundAndFlushesOnClose() throws Exception {
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.disassemble(anyInt())).thenReturn(new DisassembledInstruction(0, "nop", "00"));
-        DebugProbe probe = new DebugProbe("custom-cpu", memory, disassembler);
-        probe.register("PC", 32, () -> 0, v -> {});
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.of(probe));
-        Path path = destination();
-        try (DebugSession session = new DebugSession(cpu, memory, null)) {
-            session.record(2);
-            session.recordTo(path);
-            for (int i = 0; i < 20; i++) { probe.begin(0); probe.end(true); }
-            assertEquals(2, session.history().size());
-            session.record(0);
-            assertEquals(2, session.history().size()); // Stopping does not erase evidence.
-            assertTrue(probe.isActive()); // File capture remains independent of recent capture.
-            for (int i = 0; i < 3; i++) { probe.begin(0); probe.end(true); }
-        }
-        assertFalse(probe.isActive());
-        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
-            assertEquals(23, reader.nextPage(100).size());
             assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void textExportIncludesEventsRegistersAccessesAndRecordingCompleteness() throws Exception {
+        Path recording = temporary.getRoot().toPath().resolve("export.emutrace");
+        Path text = temporary.getRoot().toPath().resolve("export.txt");
+        DebugCPU.Instruction write = new DebugCPU.Instruction(1, 0x20, 2, "STORE", "AA",
+                Map.of("B", 2L, "A", 1L), Map.of("B", 3L, "A", 1L),
+                List.of(new DebugCPU.Access(0x30, 2, 0xff, true)), true);
+        InstructionRecording.write(recording,
+                new InstructionRecording.Header("test-cpu", List.of(new DebugCPU.Register("A", 8))),
+                List.of(write));
+
+        InstructionRecording.exportText(text, recording);
+
+        String exported = Files.readString(text);
+        assertTrue(exported.contains("emuStudio instruction recording v1 | test-cpu"));
+        assertTrue(exported.contains("A:8"));
+        assertTrue(exported.contains("#1 | bank=2 PC=0020 | AA | STORE | completed"));
+        assertTrue(exported.contains("before: A=1 B=2"));
+        assertTrue(exported.contains("after: A=1 B=3"));
+        assertTrue(exported.contains("WRITE bank=2:0030 value=FF"));
+        assertTrue(exported.contains("Complete recording: 1 instructions"));
+    }
+
+    @Test
+    public void textExportNeverOverwritesExistingOutput() throws Exception {
+        Path text = temporary.newFile("existing.txt").toPath();
+        Files.writeString(text, "keep this export");
+
+        assertThrows(IOException.class, () -> InstructionRecording.exportText(text,
+                new InstructionRecording.Header("RAM", List.of()), List.of()));
+
+        assertEquals("keep this export", Files.readString(text));
+    }
+
+    private static DebugCPU.Instruction instruction(long sequence, int address) {
+        return new DebugCPU.Instruction(sequence, address, 0, "NOP", "00",
+                Map.of(), Map.of(), List.of(), true);
+    }
+
+    private static final class FailingOutputStream extends OutputStream {
+        private boolean failWrites;
+        private boolean closed;
+
+        @Override
+        public void write(int value) throws IOException {
+            if (failWrites) throw new IOException("disk full");
+        }
+
+        @Override
+        public void close() {
+            closed = true;
         }
     }
 }

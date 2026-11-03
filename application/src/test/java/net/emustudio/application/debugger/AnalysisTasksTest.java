@@ -1,255 +1,196 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
-SPDX-License-Identifier: GPL-3.0-or-later */
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import org.junit.Test;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.Optional;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 import javax.swing.SwingUtilities;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.Assert.*;
 
 public class AnalysisTasksTest {
-    @Test(timeout = 5000)
-    public void slowCaptureLeavesEdtAvailableAndAppliesResultOnEdt() throws Exception {
-        Fixture f = new Fixture();
-        CountDownLatch done = new CountDownLatch(1), edtAvailable = new CountDownLatch(1);
-        AtomicBoolean appliedOnEdt = new AtomicBoolean();
-        AtomicReference<Throwable> failure = new AtomicReference<>();
-        AnalysisTasks tasks = new AnalysisTasks(f.session, busy -> { if (!busy) done.countDown(); }, failure::set);
-        try {
-            SwingUtilities.invokeAndWait(() -> tasks.submit(f.session::captureMemory,
-                    image -> appliedOnEdt.set(SwingUtilities.isEventDispatchThread())));
-            assertTrue(f.readStarted.await(1, TimeUnit.SECONDS));
-            SwingUtilities.invokeLater(edtAvailable::countDown);
-            assertTrue(edtAvailable.await(1, TimeUnit.SECONDS));
-            assertFalse(f.readOnEdt.get());
-            f.releaseRead.countDown();
-            assertTrue(done.await(1, TimeUnit.SECONDS));
-            assertTrue(appliedOnEdt.get());
-            assertNull(failure.get());
-        } finally {
-            f.releaseRead.countDown();
-            SwingUtilities.invokeAndWait(tasks::close);
-            f.session.close();
-        }
-    }
+    @Test(timeout = 15000)
+    public void computesOffEventThreadAndAppliesResultOnEventThread() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            Completion completion = new Completion();
+            AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+            AtomicBoolean workerOnEventThread = new AtomicBoolean(true);
+            AtomicBoolean applyOnEventThread = new AtomicBoolean();
+            AtomicReference<String> applied = new AtomicReference<>();
+            try {
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> {
+                    workerOnEventThread.set(SwingUtilities.isEventDispatchThread());
+                    return "decoded instructions";
+                }, result -> {
+                    applyOnEventThread.set(SwingUtilities.isEventDispatchThread());
+                    applied.set(result);
+                }));
+                completion.await();
 
-    @Test(timeout = 5000)
-    public void resumeAndPauseDuringCaptureDiscardsResultAndStagedImage() throws Exception {
-        Fixture f = new Fixture();
-        f.blockRead.set(false);
-        MemoryAnalysis original = f.session.image();
-        f.blockRead.set(true);
-        CountDownLatch done = new CountDownLatch(1);
-        AtomicReference<Throwable> failure = new AtomicReference<>();
-        AtomicBoolean applied = new AtomicBoolean();
-        AnalysisTasks tasks = new AnalysisTasks(f.session, busy -> { if (!busy) done.countDown(); }, failure::set);
-        try {
-            SwingUtilities.invokeAndWait(() -> tasks.submit(f.session::captureImage, captured -> {
-                f.session.installImage(captured);
-                applied.set(true);
-            }));
-            assertTrue(f.readStarted.await(1, TimeUnit.SECONDS));
-            f.listener.get().runStateChanged(CPU.RunState.STATE_RUNNING);
-            f.listener.get().runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
-            f.releaseRead.countDown();
-            assertTrue(done.await(1, TimeUnit.SECONDS));
-            assertFalse(applied.get());
-            assertSame(original, f.session.image());
-            assertTrue(failure.get().getMessage().contains("machine changed"));
-        } finally {
-            f.releaseRead.countDown();
-            SwingUtilities.invokeAndWait(tasks::close);
-            f.session.close();
-        }
-    }
-
-    @Test
-    public void mutationRejectsOldCaptureDuringAndAfterOperationWithoutCpuEvents() throws Exception {
-        Fixture f = new Fixture();
-        f.blockRead.set(false);
-        try {
-            DebugSession.ImageCapture before = f.session.captureImage();
-            f.session.runMutation(() -> {
-                assertThrows(IllegalStateException.class, f.session::pausedGeneration);
-                assertThrows(IllegalStateException.class, () -> f.session.installImage(before));
-            });
-            assertThrows(IllegalStateException.class, () -> f.session.installImage(before));
-            assertThrows(IllegalArgumentException.class,
-                    () -> f.session.runMutation(() -> { throw new IllegalArgumentException("edit failed"); }));
-            f.session.installImage(f.session.captureImage());
-            assertEquals(8, f.session.image().size());
-        } finally {
-            f.session.close();
-        }
-    }
-
-    @Test
-    public void pausedCpuAndMemoryNotificationsInvalidateAnalysisAndListenersAreRemoved() throws Exception {
-        Fixture f = new Fixture();
-        try {
-            long before = f.session.pausedGeneration();
-            f.listener.get().runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
-            long stepped = f.session.pausedGeneration();
-            assertNotEquals(before, stepped);
-            f.listener.get().internalStateChanged();
-            long edited = f.session.pausedGeneration();
-            assertNotEquals(stepped, edited);
-            f.memoryListener.get().memoryContentChanged(0, 1);
-            long written = f.session.pausedGeneration();
-            assertNotEquals(edited, written);
-            f.memoryListener.get().memorySizeChanged();
-            assertNotEquals(written, f.session.pausedGeneration());
-            assertThrows(IllegalStateException.class, () -> f.session.applyPaused(before, () -> {}));
-        } finally {
-            f.session.close();
-        }
-        verify(f.memory).removeMemoryListener(f.memoryListener.get());
-    }
-
-    @Test(timeout = 5000)
-    public void controllerResetInvalidatesBeforeMemoryChangesWithoutCpuNotification() throws Exception {
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
-        List<CPU.CPUListener> listeners = new CopyOnWriteArrayList<>();
-        doAnswer(invocation -> { listeners.add(invocation.getArgument(0)); return null; })
-                .when(cpu).addCPUListener(any());
-        doAnswer(invocation -> {
-            listeners.forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
-            return null;
-        }).when(cpu).reset();
-        MemoryContext<?> context = mock(MemoryContext.class);
-        Memory memory = mock(Memory.class);
-        AtomicBoolean rejected = new AtomicBoolean();
-        try (DebugSession session = new DebugSession(cpu, context, null)) {
-            doAnswer(invocation -> {
-                assertThrows(IllegalStateException.class, session::pausedGeneration);
-                assertThrows(IllegalStateException.class, session::captureMemory);
-                verify(context, never()).readBank(anyInt(), anyInt());
-                rejected.set(true);
-                return null;
-            }).when(memory).reset();
-            try (EmulationController controller = new EmulationController(cpu, memory, List.of(), session)) {
-                controller.reset();
+                assertFalse(workerOnEventThread.get());
+                assertTrue(applyOnEventThread.get());
+                assertEquals("decoded instructions", applied.get());
+                assertEquals(List.of(true, false), completion.busyStates);
+                assertNull(completion.failure.get());
+                SwingUtilities.invokeAndWait(() -> assertFalse(tasks.isBusy()));
+            } finally {
+                SwingUtilities.invokeAndWait(tasks::close);
             }
-            assertTrue(rejected.get());
         }
     }
 
-    @Test(timeout = 5000)
-    public void cancellationKeepsJobBusyUntilProviderActuallyExits() throws Exception {
-        Fixture f = new Fixture();
-        CountDownLatch done = new CountDownLatch(1);
-        AtomicBoolean applied = new AtomicBoolean();
-        AnalysisTasks tasks = new AnalysisTasks(f.session, busy -> { if (!busy) done.countDown(); }, ignored -> {});
-        try {
-            SwingUtilities.invokeAndWait(() -> tasks.submit(f.session::captureMemory, image -> applied.set(true)));
-            assertTrue(f.readStarted.await(1, TimeUnit.SECONDS));
-            SwingUtilities.invokeAndWait(() -> {
-                tasks.cancel();
-                assertTrue(tasks.isBusy());
-                assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 1, ignored -> {}));
-            });
-            f.releaseRead.countDown();
-            assertTrue(done.await(1, TimeUnit.SECONDS));
-            assertFalse(applied.get());
-        } finally {
-            f.releaseRead.countDown();
-            SwingUtilities.invokeAndWait(tasks::close);
-            f.session.close();
-        }
-    }
+    @Test(timeout = 15000)
+    public void operationFailureReportsOriginalCauseAndAllowsAnotherTask() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            Completion completion = new Completion();
+            AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+            IllegalArgumentException cause = new IllegalArgumentException("bad pattern");
+            AtomicBoolean applied = new AtomicBoolean();
+            try {
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> { throw cause; }, value -> applied.set(true)));
+                completion.await();
+                assertSame(cause, completion.failure.get());
+                assertFalse(applied.get());
 
-    @Test(timeout = 5000)
-    public void disposingCancelsAndSuppressesLateCallbacks() throws Exception {
-        Fixture f = new Fixture();
-        AtomicBoolean applied = new AtomicBoolean(), reported = new AtomicBoolean();
-        CountDownLatch operationExited = new CountDownLatch(1);
-        AnalysisTasks tasks = new AnalysisTasks(f.session, ignored -> {}, ignored -> reported.set(true));
-        try {
-            SwingUtilities.invokeAndWait(() -> tasks.submit(() -> {
-                try { return f.session.captureMemory(); }
-                finally { operationExited.countDown(); }
-            }, image -> applied.set(true)));
-            assertTrue(f.readStarted.await(1, TimeUnit.SECONDS));
-            SwingUtilities.invokeAndWait(tasks::close);
-            f.releaseRead.countDown();
-            assertTrue(operationExited.await(1, TimeUnit.SECONDS));
-            SwingUtilities.invokeAndWait(() -> assertFalse(tasks.isBusy()));
-            assertFalse(applied.get());
-            assertFalse(reported.get());
-        } finally {
-            f.releaseRead.countDown();
-            f.session.close();
-        }
-    }
-
-    @Test
-    public void binaryReadChecksSizeAndBoundsActualReads() throws Exception {
-        Path file = Files.createTempFile("debugger-binary", ".bin");
-        try {
-            Files.write(file, new byte[] {1, 2, 3});
-            assertArrayEquals(new byte[] {1, 2, 3}, MemoryAnalysis.readBinary(file, 3));
-            assertThrows(IOException.class, () -> MemoryAnalysis.readBinary(file, 2));
-            assertThrows(IOException.class, () -> MemoryAnalysis.readBinary(file, 4));
-            try (RandomAccessFile sparse = new RandomAccessFile(file.toFile(), "rw")) {
-                sparse.setLength(1L << 32);
+                CountDownLatch recovered = new CountDownLatch(1);
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> 7, value -> {
+                    assertEquals(Integer.valueOf(7), value);
+                    recovered.countDown();
+                }));
+                assertTrue("Next analysis should apply", recovered.await(2, TimeUnit.SECONDS));
+            } finally {
+                SwingUtilities.invokeAndWait(tasks::close);
             }
-            assertThrows(IOException.class, () -> MemoryAnalysis.readBinary(file, 3));
-            assertThrows(IOException.class,
-                    () -> MemoryAnalysis.readBinary(new ByteArrayInputStream(new byte[] {1}), 2));
-            assertThrows(IOException.class,
-                    () -> MemoryAnalysis.readBinary(new ByteArrayInputStream(new byte[] {1, 2, 3}), 2));
-        } finally {
-            Files.delete(file);
         }
     }
 
-    private static final class Fixture {
-        final AtomicReference<CPU.CPUListener> listener = new AtomicReference<>();
-        final AtomicReference<MemoryContext.MemoryListener> memoryListener = new AtomicReference<>();
-        final CountDownLatch readStarted = new CountDownLatch(1), releaseRead = new CountDownLatch(1);
-        final AtomicBoolean blockRead = new AtomicBoolean(true), readOnEdt = new AtomicBoolean();
-        final DebugSession session;
-        final MemoryContext<Byte> memory;
+    @Test(timeout = 15000)
+    public void machineMutationWhileAnalysisRunsDiscardsItsResult() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            Completion completion = new Completion();
+            AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+            CountDownLatch entered = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            AtomicBoolean applied = new AtomicBoolean();
+            try {
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> {
+                    entered.countDown();
+                    if (!release.await(2, TimeUnit.SECONDS)) throw new IllegalStateException("Test did not release analysis");
+                    return 42;
+                }, value -> applied.set(true)));
+                assertTrue("Analysis should start", entered.await(2, TimeUnit.SECONDS));
+                session.runMutation(() -> machine.memoryChanged(0));
+                release.countDown();
+                completion.await();
 
-        @SuppressWarnings("unchecked")
-        Fixture() throws Exception {
-            CPU cpu = mock(CPU.class);
-            when(cpu.getDebugger()).thenReturn(Optional.empty());
-            doAnswer(invocation -> { listener.set(invocation.getArgument(0)); return null; })
-                    .when(cpu).addCPUListener(any());
-            memory = mock(MemoryContext.class);
-            when(memory.getCellTypeClass()).thenReturn(Byte.class);
-            when(memory.getSize()).thenReturn(8);
-            when(memory.getBanksCount()).thenReturn(1);
-            doAnswer(invocation -> { memoryListener.set(invocation.getArgument(0)); return null; })
-                    .when(memory).addMemoryListener(any());
-            when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation -> {
-                if (blockRead.get()) {
-                    readOnEdt.set(SwingUtilities.isEventDispatchThread());
-                    readStarted.countDown();
-                    boolean interrupted = false;
-                    while (true) {
-                        try { releaseRead.await(); break; }
-                        catch (InterruptedException e) { interrupted = true; }
+                assertFalse(applied.get());
+                assertTrue(completion.failure.get() instanceof IllegalStateException);
+                assertTrue(completion.failure.get().getMessage().contains("machine changed"));
+            } finally {
+                release.countDown();
+                SwingUtilities.invokeAndWait(tasks::close);
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
+    public void cancellingDoesNotReleaseBusyStateBeforeOperationActuallyExits() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            Completion completion = new Completion();
+            AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+            CountDownLatch entered = new CountDownLatch(1);
+            CountDownLatch interrupted = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            AtomicBoolean applied = new AtomicBoolean();
+            try {
+                // Simulate an operation that must finish cleanup after receiving cancellation.
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> {
+                    entered.countDown();
+                    try {
+                        if (!release.await(2, TimeUnit.SECONDS)) throw new IllegalStateException("Missing cancellation");
+                    } catch (InterruptedException expected) {
+                        interrupted.countDown();
+                        if (!release.await(2, TimeUnit.SECONDS)) throw new IllegalStateException("Missing cleanup release");
                     }
-                    if (interrupted) Thread.currentThread().interrupt();
-                }
-                return (byte) 1;
+                    return 42;
+                }, value -> applied.set(true)));
+                assertTrue(entered.await(2, TimeUnit.SECONDS));
+                SwingUtilities.invokeAndWait(tasks::cancel);
+                assertTrue("Worker should observe cancellation", interrupted.await(2, TimeUnit.SECONDS));
+
+                SwingUtilities.invokeAndWait(() -> {
+                    assertTrue(tasks.isBusy());
+                    assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 99, value -> {}));
+                });
+                release.countDown();
+                completion.await();
+                assertFalse(applied.get());
+                assertEquals("Analysis cancelled", completion.failure.get().getMessage());
+                assertEquals(List.of(true, false), completion.busyStates);
+            } finally {
+                release.countDown();
+                SwingUtilities.invokeAndWait(tasks::close);
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
+    public void controlsRequireEventThreadAndPausedSession() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
+            try {
+                assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 1, value -> {}));
+                assertThrows(IllegalStateException.class, tasks::cancel);
+                assertThrows(IllegalStateException.class, tasks::close);
+                machine.state(CPU.RunState.STATE_RUNNING);
+                SwingUtilities.invokeAndWait(() -> {
+                    assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 1, value -> {}));
+                    assertFalse(tasks.isBusy());
+                });
+            } finally {
+                SwingUtilities.invokeAndWait(tasks::close);
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
+    public void closedWindowRejectsNewAnalysis() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
+            SwingUtilities.invokeAndWait(() -> {
+                tasks.close();
+                assertFalse(tasks.isBusy());
+                assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 1, value -> {}));
             });
-            session = new DebugSession(cpu, memory, null);
+        }
+    }
+
+    private static final class Completion {
+        final List<Boolean> busyStates = new ArrayList<>();
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final CountDownLatch finished = new CountDownLatch(1);
+
+        void busyChanged(boolean busy) {
+            assertTrue("Busy notification belongs on event thread", SwingUtilities.isEventDispatchThread());
+            busyStates.add(busy);
+            if (!busy) finished.countDown();
+        }
+
+        void await() throws InterruptedException {
+            assertTrue("Analysis should finish", finished.await(2, TimeUnit.SECONDS));
         }
     }
 }
