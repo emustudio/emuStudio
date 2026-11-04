@@ -124,13 +124,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final DefaultListModel<String> ruleRows = new DefaultListModel<>();
     private final DefaultListModel<String> memoryWatchRows = new DefaultListModel<>();
     private final DefaultListModel<AnnotationIndex.Entry> annotationRows = new DefaultListModel<>();
-    private final DefaultListModel<FlowAnalysis.Edge> referenceRows = new DefaultListModel<>();
-    private FlowAnalysis referenceFlow;
-    private boolean referencesFromSweep;
     private final JList<String> watches = new JList<>(watchRows),
             rules = new JList<>(ruleRows), memoryWatches = new JList<>(memoryWatchRows);
     private final JList<AnnotationIndex.Entry> annotations = new JList<>(annotationRows);
-    private final JList<FlowAnalysis.Edge> references = new JList<>(referenceRows);
     private final JTextArea historicalState;
     private final AddressModel model = new AddressModel();
     private final DebugTableImpl table;
@@ -146,6 +142,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int lastMemoryAddress = -1;
     private int lastInstructionAddress;
     private final GraphPanel graph = new GraphPanel();
+    private JButton goToFlowInstruction;
     private final Map<String, Long> watchValues = new HashMap<>();
     private Map<Integer, String> discoveredStrings = Map.of();
     private int stringBank = -1;
@@ -222,7 +219,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         inspectedAddress = lastInstructionAddress;
         pattern = gui.textField("00 ??", 12);
         historicalState = gui.textAreaReadOnly(50, 10);
-        for (JList<?> list : List.of(watches, rules, memoryWatches, annotations, references)) gui.styleList(list);
+        for (JList<?> list : List.of(watches, rules, memoryWatches, annotations)) gui.styleList(list);
         this.session = session;
         if (session.memory != null && instructionModel instanceof DebugTableModelImpl)
             ((DebugTableModelImpl) instructionModel).setInstructionIndex(new InstructionIndex(
@@ -254,12 +251,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     int selected = table.getModel() == model ? selectedBank() : instructionBank();
                     int bank = session.memory != null && address >= session.memory.getCommonBoundary() ? 0 : selected;
                     AnnotationIndex.Entry entry = annotationAt(address, bank);
-                    String annotation = entry == null || entry.label == null ? "" : entry.label.trim();
-                    String labels = (sourceMappingsCurrent ? compiledSymbols.get() : List.<SourceAddressMap.Symbol>of()).stream().filter(symbol -> symbol.location
-                                    .filter(location -> location.address == address && location.bank == bank).isPresent())
-                            .map(symbol -> symbol.name).distinct().collect(java.util.stream.Collectors.joining(", "));
-                    String result = annotation.isEmpty() ? labels
-                            : labels.isEmpty() || labels.equals(annotation) ? annotation : annotation + ", " + labels;
+                    String result = labelsAt(address, bank);
                     if (result.isEmpty()) return null;
                     String comment = entry == null || entry.comment == null ? "" : entry.comment.trim();
                     return comment.isEmpty() ? result : result + " — " + comment;
@@ -364,6 +356,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         sourceContext.setVisible(!message.isEmpty() && !"Source mapping current".equals(message));
         sourceMappingsCurrent = current;
         table.repaint();
+        graph.repaint();
     }
 
     private void notifyAddressSelection(boolean visit) {
@@ -409,6 +402,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void setSymbols(java.util.function.Supplier<List<SourceAddressMap.Symbol>> values) {
         compiledSymbols = Objects.requireNonNull(values);
         table.repaint();
+        graph.repaint();
     }
 
     @Override
@@ -461,6 +455,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         else {
             enabledControls.forEach(Component::setEnabled);
             enabledControls.clear();
+            updateFlowNavigation();
             discardStaleMemoryResults();
             historyAnalysis = historyCancelRequested = false;
             if (historyWorkControls != null) historyWorkControls.setVisible(false);
@@ -948,7 +943,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             String kind = "Data";
             if (entry.kind.equals("UNKNOWN")) kind = "Unspecified";
             else if (entry.kind.equals("CODE")) kind = "Code";
-            return new ListDetail(String.format("%04X · Bank %d", entry.address, entry.bank),
+            return new ListDetail(String.format("%04X–%04X · Bank %d", entry.address, entry.end - 1, entry.bank),
                     entry.label.isBlank() ? "Unnamed annotation" : entry.label,
                     kind + (entry.comment.isBlank() ? "" : " · " + entry.comment), entry.toString());
         }));
@@ -961,7 +956,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JPanel tools = row();
         JButton editAnnotation = button(ICON_RENAME, "Edit selected annotation", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
-            if (entry != null) showAnnotationEditor(entry.bank, entry.address, "Edit annotation");
+            if (entry != null) showAnnotationEditor(entry.bank, entry.address, "Edit annotation", entry);
         });
         editAnnotation.setText("Edit");
         editAnnotation.setEnabled(false);
@@ -974,13 +969,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 selectAnnotationTarget();
                 return;
             }
-            annotationForm.load(entry.bank, entry.address);
+            annotationForm.loadEntry(entry);
+            graph.selectAnnotation(entry.id);
             guard(() -> navigate(entry.address, entry.bank, true, NavigationTarget.SOURCE_DATA));
         });
         JToolBar filterTools = line(tools, label("Search annotations", annotationFilter), annotationFilter);
         JButton newAnnotation = button(ICON_RENAME, "Annotate inspected address", () -> {
             if (!confirmSaveAnnotations()) return;
-            showAnnotationEditor(selectedBank(), inspectedAddress, "New annotation");
+            showAnnotationEditor(selectedBank(), inspectedAddress, "New annotation", null);
         });
         newAnnotation.setText("New");
         filterTools.add(newAnnotation);
@@ -999,7 +995,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (JOptionPane.showConfirmDialog(this,
                     String.format("Delete annotation at %04X (bank %d)?", entry.address, entry.bank),
                     "Delete annotation", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
-            changeAnnotations(() -> index.remove(entry.bank, entry.address));
+            changeAnnotations(() -> index.remove(entry));
             annotationForm.load(entry.bank, entry.address);
         });
         management.add(delete);
@@ -1008,7 +1004,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!confirmSaveAnnotations()) return;
             if (JOptionPane.showConfirmDialog(this, "Remove all annotations from this image?",
                     "Clear annotations", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
-            changeAnnotations(() -> index.entries().forEach(entry -> index.remove(entry.bank, entry.address)));
+            changeAnnotations(index::clear);
             annotationForm.load(selectedBank(), inspectedAddress);
         }));
         JButton manage = new JButton("Manage…");
@@ -1027,8 +1023,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return panel;
     }
 
-    private void showAnnotationEditor(int bank, int address, String title) {
-        annotationForm.load(bank, address);
+    private void showAnnotationEditor(int bank, int address, String title, AnnotationIndex.Entry entry) {
+        if (entry == null) annotationForm.loadNew(bank, address);
+        else annotationForm.loadEntry(entry);
         Window owner = SwingUtilities.getWindowAncestor(this);
         net.emustudio.emulib.runtime.ui.components.DialogBase dialog =
                 new net.emustudio.emulib.runtime.ui.components.DialogBase(owner instanceof Frame ? (Frame) owner : null, title, true) {
@@ -1055,13 +1052,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             change.run();
             session.saveAnnotations();
         } catch (Exception failure) {
-            index.entries().forEach(entry -> index.remove(entry.bank, entry.address));
+            index.clear();
             previous.forEach(index::put);
             throw failure;
         }
         refreshAnnotations(annotationFilter.getText());
         discardStaleMemoryResults();
         model.refreshData();
+        if (graph.flow != null) analyzeFlow(graph.bank, graph.start);
     }
 
     public boolean confirmSaveAnnotations() {
@@ -1091,6 +1089,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final class AnnotationForm extends JPanel {
         private final List<String> kinds = List.of("UNKNOWN", "CODE", "DATA");
         private final JTextField addressField = gui.textField("", 16), labelField = gui.textField("", 12), comment = gui.textField("", 20);
+        private final JTextField endField = gui.textField("", 16);
+        private final JSpinner bankField = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
         private final JComboBox<String> kind = new JComboBox<>(new String[]{"Unspecified", "Code", "Data"});
         private final JButton save;
         private int bank, address, selectedBank;
@@ -1105,6 +1105,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             addressField.setToolTipText("Decimal or hexadecimal address, for example 42 or 0x2A");
             fields.add(label("Address", addressField));
             fields.add(addressField, "growx, wrap");
+            endField.setToolTipText("Last address included in the annotation");
+            fields.add(label("End address", endField));
+            fields.add(endField, "growx, wrap");
+            fields.add(label("Bank", bankField));
+            fields.add(bankField, "growx, wrap");
             fields.add(label("Label", labelField));
             fields.add(labelField, "growx, wrap");
             fields.add(label("Comment", comment));
@@ -1126,6 +1131,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             labelField.getDocument().addDocumentListener(changed);
             comment.getDocument().addDocumentListener(changed);
             addressField.getDocument().addDocumentListener(changed);
+            endField.getDocument().addDocumentListener(changed);
+            bankField.addChangeListener(event -> updateState());
             kind.addActionListener(event -> updateState());
             labelField.addActionListener(event -> save.doClick());
             comment.addActionListener(event -> save.doClick());
@@ -1133,19 +1140,29 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         boolean matches(AnnotationIndex.Entry entry) {
-            return original != null && entry.bank == bank && entry.address == address;
+            return original != null && original.id >= 0 && entry.id == original.id;
         }
 
         void load(int selected, int at) {
+            AnnotationIndex.Entry entry = index == null ? null : index.get(selected, at);
+            if (entry == null) loadNew(selected, at);
+            else loadEntry(entry);
+        }
+
+        void loadNew(int selected, int at) {
+            loadEntry(new AnnotationIndex.Entry(selected, at, "", "", "UNKNOWN"));
+        }
+
+        void loadEntry(AnnotationIndex.Entry entry) {
             loading = true;
             try {
-                bank = index == null ? selected : index.programIndex().snapshot().layout().physicalBank(selected, at);
-                selectedBank = selected;
-                address = at;
+                bank = entry.bank;
+                selectedBank = entry.bank;
+                address = entry.address;
                 addressField.setText(String.format("0x%04X", address));
-                original = index == null ? null : index.get(bank, address);
-                if (original == null && index != null)
-                    original = new AnnotationIndex.Entry(bank, address, "", "", "UNKNOWN");
+                endField.setText(String.format("0x%04X", entry.end - 1));
+                bankField.setValue(bank);
+                original = entry;
                 labelField.setText(original == null ? "" : original.label);
                 comment.setText(original == null ? "" : original.comment);
                 kind.setSelectedIndex(original == null ? 0 : kinds.indexOf(original.kind));
@@ -1159,7 +1176,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             return original != null && (!original.label.equals(labelField.getText())
                     || !original.comment.equals(comment.getText())
                     || !original.kind.equals(kinds.get(kind.getSelectedIndex()))
-                    || !addressField.getText().equalsIgnoreCase(String.format("0x%04X", address)));
+                    || !addressField.getText().equalsIgnoreCase(String.format("0x%04X", original.address))
+                    || !endField.getText().equalsIgnoreCase(String.format("0x%04X", original.end - 1))
+                    || ((Number) bankField.getValue()).intValue() != original.bank);
         }
 
         void updateState() {
@@ -1172,20 +1191,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         void saveDraft() throws Exception {
             if (!dirty()) return;
-            int target;
+            int target, end;
             try {
                 target = net.emustudio.emulib.runtime.helpers.RadixUtils.getInstance().parseRadix(addressField.getText());
-                if (target < 0 || target >= index.programIndex().snapshot().layout().addressSpaceSize()) throw new NumberFormatException();
+                end = net.emustudio.emulib.runtime.helpers.RadixUtils.getInstance().parseRadix(endField.getText());
+                if (target < 0 || end < target || end >= index.programIndex().snapshot().layout().addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "
                         + (index.programIndex().snapshot().layout().addressSpaceSize() - 1) + ".");
             }
             address = target;
+            selectedBank = ((Number) bankField.getValue()).intValue();
             bank = index.programIndex().snapshot().layout().physicalBank(selectedBank, address);
-            changeAnnotations(() -> index.put(new AnnotationIndex.Entry(bank, address,
-                    labelField.getText(), comment.getText(), kinds.get(kind.getSelectedIndex()))));
-            original = index.get(bank, address);
-            updateState();
+            AnnotationIndex.Entry draft = new AnnotationIndex.Entry(original.id, bank, address, end + 1,
+                    labelField.getText(), comment.getText(), kinds.get(kind.getSelectedIndex()));
+            AnnotationIndex.Entry[] saved = {draft};
+            changeAnnotations(() -> {
+                if (draft.id < 0) saved[0] = index.add(draft);
+                else index.update(draft);
+            });
+            loadEntry(saved[0]);
         }
 
         boolean confirmReplacement() throws Exception {
@@ -1530,142 +1555,40 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private JPanel flowPanel() {
-        JComboBox<Integer> nodes = new JComboBox<>();
-        JLabel referenceMode = gui.label("No references analyzed");
-        nodes.setPrototypeDisplayValue(65535);
-        nodes.getAccessibleContext().setAccessibleName("Decoded instruction address");
-        JPanel p = borderPanel(0);
+        JPanel panel = borderPanel(0);
         JPanel tools = row();
         JToolBar actions = line(tools);
-        actions.add(
-                button(ICON_CONNECTION, "Analyze from address",
-                        () -> analyzeFlow(false, nodes, referenceMode)));
-        actions.add(
-                button(ICON_FIND, "Find incoming references",
-                        () -> {
-                            if (referencesFromSweep && referenceFlow != null
-                                    && referenceFlow.isCurrent(session.programIndex())
-                                    && referenceFlow.bank() == selectedBank())
-                                { showIncomingReferences(referenceFlow, inspectedAddress); referenceMode.setText(String.format("Incoming to %04X: %d%s", inspectedAddress, referenceRows.size(), referenceFlow.truncated() ? " (partial)" : "")); }
-                            else analyzeFlow(true, nodes, referenceMode);
-                        }));
-        JButton goToSource = button(ICON_JUMP, "Go to reference source",
-                        () -> {
-                            FlowAnalysis.Edge e = references.getSelectedValue();
-                            if (e != null) {
-                                requireCurrentReferences();
-                                navigate(e.from, referenceFlow.bank());
-                            }
-                        });
-        goToSource.setText("Source");
-        actions.add(goToSource);
-        JButton goToTarget = button(ICON_JUMP, "Go to reference target", () -> {
-            FlowAnalysis.Edge edge = references.getSelectedValue();
-            if (edge != null) {
-                requireCurrentReferences();
-                navigate(edge.to, referenceFlow.bank());
-            }
-        });
-        goToTarget.setText("Target");
-        actions.add(goToTarget);
-        actions.add(label("Instruction", nodes));
-        actions.add(nodes);
-        actions.add(button(ICON_STEP, "Go to instruction", () -> {
-            if (nodes.getSelectedItem() != null) {
-                graph.requireCurrent();
-                navigate((Integer) nodes.getSelectedItem(), graph.bank);
-            }
-        }));
-        graph.getAccessibleContext().setAccessibleDescription("Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
-        references.getAccessibleContext().setAccessibleName("Static references");
-        references.getAccessibleContext().setAccessibleDescription("Select a reference; press Enter or double-click to visit its source. Use Go to reference target to visit its destination.");
-        references.setCellRenderer(new DefaultListCellRenderer() {
-            @Override public Component getListCellRendererComponent(JList<?> list, Object value, int row, boolean selected, boolean focus) {
-                super.getListCellRendererComponent(list, value, row, selected, focus);
-                FlowAnalysis.Edge edge = (FlowAnalysis.Edge) value;
-                String instruction = referenceFlow == null ? "" : referenceFlow.mnemonic(edge.from);
-                setText(String.format("%04X  %s  →  %04X  (%s)", edge.from, instruction, edge.to, edge.kind));
-                setToolTipText(String.format("%s from %04X to %04X (bank %d)", edge.kind, edge.from, edge.to, referenceFlow.bank()));
-                return this;
-            }
-        });
-        references.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event)) return;
-                int row = references.locationToIndex(event.getPoint());
-                if (row >= 0 && references.getCellBounds(row, row).contains(event.getPoint()))
-                    references.getActionMap().get("followReference").actionPerformed(new ActionEvent(references, ActionEvent.ACTION_PERFORMED, "followReference"));
-            }
-        });
-        references.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "followReference");
-        references.getActionMap().put("followReference", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                guard(() -> {
-                    FlowAnalysis.Edge edge = references.getSelectedValue();
-                    if (edge != null) {
-                        requireCurrentReferences();
-                        navigate(edge.from, referenceFlow.bank());
-                    }
-                });
-            }
-        });
-        p.add(scrollTools(tools), BorderLayout.NORTH);
-        JPanel referencePanel = new JPanel(new BorderLayout());
-        referencePanel.add(referenceMode, BorderLayout.NORTH);
-        referencePanel.add(gui.scrollPane(references), BorderLayout.CENTER);
-        referencePanel.setMinimumSize(new Dimension(0, 0));
-        JPanel graphPanel = new JPanel(new BorderLayout());
-        graphPanel.add(gui.label("Select an instruction to show its connections"), BorderLayout.NORTH);
-        graphPanel.add(gui.scrollPane(graph), BorderLayout.CENTER);
-        JSplitPane split = gui.splitPaneLeftToRight(referencePanel, graphPanel, .4);
-        p.add(split);
-        return p;
+        actions.add(button(ICON_FIND, "Analyze from address", this::analyzeFlow));
+        goToFlowInstruction = button(ICON_STEP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
+        updateFlowNavigation();
+        actions.add(goToFlowInstruction);
+        graph.getAccessibleContext().setAccessibleDescription(
+                "Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
+        panel.add(scrollTools(tools), BorderLayout.NORTH);
+        JScrollPane graphScroll = gui.scrollPane(graph);
+        graphScroll.getVerticalScrollBar().setUnitIncrement(30);
+        graphScroll.getHorizontalScrollBar().setUnitIncrement(30);
+        panel.add(graphScroll, BorderLayout.CENTER);
+        return panel;
     }
 
-    private void analyzeFlow(boolean sweep, JComboBox<Integer> nodes, JLabel referenceMode) {
+    private void updateFlowNavigation() {
+        if (goToFlowInstruction != null)
+            goToFlowInstruction.setEnabled(graph.boxes.containsKey(graph.selectedNode));
+    }
+
+    private void analyzeFlow() {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        int bank = selectedBank(), address = inspectedAddress;
-        tasks.submit(() -> session.analyzeFlow(bank, address, sweep ? 100000 : 256, sweep), flow -> {
+        analyzeFlow(selectedBank(), inspectedAddress);
+    }
+
+    private void analyzeFlow(int bank, int address) {
+        tasks.submit(() -> session.analyzeFlow(bank, address, 256, false), flow -> {
             if (!flow.isCurrent(session.programIndex()))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
-            referenceFlow = flow;
-            referencesFromSweep = sweep;
-            referenceRows.clear();
-            if (sweep) {
-                showIncomingReferences(flow, address);
-                graph.clearFlow();
-                nodes.removeAllItems();
-                referenceMode.setText(String.format("Incoming to %04X: %d", address, referenceRows.size()));
-            }
-            else {
-                referenceMode.setText(String.format("Reachable branches and calls (start %04X)", address));
-                flow.forEachEdge((from, to, kind) -> {
-                    if (kind != ProgramIndex.EdgeKind.FALL_THROUGH)
-                        referenceRows.addElement(new FlowAnalysis.Edge(from, to, kind));
-                });
-                referenceMode.setText(referenceMode.getText() + ": " + referenceRows.size());
-                graph.setFlow(flow);
-                nodes.removeAllItems();
-                flow.forEachInstruction(instruction -> nodes.addItem(instruction.cells().start));
-            }
-            if (flow.truncated()) {
-                referenceMode.setText(referenceMode.getText() + " (partial)");
-                referenceMode.setToolTipText("Work limit reached; more references may exist.");
-            } else {
-                referenceMode.setToolTipText(null);
-            }
+            graph.start = address;
+            graph.setFlow(flow);
         }, true);
-    }
-
-    private void showIncomingReferences(FlowAnalysis flow, int address) {
-        referenceRows.clear();
-        for (FlowAnalysis.Edge edge : flow.predecessors(address))
-            if (!edge.kind.equals("next")) referenceRows.addElement(edge);
-    }
-
-    private void requireCurrentReferences() {
-        if (referenceFlow == null || !referenceFlow.isCurrent(session.programIndex()))
-            throw new IllegalStateException("Flow analysis is stale. Analyze again.");
     }
 
     private JPanel historyPanel() {
@@ -2373,7 +2296,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (selected != null) {
                 for (int i = 0; i < annotationRows.size(); i++) {
                     AnnotationIndex.Entry entry = annotationRows.get(i);
-                    if (entry.bank == selected.bank && entry.address == selected.address) {
+                    if (entry.id == selected.id) {
                         annotations.setSelectedIndex(i);
                         break;
                     }
@@ -2393,6 +2316,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
         return at >= 0 && at < layout.addressSpaceSize() && bank >= 0 && bank < layout.bankCount()
                 ? index.get(bank, at) : null;
+    }
+
+    private String labelsAt(int address, int bank) {
+        String annotation = index == null ? "" : index.entries().stream()
+                .filter(entry -> entry.bank == bank && entry.address == address)
+                .map(entry -> entry.label.trim()).filter(label -> !label.isEmpty()).distinct()
+                .collect(java.util.stream.Collectors.joining(", "));
+        String labels = (sourceMappingsCurrent ? compiledSymbols.get() : List.<SourceAddressMap.Symbol>of()).stream()
+                .filter(symbol -> symbol.location.filter(location -> location.address == address && location.bank == bank).isPresent())
+                .map(symbol -> symbol.name).distinct().collect(java.util.stream.Collectors.joining(", "));
+        return annotation.isEmpty() ? labels
+                : labels.isEmpty() || labels.equals(annotation) ? annotation : annotation + ", " + labels;
     }
 
     private static <T> void updateRows(DefaultListModel<T> model, List<T> values) {
@@ -2687,9 +2622,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private final class GraphPanel extends JPanel {
         FlowAnalysis flow;
-        int bank, common;
+        int bank, common, start;
         int selectedNode = -1;
         final Map<Integer, Rectangle> boxes = new LinkedHashMap<>();
+        final Map<Integer, Integer> instructionEnds = new HashMap<>();
+        final Set<Integer> branchNodes = new HashSet<>();
+        private List<FlowAnalysis.Edge> selectedEdges = List.of();
+        private final List<AnnotationLane> lanes = new ArrayList<>();
+        private int selectedLane = -1;
+
+        private final class AnnotationLane {
+            final AnnotationIndex.Entry annotation;
+            final Rectangle bounds;
+            final Rectangle header;
+
+            AnnotationLane(AnnotationIndex.Entry annotation, Rectangle bounds, Rectangle header) {
+                this.annotation = annotation;
+                this.bounds = bounds;
+                this.header = header;
+            }
+        }
 
         GraphPanel() {
             setFocusable(true);
@@ -2714,6 +2666,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     if (boxes.containsKey(selectedNode)) followNode(selectedNode);
                 }
             });
+            for (int direction : new int[]{-1, 1}) {
+                String action = direction < 0 ? "previousAnnotationLane" : "nextAnnotationLane";
+                getInputMap().put(KeyStroke.getKeyStroke(direction < 0 ? KeyEvent.VK_UP : KeyEvent.VK_DOWN,
+                        InputEvent.ALT_DOWN_MASK), action);
+                getActionMap().put(action, new AbstractAction() {
+                    public void actionPerformed(ActionEvent event) {
+                        if (!lanes.isEmpty()) selectLane(selectedLane < 0 ? 0 : Math.floorMod(selectedLane + direction, lanes.size()));
+                    }
+                });
+            }
             addMouseListener(
                     new MouseAdapter() {
                         @Override
@@ -2723,27 +2685,76 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     requestFocusInWindow();
                                     selectNode(entry.getKey());
                                     if (e.getClickCount() == 2) followNode(entry.getKey());
-                                    break;
+                                    return;
                                 }
                             }
+                            for (int i = 0; i < lanes.size(); i++) {
+                                Rectangle bounds = lanes.get(i).bounds;
+                                Rectangle inner = new Rectangle(bounds);
+                                inner.grow(-5, -5);
+                                if (lanes.get(i).header.contains(e.getPoint())
+                                        || (bounds.contains(e.getPoint()) && !inner.contains(e.getPoint()))) {
+                                    requestFocusInWindow();
+                                    selectLane(i);
+                                    return;
+                                }
+                            }
+                            selectedLane = -1;
+                            selectNode(-1);
                         }
                     });
         }
 
+        private void selectLane(int lane) {
+            selectedLane = lane;
+            AnnotationLane selected = lanes.get(lane);
+            boolean visible = false;
+            for (int i = 0; i < annotationRows.size(); i++)
+                if (annotationRows.get(i).id == selected.annotation.id) { visible = true; break; }
+            if (!visible && !annotationFilter.getText().isEmpty()) annotationFilter.setText("");
+            for (int i = 0; i < annotationRows.size(); i++) {
+                if (annotationRows.get(i).id == selected.annotation.id) {
+                    boolean wasUpdating = updatingAnnotations;
+                    updatingAnnotations = true;
+                    try { annotations.setSelectedIndex(i); }
+                    finally { updatingAnnotations = wasUpdating; }
+                    annotationForm.loadEntry(selected.annotation);
+                    break;
+                }
+            }
+            getAccessibleContext().setAccessibleDescription("Selected annotation: " + laneTitle(selected.annotation)
+                    + ". Alt Up and Alt Down select annotation lanes.");
+            scrollRectToVisible(selected.header);
+            repaint();
+        }
+
+        private void selectAnnotation(long id) {
+            for (int i = 0; i < lanes.size(); i++) {
+                if (lanes.get(i).annotation.id == id) {
+                    selectLane(i);
+                    return;
+                }
+            }
+        }
+
+        private String laneTitle(AnnotationIndex.Entry annotation) {
+            return annotation.label.isBlank() ? String.format("%04X", annotation.address) : annotation.label;
+        }
+
         private void selectNode(int address) {
             selectedNode = address;
+            updateFlowNavigation();
             Rectangle selected = boxes.get(address);
-            if (selected != null) {
-                updateGraphSize();
-                repaint();
-                scrollRectToVisible(selected);
-            }
+            updateSelectedEdges();
+            updateGraphSize();
+            repaint();
+            if (selected != null) scrollRectToVisible(selected);
         }
 
         private void followNode(int address) {
             guard(() -> {
                 requireCurrent();
-                navigate(address, bank, true, NavigationTarget.SOURCE_INSTRUCTION);
+                navigate(address, bank, true, NavigationTarget.LISTING);
             });
         }
 
@@ -2758,18 +2769,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!current()) return "Flow analysis is stale. Analyze again.";
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
                 if (entry.getValue().contains(event.getPoint()))
-                    return String.format("%04X · %s", entry.getKey(), flow.mnemonic(entry.getKey()));
+                    return String.format("%s%04X · %s%s", nodeLabels(entry.getKey()).isEmpty() ? "" : nodeLabels(entry.getKey()) + " · ",
+                            entry.getKey(), flow.mnemonic(entry.getKey()), branchNodes.contains(entry.getKey()) ? " · Branch" : "");
+            for (AnnotationLane lane : lanes)
+                if (lane.header.contains(event.getPoint()))
+                    return String.format("%s · %04X–%04X · Bank %d%s", laneTitle(lane.annotation),
+                            lane.annotation.address, lane.annotation.end - 1, lane.annotation.bank,
+                            lane.annotation.comment.isBlank() ? "" : " · " + lane.annotation.comment);
             return "Lines show connections to and from the selected instruction. Double-click or press Enter to navigate.";
-        }
-
-        void clearFlow() {
-            flow = null;
-            selectedNode = -1;
-            boxes.clear();
-            setPreferredSize(new Dimension(460, 400));
-            revalidate();
-            scrollRectToVisible(new Rectangle(0, 0, 1, 1));
-            repaint();
         }
 
         void setFlow(FlowAnalysis flow) {
@@ -2777,29 +2784,66 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             bank = flow.bank();
             common = session.memory == null ? 0 : session.memory.getCommonBoundary();
             boxes.clear();
+            instructionEnds.clear();
+            branchNodes.clear();
+            lanes.clear();
+            selectedLane = -1;
             selectedNode = inspectedAddress;
             flow.forEachInstruction(instruction -> {
                 int at = instruction.cells().start;
                 int i = boxes.size();
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
+                instructionEnds.put(at, instruction.cells().end);
+                if (instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
             });
+            if (index != null) {
+                List<AnnotationIndex.Entry> visible = new ArrayList<>();
+                for (AnnotationIndex.Entry annotation : index.entries()) {
+                    if (boxes.keySet().stream().anyMatch(at -> coversInstruction(annotation, at))) visible.add(annotation);
+                }
+                int nodeX = 30 + visible.size() * 110;
+                boxes.values().forEach(box -> box.x = nodeX);
+                for (int i = 0; i < visible.size(); i++) {
+                    AnnotationIndex.Entry annotation = visible.get(i);
+                    List<Rectangle> covered = new ArrayList<>();
+                    boxes.forEach((at, box) -> {
+                        if (coversInstruction(annotation, at)) covered.add(box);
+                    });
+                    int top = covered.get(0).y - 8, bottom = covered.get(covered.size() - 1).y + 68;
+                    int x = 5 + i * 110;
+                    lanes.add(new AnnotationLane(annotation, new Rectangle(x, top, nodeX + 220 + i * 4 - x, bottom - top),
+                            new Rectangle(x + 3, top + 3, 100, 24)));
+                }
+            }
             if (!boxes.containsKey(selectedNode) && !boxes.isEmpty()) selectedNode = boxes.keySet().iterator().next();
+            updateFlowNavigation();
+            updateSelectedEdges();
             updateGraphSize();
             revalidate();
             repaint();
         }
 
-        private List<FlowAnalysis.Edge> selectedEdges() {
+        private String nodeLabels(int address) {
+            return labelsAt(address, address >= common ? 0 : bank);
+        }
+
+        private boolean coversInstruction(AnnotationIndex.Entry annotation, int at) {
+            int overlap = Math.max(at, annotation.address);
+            return overlap < Math.min(instructionEnds.get(at), annotation.end)
+                    && annotation.bank == (overlap >= common ? 0 : bank);
+        }
+
+        private void updateSelectedEdges() {
             List<FlowAnalysis.Edge> edges = new ArrayList<>();
             if (flow != null) flow.forEachEdge((from, to, kind) -> {
                 if ((from == selectedNode || to == selectedNode) && boxes.containsKey(from) && boxes.containsKey(to))
                     edges.add(new FlowAnalysis.Edge(from, to, kind));
             });
-            return edges;
+            selectedEdges = edges;
         }
 
         private void updateGraphSize() {
-            setPreferredSize(new Dimension(Math.max(460, 290 + selectedEdges().size() * 20),
+            setPreferredSize(new Dimension(Math.max(460, 290 + lanes.size() * 114 + selectedEdges.size() * 20),
                     Math.max(400, boxes.size() * 90 + 50)));
             revalidate();
         }
@@ -2820,7 +2864,24 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             Graphics2D g = (Graphics2D) graphics.create();
             Rectangle clip = g.getClipBounds();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            List<FlowAnalysis.Edge> edges = selectedEdges();
+            for (int i = 0; i < lanes.size(); i++) {
+                Rectangle bounds = lanes.get(i).bounds;
+                Color color = Color.getHSBColor((i * .19f) % 1f, .55f, .78f);
+                g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 28));
+                g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 14, 14);
+            }
+            for (int i = 0; i < lanes.size(); i++) {
+                AnnotationLane lane = lanes.get(i);
+                Color color = Color.getHSBColor((i * .19f) % 1f, .65f, .65f);
+                g.setColor(color);
+                g.setStroke(new BasicStroke(i == selectedLane ? 3f : 1.5f));
+                g.drawRoundRect(lane.bounds.x, lane.bounds.y, lane.bounds.width, lane.bounds.height, 14, 14);
+                g.fillRoundRect(lane.header.x, lane.header.y, lane.header.width, lane.header.height, 8, 8);
+                g.setColor(Color.WHITE);
+                String title = laneTitle(lane.annotation);
+                g.drawString(title.length() > 12 ? title.substring(0, 12) : title, lane.header.x + 5, lane.header.y + 16);
+            }
+            List<FlowAnalysis.Edge> edges = selectedEdges;
             for (int edgeIndex = 0; edgeIndex < edges.size(); edgeIndex++) {
                 FlowAnalysis.Edge edge = edges.get(edgeIndex);
                 int from = edge.from, to = edge.to;
@@ -2851,6 +2912,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             tx - (int) (10 * Math.cos(angle + delta)),
                             ty - (int) (10 * Math.sin(angle + delta)));
             }
+            Font nodeFont = new Font(Font.MONOSPACED, Font.PLAIN, g.getFont().getSize());
+            Font labelFont = nodeFont.deriveFont(Font.BOLD);
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
                 Rectangle box = entry.getValue();
                 if (clip != null && !clip.intersects(box)) continue;
@@ -2859,15 +2922,24 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         && (entry.getKey() >= common || bank == instructionBank()) && entry.getKey() == session.cpu.getInstructionLocation();
                 Color selectionBackground = UIManager.getColor("List.selectionBackground");
                 Color selectionForeground = UIManager.getColor("List.selectionForeground");
-                g.setColor(selected && selectionBackground != null ? selectionBackground : getBackground());
-                g.fillRect(box.x, box.y, box.width, box.height);
-                g.setColor(selected && selectionForeground != null ? selectionForeground : getForeground());
-                g.setStroke(new BasicStroke(selected ? 2 : 1));
-                g.drawRect(box.x, box.y, box.width, box.height);
-                g.drawString(String.format("%04X%s", entry.getKey(), pc ? " · PC" : ""), box.x + 8, box.y + 20);
+                Color surface = UIManager.getColor("Table.background");
+                Color foreground = UIManager.getColor("Table.foreground");
+                g.setColor(selected && selectionBackground != null ? selectionBackground : surface != null ? surface : getBackground());
+                g.fillRoundRect(box.x, box.y, box.width, box.height, 10, 10);
+                g.setColor(selected && selectionForeground != null ? selectionForeground : foreground != null ? foreground : getForeground());
+                g.setStroke(new BasicStroke(branchNodes.contains(entry.getKey()) ? 2.5f : selected ? 2f : 1f));
+                g.drawRoundRect(box.x, box.y, box.width, box.height, 10, 10);
+                String labels = nodeLabels(entry.getKey());
+                int addressY = labels.isEmpty() ? 20 : 34;
+                if (!labels.isEmpty()) {
+                    g.setFont(labelFont);
+                    g.drawString(labels.length() > 28 ? labels.substring(0, 28) : labels, box.x + 8, box.y + 16);
+                }
+                g.setFont(nodeFont);
+                g.drawString(String.format("%04X%s", entry.getKey(), pc ? " · PC" : ""), box.x + 8, box.y + addressY);
                 String text = flow.mnemonic(entry.getKey());
                 g.drawString(
-                        text.length() > 28 ? text.substring(0, 28) : text, box.x + 8, box.y + 42);
+                        text.length() > 28 ? text.substring(0, 28) : text, box.x + 8, box.y + addressY + 20);
             }
             g.dispose();
         }

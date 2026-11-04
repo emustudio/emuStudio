@@ -62,6 +62,7 @@ public class AnnotationIndexTest {
         ProgramIndex image = ProgramIndex.create("test", 2, 2, 1);
         AnnotationIndex annotations = new AnnotationIndex(emptyLike(image));
         Properties input = annotations.properties();
+        input.setProperty("version", "1");
         input.setProperty("entries", "2");
         for (int i = 0; i < 2; i++) {
             input.setProperty("entry." + i + ".bank", Integer.toString(i));
@@ -200,7 +201,9 @@ public class AnnotationIndexTest {
         AnnotationIndex imported = new AnnotationIndex(emptyLike(image));
         imported.put(new AnnotationIndex.Entry(0, 0, "replacement", "", "UNKNOWN"));
 
-        annotations.importProperties(imported.properties());
+        Properties legacy = imported.properties();
+        legacy.setProperty("version", "1");
+        annotations.importProperties(legacy);
 
         assertEquals("replacement", annotations.get(0, 0).label);
         assertEquals("keep", annotations.get(0, 1).label);
@@ -215,5 +218,62 @@ public class AnnotationIndexTest {
         assertThrows(IllegalArgumentException.class,
                 () -> annotations.put(new AnnotationIndex.Entry(0, 1, "", "", "CODE")));
         assertTrue(annotations.entries().isEmpty());
+    }
+
+    @Test
+    public void overlappingRangesRemainIndependentAfterSaveAndReload() throws Exception {
+        ProgramIndex image = ProgramIndex.create("test", 16, 1, 16);
+        AnnotationIndex annotations = new AnnotationIndex(image);
+        AnnotationIndex.Entry first = annotations.add(new AnnotationIndex.Entry(-1, 0, 2, 8, "first", "", "UNKNOWN"));
+        AnnotationIndex.Entry second = annotations.add(new AnnotationIndex.Entry(-1, 0, 2, 5, "second", "", "UNKNOWN"));
+        Properties saved = annotations.properties();
+        AnnotationIndex restored = new AnnotationIndex(emptyLike(image));
+
+        assertEquals(ProgramIndex.CommitResult.PUBLISHED,
+                restored.installProperties(saved, restored.programIndex().snapshot()));
+        restored.update(new AnnotationIndex.Entry(first.id, 0, 3, 9, "changed", "", "UNKNOWN"));
+        restored.remove(second);
+
+        assertEquals(1, restored.entries().size());
+        assertEquals(first.id, restored.entries().get(0).id);
+        assertEquals(3, restored.entries().get(0).address);
+        assertEquals(9, restored.entries().get(0).end);
+        assertEquals("changed", restored.entries().get(0).label);
+    }
+
+    @Test
+    public void rangesCrossingBankBoundaryAreRejectedWithoutChanges() {
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8, 2, 4));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> annotations.add(new AnnotationIndex.Entry(-1, 1, 3, 5, "crossing", "", "UNKNOWN")));
+
+        assertTrue(annotations.entries().isEmpty());
+    }
+
+    @Test
+    public void bankZeroRangeCanCrossIntoCommonMemory() {
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8, 2, 4));
+
+        AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 0, 3, 5, "shared", "", "UNKNOWN"));
+
+        List<ProgramIndex.Annotation> covering = new ArrayList<>();
+        annotations.programIndex().snapshot().forEachAnnotationCovering(1, 4, covering::add);
+        assertTrue(covering.stream().anyMatch(annotation -> annotation.entryId() == entry.id));
+    }
+
+    @Test
+    public void importingVersionTwoAllocatesIndependentIdentities() throws Exception {
+        ProgramIndex image = ProgramIndex.create("test", 8, 1, 8);
+        AnnotationIndex annotations = new AnnotationIndex(image);
+        AnnotationIndex.Entry original = annotations.add(new AnnotationIndex.Entry(-1, 0, 1, 4, "original", "", "UNKNOWN"));
+        Properties imported = annotations.properties();
+        imported.setProperty("entry.0.label", "imported");
+
+        annotations.importProperties(imported);
+
+        assertEquals(2, annotations.entries().size());
+        assertEquals("original", annotations.entries().stream().filter(entry -> entry.id == original.id).findFirst().get().label);
+        assertTrue(annotations.entries().stream().anyMatch(entry -> entry.id != original.id && entry.label.equals("imported")));
     }
 }

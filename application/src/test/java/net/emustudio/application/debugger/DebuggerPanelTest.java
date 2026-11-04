@@ -75,6 +75,8 @@ public class DebuggerPanelTest {
                             ((JTextField) label.getLabelFor()).setText("entry");
                             JLabel address = component((Container) window, JLabel.class, "Address");
                             ((JTextField) address.getLabelFor()).setText("0x0001");
+                            JLabel end = component((Container) window, JLabel.class, "End address");
+                            ((JTextField) end.getLabelFor()).setText("0x0001");
                             assertNull(findComponent((Container) window, JButton.class, "Cancel"));
                             button((Container) window, "Save annotation").doClick(0);
                         } catch (Throwable error) {
@@ -126,6 +128,78 @@ public class DebuggerPanelTest {
             if (failure.get() != null) throw new AssertionError(failure.get());
             assertNull(workspace.session.annotations().get(0, 0));
         }
+    }
+
+    @Test
+    public void annotationEditorCreatesAndEditsOverlappingRangesIndependently() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8], new byte[8]}, 8, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container panel = (Container) tabs.getSelectedComponent();
+                editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
+                    annotationField(dialog, "Address").setText("0x0001");
+                    annotationField(dialog, "End address").setText("0x0004");
+                    annotationField(dialog, "Label").setText("first");
+                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
+                });
+                editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
+                    annotationField(dialog, "Address").setText("0x0002");
+                    annotationField(dialog, "End address").setText("0x0005");
+                    annotationField(dialog, "Label").setText("second");
+                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
+                });
+                @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(panel, JList.class, "Annotations");
+                assertEquals(2, list.getModel().getSize());
+                int firstRow = list.getModel().getElementAt(0).label.equals("first") ? 0 : 1;
+                list.setSelectedIndex(firstRow);
+                editAnnotationDialog(panel, "Edit annotation", "Edit selected annotation", dialog -> {
+                    annotationField(dialog, "End address").setText("0x0006");
+                    annotationField(dialog, "Label").setText("updated");
+                });
+            });
+
+            List<AnnotationIndex.Entry> entries = workspace.session.annotations().entries();
+            assertEquals(2, entries.size());
+            AnnotationIndex.Entry updated = entries.stream().filter(entry -> entry.label.equals("updated")).findFirst().orElseThrow();
+            AnnotationIndex.Entry second = entries.stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
+            assertEquals(1, updated.bank);
+            assertEquals(1, updated.address);
+            assertEquals(7, updated.end);
+            assertEquals(1, second.bank);
+            assertEquals(2, second.address);
+            assertEquals(6, second.end);
+        }
+    }
+
+    private static JTextField annotationField(Container dialog, String name) {
+        return (JTextField) component(dialog, JLabel.class, name).getLabelFor();
+    }
+
+    private static void editAnnotationDialog(Container panel, String title, String buttonName, Consumer<Container> edit) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (java.awt.Window window : java.awt.Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !title.equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try {
+                    edit.accept((Container) window);
+                    button((Container) window, "Save annotation").doClick(0);
+                    if (window.isShowing()) throw new AssertionError("Annotation dialog did not close after save");
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    window.dispose();
+                }
+            }
+        });
+        timer.start();
+        try { button(panel, buttonName).doClick(0); }
+        finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation dialog", opened.get());
     }
 
     @Test
@@ -505,7 +579,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void reachableFlowDecodesOffEdtAndPublishesReferencesAfterWorkerCompletes() throws Exception {
+    public void reachableFlowDecodesOffEdtAndGraphNavigatesOnDoubleClick() throws Exception {
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), shown = new CountDownLatch(1);
         AtomicBoolean decodedOnEdt = new AtomicBoolean();
         Disassembler disassembler = mock(Disassembler.class);
@@ -519,15 +593,20 @@ public class DebuggerPanelTest {
                 decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
                 entered.countDown();
                 assertTrue("Test should release decoder", release.await(10, TimeUnit.SECONDS));
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.CALL, 1, true, List.of(1)));
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.JUMP, 1, true, List.of(1)));
             });
             when(disassembler.getFlow(1)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
         })) {
             try {
+                workspace.session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "", "CODE"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 0, 2, "region", "", "UNKNOWN"));
                 SwingUtilities.invokeAndWait(() -> {
-                    JList<?> references = component(workspace.panel, JList.class, "Static references");
-                    countAdditions(references, shown);
+                    AbstractButton goTo = button(workspace.panel, "Go to instruction");
+                    assertFalse(goTo.isEnabled());
+                    goTo.addPropertyChangeListener("enabled", event -> {
+                        if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                    });
                     button(workspace.panel, "Analyze from address").doClick(0);
                     assertFalse("Analysis should disable inspection before worker starts", workspace.table.isEnabled());
                 });
@@ -538,20 +617,38 @@ public class DebuggerPanelTest {
                 assertTrue("Paused queries on EDT must not wait for live flow decode",
                         responsive.await(5, TimeUnit.SECONDS));
                 release.countDown();
-                assertTrue("Published reference should reach UI", shown.await(5, TimeUnit.SECONDS));
+                assertTrue("Published instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
                 SwingUtilities.invokeAndWait(() -> {
-                    JList<?> references = component(workspace.panel, JList.class, "Static references");
-                    assertEquals(1, references.getModel().getSize());
-                    FlowAnalysis.Edge edge = (FlowAnalysis.Edge) references.getModel().getElementAt(0);
-                    assertEquals("call", edge.kind);
-                    @SuppressWarnings("unchecked") JList<FlowAnalysis.Edge> list = (JList<FlowAnalysis.Edge>) references;
-                    Component rendered = list.getCellRenderer().getListCellRendererComponent(list, edge, 0, false, false);
-                    assertTrue(((JLabel) rendered).getText().contains("NOP"));
-                    list.setSelectedIndex(0);
-                    button(workspace.panel, "Go to reference target").doClick(0);
+                    assertNull(findComponent(workspace.panel, JList.class, "Static references"));
+                    JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                    JScrollPane graphScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, graph);
+                    assertEquals(30, graphScroll.getVerticalScrollBar().getUnitIncrement());
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("Branch"));
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 10, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 120, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("region"));
+                    JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                    tabs.setSelectedIndex(tabs.indexOfTab("References"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 260, 130, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    button(workspace.panel, "Go to instruction").doClick(0);
+                    assertTrue(workspace.panel.isInstructionView());
                     assertEquals(1, workspace.table.getSelectedRow());
-                    button(workspace.panel, "Go to reference source").doClick(0);
-                    assertEquals(0, workspace.table.getSelectedRow());
+                    tabs.setSelectedIndex(tabs.indexOfTab("References"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 260, 130, 2, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(workspace.panel.isInstructionView());
+                    assertEquals(1, workspace.table.getSelectedRow());
                     assertTrue(workspace.table.isEnabled());
                 });
                 verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
@@ -577,44 +674,6 @@ public class DebuggerPanelTest {
         }
     }
 
-    @Test
-    public void incomingReferenceActionUsesCachedIndexedPredecessorsAfterSweep() throws Exception {
-        CountDownLatch shown = new CountDownLatch(1);
-        AtomicInteger reads = new AtomicInteger();
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
-            Disassembler disassembler = session.cpu.getDisassembler();
-            when(disassembler.getFlow(anyInt())).thenAnswer(call -> {
-                reads.incrementAndGet();
-                assertFalse("Reference sweep must run off Swing event thread", SwingUtilities.isEventDispatchThread());
-                int address = call.getArgument(0);
-                return Optional.of(new InstructionFlow(address == 0 ? InstructionFlow.Kind.JUMP : InstructionFlow.Kind.STOP,
-                        address + 1, false, address == 0 ? List.of(1) : List.of()));
-            });
-        })) {
-            SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.navigate(1, 0);
-                countAdditions(component(workspace.panel, JList.class, "Static references"), shown);
-                button(workspace.panel, "Find incoming references").doClick(0);
-            });
-            assertTrue("Sweep reference should reach UI", shown.await(5, TimeUnit.SECONDS));
-            int afterSweep = reads.get();
-            SwingUtilities.invokeAndWait(() -> {
-                JList<?> references = component(workspace.panel, JList.class, "Static references");
-                assertEquals(1, references.getModel().getSize());
-                button(workspace.panel, "Find incoming references").doClick(0);
-                assertEquals(1, references.getModel().getSize());
-            });
-            assertEquals("Repeated predecessor query must not decode again", afterSweep, reads.get());
-        }
-    }
-
-    private static void countAdditions(JList<?> list, CountDownLatch latch) {
-        list.getModel().addListDataListener(new ListDataListener() {
-            @Override public void intervalAdded(ListDataEvent event) { latch.countDown(); }
-            @Override public void intervalRemoved(ListDataEvent event) { }
-            @Override public void contentsChanged(ListDataEvent event) { }
-        });
-    }
 
     private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");

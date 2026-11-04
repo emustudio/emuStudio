@@ -52,6 +52,32 @@ public final class AnnotationIndex {
         edit(List.of(entry), false);
     }
 
+    /** Adds an independent annotation even when another starts at the same address. */
+    public Entry add(Entry entry) {
+        Entry added = new Entry(IDS.getAndAdd(2), entry.bank, entry.address, entry.end, entry.label, entry.comment, entry.kind);
+        edit(List.of(added), false);
+        return added;
+    }
+
+    /** Updates an existing annotation by identity. */
+    public void update(Entry entry) {
+        if (entry.id < 0 || entries().stream().noneMatch(existing -> existing.id == entry.id))
+            throw new IllegalArgumentException("Unknown annotation");
+        edit(List.of(entry), false);
+    }
+
+    public void remove(Entry entry) {
+        if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
+        for (;;) {
+            ProgramIndex.Snapshot base = index.snapshot();
+            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
+                update.removeAnnotation(OWNER, entry.id).removeAnnotation(OWNER, entry.id + 1);
+                update.removeAnnotation(TYPE_OWNER, entry.id);
+                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
+            }
+        }
+    }
+
     private static void validateKind(String kind) {
         if (!List.of("UNKNOWN", "CODE", "DATA").contains(kind))
             throw new IllegalArgumentException("Invalid annotation kind");
@@ -82,10 +108,14 @@ public final class AnnotationIndex {
         if (clear) update.removeAnnotations(OWNER).removeAnnotations(TYPE_OWNER);
         for (Entry entry : entries) {
             validateKind(entry.kind);
-            int bank = base.layout().physicalBank(entry.bank, entry.address);
+            ProgramIndex.Layout layout = base.layout();
+            int bank = layout.physicalBank(entry.bank, entry.address);
+            if (entry.end <= entry.address || entry.end > layout.addressSpaceSize()
+                    || (bank != 0 && entry.address < layout.commonBoundary() && entry.end > layout.commonBoundary()))
+                throw new IllegalArgumentException("Invalid annotation range or range crosses bank boundary");
             ProgramIndex.Annotation old = lookup(base, bank, entry.address).marker;
-            long id = old == null ? IDS.getAndAdd(2) : old.entryId();
-            ProgramIndex.Range range = new ProgramIndex.Range(bank, entry.address, entry.address + 1);
+            long id = entry.id >= 0 ? entry.id : old == null ? IDS.getAndAdd(2) : old.entryId();
+            ProgramIndex.Range range = new ProgramIndex.Range(bank, entry.address, entry.end);
             String kind = USER_KIND + entry.kind;
             update.putAnnotation(OWNER, id, range, kind, entry.comment);
             update.removeAnnotation(OWNER, id + 1);
@@ -135,7 +165,7 @@ public final class AnnotationIndex {
 
     public Properties properties() {
         Properties p = new Properties();
-        p.setProperty("version", "1");
+        p.setProperty("version", "2");
         p.setProperty("image.identity", index.snapshot().layout().imageId());
         List<Entry> entries = entries();
         p.setProperty("entries", Integer.toString(entries.size()));
@@ -144,6 +174,8 @@ public final class AnnotationIndex {
             String k = "entry." + (i++) + ".";
             p.setProperty(k + "bank", Integer.toString(e.bank));
             p.setProperty(k + "address", Integer.toString(e.address));
+            p.setProperty(k + "end", Integer.toString(e.end));
+            p.setProperty(k + "id", Long.toString(e.id));
             p.setProperty(k + "label", e.label);
             p.setProperty(k + "comment", e.comment);
             p.setProperty(k + "kind", e.kind);
@@ -155,11 +187,20 @@ public final class AnnotationIndex {
     public void load(Path path) throws IOException { importProperties(AtomicProperties.load(path)); }
 
     public void importProperties(Properties p) throws IOException {
-        edit(importedEntries(p), false);
+        List<Entry> imported = importedEntries(p);
+        if ("2".equals(p.getProperty("version"))) {
+            List<Entry> copies = new ArrayList<>();
+            for (Entry entry : imported)
+                copies.add(new Entry(IDS.getAndAdd(2), entry.bank, entry.address, entry.end,
+                        entry.label, entry.comment, entry.kind));
+            imported = copies;
+        }
+        edit(imported, false);
     }
 
     private List<Entry> importedEntries(Properties p) throws IOException {
-        if (!"1".equals(p.getProperty("version"))
+        String version = p.getProperty("version");
+        if (!("1".equals(version) || "2".equals(version))
                 || !index.snapshot().layout().imageId().equals(p.getProperty("image.identity")))
             throw new IOException("Annotations belong to another memory image/layout");
         Map<Long, Entry> imported = new LinkedHashMap<>();
@@ -168,14 +209,24 @@ public final class AnnotationIndex {
             if (count < 0 || count > 100000) throw new IllegalArgumentException("Too many annotations");
             for (int i = 0; i < count; i++) {
                 String k = "entry." + i + ".";
-                Entry entry = new Entry(Integer.parseInt(p.getProperty(k + "bank")),
-                        Integer.parseInt(p.getProperty(k + "address")), p.getProperty(k + "label", ""),
+                int address = Integer.parseInt(p.getProperty(k + "address"));
+                long id = "1".equals(version) ? -1 : Long.parseLong(p.getProperty(k + "id"));
+                if ("2".equals(version) && (id < 0 || id >= Long.MAX_VALUE - 1 || (id & 1) != 0)) throw new IllegalArgumentException("Invalid annotation id");
+                Entry entry = new Entry(id, Integer.parseInt(p.getProperty(k + "bank")),
+                        address, "1".equals(version) ? address + 1 : Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
                         p.getProperty(k + "comment", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
                 int bank = index.snapshot().layout().physicalBank(entry.bank, entry.address);
-                imported.put(((long) bank << 32) | (entry.address & 0xffffffffL), entry);
+                ProgramIndex.Layout layout = index.snapshot().layout();
+                if (entry.end <= address || entry.end > layout.addressSpaceSize()
+                        || (bank != 0 && address < layout.commonBoundary() && entry.end > layout.commonBoundary()))
+                    throw new IllegalArgumentException("Invalid annotation range");
+                long key = "1".equals(version) ? ((long) bank << 32) | (address & 0xffffffffL) : id;
+                if ("2".equals(version) && imported.containsKey(key)) throw new IllegalArgumentException("Duplicate annotation id");
+                imported.put(key, entry);
             }
+            if ("2".equals(version)) for (long id : imported.keySet()) IDS.accumulateAndGet(id + 2, Math::max);
             return new ArrayList<>(imported.values());
         } catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
     }
@@ -207,7 +258,7 @@ public final class AnnotationIndex {
             snapshot.forEachAnnotation(a -> {
                 if (a.ownerId() != OWNER || !a.kind().startsWith(USER_KIND)) return;
                 String kind = a.kind().substring(USER_KIND.length());
-                Entry entry = new Entry(a.range().bank, a.range().start,
+                Entry entry = new Entry(a.entryId(), a.range().bank, a.range().start, a.range().end,
                         labels.getOrDefault(a.entryId() + 1, ""), a.text(), kind);
                 result.add(entry);
                 payloads.put(a, entry);
@@ -217,11 +268,17 @@ public final class AnnotationIndex {
     }
 
     public static final class Entry {
-        public final int bank, address;
+        public final long id;
+        public final int bank, address, end;
         public final String label, comment, kind;
         public Entry(int bank, int address, String label, String comment, String kind) {
+            this(-1, bank, address, address + 1, label, comment, kind);
+        }
+        public Entry(long id, int bank, int address, int end, String label, String comment, String kind) {
+            this.id = id;
             this.bank = bank;
             this.address = address;
+            this.end = end;
             this.label = Objects.requireNonNull(label);
             this.comment = Objects.requireNonNull(comment);
             this.kind = Objects.requireNonNull(kind);
