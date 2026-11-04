@@ -493,6 +493,41 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
+            try {
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 0, 2, "range", "note", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 1, 2, "inner", "", "UNKNOWN"));
+            } catch (Exception e) { throw new RuntimeException(e); }
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                java.awt.Rectangle first = workspace.table.getCellRect(0, 0, true);
+                java.awt.event.MouseEvent hoverFirst = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, first.x + 1, first.y + 1, 0, false);
+                assertEquals("range — note", workspace.table.getToolTipText(hoverFirst));
+                java.awt.Color lane = java.awt.Color.getHSBColor(0f, .55f, .78f);
+                java.awt.Color base = graph.getBackground();
+                java.awt.Color expected = new java.awt.Color((lane.getRed() * 28 + base.getRed() * 227 + 127) / 255,
+                        (lane.getGreen() * 28 + base.getGreen() * 227 + 127) / 255,
+                        (lane.getBlue() * 28 + base.getBlue() * 227 + 127) / 255);
+                assertEquals(expected, workspace.table.createToolTip().getBackground());
+
+                java.awt.Rectangle second = workspace.table.getCellRect(1, 0, true);
+                java.awt.event.MouseEvent hoverSecond = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
+                assertEquals("range — note | inner", workspace.table.getToolTipText(hoverSecond));
+                assertNotEquals(expected, workspace.table.createToolTip().getBackground());
+
+                java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
+                java.awt.event.MouseEvent hoverThird = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, third.x + 1, third.y + 1, 0, false);
+                assertNull(workspace.table.getToolTipText(hoverThird));
+            });
+        }
+    }
+
+    @Test
     public void setAndUnsetRequestsOnlyEditTheBreakpoint() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
@@ -628,6 +663,26 @@ public class DebuggerPanelTest {
                     JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
                     JScrollPane graphScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, graph);
                     assertEquals(30, graphScroll.getVerticalScrollBar().getUnitIncrement());
+                    AtomicInteger symbolReads = new AtomicInteger();
+                    workspace.panel.setSymbols(() -> { symbolReads.incrementAndGet(); return List.of(); });
+                    workspace.panel.setSourceNavigationStatus("Source mapping current", true);
+                    graph.setSize(graph.getPreferredSize());
+                    java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(600, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics2D graphics = image.createGraphics();
+                    try {
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                                System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.paint(graphics);
+                        graph.paint(graphics);
+                        assertEquals("Selection repaints should reuse compiled labels", 1, symbolReads.get());
+                        workspace.panel.setSymbols(() -> { symbolReads.incrementAndGet(); return List.of(); });
+                        graph.paint(graphics);
+                        assertEquals("Changing symbols should refresh graph labels", 2, symbolReads.get());
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                                System.currentTimeMillis(), 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.paint(graphics);
+                        assertEquals("Paint after selection should recheck live symbols", 3, symbolReads.get());
+                    } finally { graphics.dispose(); }
                     assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
                             System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("Branch"));
                     assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,

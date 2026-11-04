@@ -26,6 +26,8 @@ public class DebugTableImpl extends JTable {
     private final TextCellRenderer textRenderer;
     private IntPredicate breakpointRow = row -> false;
     private IntFunction<String> rowTooltip = row -> null;
+    private IntFunction<Color> rowTooltipBackground = row -> null;
+    private Color tooltipBackground;
     private IntFunction<String> addressTooltip = row -> null;
     private IntPredicate addressColumn = column -> false;
 
@@ -107,16 +109,32 @@ public class DebugTableImpl extends JTable {
         this.addressTooltip = Objects.requireNonNull(addressTooltip);
     }
 
+    public void setRowTooltipBackground(IntFunction<Color> background) {
+        rowTooltipBackground = Objects.requireNonNull(background);
+    }
+
     @Override
     public String getToolTipText(MouseEvent event) {
         int row = rowAtPoint(event.getPoint());
         int column = columnAtPoint(event.getPoint());
+        int modelRow = row < 0 ? -1 : convertRowIndexToModel(row);
+        String tooltip = modelRow < 0 ? null : rowTooltip.apply(modelRow);
+        tooltipBackground = tooltip == null ? null : rowTooltipBackground.apply(modelRow);
         if (row >= 0 && column >= 0 && addressColumn.test(convertColumnIndexToModel(column))) {
-            String label = addressTooltip.apply(convertRowIndexToModel(row));
-            if (label != null) return label;
+            String label = addressTooltip.apply(modelRow);
+            if (label != null) {
+                if (tooltip == null || label.contains(tooltip)) return label;
+                if (tooltip.contains(label)) return tooltip;
+                return label + " | " + tooltip;
+            }
         }
-        String tooltip = row < 0 ? null : rowTooltip.apply(convertRowIndexToModel(row));
         return tooltip != null ? tooltip : super.getToolTipText(event);
+    }
+
+    @Override public JToolTip createToolTip() {
+        JToolTip tooltip = super.createToolTip();
+        if (tooltipBackground != null) tooltip.setBackground(tooltipBackground);
+        return tooltip;
     }
 
     @Override

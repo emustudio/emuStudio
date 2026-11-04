@@ -232,12 +232,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             return address >= 0 && session.isBreakpointSet(address);
         }, row -> {
             if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
-            AnnotationIndex.Entry entry = annotationAt(instructionModel.getLocationAt(row), instructionBank());
-            if (entry == null) return null;
-            String label = entry.label == null ? "" : entry.label.trim();
-            String comment = entry.comment == null ? "" : entry.comment.trim();
-            if (label.isEmpty()) return comment.isEmpty() ? null : comment;
-            return comment.isEmpty() ? label : label + " — " + comment;
+            return annotationTooltip(instructionModel.getLocationAt(row), instructionBank());
+        });
+        table.setRowTooltipBackground(row -> {
+            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
+            return annotationTooltipBackground(instructionModel.getLocationAt(row), instructionBank());
         });
         table.setAddressPresentation(column -> table.getModel() == model ? column == 0
                 : table.getModel() == instructionRows && column != breakpointColumn
@@ -354,6 +353,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         sourceContext.getAccessibleContext().setAccessibleDescription(message);
         sourceContext.setVisible(!message.isEmpty() && !"Source mapping current".equals(message));
         sourceMappingsCurrent = current;
+        graph.invalidateLabels();
         table.repaint();
         graph.repaint();
     }
@@ -400,6 +400,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void setSymbols(java.util.function.Supplier<List<SourceAddressMap.Symbol>> values) {
         compiledSymbols = Objects.requireNonNull(values);
+        graph.invalidateLabels();
         table.repaint();
         graph.repaint();
     }
@@ -2232,6 +2233,49 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 ? index.get(bank, at) : null;
     }
 
+    private List<AnnotationIndex.Entry> annotationsCovering(int address, int bank) {
+        if (index == null) return List.of();
+        ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
+        if (address < 0 || address >= layout.addressSpaceSize() || bank < 0 || bank >= layout.bankCount())
+            return List.of();
+        int physical = layout.physicalBank(bank, address);
+        List<AnnotationIndex.Entry> result = new ArrayList<>();
+        for (AnnotationIndex.Entry entry : index.entries())
+            if (entry.bank == physical && entry.address <= address && address < entry.end) result.add(entry);
+        return result;
+    }
+
+    private String annotationTooltip(int address, int bank) {
+        List<String> descriptions = new ArrayList<>();
+        for (AnnotationIndex.Entry entry : annotationsCovering(address, bank)) {
+            String label = entry.label.trim(), comment = entry.comment.trim();
+            String description = label.isEmpty() ? comment : comment.isEmpty() ? label : label + " — " + comment;
+            descriptions.add(description.isEmpty() ? "Annotation" : description);
+        }
+        return descriptions.isEmpty() ? null : String.join(" | ", descriptions);
+    }
+
+    private static Color laneFill(int index) {
+        return Color.getHSBColor((index * .19f) % 1f, .55f, .78f);
+    }
+
+    private Color annotationTooltipBackground(int address, int bank) {
+        List<AnnotationIndex.Entry> entries = annotationsCovering(address, bank);
+        if (entries.isEmpty()) return null;
+        Color background = graph.getBackground();
+        if (background == null) background = table.getBackground();
+        List<AnnotationIndex.Entry> all = index.entries();
+        for (AnnotationIndex.Entry entry : entries) {
+            int colorIndex = graph.laneColorIndex(entry.id);
+            if (colorIndex < 0) colorIndex = all.indexOf(entry);
+            Color lane = laneFill(colorIndex);
+            background = new Color((lane.getRed() * 28 + background.getRed() * 227 + 127) / 255,
+                    (lane.getGreen() * 28 + background.getGreen() * 227 + 127) / 255,
+                    (lane.getBlue() * 28 + background.getBlue() * 227 + 127) / 255);
+        }
+        return background;
+    }
+
     private String labelsAt(int address, int bank) {
         String annotation = index == null ? "" : index.entries().stream()
                 .filter(entry -> entry.bank == bank && entry.address == address)
@@ -2526,6 +2570,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         final Map<Integer, Rectangle> boxes = new LinkedHashMap<>();
         final Map<Integer, Integer> instructionEnds = new HashMap<>();
         final Set<Integer> branchNodes = new HashSet<>();
+        private Map<Long, String> nodeLabelCache;
+        private ProgramIndex labelIndex;
+        private long labelContentRevision, labelMemoryRevision;
         private List<FlowAnalysis.Edge> selectedEdges = List.of();
         private final List<AnnotationLane> lanes = new ArrayList<>();
         private int selectedLane = -1;
@@ -2586,6 +2633,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         @Override public void mousePressed(MouseEvent e) {
                             if (SwingUtilities.isLeftMouseButton(e) && current()) {
                                 selectionStart = e.getPoint();
+                                invalidateLabels();
                                 draggedSelection = false;
                                 return;
                             }
@@ -2756,6 +2804,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
         }
 
+        private int laneColorIndex(long id) {
+            for (int i = 0; i < lanes.size(); i++) if (lanes.get(i).annotation.id == id) return i;
+            return -1;
+        }
+
         private String laneTitle(AnnotationIndex.Entry annotation) {
             return annotation.label.isBlank() ? String.format("%04X", annotation.address) : annotation.label;
         }
@@ -2786,6 +2839,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public String getToolTipText(MouseEvent event) {
             if (flow == null) return "Analyze from address to show flow";
             if (!current()) return "Flow analysis is stale. Analyze again.";
+            if (selectionStart == null && candidateLane == null) invalidateLabels();
             Point point = modelPoint(event.getPoint());
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
                 if (entry.getValue().contains(point))
@@ -2801,6 +2855,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         void setFlow(FlowAnalysis flow) {
             this.flow = flow;
+            invalidateLabels();
             bank = flow.bank();
             common = session.memory == null ? 0 : session.memory.getCommonBoundary();
             boxes.clear();
@@ -2844,7 +2899,44 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         private String nodeLabels(int address) {
-            return labelsAt(address, address >= common ? 0 : bank);
+            refreshNodeLabels();
+            return nodeLabelCache.getOrDefault(labelKey(address >= common ? 0 : bank, address), "");
+        }
+
+        private long labelKey(int bank, int address) {
+            return ((long) bank << 32) | (address & 0xffffffffL);
+        }
+
+        private void invalidateLabels() { nodeLabelCache = null; }
+
+        private void refreshNodeLabels() {
+            ProgramIndex currentIndex = index == null ? null : index.programIndex();
+            ProgramIndex.Snapshot snapshot = currentIndex == null ? null : currentIndex.snapshot();
+            long content = snapshot == null ? -1 : snapshot.contentRevision();
+            long memory = snapshot == null ? -1 : snapshot.memoryRevision();
+            if (nodeLabelCache != null && labelIndex == currentIndex
+                    && labelContentRevision == content && labelMemoryRevision == memory) return;
+            Map<Long, LinkedHashSet<String>> annotations = new HashMap<>(), symbols = new HashMap<>();
+            if (index != null) for (AnnotationIndex.Entry entry : index.entries()) {
+                String label = entry.label.trim();
+                if (!label.isEmpty()) annotations.computeIfAbsent(labelKey(entry.bank, entry.address), ignored -> new LinkedHashSet<>()).add(label);
+            }
+            if (sourceMappingsCurrent) for (SourceAddressMap.Symbol symbol : compiledSymbols.get())
+                symbol.location.ifPresent(location -> symbols.computeIfAbsent(labelKey(location.bank, location.address),
+                        ignored -> new LinkedHashSet<>()).add(symbol.name));
+            Map<Long, String> labels = new HashMap<>();
+            Set<Long> keys = new HashSet<>(annotations.keySet());
+            keys.addAll(symbols.keySet());
+            for (long key : keys) {
+                String annotation = String.join(", ", annotations.getOrDefault(key, new LinkedHashSet<>()));
+                String source = String.join(", ", symbols.getOrDefault(key, new LinkedHashSet<>()));
+                labels.put(key, annotation.isEmpty() ? source
+                        : source.isEmpty() || source.equals(annotation) ? annotation : annotation + ", " + source);
+            }
+            nodeLabelCache = labels;
+            labelIndex = currentIndex;
+            labelContentRevision = content;
+            labelMemoryRevision = memory;
         }
 
         private boolean coversInstruction(AnnotationIndex.Entry annotation, int at) {
@@ -2882,6 +2974,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 graphics.drawString("Flow analysis is stale. Analyze again.", 25, 35);
                 return;
             }
+            if (selectionStart == null && candidateLane == null) invalidateLabels();
             Graphics2D g = (Graphics2D) graphics.create();
             double scale = zoomLevels[zoomIndex] / 100.0;
             g.scale(scale, scale);
@@ -2895,7 +2988,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             for (int i = 0; i < lanes.size(); i++) {
                 Rectangle bounds = lanes.get(i).bounds;
-                Color color = Color.getHSBColor((i * .19f) % 1f, .55f, .78f);
+                Color color = laneFill(i);
                 g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 28));
                 g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 14, 14);
             }
