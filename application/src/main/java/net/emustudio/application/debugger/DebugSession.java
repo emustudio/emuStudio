@@ -40,14 +40,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private volatile ProgramIndex programIndex;
     // Never acquire the session monitor while holding this lock in a memory notification.
     private final Object indexPublicationLock = new Object();
-    private SourceAddressMap sourceMappings = SourceAddressMap.empty();
-    private final IdentityHashMap<Rule, int[]> sourceBindings = new IdentityHashMap<>();
     private final IdentityHashMap<Rule, Long> executionRuleIds = new IdentityHashMap<>();
     private long nextExecutionRuleId;
     private long[] executionRuleKeys = new long[0];
     private final Set<Long> indexedBreakpointIds = new HashSet<>();
     private Rule[] evaluationRules = new Rule[0];
-    private int[] executionRuleOrder = new int[0], sourceRuleOrder = new int[0], candidateOrder = new int[0];
+    private int[] executionRuleOrder = new int[0], candidateOrder = new int[0];
     private int candidateCount;
     private final Consumer<ProgramIndex.Breakpoint> collectExecutionCandidate = breakpoint -> {
         int slot = Arrays.binarySearch(executionRuleKeys, breakpoint.id());
@@ -74,8 +72,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 programIndex = replacement;
             }
             annotations = null;
-            sourceMappings = SourceAddressMap.empty();
-            sourceBindings.clear();
             indexedBreakpointIds.clear();
             generation++;
         }
@@ -86,15 +82,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         requirePaused();
         if (mappings.programIndex() != programIndex())
             throw new IllegalStateException("Source mappings belong to another memory image");
-        sourceMappings = mappings;
-        bindSourceRules();
         metadataChanged();
     }
 
     public synchronized void clearSourceMappings() {
         SourceAddressMap.clearPublished(programIndex());
-        sourceMappings = SourceAddressMap.empty();
-        sourceBindings.clear();
         metadataChanged();
     }
 
@@ -231,22 +223,19 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     /** Invalidates analysis before and after a machine edit, even if the CPU emits no event. */
     public void runMutation(Runnable mutation) {
-        runMachineOperation(mutation, false);
+        runMachineOperation(mutation);
     }
 
-    /** Source rules bind while paused; execution thereafter uses their resolved address targets. */
     public void runExecution(Runnable execution) {
-        runMachineOperation(execution, true);
+        runMachineOperation(execution);
     }
 
-    private void runMachineOperation(Runnable mutation, boolean execution) {
+    private void runMachineOperation(Runnable mutation) {
         Objects.requireNonNull(mutation);
         SourceCaptureGuard operation = new SourceCaptureGuard();
         synchronized (this) {
             if (closed) throw new IllegalStateException("Debugger session closed");
             pendingHit = null;
-            if (execution) bindSourceRules();
-            else sourceBindings.clear();
             generation++;
             invalidateIndex();
             activeMutations++;
@@ -400,7 +389,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         invalidateIndex();
         synchronized (this) {
             generation++;
-            sourceBindings.clear();
         }
     }
 
@@ -476,8 +464,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public synchronized void updateProbe() {
-        sourceBindings.clear();
-        bindSourceRules();
         synchronizeBreakpoints();
         boolean needed = recording != null || historyLimit > 0 || rules.stream().anyMatch(r -> r.enabled);
         if (debug != null && needed != attached) {
@@ -523,15 +509,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                     evaluationRules = rules.toArray(new Rule[0]);
                     executionRuleIds.entrySet().removeIf(entry -> !ids.contains(entry.getValue()));
                     TreeMap<Long, Integer> orderById = new TreeMap<>();
-                    int[] sources = new int[evaluationRules.length];
-                    int sourceCount = 0;
                     for (int i = 0; i < evaluationRules.length; i++) {
                         Rule rule = evaluationRules[i];
                         Long id = executionRuleIds.get(rule);
                         if (rule.kind.equals("EXEC") && id != null) orderById.put(id, i);
-                        if (rule.kind.equals("SOURCE") && rule.enabled) sources[sourceCount++] = i;
                     }
-                    sourceRuleOrder = Arrays.copyOf(sources, sourceCount);
                     executionRuleKeys = new long[orderById.size()];
                     executionRuleOrder = new int[orderById.size()];
                     int slot = 0;
@@ -564,15 +546,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             boolean execution = snapshot != null && snapshot.hasExecutionBreakpoint(address);
             candidateCount = 0;
             if (execution) snapshot.forEachExecutionBreakpoint(address, collectExecutionCandidate);
-            for (int order : sourceRuleOrder) candidateOrder[candidateCount++] = order;
             Arrays.sort(candidateOrder, 0, candidateCount);
             for (int i = 0; i < candidateCount; i++) {
                 Rule rule = evaluationRules[candidateOrder[i]];
                 if (rule.enabled
-                        && ((execution && rule.kind.equals("EXEC") && rule.address == address)
-                                || (rule.kind.equals("SOURCE") && sourceMatches(rule, address)))
-                        && condition(rule, memory == null ? bank : memory.getSelectedBank())
-                        && ++rule.hits >= rule.afterHits) {
+                        && execution && rule.kind.equals("EXEC") && rule.address == address) {
                     stoppedAddress = address;
                     status = "Breakpoint: " + rule.name;
                     pendingHit = new BreakpointHit(address, bank, rule);
@@ -585,21 +563,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             return true;
         }
         return false;
-    }
-
-    private boolean sourceMatches(Rule rule, int address) {
-        int[] bindings = sourceBindings.get(rule);
-        return bindings != null && Arrays.binarySearch(bindings, address) >= 0;
-    }
-
-    private void bindSourceRules() {
-        for (Rule rule : rules) {
-            if (!rule.kind.equals("SOURCE") || !rule.enabled || sourceBindings.containsKey(rule)) continue;
-            List<Integer> addresses = new ArrayList<>();
-            sourceMappings.forEachCurrentLocation(rule.source, rule.address, location -> addresses.add(location.address));
-            if (!addresses.isEmpty())
-                sourceBindings.put(rule, addresses.stream().mapToInt(Integer::intValue).sorted().distinct().toArray());
-        }
     }
 
     private boolean condition(Rule rule, int bank) {
@@ -688,11 +651,17 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     List<Integer> ordinaryBreakpoints() {
         Set<Integer> addresses = new TreeSet<>(cpu.getBreakpoints());
         addresses.addAll(disabledBreakpoints);
+        for (Rule rule : rules) if (rule.kind.equals("EXEC")) addresses.add(rule.address);
         return new ArrayList<>(addresses);
     }
 
     void toggleOrdinaryBreakpoint(int address) {
         requirePaused();
+        if (!cpu.isBreakpointSupported()) {
+            rules.stream().filter(rule -> isSimpleBreakpoint(rule, address)).findFirst().ifPresent(rule -> rule.enabled = !rule.enabled);
+            updateProbe();
+            return;
+        }
         if (cpu.isBreakpointSet(address)) {
             cpu.unsetBreakpoint(address);
             disabledBreakpoints.add(address);
@@ -744,9 +713,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             p.setProperty(k + "condition", r.condition);
             p.setProperty(k + "enabled", Boolean.toString(r.enabled));
             p.setProperty(k + "after", Long.toString(r.afterHits));
-            p.setProperty(k + "source", r.source);
         }
-        List<Integer> ordinary = ordinaryBreakpoints();
+        List<Integer> ordinary = cpu.isBreakpointSupported() ? ordinaryBreakpoints() : List.of();
         p.setProperty("ordinary", Integer.toString(ordinary.size()));
         for (int i = 0; i < ordinary.size(); i++) {
             p.setProperty("ordinary." + i, Integer.toString(ordinary.get(i)));
@@ -780,6 +748,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             for (int i = 0; i < count; i++) {
                 String k = "rule." + i + ".";
                 String kind = p.getProperty(k + "kind");
+                if ("SOURCE".equals(kind) || ("EXEC".equals(kind)
+                        && (!p.getProperty(k + "condition", "").isBlank() || !"1".equals(p.getProperty(k + "after"))))) continue;
                 Rule r;
                 if ("READ".equals(kind) || "WRITE".equals(kind))
                     r = new AccessRule(p.getProperty(k + "name"), kind,
@@ -789,14 +759,15 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                     r = new Rule(p.getProperty(k + "name"), kind, Integer.parseInt(p.getProperty(k + "address")),
                             p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
                 r.enabled = Boolean.parseBoolean(p.getProperty(k + "enabled"));
-                r.source = p.getProperty(k + "source", "");
                 if (memory != null && r instanceof AccessRule && ((AccessRule) r).bank >= memory.getBanksCount())
                     throw new IllegalArgumentException("Breakpoint bank outside memory");
-                if (r.kind.equals("SOURCE")) {
-                    if (r.address < 1 || r.source.isBlank())
-                        throw new IllegalArgumentException("Invalid source breakpoint");
-                } else if (r.address >= cpu.getAddressSpaceSize())
+                if (r.address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
+                if ("EXEC".equals(kind) && cpu.isBreakpointSupported()) {
+                    if (r.enabled) addresses.add(r.address);
+                    else disabledBreakpoints.add(r.address);
+                    continue;
+                }
                 rules.add(r);
             }
             addresses.forEach(cpu::setBreakpoint);
@@ -843,7 +814,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         public final String name, kind, condition;
         public final int address;
         public final long afterHits;
-        public String source = "";
         public boolean enabled = true;
         public long hits;
 
@@ -854,7 +824,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
         private Rule(String name, String kind, int address, String condition, long afterHits, boolean access) {
             boolean validKind = access ? "READ".equals(kind) || "WRITE".equals(kind)
-                    : "EXEC".equals(kind) || "SOURCE".equals(kind);
+                    : "EXEC".equals(kind) && condition != null && condition.isBlank() && afterHits == 1;
             if (name == null
                     || name.isBlank()
                     || !validKind

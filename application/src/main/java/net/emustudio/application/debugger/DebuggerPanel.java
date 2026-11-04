@@ -70,7 +70,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JTextField annotationFilter;
     private final Set<String> changedWatches = new HashSet<>();
     private List<String> displayedWatches = List.of();
-    private List<DebugSession.Rule> displayedRules = List.of();
     private List<DebugSession.AccessRule> displayedMemoryWatches = List.of();
     private List<DebugCPU.Instruction> displayedHistory = List.of();
     private List<DebugCPU.Instruction> historySource = List.of();
@@ -1402,156 +1401,52 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private JPanel rulePanel() {
-        JPanel p = borderPanel(0);
+        JPanel panel = borderPanel(0);
         rules.getAccessibleContext().setAccessibleName("Breakpoints");
         rules.setCellRenderer(new DetailRenderer<>((value, row) -> {
-            if (row >= 0 && row < displayedRules.size()) {
-                DebugSession.Rule rule = displayedRules.get(row);
-                String target = rule.kind.equals("SOURCE")
-                        ? Path.of(rule.source).getFileName() + ":" + rule.address : String.format("%04X", rule.address);
-                return new ListDetail(rule.enabled ? "Enabled" : "Disabled", rule.name,
-                        target + " · " + ruleOptions(rule), value);
-            }
-            int ordinary = row - displayedRules.size();
-            return ordinary >= 0 && ordinary < ordinaryBreakpoints.size()
-                    ? new ListDetail(session.isBreakpointSet(ordinaryBreakpoints.get(ordinary))
-                            ? "Enabled" : "Disabled", String.format("%04X", ordinaryBreakpoints.get(ordinary)),
-                            "Execution breakpoint", value)
-                    : new ListDetail("", value, "", value);
+            if (row < 0 || row >= ordinaryBreakpoints.size()) return new ListDetail("", value, "", value);
+            int address = ordinaryBreakpoints.get(row);
+            return new ListDetail(session.isBreakpointSet(address) ? "Enabled" : "Disabled",
+                    String.format("%04X", address), "Execution breakpoint", value);
         }));
-        p.add(gui.scrollPane(rules));
+        panel.add(gui.scrollPane(rules));
         JPanel tools = row();
-        JTextField name = gui.textField("Breakpoint", 10), at = gui.textField("0x0000", 7),
-                condition = gui.textField("", 18), hits = gui.textField("1", 3),
-                source = gui.textField("", 22), sourceLine = gui.textField("1", 5);
-        source.setToolTipText("Optional source file and line to stop before execution; leave blank to use Address.");
-        sourceLine.setEnabled(false);
-        source.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            private void update() {
-                boolean sourceTarget = !source.getText().isBlank();
-                at.setEnabled(!sourceTarget);
-                sourceLine.setEnabled(sourceTarget && session.debug != null);
-            }
-            public void insertUpdate(javax.swing.event.DocumentEvent event) { update(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent event) { update(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent event) { update(); }
-        });
-        JButton addRule = button(ICON_ADD, "Add breakpoint", () -> {
-            boolean sourceTarget = !source.getText().isBlank();
-            int location = sourceTarget ? Integer.parseInt(sourceLine.getText()) : Integer.decode(at.getText());
-            if (!sourceTarget && (location < 0 || location >= session.cpu.getAddressSpaceSize()))
-                throw new IllegalArgumentException("Address outside CPU");
-            if (session.debug == null) {
-                session.setBreakpoint(location, true);
-                breakpointsChanged.run();
-                session.save();
-                refresh();
-                rules.setSelectedIndex(displayedRules.size() + ordinaryBreakpoints.indexOf(location));
-                return;
-            }
-            if (!condition.getText().isBlank()) session.evaluate(condition.getText(),
-                    session.memory == null ? 0 : session.memory.getSelectedBank());
-            DebugSession.Rule rule = new DebugSession.Rule(name.getText(), sourceTarget ? "SOURCE" : "EXEC", location,
-                    condition.getText(), Long.parseLong(hits.getText()));
-            if (sourceTarget) {
-                if (location < 1)
-                    throw new IllegalArgumentException("Enter source file and line >= 1");
-                rule.source = Path.of(source.getText()).toAbsolutePath().normalize().toString();
-            }
-            session.rules.add(rule);
-            session.updateProbe();
-            refresh();
-            rules.setSelectedIndex(displayedRules.indexOf(rule));
+        JTextField address = gui.textField("0x0000", 7);
+        JButton add = button(ICON_ADD, "Add breakpoint", () -> {
+            int at = Integer.decode(address.getText());
+            session.setBreakpoint(at, true);
+            breakpointsChanged.run();
             session.save();
+            refresh();
+            rules.setSelectedIndex(ordinaryBreakpoints.indexOf(at));
         });
-        JPanel fields = gui.panel("insets 4, fillx, hidemode 3", "[][grow,fill][]", "");
-        fields.add(label("Name", name)); fields.add(name, "growx"); fields.add(addRule, "wrap");
-        fields.add(label("Address", at)); fields.add(at);
-        JToggleButton advanced = toggleButton(ICON_SETTINGS, "Advanced breakpoint options");
-        fields.add(advanced, "wrap");
-        tools.add(fields, "span, growx, wrap");
-        JPanel advancedFields = gui.panel("insets 4, fillx", "[][grow,fill][][70!,fill]", "");
-        advancedFields.add(label("Condition", condition)); advancedFields.add(condition);
-        advancedFields.add(label("Stop from hit", hits)); advancedFields.add(hits, "wrap");
-        advancedFields.add(label("Source file", source)); advancedFields.add(source);
-        advancedFields.add(label("Source line", sourceLine)); advancedFields.add(sourceLine, "wrap");
-        advancedFields.setVisible(false);
-        advanced.addActionListener(event -> {
-            advancedFields.setVisible(advanced.isSelected());
-            tools.revalidate();
-        });
-        tools.add(advancedFields, "span, growx, wrap");
-        addRule.setEnabled(session.debug != null || session.cpu.isBreakpointSupported());
-
-        JToolBar actions = line(tools);
-        actions.add(
-                button(ICON_BREAKPOINT, "Enable / disable",
-                        () -> {
-                            int selected = rules.getSelectedIndex();
-                            if (selected >= 0 && selected < displayedRules.size()) {
-                                DebugSession.Rule rule = displayedRules.get(selected);
-                                rule.enabled = !rule.enabled;
-                                session.updateProbe();
-                                session.save();
-                                refresh();
-                            } else if (selected >= displayedRules.size()
-                                    && selected < displayedRules.size() + ordinaryBreakpoints.size()) {
-                                session.toggleOrdinaryBreakpoint(ordinaryBreakpoints.get(selected - displayedRules.size()));
-                                breakpointsChanged.run();
-                                session.save();
-                                refresh();
-                            }
-                        }));
-        actions.add(
-                button(ICON_REMOVE, "Remove",
-                        () -> {
-                            int selected = rules.getSelectedIndex();
-                            if (selected >= 0 && selected < displayedRules.size()) {
-                                session.rules.remove(displayedRules.get(selected));
-                                session.updateProbe();
-                                session.save();
-                                refresh();
-                            } else if (selected >= displayedRules.size()
-                                    && selected
-                                            < displayedRules.size() + ordinaryBreakpoints.size()) {
-                                session.setBreakpoint(ordinaryBreakpoints.get(selected - displayedRules.size()), false);
-                                breakpointsChanged.run();
-                                session.save();
-                                refresh();
-                            }
-                        }));
-        actions.add(button(ICON_SAVE, "Save settings", session::save));
-        actions.add(
-                button(ICON_RESET, "Reset hit counts",
-                        () -> {
-                            displayedRules.forEach(r -> r.hits = 0);
-                            refresh();
-                        }));
-        actions.add(
-                button(ICON_JUMP, "Go to address",
-                        () -> {
-                            int selected = rules.getSelectedIndex();
-                            if (selected >= 0 && selected < displayedRules.size()) {
-                                DebugSession.Rule rule = displayedRules.get(selected);
-                                if (!rule.kind.equals("SOURCE"))
-                                    navigate(rule.address, selectedBank());
-                            } else if (selected >= displayedRules.size()
-                                    && selected
-                                            < displayedRules.size() + ordinaryBreakpoints.size()) {
-                                navigate(
-                                        ordinaryBreakpoints.get(selected - displayedRules.size()),
-                                        selectedBank());
-                            }
-                        }));
-        if (session.debug == null) {
-            name.setEnabled(false);
-            condition.setEnabled(false);
-            hits.setEnabled(false);
-            source.setEnabled(false);
-            tools.add(gui.label("Conditions and source locations unavailable for this CPU."), "span, wrap");
-        }
-        p.add(scrollTools(tools), BorderLayout.NORTH);
-        return p;
+        add.setEnabled(session.debug != null || session.cpu.isBreakpointSupported());
+        line(tools, label("Address", address), address, add);
+        line(tools,
+                button(ICON_BREAKPOINT, "Enable / disable", () -> {
+                    int selected = rules.getSelectedIndex();
+                    if (selected < 0 || selected >= ordinaryBreakpoints.size()) return;
+                    session.toggleOrdinaryBreakpoint(ordinaryBreakpoints.get(selected));
+                    breakpointsChanged.run();
+                    session.save();
+                    refresh();
+                }),
+                button(ICON_REMOVE, "Remove", () -> {
+                    int selected = rules.getSelectedIndex();
+                    if (selected < 0 || selected >= ordinaryBreakpoints.size()) return;
+                    session.setBreakpoint(ordinaryBreakpoints.get(selected), false);
+                    breakpointsChanged.run();
+                    session.save();
+                    refresh();
+                }),
+                button(ICON_SAVE, "Save settings", session::save),
+                button(ICON_JUMP, "Go to address", () -> {
+                    int selected = rules.getSelectedIndex();
+                    if (selected >= 0 && selected < ordinaryBreakpoints.size())
+                        navigate(ordinaryBreakpoints.get(selected), selectedBank());
+                }));
+        panel.add(scrollTools(tools), BorderLayout.NORTH);
+        return panel;
     }
 
     private JPanel flowPanel() {
@@ -1562,12 +1457,31 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         goToFlowInstruction = button(ICON_STEP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
         updateFlowNavigation();
         actions.add(goToFlowInstruction);
+        JComboBox<String> zoom = new JComboBox<>(new String[]{"50%", "75%", "100%", "125%", "150%", "200%", "250%", "300%"});
+        zoom.setSelectedItem("100%");
+        zoom.setName("Graph zoom");
+        zoom.addActionListener(event -> graph.setZoom(zoom.getSelectedIndex(), null));
+        graph.zoomControl = zoom;
+        actions.add(label("Zoom", zoom));
+        zoom.getAccessibleContext().setAccessibleName("Graph zoom");
+        actions.add(zoom);
         graph.getAccessibleContext().setAccessibleDescription(
                 "Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         JScrollPane graphScroll = gui.scrollPane(graph);
         graphScroll.getVerticalScrollBar().setUnitIncrement(30);
         graphScroll.getHorizontalScrollBar().setUnitIncrement(30);
+        MouseWheelListener[] wheelListeners = graphScroll.getMouseWheelListeners();
+        for (MouseWheelListener listener : wheelListeners) graphScroll.removeMouseWheelListener(listener);
+        graphScroll.addMouseWheelListener(event -> {
+            if (event.isControlDown() && event.getWheelRotation() != 0) {
+                Point anchor = SwingUtilities.convertPoint(graphScroll, event.getPoint(), graphScroll.getViewport());
+                graph.setZoom(graph.zoomIndex - event.getWheelRotation(), anchor);
+                event.consume();
+            } else {
+                for (MouseWheelListener listener : wheelListeners) listener.mouseWheelMoved(event);
+            }
+        });
         panel.add(graphScroll, BorderLayout.CENTER);
         return panel;
     }
@@ -2471,31 +2385,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void refreshBreakpoints() {
-        int ruleSelection = rules.getSelectedIndex();
-        DebugSession.Rule selectedRule = ruleSelection >= 0 && ruleSelection < displayedRules.size()
-                ? displayedRules.get(ruleSelection) : null;
-        Integer selectedOrdinary = ruleSelection >= displayedRules.size()
-                && ruleSelection < displayedRules.size() + ordinaryBreakpoints.size()
-                ? ordinaryBreakpoints.get(ruleSelection - displayedRules.size()) : null;
-        displayedRules = new ArrayList<>();
-        for (DebugSession.Rule rule : session.rules)
-            if (rule.kind.equals("EXEC") || rule.kind.equals("SOURCE")) displayedRules.add(rule);
-        List<String> ruleText = new ArrayList<>();
-        for (DebugSession.Rule rule : displayedRules)
-            ruleText.add((rule.enabled ? "Enabled " : "Disabled ") + rule.name + " · "
-                    + (rule.kind.equals("SOURCE") ? rule.source + ":" + rule.address : String.format("%04X", rule.address))
-                    + " hits=" + rule.hits
-                    + (rule.condition.isBlank() ? "" : " if " + rule.condition));
+        int selected = rules.getSelectedIndex();
+        Integer address = selected >= 0 && selected < ordinaryBreakpoints.size()
+                ? ordinaryBreakpoints.get(selected) : null;
         ordinaryBreakpoints = session.ordinaryBreakpoints();
-        for (int ordinary : ordinaryBreakpoints)
-            ruleText.add(String.format("%s breakpoint: %04X",
-                    session.isBreakpointSet(ordinary) ? "Enabled" : "Disabled", ordinary));
-        updateRows(ruleRows, ruleText);
-        if (selectedRule != null) rules.setSelectedIndex(displayedRules.indexOf(selectedRule));
-        else if (selectedOrdinary != null) {
-            int i = ordinaryBreakpoints.indexOf(selectedOrdinary);
-            rules.setSelectedIndex(i < 0 ? -1 : displayedRules.size() + i);
-        }
+        List<String> rows = new ArrayList<>();
+        for (int at : ordinaryBreakpoints)
+            rows.add(String.format("%s breakpoint: %04X",
+                    session.isBreakpointSet(at) ? "Enabled" : "Disabled", at));
+        updateRows(ruleRows, rows);
+        if (address != null) rules.setSelectedIndex(ordinaryBreakpoints.indexOf(address));
     }
 
     private Path choose(boolean save, boolean directory) {
@@ -2630,6 +2529,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private List<FlowAnalysis.Edge> selectedEdges = List.of();
         private final List<AnnotationLane> lanes = new ArrayList<>();
         private int selectedLane = -1;
+        private final int[] zoomLevels = {50, 75, 100, 125, 150, 200, 250, 300};
+        private int zoomIndex = 2;
+        private JComboBox<String> zoomControl;
+        private Point dragStart, dragView;
 
         private final class AnnotationLane {
             final AnnotationIndex.Entry annotation;
@@ -2676,12 +2579,28 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     }
                 });
             }
-            addMouseListener(
-                    new MouseAdapter() {
+            MouseAdapter mouse = new MouseAdapter() {
+                        @Override public void mousePressed(MouseEvent e) {
+                            if (!SwingUtilities.isRightMouseButton(e)) return;
+                            JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphPanel.this);
+                            if (viewport != null) {
+                                dragStart = SwingUtilities.convertPoint(GraphPanel.this, e.getPoint(), viewport);
+                                dragView = viewport.getViewPosition();
+                            }
+                        }
+                        @Override public void mouseReleased(MouseEvent e) { dragStart = dragView = null; }
+                        @Override public void mouseDragged(MouseEvent e) {
+                            JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphPanel.this);
+                            if (viewport == null || dragStart == null) return;
+                            Point point = SwingUtilities.convertPoint(GraphPanel.this, e.getPoint(), viewport);
+                            setViewPosition(viewport, dragView.x + dragStart.x - point.x, dragView.y + dragStart.y - point.y);
+                        }
                         @Override
                         public void mouseClicked(MouseEvent e) {
+                            if (!SwingUtilities.isLeftMouseButton(e)) return;
+                            Point point = modelPoint(e.getPoint());
                             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
-                                if (entry.getValue().contains(e.getPoint())) {
+                                if (entry.getValue().contains(point)) {
                                     requestFocusInWindow();
                                     selectNode(entry.getKey());
                                     if (e.getClickCount() == 2) followNode(entry.getKey());
@@ -2692,8 +2611,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 Rectangle bounds = lanes.get(i).bounds;
                                 Rectangle inner = new Rectangle(bounds);
                                 inner.grow(-5, -5);
-                                if (lanes.get(i).header.contains(e.getPoint())
-                                        || (bounds.contains(e.getPoint()) && !inner.contains(e.getPoint()))) {
+                                if (lanes.get(i).header.contains(point)
+                                        || (bounds.contains(point) && !inner.contains(point))) {
                                     requestFocusInWindow();
                                     selectLane(i);
                                     return;
@@ -2702,7 +2621,45 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             selectedLane = -1;
                             selectNode(-1);
                         }
-                    });
+                    };
+            addMouseListener(mouse);
+            addMouseMotionListener(mouse);
+        }
+
+        private Point modelPoint(Point point) {
+            double scale = zoomLevels[zoomIndex] / 100.0;
+            return new Point((int) (point.x / scale), (int) (point.y / scale));
+        }
+
+        private Rectangle viewRect(Rectangle rect) {
+            double scale = zoomLevels[zoomIndex] / 100.0;
+            return new Rectangle((int) (rect.x * scale), (int) (rect.y * scale),
+                    (int) Math.ceil(rect.width * scale), (int) Math.ceil(rect.height * scale));
+        }
+
+        private void setViewPosition(JViewport viewport, int x, int y) {
+            Dimension view = viewport.getViewSize(), extent = viewport.getExtentSize();
+            viewport.setViewPosition(new Point(Math.max(0, Math.min(x, Math.max(0, view.width - extent.width))),
+                    Math.max(0, Math.min(y, Math.max(0, view.height - extent.height)))));
+        }
+
+        private void setZoom(int index, Point anchor) {
+            index = Math.max(0, Math.min(index, zoomLevels.length - 1));
+            if (index == zoomIndex) return;
+            JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, this);
+            if (viewport != null && anchor == null)
+                anchor = new Point(viewport.getWidth() / 2, viewport.getHeight() / 2);
+            Point previous = viewport == null ? null : viewport.getViewPosition();
+            double ratio = (double) zoomLevels[index] / zoomLevels[zoomIndex];
+            zoomIndex = index;
+            if (zoomControl != null && zoomControl.getSelectedIndex() != index) zoomControl.setSelectedIndex(index);
+            updateGraphSize();
+            if (viewport != null) {
+                viewport.setViewSize(getPreferredSize());
+                setViewPosition(viewport, (int) Math.round((previous.x + anchor.x) * ratio - anchor.x),
+                        (int) Math.round((previous.y + anchor.y) * ratio - anchor.y));
+            }
+            repaint();
         }
 
         private void selectLane(int lane) {
@@ -2724,7 +2681,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             getAccessibleContext().setAccessibleDescription("Selected annotation: " + laneTitle(selected.annotation)
                     + ". Alt Up and Alt Down select annotation lanes.");
-            scrollRectToVisible(selected.header);
+            scrollRectToVisible(viewRect(selected.header));
             repaint();
         }
 
@@ -2748,7 +2705,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             updateSelectedEdges();
             updateGraphSize();
             repaint();
-            if (selected != null) scrollRectToVisible(selected);
+            if (selected != null) scrollRectToVisible(viewRect(selected));
         }
 
         private void followNode(int address) {
@@ -2767,16 +2724,17 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public String getToolTipText(MouseEvent event) {
             if (flow == null) return "Analyze from address to show flow";
             if (!current()) return "Flow analysis is stale. Analyze again.";
+            Point point = modelPoint(event.getPoint());
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
-                if (entry.getValue().contains(event.getPoint()))
+                if (entry.getValue().contains(point))
                     return String.format("%s%04X · %s%s", nodeLabels(entry.getKey()).isEmpty() ? "" : nodeLabels(entry.getKey()) + " · ",
                             entry.getKey(), flow.mnemonic(entry.getKey()), branchNodes.contains(entry.getKey()) ? " · Branch" : "");
             for (AnnotationLane lane : lanes)
-                if (lane.header.contains(event.getPoint()))
+                if (lane.header.contains(point))
                     return String.format("%s · %04X–%04X · Bank %d%s", laneTitle(lane.annotation),
                             lane.annotation.address, lane.annotation.end - 1, lane.annotation.bank,
                             lane.annotation.comment.isBlank() ? "" : " · " + lane.annotation.comment);
-            return "Lines show connections to and from the selected instruction. Double-click or press Enter to navigate.";
+            return null;
         }
 
         void setFlow(FlowAnalysis flow) {
@@ -2843,8 +2801,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         private void updateGraphSize() {
-            setPreferredSize(new Dimension(Math.max(460, 290 + lanes.size() * 114 + selectedEdges.size() * 20),
-                    Math.max(400, boxes.size() * 90 + 50)));
+            double scale = zoomLevels[zoomIndex] / 100.0;
+            setPreferredSize(new Dimension((int) Math.ceil(Math.max(460, 290 + lanes.size() * 114 + selectedEdges.size() * 20) * scale),
+                    (int) Math.ceil(Math.max(400, boxes.size() * 90 + 50) * scale)));
             revalidate();
         }
 
@@ -2862,6 +2821,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 return;
             }
             Graphics2D g = (Graphics2D) graphics.create();
+            double scale = zoomLevels[zoomIndex] / 100.0;
+            g.scale(scale, scale);
             Rectangle clip = g.getClipBounds();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             for (int i = 0; i < lanes.size(); i++) {

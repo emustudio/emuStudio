@@ -96,33 +96,6 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void addressOnlyRulesAndMultipleCandidatesUsePublishedExecutionState() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 1, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.Rule disabled = new DebugSession.Rule("disabled", "EXEC", 1, "", 1);
-            disabled.enabled = false;
-            DebugSession.Rule falseCondition = new DebugSession.Rule("conditional", "EXEC", 1, "0", 1);
-            DebugSession.Rule enabled = new DebugSession.Rule("enabled", "EXEC", 1, "", 1);
-            session.rules.addAll(List.of(disabled, falseCondition, enabled));
-            session.updateProbe();
-            machine.state(CPU.RunState.STATE_RUNNING);
-            assertTrue(session.programIndex().snapshot().hasExecutionBreakpoint(1));
-            assertTrue(session.beforeInstruction(1, 0));
-            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertSame(enabled, session.takeBreakpointHit().rule);
-            session.rules.remove(enabled);
-            session.updateProbe();
-            assertTrue("Remaining conditional rule retains presence", session.programIndex().snapshot().hasExecutionBreakpoint(1));
-            session.rules.remove(falseCondition);
-            session.updateProbe();
-            assertFalse(session.programIndex().snapshot().hasExecutionBreakpoint(1));
-            disabled.enabled = true;
-            session.updateProbe();
-            assertTrue(session.programIndex().snapshot().hasExecutionBreakpoint(1));
-        }
-    }
-
-    @Test
     public void executionInvalidatesFlowEvenWithoutMemoryNotificationsAndOldSnapshotStaysImmutable() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
@@ -396,55 +369,6 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void executionRuleMatchesAddressInEveryBankAndSkipsOneResumeAcrossBanks() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 2, false);
-        when(machine.debug.readRegister("A")).thenReturn(1L);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.Rule rule = new DebugSession.Rule("loop", "EXEC", 1, "A == 1", 2);
-            session.rules.add(rule);
-            assertFalse(session.beforeInstruction(0, 0));
-            assertFalse(session.beforeInstruction(1, 0));
-            assertEquals(1, rule.hits);
-
-            assertTrue(session.beforeInstruction(1, 1));
-            DebugSession.BreakpointHit hit = session.takeBreakpointHit();
-            assertEquals(1, hit.address);
-            assertEquals(1, hit.bank);
-            assertSame(rule, hit.rule);
-            assertNull(session.takeBreakpointHit());
-            assertFalse("Resume is address-only even after a bank change", session.beforeInstruction(1, 0));
-            assertTrue("Later visits can stop again", session.beforeInstruction(1, 1));
-        }
-    }
-
-    @Test
-    public void disabledAndFalseConditionRulesDoNotCountHits() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.Rule disabled = new DebugSession.Rule("disabled", "EXEC", 0, "", 1);
-            disabled.enabled = false;
-            DebugSession.Rule falseCondition = new DebugSession.Rule("false", "EXEC", 0, "0", 1);
-            session.rules.addAll(List.of(disabled, falseCondition));
-
-            assertFalse(session.beforeInstruction(0, 0));
-            assertEquals(0, disabled.hits);
-            assertEquals(0, falseCondition.hits);
-            assertNull(session.takeBreakpointHit());
-        }
-    }
-
-    @Test
-    public void conditionFailureStopsExecutionWithDiagnostic() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.rules.add(new DebugSession.Rule("invalid", "EXEC", 0, "1 / 0", 1));
-
-            assertTrue(session.beforeInstruction(0, 0));
-            assertTrue(session.status.startsWith("Breakpoint evaluation failed:"));
-        }
-    }
-
-    @Test
     public void writeWatchUsesGuestAccessAddressAndBankInsteadOfInstructionLocation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 2, false);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
@@ -606,37 +530,31 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void executionAndSourcePersistenceHaveNoBankWhileWatchpointsKeepRequiredBank() throws Exception {
-        Path settings = temporary.getRoot().toPath().resolve("address-only.properties");
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 1, false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, settings)) {
-            session.rules.add(new DebugSession.Rule("execute", "EXEC", 1, "", 1));
-            DebugSession.Rule source = new DebugSession.Rule("source", "SOURCE", 2, "", 1);
-            source.source = temporary.getRoot().toPath().resolve("program.asm").toString();
-            session.rules.add(source);
-            session.rules.add(new DebugSession.AccessRule("write", "WRITE", 0, 1, "", 1));
+    public void portableDisabledBreakpointSurvivesSettingsRoundTrip() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("portable.properties");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
+        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+            session.setBreakpoint(1, true);
+            session.toggleOrdinaryBreakpoint(1);
             session.save();
         }
-        Properties saved = AtomicProperties.load(settings);
-        assertFalse(saved.containsKey("rule.0.bank"));
-        assertFalse(saved.containsKey("rule.1.bank"));
-        assertEquals("1", saved.getProperty("rule.2.bank"));
-        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 1, false);
+
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
         try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
-            assertEquals(3, session.rules.size());
-            assertFalse(session.rules.get(0) instanceof DebugSession.AccessRule);
-            assertFalse(session.rules.get(1) instanceof DebugSession.AccessRule);
-            assertEquals(1, ((DebugSession.AccessRule) session.rules.get(2)).bank);
+            assertEquals(List.of(1), session.ordinaryBreakpoints());
+            assertFalse(session.isBreakpointSet(1));
+            session.toggleOrdinaryBreakpoint(1);
+            assertTrue(session.isBreakpointSet(1));
+            verify(reopened.cpu, never()).setBreakpoint(anyInt());
         }
-        saved.remove("rule.2.bank");
-        AtomicProperties.save(settings, saved);
-        DebuggerTestMachine invalid = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 1, false);
-        assertThrows(IOException.class, () -> new DebugSession(invalid.cpu, invalid.memory, settings));
     }
 
     @Test
     public void onlyAccessRulesCanCarryWatchpointKindsAndBankSelectors() {
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("read", "READ", 0, "", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("source", "SOURCE", 0, "", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("conditional", "EXEC", 0, "A == 1", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("hit count", "EXEC", 0, "", 2));
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("exec", "EXEC", 0, 0, "", 1));
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("read", "READ", 0, -2, "", 1));
     }

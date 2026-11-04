@@ -242,44 +242,6 @@ public final class SourceAddressMap {
         return matches.size() == 1 ? Optional.of(matches.get(0).location) : Optional.empty();
     }
 
-    /** Source rules are line-based, but only explicit current mappings may bind that line. */
-    public boolean matchesCurrentLine(int address, int bank, String file, int line) {
-        if (!sameLayout() || address < 0 || address >= size || bank < 0 || bank >= bankCount) return false;
-        Source source = sources.get(normalize(Path.of(file)));
-        if (source == null) return false;
-        ProgramIndex.Snapshot snapshot = index.snapshot();
-        Entry label = source.labels.get(line);
-        if (label != null && label.location.address == address
-                && label.location.bank == snapshot.layout().physicalBank(bank, address) && live(label, snapshot)) return true;
-        boolean[] matched = {false};
-        snapshot.forEachMappingAt(bank, address, mapping -> {
-            Entry entry = entryFor(mapping);
-            if (live(entry, mapping, snapshot) && entry.source == source && entry.location.position.line == line)
-                matched[0] = true;
-        });
-        return matched[0];
-    }
-
-    /** Resolve all current targets while paused, before a run invalidates memory provenance. */
-    public void forEachCurrentLocation(String file, int line, Consumer<? super Location> visitor) {
-        Objects.requireNonNull(visitor);
-        Source source = sources.get(normalize(Path.of(file)));
-        if (source == null || index == null || !sameLayout()) return;
-        ProgramIndex.Snapshot snapshot = index.snapshot();
-        ProgramIndex.SourceSpan span = source.lineSpan(line);
-        Set<Long> visited = new HashSet<>();
-        if (span != null) snapshot.forEachMappingOverlappingSource(span, mapping -> {
-            Entry entry = entryFor(mapping);
-            if (live(entry, mapping, snapshot) && visited.add(locationKey(entry.location))) visitor.accept(entry.location);
-        });
-        Entry label = source.labels.get(line);
-        if (live(label, snapshot) && visited.add(locationKey(label.location))) visitor.accept(label.location);
-    }
-
-    private static long locationKey(Location location) {
-        return ((long) location.bank << 32) | location.address;
-    }
-
     public List<Symbol> symbols() {
         List<Symbol> result = new ArrayList<>();
         ProgramIndex.Snapshot snapshot = index == null ? null : index.snapshot();

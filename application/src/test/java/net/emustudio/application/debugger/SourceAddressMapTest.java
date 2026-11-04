@@ -149,8 +149,6 @@ public class SourceAddressMapTest {
         assertTrue(map.sourceAt(0, 0).isEmpty());
         assertEquals(0, map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow().address);
         assertEquals(0, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
-        assertTrue(map.matchesCurrentLine(0, 0, source.toString(), 1));
-        assertTrue(map.matchesCurrentLine(0, 0, source.toString(), 2));
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
         map.programIndex().snapshot().forEachMappingAt(0, 0, mappings::add);
         assertEquals(2, mappings.size());
@@ -264,7 +262,6 @@ public class SourceAddressMapTest {
 
         assertTrue(map.sourceAt(0, 0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
-        assertFalse(map.matchesCurrentLine(0, 0, source.toString(), 1));
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
         old.forEachMappingAt(0, 0, mappings::add);
         assertEquals(1, mappings.size());
@@ -322,15 +319,6 @@ public class SourceAddressMapTest {
         List<ProgramIndex.Mapping> repeated = new ArrayList<>();
         map.programIndex().snapshot().forEachMappingOverlappingSource(atLeft.get(0).source(), repeated::add);
         assertEquals(2, repeated.size());
-        List<SourceAddressMap.Location> targets = new ArrayList<>();
-        map.forEachCurrentLocation(left.toString(), 1, targets::add);
-        assertEquals(2, targets.size());
-        assertEquals(0, targets.get(0).address);
-        assertEquals(1, targets.get(1).address);
-        map.programIndex().memoryChanged();
-        targets.clear();
-        map.forEachCurrentLocation(left.toString(), 1, targets::add);
-        assertTrue(targets.isEmpty());
     }
 
     @Test
@@ -462,7 +450,6 @@ public class SourceAddressMapTest {
         });
         assertEquals(1, labels.size());
         assertEquals(0, labels.get(0).range().start);
-        assertTrue(map.matchesCurrentLine(0, 0, source.toString(), 1));
     }
 
     private Path source(String name, String text) throws IOException {

@@ -185,7 +185,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
-            DebugSession.Rule rule = new DebugSession.Rule("entry", "EXEC", 12, "", 2);
+            DebugSession.Rule rule = new DebugSession.Rule("entry", "EXEC", 12, "", 1);
             session.rules.add(rule);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));

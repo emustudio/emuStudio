@@ -21,6 +21,8 @@ import javax.swing.event.ListDataListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -368,6 +370,7 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
+                assertNull(findComponent(breakpoints, JToggleButton.class, "Advanced breakpoint options"));
                 JList<?> list = component(breakpoints, JList.class, "Breakpoints");
                 assertEquals(1, list.getModel().getSize());
                 list.setSelectedIndex(0);
@@ -650,6 +653,27 @@ public class DebuggerPanelTest {
                     assertTrue(workspace.panel.isInstructionView());
                     assertEquals(1, workspace.table.getSelectedRow());
                     assertTrue(workspace.table.isEnabled());
+                    tabs.setSelectedIndex(tabs.indexOfTab("References"));
+                    JComboBox<?> zoom = component(workspace.panel, JComboBox.class, "Graph zoom");
+                    JViewport viewport = graphScroll.getViewport();
+                    viewport.setExtentSize(new Dimension(200, 150));
+                    zoom.setSelectedItem("200%");
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 520, 80, 0, false)).contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 520, 260, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    viewport.setViewPosition(new Point(100, 100));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON3_DOWN_MASK, 300, 200, 1, false, java.awt.event.MouseEvent.BUTTON3));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON3_DOWN_MASK, 280, 170, 0, false, java.awt.event.MouseEvent.NOBUTTON));
+                    assertEquals(new Point(120, 130), viewport.getViewPosition());
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    graphScroll.dispatchEvent(new java.awt.event.MouseWheelEvent(graphScroll, java.awt.event.MouseEvent.MOUSE_WHEEL,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.CTRL_DOWN_MASK, 50, 50, 0, false,
+                            java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
+                    assertEquals("250%", zoom.getSelectedItem());
                 });
                 verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
             } finally { release.countDown(); }
