@@ -705,8 +705,13 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void load() throws IOException {
         if (settings == null || !Files.isRegularFile(settings)) return;
         Properties p = AtomicProperties.load(settings);
-        if (!"2".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu")))
-            throw new IOException("Debugger settings belong to another CPU/version");
+        if (!"2".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu"))) {
+            Path archived = settings.resolveSibling(settings.getFileName() + ".incompatible-" + UUID.randomUUID());
+            Files.move(settings, archived);
+            org.slf4j.LoggerFactory.getLogger(DebugSession.class)
+                    .warn("Debugger settings belong to another CPU/version; preserved at {}. Starting with empty settings.", archived);
+            return;
+        }
         try {
             int ordinary = count(p, "ordinary");
             List<Integer> addresses = new ArrayList<>();

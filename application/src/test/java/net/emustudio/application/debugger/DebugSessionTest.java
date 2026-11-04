@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -512,6 +513,47 @@ public class DebugSessionTest {
             assertFalse(reopened.cpu.isBreakpointSet(2));
             session.toggleOrdinaryBreakpoint(2);
             assertTrue(session.isBreakpointSet(2));
+        }
+    }
+
+    @Test
+    public void obsoleteSettingsArePreservedAndDoNotBlockStartup() throws Exception {
+        assertIncompatibleSettingsStartClean("1", "Test CPU");
+    }
+
+    @Test
+    public void settingsForAnotherCpuArePreservedAndDoNotBlockStartup() throws Exception {
+        assertIncompatibleSettingsStartClean("2", "another CPU");
+    }
+
+    private void assertIncompatibleSettingsStartClean(String version, String cpuTitle) throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("debug.properties");
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, true);
+        Properties original = new Properties();
+        original.setProperty("version", version);
+        original.setProperty("cpu", cpuTitle);
+        original.setProperty("watches", "1");
+        original.setProperty("watch.0", "A + 1");
+        AtomicProperties.save(settings, original);
+        byte[] saved = Files.readAllBytes(settings);
+
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, settings)) {
+            assertTrue(session.watches.isEmpty());
+            assertTrue(session.rules.isEmpty());
+            assertTrue(session.ordinaryBreakpoints().isEmpty());
+            assertFalse(Files.exists(settings));
+            session.watches.add("A + 2");
+        }
+
+        try (var paths = Files.list(settings.getParent())) {
+            List<Path> archives = paths.filter(path -> path.getFileName().toString()
+                    .startsWith("debug.properties.incompatible-")).collect(java.util.stream.Collectors.toList());
+            assertEquals(1, archives.size());
+            assertArrayEquals(saved, Files.readAllBytes(archives.get(0)));
+        }
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, true);
+        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
+            assertEquals(List.of("A + 2"), session.watches);
         }
     }
 
