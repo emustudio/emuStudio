@@ -50,7 +50,7 @@ public class AnnotationIndexTest {
         assertEquals(ProgramIndex.CommitResult.PUBLISHED, live.installProperties(captured.properties(), index.snapshot()));
         assertEquals("user", live.get(0, 0).label);
         java.util.ArrayList<ProgramIndex.Mapping> mappings = new java.util.ArrayList<>();
-        index.snapshot().forEachMapping(mappings::add);
+        index.snapshot().forEachMappingAt(0, 0, mappings::add);
         assertEquals(1, mappings.size());
         java.util.ArrayList<ProgramIndex.Annotation> other = new java.util.ArrayList<>();
         index.snapshot().forEachAnnotation(annotation -> { if (annotation.ownerId() == 9) other.add(annotation); });
@@ -99,7 +99,7 @@ public class AnnotationIndexTest {
         index.snapshot().forEachAnnotation(labels::add);
         assertEquals(2, labels.size());
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        index.snapshot().forEachMapping(mappings::add);
+        index.snapshot().forEachMappingAt(0, 0, mappings::add);
         assertEquals(1, mappings.size());
     }
 

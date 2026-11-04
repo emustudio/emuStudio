@@ -44,7 +44,7 @@ public class SparseDebugSessionTest {
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
             try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-                update.put(1, address, true, "");
+                update.put(1, address, true);
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
             session.annotations().put(new AnnotationIndex.Entry(0, address, "metadata", "word memory", "CODE"));

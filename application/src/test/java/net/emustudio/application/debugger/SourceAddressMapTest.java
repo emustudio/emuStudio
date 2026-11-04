@@ -169,7 +169,7 @@ public class SourceAddressMapTest {
 
         assertEquals(6, map.sourceAt(0, 0).orElseThrow().position.column);
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        map.programIndex().snapshot().forEachMapping(mappings::add);
+        map.programIndex().snapshot().forEachMappingAt(0, 0, mappings::add);
         ProgramIndex.SourceSpan span = mappings.get(0).source();
         assertEquals(source.toUri().toString(), span.fileId);
         assertEquals(opcodeOffset, span.startOffset);
@@ -242,7 +242,8 @@ public class SourceAddressMapTest {
         SourceAddressMap map = SourceAddressMap.capture(compiler(), memory, null, Map.of(source, text));
 
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        map.programIndex().snapshot().forEachMapping(mappings::add);
+        for (int address = 0; address < 5; address++)
+            map.programIndex().snapshot().forEachMappingAt(0, address, mappings::add);
         assertEquals(1, mappings.size());
         assertEquals(0, mappings.get(0).source().startOffset);
         assertEquals(1, mappings.get(0).source().endOffset);
@@ -256,7 +257,7 @@ public class SourceAddressMapTest {
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
         ProgramIndex index = ProgramIndex.create("image", 4, 1, 4);
         SourceAddressMap map = SourceAddressMap.capture(compiler(), memory, null, Map.of(source, "NOP\n"), index);
-        ProgramIndex.Snapshot old = map.capturedSnapshot();
+        ProgramIndex.Snapshot old = index.snapshot();
 
         index.memoryChanged();
 
@@ -336,7 +337,8 @@ public class SourceAddressMapTest {
 
         assertTrue(failure.getMessage().contains("changed during capture"));
         List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        index.snapshot().forEachMapping(mappings::add);
+        for (int address = 0; address < 4; address++)
+            index.snapshot().forEachMappingAt(0, address, mappings::add);
         assertTrue(mappings.isEmpty());
     }
 

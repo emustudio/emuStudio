@@ -27,7 +27,6 @@ public final class SourceAddressMap {
     private final MemoryContextAnnotations annotations;
     private final int size, bankCount, common;
     private final ProgramIndex index;
-    private ProgramIndex.Snapshot capturedSnapshot;
     private final List<Entry> entries = new ArrayList<>();
     private final Map<Path, Source> sources = new LinkedHashMap<>();
     private final List<Declaration> declarations = new ArrayList<>();
@@ -45,8 +44,6 @@ public final class SourceAddressMap {
     public static SourceAddressMap empty() { return new SourceAddressMap(null, null); }
 
     public ProgramIndex programIndex() { return index; }
-
-    public ProgramIndex.Snapshot capturedSnapshot() { return capturedSnapshot; }
 
     /** Unsupported compiler positions are excluded from bindings, with their reason retained here. */
     public List<String> diagnostics() { return List.copyOf(diagnostics); }
@@ -189,7 +186,6 @@ public final class SourceAddressMap {
             if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
                 throw new IOException("Source mappings discarded: memory or metadata changed during capture");
         }
-        capturedSnapshot = index.snapshot();
     }
 
     static void clearPublished(ProgramIndex index) {

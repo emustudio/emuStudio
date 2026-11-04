@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.Window;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -621,6 +622,7 @@ public class DebuggerPanelTest {
                         responsive.await(5, TimeUnit.SECONDS));
                 release.countDown();
                 assertTrue("Published instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
+                AnnotationIndex annotationIndex = workspace.session.annotations();
                 SwingUtilities.invokeAndWait(() -> {
                     assertNull(findComponent(workspace.panel, JList.class, "Static references"));
                     JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
@@ -636,6 +638,9 @@ public class DebuggerPanelTest {
                     graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
                             System.currentTimeMillis(), 0, 120, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
                     assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("region"));
+                    doubleClickLaneAndCancel(graph, 120, 25, "region");
+                    doubleClickLaneAndCancel(graph, 200, 80, "region");
+                    assertTrue(annotationIndex.entries().stream().anyMatch(entry -> entry.label.equals("region")));
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("References"));
                     graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
@@ -674,10 +679,80 @@ public class DebuggerPanelTest {
                             System.currentTimeMillis(), java.awt.event.InputEvent.CTRL_DOWN_MASK, 50, 50, 0, false,
                             java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
                     assertEquals("250%", zoom.getSelectedItem());
+                    zoom.setSelectedItem("100%");
+                    int before = annotationIndex.entries().size();
+                    dragAnnotation(graph, dialog -> {
+                        assertEquals("0x0000", annotationField(dialog, "Address").getText());
+                        assertEquals("0x0001", annotationField(dialog, "End address").getText());
+                        JRootPane root = ((JDialog) dialog).getRootPane();
+                        Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                                .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                        root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                    });
+                    assertEquals(before, annotationIndex.entries().size());
+                    dragAnnotation(graph, dialog -> {
+                        button(dialog, "Save annotation").doClick(0);
+                    });
+                    assertEquals(before + 1, annotationIndex.entries().size());
+                    assertTrue(annotationIndex.entries().stream().anyMatch(entry ->
+                            entry.label.isEmpty() && entry.address == 0 && entry.end == 2));
                 });
                 verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
             } finally { release.countDown(); }
         }
+    }
+
+    private static void dragAnnotation(JPanel graph, Consumer<Container> action) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (Window window : Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try { action.accept((Container) window); }
+                catch (Throwable error) { failure.set(error); }
+                finally { window.dispose(); }
+            }
+        });
+        timer.start();
+        try {
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                    1, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 245, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                    2, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 470, 180, 0, false, java.awt.event.MouseEvent.NOBUTTON));
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                    3, 0, 470, 180, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        } finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation dialog", opened.get());
+    }
+
+    private static void doubleClickLaneAndCancel(JPanel graph, int x, int y, String expectedLabel) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (Window window : Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !"Edit annotation".equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try {
+                    assertEquals(expectedLabel, annotationField((Container) window, "Label").getText());
+                    JRootPane root = ((JDialog) window).getRootPane();
+                    Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                            .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                    root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                } catch (Throwable error) { failure.set(error); }
+                finally { window.dispose(); }
+            }
+        });
+        timer.start();
+        try {
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                    System.currentTimeMillis(), 0, x, y, 2, false, java.awt.event.MouseEvent.BUTTON1));
+        } finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation editor", opened.get());
     }
 
     @Test

@@ -64,7 +64,7 @@ public class ProgramIndexPaginationBenchmark {
                     update.replaceFlow(false);
                     for (int address = 0; address < 65536; address++)
                         update.putInstruction(new ProgramIndex.Range(0, address, address + 1),
-                                ProgramIndex.InstructionKind.LINEAR, false);
+                                ProgramIndex.InstructionKind.LINEAR);
                     update.commit();
                 }
             }

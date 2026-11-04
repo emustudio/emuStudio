@@ -66,26 +66,6 @@ public final class FlowAnalysis {
         return new Pending(builder);
     }
 
-    /** Bounded linear sweep for the existing whole-memory incoming-reference action. */
-    public static Pending sweep(Disassembler disassembler, int limit, ProgramIndex index, int bank) {
-        return sweep(disassembler, limit, index, index.snapshot(), bank);
-    }
-
-    /** Uses the metadata root from before live decoding. */
-    public static Pending sweep(Disassembler disassembler, int limit, ProgramIndex index,
-                                ProgramIndex.Snapshot base, int bank) {
-        Builder builder = new Builder(disassembler, limit, index, base, bank);
-        int address = 0;
-        int attempts = 0;
-        while (address < builder.size && attempts++ < limit) {
-            checkCancelled();
-            Decoded decoded = builder.decode(address);
-            address = decoded == null ? address + 1 : decoded.cells.end;
-        }
-        builder.truncated |= address < builder.size;
-        return new Pending(builder);
-    }
-
     private static void checkCancelled() {
         if (Thread.currentThread().isInterrupted()) throw new CancellationException();
     }
@@ -99,7 +79,6 @@ public final class FlowAnalysis {
                 && current.flowState() != ProgramIndex.FlowState.NOT_BUILT;
     }
 
-    public ProgramIndex.Snapshot snapshot() { return snapshot; }
     public int bank() { return bank; }
     public boolean truncated() { return snapshot.flowState() == ProgramIndex.FlowState.TRUNCATED; }
     public String mnemonic(int address) { return listing.getOrDefault(address, ""); }
@@ -112,23 +91,6 @@ public final class FlowAnalysis {
         Objects.requireNonNull(visitor);
         snapshot.forEachInstruction(instruction -> snapshot.forEachSuccessor(
                 instruction.cells().bank, instruction.cells().start, visitor));
-    }
-
-    /** All incoming edges, including branches and fall-through. */
-    public List<Edge> predecessors(int address) {
-        List<Edge> result = new ArrayList<>();
-        snapshot.forEachPredecessor(bank, address,
-                (from, to, kind) -> result.add(new Edge(from, to, kind)));
-        return result;
-    }
-
-    /** Call sites only; deliberately distinct from the old callers() incoming-edge semantics. */
-    public List<Edge> callSites(int address) {
-        List<Edge> result = new ArrayList<>();
-        snapshot.forEachPredecessor(bank, address, (from, to, kind) -> {
-            if (kind == ProgramIndex.EdgeKind.CALL) result.add(new Edge(from, to, kind));
-        });
-        return result;
     }
 
     /** Staged decoder output; publish only after the adapter validates its paused session. */
@@ -145,7 +107,7 @@ public final class FlowAnalysis {
             try (ProgramIndex.ContentUpdate update = builder.index.updateContent(builder.base)) {
                 update.replaceFlow(builder.truncated);
                 for (Decoded decoded : builder.instructions.values())
-                    update.putInstruction(decoded.cells, decoded.kind, decoded.unresolved);
+                    update.putInstruction(decoded.cells, decoded.kind);
                 for (Edge edge : builder.edges)
                     update.putEdge(builder.bank, edge.from, edge.to, edge.edgeKind);
                 if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
@@ -195,9 +157,6 @@ public final class FlowAnalysis {
                 if (end <= address || end > size) return null;
                 String mnemonic = disassembler.disassemble(address).mnemo;
                 ProgramIndex.Range cells = new ProgramIndex.Range(bank, address, end);
-                boolean unresolved = flow.targets.isEmpty()
-                        && (flow.kind == InstructionFlow.Kind.JUMP || flow.kind == InstructionFlow.Kind.CALL
-                        || flow.kind == InstructionFlow.Kind.RETURN);
                 List<Integer> destinations = new ArrayList<>();
                 ProgramIndex.EdgeKind targetKind = flow.kind == InstructionFlow.Kind.CALL
                         ? ProgramIndex.EdgeKind.CALL : ProgramIndex.EdgeKind.BRANCH;
@@ -217,8 +176,7 @@ public final class FlowAnalysis {
                         destinations.add(flow.next);
                     }
                 }
-                Decoded decoded = new Decoded(cells, ProgramIndex.InstructionKind.valueOf(flow.kind.name()),
-                        unresolved, destinations);
+                Decoded decoded = new Decoded(cells, ProgramIndex.InstructionKind.valueOf(flow.kind.name()), destinations);
                 instructions.put(address, decoded);
                 listing.put(address, mnemonic);
                 return decoded;
@@ -243,14 +201,11 @@ public final class FlowAnalysis {
     private static final class Decoded {
         final ProgramIndex.Range cells;
         final ProgramIndex.InstructionKind kind;
-        final boolean unresolved;
         final List<Integer> destinations;
 
-        Decoded(ProgramIndex.Range cells, ProgramIndex.InstructionKind kind,
-                boolean unresolved, List<Integer> destinations) {
+        Decoded(ProgramIndex.Range cells, ProgramIndex.InstructionKind kind, List<Integer> destinations) {
             this.cells = cells;
             this.kind = kind;
-            this.unresolved = unresolved;
             this.destinations = destinations;
         }
     }

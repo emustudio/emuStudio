@@ -62,8 +62,6 @@ public final class ProgramIndex {
 
     public static final class Kinds {
         public static final String LABEL = "label";
-        public static final String COMMENT = "comment";
-        public static final String REGION = "region";
         public static final String CODE = "code";
         public static final String DATA = "data";
         private Kinds() { }
@@ -81,12 +79,8 @@ public final class ProgramIndex {
     public interface Snapshot {
         Layout layout();
         long contentRevision();
-        long breakpointRevision();
         long memoryRevision();
-        void forEachMapping(Consumer<? super Mapping> visitor);
         void forEachAnnotation(Consumer<? super Annotation> visitor);
-        /** Includes disabled rules. */
-        void forEachBreakpoint(Consumer<? super Breakpoint> visitor);
         void forEachMappingAt(int bank, int address, Consumer<? super Mapping> visitor);
         /** Exact document identity AND revision; explicit half-open source spans only. */
         void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor);
@@ -99,8 +93,6 @@ public final class ProgramIndex {
         /** Exact instruction starts only; unavailable for NOT_BUILT/STALE. */
         Instruction instructionAt(int bank, int address);
         void forEachSuccessor(int bank, int address, EdgeVisitor visitor);
-        /** All incoming edge kinds; callers wanting calls must filter CALL explicitly. */
-        void forEachPredecessor(int bank, int address, EdgeVisitor visitor);
         /** Bank/start order; unavailable for NOT_BUILT/STALE. */
         void forEachInstruction(Consumer<? super Instruction> visitor);
     }
@@ -118,7 +110,7 @@ public final class ProgramIndex {
         ContentUpdate putAnnotation(long ownerId, long entryId, Range range, String kind, String text);
         ContentUpdate removeAnnotation(long ownerId, long entryId);
         ContentUpdate replaceFlow(boolean truncated);
-        ContentUpdate putInstruction(Range cells, InstructionKind kind, boolean unresolvedSuccessors);
+        ContentUpdate putInstruction(Range cells, InstructionKind kind);
         /** Known undecoded destinations are permitted. Unknown indirect targets are never edges. */
         ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind);
         /**
@@ -132,7 +124,7 @@ public final class ProgramIndex {
 
     public interface BreakpointUpdate extends AutoCloseable {
         /** CPU-visible address only; bank selection never changes execution-rule matching. */
-        BreakpointUpdate put(long id, int address, boolean enabled, String condition);
+        BreakpointUpdate put(long id, int address, boolean enabled);
         BreakpointUpdate remove(long id);
         /** Compares only breakpoint revision, preserving latest content/memory state. */
         CommitResult commit();
@@ -157,12 +149,10 @@ public final class ProgramIndex {
         long id();
         int address();
         boolean enabled();
-        String condition();
     }
     public interface Instruction {
         Range cells();
         InstructionKind kind();
-        boolean unresolvedSuccessors();
     }
     @FunctionalInterface
     public interface EdgeVisitor {
@@ -241,21 +231,12 @@ public final class ProgramIndex {
 
         @Override public Layout layout() { return layout; }
         @Override public long contentRevision() { return contentRevision; }
-        @Override public long breakpointRevision() { return breakpointRevision; }
         @Override public long memoryRevision() { return memoryRevision; }
         @Override public FlowState flowState() { return flowState; }
 
-        @Override public void forEachMapping(Consumer<? super Mapping> visitor) {
-            Objects.requireNonNull(visitor, "visitor");
-            for (Mapping value : content.mappings.values) visitor.accept(value);
-        }
         @Override public void forEachAnnotation(Consumer<? super Annotation> visitor) {
             Objects.requireNonNull(visitor, "visitor");
             for (Annotation value : content.annotations.values) visitor.accept(value);
-        }
-        @Override public void forEachBreakpoint(Consumer<? super Breakpoint> visitor) {
-            Objects.requireNonNull(visitor, "visitor");
-            for (Breakpoint value : breakpoints.values) visitor.accept(value);
         }
         @Override public void forEachMappingAt(int bank, int address, Consumer<? super Mapping> visitor) {
             int physical = layout.physicalBank(bank, address);
@@ -295,11 +276,6 @@ public final class ProgramIndex {
             int physical = layout.physicalBank(bank, address);
             Objects.requireNonNull(visitor, "visitor");
             if (flowAvailable()) content.flow.successors(physical, address, visitor);
-        }
-        @Override public void forEachPredecessor(int bank, int address, EdgeVisitor visitor) {
-            int physical = layout.physicalBank(bank, address);
-            Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.predecessors(physical, address, visitor);
         }
         @Override public void forEachInstruction(Consumer<? super Instruction> visitor) {
             Objects.requireNonNull(visitor, "visitor");
@@ -423,11 +399,11 @@ public final class ProgramIndex {
                 throw new IllegalStateException("replaceFlow must precede instructions and edges");
             }
         }
-        @Override public ContentUpdate putInstruction(Range cells, InstructionKind kind, boolean unresolvedSuccessors) {
+        @Override public ContentUpdate putInstruction(Range cells, InstructionKind kind) {
             requireFlow();
             Range checked = range(layout, cells);
             required(kind, "kind");
-            instructions.put(AddressTable.key(checked.bank, checked.start), new InstructionValue(checked, kind, unresolvedSuccessors));
+            instructions.put(AddressTable.key(checked.bank, checked.start), new InstructionValue(checked, kind));
             return this;
         }
         @Override public ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind) {
@@ -472,10 +448,10 @@ public final class ProgramIndex {
             }
             return values;
         }
-        @Override public BreakpointUpdate put(long id, int address, boolean enabled, String condition) {
+        @Override public BreakpointUpdate put(long id, int address, boolean enabled) {
             requireOpen();
             validate(address >= 0 && address < layout.size, "Address outside memory layout");
-            values().put(id, new BreakpointValue(id, address, enabled, required(condition, "condition")));
+            values().put(id, new BreakpointValue(id, address, enabled));
             return this;
         }
         @Override public BreakpointUpdate remove(long id) {
@@ -606,24 +582,20 @@ public final class ProgramIndex {
         final long id;
         final int address;
         final boolean enabled;
-        final String condition;
-        BreakpointValue(long id, int address, boolean enabled, String condition) {
-            this.id = id; this.address = address; this.enabled = enabled; this.condition = condition;
+        BreakpointValue(long id, int address, boolean enabled) {
+            this.id = id; this.address = address; this.enabled = enabled;
         }
         @Override public long id() { return id; }
         @Override public int address() { return address; }
         @Override public boolean enabled() { return enabled; }
-        @Override public String condition() { return condition; }
     }
     private static final class InstructionValue implements Instruction {
         final Range cells;
         final InstructionKind kind;
-        final boolean unresolved;
-        InstructionValue(Range cells, InstructionKind kind, boolean unresolved) {
-            this.cells = cells; this.kind = kind; this.unresolved = unresolved;
+        InstructionValue(Range cells, InstructionKind kind) {
+            this.cells = cells; this.kind = kind;
         }
         @Override public Range cells() { return cells; }
         @Override public InstructionKind kind() { return kind; }
-        @Override public boolean unresolvedSuccessors() { return unresolved; }
     }
 }

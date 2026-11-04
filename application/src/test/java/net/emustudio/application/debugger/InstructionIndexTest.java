@@ -37,7 +37,7 @@ public class InstructionIndexTest {
         ProgramIndex index = bankedIndex();
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false);
-            update.putInstruction(new ProgramIndex.Range(1, 7, 10), ProgramIndex.InstructionKind.LINEAR, false);
+            update.putInstruction(new ProgramIndex.Range(1, 7, 10), ProgramIndex.InstructionKind.LINEAR);
             update.commit();
         }
         InstructionIndex instructions = new InstructionIndex(index::snapshot, () -> 1);
@@ -63,7 +63,7 @@ public class InstructionIndexTest {
         InstructionIndex instructions = new InstructionIndex(index::snapshot, () -> 0);
         InstructionIndex.View before = instructions.snapshot();
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-            update.put(1, 0, true, "");
+            update.put(1, 0, true);
             update.commit();
         }
         assertSame(before, instructions.snapshot());
@@ -107,9 +107,9 @@ public class InstructionIndexTest {
         ProgramIndex index = ProgramIndex.create("banked", 16, 2, 8);
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false);
-            update.putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR, false);
-            update.putInstruction(new ProgramIndex.Range(1, 0, 3), ProgramIndex.InstructionKind.LINEAR, false);
-            update.putInstruction(new ProgramIndex.Range(1, 8, 10), ProgramIndex.InstructionKind.LINEAR, false);
+            update.putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(1, 0, 3), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(1, 8, 10), ProgramIndex.InstructionKind.LINEAR);
             update.commit();
         }
         return index;

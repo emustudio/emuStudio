@@ -101,7 +101,7 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             ProgramIndex index = session.programIndex();
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-                update.replaceFlow(false).putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR, false);
+                update.replaceFlow(false).putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR);
                 update.commit();
             }
             ProgramIndex.Snapshot old = index.snapshot();
@@ -168,7 +168,7 @@ public class DebugSessionTest {
         when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10, false));
+            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
             session.annotations().put(new AnnotationIndex.Entry(0, 1, "new", "", "DATA"));
@@ -191,14 +191,14 @@ public class DebugSessionTest {
         when(explicit.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
                 "VALUE " + machine.memory.readBank(0, 1), ""));
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            assertEquals("VALUE 7", session.analyzeFlow(1, 0, 10, false).mnemonic(0));
+            assertEquals("VALUE 7", session.analyzeFlow(1, 0, 10).mnemonic(0));
             cells[1][0] = 8;
             machine.memoryChanged(0);
-            assertEquals("VALUE 8", session.analyzeFlow(1, 0, 10, false).mnemonic(0));
+            assertEquals("VALUE 8", session.analyzeFlow(1, 0, 10).mnemonic(0));
             verify(original, never()).getFlow(anyInt());
             when(original.forBank(1)).thenReturn(Optional.empty());
-            assertThrows(IllegalStateException.class, () -> session.analyzeFlow(1, 0, 10, false));
-            assertEquals("STOP", session.analyzeFlow(0, 0, 10, false).mnemonic(0));
+            assertThrows(IllegalStateException.class, () -> session.analyzeFlow(1, 0, 10));
+            assertEquals("STOP", session.analyzeFlow(0, 0, 10).mnemonic(0));
         }
         assertEquals(0, machine.memory.getSelectedBank());
     }
@@ -221,7 +221,7 @@ public class DebugSessionTest {
             boolean disposed = false;
             try {
                 ProgramIndex index = session.programIndex();
-                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10, false));
+                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10));
                 await(entered);
                 if (change == 0) machine.memoryChanged(1);
                 else if (change == 1) {
@@ -265,7 +265,7 @@ public class DebugSessionTest {
         });
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             IllegalStateException changed = assertThrows(IllegalStateException.class,
-                    () -> session.analyzeFlow(0, 0, 10, false));
+                    () -> session.analyzeFlow(0, 0, 10));
             assertTrue(changed.getMessage().contains("bank changed"));
             verify(decoder, never()).getNextInstructionPosition(anyInt());
             verify(decoder, never()).disassemble(anyInt());
@@ -273,7 +273,7 @@ public class DebugSessionTest {
             Thread.currentThread().interrupt();
             try {
                 assertThrows(java.util.concurrent.CancellationException.class,
-                        () -> session.analyzeFlow(0, 0, 10, false));
+                        () -> session.analyzeFlow(0, 0, 10));
             } finally { Thread.interrupted(); }
             assertEquals(ProgramIndex.FlowState.NOT_BUILT, session.programIndex().snapshot().flowState());
         }

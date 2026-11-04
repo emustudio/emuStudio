@@ -94,7 +94,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false, () -> f.session.runMutation(() -> {}));
 
             AtomicInteger mappings = new AtomicInteger();
-            f.session.programIndex().snapshot().forEachMapping(mapping -> mappings.incrementAndGet());
+            for (int address = 0; address < 32; address++)
+                f.session.programIndex().snapshot().forEachMappingAt(0, address, mapping -> mappings.incrementAndGet());
             assertEquals(0, mappings.get());
             JLabel status = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));

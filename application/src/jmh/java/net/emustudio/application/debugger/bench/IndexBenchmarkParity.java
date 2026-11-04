@@ -60,11 +60,7 @@ public final class IndexBenchmarkParity {
                 ProgramIndexGraphBenchmark benchmark = new ProgramIndexGraphBenchmark();
                 for (int query = 0; query < 16; query++) {
                     state.cursor = query;
-                    long old = benchmark.oldPredecessors(state);
-                    state.cursor = query;
-                    equal(old, benchmark.indexedPredecessors(state), "graph incoming " + layout + " " + nodes);
-                    state.cursor = query;
-                    old = benchmark.scanSuccessorsOracle(state);
+                    long old = benchmark.scanSuccessorsOracle(state);
                     state.cursor = query;
                     equal(old, benchmark.indexedSuccessors(state), "graph outgoing " + layout + " " + nodes);
                 }

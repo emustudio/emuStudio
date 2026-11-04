@@ -294,7 +294,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     /** Decode live, explicit-bank memory off the UI thread; publish only while its paused root is current. */
-    public FlowAnalysis analyzeFlow(int bank, int start, int limit, boolean sweep) {
+    public FlowAnalysis analyzeFlow(int bank, int start, int limit) {
         LiveWork work = liveWork();
         work.base.layout().physicalBank(bank, start);
         Disassembler original = cpu.getDisassembler();
@@ -310,9 +310,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 throw new IllegalStateException("Analysis discarded: mapped memory bank changed");
         };
         Disassembler decoder = guardedDecoder(selected, validate);
-        FlowAnalysis.Pending pending = sweep
-                ? FlowAnalysis.sweep(decoder, limit, work.index, work.base, bank)
-                : FlowAnalysis.reachable(decoder, start, limit, work.index, work.base, bank);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, work.index, work.base, bank);
         synchronized (this) {
             validate.run();
             return pending.publish();
@@ -490,7 +488,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         id = nextExecutionRuleId++;
                         executionRuleIds.put(rule, id);
                     }
-                    update.put(id, rule.address, rule.enabled, rule.condition);
+                    update.put(id, rule.address, rule.enabled);
                     ids.add(id);
                 }
                 if (cpu.isBreakpointSupported()) {
@@ -499,7 +497,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                     for (int address : nativeRules) {
                         if (address < 0 || address >= base.layout().addressSpaceSize()) continue;
                         long id = Long.MIN_VALUE + address;
-                        update.put(id, address, cpu.isBreakpointSet(address), "");
+                        update.put(id, address, cpu.isBreakpointSet(address));
                         ids.add(id);
                     }
                 }

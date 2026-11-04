@@ -104,23 +104,23 @@ public class ProgramIndexAllocationTest {
                     sources[i] = new SourceSpan("file:///allocation.asm", 2000, i * 2, i * 2 + 3);
                     content.putMapping(1, i, new Range(1, address, address + 2), sources[i]);
                     content.putAnnotation(1, i, new Range(1, address, address + 2), Kinds.LABEL, "label" + i % 2);
-                    content.putInstruction(new Range(1, address, address + 2), InstructionKind.CALL, false);
+                    content.putInstruction(new Range(1, address, address + 2), InstructionKind.CALL);
                     int next = starts[(i + 1) % starts.length];
                     content.putEdge(1, address, next, EdgeKind.CALL);
                     content.putEdge(1, address, address + 1, EdgeKind.FALL_THROUGH);
                     content.putEdge(1, address, next, EdgeKind.BRANCH);
                 }
-                content.putAnnotation(2, 1, new Range(1, 0, 128), Kinds.REGION, "outer");
-                content.putAnnotation(2, 2, new Range(1, 16, 64), Kinds.REGION, "nested");
-                content.putAnnotation(2, 3, new Range(1, common - 2, common + 2), Kinds.REGION, "crossing");
+                content.putAnnotation(2, 1, new Range(1, 0, 128), "region", "outer");
+                content.putAnnotation(2, 2, new Range(1, 16, 64), "region", "nested");
+                content.putAnnotation(2, 3, new Range(1, common - 2, common + 2), "region", "crossing");
                 assertEquals(CommitResult.PUBLISHED, content.commit());
             }
             sources[starts.length] = new SourceSpan("file:///allocation.asm", 2001, 0, 1);
             try (BreakpointUpdate breakpoints = index.updateBreakpoints(index.snapshot())) {
                 for (int i = 0; i < starts.length; i++) {
-                    breakpoints.put(i, starts[i], true, "");
-                    breakpoints.put(100 + i, starts[i], true, "A == 1");
-                    breakpoints.put(200 + i, starts[i], false, "");
+                    breakpoints.put(i, starts[i], true);
+                    breakpoints.put(100 + i, starts[i], true);
+                    breakpoints.put(200 + i, starts[i], false);
                 }
                 assertEquals(CommitResult.PUBLISHED, breakpoints.commit());
             }
@@ -141,10 +141,7 @@ public class ProgramIndexAllocationTest {
                 Instruction instruction = snapshot.instructionAt(bank, address);
                 if (instruction != null) consumed += instruction.cells().end;
                 snapshot.forEachSuccessor(bank, address, EDGES);
-                snapshot.forEachPredecessor(bank, address, EDGES);
-                snapshot.forEachMapping(VALUES);
                 snapshot.forEachAnnotation(VALUES);
-                snapshot.forEachBreakpoint(VALUES);
                 snapshot.forEachInstruction(VALUES);
             }
         }

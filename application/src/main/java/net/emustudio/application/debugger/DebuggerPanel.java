@@ -1185,11 +1185,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             boolean dirty = dirty();
             save.setToolTipText("Save annotation");
             save.getAccessibleContext().setAccessibleName("Save annotation");
-            save.setEnabled(dirty && !running && !tasks.isBusy());
+            save.setEnabled(original != null && (dirty || original.id < 0) && !running && !tasks.isBusy());
         }
 
         void saveDraft() throws Exception {
-            if (!dirty()) return;
+            if (original == null || (original.id >= 0 && !dirty())) return;
             int target, end;
             try {
                 target = net.emustudio.emulib.runtime.helpers.RadixUtils.getInstance().parseRadix(addressField.getText());
@@ -1497,7 +1497,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void analyzeFlow(int bank, int address) {
-        tasks.submit(() -> session.analyzeFlow(bank, address, 256, false), flow -> {
+        tasks.submit(() -> session.analyzeFlow(bank, address, 256), flow -> {
             if (!flow.isCurrent(session.programIndex()))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
             graph.start = address;
@@ -2533,6 +2533,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private int zoomIndex = 2;
         private JComboBox<String> zoomControl;
         private Point dragStart, dragView;
+        private Point selectionStart;
+        private Rectangle selectionArea, candidateLane;
+        private boolean draggedSelection;
 
         private final class AnnotationLane {
             final AnnotationIndex.Entry annotation;
@@ -2581,6 +2584,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             MouseAdapter mouse = new MouseAdapter() {
                         @Override public void mousePressed(MouseEvent e) {
+                            if (SwingUtilities.isLeftMouseButton(e) && current()) {
+                                selectionStart = e.getPoint();
+                                draggedSelection = false;
+                                return;
+                            }
                             if (!SwingUtilities.isRightMouseButton(e)) return;
                             JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphPanel.this);
                             if (viewport != null) {
@@ -2588,8 +2596,42 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 dragView = viewport.getViewPosition();
                             }
                         }
-                        @Override public void mouseReleased(MouseEvent e) { dragStart = dragView = null; }
+                        @Override public void mouseReleased(MouseEvent e) {
+                            dragStart = dragView = null;
+                            if (!SwingUtilities.isLeftMouseButton(e) || selectionStart == null) return;
+                            selectionStart = null;
+                            if (!draggedSelection) return;
+                            List<Integer> selected = new ArrayList<>();
+                            boxes.forEach((address, box) -> { if (selectionArea != null && selectionArea.intersects(box)) selected.add(address); });
+                            selectionArea = null;
+                            if (!selected.isEmpty()) {
+                                int first = Collections.min(selected);
+                                int end = selected.stream().mapToInt(instructionEnds::get).max().orElse(first + 1);
+                                int physicalBank = first >= common ? 0 : bank;
+                                guard(() -> {
+                                    requireCurrent();
+                                    if (confirmSaveAnnotations())
+                                        showAnnotationEditor(physicalBank, first, "New annotation",
+                                                new AnnotationIndex.Entry(-1, physicalBank, first, end, "", "", "UNKNOWN"));
+                                });
+                            }
+                            candidateLane = null;
+                            repaint();
+                        }
                         @Override public void mouseDragged(MouseEvent e) {
+                            if (selectionStart != null && (e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+                                if (!draggedSelection && selectionStart.distance(e.getPoint()) < 4) return;
+                                draggedSelection = true;
+                                Point a = modelPoint(selectionStart), b = modelPoint(e.getPoint());
+                                selectionArea = new Rectangle(Math.min(a.x, b.x), Math.min(a.y, b.y),
+                                        Math.max(1, Math.abs(a.x - b.x)), Math.max(1, Math.abs(a.y - b.y)));
+                                candidateLane = null;
+                                for (Rectangle box : boxes.values()) if (selectionArea.intersects(box))
+                                    candidateLane = candidateLane == null ? new Rectangle(box) : candidateLane.union(box);
+                                if (candidateLane != null) candidateLane.grow(8, 8);
+                                repaint();
+                                return;
+                            }
                             JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphPanel.this);
                             if (viewport == null || dragStart == null) return;
                             Point point = SwingUtilities.convertPoint(GraphPanel.this, e.getPoint(), viewport);
@@ -2598,6 +2640,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             if (!SwingUtilities.isLeftMouseButton(e)) return;
+                            if (draggedSelection) { draggedSelection = false; return; }
                             Point point = modelPoint(e.getPoint());
                             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
                                 if (entry.getValue().contains(point)) {
@@ -2615,7 +2658,17 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                         || (bounds.contains(point) && !inner.contains(point))) {
                                     requestFocusInWindow();
                                     selectLane(i);
+                                    if (e.getClickCount() == 2) editLane(i);
                                     return;
+                                }
+                            }
+                            if (e.getClickCount() == 2) {
+                                for (int i = lanes.size() - 1; i >= 0; i--) {
+                                    if (lanes.get(i).bounds.contains(point)) {
+                                        selectLane(i);
+                                        editLane(i);
+                                        return;
+                                    }
                                 }
                             }
                             selectedLane = -1;
@@ -2683,6 +2736,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     + ". Alt Up and Alt Down select annotation lanes.");
             scrollRectToVisible(viewRect(selected.header));
             repaint();
+        }
+
+        private void editLane(int lane) {
+            AnnotationIndex.Entry annotation = lanes.get(lane).annotation;
+            guard(() -> {
+                requireCurrent();
+                if (confirmSaveAnnotations())
+                    showAnnotationEditor(annotation.bank, annotation.address, "Edit annotation", annotation);
+            });
         }
 
         private void selectAnnotation(long id) {
@@ -2825,6 +2887,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             g.scale(scale, scale);
             Rectangle clip = g.getClipBounds();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (candidateLane != null) {
+                g.setColor(new Color(55, 120, 200, 40));
+                g.fillRoundRect(candidateLane.x, candidateLane.y, candidateLane.width, candidateLane.height, 14, 14);
+                g.setColor(new Color(55, 120, 200));
+                g.drawRoundRect(candidateLane.x, candidateLane.y, candidateLane.width, candidateLane.height, 14, 14);
+            }
             for (int i = 0; i < lanes.size(); i++) {
                 Rectangle bounds = lanes.get(i).bounds;
                 Color color = Color.getHSBColor((i * .19f) % 1f, .55f, .78f);
@@ -2901,6 +2969,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 String text = flow.mnemonic(entry.getKey());
                 g.drawString(
                         text.length() > 28 ? text.substring(0, 28) : text, box.x + 8, box.y + addressY + 20);
+            }
+            if (selectionArea != null) {
+                g.setColor(new Color(55, 120, 200, 35));
+                g.fill(selectionArea);
+                g.setColor(new Color(55, 120, 200));
+                g.draw(selectionArea);
             }
             g.dispose();
         }

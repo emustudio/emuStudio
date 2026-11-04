@@ -35,7 +35,7 @@ public class ProgramIndexBreakpointBenchmark {
         ProgramIndex create() {
             ProgramIndex created = ProgramIndex.create("rules", size, banks, common);
             try (ProgramIndex.BreakpointUpdate update = created.updateBreakpoints(created.snapshot())) {
-                for (int i = 0; i < rules; i++) update.put(i, address(i), i % 3 != 2, condition(i));
+                for (int i = 0; i < rules; i++) update.put(i, address(i), i % 3 != 2);
                 update.commit();
             }
             return created;
@@ -45,7 +45,6 @@ public class ProgramIndexBreakpointBenchmark {
             if (!layout.equals("single") && rule % 16 <= 1) return common + rule / 16;
             return layout.equals("sparse") ? rule * 100003 : rule * 3;
         }
-        String condition(int rule) { return rule % 4 == 0 ? "A == 1" : ""; }
         int hitRule() {
             if (rules == 0) return 0;
             int rule = (cursor++ & Integer.MAX_VALUE) % rules;
@@ -85,7 +84,7 @@ public class ProgramIndexBreakpointBenchmark {
     public ProgramIndex.CommitResult editOneRule(Rules state) {
         try (ProgramIndex.BreakpointUpdate update = state.index.updateBreakpoints(state.index.snapshot())) {
             if (state.rules == 0) update.remove(0);
-            else update.put(0, state.address(0), (state.cursor++ & 1) == 0, "");
+            else update.put(0, state.address(0), (state.cursor++ & 1) == 0);
             return update.commit();
         }
     }

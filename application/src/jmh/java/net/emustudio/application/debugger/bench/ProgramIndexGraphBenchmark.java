@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-/** Frozen production incoming-edge scan vs CSR, with identical explicit edge semantics. */
+/** Frozen production edge scan vs CSR, with identical explicit edge semantics. */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 3, time = 1)
@@ -53,19 +53,6 @@ public class ProgramIndexGraphBenchmark {
         }
 
         int nextAddress() { return addresses[queries[(cursor++) & (queries.length - 1)]]; }
-    }
-
-    @Benchmark public long oldPredecessors(Graphs state) {
-        long result = 0;
-        for (BaselineFlowAnalysis.Edge edge : state.baseline.callers(state.nextAddress()))
-            result += (edge.from ^ edge.to) + 1L;
-        return result;
-    }
-
-    @Benchmark public long indexedPredecessors(Graphs state) {
-        state.sink.checksum = 0;
-        state.snapshot.forEachPredecessor(state.bank, state.nextAddress(), state.sink);
-        return state.sink.checksum;
     }
 
     @Benchmark public long indexedSuccessors(Graphs state) {

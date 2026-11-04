@@ -336,7 +336,7 @@ public class DebugTableModelImplTest {
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
             for (int at = 0; at < 16; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR, false);
+                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR);
             edit.commit();
         }
         AtomicInteger calls = new AtomicInteger();
@@ -374,9 +374,9 @@ public class DebugTableModelImplTest {
         ProgramIndex index = ProgramIndex.create("operand-edit", 16, 1, 16);
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
-            edit.putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR, false);
+            edit.putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR);
             for (int at = 2; at < 16; at++)
-                edit.putInstruction(new ProgramIndex.Range(0, at, at + 1), ProgramIndex.InstructionKind.LINEAR, false);
+                edit.putInstruction(new ProgramIndex.Range(0, at, at + 1), ProgramIndex.InstructionKind.LINEAR);
             edit.commit();
         }
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
@@ -416,12 +416,12 @@ public class DebugTableModelImplTest {
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
             for (int at = 0; at < 8; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR, false);
-            edit.putInstruction(new ProgramIndex.Range(1, 0, 3), ProgramIndex.InstructionKind.LINEAR, false);
-            edit.putInstruction(new ProgramIndex.Range(1, 3, 6), ProgramIndex.InstructionKind.LINEAR, false);
-            edit.putInstruction(new ProgramIndex.Range(1, 6, 8), ProgramIndex.InstructionKind.LINEAR, false);
+                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR);
+            edit.putInstruction(new ProgramIndex.Range(1, 0, 3), ProgramIndex.InstructionKind.LINEAR);
+            edit.putInstruction(new ProgramIndex.Range(1, 3, 6), ProgramIndex.InstructionKind.LINEAR);
+            edit.putInstruction(new ProgramIndex.Range(1, 6, 8), ProgramIndex.InstructionKind.LINEAR);
             for (int at = 8; at < 16; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR, false);
+                edit.putInstruction(new ProgramIndex.Range(0, at, at + 2), ProgramIndex.InstructionKind.LINEAR);
             edit.commit();
         }
         AtomicInteger calls = new AtomicInteger(), bank = new AtomicInteger();
@@ -456,7 +456,7 @@ public class DebugTableModelImplTest {
         assertEquals(4, model.getLocationAt(1));
         int initialCalls = calls.get();
         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.put(1, 4, true, "");
+            edit.put(1, 4, true);
             edit.commit();
         }
         assertEquals(4, model.getLocationAt(1));

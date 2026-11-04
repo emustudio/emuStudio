@@ -41,7 +41,7 @@ public class AnalysisTasksTest {
                         }
                     } else {
                         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-                            edit.put(7, 0, true, "").commit();
+                            edit.put(7, 0, true).commit();
                         }
                     }
                     release.countDown();

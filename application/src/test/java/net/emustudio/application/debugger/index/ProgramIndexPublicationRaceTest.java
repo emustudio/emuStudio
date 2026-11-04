@@ -42,12 +42,15 @@ public class ProgramIndexPublicationRaceTest {
                 Snapshot current = index.snapshot();
                 int[] entries = {0};
                 if (content) current.forEachAnnotation(annotation -> entries[0]++);
-                else current.forEachBreakpoint(breakpoint -> entries[0]++);
+                else {
+                    current.forEachExecutionBreakpoint(0, breakpoint -> entries[0]++);
+                    current.forEachExecutionBreakpoint(1, breakpoint -> entries[0]++);
+                }
                 assertEquals("The losing edit publishes no partial entries", 2, entries[0]);
                 assertEquals(content ? 1 : 0, current.contentRevision());
-                assertEquals(content ? 0 : 1, current.breakpointRevision());
                 assertEquals(0, base.contentRevision());
-                assertEquals(0, base.breakpointRevision());
+                assertFalse(base.hasExecutionBreakpoint(0));
+                assertFalse(base.hasExecutionBreakpoint(1));
             }
         } finally { workers.shutdownNow(); }
     }
@@ -56,16 +59,16 @@ public class ProgramIndexPublicationRaceTest {
                                      CountDownLatch staged, CountDownLatch release) throws InterruptedException {
         if (content) {
             try (ContentUpdate update = index.updateContent(base)) {
-                update.putAnnotation(owner, 1, new Range(0, 0, 1), Kinds.COMMENT, "first");
-                update.putAnnotation(owner, 2, new Range(1, 1, 2), Kinds.COMMENT, "second");
+                update.putAnnotation(owner, 1, new Range(0, 0, 1), "comment", "first");
+                update.putAnnotation(owner, 2, new Range(1, 1, 2), "comment", "second");
                 staged.countDown();
                 assertTrue(release.await(5, TimeUnit.SECONDS));
                 return update.commit();
             }
         }
         try (BreakpointUpdate update = index.updateBreakpoints(base)) {
-            update.put(owner * 2, 0, true, "");
-            update.put(owner * 2 + 1, 1, false, "A == 1");
+            update.put(owner * 2, 0, true);
+            update.put(owner * 2 + 1, 1, true);
             staged.countDown();
             assertTrue(release.await(5, TimeUnit.SECONDS));
             return update.commit();

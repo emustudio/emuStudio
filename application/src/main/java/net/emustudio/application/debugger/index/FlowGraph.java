@@ -16,8 +16,8 @@ import java.util.function.Consumer;
 public final class FlowGraph {
     private static final ProgramIndex.EdgeKind[] KINDS = ProgramIndex.EdgeKind.values();
     private final AddressTable nodes;
-    private final int[] addresses, outgoingOffsets, incomingOffsets, outgoing, incoming;
-    private final byte[] outgoingKinds, incomingKinds;
+    private final int[] addresses, outgoingOffsets, outgoing;
+    private final byte[] outgoingKinds;
     private final ProgramIndex.Instruction[] instructions;
 
     FlowGraph(ProgramIndex.Layout layout, Map<Long, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
@@ -37,27 +37,20 @@ public final class FlowGraph {
         }
         nodes = new AddressTable(layout, ids);
         outgoingOffsets = new int[keys.size() + 1];
-        incomingOffsets = new int[keys.size() + 1];
         for (Edge e : edges) {
             outgoingOffsets[ids.get(e.from)]++;
-            incomingOffsets[ids.get(e.to)]++;
         }
         for (i = 1; i < outgoingOffsets.length; i++) {
             outgoingOffsets[i] += outgoingOffsets[i - 1];
-            incomingOffsets[i] += incomingOffsets[i - 1];
         }
         outgoing = new int[edges.size()];
-        incoming = new int[edges.size()];
         outgoingKinds = new byte[edges.size()];
-        incomingKinds = new byte[edges.size()];
-        int[] outCursor = outgoingOffsets.clone(), inCursor = incomingOffsets.clone();
+        int[] outCursor = outgoingOffsets.clone();
         for (Edge e : edges) {
             int from = ids.get(e.from) - 1, to = ids.get(e.to) - 1;
-            int outAt = outCursor[from]++, inAt = inCursor[to]++;
+            int outAt = outCursor[from]++;
             outgoing[outAt] = to;
-            incoming[inAt] = from;
             outgoingKinds[outAt] = (byte) e.kind.ordinal();
-            incomingKinds[inAt] = (byte) e.kind.ordinal();
         }
     }
 
@@ -76,15 +69,6 @@ public final class FlowGraph {
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
             int to = outgoing[at];
             visitor.accept(addresses[id], addresses[to], KINDS[outgoingKinds[at]]);
-        }
-    }
-
-    void predecessors(int bank, int address, ProgramIndex.EdgeVisitor visitor) {
-        int id = nodes.get(bank, address) - 1;
-        if (id < 0) return;
-        for (int at = incomingOffsets[id]; at < incomingOffsets[id + 1]; at++) {
-            int from = incoming[at];
-            visitor.accept(addresses[from], addresses[id], KINDS[incomingKinds[at]]);
         }
     }
 

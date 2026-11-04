@@ -55,7 +55,7 @@ public class ProgramIndexTest {
     @Test public void crossingRangesShareSuffixAndNeverDuplicateLogicalEntries() {
         ProgramIndex index = create("banks", 16, 3, 8);
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.putAnnotation(1, 1, new Range(2, 6, 11), Kinds.REGION, "crossing");
+            edit.putAnnotation(1, 1, new Range(2, 6, 11), "region", "crossing");
             edit.putAnnotation(1, 2, new Range(1, 6, 7), Kinds.LABEL, "same");
             edit.putAnnotation(2, 3, new Range(2, 6, 7), Kinds.LABEL, "same");
             edit.putAnnotation(2, 4, new Range(1, 9, 10), "plugin:custom", "common");
@@ -70,7 +70,7 @@ public class ProgramIndexTest {
         snapshot.forEachAnnotationStartingAt(1, 9, starts::add);
         assertEquals(0, starts.get(0).range().bank);
         try (ContentUpdate edit = index.updateContent(snapshot)) {
-            edit.removeAnnotations(1).putAnnotation(1, 10, new Range(0, 0, 1), Kinds.COMMENT, "");
+            edit.removeAnnotations(1).putAnnotation(1, 10, new Range(0, 0, 1), "comment", "");
             edit.commit();
         }
         List<Annotation> all = new ArrayList<>();
@@ -101,7 +101,7 @@ public class ProgramIndexTest {
         Snapshot before = index.snapshot();
         index.memoryChanged();
         List<Mapping> historical = new ArrayList<>();
-        index.snapshot().forEachMapping(historical::add);
+        index.snapshot().forEachMappingAt(0, 0, historical::add);
         assertTrue(historical.stream().allMatch(m -> m.memoryRevision() == before.memoryRevision()));
         assertNotEquals(index.snapshot().memoryRevision(), historical.get(0).memoryRevision());
         assertEquals(0, before.memoryRevision());
@@ -111,11 +111,11 @@ public class ProgramIndexTest {
         ProgramIndex index = create("rules", 128, 3, 96);
         assertFalse(index.snapshot().hasExecutionBreakpoint(0));
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.put(1, 0, true, "R0 == 3");
-            edit.put(2, 0, true, "");
-            edit.put(3, 63, true, "");
-            edit.put(4, 1, false, "");
-            edit.put(5, 127, true, "");
+            edit.put(1, 0, true);
+            edit.put(2, 0, true);
+            edit.put(3, 63, true);
+            edit.put(4, 1, false);
+            edit.put(5, 127, true);
             edit.commit();
         }
         Snapshot old = index.snapshot();
@@ -127,12 +127,9 @@ public class ProgramIndexTest {
         List<Breakpoint> rules = new ArrayList<>();
         old.forEachExecutionBreakpoint(0, rules::add);
         assertEquals(2, rules.size());
-        assertEquals("R0 == 3", rules.get(0).condition());
-        rules.clear();
-        old.forEachBreakpoint(rules::add);
-        assertEquals(5, rules.size());
+        assertEquals(Set.of(1L, 2L), Set.of(rules.get(0).id(), rules.get(1).id()));
         try (BreakpointUpdate edit = index.updateBreakpoints(old)) {
-            edit.remove(1).put(4, 1, true, "");
+            edit.remove(1).put(4, 1, true);
             edit.commit();
         }
         assertTrue(index.snapshot().hasExecutionBreakpoint(0));
@@ -148,9 +145,9 @@ public class ProgramIndexTest {
         ProgramIndex index = create("flow", 32, 3, 16);
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(true)
-                    .putInstruction(new Range(2, 0, 3), InstructionKind.CALL, false)
-                    .putInstruction(new Range(2, 3, 4), InstructionKind.JUMP, true)
-                    .putInstruction(new Range(2, 16, 17), InstructionKind.RETURN, false)
+                    .putInstruction(new Range(2, 0, 3), InstructionKind.CALL)
+                    .putInstruction(new Range(2, 3, 4), InstructionKind.JUMP)
+                    .putInstruction(new Range(2, 16, 17), InstructionKind.RETURN)
                     .putEdge(2, 0, 3, EdgeKind.FALL_THROUGH)
                     .putEdge(2, 0, 3, EdgeKind.CALL)
                     .putEdge(2, 0, 3, EdgeKind.CALL)
@@ -163,7 +160,7 @@ public class ProgramIndexTest {
         assertNotNull(snapshot.instructionAt(2, 0));
         assertNull(snapshot.instructionAt(2, 1));
         assertNull(snapshot.instructionAt(0, 0));
-        assertTrue(snapshot.instructionAt(2, 3).unresolvedSuccessors());
+        assertEquals(InstructionKind.JUMP, snapshot.instructionAt(2, 3).kind());
         assertEquals(0, snapshot.instructionAt(1, 16).cells().bank);
         assertEquals(Set.of("0>3:FALL_THROUGH", "0>3:CALL", "3>3:BRANCH"), edges(snapshot, 2, 3, true));
         assertNull(snapshot.instructionAt(0, 20));
@@ -180,7 +177,7 @@ public class ProgramIndexTest {
         buildTinyFlow(index);
         Snapshot historical = index.snapshot();
         try (ContentUpdate edit = index.updateContent(historical)) {
-            edit.putAnnotation(1, 1, new Range(0, 1, 2), Kinds.COMMENT, "operand").commit();
+            edit.putAnnotation(1, 1, new Range(0, 1, 2), "comment", "operand").commit();
         }
         assertEquals(FlowState.CURRENT, index.snapshot().flowState());
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
@@ -210,33 +207,33 @@ public class ProgramIndexTest {
         assertThrows(IllegalStateException.class, first::commit);
         first.close(); first.close();
         ContentUpdate closed = index.updateContent(index.snapshot());
-        closed.putAnnotation(1, 3, new Range(0, 2, 3), Kinds.COMMENT, "discard");
+        closed.putAnnotation(1, 3, new Range(0, 2, 3), "comment", "discard");
         closed.close();
         assertThrows(IllegalStateException.class, closed::commit);
         assertTrue(annotationsAt(index.snapshot(), 0, 2).isEmpty());
         Snapshot beforeInvalid = index.snapshot();
         ContentUpdate invalid = index.updateContent(beforeInvalid);
-        invalid.putAnnotation(1, 4, new Range(0, 3, 4), Kinds.COMMENT, "discard");
+        invalid.putAnnotation(1, 4, new Range(0, 3, 4), "comment", "discard");
         invalid.replaceFlow(false).putEdge(0, 5, 6, EdgeKind.CALL);
         assertThrows(IllegalArgumentException.class, invalid::commit);
         assertSame(beforeInvalid, index.snapshot());
         BreakpointUpdate b1 = index.updateBreakpoints(beforeInvalid), b2 = index.updateBreakpoints(beforeInvalid);
-        b1.put(1, 0, true, "").commit();
-        assertEquals(CommitResult.STALE, b2.put(2, 1, true, "").commit());
+        b1.put(1, 0, true).commit();
+        assertEquals(CommitResult.STALE, b2.put(2, 1, true).commit());
     }
 
     @Test public void validationFailurePoisonsEarlierStagedEntriesInBothEditKinds() {
         ProgramIndex index = create("poison", 8, 1, 8);
         Snapshot initial = index.snapshot();
         ContentUpdate content = index.updateContent(initial);
-        content.putAnnotation(1, 1, new Range(0, 0, 1), Kinds.COMMENT, "must not publish");
+        content.putAnnotation(1, 1, new Range(0, 0, 1), "comment", "must not publish");
         assertThrows(IllegalArgumentException.class,
                 () -> content.putAnnotation(1, 2, new Range(0, 1, 2), Kinds.LABEL, ""));
         assertThrows(IllegalStateException.class, content::commit);
         assertSame(initial, index.snapshot());
         BreakpointUpdate breakpoint = index.updateBreakpoints(initial);
-        breakpoint.put(1, 0, true, "");
-        assertThrows(IllegalArgumentException.class, () -> breakpoint.put(2, 8, true, ""));
+        breakpoint.put(1, 0, true);
+        assertThrows(IllegalArgumentException.class, () -> breakpoint.put(2, 8, true));
         assertThrows(IllegalStateException.class, breakpoint::commit);
         assertSame(initial, index.snapshot());
         content.close(); breakpoint.close();
@@ -258,7 +255,7 @@ public class ProgramIndexTest {
                 });
                 Future<CommitResult> breakpoint = executor.submit(() -> {
                     try (BreakpointUpdate edit = index.updateBreakpoints(base)) {
-                        edit.put(1, 0, true, "");
+                        edit.put(1, 0, true);
                         ready.countDown(); await(publish);
                         return edit.commit();
                     }
@@ -269,7 +266,6 @@ public class ProgramIndexTest {
                 assertEquals(Set.of(1L), annotationsAt(index.snapshot(), 0, 0));
                 assertTrue(index.snapshot().hasExecutionBreakpoint(0));
                 assertEquals(base.contentRevision() + 1, index.snapshot().contentRevision());
-                assertEquals(base.breakpointRevision() + 1, index.snapshot().breakpointRevision());
             }
         } finally { executor.shutdownNow(); }
     }
@@ -282,13 +278,13 @@ public class ProgramIndexTest {
         try {
             Future<CommitResult> result = executor.submit(() -> {
                 try (ContentUpdate edit = index.updateContent(base)) {
-                    edit.replaceFlow(false).putInstruction(new Range(0, 0, 2), InstructionKind.STOP, false);
+                    edit.replaceFlow(false).putInstruction(new Range(0, 0, 2), InstructionKind.STOP);
                     staged.countDown(); await(changed);
                     return edit.commit();
                 }
             });
             BreakpointUpdate breakpoint = index.updateBreakpoints(base);
-            breakpoint.put(1, 0, true, "");
+            breakpoint.put(1, 0, true);
             await(staged); index.memoryChanged(); changed.countDown();
             assertEquals(CommitResult.STALE, result.get(10, TimeUnit.SECONDS));
             assertEquals(CommitResult.PUBLISHED, breakpoint.commit());
@@ -302,12 +298,12 @@ public class ProgramIndexTest {
         ProgramIndex index = create("sparse", Integer.MAX_VALUE, 1000000, 2000000000);
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.putMapping(1, 1, new Range(999999, 7, Integer.MAX_VALUE), source(0, 1));
-            edit.putAnnotation(1, 2, new Range(999999, 1999999999, Integer.MAX_VALUE), Kinds.REGION, "large");
-            edit.replaceFlow(false).putInstruction(new Range(999999, 7, 9), InstructionKind.JUMP, false)
+            edit.putAnnotation(1, 2, new Range(999999, 1999999999, Integer.MAX_VALUE), "region", "large");
+            edit.replaceFlow(false).putInstruction(new Range(999999, 7, 9), InstructionKind.JUMP)
                     .putEdge(999999, 7, Integer.MAX_VALUE - 1, EdgeKind.BRANCH).commit();
         }
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.put(1, Integer.MAX_VALUE - 1, true, "").commit();
+            edit.put(1, Integer.MAX_VALUE - 1, true).commit();
         }
         assertEquals(List.of(1L), mappingIds(index.snapshot(), 999999, 7));
         assertEquals(List.of(1L), mappingIds(index.snapshot(), 0, Integer.MAX_VALUE - 1));
@@ -326,7 +322,7 @@ public class ProgramIndexTest {
                 int start = random.nextInt(64), end = start + 1 + random.nextInt(64 - start);
                 Range r = new Range(random.nextInt(3), start, end);
                 ranges.add(r);
-                edit.putAnnotation(i % 7, i, r, Kinds.REGION, "r" + i);
+                edit.putAnnotation(i % 7, i, r, "region", "r" + i);
                 edit.putMapping(i % 7, i, r, source(i, i + 1));
             }
             edit.commit();
@@ -405,7 +401,7 @@ public class ProgramIndexTest {
             edit.putAnnotation(1, 7, new Range(0, 0, 1), Kinds.LABEL, "zero");
             edit.putAnnotation(1, 8, new Range(0, 1023, 1024), Kinds.LABEL, "last-in-page");
             edit.replaceFlow(false).putInstruction(new Range(0, Integer.MAX_VALUE - 1, Integer.MAX_VALUE),
-                    InstructionKind.STOP, false).commit();
+                    InstructionKind.STOP).commit();
         }
         Snapshot snapshot = index.snapshot();
         assertEquals(List.of(1L), mappingIds(snapshot, 0, 0));
@@ -446,7 +442,7 @@ public class ProgramIndexTest {
                 SourceSpan span = new SourceSpan("file:///" + random.nextInt(3) + "/same.asm", random.nextInt(3), from, to);
                 sources.add(span);
                 edit.putMapping(1, i, new Range(0, i, i + 1), span);
-                edit.putInstruction(new Range(0, i, i + 1), InstructionKind.LINEAR, false);
+                edit.putInstruction(new Range(0, i, i + 1), InstructionKind.LINEAR);
             }
             for (int i = 0; i < 700; i++) {
                 int from = random.nextInt(200), to = random.nextInt(256);
@@ -483,7 +479,7 @@ public class ProgramIndexTest {
 
     private static void buildTinyFlow(ProgramIndex index) {
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.replaceFlow(false).putInstruction(new Range(0, 0, 3), InstructionKind.LINEAR, false)
+            edit.replaceFlow(false).putInstruction(new Range(0, 0, 3), InstructionKind.LINEAR)
                     .putEdge(0, 0, 3, EdgeKind.FALL_THROUGH).commit();
         }
     }
@@ -517,8 +513,14 @@ public class ProgramIndexTest {
     private static Set<String> edges(Snapshot snapshot, int bank, int address, boolean incoming) {
         Set<String> edges = new HashSet<>();
         EdgeVisitor visitor = (from, to, kind) -> assertTrue("Duplicate edge", edges.add(edge(from, to, kind)));
-        if (incoming) snapshot.forEachPredecessor(bank, address, visitor);
-        else snapshot.forEachSuccessor(bank, address, visitor);
+        if (incoming) {
+            int physical = snapshot.layout().physicalBank(bank, address);
+            snapshot.forEachInstruction(instruction -> snapshot.forEachSuccessor(instruction.cells().bank,
+                    instruction.cells().start, (from, to, kind) -> {
+                        if (to == address && snapshot.layout().physicalBank(instruction.cells().bank, to) == physical)
+                            visitor.accept(from, to, kind);
+                    }));
+        } else snapshot.forEachSuccessor(bank, address, visitor);
         return edges;
     }
 }

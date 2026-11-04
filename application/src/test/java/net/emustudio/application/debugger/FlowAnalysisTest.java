@@ -31,13 +31,13 @@ public class FlowAnalysisTest {
         assertEquals("CALL 4", analysis.mnemonic(0));
         assertEquals("RET", analysis.mnemonic(4));
         assertEquals(2, edges(analysis).size());
-        FlowAnalysis.Edge call = analysis.predecessors(4).get(0);
+        FlowAnalysis.Edge call = predecessors(analysis, 4).get(0);
         assertEquals(0, call.from);
         assertEquals(4, call.to);
         assertEquals("call", call.kind);
-        assertEquals("next", analysis.predecessors(1).get(0).kind);
-        assertEquals(1, analysis.callSites(4).size());
-        assertTrue(analysis.callSites(1).isEmpty());
+        assertEquals("next", predecessors(analysis, 1).get(0).kind);
+        assertEquals(1, callSites(analysis, 4).size());
+        assertTrue(callSites(analysis, 1).isEmpty());
         assertFalse(analysis.truncated());
     }
 
@@ -51,8 +51,8 @@ public class FlowAnalysisTest {
 
         assertEquals(List.of(0, 2), addresses(analysis));
         assertEquals(4, edges(analysis).size());
-        assertEquals(3, analysis.predecessors(0).size());
-        assertEquals(1, analysis.callSites(0).size());
+        assertEquals(3, predecessors(analysis, 0).size());
+        assertEquals(1, callSites(analysis, 0).size());
         assertFalse(analysis.truncated());
         verify(disassembler).getFlow(0);
         verify(disassembler).getFlow(2);
@@ -63,12 +63,13 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "NOP", InstructionFlow.Kind.LINEAR, 1, true, List.of());
 
-        FlowAnalysis analysis = reachable(disassembler, 0, 1, index(4));
+        ProgramIndex index = index(4);
+        FlowAnalysis analysis = reachable(disassembler, 0, 1, index);
 
         assertEquals(List.of(0), addresses(analysis));
         assertTrue(analysis.truncated());
-        assertNull(analysis.snapshot().instructionAt(0, 1));
-        assertEquals("next", analysis.predecessors(1).get(0).kind);
+        assertNull(index.snapshot().instructionAt(0, 1));
+        assertEquals("next", predecessors(analysis, 1).get(0).kind);
         verify(disassembler, never()).getFlow(1);
     }
 
@@ -85,7 +86,7 @@ public class FlowAnalysisTest {
         FlowAnalysis analysis = reachable(disassembler, 0, 10, index);
 
         assertEquals(List.of(0), addresses(analysis));
-        assertEquals(3, analysis.predecessors(3).get(0).to);
+        assertEquals(3, predecessors(analysis, 3).get(0).to);
         assertFalse(analysis.truncated());
         verify(disassembler, never()).getFlow(3);
     }
@@ -95,11 +96,12 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "JP (HL)", InstructionFlow.Kind.JUMP, 1, false, List.of());
 
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, index(4));
+        ProgramIndex index = index(4);
+        FlowAnalysis analysis = reachable(disassembler, 0, 10, index);
 
         assertEquals(List.of(0), addresses(analysis));
         assertTrue(edges(analysis).isEmpty());
-        assertTrue(analysis.snapshot().instructionAt(0, 0).unresolvedSuccessors());
+        assertEquals(ProgramIndex.InstructionKind.JUMP, index.snapshot().instructionAt(0, 0).kind());
         assertFalse(analysis.truncated());
     }
 
@@ -113,7 +115,7 @@ public class FlowAnalysisTest {
         FlowAnalysis analysis = reachable(disassembler, 0, 10, index(16));
 
         assertEquals(List.of(0, 1), addresses(analysis));
-        assertEquals(1, analysis.predecessors(8).size());
+        assertEquals(1, predecessors(analysis, 8).size());
         assertFalse(analysis.truncated());
         verify(disassembler).getFlow(8);
     }
@@ -127,36 +129,6 @@ public class FlowAnalysisTest {
 
         when(disassembler.getNextInstructionPosition(0)).thenReturn(5);
         assertTrue(addresses(reachable(disassembler, 0, 10, index(4))).isEmpty());
-    }
-
-    @Test
-    public void sweepUsesExplicitExtentsAndQueriesIncomingWithoutRedecoding() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "JP 4", InstructionFlow.Kind.JUMP, 2, false, List.of(4));
-        instruction(disassembler, 2, "CALL 4", InstructionFlow.Kind.CALL, 4, true, List.of(4));
-        instruction(disassembler, 4, "HALT", InstructionFlow.Kind.STOP, 5, false, List.of());
-        ProgramIndex index = index(5);
-
-        FlowAnalysis analysis = FlowAnalysis.sweep(disassembler, 10, index, 0).publish();
-        clearInvocations(disassembler);
-
-        assertEquals(List.of(0, 2, 4), addresses(analysis));
-        assertEquals(3, analysis.predecessors(4).size());
-        assertEquals(1, analysis.callSites(4).size());
-        assertFalse(analysis.truncated());
-        verifyNoInteractions(disassembler);
-    }
-
-    @Test
-    public void sweepMarksItsWorkBoundRatherThanClaimingCompleteMemoryCoverage() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "NOP", InstructionFlow.Kind.LINEAR, 1, true, List.of());
-
-        FlowAnalysis analysis = FlowAnalysis.sweep(disassembler, 1, index(65536), 0).publish();
-
-        assertTrue(analysis.truncated());
-        assertEquals(List.of(0), addresses(analysis));
-        verify(disassembler, never()).getFlow(1);
     }
 
     @Test
@@ -181,13 +153,13 @@ public class FlowAnalysisTest {
 
         FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, index, 1).publish();
 
-        assertNotNull(analysis.snapshot().instructionAt(1, 0));
-        assertNull(analysis.snapshot().instructionAt(0, 0));
-        assertSame(analysis.snapshot().instructionAt(0, 6), analysis.snapshot().instructionAt(1, 6));
-        FlowAnalysis.Edge call = analysis.predecessors(6).get(0);
+        assertNotNull(index.snapshot().instructionAt(1, 0));
+        assertNull(index.snapshot().instructionAt(0, 0));
+        assertSame(index.snapshot().instructionAt(0, 6), index.snapshot().instructionAt(1, 6));
+        FlowAnalysis.Edge call = predecessors(analysis, 6).get(0);
         assertEquals(0, call.from);
         assertEquals(6, call.to);
-        FlowAnalysis.Edge branch = analysis.predecessors(0).get(0);
+        FlowAnalysis.Edge branch = predecessors(analysis, 0).get(0);
         assertEquals(6, branch.from);
         assertEquals(0, branch.to);
     }
@@ -199,13 +171,14 @@ public class FlowAnalysisTest {
         ProgramIndex index = index(4);
         FlowAnalysis analysis = reachable(disassembler, 0, 1, index);
 
-        assertEquals(2, analysis.snapshot().instructionAt(0, 0).cells().end);
+        ProgramIndex.Snapshot old = index.snapshot();
+        assertEquals(2, old.instructionAt(0, 0).cells().end);
         index.memoryChanged(); // Adapter reports a write to either covered cell, including address 1.
 
         assertFalse(analysis.isCurrent(index));
         assertEquals(ProgramIndex.FlowState.STALE, index.snapshot().flowState());
         assertNull(index.snapshot().instructionAt(0, 0));
-        assertNotNull(analysis.snapshot().instructionAt(0, 0));
+        assertNotNull(old.instructionAt(0, 0));
         assertFalse(analysis.isCurrent(index(4)));
     }
 
@@ -216,7 +189,7 @@ public class FlowAnalysisTest {
         ProgramIndex index = index(4);
         FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index, 0);
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 0, 1), ProgramIndex.Kinds.COMMENT, "changed");
+            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 0, 1), "comment", "changed");
             update.commit();
         }
         assertThrows(IllegalStateException.class, pending::publish);
@@ -235,7 +208,7 @@ public class FlowAnalysisTest {
         ProgramIndex index = index(4);
         FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index, 0);
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-            update.put(7, 0, true, "");
+            update.put(7, 0, true);
             update.commit();
         }
 
@@ -293,6 +266,22 @@ public class FlowAnalysisTest {
     private static List<String> edges(FlowAnalysis analysis) {
         List<String> result = new ArrayList<>();
         analysis.forEachEdge((from, to, kind) -> result.add(from + ":" + to + ":" + kind));
+        return result;
+    }
+
+    private static List<FlowAnalysis.Edge> predecessors(FlowAnalysis analysis, int address) {
+        List<FlowAnalysis.Edge> result = new ArrayList<>();
+        analysis.forEachEdge((from, to, kind) -> {
+            if (to == address) result.add(new FlowAnalysis.Edge(from, to, kind));
+        });
+        return result;
+    }
+
+    private static List<FlowAnalysis.Edge> callSites(FlowAnalysis analysis, int address) {
+        List<FlowAnalysis.Edge> result = new ArrayList<>();
+        analysis.forEachEdge((from, to, kind) -> {
+            if (to == address && kind == ProgramIndex.EdgeKind.CALL) result.add(new FlowAnalysis.Edge(from, to, kind));
+        });
         return result;
     }
 
