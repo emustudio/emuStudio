@@ -42,12 +42,6 @@ public class RaspDisassembler implements Disassembler {
     private static boolean isJump(int opcode) { return opcode == JMP || opcode == JZ || opcode == JGTZ; }
 
     @Override
-    public Optional<Disassembler> forBank(int bank) {
-        if (bank != 0) throw new IllegalArgumentException("RASP has one memory bank");
-        return Optional.of(this);
-    }
-
-    @Override
     public int getNextInstructionPosition(int address) throws IndexOutOfBoundsException {
         int opcode = memory.read(address);
         if (!memory.isInstruction(opcode) || opcode == HALT) {

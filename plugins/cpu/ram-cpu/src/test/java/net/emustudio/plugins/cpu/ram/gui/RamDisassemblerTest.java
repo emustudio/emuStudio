@@ -82,7 +82,7 @@ public class RamDisassemblerTest {
     }
 
     @Test
-    public void explicitBankDecoderReadsLiveRamOperands() throws Exception {
+    public void decoderReadsLiveRamOperands() throws Exception {
         AtomicReference<String> spelling = new AtomicReference<>("5");
         RamValue value = createNiceMock(RamValue.class);
         expect(value.getStringRepresentation()).andAnswer(spelling::get).anyTimes();
@@ -95,14 +95,11 @@ public class RamDisassemblerTest {
         expect(memory.read(0)).andReturn(instruction).anyTimes();
         replay(memory);
         RamDisassembler live = new RamDisassembler(memory);
-        net.emustudio.emulib.plugins.cpu.Disassembler bank = live.forBank(0).orElseThrow();
-        assertTrue(bank.disassemble(0).mnemo.contains("5"));
+        assertTrue(live.disassemble(0).mnemo.contains("5"));
 
         spelling.set("99");
 
-        assertTrue(bank.disassemble(0).mnemo.contains("99"));
         assertTrue(live.disassemble(0).mnemo.contains("99"));
-        assertThrows(IllegalArgumentException.class, () -> live.forBank(1));
     }
 }
 

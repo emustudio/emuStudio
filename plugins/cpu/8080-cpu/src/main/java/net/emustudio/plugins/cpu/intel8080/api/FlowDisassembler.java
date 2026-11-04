@@ -34,7 +34,7 @@ public final class FlowDisassembler implements Disassembler {
     }
 
     private int byteAt(int at) {
-        return memory.readBank(at & 65535, memory.getSelectedBank()) & 255;
+        return memory.read(at & 65535) & 255;
     }
 
     @Override

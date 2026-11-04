@@ -312,23 +312,17 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         applyCurrent(stamp, true, "Analysis discarded: memory, source or metadata changed", () -> {});
     }
 
-    /** Decode live, explicit-bank memory off the UI thread; publish only while its paused root is current. */
-    public FlowAnalysis analyzeFlow(int bank, int start, int limit) {
+    /** Use the CPU's wired decoder off the UI thread; publish only while its paused root is current. */
+    public FlowAnalysis analyzeFlow(int start, int limit) {
         Stamp stamp = liveStamp();
+        int bank = memory == null ? 0 : memory.getSelectedBank();
         stamp.base.layout().physicalBank(bank, start);
-        Disassembler original = cpu.getDisassembler();
-        Optional<Disassembler> explicit = original.forBank(bank);
-        Disassembler selected = explicit.orElseGet(() -> {
-            if (bank != (memory == null ? 0 : memory.getSelectedBank()))
-                throw new IllegalStateException("Flow analysis for this inspection bank is unsupported by this CPU");
-            return original;
-        });
         Runnable validate = () -> {
             requireCurrent(stamp);
-            if (explicit.isEmpty() && bank != (memory == null ? 0 : memory.getSelectedBank()))
+            if (bank != (memory == null ? 0 : memory.getSelectedBank()))
                 throw new IllegalStateException("Analysis discarded: mapped memory bank changed");
         };
-        Disassembler decoder = guardedDecoder(selected, validate);
+        Disassembler decoder = guardedDecoder(cpu.getDisassembler(), validate);
         FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, stamp.index, stamp.base, bank);
         synchronized (this) {
             validate.run();

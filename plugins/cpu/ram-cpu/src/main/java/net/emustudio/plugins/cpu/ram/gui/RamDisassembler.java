@@ -9,7 +9,6 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
-import java.util.Optional;
 
 public class RamDisassembler implements Disassembler {
     private final RamMemoryContext memory;
@@ -32,12 +31,6 @@ public class RamDisassembler implements Disassembler {
         if (operandValue != null) encoding += " " + operandValue.getStringRepresentation();
         if (in.getLabel() != null) encoding += " @" + in.getLabel().getAddress();
         return new DisassembledInstruction(memLocation, mnemo, encoding);
-    }
-
-    @Override
-    public Optional<Disassembler> forBank(int bank) {
-        if (bank != 0) throw new IllegalArgumentException("RAM has one memory bank");
-        return Optional.of(this);
     }
 
     @Override

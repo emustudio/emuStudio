@@ -24,7 +24,7 @@ public class RaspDisassemblerTest {
     }
 
     @Test
-    public void explicitBankDecoderReadsLiveWordCellsAndLabelNames() throws Exception {
+    public void decoderReadsLiveWordCellsAndLabelNames() throws Exception {
         AtomicReference<String> name = new AtomicReference<>("OLD");
         RaspLabel label = createNiceMock(RaspLabel.class);
         expect(label.getAddress()).andReturn(10).anyTimes();
@@ -37,15 +37,12 @@ public class RaspDisassemblerTest {
         expect(memory.getLabel(10)).andReturn(Optional.of(label)).anyTimes();
         replay(memory);
         RaspDisassembler live = new RaspDisassembler(memory);
-        net.emustudio.emulib.plugins.cpu.Disassembler bank = live.forBank(0).orElseThrow();
-        assertTrue(bank.disassemble(0).mnemo.contains("OLD"));
+        assertTrue(live.disassemble(0).mnemo.contains("OLD"));
 
         name.set("NEW");
 
-        assertTrue(bank.disassemble(0).mnemo.contains("NEW"));
         assertTrue(live.disassemble(0).mnemo.contains("NEW"));
-        assertEquals(2, bank.getNextInstructionPosition(0));
-        assertThrows(IllegalArgumentException.class, () -> live.forBank(1));
+        assertEquals(2, live.getNextInstructionPosition(0));
     }
 
     @Test

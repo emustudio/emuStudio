@@ -54,18 +54,17 @@ public class FlowMetadataTest {
     }
 
     @Test
-    public void explicitBankDecoderReadsUpdatedRelativeOperandsAndDisassembly() throws Exception {
+    public void decoderReadsUpdatedRelativeOperandsAndDisassembly() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x18);
         memory.write(1, (byte) 0x02);
-        Disassembler live = new BankedDisassembler<>(memory, cells ->
-                new FlowDisassembler(new DisassemblerImpl(cells, new DecoderImpl(cells)), cells, true));
-        Disassembler bank = live.forBank(0).orElseThrow();
-        assertEquals(java.util.List.of(4), bank.getFlow(0).orElseThrow().targets);
-        String mnemonic = bank.disassemble(0).mnemo;
+        Disassembler live = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, true);
+        assertEquals(java.util.List.of(4), live.getFlow(0).orElseThrow().targets);
+        String mnemonic = live.disassemble(0).mnemo;
+
         memory.write(1, (byte) 0xfe);
-        assertEquals(java.util.List.of(0), bank.getFlow(0).orElseThrow().targets);
-        assertNotEquals(mnemonic, bank.disassemble(0).mnemo);
+
         assertEquals(java.util.List.of(0), live.getFlow(0).orElseThrow().targets);
+        assertNotEquals(mnemonic, live.disassemble(0).mnemo);
     }
 }

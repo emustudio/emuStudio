@@ -180,11 +180,9 @@ bank. Read/write access rules retain their bank selectors and persisted bank key
 CPU addresses across physical banks. Native CPU breakpoint behavior stays native.
 Index maintenance alone never activates instruction/register tracing.
 
-The optional emuLib `Disassembler.forBank(bank)` supplies side-effect-free live inspection decoding for an explicit bank
-using the read-only live context returned by `MemoryContext.forBank(bank)`.
-This does not change the selected CPU bank. Bundled decoders implement it; third-party decoders without that view can use
-their logical decoder for the currently selected bank while its mapping remains unchanged. Other inspection banks need
-explicit-bank decoding. Analysis runs off Swing's event thread while paused, checks generation and index
+Flow analysis uses the CPU's disassembler with its plugin-provided memory wiring. Decoders and disassemblers read logical
+addresses without selecting banks; each address may map differently inside the connected plugins. The memory-inspection
+bank selector does not rewire decoding. Analysis runs off Swing's event thread while paused, checks generation and index
 identity/revisions, and rejects late results after changes/disposal. It retains derived metadata rather than copied cells.
 An immutable index snapshot does not freeze live memory.
 Raw paused writes made with notifications explicitly disabled, or changes through exported raw arrays, remain outside
@@ -213,8 +211,6 @@ The composite `build :emuLib:test :application:jmhClasses :application:indexBenc
 the Java 11 project toolchains: 4,501 emuStudio tests (zero failures, 57 skipped), including 781 application tests
 (one existing skip), and 427 emuLib tests (zero failures, 21 skipped). All 41 index benchmark parity datasets passed.
 The final build log is `/tmp/emustudio-live-memory-full.log`.
-Consolidating bank views into `MemoryContext.forBank(bank)` passed the same full composite checks; see
-`/tmp/emustudio-memory-context-bank.log`. The standalone bank class is absent from the packaged emuLib JAR.
 
 Coverage includes metadata-only startup with no memory-cell reads, live bank/common-cell inspection, invalidation after
 operand writes, original-revision result guards, cancellation/disposal and concurrent machine/metadata changes. Blocked

@@ -157,7 +157,6 @@ public class DebugSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
         net.emustudio.emulib.plugins.cpu.Disassembler decoder = mock(net.emustudio.emulib.plugins.cpu.Disassembler.class);
         when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        when(decoder.forBank(0)).thenReturn(Optional.of(decoder));
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
         when(decoder.getFlow(0)).thenAnswer(call -> {
             entered.countDown(); await(release);
@@ -168,7 +167,7 @@ public class DebugSessionTest {
         when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10));
+            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
             session.annotations().put(new AnnotationIndex.Entry(0, 1, "new", "", "DATA"));
@@ -180,25 +179,22 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void flowUsesLiveExplicitBankAndRestrictsMappedDecoderFallback() throws Exception {
+    public void flowUsesCpuWiredDecoderAndLiveOperands() throws Exception {
         byte[][] cells = {{1, 0}, {7, 0}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, 1, false);
-        Disassembler original = mock(Disassembler.class), explicit = mock(Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(original);
-        when(original.forBank(1)).thenReturn(Optional.of(explicit));
-        stopAtZero(explicit);
-        stopAtZero(original);
-        when(explicit.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
-                "VALUE " + machine.memory.readBank(0, 1), ""));
+        Disassembler decoder = mock(Disassembler.class);
+        when(machine.cpu.getDisassembler()).thenReturn(decoder);
+        stopAtZero(decoder);
+        when(decoder.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
+                "VALUE " + cells[1][0], ""));
+
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            assertEquals("VALUE 7", session.analyzeFlow(1, 0, 10).mnemonic(0));
+            assertEquals("VALUE 7", session.analyzeFlow(0, 10).mnemonic(0));
+
             cells[1][0] = 8;
             machine.memoryChanged(0);
-            assertEquals("VALUE 8", session.analyzeFlow(1, 0, 10).mnemonic(0));
-            verify(original, never()).getFlow(anyInt());
-            when(original.forBank(1)).thenReturn(Optional.empty());
-            assertThrows(IllegalStateException.class, () -> session.analyzeFlow(1, 0, 10));
-            assertEquals("STOP", session.analyzeFlow(0, 0, 10).mnemonic(0));
+
+            assertEquals("VALUE 8", session.analyzeFlow(0, 10).mnemonic(0));
         }
         assertEquals(0, machine.memory.getSelectedBank());
     }
@@ -209,7 +205,6 @@ public class DebugSessionTest {
             DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
             Disassembler decoder = mock(Disassembler.class);
             when(machine.cpu.getDisassembler()).thenReturn(decoder);
-            when(decoder.forBank(0)).thenReturn(Optional.of(decoder));
             stopAtZero(decoder);
             CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
             when(decoder.getFlow(0)).thenAnswer(call -> {
@@ -221,7 +216,7 @@ public class DebugSessionTest {
             boolean disposed = false;
             try {
                 ProgramIndex index = session.programIndex();
-                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 0, 10));
+                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
                 await(entered);
                 if (change == 0) machine.memoryChanged(1);
                 else if (change == 1) {
@@ -265,7 +260,7 @@ public class DebugSessionTest {
         });
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             IllegalStateException changed = assertThrows(IllegalStateException.class,
-                    () -> session.analyzeFlow(0, 0, 10));
+                    () -> session.analyzeFlow(0, 10));
             assertTrue(changed.getMessage().contains("bank changed"));
             verify(decoder, never()).getNextInstructionPosition(anyInt());
             verify(decoder, never()).disassemble(anyInt());
@@ -273,7 +268,7 @@ public class DebugSessionTest {
             Thread.currentThread().interrupt();
             try {
                 assertThrows(java.util.concurrent.CancellationException.class,
-                        () -> session.analyzeFlow(0, 0, 10));
+                        () -> session.analyzeFlow(0, 10));
             } finally { Thread.interrupted(); }
             assertEquals(ProgramIndex.FlowState.NOT_BUILT, session.programIndex().snapshot().flowState());
         }

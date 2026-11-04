@@ -626,8 +626,7 @@ public class DebuggerPanelTest {
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
-            Disassembler live = session.cpu.getDisassembler();
-            when(live.forBank(0)).thenReturn(Optional.of(disassembler));
+            when(session.cpu.getDisassembler()).thenReturn(disassembler);
             when(disassembler.getFlow(0)).thenAnswer(call -> {
                 decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
                 entered.countDown();
@@ -752,7 +751,6 @@ public class DebuggerPanelTest {
                     assertTrue(annotationIndex.entries().stream().anyMatch(entry ->
                             entry.label.isEmpty() && entry.address == 0 && entry.end == 2));
                 });
-                verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
             } finally { release.countDown(); }
         }
     }
@@ -811,20 +809,30 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void unsupportedExplicitBankDecoderReportsDiagnosticWithoutDecodingMappedBank() throws Exception {
-        CountDownLatch failed = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2,
-                session -> when(session.cpu.getDisassembler().forBank(anyInt())).thenReturn(Optional.empty()))) {
-            doAnswer(call -> { failed.countDown(); return null; }).when(workspace.dialogs).showError(anyString(), eq("Debugger"));
+    public void flowUsesCpuDecoderRegardlessOfInspectionBank() throws Exception {
+        CountDownLatch decoded = new CountDownLatch(1), shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {
+            Disassembler decoder = session.cpu.getDisassembler();
+            when(decoder.getFlow(0)).thenAnswer(call -> {
+                decoded.countDown();
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+            });
+        })) {
             SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
                 workspace.panel.navigate(0, 1);
                 button(workspace.panel, "Analyze from address").doClick(0);
             });
-            assertTrue("Unsupported bank decoder should be reported", failed.await(5, TimeUnit.SECONDS));
-            org.mockito.ArgumentCaptor<String> message = org.mockito.ArgumentCaptor.forClass(String.class);
-            verify(workspace.dialogs).showError(message.capture(), eq("Debugger"));
-            assertTrue(message.getValue().toLowerCase(java.util.Locale.ROOT).contains("bank"));
-            verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());
+            assertTrue("CPU decoder should run", decoded.await(5, TimeUnit.SECONDS));
+            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").doClick(0);
+                assertEquals(0, component(workspace.panel, JComboBox.class, "Memory inspection bank").getSelectedItem());
+            });
+            assertEquals(0, workspace.machine.memory.getSelectedBank());
+            verify(workspace.dialogs, never()).showError(anyString(), eq("Debugger"));
         }
     }
 
@@ -834,7 +842,6 @@ public class DebuggerPanelTest {
         Workspace workspace = new Workspace();
         workspace.machine = new DebuggerTestMachine(banks, common, false);
         Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.forBank(anyInt())).thenReturn(Optional.of(disassembler));
         when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));

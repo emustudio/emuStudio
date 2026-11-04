@@ -1064,7 +1064,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refreshAnnotations(annotationFilter.getText());
         discardStaleMemoryResults();
         model.refreshData();
-        if (graph.flow != null) analyzeFlow(graph.bank, graph.start);
+        if (graph.flow != null) analyzeFlow(graph.start);
     }
 
     public boolean confirmSaveAnnotations() {
@@ -1494,11 +1494,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void analyzeFlow() {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        analyzeFlow(selectedBank(), inspectedAddress);
+        analyzeFlow(inspectedAddress);
     }
 
-    private void analyzeFlow(int bank, int address) {
-        tasks.submit(() -> session.analyzeFlow(bank, address, 256), flow -> {
+    private void analyzeFlow(int address) {
+        tasks.submit(() -> session.analyzeFlow(address, 256), flow -> {
             if (!flow.isCurrent(session.programIndex()))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
             graph.start = address;
