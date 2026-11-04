@@ -86,7 +86,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public synchronized void clearSourceMappings() {
-        SourceAddressMap.clearPublished(programIndex());
+        ProgramIndex index = programIndex();
+        // Memory writes advance the index revision under this lock; holding it keeps the clear from starving.
+        synchronized (indexPublicationLock) {
+            SourceAddressMap.clearPublished(index);
+        }
         metadataChanged();
     }
 

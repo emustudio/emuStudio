@@ -5,6 +5,7 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.debugger.SourceAddressMap;
+import net.emustudio.application.debugger.SourceInputs;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -14,7 +15,6 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import javax.swing.*;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 
 /** Coordinates view selections; execution state and source editing histories remain their owners'. */
@@ -30,7 +30,7 @@ final class SourceNavigation implements AutoCloseable {
     private volatile boolean compiling;
     private volatile String mappingStatus = "";
     private boolean failed, inputCaptureFailed;
-    private Map<Path, String> inputs = Map.of();
+    private SourceInputs inputs = SourceInputs.empty();
     private volatile Path activeSource;
     private final CompilerListener listener = new CompilerListener() {
         @Override public void onStart() {
@@ -40,7 +40,7 @@ final class SourceNavigation implements AutoCloseable {
                 failed = false;
                 inputCaptureFailed = false;
                 compiling = true;
-                inputs = Map.of();
+                inputs = SourceInputs.empty();
                 mappings = SourceAddressMap.empty();
             }
             session.clearSourceMappings();
@@ -53,7 +53,7 @@ final class SourceNavigation implements AutoCloseable {
             try {
                 Path root = SwingUtilities.isEventDispatchThread()
                         ? editor.getCurrentFile().map(java.io.File::toPath).orElse(null) : activeSource;
-                Map<Path, String> captured = root == null ? Map.of() : SourceAddressMap.captureInputs(compiler, root);
+                SourceInputs captured = root == null ? SourceInputs.empty() : SourceInputs.capture(compiler, root);
                 synchronized (SourceNavigation.this) { if (current == compilation) inputs = captured; }
             } catch (Exception e) {
                 synchronized (SourceNavigation.this) { if (current == compilation) inputCaptureFailed = true; }
@@ -68,7 +68,7 @@ final class SourceNavigation implements AutoCloseable {
 
         @Override public void onFinish() {
             final long current;
-            final Map<Path, String> sourceInputs;
+            final SourceInputs sourceInputs;
             synchronized (SourceNavigation.this) {
                 compiling = false;
                 if (closed) return;
@@ -105,8 +105,8 @@ final class SourceNavigation implements AutoCloseable {
                     SourceAddressMap[] result = new SourceAddressMap[1];
                     session.applySourceCapture(guard, () -> {
                         try {
-                            result[0] = SourceAddressMap.capture(compiler, session.memory, session.cpu.getDisassembler(),
-                                    sourceInputs, session.memory == null ? null : session.programIndex(), compiledBank);
+                            result[0] = SourceAddressMap.capture(compiler, session.memory, sourceInputs,
+                                    session.memory == null ? null : session.programIndex(), compiledBank);
                         } catch (java.io.IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -166,7 +166,7 @@ final class SourceNavigation implements AutoCloseable {
         }
         if (!snapshot.inputsUnchanged()) return stale();
         for (Path file : snapshot.sourceFiles())
-            if (editor.sourceText(file).filter(text -> snapshot.matches(file, text)).isEmpty()) return stale();
+            if (editor.openSourceText(file).filter(text -> !snapshot.matches(file, text)).isPresent()) return stale();
         if (!snapshot.sourceFiles().contains(Path.of(position.fileName).toAbsolutePath().normalize())) {
             showStatus("This file is not part of the compiled program", true);
             return Optional.empty();

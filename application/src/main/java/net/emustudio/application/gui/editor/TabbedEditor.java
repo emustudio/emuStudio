@@ -19,7 +19,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -147,16 +146,15 @@ public class TabbedEditor implements Editor {
         });
     }
 
-    /** Open buffers take precedence over disk, including unsaved edits and split mirrors. */
-    public Optional<String> sourceText(Path path) {
+    /** Open buffer text, including unsaved edits and split mirrors; empty for files not open. */
+    public Optional<String> openSourceText(Path path) {
         Path normalized = path.toAbsolutePath().normalize();
         for (REditor candidate : editors) {
             if (candidate.getCurrentFile().map(File::toPath).map(Path::toAbsolutePath)
                     .map(Path::normalize).filter(normalized::equals).isPresent())
                 return Optional.of(candidate.textPane().getText());
         }
-        try { return Optional.of(Files.readString(normalized)); }
-        catch (IOException e) { return Optional.empty(); }
+        return Optional.empty();
     }
 
     /** Follow a debugger selection without stealing focus, closing a split or recording an editor visit. */
