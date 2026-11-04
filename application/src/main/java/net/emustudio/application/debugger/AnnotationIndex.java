@@ -17,11 +17,17 @@ public final class AnnotationIndex {
     private static final String USER_KIND = "emuStudio.user/";
     private static final AtomicLong IDS = new AtomicLong();
     private final ProgramIndex index;
+    private final Runnable changed;
     private volatile View cached;
     private final ThreadLocal<Lookup> lookups = ThreadLocal.withInitial(Lookup::new);
 
     public AnnotationIndex(ProgramIndex index) {
+        this(index, () -> {});
+    }
+
+    AnnotationIndex(ProgramIndex index, Runnable changed) {
         this.index = Objects.requireNonNull(index);
+        this.changed = Objects.requireNonNull(changed);
     }
 
     public ProgramIndex programIndex() { return index; }
@@ -57,7 +63,7 @@ public final class AnnotationIndex {
             ProgramIndex.Snapshot base = index.snapshot();
             try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
                 stage(update, base, entries, clear);
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) return;
+                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
             }
         }
     }
@@ -80,7 +86,7 @@ public final class AnnotationIndex {
             ProgramIndex.Annotation old = lookup(base, bank, entry.address).marker;
             long id = old == null ? IDS.getAndAdd(2) : old.entryId();
             ProgramIndex.Range range = new ProgramIndex.Range(bank, entry.address, entry.address + 1);
-            String kind = USER_KIND + entry.kind + (entry.bookmark ? "/bookmark" : "");
+            String kind = USER_KIND + entry.kind;
             update.putAnnotation(OWNER, id, range, kind, entry.comment);
             update.removeAnnotation(OWNER, id + 1);
             if (!entry.label.isEmpty())
@@ -101,7 +107,7 @@ public final class AnnotationIndex {
             try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
                 update.removeAnnotation(OWNER, old.entryId()).removeAnnotation(OWNER, old.entryId() + 1);
                 update.removeAnnotation(TYPE_OWNER, old.entryId());
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) return;
+                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
             }
         }
     }
@@ -140,7 +146,6 @@ public final class AnnotationIndex {
             p.setProperty(k + "address", Integer.toString(e.address));
             p.setProperty(k + "label", e.label);
             p.setProperty(k + "comment", e.comment);
-            p.setProperty(k + "bookmark", Boolean.toString(e.bookmark));
             p.setProperty(k + "kind", e.kind);
         }
         return p;
@@ -165,7 +170,7 @@ public final class AnnotationIndex {
                 String k = "entry." + i + ".";
                 Entry entry = new Entry(Integer.parseInt(p.getProperty(k + "bank")),
                         Integer.parseInt(p.getProperty(k + "address")), p.getProperty(k + "label", ""),
-                        p.getProperty(k + "comment", ""), Boolean.parseBoolean(p.getProperty(k + "bookmark")),
+                        p.getProperty(k + "comment", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
                 int bank = index.snapshot().layout().physicalBank(entry.bank, entry.address);
@@ -201,11 +206,9 @@ public final class AnnotationIndex {
             List<Entry> result = new ArrayList<>();
             snapshot.forEachAnnotation(a -> {
                 if (a.ownerId() != OWNER || !a.kind().startsWith(USER_KIND)) return;
-                String value = a.kind().substring(USER_KIND.length());
-                boolean bookmark = value.endsWith("/bookmark");
-                String kind = bookmark ? value.substring(0, value.length() - "/bookmark".length()) : value;
+                String kind = a.kind().substring(USER_KIND.length());
                 Entry entry = new Entry(a.range().bank, a.range().start,
-                        labels.getOrDefault(a.entryId() + 1, ""), a.text(), bookmark, kind);
+                        labels.getOrDefault(a.entryId() + 1, ""), a.text(), kind);
                 result.add(entry);
                 payloads.put(a, entry);
             });
@@ -216,14 +219,11 @@ public final class AnnotationIndex {
     public static final class Entry {
         public final int bank, address;
         public final String label, comment, kind;
-        public final boolean bookmark;
-
-        public Entry(int bank, int address, String label, String comment, boolean bookmark, String kind) {
+        public Entry(int bank, int address, String label, String comment, String kind) {
             this.bank = bank;
             this.address = address;
             this.label = Objects.requireNonNull(label);
             this.comment = Objects.requireNonNull(comment);
-            this.bookmark = bookmark;
             this.kind = Objects.requireNonNull(kind);
         }
 

@@ -15,7 +15,6 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
 import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
-import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,7 +177,6 @@ public class MemoryImpl extends AbstractMemory {
     public void loadImage(Path imagePath, int address, int bank) throws IOException {
         MemoryImageLoader.MemoryBank memoryBank = MemoryImageLoader.MemoryBank.of(bank, address);
         MemoryImageLoader.load(imagePath, context, memoryBank);
-        MetadataSidecar.load(imagePath, context);
     }
 
     /*
@@ -225,7 +223,8 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryGui(parent, this, context, settings, applicationApi.getDialogs(), applicationApi.getGUI());
+                gui = new MemoryGui(parent, this, context, settings, applicationApi.getDialogs(), applicationApi.getGUI(),
+                        applicationApi.getDebuggerMemory());
             }
             gui.setVisible(true);
         }

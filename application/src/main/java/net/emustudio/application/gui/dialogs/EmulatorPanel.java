@@ -82,7 +82,6 @@ public class EmulatorPanel extends JPanel {
         this.listingState.setHorizontalAlignment(SwingConstants.CENTER);
         this.debugTable = new DebugTableImpl(debugTableModel);
         this.debugTable.getAccessibleContext().setAccessibleName("Instruction listing");
-        this.debugTable.setToolTipText("Select to inspect; double-click or press Enter to open mapped source.");
         this.toolDebug = gui.toolBar();
         this.toolDebug.putClientProperty("FlatLaf.style", "focusableButtons: true");
 
@@ -248,6 +247,7 @@ public class EmulatorPanel extends JPanel {
         workspace.setMinimumSize(new Dimension(360, 180));
         workspace.setPreferredSize(new Dimension(680, 650));
         splitLeftRight = gui.splitPaneLeftToRight(workspace, sidebar, 0.75);
+        splitLeftRight.setContinuousLayout(false);
         splitLeftRight.setName("debuggerColumns");
         splitLeftRight.setDividerLocation(700);
         splitLeftRight.addComponentListener(new ComponentAdapter() {

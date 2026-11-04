@@ -59,7 +59,13 @@ public class DebugTableImpl extends JTable {
     private void setupColumnWidths() {
         int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
-            TableColumn tableColumn = getColumn(tableModel.getColumnName(i));
+            int viewColumn;
+            try {
+                viewColumn = getColumnModel().getColumnIndex(tableModel.getColumnName(i));
+            } catch (IllegalArgumentException missingColumn) {
+                continue;
+            }
+            TableColumn tableColumn = getColumnModel().getColumn(viewColumn);
             DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {

@@ -192,6 +192,16 @@ public final class SourceAddressMap {
         capturedSnapshot = index.snapshot();
     }
 
+    static void clearPublished(ProgramIndex index) {
+        for (;;) {
+            ProgramIndex.Snapshot base = index.snapshot();
+            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
+                update.removeMappings(MAPPING_OWNER).removeAnnotations(MAPPING_OWNER);
+                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) return;
+            }
+        }
+    }
+
     public boolean matches(Path path, String text) {
         Source source = sources.get(normalize(path));
         // Editors normalize CRLF on load; compiler offsets and provenance retain the raw snapshot.

@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.runtime.DebuggerMemory;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -26,6 +27,9 @@ public class MemoryGui extends DialogBase {
 
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
+    private final DebuggerMemory debuggerMemory;
+    private boolean listening;
+    private final Runnable debuggerListener;
     private final JLabel lblBanksCount = new JLabel("0");
     private JLabel lblPageCount;
     private final JScrollPane paneMemory = new JScrollPane();
@@ -37,6 +41,8 @@ public class MemoryGui extends DialogBase {
     private final JTextField txtValueDec = readOnlyField("00");
     private final JTextField txtValueHex = readOnlyField("00");
     private final JTextField txtValueOct = readOnlyField("000");
+    private final JTextField txtLabel = readOnlyDescription();
+    private final JTextField txtAnnotation = readOnlyDescription();
     private final JToggleButton btnAsciiMode = new JToggleButton();
 
     private final LoadImageAction loadImageAction;
@@ -48,9 +54,11 @@ public class MemoryGui extends DialogBase {
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
-    public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui) {
+    public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui,
+                     DebuggerMemory debuggerMemory) {
         super(parent, "Byte Operating Memory", false);
         this.gui = gui;
+        this.debuggerMemory = debuggerMemory;
         this.lblPageCount = gui.labelBold("0");
 
         Objects.requireNonNull(context);
@@ -59,7 +67,13 @@ public class MemoryGui extends DialogBase {
         Objects.requireNonNull(dialogs);
 
         this.tableModel = new MemoryTableModel(context);
-        this.table = new MemoryTable(tableModel, paneMemory);
+        this.table = new MemoryTable(tableModel, paneMemory, debuggerMemory);
+        this.debuggerListener = () -> SwingUtilities.invokeLater(() -> {
+            if (listening) {
+                table.repaint();
+                updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
+            }
+        });
 
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
@@ -88,6 +102,7 @@ public class MemoryGui extends DialogBase {
             int i = (Integer) spnPage.getModel().getValue();
             try {
                 tableModel.setPage(i);
+                updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
             } catch (IndexOutOfBoundsException ex) {
                 spnPage.getModel().setValue(tableModel.getPage());
             }
@@ -96,12 +111,15 @@ public class MemoryGui extends DialogBase {
             int i = (Integer) spnBank.getModel().getValue();
             try {
                 tableModel.setCurrentBank(i);
+                updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
             } catch (IndexOutOfBoundsException ex) {
                 spnBank.getModel().setValue(tableModel.getCurrentBank());
             }
         });
 
-        tableModel.addTableModelListener(e -> updateMemVal(e.getFirstRow(), e.getColumn()));
+        tableModel.addTableModelListener(e -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
+        table.getSelectionModel().addListSelectionListener(e -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
+        table.getColumnModel().getSelectionModel().addListSelectionListener(e -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
         MouseHandler mouseHandler = new MouseHandler(
                 tableModel, () -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
         table.addMouseListener(mouseHandler);
@@ -125,6 +143,12 @@ public class MemoryGui extends DialogBase {
         txtValueHex.setText(String.format("%02X", data));
         txtValueOct.setText(String.format("%02o", data));
         txtValueBin.setText(formatBinaryString(data, 8));
+        String label = debuggerMemory == null ? "" : debuggerMemory.label(tableModel.getCurrentBank(), address);
+        String annotation = debuggerMemory == null ? "" : debuggerMemory.comment(tableModel.getCurrentBank(), address);
+        txtLabel.setText(label);
+        txtLabel.setToolTipText(label.isEmpty() ? null : "Label: " + label);
+        txtAnnotation.setText(annotation);
+        txtAnnotation.setToolTipText(annotation.isEmpty() ? null : "Annotation: " + annotation);
     }
 
     @Override
@@ -175,7 +199,11 @@ public class MemoryGui extends DialogBase {
         panelValue.add(txtValueHex);
         panelValue.add(gui.label("(hex)"));
         panelValue.add(txtValueBin);
-        panelValue.add(gui.label("(bin)"));
+        panelValue.add(gui.label("(bin)"), "wrap");
+        panelValue.add(gui.label("Label:"));
+        panelValue.add(txtLabel, "span, growx, wrap");
+        panelValue.add(gui.label("Annotation:"));
+        panelValue.add(txtAnnotation, "span, growx");
 
         JPanel bottomPanel = gui.panel("insets dialog", "[grow]", "[]6[]");
         bottomPanel.add(panelControl, "growx, wrap");
@@ -183,20 +211,42 @@ public class MemoryGui extends DialogBase {
 
         paneMemory.setViewportView(table);
         paneMemory.setMinimumSize(new Dimension(768, 300));
+        paneMemory.setPreferredSize(new Dimension(768, 390));
 
         JSplitPane splitPane = gui.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
-        splitPane.setDividerLocation(390);
 
         JPanel content = gui.panel("insets 0", "[grow]", "[]6[grow]");
         content.add(toolBar, "growx, wrap");
         content.add(splitPane, "grow");
 
-        setPreferredSize(new Dimension(794, 629));
         return content;
     }
 
     private int getCurrentAddress() {
         return tableModel.getPage() * (tableModel.getRowCount() * tableModel.getColumnCount());
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible && !listening && debuggerMemory != null) {
+            debuggerMemory.addListener(debuggerListener);
+            listening = true;
+            table.repaint();
+            updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
+        } else if (!visible && listening) {
+            listening = false;
+            debuggerMemory.removeListener(debuggerListener);
+        }
+        super.setVisible(visible);
+    }
+
+    @Override
+    public void dispose() {
+        if (listening) {
+            listening = false;
+            debuggerMemory.removeListener(debuggerListener);
+        }
+        super.dispose();
     }
 
     private void bindSearchShortcut(String name, Action action) {
@@ -222,6 +272,12 @@ public class MemoryGui extends DialogBase {
         JTextField field = new JTextField(text);
         field.setEditable(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
+        return field;
+    }
+
+    private static JTextField readOnlyDescription() {
+        JTextField field = new JTextField();
+        field.setEditable(false);
         return field;
     }
 }

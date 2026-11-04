@@ -18,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /** Per-computer debug state. UI mutates rules/watches only while paused. */
@@ -31,6 +32,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private Properties lastSaved;
     private final String metadataNamespace;
     private AnnotationIndex annotations;
+    private final List<Runnable> metadataListeners = new CopyOnWriteArrayList<>();
+
+    public void addMetadataListener(Runnable listener) { metadataListeners.add(listener); }
+    public void removeMetadataListener(Runnable listener) { metadataListeners.remove(listener); }
+    private void metadataChanged() { metadataListeners.forEach(Runnable::run); }
     private volatile ProgramIndex programIndex;
     // Never acquire the session monitor while holding this lock in a memory notification.
     private final Object indexPublicationLock = new Object();
@@ -82,6 +88,14 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             throw new IllegalStateException("Source mappings belong to another memory image");
         sourceMappings = mappings;
         bindSourceRules();
+        metadataChanged();
+    }
+
+    public synchronized void clearSourceMappings() {
+        SourceAddressMap.clearPublished(programIndex());
+        sourceMappings = SourceAddressMap.empty();
+        sourceBindings.clear();
+        metadataChanged();
     }
 
     /** Live reads never retain a copy of memory cells. Reacquire after a machine or metadata edit. */
@@ -102,7 +116,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         synchronized (this) {
             work.requireCurrent();
             if (annotations == null) {
-                AnnotationIndex installed = new AnnotationIndex(work.index);
+                AnnotationIndex installed = new AnnotationIndex(work.index, this::metadataChanged);
                 if (loaded != null && installed.installProperties(loaded, work.base) != ProgramIndex.CommitResult.PUBLISHED)
                     throw new IllegalStateException("Metadata discarded: machine or metadata changed while loading");
                 annotations = installed;
@@ -156,6 +170,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 @Override
                 public void memorySizeChanged() {
                     invalidateAnalysis();
+                    metadataChanged();
                 }
             };
     private final CPU.CPUListener stateListener =
@@ -178,6 +193,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                                 pendingHit = new BreakpointHit(at, memory == null ? 0 : memory.getBank(at), null);
                         }
                     }
+                    metadataChanged();
                 }
 
                 @Override
@@ -185,6 +201,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                     synchronized (DebugSession.this) {
                         generation++;
                     }
+                    metadataChanged();
                 }
             };
 

@@ -43,6 +43,7 @@ final class SourceNavigation implements AutoCloseable {
                 inputs = Map.of();
                 mappings = SourceAddressMap.empty();
             }
+            session.clearSourceMappings();
             SwingUtilities.invokeLater(() -> {
                 if (!closed && current == compilation) {
                     debugger.setSymbols(java.util.List::of);

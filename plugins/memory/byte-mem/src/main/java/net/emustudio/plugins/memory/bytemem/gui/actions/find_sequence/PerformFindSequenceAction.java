@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PerformFindSequenceAction extends AbstractAction {
+    public enum Format { TEXT, BYTES, INT16, INT32, INT64, FLOAT32, FLOAT64 }
     public final static String ERROR_NUMBER_FORMAT = "Cannot parse sequence of bytes. Bytes (in correct radix format) must be separated with spaces.";
     private final static Logger LOGGER = LoggerFactory.getLogger(PerformFindSequenceAction.class);
     private final Dialogs dialogs;
@@ -25,7 +28,8 @@ public class PerformFindSequenceAction extends AbstractAction {
     private final BiConsumer<byte[], Integer> startSearch;
 
     private final Supplier<Boolean> isCurrentPage;
-    private final Supplier<Boolean> isPlainText;
+    private final Supplier<Format> format;
+    private final Supplier<ByteOrder> byteOrder;
     private final int currentAddress;
     private final JTextComponent txtPosition;
     private final JTextComponent txtFindText;
@@ -35,7 +39,7 @@ public class PerformFindSequenceAction extends AbstractAction {
     public PerformFindSequenceAction(Dialogs dialogs, Runnable dispose,
                                      BiConsumer<byte[], Integer> startSearch,
                                      Supplier<Boolean> isCurrentPage,
-                                     Supplier<Boolean> isPlainText,
+                                     Supplier<Format> format, Supplier<ByteOrder> byteOrder,
                                      int currentAddress,
                                      JTextComponent txtPosition,
                                      JTextComponent txtFindText) {
@@ -46,7 +50,8 @@ public class PerformFindSequenceAction extends AbstractAction {
 
         this.currentAddress = currentAddress;
         this.isCurrentPage = Objects.requireNonNull(isCurrentPage);
-        this.isPlainText = Objects.requireNonNull(isPlainText);
+        this.format = Objects.requireNonNull(format);
+        this.byteOrder = Objects.requireNonNull(byteOrder);
         this.txtPosition = Objects.requireNonNull(txtPosition);
         this.txtFindText = Objects.requireNonNull(txtFindText);
     }
@@ -68,9 +73,10 @@ public class PerformFindSequenceAction extends AbstractAction {
             }
 
             final byte[] sequenceToFind;
-            if (isPlainText.get()) {
+            Format selectedFormat = format.get();
+            if (selectedFormat == Format.TEXT) {
                 sequenceToFind = text.getBytes();
-            } else {
+            } else if (selectedFormat == Format.BYTES) {
                 lastError.message = ERROR_NUMBER_FORMAT;
 
                 List<Integer> mapped = Stream.of(text.split(" ")).map(radixUtils::parseRadix).collect(Collectors.toList());
@@ -78,6 +84,19 @@ public class PerformFindSequenceAction extends AbstractAction {
                 for (int i = 0; i < sequenceToFind.length; i++) {
                     sequenceToFind[i] = mapped.get(i).byteValue(); // NOTE: if integer is > than byte, the rest is cut off.
                 }
+            } else {
+                lastError.message = "Invalid number for selected format";
+                String value = text.trim();
+                ByteBuffer buffer = ByteBuffer.allocate(8).order(byteOrder.get());
+                switch (selectedFormat) {
+                    case INT16: buffer.putShort(Short.parseShort(value)); break;
+                    case INT32: buffer.putInt(Integer.parseInt(value)); break;
+                    case INT64: buffer.putLong(Long.parseLong(value)); break;
+                    case FLOAT32: buffer.putFloat(Float.parseFloat(value)); break;
+                    case FLOAT64: buffer.putDouble(Double.parseDouble(value)); break;
+                    default: throw new IllegalStateException();
+                }
+                sequenceToFind = java.util.Arrays.copyOf(buffer.array(), buffer.position());
             }
 
             startSearch.accept(sequenceToFind, from);

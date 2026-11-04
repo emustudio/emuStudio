@@ -37,6 +37,98 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void instructionViewAcceptsColumnsRenamedByWrapper() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                javax.swing.table.TableModel base = workspace.table.instructionModel();
+                javax.swing.table.TableModel wrapper = new javax.swing.table.AbstractTableModel() {
+                    @Override public int getRowCount() { return base.getRowCount(); }
+                    @Override public int getColumnCount() { return base.getColumnCount(); }
+                    @Override public String getColumnName(int column) {
+                        return column == 0 ? "renamed" : base.getColumnName(column);
+                    }
+                    @Override public Object getValueAt(int row, int column) { return base.getValueAt(row, column); }
+                };
+                workspace.table.showInstructions(wrapper);
+                assertEquals("renamed", workspace.table.getColumnName(0));
+            });
+        }
+    }
+
+    @Test
+    public void newAnnotationUsesDialogInsteadOfInlineEditor() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container annotations = (Container) tabs.getSelectedComponent();
+                assertNull(findComponent(annotations, JButton.class, "Save annotation"));
+                assertFalse(button(annotations, "Edit selected annotation").isEnabled());
+                Timer timer = new Timer(100, event -> {
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (!(window instanceof JDialog) || !window.isShowing()
+                                || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                        ((Timer) event.getSource()).stop();
+                        try {
+                            JLabel label = component((Container) window, JLabel.class, "Label");
+                            ((JTextField) label.getLabelFor()).setText("entry");
+                            JLabel address = component((Container) window, JLabel.class, "Address");
+                            ((JTextField) address.getLabelFor()).setText("0x0001");
+                            assertNull(findComponent((Container) window, JButton.class, "Cancel"));
+                            button((Container) window, "Save annotation").doClick(0);
+                        } catch (Throwable error) {
+                            failure.set(error);
+                            window.dispose();
+                        }
+                    }
+                });
+                timer.start();
+                button(annotations, "Annotate inspected address").doClick(0);
+                timer.stop();
+            });
+            if (failure.get() != null) throw new AssertionError(failure.get());
+            assertEquals("entry", workspace.session.annotations().get(0, 1).label);
+        }
+    }
+
+    @Test
+    public void escapeDiscardsAnnotationDraftWithoutConfirmation() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container annotations = (Container) tabs.getSelectedComponent();
+                Timer timer = new Timer(100, event -> {
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (!(window instanceof JDialog) || !window.isShowing()
+                                || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                        ((Timer) event.getSource()).stop();
+                        try {
+                            JLabel label = component((Container) window, JLabel.class, "Label");
+                            ((JTextField) label.getLabelFor()).setText("discarded");
+                            JRootPane root = ((JDialog) window).getRootPane();
+                            KeyStroke escape = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0);
+                            Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).get(escape);
+                            root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                        } catch (Throwable error) {
+                            failure.set(error);
+                            window.dispose();
+                        }
+                    }
+                });
+                timer.start();
+                button(annotations, "Annotate inspected address").doClick(0);
+                timer.stop();
+                assertTrue(workspace.panel.confirmSaveAnnotations());
+            });
+            if (failure.get() != null) throw new AssertionError(failure.get());
+            assertNull(workspace.session.annotations().get(0, 0));
+        }
+    }
+
+    @Test
     public void obsoleteMemoryControlsAreAbsent() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
@@ -298,7 +390,7 @@ public class DebuggerPanelTest {
     public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "entry point", false, "CODE"));
+                session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "entry point", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {

@@ -66,7 +66,6 @@ public final class ProgramIndex {
         public static final String REGION = "region";
         public static final String CODE = "code";
         public static final String DATA = "data";
-        public static final String BOOKMARK = "bookmark";
         private Kinds() { }
     }
 

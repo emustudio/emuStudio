@@ -17,6 +17,9 @@ public class ApplicationApiImpl implements ApplicationApi {
     private final Dialogs dialogs;
     private final GUI gui;
     private final AtomicInteger programLocation = new AtomicInteger();
+    private final DebuggerMemoryImpl debuggerMemory = new DebuggerMemoryImpl();
+
+    @Override public DebuggerMemoryImpl getDebuggerMemory() { return debuggerMemory; }
 
     public ApplicationApiImpl(DebuggerTable debuggerTable, ContextPool contextPool, Dialogs dialogs, GUI gui) {
         this.debuggerTable = Objects.requireNonNull(debuggerTable);

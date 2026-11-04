@@ -47,7 +47,7 @@ public class SparseDebugSessionTest {
                 update.put(1, address, true, "");
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
-            session.annotations().put(new AnnotationIndex.Entry(0, address, "metadata", "word memory", false, "CODE"));
+            session.annotations().put(new AnnotationIndex.Entry(0, address, "metadata", "word memory", "CODE"));
             assertEquals("metadata", session.annotations().get(0, address).label);
             assertThrows(IllegalArgumentException.class, session::liveMemory);
 
