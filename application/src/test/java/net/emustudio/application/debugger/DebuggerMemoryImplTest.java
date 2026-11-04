@@ -18,7 +18,7 @@ public class DebuggerMemoryImplTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32, false);
         DebuggerMemoryImpl view = new DebuggerMemoryImpl();
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.annotations().put(new AnnotationIndex.Entry(4, "user", "note", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "user", "DATA"));
             ProgramIndex index = session.programIndex();
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
                 update.putAnnotation(2, 1, new ProgramIndex.Range(5, 6), ProgramIndex.Kinds.LABEL, "source");
@@ -30,7 +30,6 @@ public class DebuggerMemoryImplTest {
 
             assertEquals("", view.label(5));
             assertEquals("user", view.label(4));
-            assertEquals("note", view.comment(4));
         }
     }
 
@@ -39,14 +38,12 @@ public class DebuggerMemoryImplTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[2][32], 16, false);
         DebuggerMemoryImpl view = new DebuggerMemoryImpl();
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.annotations().put(new AnnotationIndex.Entry(4, "one", "second", "DATA"));
-            session.annotations().put(new AnnotationIndex.Entry(20, "shared", "common", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "one", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(20, "shared", "DATA"));
             view.setSession(session);
 
-            assertEquals("second", view.comment(4));
             assertEquals("one", view.label(4));
             assertEquals("shared", view.label(20));
-            assertEquals("common", view.comment(20));
             assertEquals("", view.label(5));
         }
     }
@@ -76,7 +73,7 @@ public class DebuggerMemoryImplTest {
             view.setSession(session);
             changes.set(0);
 
-            session.annotations().put(new AnnotationIndex.Entry(4, "entry", "note", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "entry", "DATA"));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             assertEquals(2, changes.get());
 

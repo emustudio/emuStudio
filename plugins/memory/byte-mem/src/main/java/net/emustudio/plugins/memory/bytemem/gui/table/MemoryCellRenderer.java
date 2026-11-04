@@ -65,12 +65,10 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         int address = tableModel.toAddress(row, column);
         boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
         String label = mapped ? debuggerMemory.label(address) : "";
-        String comment = mapped ? debuggerMemory.comment(address) : "";
         boolean current = mapped && debuggerMemory.isCurrentInstruction(address);
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");
-        if (!comment.isEmpty()) tooltip.append("Annotation: ").append(escape(comment)).append("<br>");
         if (tableModel.isROMAt(row, column)) tooltip.append("Read-only memory<br>");
         if (tableModel.isAtBANK(row, column)) tooltip.append("Banked memory<br>");
         setToolTipText(tooltip.length() == 6 ? null : tooltip.append("</html>").toString());
@@ -80,8 +78,6 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         } else {
             if (current) {
                 this.setBackground(new Color(255, 204, 204));
-            } else if (!comment.isEmpty()) {
-                this.setBackground(new Color(200, 200, 200));
             } else if (!label.isEmpty()) {
                 this.setBackground(new Color(230, 230, 230));
             } else if (tableModel.isROMAt(row, column)) {

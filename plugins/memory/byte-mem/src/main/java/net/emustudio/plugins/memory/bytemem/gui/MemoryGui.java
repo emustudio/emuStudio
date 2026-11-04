@@ -43,7 +43,6 @@ public class MemoryGui extends DialogBase {
     private final JTextField txtValueHex = readOnlyField("00");
     private final JTextField txtValueOct = readOnlyField("000");
     private final JTextField txtLabel = readOnlyDescription();
-    private final JTextField txtAnnotation = readOnlyDescription();
     private final JToggleButton btnAsciiMode = new JToggleButton();
 
     private final LoadImageAction loadImageAction;
@@ -148,11 +147,8 @@ public class MemoryGui extends DialogBase {
         txtValueBin.setText(formatBinaryString(data, 8));
         boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
         String label = mapped ? debuggerMemory.label(address) : "";
-        String annotation = mapped ? debuggerMemory.comment(address) : "";
         txtLabel.setText(label);
         txtLabel.setToolTipText(label.isEmpty() ? null : "Label: " + label);
-        txtAnnotation.setText(annotation);
-        txtAnnotation.setToolTipText(annotation.isEmpty() ? null : "Annotation: " + annotation);
     }
 
     @Override
@@ -206,8 +202,6 @@ public class MemoryGui extends DialogBase {
         panelValue.add(gui.label("(bin)"), "wrap");
         panelValue.add(gui.label("Label:"));
         panelValue.add(txtLabel, "span, growx, wrap");
-        panelValue.add(gui.label("Annotation:"));
-        panelValue.add(txtAnnotation, "span, growx");
 
         JPanel bottomPanel = gui.panel("insets dialog", "[grow]", "[]6[]");
         bottomPanel.add(panelControl, "growx, wrap");

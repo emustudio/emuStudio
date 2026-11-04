@@ -33,18 +33,16 @@ public final class DebuggerMemoryImpl implements DebuggerMemory {
         if (session == old) setSession(null);
     }
 
-    @Override public String label(int address) { return lookup(address, true); }
-    @Override public String comment(int address) { return lookup(address, false); }
+    @Override public String label(int address) { return lookup(address); }
 
-    private String lookup(int address, boolean label) {
+    private String lookup(int address) {
         DebugSession current = session;
         if (current == null) return "";
         try {
             ProgramIndex.Snapshot snapshot = current.programIndex().snapshot();
             StringBuilder result = new StringBuilder();
             snapshot.forEachAnnotationStartingAt(address, annotation -> {
-                boolean matches = label ? annotation.kind().equals(ProgramIndex.Kinds.LABEL)
-                        : annotation.kind().startsWith("emuStudio.user/");
+                boolean matches = annotation.kind().equals(ProgramIndex.Kinds.LABEL);
                 if (matches && !annotation.text().isEmpty()) {
                     if (result.length() > 0) result.append(", ");
                     result.append(annotation.text());

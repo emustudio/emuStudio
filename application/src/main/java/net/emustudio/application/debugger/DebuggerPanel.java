@@ -225,11 +225,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 row -> {
                     if (disposed || running || tasks.isBusy()) return null;
                     int address = instructionModel.getLocationAt(row);
-                    AnnotationIndex.Entry entry = annotationAt(address);
                     String result = labelsAt(address);
                     if (result.isEmpty()) return null;
-                    String comment = entry == null || entry.comment == null ? "" : entry.comment.trim();
-                    return comment.isEmpty() ? result : result + " — " + comment;
+                    return result;
                 });
         setLayout(new BorderLayout(6, 6));
         tabs.setName("debuggerViews");
@@ -642,7 +640,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             else if (entry.kind.equals("CODE")) kind = "Code";
             return new ListDetail(String.format("%04X–%04X", entry.address, entry.end - 1),
                     entry.label.isBlank() ? "Unnamed annotation" : entry.label,
-                    kind + (entry.comment.isBlank() ? "" : " · " + entry.comment), entry.toString());
+                    kind, entry.toString());
         }));
         annotations.getAccessibleContext().setAccessibleName("Annotations");
         annotations.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -791,7 +789,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private final class AnnotationForm extends JPanel {
         private final List<String> kinds = List.of("UNKNOWN", "CODE", "DATA");
-        private final JTextField addressField = gui.textField("", 16), labelField = gui.textField("", 12), comment = gui.textField("", 20);
+        private final JTextField addressField = gui.textField("", 16), labelField = gui.textField("", 12);
         private final JTextField endField = gui.textField("", 16);
         private final JComboBox<String> kind = new JComboBox<>(new String[]{"Unspecified", "Code", "Data"});
         private final JButton save;
@@ -812,8 +810,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             fields.add(endField, "growx, wrap");
             fields.add(label("Label", labelField));
             fields.add(labelField, "growx, wrap");
-            fields.add(label("Comment", comment));
-            fields.add(comment, "growx");
             add(fields, "growx, wrap");
             save = button(ICON_SAVE, "Save annotation", () -> { saveDraft(); onSaved.run(); });
             save.setName("saveAnnotation");
@@ -823,10 +819,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             options.add(kind);
             options.add(save, "skip 1");
             add(options, "growx");
-            onTextChange(this::updateState, labelField, comment, addressField, endField);
+            onTextChange(this::updateState, labelField, addressField, endField);
             kind.addActionListener(event -> updateState());
             labelField.addActionListener(event -> save.doClick());
-            comment.addActionListener(event -> save.doClick());
             updateState();
         }
 
@@ -841,7 +836,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         void loadNew(int at) {
-            loadEntry(new AnnotationIndex.Entry(at, "", "", "UNKNOWN"));
+            loadEntry(new AnnotationIndex.Entry(at, "", "UNKNOWN"));
         }
 
         void loadEntry(AnnotationIndex.Entry entry) {
@@ -852,7 +847,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 endField.setText(String.format("0x%04X", entry.end - 1));
                 original = entry;
                 labelField.setText(original == null ? "" : original.label);
-                comment.setText(original == null ? "" : original.comment);
                 kind.setSelectedIndex(original == null ? 0 : kinds.indexOf(original.kind));
             } finally {
                 loading = false;
@@ -862,7 +856,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         boolean dirty() {
             return original != null && (!original.label.equals(labelField.getText())
-                    || !original.comment.equals(comment.getText())
                     || !original.kind.equals(kinds.get(kind.getSelectedIndex()))
                     || !addressField.getText().equalsIgnoreCase(String.format("0x%04X", original.address))
                     || !endField.getText().equalsIgnoreCase(String.format("0x%04X", original.end - 1)));
@@ -888,7 +881,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         + (index.programIndex().snapshot().layout().addressSpaceSize() - 1) + ".");
             }
             address = target;
-            AnnotationIndex.Entry draft = new AnnotationIndex.Entry(original.id, address, end + 1, labelField.getText(), comment.getText(), kinds.get(kind.getSelectedIndex()));
+            AnnotationIndex.Entry draft = new AnnotationIndex.Entry(original.id, address, end + 1, labelField.getText(), kinds.get(kind.getSelectedIndex()));
             AnnotationIndex.Entry[] saved = {draft};
             changeAnnotations(() -> {
                 if (draft.id < 0) saved[0] = index.add(draft);
@@ -1913,8 +1906,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private String annotationTooltip(int address) {
         List<String> descriptions = new ArrayList<>();
         for (AnnotationIndex.Entry entry : annotationsCovering(address)) {
-            String label = entry.label.trim(), comment = entry.comment.trim();
-            String description = label.isEmpty() ? comment : comment.isEmpty() ? label : label + " — " + comment;
+            String description = entry.label.trim();
             descriptions.add(description.isEmpty() ? "Annotation" : description);
         }
         return descriptions.isEmpty() ? null : String.join(" | ", descriptions);
@@ -2125,7 +2117,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public String getColumnName(int col) {
             if (col == breakpointColumn) return "bp";
             if (col < baseCount()) return instructionModel.getColumnName(baseColumn(col));
-            return col == baseCount() ? "Label" : "Comment";
+            return "Label";
         }
         @Override public Class<?> getColumnClass(int col) {
             if (col == breakpointColumn) return Boolean.class;
@@ -2141,7 +2133,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             int at = instructionModel.getLocationAt(row);
             AnnotationIndex.Entry entry = annotationAt(at);
             if (entry == null) return "";
-            return col == baseCount() ? entry.label : entry.comment;
+            return entry.label;
         }
         @Override public boolean isCellEditable(int row, int col) {
             if (disposed || tasks.isBusy() || running) return false;
@@ -2269,7 +2261,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     requireCurrent();
                                     if (confirmSaveAnnotations())
                                         showAnnotationEditor(first, "New annotation",
-                                                new AnnotationIndex.Entry(-1, first, end, "", "", "UNKNOWN"));
+                                                new AnnotationIndex.Entry(-1, first, end, "", "UNKNOWN"));
                                 });
                             }
                             candidateLane = null;
@@ -2456,9 +2448,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             entry.getKey(), flow.mnemonic(entry.getKey()), branchNodes.contains(entry.getKey()) ? " · Branch" : "");
             for (AnnotationLane lane : lanes)
                 if (lane.header.contains(point))
-                    return String.format("%s · %04X–%04X%s", laneTitle(lane.annotation),
-                            lane.annotation.address, lane.annotation.end - 1,
-                            lane.annotation.comment.isBlank() ? "" : " · " + lane.annotation.comment);
+                    return String.format("%s · %04X–%04X", laneTitle(lane.annotation),
+                            lane.annotation.address, lane.annotation.end - 1);
             return null;
         }
 

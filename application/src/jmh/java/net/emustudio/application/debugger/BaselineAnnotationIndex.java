@@ -36,7 +36,6 @@ public final class BaselineAnnotationIndex {
                 new Entry(
                         entry.address,
                         entry.label,
-                        entry.comment,
                         entry.bookmark,
                         entry.kind));
     }
@@ -53,7 +52,7 @@ public final class BaselineAnnotationIndex {
         String needle = text.toLowerCase(Locale.ROOT);
         List<Entry> result = new ArrayList<>();
         for (Entry e : entries.values())
-            if ((e.label + " " + e.comment).toLowerCase(Locale.ROOT).contains(needle))
+            if (e.label.toLowerCase(Locale.ROOT).contains(needle))
                 result.add(e);
         return result;
     }
@@ -70,7 +69,6 @@ public final class BaselineAnnotationIndex {
             p.setProperty(k + "address", Integer.toString(e.address));
             p.setProperty(k + "end", Integer.toString(e.address + 1));
             p.setProperty(k + "label", e.label);
-            p.setProperty(k + "comment", e.comment);
             p.setProperty(k + "bookmark", Boolean.toString(e.bookmark));
             p.setProperty(k + "kind", e.kind);
         }
@@ -100,7 +98,6 @@ public final class BaselineAnnotationIndex {
                         new Entry(
                                 Integer.parseInt(p.getProperty(k + "address")),
                                 p.getProperty(k + "label", ""),
-                                p.getProperty(k + "comment", ""),
                                 Boolean.parseBoolean(p.getProperty(k + "bookmark")),
                                 p.getProperty(k + "kind", "UNKNOWN")));
             }
@@ -112,25 +109,23 @@ public final class BaselineAnnotationIndex {
 
     public static final class Entry {
         public final int address;
-        public final String label, comment, kind;
+        public final String label, kind;
         public final boolean bookmark;
 
         public Entry(
                 int address,
                 String label,
-                String comment,
                 boolean bookmark,
                 String kind) {
             this.address = address;
             this.label = Objects.requireNonNull(label);
-            this.comment = Objects.requireNonNull(comment);
             this.bookmark = bookmark;
             this.kind = Objects.requireNonNull(kind);
         }
 
         @Override
         public String toString() {
-            return String.format("%04X %s %s", address, label, comment);
+            return String.format("%04X %s", address, label);
         }
     }
 }

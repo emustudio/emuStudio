@@ -54,7 +54,7 @@ public final class AnnotationIndex {
 
     /** Adds an independent annotation even when another starts at the same address. */
     public Entry add(Entry entry) {
-        Entry added = new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.comment, entry.kind);
+        Entry added = new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind);
         edit(List.of(added), false);
         return added;
     }
@@ -117,7 +117,7 @@ public final class AnnotationIndex {
             long id = entry.id >= 0 ? entry.id : old == null ? IDS.getAndAdd(2) : old.entryId();
             ProgramIndex.Range range = new ProgramIndex.Range(entry.address, entry.end);
             String kind = USER_KIND + entry.kind;
-            update.putAnnotation(OWNER, id, range, kind, entry.comment);
+            update.putAnnotation(OWNER, id, range, kind, entry.label);
             update.removeAnnotation(OWNER, id + 1);
             if (!entry.label.isEmpty())
                 update.putAnnotation(OWNER, id + 1, range, ProgramIndex.Kinds.LABEL, entry.label);
@@ -147,7 +147,7 @@ public final class AnnotationIndex {
         String needle = text.toLowerCase(Locale.ROOT);
         List<Entry> result = new ArrayList<>();
         for (Entry e : entries())
-            if ((e.label + " " + e.comment).toLowerCase(Locale.ROOT).contains(needle)) result.add(e);
+            if (e.label.toLowerCase(Locale.ROOT).contains(needle)) result.add(e);
         return result;
     }
 
@@ -173,7 +173,6 @@ public final class AnnotationIndex {
             p.setProperty(k + "end", Integer.toString(e.end));
             p.setProperty(k + "id", Long.toString(e.id));
             p.setProperty(k + "label", e.label);
-            p.setProperty(k + "comment", e.comment);
             p.setProperty(k + "kind", e.kind);
         }
         return p;
@@ -187,7 +186,7 @@ public final class AnnotationIndex {
         List<Entry> copies = new ArrayList<>();
         for (Entry entry : imported)
             copies.add(new Entry(IDS.getAndAdd(2), entry.address, entry.end,
-                    entry.label, entry.comment, entry.kind));
+                    entry.label, entry.kind));
         edit(copies, false);
     }
 
@@ -206,7 +205,6 @@ public final class AnnotationIndex {
                 long id = Long.parseLong(p.getProperty(k + "id"));
                 if (id < 0 || id >= Long.MAX_VALUE - 1 || (id & 1) != 0) throw new IllegalArgumentException("Invalid annotation id");
                 Entry entry = new Entry(id, address, Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
-                        p.getProperty(k + "comment", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
                 validateRange(index.snapshot().layout(), entry);
@@ -237,16 +235,12 @@ public final class AnnotationIndex {
 
         View(ProgramIndex.Snapshot snapshot) {
             revision = snapshot.contentRevision();
-            Map<Long, String> labels = new HashMap<>();
-            snapshot.forEachAnnotation(a -> {
-                if (a.ownerId() == OWNER && a.kind().equals(ProgramIndex.Kinds.LABEL)) labels.put(a.entryId(), a.text());
-            });
             List<Entry> result = new ArrayList<>();
             snapshot.forEachAnnotation(a -> {
                 if (a.ownerId() != OWNER || !a.kind().startsWith(USER_KIND)) return;
                 String kind = a.kind().substring(USER_KIND.length());
                 Entry entry = new Entry(a.entryId(), a.range().start, a.range().end,
-                        labels.getOrDefault(a.entryId() + 1, ""), a.text(), kind);
+                        a.text(), kind);
                 result.add(entry);
                 payloads.put(a, entry);
             });
@@ -257,19 +251,18 @@ public final class AnnotationIndex {
     public static final class Entry {
         public final long id;
         public final int address, end;
-        public final String label, comment, kind;
-        public Entry(int address, String label, String comment, String kind) {
-            this(-1, address, address + 1, label, comment, kind);
+        public final String label, kind;
+        public Entry(int address, String label, String kind) {
+            this(-1, address, address + 1, label, kind);
         }
-        public Entry(long id, int address, int end, String label, String comment, String kind) {
+        public Entry(long id, int address, int end, String label, String kind) {
             this.id = id;
             this.address = address;
             this.end = end;
             this.label = Objects.requireNonNull(label);
-            this.comment = Objects.requireNonNull(comment);
             this.kind = Objects.requireNonNull(kind);
         }
 
-        @Override public String toString() { return String.format("%04X %s %s", address, label, comment); }
+        @Override public String toString() { return String.format("%04X %s", address, label); }
     }
 }

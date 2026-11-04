@@ -70,7 +70,7 @@ final class BenchmarkData {
     BaselineAnnotationIndex baseline(ProgramIndex.Layout layout) {
         BaselineAnnotationIndex index = new BaselineAnnotationIndex(layout);
         for (int i = 0; i < count; i++) index.put(new BaselineAnnotationIndex.Entry(
-                address[i], labels[i], "", false, "UNKNOWN"));
+                address[i], labels[i], false, "UNKNOWN"));
         return index;
     }
 

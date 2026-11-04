@@ -361,7 +361,7 @@ public class DebuggerPanelTest {
     public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                session.annotations().put(new AnnotationIndex.Entry(0, "start", "entry point", "CODE"));
+                session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -375,7 +375,7 @@ public class DebuggerPanelTest {
                 java.awt.Rectangle cell = workspace.table.getCellRect(0, 0, true);
                 java.awt.event.MouseEvent hover = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, cell.x + 1, cell.y + 1, 0, false);
-                assertEquals("start — entry point", workspace.table.getToolTipText(hover));
+                assertEquals("start", workspace.table.getToolTipText(hover));
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 0)));
                 JComponent rendered = (JComponent) workspace.table.prepareRenderer(
@@ -389,8 +389,8 @@ public class DebuggerPanelTest {
     public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
-                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "note", "UNKNOWN"));
-                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "UNKNOWN"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -398,7 +398,7 @@ public class DebuggerPanelTest {
                 java.awt.Rectangle first = workspace.table.getCellRect(0, 0, true);
                 java.awt.event.MouseEvent hoverFirst = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, first.x + 1, first.y + 1, 0, false);
-                assertEquals("range — note", workspace.table.getToolTipText(hoverFirst));
+                assertEquals("range", workspace.table.getToolTipText(hoverFirst));
                 java.awt.Color lane = java.awt.Color.getHSBColor(0f, .55f, .78f);
                 java.awt.Color base = graph.getBackground();
                 java.awt.Color expected = new java.awt.Color((lane.getRed() * 28 + base.getRed() * 227 + 127) / 255,
@@ -409,7 +409,7 @@ public class DebuggerPanelTest {
                 java.awt.Rectangle second = workspace.table.getCellRect(1, 0, true);
                 java.awt.event.MouseEvent hoverSecond = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
-                assertEquals("range — note | inner", workspace.table.getToolTipText(hoverSecond));
+                assertEquals("range | inner", workspace.table.getToolTipText(hoverSecond));
                 assertNotEquals(expected, workspace.table.createToolTip().getBackground());
 
                 java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
@@ -530,8 +530,8 @@ public class DebuggerPanelTest {
                     new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
         })) {
             try {
-                workspace.session.annotations().put(new AnnotationIndex.Entry(0, "start", "", "CODE"));
-                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "", "UNKNOWN"));
+                workspace.session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "UNKNOWN"));
                 SwingUtilities.invokeAndWait(() -> {
                     AbstractButton goTo = button(workspace.panel, "Go to instruction");
                     assertFalse(goTo.isEnabled());

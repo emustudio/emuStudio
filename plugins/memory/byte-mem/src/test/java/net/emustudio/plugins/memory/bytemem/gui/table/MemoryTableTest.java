@@ -15,8 +15,7 @@ import static org.junit.Assert.*;
 public class MemoryTableTest {
     private MemoryTableModel tableModel;
     private final DebuggerMemory metadata = new DebuggerMemory() {
-        public String label(int address) { return address == 1 ? "<start>" : ""; }
-        public String comment(int address) { return address == 2 ? "Comment & details" : ""; }
+        public String label(int address) { return address == 1 ? "<start>" : address == 2 ? "Label & details" : ""; }
         public boolean isCurrentInstruction(int address) { return address == 3; }
         public void addListener(Runnable listener) { }
         public void removeListener(Runnable listener) { }
@@ -80,8 +79,8 @@ public class MemoryTableTest {
         assertEquals(new Color(230, 230, 230), label.getBackground());
         assertTrue(label.getToolTipText().contains("&lt;start&gt;"));
         JLabel annotation = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 2), 0, 2);
-        assertEquals(new Color(200, 200, 200), annotation.getBackground());
-        assertTrue(annotation.getToolTipText().contains("Comment &amp; details"));
+        assertEquals(new Color(230, 230, 230), annotation.getBackground());
+        assertTrue(annotation.getToolTipText().contains("Label &amp; details"));
         JLabel instruction = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 3), 0, 3);
         assertEquals(new Color(255, 204, 204), instruction.getBackground());
         assertTrue(instruction.getToolTipText().contains("Current instruction"));

@@ -121,7 +121,7 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             ProgramIndex initial = session.programIndex();
             assertSame(initial, session.annotations().programIndex());
-            session.annotations().put(new AnnotationIndex.Entry(1, "user", "", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "user", "DATA"));
             machine.memoryChanged(1);
             assertEquals("user", session.annotations().get(1).label);
             assertSame(initial, session.programIndex());
@@ -168,7 +168,7 @@ public class DebugSessionTest {
             Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
-            session.annotations().put(new AnnotationIndex.Entry(1, "new", "", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "new", "DATA"));
             release.countDown();
             ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
             assertTrue(rejected.getCause() instanceof IllegalStateException);
@@ -298,7 +298,7 @@ public class DebugSessionTest {
             machine.memoryChanged(1);
             assertThrows(IllegalStateException.class, () -> first.value(0));
             LiveMemory second = session.liveMemory();
-            session.annotations().put(new AnnotationIndex.Entry(1, "changed", "", "UNKNOWN"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
             assertThrows(IllegalStateException.class, second::requireCurrent);
             LiveMemory third = session.liveMemory();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -614,7 +614,7 @@ public class DebugSessionTest {
         String identity;
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             identity = session.programIndex().snapshot().layout().imageId();
-            session.annotations().put(new AnnotationIndex.Entry(1, "buffer", "payload", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "buffer", "DATA"));
             session.saveAnnotations();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2, false);
