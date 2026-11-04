@@ -378,9 +378,9 @@ public class EmulatorPanel extends JPanel {
         toolDebug.add(gui.toolbarButton(stepBackAction));
         toolDebug.add(gui.toolbarButton(stopAction));
         toolDebug.add(gui.toolbarButton(pauseAction));
-        toolDebug.add(gui.toolbarButton(stepAction));
-        toolDebug.add(gui.toolbarButton(runTimedAction));
         toolDebug.add(gui.toolbarButton(runAction));
+        toolDebug.add(gui.toolbarButton(runTimedAction));
+        toolDebug.add(gui.toolbarButton(stepAction));
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(jumpAction));
         toolDebug.addSeparator();

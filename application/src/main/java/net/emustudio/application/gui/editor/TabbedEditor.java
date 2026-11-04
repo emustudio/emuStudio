@@ -102,11 +102,6 @@ public class TabbedEditor implements Editor {
         REditor active = activeEditor();
         if (leftSplit != null) leftSplit.update(active);
         if (rightSplit != null) rightSplit.update(active);
-        if (searchBar != null) {
-            String side = leftSplit != null && leftSplit.editor == active ? "Left pane"
-                    : rightSplit != null && rightSplit.editor == active ? "Right pane" : "File";
-            searchBar.setTarget(side + ": " + title(active), active.getCurrentFile().map(File::getAbsolutePath).orElse(UNTITLED));
-        }
     }
 
     private final class SplitPaneView extends JPanel {
@@ -483,7 +478,7 @@ public class TabbedEditor implements Editor {
 
     public InlineSearchBar searchBar() {
         if (searchBar == null) {
-            searchBar = new InlineSearchBar(this::activeEditor, () -> new FilesSearchDialog(this, searchBar).setVisible(true));
+            searchBar = new InlineSearchBar(this::activeEditor);
             editors.forEach(searchBar::observe);
             updatePaneContext();
         }
@@ -580,7 +575,6 @@ public class TabbedEditor implements Editor {
             addCommand(navigate, "Previous edit", () -> navigate(edits, back));
             addCommand(navigate, "Bookmarks…", this::showBookmarks);
             menu.addSeparator();
-            addCommand(menu, "Find / replace in files…", () -> new FilesSearchDialog(this, searchBar()).setVisible(true));
             JMenu refactor = new JMenu("Refactor");
             addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this));
             addCommand(refactor, "Extract selection…", () -> SourceRefactoring.extract(this));

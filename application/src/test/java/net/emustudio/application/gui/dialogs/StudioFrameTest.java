@@ -61,7 +61,8 @@ public class StudioFrameTest extends AbstractSwingTest {
             return labels;
         });
         org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Selection", "Navigate", "Editing macros",
-                "Editor display", "Find / replace in files…", "Refactor", "Split view")));
+                "Editor display", "Refactor", "Split view")));
+        org.junit.Assert.assertFalse(editingItems.contains("Find / replace in files…"));
     }
 
     @Test

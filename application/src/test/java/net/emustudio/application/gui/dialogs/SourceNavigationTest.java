@@ -41,6 +41,31 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
+    public void labelsAppearOnAddressCellsAndDisappearWhenSourceChanges() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            runOnEdt(f.debugger::showMemory);
+            JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, pane -> true);
+            assertEquals(-1, onEdt(() -> tabs.indexOfTab("Symbols")).intValue());
+            String tooltip = onEdt(() -> {
+                java.awt.Rectangle cell = f.table.getCellRect(2, 0, true);
+                return f.table.getToolTipText(new java.awt.event.MouseEvent(f.table, 0, 0, 0, cell.x + 2, cell.y + 2, 0, false));
+            });
+            assertEquals("second", tooltip);
+            assertEquals(new java.awt.Color(210, 210, 210), onEdt(() ->
+                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
+            runOnEdt(() -> f.table.setRowSelectionInterval(2, 2));
+            assertEquals(new java.awt.Color(110, 110, 110), onEdt(() ->
+                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
+            assertEquals(onEdt(f.table::getBackground), onEdt(() ->
+                    f.table.prepareRenderer(f.table.getCellRenderer(3, 0), 3, 0).getBackground()));
+            runOnEdt(() -> { f.pane.insert("; edited\n", 0); f.table.clearSelection(); });
+            assertEquals(onEdt(f.table::getBackground), onEdt(() ->
+                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
+        }
+    }
+
+    @Test(timeout = 10000)
     public void replacingMemoryLayoutRejectsOldSourceNavigationInBothDirections() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -112,36 +137,10 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
             assertTrue(onEdt(source::getText).contains("Source changed"));
             assertTrue(onEdt(source::isVisible));
-            JList<?> symbols = findComponent(f.debugger, JList.class,
-                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
-            assertFalse(onEdt(symbols::isEnabled));
             runOnEdt(() -> { f.pane.setText(f.text); assertTrue(f.editor.saveFile()); });
             f.compile(false);
-            assertTrue(onEdt(symbols::isEnabled));
             f.sourceLine(2);
             assertFalse(onEdt(source::isVisible));
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void symbolFilteringPreservesTheQueryAndUsesFullMappingsForSourceFollowing() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.compile(false);
-            runOnEdt(f.debugger::showMemory);
-            JTextField filter = findComponent(f.debugger, JTextField.class,
-                    field -> "Filter symbols".equals(field.getAccessibleContext().getAccessibleName()));
-            JList<?> symbols = findComponent(f.debugger, JList.class,
-                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
-            setText(filter, "third");
-            assertEquals(1, onEdt(() -> symbols.getModel().getSize()).intValue());
-            f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            assertEquals("third", onEdt(filter::getText));
-            JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, pane -> true);
-            runOnEdt(() -> { tabs.setSelectedIndex(tabs.indexOfTab("Symbols")); symbols.setSelectedIndex(0); });
-            assertEquals(3, f.line());
-            assertEquals("Symbols", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }
@@ -163,19 +162,10 @@ public class SourceNavigationTest extends AbstractSwingTest {
 
             assertEquals(3, f.line());
 
-            JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, p -> true);
-            runOnEdt(() -> tabs.setSelectedIndex(tabs.indexOfTab("Symbols")));
-            JList<?> symbols = findComponent(f.debugger, JList.class,
-                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
-            assertEquals(3, onEdt(() -> symbols.getModel().getSize()).intValue());
-            runOnEdt(() -> symbols.setSelectedIndex(0));
+            runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
             assertEquals(1, f.line());
-            assertEquals("Symbols", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
-            runOnEdt(f.debugger::showMemory);
-            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.table.setRowSelectionInterval(4, 4));
             assertEquals(3, f.line());
-            assertTrue(onEdt(() -> symbols.getSelectedValue().toString().startsWith("third")));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
             assertEquals(0, f.bank.get());
         }
@@ -238,29 +228,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void symbolsRemainVisibleForForeignBankAndDataSelections() throws Exception {
-        try (Fixture f = new Fixture("first: nop\nsecond: db 0\nthird: nop\n")) {
-            f.bank.set(1);
-            f.compile(false);
-            JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, p -> true);
-            JList<?> symbols = findComponent(f.debugger, JList.class,
-                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
-            runOnEdt(() -> tabs.setSelectedIndex(tabs.indexOfTab("Symbols")));
-            clearInvocations(f.original);
-            runOnEdt(() -> symbols.setSelectedIndex(2));
-            assertEquals("Symbols", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
-            verify(f.original, never()).showAddress(4); // Must not decode the CPU's different bank.
-            runOnEdt(() -> symbols.setSelectedIndex(1));
-            assertEquals("Symbols", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
-            verify(f.original, never()).showAddress(2); // Data never becomes speculative instructions.
-            assertEquals(2, f.line());
-            runOnEdt(f.debugger::showMemory);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            assertEquals(0, f.bank.get());
-        }
-    }
-
-    @Test(timeout = 10000)
     public void dirtyAndSavedEditsFailedCompilationAndRunningCpuNeverUseOldMappings() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -317,9 +284,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(() -> {});
             f.sourceLine(3);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            JList<?> symbols = findComponent(f.debugger, JList.class,
-                    list -> "Compiled symbols".equals(list.getAccessibleContext().getAccessibleName()));
-            assertEquals(0, onEdt(() -> symbols.getModel().getSize()).intValue());
         }
     }
 

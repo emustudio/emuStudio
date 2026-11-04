@@ -45,7 +45,7 @@ final class SourceNavigation implements AutoCloseable {
             }
             SwingUtilities.invokeLater(() -> {
                 if (!closed && current == compilation) {
-                    debugger.setSymbols(java.util.List.of(), SourceNavigation.this::symbolSelected);
+                    debugger.setSymbols(java.util.List::of);
                     showStatus("Compiling sources…", false);
                 }
             });
@@ -124,7 +124,7 @@ final class SourceNavigation implements AutoCloseable {
                     mappingStatus = captured.diagnostics().isEmpty() ? "Source mapping current"
                             : "Source mapping incomplete: " + captured.diagnostics().get(0);
                 }
-                debugger.setSymbols(captured.symbols(), SourceNavigation.this::symbolSelected);
+                debugger.setSymbols(captured::symbols);
                 showStatus(mappingStatus, !captured.sourceFiles().isEmpty());
                 editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
             });
@@ -140,7 +140,7 @@ final class SourceNavigation implements AutoCloseable {
         editor.setSourcePositionChanged(this::sourceSelected);
         debugger.setAddressSelectionListener(this::addressSelected);
         debugger.setInspectionReadyListener(() -> editor.currentSourcePosition().ifPresent(this::sourceSelected));
-        debugger.setSymbols(java.util.List.of(), this::symbolSelected);
+        debugger.setSymbols(java.util.List::of);
         if (compiler == null) mappingStatus = "Source synchronization unavailable — no compiler";
         showStatus(mappingStatus, false);
         if (compiler != null) compiler.addCompilerListener(listener);
@@ -194,14 +194,12 @@ final class SourceNavigation implements AutoCloseable {
         if (synchronizing || closed) return;
         Optional<SourceAddressMap> snapshot = current(position);
         if (snapshot.isEmpty() || !paused()) return;
-        debugger.selectSymbol(position, -1, -1);
         Optional<SourceAddressMap.Location> address = snapshot.get().addressOf(position);
         if (address.isEmpty()) showStatus("Source line has no current memory address", true);
         address.ifPresent(location -> {
             synchronizing = true;
             try {
                 debugger.synchronizeSourceAddress(location);
-                debugger.selectSymbol(location.position, location.address, location.bank);
             } finally { synchronizing = false; }
         });
     }
@@ -220,29 +218,12 @@ final class SourceNavigation implements AutoCloseable {
             try {
                 if (location.instruction && location.bank == session.memory.getBank(location.address))
                     debugger.alignInstructionAddress(location.address);
-                debugger.selectSymbol(location.position, location.address, location.bank);
                 if (visit) editor.visitPosition(location.position);
                 else editor.synchronizePosition(location.position);
             } finally { synchronizing = false; }
         });
     }
 
-    private void symbolSelected(SourceAddressMap.Symbol symbol) {
-        if (synchronizing || !paused()) return;
-        Optional<SourceAddressMap> snapshot = current(symbol.position);
-        if (snapshot.isEmpty() || snapshot.get().symbols().stream().noneMatch(value -> value.name.equals(symbol.name)
-                && value.position.fileName.equals(symbol.position.fileName) && value.position.line == symbol.position.line
-                && value.position.column == symbol.position.column)) return;
-        synchronizing = true;
-        try {
-            editor.visitPosition(symbol.position);
-            Optional<SourceAddressMap.Location> address = snapshot.get().addressOf(symbol.position);
-            if (address.isPresent()) debugger.synchronizeSourceAddress(address.get());
-            else showStatus(symbol.sourceOnly
-                    ? "Source-only declaration — no memory address"
-                    : "Memory mapping changed — compile the program to synchronize", true);
-        } finally { synchronizing = false; }
-    }
 
     @Override public void close() {
         if (closed) return;

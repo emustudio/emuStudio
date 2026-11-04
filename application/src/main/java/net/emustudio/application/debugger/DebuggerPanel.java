@@ -44,16 +44,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private AddressSelectionListener addressSelectionListener = (address, bank, visit) -> {};
     private Runnable inspectionReadyListener = () -> {};
-    private boolean pinnedSelection, changingView, updatingSymbols;
+    private boolean pinnedSelection, changingView;
     private final JCheckBoxMenuItem pinInspection = new JCheckBoxMenuItem("Pin inspection");
-    private final DefaultListModel<SourceAddressMap.Symbol> symbolRows = new DefaultListModel<>();
-    private final JList<SourceAddressMap.Symbol> symbols = new JList<>(symbolRows);
-    private final JLabel symbolContext = new JLabel("Compile sources to browse symbols.");
-    private final JTextField symbolFilter = new JTextField(18);
-    private List<SourceAddressMap.Symbol> compiledSymbols = List.of();
+    private java.util.function.Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private final JLabel sourceContext = new JLabel();
     private boolean sourceMappingsCurrent;
-    private Consumer<SourceAddressMap.Symbol> symbolSelected = symbol -> {};
     private final DebugSession session;
     private final GUI gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
@@ -72,7 +67,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private boolean updatingAnnotations;
     private final JPanel annotationList = new JPanel(new CardLayout());
     private final JLabel annotationEmpty = new JLabel("", SwingConstants.CENTER);
-    private final JLabel resultContext;
     private final JTextField annotationFilter;
     private final JCheckBox bookmarksOnly = new JCheckBox("Bookmarks only");
     private final Set<String> changedWatches = new HashSet<>();
@@ -224,7 +218,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.instructionRows = new InstructionAnnotationsModel();
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
-        resultContext = gui.label("All addresses");
         annotationFilter = gui.textField("", 14);
         lastInstructionAddress = session.cpu.getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
@@ -238,11 +231,44 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.sourceNavigator = sourceNavigator;
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         tasks = new AnalysisTasks(session, this::setBusy, this::showFailure);
+        table.setInstructionRowPresentation(row -> {
+            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return false;
+            int address = instructionModel.getLocationAt(row);
+            return address >= 0 && session.isBreakpointSet(address);
+        }, row -> {
+            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
+            AnnotationIndex.Entry entry = annotationAt(instructionModel.getLocationAt(row), instructionBank());
+            if (entry == null) return null;
+            String label = entry.label == null ? "" : entry.label.trim();
+            String comment = entry.comment == null ? "" : entry.comment.trim();
+            if (label.isEmpty()) return comment.isEmpty() ? null : comment;
+            return comment.isEmpty() ? label : label + " — " + comment;
+        });
+        table.setAddressPresentation(column -> table.getModel() == model ? column == 0
+                : table.getModel() == instructionRows && column != breakpointColumn
+                && instructionRows.baseColumn(column) >= 0
+                && instructionRows.baseColumn(column) < instructionModel.getColumnCount()
+                && instructionModel.getColumnAt(instructionRows.baseColumn(column)) instanceof net.emustudio.emulib.runtime.ui.debugger.AddressColumn,
+                row -> {
+                    if (disposed || running || tasks.isBusy()) return null;
+                    int address = table.getModel() == model ? model.addressAt(row) : instructionModel.getLocationAt(row);
+                    int selected = table.getModel() == model ? selectedBank() : instructionBank();
+                    int bank = session.memory != null && address >= session.memory.getCommonBoundary() ? 0 : selected;
+                    AnnotationIndex.Entry entry = annotationAt(address, bank);
+                    String annotation = entry == null || entry.label == null ? "" : entry.label.trim();
+                    String labels = (sourceMappingsCurrent ? compiledSymbols.get() : List.<SourceAddressMap.Symbol>of()).stream().filter(symbol -> symbol.location
+                                    .filter(location -> location.address == address && location.bank == bank).isPresent())
+                            .map(symbol -> symbol.name).distinct().collect(java.util.stream.Collectors.joining(", "));
+                    String result = annotation.isEmpty() ? labels
+                            : labels.isEmpty() || labels.equals(annotation) ? annotation : annotation + ", " + labels;
+                    if (result.isEmpty()) return null;
+                    String comment = entry == null || entry.comment == null ? "" : entry.comment.trim();
+                    return comment.isEmpty() ? result : result + " — " + comment;
+                });
         setLayout(new BorderLayout(6, 6));
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
-        tabs.addTab("Symbols", symbolsPanel());
         if (byteMemory) {
             inspectionBank = session.memory.getSelectedBank();
             memoryView = memoryPanel();
@@ -338,8 +364,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         sourceContext.getAccessibleContext().setAccessibleDescription(message);
         sourceContext.setVisible(!message.isEmpty() && !"Source mapping current".equals(message));
         sourceMappingsCurrent = current;
-        symbols.setEnabled(current && !running && !tasks.isBusy());
-        updateSymbolCount();
+        table.repaint();
     }
 
     private void notifyAddressSelection(boolean visit) {
@@ -382,78 +407,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         } finally { navigating = wasNavigating; }
     }
 
-    public void setSymbols(List<SourceAddressMap.Symbol> values, Consumer<SourceAddressMap.Symbol> selection) {
-        updatingSymbols = true;
-        try {
-            symbolSelected = Objects.requireNonNull(selection);
-            compiledSymbols = List.copyOf(values);
-            filterSymbols();
-        } finally { updatingSymbols = false; }
-    }
-
-    public void selectSymbol(SourceCodePosition position, int address, int bank) {
-        SourceAddressMap.Symbol selected = null;
-        for (SourceAddressMap.Symbol symbol : compiledSymbols) {
-            if (!symbol.position.fileName.equals(position.fileName)) continue;
-            if (symbol.position.line == position.line) { selected = symbol; break; }
-            if (symbol.location.filter(location -> location.bank == bank && location.address <= address).isPresent()
-                    && (selected == null || symbol.position.line > selected.position.line)) selected = symbol;
-        }
-        updatingSymbols = true;
-        try { symbols.setSelectedValue(selected, true); if (selected == null) symbols.clearSelection(); }
-        finally { updatingSymbols = false; }
-    }
-
-    private JPanel symbolsPanel() {
-        JPanel panel = borderPanel(4);
-        symbols.getAccessibleContext().setAccessibleName("Compiled symbols");
-        symbols.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        symbols.setToolTipText("Definitions from the last successful compilation. Recompile changed sources to synchronize addresses.");
-        gui.styleList(symbols);
-        symbols.setCellRenderer(new DetailRenderer<>((symbol, row) -> new ListDetail(
-                symbol.location.map(at -> String.format("%04X · Bank %d", at.address, at.bank))
-                        .orElse(symbol.sourceOnly ? "Source only" : "Address unavailable"),
-                symbol.name, Path.of(symbol.position.fileName).getFileName() + ":" + symbol.position.line,
-                symbol.position.fileName + ":" + symbol.position.line)));
-        JPanel filter = gui.panel("insets 4, fillx", "[][grow]", "");
-        filter.add(label("Filter symbols", symbolFilter));
-        filter.add(symbolFilter, "growx");
-        symbolFilter.setToolTipText("Filter by symbol name, source file or address");
-        symbolFilter.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
-        });
-        panel.add(filter, BorderLayout.NORTH);
-        symbols.addListSelectionListener(event -> {
-            if (!updatingSymbols && !event.getValueIsAdjusting() && symbols.getSelectedValue() != null)
-                symbolSelected.accept(symbols.getSelectedValue());
-        });
-        panel.add(gui.scrollPane(symbols));
-        panel.add(symbolContext, BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private void filterSymbols() {
-        SourceAddressMap.Symbol selected = symbols.getSelectedValue();
-        String query = symbolFilter.getText().strip().toLowerCase(Locale.ROOT);
-        boolean wasUpdating = updatingSymbols;
-        updatingSymbols = true;
-        try {
-            updateRows(symbolRows, compiledSymbols.stream()
-                    .filter(symbol -> symbol.toString().toLowerCase(Locale.ROOT).contains(query))
-                    .collect(java.util.stream.Collectors.toList()));
-            if (selected != null && symbolRows.contains(selected)) symbols.setSelectedValue(selected, false);
-            else symbols.clearSelection();
-            updateSymbolCount();
-        } finally { updatingSymbols = wasUpdating; }
-    }
-
-    private void updateSymbolCount() {
-        symbolContext.setVisible(!compiledSymbols.isEmpty());
-        symbolContext.setText(symbolRows.size() == compiledSymbols.size() ? compiledSymbols.size() + " symbols"
-                : symbolRows.size() + " of " + compiledSymbols.size() + " symbols");
-        symbolContext.setToolTipText("Source-only declarations have no memory address. Names and addresses come from the last successful compilation.");
+    public void setSymbols(java.util.function.Supplier<List<SourceAddressMap.Symbol>> values) {
+        compiledSymbols = Objects.requireNonNull(values);
+        table.repaint();
     }
 
     @Override
@@ -630,7 +586,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateExecutionState() {
         table.setEnabled(!running && !tasks.isBusy());
-        symbols.setEnabled(sourceMappingsCurrent && !running && !tasks.isBusy());
         boolean visible = !running || !isInstructionView();
         table.setVisible(visible);
         tableScroll.setVisible(visible);
@@ -654,16 +609,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
                 instructionTableHolder.add(tableScroll);
                 table.showInstructions(instructionRows);
-                if (breakpointColumn >= 0) {
-                    TableColumn breakpoint = table.getColumnModel().getColumn(breakpointColumn);
-                    breakpoint.setMinWidth(32);
-                    breakpoint.setMaxWidth(32);
-                    breakpoint.setPreferredWidth(32);
-                }
-                if (byteMemory) {
-                    table.getColumnModel().getColumn(instructionRows.baseCount()).setPreferredWidth(110);
-                    table.getColumnModel().getColumn(instructionRows.baseCount() + 1).setPreferredWidth(200);
-                }
+                configureInstructionColumns();
                 inspectedAddress = lastInstructionAddress;
                 selectInstructionAddress();
                 table.getAccessibleContext().setAccessibleName("Instruction listing");
@@ -672,6 +618,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             } else if (memoryView != null && tabs.getSelectedComponent() == memoryView) {
                 memoryView.add(tableScroll, BorderLayout.CENTER);
                 table.setModel(model);
+                table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
                 table.setDefaultRenderer(Object.class, memoryRenderer);
                 table.setDefaultRenderer(String.class, memoryRenderer);
                 configureMemoryColumns();
@@ -697,6 +644,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             repaint();
         } finally { changingView = false; navigating = wasNavigating; }
         if (!navigating) notifyAddressSelection(false);
+    }
+
+    private void configureInstructionColumns() {
+        if (table.getModel() != instructionRows) return;
+        if (breakpointColumn >= 0) {
+            int view = table.convertColumnIndexToView(breakpointColumn);
+            if (view >= 0) table.removeColumn(table.getColumnModel().getColumn(view));
+        }
+        for (int col = 0; col < table.getColumnCount(); col++) {
+            TableColumn column = table.getColumnModel().getColumn(col);
+            int width = Math.max(column.getPreferredWidth(),
+                    table.getTableHeader().getFontMetrics(table.getTableHeader().getFont())
+                            .stringWidth(column.getHeaderValue().toString()) + 16);
+            for (int row = 0; row < table.getRowCount(); row++) {
+                width = Math.max(width, table.prepareRenderer(table.getCellRenderer(row, col), row, col)
+                        .getPreferredSize().width + 8);
+            }
+            column.setMinWidth(width);
+        }
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     }
 
     public void showBreakpoints() {
@@ -820,7 +787,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         memoryResults = null;
         discoveredStrings = Map.of();
         stringBank = -1;
-        resultContext.setText("All addresses");
         model.showAll();
     }
 
@@ -914,9 +880,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         line(controls, label("Find", pattern), findKind, pattern,
                 widthLabel, width, bigEndian, find);
         pattern.getAccessibleContext().setAccessibleName("Search value");
-        line(controls, resultContext, button(ICON_MOVE_UP, "Previous", () -> selectResult(-1)),
-                button(ICON_MOVE_DOWN, "Next", () -> selectResult(1)),
-                button(ICON_MEMORY, "Show all addresses", this::resetMemoryView));
         showStrings.setToolTipText("Show or hide strings found in live paused memory");
         showStrings.addActionListener(event -> configureMemoryColumns());
         line(controls, button(ICON_ASCII, "Find strings", () -> {
@@ -934,7 +897,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 showStrings.setSelected(true);
                 configureMemoryColumns();
                 model.show(new ArrayList<>(found.value.keySet()));
-                resultContext.setText(found.value.size() + " strings");
             });
         }), button(ICON_COMPILER, "Show source", () -> showSource(inspectedAddress)), showStrings);
         panel.add(scrollTools(controls), BorderLayout.NORTH);
@@ -953,7 +915,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             discoveredStrings = Map.of();
             stringBank = -1;
             model.show(found.value);
-            resultContext.setText(found.value.size() + " matches");
         });
     }
 
@@ -979,13 +940,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void discardStaleMemoryResults() {
         if (!memoryResultsCurrent()) resetMemoryView();
-    }
-
-    private void selectResult(int delta) {
-        int count = table.getRowCount();
-        if (count == 0) return;
-        int row = Math.floorMod(table.getSelectedRow() + delta, count);
-        navigate(model.addressAt(row), selectedBank());
     }
 
     private JPanel annotationPanel() {
@@ -2564,7 +2518,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private int baseColumn(int col) { return col - (addedBreakpointColumn ? 1 : 0); }
         private int baseCount() { return instructionModel.getColumnCount() + (addedBreakpointColumn ? 1 : 0); }
         @Override public int getRowCount() { return instructionModel.getRowCount(); }
-        @Override public int getColumnCount() { return baseCount() + (byteMemory ? 2 : 0); }
+        @Override public int getColumnCount() { return baseCount(); }
         @Override public String getColumnName(int col) {
             if (col == breakpointColumn) return "bp";
             if (col < baseCount()) return instructionModel.getColumnName(baseColumn(col));
@@ -2604,8 +2558,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             } else if (col < baseCount()) instructionModel.setValueAt(value, row, baseColumn(col));
         }
         @Override public void tableChanged(TableModelEvent event) {
-            if (event.getFirstRow() == TableModelEvent.HEADER_ROW) fireTableStructureChanged();
-            else fireTableDataChanged();
+            if (event.getFirstRow() == TableModelEvent.HEADER_ROW) {
+                fireTableStructureChanged();
+                SwingUtilities.invokeLater(() -> { if (!disposed) configureInstructionColumns(); });
+            }
+            else {
+                fireTableDataChanged();
+                SwingUtilities.invokeLater(() -> { if (!disposed) configureInstructionColumns(); });
+            }
             selectInstructionAddress();
         }
     }

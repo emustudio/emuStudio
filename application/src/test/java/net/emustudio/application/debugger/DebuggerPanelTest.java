@@ -37,14 +37,15 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
-    public void memorySnapshotControlsAreAbsent() throws Exception {
+    public void obsoleteMemoryControlsAreAbsent() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 for (String name : List.of("Take snapshot", "Capture baseline", "Compare baseline", "Compare binary",
-                        "Export memory and metadata", "Rescan", "Compare / strings", "Live memory"))
+                        "Export memory and metadata", "Rescan", "Compare / strings", "Live memory",
+                        "Previous", "Next", "Show all addresses"))
                     assertNull(name, findComponent(workspace.panel, AbstractButton.class, name));
                 assertNotNull(findComponent(workspace.panel, AbstractButton.class, "Find strings"));
-                assertNotNull(findComponent(workspace.panel, AbstractButton.class, "Show all addresses"));
+                assertNull(findComponent(workspace.panel, JLabel.class, "All addresses"));
             });
         }
     }
@@ -290,6 +291,34 @@ public class DebuggerPanelTest {
             });
             verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
             verify(workspace.machine.cpu, never()).setBreakpoint(anyInt());
+        }
+    }
+
+    @Test
+    public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
+            try {
+                session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "entry point", false, "CODE"));
+            } catch (Exception e) { throw new RuntimeException(e); }
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                for (int col = 0; col < workspace.table.getColumnCount(); col++) {
+                    String name = workspace.table.getColumnName(col);
+                    assertFalse(List.of("bp", "Label", "Comment").contains(name));
+                    assertTrue(workspace.table.getColumnModel().getColumn(col).getMinWidth()
+                            >= workspace.table.getColumnModel().getColumn(col).getPreferredWidth());
+                }
+                assertEquals(JTable.AUTO_RESIZE_OFF, workspace.table.getAutoResizeMode());
+                java.awt.Rectangle cell = workspace.table.getCellRect(0, 0, true);
+                java.awt.event.MouseEvent hover = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, cell.x + 1, cell.y + 1, 0, false);
+                assertEquals("start — entry point", workspace.table.getToolTipText(hover));
+                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.SET, 0)));
+                JComponent rendered = (JComponent) workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(0, 0), 0, 0);
+                assertTrue(rendered.getFont().isBold());
+            });
         }
     }
 

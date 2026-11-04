@@ -13,7 +13,10 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_TABLE_GRID;
 
@@ -21,6 +24,10 @@ public class DebugTableImpl extends JTable {
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
     private final TextCellRenderer textRenderer;
+    private IntPredicate breakpointRow = row -> false;
+    private IntFunction<String> rowTooltip = row -> null;
+    private IntFunction<String> addressTooltip = row -> null;
+    private IntPredicate addressColumn = column -> false;
 
     public DebugTableImpl(DebugTableModel tableModel) {
         super(Objects.requireNonNull(tableModel));
@@ -81,6 +88,48 @@ public class DebugTableImpl extends JTable {
         setModel(model);
         setupRenderers();
         setupColumnWidths();
+    }
+
+    public void setInstructionRowPresentation(IntPredicate breakpointRow, IntFunction<String> rowTooltip) {
+        this.breakpointRow = Objects.requireNonNull(breakpointRow);
+        this.rowTooltip = Objects.requireNonNull(rowTooltip);
+        ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    public void setAddressPresentation(IntPredicate addressColumn, IntFunction<String> addressTooltip) {
+        this.addressColumn = Objects.requireNonNull(addressColumn);
+        this.addressTooltip = Objects.requireNonNull(addressTooltip);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        int row = rowAtPoint(event.getPoint());
+        int column = columnAtPoint(event.getPoint());
+        if (row >= 0 && column >= 0 && addressColumn.test(convertColumnIndexToModel(column))) {
+            String label = addressTooltip.apply(convertRowIndexToModel(row));
+            if (label != null) return label;
+        }
+        String tooltip = row < 0 ? null : rowTooltip.apply(convertRowIndexToModel(row));
+        return tooltip != null ? tooltip : super.getToolTipText(event);
+    }
+
+    @Override
+    public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+        Component component = super.prepareRenderer(renderer, row, column);
+        component.setBackground(isCellSelected(row, column) ? getSelectionBackground() : getBackground());
+        if (addressColumn.test(convertColumnIndexToModel(column))
+                && addressTooltip.apply(convertRowIndexToModel(row)) != null) {
+            component.setBackground(isCellSelected(row, column) ? new Color(110, 110, 110) : new Color(210, 210, 210));
+        }
+        int modelRow = convertRowIndexToModel(row);
+        if (tableModel.isRowAtCurrentInstruction(modelRow)) {
+            component.setBackground(new Color(255, 204, 204));
+            component.setForeground(Color.BLACK);
+        }
+        Font font = component.getFont();
+        component.setFont(font.deriveFont(breakpointRow.test(modelRow)
+                ? font.getStyle() | Font.BOLD : font.getStyle() & ~Font.BOLD));
+        return component;
     }
 
     private void setupRenderers() {
