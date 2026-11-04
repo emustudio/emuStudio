@@ -685,9 +685,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (request.address < 0 || request.address >= session.cpu.getAddressSpaceSize())
                 throw new IllegalArgumentException("Address outside CPU");
             session.setBreakpoint(request.address, request.operation == BreakpointDialog.Operation.SET);
-            breakpointsChanged.run();
-            session.save();
-            refresh();
+            breakpointListChanged();
             return true;
         } catch (Exception e) {
             showFailure(e);
@@ -992,9 +990,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JMenuItem delete = annotationMenuItem("Delete selected annotation…", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (entry == null || !confirmSaveAnnotations()) return;
-            if (JOptionPane.showConfirmDialog(this,
-                    String.format("Delete annotation at %04X (bank %d)?", entry.address, entry.bank),
-                    "Delete annotation", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
+            if (!confirm(String.format("Delete annotation at %04X (bank %d)?", entry.address, entry.bank),
+                    "Delete annotation")) return;
             changeAnnotations(() -> index.remove(entry));
             annotationForm.load(entry.bank, entry.address);
         });
@@ -1002,8 +999,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         management.addSeparator();
         management.add(annotationMenuItem("Clear all annotations…", () -> {
             if (!confirmSaveAnnotations()) return;
-            if (JOptionPane.showConfirmDialog(this, "Remove all annotations from this image?",
-                    "Clear annotations", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
+            if (!confirm("Remove all annotations from this image?", "Clear annotations")) return;
             changeAnnotations(index::clear);
             annotationForm.load(selectedBank(), inspectedAddress);
         }));
@@ -1014,11 +1010,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             management.show(manage, 0, manage.getHeight());
         });
         filterTools.add(manage);
-        annotationFilter.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
-        });
+        onTextChange(() -> refreshAnnotations(annotationFilter.getText()), annotationFilter);
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         return panel;
     }
@@ -1044,6 +1036,19 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JMenuItem item = new JMenuItem(text);
         item.addActionListener(event -> guard(operation));
         return item;
+    }
+
+    private boolean confirm(String message, String title) {
+        return JOptionPane.showConfirmDialog(this, message, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+    }
+
+    private static void onTextChange(Runnable action, javax.swing.text.JTextComponent... fields) {
+        javax.swing.event.DocumentListener listener = new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent event) { action.run(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent event) { action.run(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent event) { action.run(); }
+        };
+        for (javax.swing.text.JTextComponent field : fields) field.getDocument().addDocumentListener(listener);
     }
 
     private void changeAnnotations(Operation change) throws Exception {
@@ -1123,15 +1128,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             options.add(kind);
             options.add(save, "skip 1");
             add(options, "growx");
-            javax.swing.event.DocumentListener changed = new javax.swing.event.DocumentListener() {
-                public void insertUpdate(javax.swing.event.DocumentEvent event) { updateState(); }
-                public void removeUpdate(javax.swing.event.DocumentEvent event) { updateState(); }
-                public void changedUpdate(javax.swing.event.DocumentEvent event) { updateState(); }
-            };
-            labelField.getDocument().addDocumentListener(changed);
-            comment.getDocument().addDocumentListener(changed);
-            addressField.getDocument().addDocumentListener(changed);
-            endField.getDocument().addDocumentListener(changed);
+            onTextChange(this::updateState, labelField, comment, addressField, endField);
             bankField.addChangeListener(event -> updateState());
             kind.addActionListener(event -> updateState());
             labelField.addActionListener(event -> save.doClick());
@@ -1359,26 +1356,19 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 added.add(rule);
             }
             session.rules.addAll(added);
-            session.updateProbe();
-            session.save();
-            refresh();
+            memoryWatchesChanged();
             memoryWatches.setSelectedIndex(displayedMemoryWatches.indexOf(added.get(0)));
         });
         line(tools, add, advanced, button(ICON_BREAKPOINT, "Enable / disable memory watch", () -> {
-            int selected = memoryWatches.getSelectedIndex();
-            if (selected < 0 || selected >= displayedMemoryWatches.size()) return;
-            DebugSession.Rule rule = displayedMemoryWatches.get(selected);
+            DebugSession.Rule rule = selected(memoryWatches, displayedMemoryWatches);
+            if (rule == null) return;
             rule.enabled = !rule.enabled;
-            session.updateProbe();
-            session.save();
-            refresh();
+            memoryWatchesChanged();
         }), button(ICON_REMOVE, "Remove memory watch", () -> {
-            int selected = memoryWatches.getSelectedIndex();
-            if (selected < 0 || selected >= displayedMemoryWatches.size()) return;
-            session.rules.remove(displayedMemoryWatches.get(selected));
-            session.updateProbe();
-            session.save();
-            refresh();
+            DebugSession.Rule rule = selected(memoryWatches, displayedMemoryWatches);
+            if (rule == null) return;
+            session.rules.remove(rule);
+            memoryWatchesChanged();
         }), button(ICON_RESET, "Reset memory watch hit counts", () -> {
             displayedMemoryWatches.forEach(rule -> rule.hits = 0);
             refresh();
@@ -1390,6 +1380,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         return panel;
+    }
+
+    private static <T> T selected(JList<?> list, List<T> rows) {
+        int selected = list.getSelectedIndex();
+        return selected >= 0 && selected < rows.size() ? rows.get(selected) : null;
+    }
+
+    private void memoryWatchesChanged() throws IOException {
+        session.updateProbe();
+        session.save();
+        refresh();
+    }
+
+    private void breakpointListChanged() throws IOException {
+        breakpointsChanged.run();
+        session.save();
+        refresh();
     }
 
     private static String ruleOptions(DebugSession.Rule rule) {
@@ -1416,35 +1423,28 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JButton add = button(ICON_ADD, "Add breakpoint", () -> {
             int at = Integer.decode(address.getText());
             session.setBreakpoint(at, true);
-            breakpointsChanged.run();
-            session.save();
-            refresh();
+            breakpointListChanged();
             rules.setSelectedIndex(ordinaryBreakpoints.indexOf(at));
         });
         add.setEnabled(session.debug != null || session.cpu.isBreakpointSupported());
         line(tools, label("Address", address), address, add);
         line(tools,
                 button(ICON_BREAKPOINT, "Enable / disable", () -> {
-                    int selected = rules.getSelectedIndex();
-                    if (selected < 0 || selected >= ordinaryBreakpoints.size()) return;
-                    session.toggleOrdinaryBreakpoint(ordinaryBreakpoints.get(selected));
-                    breakpointsChanged.run();
-                    session.save();
-                    refresh();
+                    Integer breakpoint = selected(rules, ordinaryBreakpoints);
+                    if (breakpoint == null) return;
+                    session.toggleOrdinaryBreakpoint(breakpoint);
+                    breakpointListChanged();
                 }),
                 button(ICON_REMOVE, "Remove", () -> {
-                    int selected = rules.getSelectedIndex();
-                    if (selected < 0 || selected >= ordinaryBreakpoints.size()) return;
-                    session.setBreakpoint(ordinaryBreakpoints.get(selected), false);
-                    breakpointsChanged.run();
-                    session.save();
-                    refresh();
+                    Integer breakpoint = selected(rules, ordinaryBreakpoints);
+                    if (breakpoint == null) return;
+                    session.setBreakpoint(breakpoint, false);
+                    breakpointListChanged();
                 }),
                 button(ICON_SAVE, "Save settings", session::save),
                 button(ICON_JUMP, "Go to address", () -> {
-                    int selected = rules.getSelectedIndex();
-                    if (selected >= 0 && selected < ordinaryBreakpoints.size())
-                        navigate(ordinaryBreakpoints.get(selected), selectedBank());
+                    Integer breakpoint = selected(rules, ordinaryBreakpoints);
+                    if (breakpoint != null) navigate(breakpoint, selectedBank());
                 }));
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         return panel;
