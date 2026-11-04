@@ -44,24 +44,24 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void labelsAppearOnAddressCellsAndDisappearWhenSourceChanges() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, pane -> true);
             assertEquals(-1, onEdt(() -> tabs.indexOfTab("Symbols")).intValue());
             String tooltip = onEdt(() -> {
-                java.awt.Rectangle cell = f.table.getCellRect(2, 0, true);
+                java.awt.Rectangle cell = f.table.getCellRect(1, 0, true);
                 return f.table.getToolTipText(new java.awt.event.MouseEvent(f.table, 0, 0, 0, cell.x + 2, cell.y + 2, 0, false));
             });
             assertEquals("second", tooltip);
             assertEquals(new java.awt.Color(210, 210, 210), onEdt(() ->
-                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
-            runOnEdt(() -> f.table.setRowSelectionInterval(2, 2));
+                    f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
+            runOnEdt(() -> f.table.setRowSelectionInterval(1, 1));
             assertEquals(new java.awt.Color(110, 110, 110), onEdt(() ->
-                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
+                    f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
             assertEquals(onEdt(f.table::getBackground), onEdt(() ->
                     f.table.prepareRenderer(f.table.getCellRenderer(3, 0), 3, 0).getBackground()));
             runOnEdt(() -> { f.pane.insert("; edited\n", 0); f.table.clearSelection(); });
             assertEquals(onEdt(f.table::getBackground), onEdt(() ->
-                    f.table.prepareRenderer(f.table.getCellRenderer(2, 0), 2, 0).getBackground()));
+                    f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
         }
     }
 
@@ -69,15 +69,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void replacingMemoryLayoutRejectsOldSourceNavigationInBothDirections() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             net.emustudio.application.debugger.index.ProgramIndex previous = f.session.programIndex();
             when(f.memory.getAddressSpaceSize()).thenReturn(64);
             assertNotSame(previous, f.session.programIndex());
 
             f.sourceLine(3);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             JLabel status = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
             assertTrue(onEdt(status::getText).contains("Memory image changed"));
@@ -95,7 +95,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
 
             AtomicInteger mappings = new AtomicInteger();
             for (int address = 0; address < 32; address++)
-                f.session.programIndex().snapshot().forEachMappingAt(0, address, mapping -> mappings.incrementAndGet());
+                f.session.programIndex().snapshot().forEachMappingAt(address, mapping -> mappings.incrementAndGet());
             assertEquals(0, mappings.get());
             JLabel status = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
@@ -107,7 +107,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void editsWhileRunningStillExposeStaleSourcesWithoutMovingInspection() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
             triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
             f.running(true);
@@ -115,7 +115,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             JLabel status = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
             assertTrue(onEdt(status::getText).contains("Source changed"));
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.running(false);
             assertTrue(onEdt(status::getText).contains("Source changed"));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
@@ -126,7 +126,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void pinAndStaleSourceStatesExplainWhyFollowingStops() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
             JLabel source = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
@@ -134,7 +134,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
             f.sourceLine(3);
             assertTrue(onEdt(f.debugger::isInspectionPinned));
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
             assertTrue(onEdt(source::getText).contains("Source changed"));
             assertTrue(onEdt(source::isVisible));
@@ -150,22 +150,22 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void sourceMemorySymbolsAndEditorHistoryStaySynchronized() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.sourceLine(3);
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
-            f.sourceHistory("Back");
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            f.sourceHistory("Back");
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             assertEquals(2, f.line());
             f.sourceHistory("Forward");
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
 
             assertEquals(3, f.line());
 
             runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
             assertEquals(1, f.line());
-            runOnEdt(() -> f.table.setRowSelectionInterval(4, 4));
+            runOnEdt(() -> f.table.setRowSelectionInterval(2, 2));
             assertEquals(3, f.line());
             verify(f.cpu, never()).setInstructionLocation(anyInt());
             assertEquals(0, f.bank.get());
@@ -176,22 +176,22 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void sourceBookmarksFollowAddressesAndPinnedInspectionStopsAutomaticFollowing() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             f.sourceAction("Toggle bookmark");
             f.sourceLine(1);
             f.sourceAction("Next bookmark");
             assertEquals(3, f.line());
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
 
             JCheckBoxMenuItem pin = onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0));
             triggerButton(pin);
             f.sourceLine(1);
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             assertTrue(onEdt(f.debugger::isInspectionPinned));
             triggerButton(pin);
             f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
         }
     }
 
@@ -199,7 +199,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void instructionSelectionSurvivesViewSwitchAndRowCountRefresh() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             runOnEdt(f.debugger::showInstructions);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
@@ -232,26 +232,26 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void dirtyAndSavedEditsFailedCompilationAndRunningCpuNeverUseOldMappings() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
             f.sourceLine(4);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> assertTrue(f.editor.saveFile()));
             f.sourceLine(2);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.setText(f.text));
             runOnEdt(() -> assertTrue(f.editor.saveFile()));
             f.sourceLine(2);
             f.compile(true);
             f.sourceLine(3);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.compile(false);
             f.sourceLine(2);
             f.running(true);
             f.sourceLine(3);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.running(false);
         }
     }
@@ -260,11 +260,11 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void savedExternalEditsCannotHideBehindAnUnchangedOpenBuffer() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
             Files.writeString(f.path, "; externally saved\n" + f.text);
             f.sourceLine(3);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             assertEquals(f.text, onEdt(f.pane::getText));
         }
     }
@@ -273,7 +273,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void changesDuringCompilationNeverBindNewSourceToOldAddresses() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
             runOnEdt(() -> f.compilerEvents.onStart());
             String changed = "third: nop\nfirst: nop\nsecond: nop\n";
@@ -284,7 +284,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             });
             runOnEdt(() -> {});
             f.sourceLine(3);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
         }
     }
 
@@ -293,15 +293,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
         try (Fixture f = new Fixture()) {
             f.bank.set(1);
             f.compile(false); // Fixture resets selected CPU bank before queued UI work.
-            runOnEdt(f.debugger::showMemory);
+            runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
             // Following compiled bank 1 must leave the live CPU bank at 0.
             assertEquals(0, f.bank.get());
             runOnEdt(f.navigation::close);
             verify(f.compiler).removeCompilerListener(f.compilerEvents);
             f.sourceLine(2);
-            assertEquals(4, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
         }
     }
 
@@ -358,7 +358,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
-            DebuggerColumn column = mock(DebuggerColumn.class);
+            DebuggerColumn column = mock(net.emustudio.emulib.runtime.ui.debugger.AddressColumn.class);
             when(column.getClassType()).thenReturn(String.class);
             when(column.getDefaultWidth()).thenReturn(-1);
             when(original.getColumnCount()).thenReturn(1);
@@ -376,14 +376,18 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 return new DebuggerPanel(session, listing, scroll, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
             });
             table = findComponent(debugger, JTable.class, t -> true);
+            runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {
+                if (!event.getValueIsAdjusting() && debugger.isInstructionView() && table.getSelectedRow() >= 0)
+                    debugger.followAddress(original.getLocationAt(table.convertRowIndexToModel(table.getSelectedRow())), bank.get());
+            }));
             navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger));
             ArgumentCaptor<CompilerListener> captor = ArgumentCaptor.forClass(CompilerListener.class);
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();
             showInFrame(debugger);
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findButtonByTooltip(debugger, "Find")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findButtonByTooltip(debugger, "Find")::isEnabled));
+            while (!onEdt(findButtonByTooltip(debugger, "Analyze from address")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
+            assertTrue(onEdt(findButtonByTooltip(debugger, "Analyze from address")::isEnabled));
         }
 
         void compile(boolean fail) {

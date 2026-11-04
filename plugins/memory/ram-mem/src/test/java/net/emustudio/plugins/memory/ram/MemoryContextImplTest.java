@@ -29,17 +29,14 @@ public class MemoryContextImplTest {
     }
 
     @Test
-    public void addressCapacityRemainsStableAcrossSparseLoadAndClear() {
+    public void sizeReflectsLoadedCellsAcrossSparseLoadAndClear() {
         assertEquals(0, memory.getSize());
-        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         memory.write(Integer.MAX_VALUE - 1, instruction);
         assertEquals(1, memory.getSize());
         assertEquals(instruction, memory.read(Integer.MAX_VALUE - 1));
-        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
         memory.clear();
         assertEquals(0, memory.getSize());
-        assertEquals(Integer.MAX_VALUE, memory.getAddressSpaceSize());
     }
 
     @Test

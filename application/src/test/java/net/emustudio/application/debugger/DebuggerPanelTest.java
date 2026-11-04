@@ -206,57 +206,15 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void obsoleteMemoryControlsAreAbsent() throws Exception {
+    public void memoryInspectionTabAndControlsAreAbsent() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                for (String name : List.of("Take snapshot", "Capture baseline", "Compare baseline", "Compare binary",
-                        "Export memory and metadata", "Rescan", "Compare / strings", "Live memory",
-                        "Previous", "Next", "Show all addresses"))
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                assertEquals(-1, tabs.indexOfTab("Memory"));
+                for (String name : List.of("Inspect address", "Find strings", "Show source"))
                     assertNull(name, findComponent(workspace.panel, AbstractButton.class, name));
-                assertNotNull(findComponent(workspace.panel, AbstractButton.class, "Find strings"));
-                assertNull(findComponent(workspace.panel, JLabel.class, "All addresses"));
-            });
-        }
-    }
-
-    @Test
-    public void memoryInspectionReadsLiveBankAndCommonCellsWithoutCapture() throws Exception {
-        byte[][] cells = {{1, 2, 3, 4}, {9, 8, 7, 6}};
-        try (Workspace workspace = workspace(cells, 2, session -> {})) {
-            SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.showMemory();
-                workspace.panel.navigate(1, 1);
-                assertEquals("08", workspace.table.getValueAt(1, 1));
-                cells[1][1] = 0x41; // Direct read must see the edit even before a UI notification.
-                assertEquals("41", workspace.table.getValueAt(1, 1));
-                cells[0][3] = 0x55;
-                assertEquals("55", workspace.table.getValueAt(3, 1));
-                assertEquals(0, workspace.machine.memory.getSelectedBank());
-            });
-        }
-    }
-
-    @Test
-    public void liveStringResultsAreDiscardedAfterMemoryChanges() throws Exception {
-        byte[][] cells = {{65, 66, 67, 68, 0}};
-        CountDownLatch shown = new CountDownLatch(1);
-        try (Workspace workspace = workspace(cells, cells[0].length, session -> {})) {
-            SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.showMemory();
-                workspace.panel.setInspectionReadyListener(shown::countDown);
-                button(workspace.panel, "Find strings").doClick(0);
-            });
-            assertTrue("Live string scan should finish", shown.await(5, TimeUnit.SECONDS));
-            SwingUtilities.invokeAndWait(() -> {
-                assertEquals(1, workspace.table.getRowCount());
-                assertEquals("ABCD", workspace.table.getValueAt(0, 4));
-                cells[0][0] = 90;
-                workspace.machine.memoryChanged(0);
-            });
-            SwingUtilities.invokeAndWait(() -> {
-                assertEquals(5, workspace.table.getRowCount());
-                assertEquals("", workspace.table.getValueAt(0, 4));
-                assertEquals("5A", workspace.table.getValueAt(0, 1));
+                assertNotNull(workspace.panel.watchesPanel());
+                assertTrue(tabs.indexOfTab("Annotations") >= 0);
             });
         }
     }
@@ -275,39 +233,6 @@ public class DebuggerPanelTest {
         }
     }
 
-    @Test
-    public void closingSessionDuringLiveScanDoesNotPublishOrNotifyInspectionReady() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), finished = new CountDownLatch(1);
-        AtomicInteger readyCalls = new AtomicInteger();
-        try (Workspace workspace = workspace(new byte[][] {{65, 66, 67, 68, 0}}, 5, session -> {})) {
-            doAnswer(call -> { finished.countDown(); return null; })
-                    .when(workspace.dialogs).showError(anyString(), eq("Debugger"));
-            SwingUtilities.invokeAndWait(() -> {
-                when(workspace.machine.memory.readBank(anyInt(), anyInt())).thenAnswer(call -> {
-                    if ("debugger-analysis".equals(Thread.currentThread().getName())) {
-                        entered.countDown();
-                        assertTrue("Test should release live read", release.await(5, TimeUnit.SECONDS));
-                    }
-                    return (byte) 65;
-                });
-                workspace.panel.showMemory();
-                workspace.panel.setInspectionReadyListener(readyCalls::incrementAndGet);
-                button(workspace.panel, "Find strings").doClick(0);
-            });
-            try {
-                assertTrue("Live read should start", entered.await(5, TimeUnit.SECONDS));
-                workspace.session.close();
-                workspace.session = null;
-                release.countDown();
-                assertTrue("Closed session should reject scan", finished.await(5, TimeUnit.SECONDS));
-                SwingUtilities.invokeAndWait(() -> {
-                    assertEquals(0, readyCalls.get());
-                    assertEquals(5, workspace.table.getRowCount());
-                });
-            } finally { release.countDown(); }
-        }
-    }
-
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
@@ -319,9 +244,8 @@ public class DebuggerPanelTest {
                         selections.add(address + ":" + bank + ":" + visit));
                 workspace.panel.navigate(1, 1);
 
-                assertFalse(workspace.panel.isInstructionView());
-                assertEquals("Memory bytes", workspace.table.getAccessibleContext().getAccessibleName());
-                assertEquals(1, workspace.table.getSelectedRow());
+                assertTrue(workspace.panel.isInstructionView());
+                assertEquals("Instruction listing", workspace.table.getAccessibleContext().getAccessibleName());
             });
 
             assertEquals(List.of("1:1:true"), selections);
@@ -348,10 +272,6 @@ public class DebuggerPanelTest {
                 workspace.panel.setExecutionRunning(true);
                 assertFalse(workspace.table.isEnabled());
                 assertFalse(workspace.table.isVisible());
-
-                workspace.panel.showMemory();
-                assertTrue("Memory view stays visible during execution", workspace.table.isVisible());
-                assertFalse(workspace.table.isEnabled());
 
                 workspace.panel.setExecutionRunning(false);
                 workspace.panel.showInstructions();
@@ -438,37 +358,10 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void memoryControlsInspectAnExplicitBankWithoutChangingCpuOrBreakpoints() throws Exception {
-        try (Workspace workspace = workspace(new byte[][] {{1, 2}, {3, 4}}, 2, session -> {})) {
-            SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.showMemory();
-                JTextField address = component(workspace.panel, JTextField.class, "Memory address");
-                JComboBox<?> bank = component(workspace.panel, JComboBox.class, "Memory inspection bank");
-                address.setText("0x1");
-                bank.setSelectedIndex(1);
-                button(workspace.panel, "Inspect address").doClick(0);
-                assertFalse(workspace.panel.isInstructionView());
-                assertEquals(1, workspace.table.getSelectedRow());
-                assertEquals("0x0001", address.getText());
-                assertEquals(1, bank.getSelectedItem());
-                assertEquals(0, workspace.machine.memory.getSelectedBank());
-                assertTrue(workspace.session.rules.isEmpty());
-                assertEquals(0, workspace.breakpointChanges.get());
-
-                workspace.panel.navigate(0, 0);
-                assertEquals("0x0000", address.getText());
-                assertEquals(0, bank.getSelectedItem());
-            });
-            verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
-            verify(workspace.machine.cpu, never()).setBreakpoint(anyInt());
-        }
-    }
-
-    @Test
     public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "entry point", "CODE"));
+                session.annotations().put(new AnnotationIndex.Entry(0, "start", "entry point", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -496,8 +389,8 @@ public class DebuggerPanelTest {
     public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
-                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 0, 2, "range", "note", "UNKNOWN"));
-                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 1, 2, "inner", "", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "note", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "", "UNKNOWN"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -586,8 +479,8 @@ public class DebuggerPanelTest {
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
-                assertFalse(workspace.panel.isInstructionView());
-                assertEquals(1, workspace.table.getSelectedRow());
+                assertTrue(workspace.panel.isInstructionView());
+                assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 assertFalse(workspace.panel.isInspectionPinned());
             });
 
@@ -596,7 +489,7 @@ public class DebuggerPanelTest {
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
-                assertEquals(2, workspace.table.getSelectedRow());
+                assertEquals(2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(0);
                 pin.doClick(0);
                 assertTrue(workspace.panel.isInspectionPinned());
@@ -607,13 +500,13 @@ public class DebuggerPanelTest {
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
-                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.getSelectedRow());
+                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(0);
                 pin.doClick(0);
                 assertFalse(workspace.panel.isInspectionPinned());
             });
             SwingUtilities.invokeAndWait(() -> workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK));
-            SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.getSelectedRow()));
+            SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow())));
         }
     }
 
@@ -637,8 +530,8 @@ public class DebuggerPanelTest {
                     new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
         })) {
             try {
-                workspace.session.annotations().put(new AnnotationIndex.Entry(0, 0, "start", "", "CODE"));
-                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 0, 2, "region", "", "UNKNOWN"));
+                workspace.session.annotations().put(new AnnotationIndex.Entry(0, "start", "", "CODE"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "", "UNKNOWN"));
                 SwingUtilities.invokeAndWait(() -> {
                     AbstractButton goTo = button(workspace.panel, "Go to instruction");
                     assertFalse(goTo.isEnabled());
@@ -829,7 +722,7 @@ public class DebuggerPanelTest {
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
             SwingUtilities.invokeAndWait(() -> {
                 button(workspace.panel, "Go to instruction").doClick(0);
-                assertEquals(0, component(workspace.panel, JComboBox.class, "Memory inspection bank").getSelectedItem());
+                assertTrue(workspace.panel.isInstructionView());
             });
             assertEquals(0, workspace.machine.memory.getSelectedBank());
             verify(workspace.dialogs, never()).showError(anyString(), eq("Debugger"));

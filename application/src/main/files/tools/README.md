@@ -1,18 +1,12 @@
-# Memory and metadata export
+# Annotation metadata
 
-In the Debugger tab, open **Annotations** and choose **Export memory and metadata**.
-The selected annotation image bank is exported as `memory-bank-N.bin`, together
-with `memory-bank-N.properties`. The binary contains the captured bytes; it does
-not include later live-memory changes or refreshes of the comparison baseline.
+In the Debugger tab, open **Annotations**, then **Manage… → Import annotations…**
+to load annotation metadata for the current memory image.
 
-The UTF-8 Java properties file contains the annotation format version, complete
-image identity, processor identifier, logical bank, base address, byte size,
-common-memory boundary and binary filename. Entries store their physical bank,
-address, label, comment, bookmark flag and code/data classification. Common
-addresses use physical bank zero. Metadata addresses remain offsets in the
-captured image; the base field describes placement of the exported binary.
+The UTF-8 Java properties file contains format version `3`, `image.identity`, and
+the entry count. Each entry stores its identity, CPU address range, label,
+comment, and code/data classification. The range end is exclusive.
 
-Annotation **Import** accepts this metadata only for the matching captured image
-and memory layout. Keep `image.identity` and layout information unchanged.
-Compiler source maps, recorded execution, live machine state and bank-switch
-behavior are not part of this format.
+Import requires a matching image identity and valid address ranges. The format
+stores annotations only; memory contents and execution recordings use separate
+files.

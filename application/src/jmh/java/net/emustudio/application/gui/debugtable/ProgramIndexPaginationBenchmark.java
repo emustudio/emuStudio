@@ -58,12 +58,12 @@ public class ProgramIndexPaginationBenchmark {
                             default: throw new UnsupportedOperationException(method.getName());
                         }
                     });
-            index = ProgramIndex.create("z80-nop", 65536, 1, 65536);
+            index = ProgramIndex.create("z80-nop", 65536);
             if (flow.equals("built")) {
                 try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
                     update.replaceFlow(false);
                     for (int address = 0; address < 65536; address++)
-                        update.putInstruction(new ProgramIndex.Range(0, address, address + 1),
+                        update.putInstruction(new ProgramIndex.Range(address, address + 1),
                                 ProgramIndex.InstructionKind.LINEAR);
                     update.commit();
                 }
@@ -79,7 +79,7 @@ public class ProgramIndexPaginationBenchmark {
             baseline.getLocationAt(rows / 2);
             indexed = new DebugTableModelImpl();
             indexed.setCPU(cpu);
-            indexed.setInstructionIndex(new InstructionIndex(index::snapshot, () -> 0));
+            indexed.setInstructionIndex(new InstructionIndex(index::snapshot));
             indexed.setMaxRows(rows);
             indexed.getLocationAt(rows / 2);
             pc = 0x8000;

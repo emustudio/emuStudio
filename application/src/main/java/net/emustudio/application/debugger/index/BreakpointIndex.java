@@ -16,19 +16,19 @@ final class BreakpointIndex {
 
     BreakpointIndex(ProgramIndex.Layout layout, ProgramIndex.Breakpoint[] values) {
         this.values = values;
-        Map<Long, List<Integer>> entries = new TreeMap<>();
-        Map<Long, Long> bitmap = new TreeMap<>();
+        Map<Integer, List<Integer>> entries = new TreeMap<>();
+        Map<Integer, Long> bitmap = new TreeMap<>();
         for (int i = 0; i < values.length; i++) {
             ProgramIndex.Breakpoint b = values[i];
             if (!b.enabled()) continue;
-            AddressPostings.add(entries, AddressTable.key(0, b.address()), i);
-            long key = AddressTable.key(0, b.address() >>> 6);
+            AddressPostings.add(entries, b.address(), i);
+            int key = b.address() >>> 6;
             bitmap.merge(key, 1L << (b.address() & 63), (a, c) -> a | c);
         }
         bits = new long[bitmap.size()];
-        Map<Long, Integer> ids = new TreeMap<>();
+        Map<Integer, Integer> ids = new TreeMap<>();
         int at = 0;
-        for (Map.Entry<Long, Long> entry : bitmap.entrySet()) {
+        for (Map.Entry<Integer, Long> entry : bitmap.entrySet()) {
             bits[at] = entry.getValue();
             ids.put(entry.getKey(), ++at);
         }
@@ -37,11 +37,11 @@ final class BreakpointIndex {
     }
 
     boolean has(int address) {
-        int word = words.get(0, address >>> 6);
+        int word = words.get(address >>> 6);
         return word != 0 && (bits[word - 1] & (1L << (address & 63))) != 0;
     }
 
     void visit(int address, Consumer<? super ProgramIndex.Breakpoint> visitor) {
-        postings.visit(0, address, visitor);
+        postings.visit(address, visitor);
     }
 }

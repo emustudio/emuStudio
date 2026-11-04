@@ -52,8 +52,6 @@ public class FlowMetadataTest {
                 for (int i = 0; i < count; i++) values[i] = read(address + i);
                 return values;
             }
-            @Override public Byte readBank(int address, int bank) { throw new AssertionError("Use wired reads"); }
-            @Override public int getSelectedBank() { throw new AssertionError("Decoder must not select banks"); }
         };
         Disassembler decoder = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, false);
 

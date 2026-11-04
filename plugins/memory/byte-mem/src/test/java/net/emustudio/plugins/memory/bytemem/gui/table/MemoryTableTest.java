@@ -15,16 +15,16 @@ import static org.junit.Assert.*;
 public class MemoryTableTest {
     private MemoryTableModel tableModel;
     private final DebuggerMemory metadata = new DebuggerMemory() {
-        public String label(int bank, int address) { return bank == 1 && address == 1 ? "<start>" : ""; }
-        public String comment(int bank, int address) { return address == 2 ? "Comment & details" : ""; }
-        public boolean isCurrentInstruction(int bank, int address) { return address == 3; }
+        public String label(int address) { return address == 1 ? "<start>" : ""; }
+        public String comment(int address) { return address == 2 ? "Comment & details" : ""; }
+        public boolean isCurrentInstruction(int address) { return address == 3; }
         public void addListener(Runnable listener) { }
         public void removeListener(Runnable listener) { }
     };
 
     @Before
     public void setUp() {
-        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 0));
+        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4));
     }
 
     @Test(expected = NullPointerException.class)
@@ -71,9 +71,10 @@ public class MemoryTableTest {
     @Test
     public void metadataColorsAndTooltipsFollowEachAddress() {
         MemoryTable table = new MemoryTable(tableModel, new JScrollPane(), metadata);
-        JLabel initial = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 1), 0, 1);
-        assertNull(initial.getToolTipText());
         tableModel.setCurrentBank(1);
+        JLabel initial = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 1), 0, 1);
+        assertFalse(initial.getToolTipText().contains("Label:"));
+        tableModel.setCurrentBank(0);
 
         JLabel label = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 1), 0, 1);
         assertEquals(new Color(230, 230, 230), label.getBackground());

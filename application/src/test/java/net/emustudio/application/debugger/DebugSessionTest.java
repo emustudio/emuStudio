@@ -40,20 +40,17 @@ public class DebugSessionTest {
             assertNull(session.memory);
             ProgramIndex index = session.programIndex();
             assertEquals(32, index.snapshot().layout().addressSpaceSize());
-            assertEquals(1, index.snapshot().layout().bankCount());
-            assertEquals(0, index.snapshot().layout().commonBoundary());
             session.setBreakpoint(7, true);
             assertTrue(index.snapshot().hasExecutionBreakpoint(7));
             machine.state(CPU.RunState.STATE_RUNNING);
-            assertFalse(session.beforeInstruction(6, 9));
-            assertTrue(session.beforeInstruction(7, 9));
+            assertFalse(session.beforeInstruction(6));
+            assertTrue(session.beforeInstruction(7));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(7, hit.address);
-            assertEquals(9, hit.bank);
             machine.state(CPU.RunState.STATE_RUNNING);
-            assertFalse(session.beforeInstruction(7, 2));
-            assertTrue(session.beforeInstruction(7, 5));
+            assertFalse(session.beforeInstruction(7));
+            assertTrue(session.beforeInstruction(7));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             session.setBreakpoint(7, false);
             assertFalse(index.snapshot().hasExecutionBreakpoint(7));
@@ -101,15 +98,15 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             ProgramIndex index = session.programIndex();
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-                update.replaceFlow(false).putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR);
+                update.replaceFlow(false).putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
                 update.commit();
             }
             ProgramIndex.Snapshot old = index.snapshot();
             session.runExecution(() -> machine.state(CPU.RunState.STATE_RUNNING));
             assertEquals(ProgramIndex.FlowState.STALE, index.snapshot().flowState());
-            assertNull(index.snapshot().instructionAt(0, 0));
+            assertNull(index.snapshot().instructionAt(0));
             assertEquals(ProgramIndex.FlowState.CURRENT, old.flowState());
-            assertNotNull(old.instructionAt(0, 0));
+            assertNotNull(old.instructionAt(0));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             ProgramIndex.Snapshot beforeWrite = index.snapshot();
             machine.memoryChanged(1);
@@ -123,12 +120,12 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             ProgramIndex initial = session.programIndex();
             assertSame(initial, session.annotations().programIndex());
-            session.annotations().put(new AnnotationIndex.Entry(0, 1, "user", "", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "user", "", "DATA"));
             machine.memoryChanged(1);
-            assertEquals("user", session.annotations().get(0, 1).label);
+            assertEquals("user", session.annotations().get(1).label);
             assertSame(initial, session.programIndex());
             verify(machine.memory, never()).read(anyInt());
-            verify(machine.memory, never()).readBank(anyInt(), anyInt());
+            verify(machine.memory, never()).read(anyInt());
         }
     }
 
@@ -139,10 +136,10 @@ public class DebugSessionTest {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             LiveMemory live = session.liveMemory();
-            when(machine.memory.readBank(0, 0)).thenAnswer(call -> {
+            when(machine.memory.read(0)).thenAnswer(call -> {
                 entered.countDown(); await(release); return (byte) 1;
             });
-            Future<Integer> read = executor.submit(() -> live.value(0, 0));
+            Future<Integer> read = executor.submit(() -> live.value(0));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
             machine.memoryChanged(0);
@@ -170,7 +167,7 @@ public class DebugSessionTest {
             Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
-            session.annotations().put(new AnnotationIndex.Entry(0, 1, "new", "", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "new", "", "DATA"));
             release.countDown();
             ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
             assertTrue(rejected.getCause() instanceof IllegalStateException);
@@ -196,7 +193,6 @@ public class DebugSessionTest {
 
             assertEquals("VALUE 8", session.analyzeFlow(0, 10).mnemonic(0));
         }
-        assertEquals(0, machine.memory.getSelectedBank());
     }
 
     @Test
@@ -229,7 +225,7 @@ public class DebugSessionTest {
                 release.countDown();
                 ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
                 assertTrue(rejected.getCause() instanceof IllegalStateException);
-                assertNull(index.snapshot().instructionAt(0, 0));
+                assertNull(index.snapshot().instructionAt(0));
                 verify(decoder, never()).getNextInstructionPosition(anyInt());
                 verify(decoder, never()).disassemble(anyInt());
             } finally {
@@ -247,30 +243,27 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void mappedDecoderRejectsBankChangesAndInterruptedWorkBeforeAnotherRead() throws Exception {
+    public void decoderRejectsNotifiedMappingChangesAndInterruptedWorkBeforeAnotherRead() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {1, 0}}, 1, false);
         Disassembler decoder = mock(Disassembler.class);
         when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        java.util.concurrent.atomic.AtomicInteger bank = new java.util.concurrent.atomic.AtomicInteger();
-        when(machine.memory.getSelectedBank()).thenAnswer(call -> bank.get());
         stopAtZero(decoder);
         when(decoder.getFlow(0)).thenAnswer(call -> {
-            bank.set(1);
+            machine.memoryChanged(0);
             return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
         });
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             IllegalStateException changed = assertThrows(IllegalStateException.class,
                     () -> session.analyzeFlow(0, 10));
-            assertTrue(changed.getMessage().contains("bank changed"));
+            assertTrue(changed.getMessage().contains("changed"));
             verify(decoder, never()).getNextInstructionPosition(anyInt());
             verify(decoder, never()).disassemble(anyInt());
-            bank.set(0);
             Thread.currentThread().interrupt();
             try {
                 assertThrows(java.util.concurrent.CancellationException.class,
                         () -> session.analyzeFlow(0, 10));
             } finally { Thread.interrupted(); }
-            assertEquals(ProgramIndex.FlowState.NOT_BUILT, session.programIndex().snapshot().flowState());
+            assertEquals(ProgramIndex.FlowState.STALE, session.programIndex().snapshot().flowState());
         }
     }
 
@@ -289,8 +282,8 @@ public class DebugSessionTest {
             assertThrows(IllegalStateException.class, () -> session.record(2));
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertEquals(1, session.liveMemory().value(0, 0));
-            assertEquals(2, session.liveMemory().value(1, 0));
+            assertEquals(1, session.liveMemory().value(0));
+            assertEquals(2, session.liveMemory().value(1));
         }
     }
 
@@ -302,9 +295,9 @@ public class DebugSessionTest {
         try {
             LiveMemory first = session.liveMemory();
             machine.memoryChanged(1);
-            assertThrows(IllegalStateException.class, () -> first.value(0, 0));
+            assertThrows(IllegalStateException.class, () -> first.value(0));
             LiveMemory second = session.liveMemory();
-            session.annotations().put(new AnnotationIndex.Entry(0, 1, "changed", "", "UNKNOWN"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "changed", "", "UNKNOWN"));
             assertThrows(IllegalStateException.class, second::requireCurrent);
             LiveMemory third = session.liveMemory();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -364,30 +357,29 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void writeWatchUsesGuestAccessAddressAndBankInsteadOfInstructionLocation() throws Exception {
+    public void writeWatchUsesGuestAccessAddressInsteadOfInstructionLocation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 2, false);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer", "WRITE", 1, 1, "", 1);
+            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer", "WRITE", 1, "", 1);
             session.rules.add(watch);
-            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(1, 0, 5, true)))));
-            assertFalse(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(1, 1, 5, false)))));
+            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(0, 5, true)))));
+            assertFalse(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(1, 5, false)))));
 
-            assertTrue(session.afterInstruction(instruction(3, List.of(new DebugCPU.Access(1, 1, 5, true)))));
+            assertTrue(session.afterInstruction(instruction(3, List.of(new DebugCPU.Access(1, 5, true)))));
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
-            assertEquals(1, hit.bank);
             assertSame(watch, hit.rule);
             assertEquals("Watchpoint: buffer", session.status);
         }
     }
 
     @Test
-    public void readWatchWithAnyBankIgnoresWrites() throws Exception {
+    public void readWatchIgnoresWrites() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.rules.add(new DebugSession.AccessRule("fetch", "READ", 0, -1, "", 1));
-            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(0, 0, 3, true)))));
-            assertTrue(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(0, 0, 3, false)))));
+            session.rules.add(new DebugSession.AccessRule("fetch", "READ", 0, "", 1));
+            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(0, 3, true)))));
+            assertTrue(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(0, 3, false)))));
         }
     }
 
@@ -457,7 +449,7 @@ public class DebugSessionTest {
             assertEquals(1, session.rules.size());
             assertSame(rule, session.rules.get(0));
             assertTrue(session.isBreakpointSet(1));
-            assertTrue(session.beforeInstruction(1, 0));
+            assertTrue(session.beforeInstruction(1));
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
             assertSame(session.rules.get(0), hit.rule);
@@ -478,7 +470,6 @@ public class DebugSessionTest {
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
-            assertEquals(0, hit.bank);
             assertNull(hit.rule);
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -494,7 +485,7 @@ public class DebugSessionTest {
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3, true);
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             session.watches.add("A + 1");
-            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer writes", "WRITE", 1, 0, "A > 3", 4);
+            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer writes", "WRITE", 1, "A > 3", 4);
             watch.enabled = false;
             session.rules.add(watch);
             session.setBreakpoint(2, true);
@@ -513,7 +504,7 @@ public class DebugSessionTest {
             assertEquals("buffer writes", watch.name);
             assertEquals("WRITE", watch.kind);
             assertEquals(1, watch.address);
-            assertEquals(0, watch.bank);
+
             assertEquals("A > 3", watch.condition);
             assertEquals(4, watch.afterHits);
             assertFalse(watch.enabled);
@@ -545,20 +536,20 @@ public class DebugSessionTest {
     }
 
     @Test
-    public void onlyAccessRulesCanCarryWatchpointKindsAndBankSelectors() {
+    public void ruleKindsAndOptionsAreValidated() {
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("read", "READ", 0, "", 1));
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("source", "SOURCE", 0, "", 1));
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("conditional", "EXEC", 0, "A == 1", 1));
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("hit count", "EXEC", 0, "", 2));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("exec", "EXEC", 0, 0, "", 1));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("read", "READ", 0, -2, "", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("exec", "EXEC", 0, "", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("read", "READ", 0, "", 0));
     }
 
     @Test
     public void malformedSettingsDoNotApplyEarlierBreakpointEntries() throws Exception {
         Path settings = temporary.newFile("invalid.properties").toPath();
         Properties values = new Properties();
-        values.setProperty("version", "1");
+        values.setProperty("version", "2");
         values.setProperty("cpu", "Test CPU");
         values.setProperty("ordinary", "2");
         values.setProperty("ordinary.0", "0");
@@ -581,14 +572,14 @@ public class DebugSessionTest {
         String identity;
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             identity = session.programIndex().snapshot().layout().imageId();
-            session.annotations().put(new AnnotationIndex.Entry(0, 1, "buffer", "payload", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(1, "buffer", "payload", "DATA"));
             session.saveAnnotations();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2, false);
         try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
             assertEquals(identity, session.programIndex().snapshot().layout().imageId());
-            assertEquals("buffer", session.annotations().get(0, 1).label);
-            verify(reopened.memory, never()).readBank(anyInt(), anyInt());
+            assertEquals("buffer", session.annotations().get(1).label);
+            verify(reopened.memory, never()).read(anyInt());
         }
         DebuggerTestMachine otherLayout = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3, false);
         try (DebugSession session = new DebugSession(otherLayout.cpu, otherLayout.memory, settings)) {
@@ -598,6 +589,6 @@ public class DebugSessionTest {
     }
 
     private static DebugCPU.Instruction instruction(long sequence, List<DebugCPU.Access> accesses) {
-        return new DebugCPU.Instruction(sequence, 0, 0, "NOP", "00", Map.of(), Map.of(), accesses, true);
+        return new DebugCPU.Instruction(sequence, 0, "NOP", "00", Map.of(), Map.of(), accesses, true);
     }
 }

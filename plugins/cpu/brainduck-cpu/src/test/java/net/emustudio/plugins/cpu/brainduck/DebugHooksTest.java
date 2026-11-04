@@ -49,7 +49,7 @@ public class DebugHooksTest {
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.reset(0);
         DebugCPU.Listener before = new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address, int bank) { return true; }
+            @Override public boolean beforeInstruction(int address) { return true; }
         };
         engine.debugger.addListener(before);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step(true));
@@ -104,12 +104,12 @@ public class DebugHooksTest {
         List<DebugCPU.Instruction> events = new ArrayList<>();
         List<Integer> beforeBanks = new ArrayList<>();
         engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address, int bank) { beforeBanks.add(bank); return false; }
+            @Override public boolean beforeInstruction(int address) { beforeBanks.add(address); return false; }
             @Override public boolean afterInstruction(DebugCPU.Instruction event) { events.add(event); return false; }
         });
         engine.step(false);
         assertEquals(List.of(0), beforeBanks);
-        assertEquals(0, events.get(0).bank);
+
         assertEquals("03", events.get(0).opcodes.trim());
         assertEquals(1, memory.getRawMemory()[0][engine.P].intValue());
         assertSame(memory, engine.debugger.memory());

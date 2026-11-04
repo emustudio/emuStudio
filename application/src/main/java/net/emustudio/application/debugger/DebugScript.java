@@ -52,11 +52,7 @@ public final class DebugScript {
                             break;
                         }
                     case "ASSERT":
-                        if (session.evaluate(
-                                        args,
-                                        session.memory == null
-                                                ? 0
-                                                : session.memory.getSelectedBank())
+                        if (session.evaluate(args)
                                 == 0)
                             throw new IllegalArgumentException("Assertion failed: " + args);
                         break;

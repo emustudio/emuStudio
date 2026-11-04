@@ -24,16 +24,16 @@ public final class ProgramIndex {
     private final Object identity = new Object();
     private final AtomicReference<View> root;
 
-    private ProgramIndex(String imageId, int size, int banks, int common) {
-        layout = new IndexLayout(imageId, size, banks, common);
+    private ProgramIndex(String imageId, int size) {
+        layout = new IndexLayout(imageId, size);
         Content empty = new Content(new Mappings(layout, new Mapping[0]), new Annotations(layout, new Annotation[0]), null);
         root = new AtomicReference<>(new View(identity, layout, empty, new BreakpointIndex(layout, new Breakpoint[0]),
                 0, 0, 0, FlowState.NOT_BUILT));
     }
 
     /** Creates an empty index, copying and validating its immutable layout. */
-    public static ProgramIndex create(String imageId, int addressSpaceSize, int bankCount, int commonBoundary) {
-        return new ProgramIndex(imageId, addressSpaceSize, bankCount, commonBoundary);
+    public static ProgramIndex create(String imageId, int addressSpaceSize) {
+        return new ProgramIndex(imageId, addressSpaceSize);
     }
 
     /** Returns the existing coherent immutable root, without copying. */
@@ -95,10 +95,6 @@ public final class ProgramIndex {
     public interface Layout {
         String imageId();
         int addressSpaceSize();
-        int bankCount();
-        int commonBoundary();
-        /** Validates bank/address; common cells always resolve to physical bank zero. */
-        int physicalBank(int bank, int address);
     }
 
     public interface Snapshot {
@@ -110,19 +106,19 @@ public final class ProgramIndex {
             return contentRevision() == other.contentRevision() && memoryRevision() == other.memoryRevision();
         }
         void forEachAnnotation(Consumer<? super Annotation> visitor);
-        void forEachMappingAt(int bank, int address, Consumer<? super Mapping> visitor);
+        void forEachMappingAt(int address, Consumer<? super Mapping> visitor);
         /** Exact document identity AND revision; explicit half-open source spans only. */
         void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor);
-        void forEachAnnotationStartingAt(int bank, int address, Consumer<? super Annotation> visitor);
-        void forEachAnnotationCovering(int bank, int address, Consumer<? super Annotation> visitor);
-        /** Enabled execution rules at the CPU-visible address, independent of memory banks. */
+        void forEachAnnotationStartingAt(int address, Consumer<? super Annotation> visitor);
+        void forEachAnnotationCovering(int address, Consumer<? super Annotation> visitor);
+        /** Enabled execution rules at the CPU-visible address. */
         boolean hasExecutionBreakpoint(int address);
         void forEachExecutionBreakpoint(int address, Consumer<? super Breakpoint> visitor);
         FlowState flowState();
         /** Exact instruction starts only; unavailable for NOT_BUILT/STALE. */
-        Instruction instructionAt(int bank, int address);
-        void forEachSuccessor(int bank, int address, EdgeVisitor visitor);
-        /** Bank/start order; unavailable for NOT_BUILT/STALE. */
+        Instruction instructionAt(int address);
+        void forEachSuccessor(int address, EdgeVisitor visitor);
+        /** Address order; unavailable for NOT_BUILT/STALE. */
         void forEachInstruction(Consumer<? super Instruction> visitor);
     }
 
@@ -141,7 +137,7 @@ public final class ProgramIndex {
         ContentUpdate replaceFlow(boolean truncated);
         ContentUpdate putInstruction(Range cells, InstructionKind kind);
         /** Known undecoded destinations are permitted. Unknown indirect targets are never edges. */
-        ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind);
+        ContentUpdate putEdge(int fromAddress, int toAddress, EdgeKind kind);
         /**
          * Compares content AND memory revisions, preserving latest independent breakpoint state.
          * Source or CODE/DATA edits stale retained flow. replaceFlow supplies resulting flow.
@@ -152,7 +148,7 @@ public final class ProgramIndex {
     }
 
     public interface BreakpointUpdate extends AutoCloseable {
-        /** CPU-visible address only; bank selection never changes execution-rule matching. */
+        /** CPU-visible address only. */
         BreakpointUpdate put(long id, int address, boolean enabled);
         BreakpointUpdate remove(long id);
         /** Compares only breakpoint revision, preserving latest content/memory state. */
@@ -188,22 +184,21 @@ public final class ProgramIndex {
         void accept(int fromAddress, int toAddress, EdgeKind kind);
     }
 
-    /** Nonempty half-open cell range. Layout validates its upper bound and bank. */
+    /** Nonempty half-open range of CPU-visible cells. Layout validates its upper bound. */
     public static final class Range {
-        public final int bank, start, end;
-        public Range(int bank, int start, int end) {
-            if (bank < 0 || start < 0 || end <= start)
-                throw new IllegalArgumentException("Invalid bank or range");
-            this.bank = bank;
+        public final int start, end;
+        public Range(int start, int end) {
+            if (start < 0 || end <= start)
+                throw new IllegalArgumentException("Invalid range");
             this.start = start;
             this.end = end;
         }
         @Override public boolean equals(Object other) {
             if (!(other instanceof Range)) return false;
             Range r = (Range) other;
-            return bank == r.bank && start == r.start && end == r.end;
+            return start == r.start && end == r.end;
         }
-        @Override public int hashCode() { return 31 * (31 * bank + start) + end; }
+        @Override public int hashCode() { return 31 * start + end; }
     }
 
     /** Exact document revision and nonempty half-open UTF-16 offset span. */
@@ -267,25 +262,25 @@ public final class ProgramIndex {
             Objects.requireNonNull(visitor, "visitor");
             for (Annotation value : content.annotations.values) visitor.accept(value);
         }
-        @Override public void forEachMappingAt(int bank, int address, Consumer<? super Mapping> visitor) {
-            int physical = layout.physicalBank(bank, address);
+        @Override public void forEachMappingAt(int address, Consumer<? super Mapping> visitor) {
+            layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            content.mappings.ranges.visit(physical, address, visitor);
+            content.mappings.ranges.visit(address, visitor);
         }
         @Override public void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor) {
             Objects.requireNonNull(span, "span");
             Objects.requireNonNull(visitor, "visitor");
             content.mappings.sources.overlapping(span, visitor);
         }
-        @Override public void forEachAnnotationStartingAt(int bank, int address, Consumer<? super Annotation> visitor) {
-            int physical = layout.physicalBank(bank, address);
+        @Override public void forEachAnnotationStartingAt(int address, Consumer<? super Annotation> visitor) {
+            layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            content.annotations.ranges.startingAt(physical, address, visitor);
+            content.annotations.ranges.startingAt(address, visitor);
         }
-        @Override public void forEachAnnotationCovering(int bank, int address, Consumer<? super Annotation> visitor) {
-            int physical = layout.physicalBank(bank, address);
+        @Override public void forEachAnnotationCovering(int address, Consumer<? super Annotation> visitor) {
+            layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            content.annotations.ranges.covering(physical, address, visitor);
+            content.annotations.ranges.covering(address, visitor);
         }
         @Override public boolean hasExecutionBreakpoint(int address) {
             layout.checkAddress(address);
@@ -297,14 +292,14 @@ public final class ProgramIndex {
             breakpoints.visit(address, visitor);
         }
         private boolean flowAvailable() { return flowState == FlowState.CURRENT || flowState == FlowState.TRUNCATED; }
-        @Override public Instruction instructionAt(int bank, int address) {
-            int physical = layout.physicalBank(bank, address);
-            return flowAvailable() ? content.flow.instructionAt(physical, address) : null;
+        @Override public Instruction instructionAt(int address) {
+            layout.checkAddress(address);
+            return flowAvailable() ? content.flow.instructionAt(address) : null;
         }
-        @Override public void forEachSuccessor(int bank, int address, EdgeVisitor visitor) {
-            int physical = layout.physicalBank(bank, address);
+        @Override public void forEachSuccessor(int address, EdgeVisitor visitor) {
+            layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.successors(physical, address, visitor);
+            if (flowAvailable()) content.flow.successors(address, visitor);
         }
         @Override public void forEachInstruction(Consumer<? super Instruction> visitor) {
             Objects.requireNonNull(visitor, "visitor");
@@ -320,11 +315,11 @@ public final class ProgramIndex {
             if (!open) throw new IllegalStateException("Edit already consumed");
         }
         Range range(IndexLayout layout, Range range) {
-            try { return layout.canonical(range); }
+            try { layout.check(range); return range; }
             catch (RuntimeException failure) { open = false; throw failure; }
         }
-        int bank(IndexLayout layout, int bank, int address) {
-            try { return layout.physicalBank(bank, address); }
+        int address(IndexLayout layout, int address) {
+            try { layout.checkAddress(address); return address; }
             catch (RuntimeException failure) { open = false; throw failure; }
         }
         <T> T required(T value, String name) {
@@ -350,7 +345,7 @@ public final class ProgramIndex {
         final View base;
         Map<Key, Mapping> mappings;
         Map<Key, Annotation> annotations;
-        Map<Long, Instruction> instructions;
+        Map<Integer, Instruction> instructions;
         Set<FlowGraph.Edge> edges;
         boolean truncated, metadataChangesFlow;
 
@@ -432,13 +427,13 @@ public final class ProgramIndex {
             requireFlow();
             Range checked = range(layout, cells);
             required(kind, "kind");
-            instructions.put(AddressTable.key(checked.bank, checked.start), new InstructionValue(checked, kind));
+            instructions.put(checked.start, new InstructionValue(checked, kind));
             return this;
         }
-        @Override public ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind) {
+        @Override public ContentUpdate putEdge(int fromAddress, int toAddress, EdgeKind kind) {
             requireFlow();
-            long from = AddressTable.key(bank(layout, bank, fromAddress), fromAddress);
-            long to = AddressTable.key(bank(layout, bank, toAddress), toAddress);
+            int from = address(layout, fromAddress);
+            int to = address(layout, toAddress);
             edges.add(new FlowGraph.Edge(from, to, required(kind, "kind")));
             return this;
         }
@@ -536,36 +531,22 @@ public final class ProgramIndex {
 
     private static final class IndexLayout implements Layout {
         final String imageId;
-        final int size, banks, common;
-        IndexLayout(String imageId, int size, int banks, int common) {
+        final int size;
+        IndexLayout(String imageId, int size) {
             this.imageId = Objects.requireNonNull(imageId, "imageId");
-            if (imageId.isEmpty() || size < 1 || banks < 1 || common < 0 || common > size)
+            if (imageId.isEmpty() || size < 1)
                 throw new IllegalArgumentException("Invalid image identity or memory layout");
             this.size = size;
-            this.banks = banks;
-            this.common = common;
         }
         @Override public String imageId() { return imageId; }
         @Override public int addressSpaceSize() { return size; }
-        @Override public int bankCount() { return banks; }
-        @Override public int commonBoundary() { return common; }
-        @Override public int physicalBank(int bank, int address) {
-            if (bank < 0 || bank >= banks || address < 0 || address >= size)
-                throw new IllegalArgumentException("Address/bank outside memory layout");
-            return address < common ? bank : 0;
-        }
         void checkAddress(int address) {
             if (address < 0 || address >= size) throw new IllegalArgumentException("Address outside memory layout");
         }
         void check(Range range) {
             Objects.requireNonNull(range, "range");
-            physicalBank(range.bank, range.start);
+            checkAddress(range.start);
             if (range.end > size) throw new IllegalArgumentException("Range outside memory layout");
-        }
-        Range canonical(Range range) {
-            check(range);
-            int physical = physicalBank(range.bank, range.start);
-            return physical == range.bank ? range : new Range(physical, range.start, range.end);
         }
     }
 

@@ -17,7 +17,7 @@ public class ProgramIndexMetadataBenchmark {
     @State(Scope.Thread)
     public static class Metadata {
         @Param({"1", "1000", "10000", "50000"}) public int entries;
-        @Param({"single", "banked", "sparse"}) public String layout;
+        @Param({"single", "clustered", "sparse"}) public String layout;
         BenchmarkData data;
         ProgramIndex index;
         ProgramIndex.Snapshot snapshot;
@@ -34,14 +34,14 @@ public class ProgramIndexMetadataBenchmark {
     @Benchmark public long pointCovering(Metadata state) {
         int i = state.data.next();
         state.annotations.checksum = 0;
-        state.snapshot.forEachAnnotationCovering(state.data.bank[i], state.data.address[i], state.annotations);
+        state.snapshot.forEachAnnotationCovering(state.data.address[i], state.annotations);
         return state.annotations.checksum;
     }
 
     @Benchmark public long sourcePoint(Metadata state) {
         int i = state.data.next();
         state.mappings.checksum = 0;
-        state.snapshot.forEachMappingAt(state.data.bank[i], state.data.address[i], state.mappings);
+        state.snapshot.forEachMappingAt(state.data.address[i], state.mappings);
         return state.mappings.checksum;
     }
 

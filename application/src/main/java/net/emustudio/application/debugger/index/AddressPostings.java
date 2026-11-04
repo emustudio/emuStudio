@@ -15,12 +15,12 @@ final class AddressPostings<T> {
     private final int[][] lists;
     private final T[] values;
 
-    AddressPostings(ProgramIndex.Layout layout, T[] values, Map<Long, List<Integer>> entries) {
+    AddressPostings(ProgramIndex.Layout layout, T[] values, Map<Integer, List<Integer>> entries) {
         this.values = values;
         List<int[]> pool = new ArrayList<>();
         Map<List<Integer>, Integer> interned = new HashMap<>();
-        Map<Long, Integer> ids = new TreeMap<>();
-        for (Map.Entry<Long, List<Integer>> entry : entries.entrySet()) {
+        Map<Integer, Integer> ids = new TreeMap<>();
+        for (Map.Entry<Integer, List<Integer>> entry : entries.entrySet()) {
             List<Integer> posting = entry.getValue();
             Integer id = interned.get(posting);
             if (id == null) {
@@ -36,12 +36,12 @@ final class AddressPostings<T> {
         addresses = new AddressTable(layout, ids);
     }
 
-    static void add(Map<Long, List<Integer>> postings, long key, int id) {
+    static void add(Map<Integer, List<Integer>> postings, int key, int id) {
         postings.computeIfAbsent(key, ignored -> new ArrayList<>()).add(id);
     }
 
-    void visit(int bank, int address, Consumer<? super T> visitor) {
-        int id = addresses.get(bank, address);
+    void visit(int address, Consumer<? super T> visitor) {
+        int id = addresses.get(address);
         if (id != 0) for (int entry : lists[id - 1]) visitor.accept(values[entry]);
     }
 }

@@ -27,11 +27,8 @@ public class InstructionRecordingTest {
         Path recording = temporary.getRoot().toPath().resolve("failed-write.emutrace");
         InstructionRecording.Header header = new InstructionRecording.Header(
                 "Z80", List.of(new DebugCPU.Register("PC", 16), new DebugCPU.Register("A", 8)));
-        DebugCPU.Instruction failedWrite = new DebugCPU.Instruction(
-                7, 0x1234, 2, "LD (HL),A", "77",
-                Map.of("PC", 0x1234L, "A", 0xffL), Map.of("PC", 0x1235L, "A", 0xffL),
-                List.of(new DebugCPU.Access(0x4000, 3, 0xff, true),
-                        new DebugCPU.Access(0x1234, 2, 0x77, false)), false);
+        DebugCPU.Instruction failedWrite = new DebugCPU.Instruction(7, 0x1234, "LD (HL),A", "77", Map.of("PC", 0x1234L, "A", 0xffL), Map.of("PC", 0x1235L, "A", 0xffL), List.of(new DebugCPU.Access(0x4000, 0xff, true),
+                        new DebugCPU.Access(0x1234, 0x77, false)), false);
 
         InstructionRecording.write(recording, header, List.of(failedWrite));
 
@@ -49,7 +46,7 @@ public class InstructionRecordingTest {
             DebugCPU.Instruction restored = page.get(0);
             assertEquals(7, restored.sequence);
             assertEquals(0x1234, restored.address);
-            assertEquals(2, restored.bank);
+
             assertEquals("LD (HL),A", restored.mnemonic);
             assertEquals("77", restored.opcodes);
             assertEquals(Map.of("PC", 0x1234L, "A", 0xffL), restored.before);
@@ -58,12 +55,12 @@ public class InstructionRecordingTest {
             assertEquals(2, restored.accesses.size());
             DebugCPU.Access write = restored.accesses.get(0);
             assertEquals(0x4000, write.address);
-            assertEquals(3, write.bank);
+
             assertEquals(0xff, write.value);
             assertTrue(write.write);
             DebugCPU.Access fetch = restored.accesses.get(1);
             assertEquals(0x1234, fetch.address);
-            assertEquals(2, fetch.bank);
+
             assertEquals(0x77, fetch.value);
             assertFalse(fetch.write);
             assertTrue(reader.complete());
@@ -312,9 +309,7 @@ public class InstructionRecordingTest {
     public void textExportIncludesEventsRegistersAccessesAndRecordingCompleteness() throws Exception {
         Path recording = temporary.getRoot().toPath().resolve("export.emutrace");
         Path text = temporary.getRoot().toPath().resolve("export.txt");
-        DebugCPU.Instruction write = new DebugCPU.Instruction(1, 0x20, 2, "STORE", "AA",
-                Map.of("B", 2L, "A", 1L), Map.of("B", 3L, "A", 1L),
-                List.of(new DebugCPU.Access(0x30, 2, 0xff, true)), true);
+        DebugCPU.Instruction write = new DebugCPU.Instruction(1, 0x20, "STORE", "AA", Map.of("B", 2L, "A", 1L), Map.of("B", 3L, "A", 1L), List.of(new DebugCPU.Access(0x30, 0xff, true)), true);
         InstructionRecording.write(recording,
                 new InstructionRecording.Header("test-cpu", List.of(new DebugCPU.Register("A", 8))),
                 List.of(write));
@@ -322,12 +317,12 @@ public class InstructionRecordingTest {
         InstructionRecording.exportText(text, recording);
 
         String exported = Files.readString(text);
-        assertTrue(exported.contains("emuStudio instruction recording v1 | test-cpu"));
+        assertTrue(exported.contains("emuStudio instruction recording v2 | test-cpu"));
         assertTrue(exported.contains("A:8"));
-        assertTrue(exported.contains("#1 | bank=2 PC=0020 | AA | STORE | completed"));
+        assertTrue(exported.contains("#1 | PC=0020 | AA | STORE | completed"));
         assertTrue(exported.contains("before: A=1 B=2"));
         assertTrue(exported.contains("after: A=1 B=3"));
-        assertTrue(exported.contains("WRITE bank=2:0030 value=FF"));
+        assertTrue(exported.contains("WRITE 0030 value=FF"));
         assertTrue(exported.contains("Complete recording: 1 instructions"));
     }
 
@@ -343,8 +338,7 @@ public class InstructionRecordingTest {
     }
 
     private static DebugCPU.Instruction instruction(long sequence, int address) {
-        return new DebugCPU.Instruction(sequence, address, 0, "NOP", "00",
-                Map.of(), Map.of(), List.of(), true);
+        return new DebugCPU.Instruction(sequence, address, "NOP", "00", Map.of(), Map.of(), List.of(), true);
     }
 
     private static final class FailingOutputStream extends OutputStream {

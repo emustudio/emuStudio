@@ -85,11 +85,9 @@ final class SourceNavigation implements AutoCloseable {
                 }
                 sourceInputs = inputs;
             }
-            // Capture the compiler bank now; publish after CompileAction's reset/mutation finishes.
-            final int compiledBank;
+            // Publish after CompileAction's reset/mutation finishes.
             final DebugSession.SourceCaptureGuard guard;
             try {
-                compiledBank = session.memory == null ? 0 : session.memory.getSelectedBank();
                 guard = session.captureSourceGuard();
             } catch (RuntimeException e) {
                 mappingStatus = "Source mappings unavailable: " + e.getMessage();
@@ -106,7 +104,7 @@ final class SourceNavigation implements AutoCloseable {
                     session.applySourceCapture(guard, () -> {
                         try {
                             result[0] = SourceAddressMap.capture(compiler, session.memory, sourceInputs,
-                                    session.memory == null ? null : session.programIndex(), compiledBank);
+                                    session.memory == null ? null : session.programIndex());
                         } catch (java.io.IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -205,10 +203,10 @@ final class SourceNavigation implements AutoCloseable {
         });
     }
 
-    private void addressSelected(int address, int bank, boolean visit) {
+    private void addressSelected(int address, boolean visit) {
         if (synchronizing || !paused()) return;
         SourceAddressMap snapshot = mappings;
-        Optional<SourceAddressMap.Location> target = snapshot.sourceAt(address, bank);
+        Optional<SourceAddressMap.Location> target = snapshot.sourceAt(address);
         if (target.isEmpty()) {
             editor.currentSourcePosition().flatMap(this::current).ifPresent(ignored ->
                     showStatus("Inspected address has no current source mapping", true));
@@ -217,7 +215,7 @@ final class SourceNavigation implements AutoCloseable {
         target.filter(location -> current(location.position).filter(snapshot::equals).isPresent()).ifPresent(location -> {
             synchronizing = true;
             try {
-                if (location.instruction && location.bank == session.memory.getBank(location.address))
+                if (location.instruction)
                     debugger.alignInstructionAddress(location.address);
                 if (visit) editor.visitPosition(location.position);
                 else editor.synchronizePosition(location.position);
@@ -231,7 +229,7 @@ final class SourceNavigation implements AutoCloseable {
         closed = true;
         if (compiler != null) compiler.removeCompilerListener(listener);
         editor.setSourcePositionChanged(position -> {});
-        debugger.setAddressSelectionListener((address, bank, visit) -> {});
+        debugger.setAddressSelectionListener((address, visit) -> {});
         debugger.setInspectionReadyListener(() -> {});
     }
 }

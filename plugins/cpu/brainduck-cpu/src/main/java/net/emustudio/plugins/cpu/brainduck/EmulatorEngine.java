@@ -107,7 +107,7 @@ public class EmulatorEngine {
     CPU.RunState step(boolean optimize) {
         debugStopped = false;
         if (!debugger.isActive()) return stepInstruction(optimize);
-        if (!debugger.begin(IP, 0)) {
+        if (!debugger.begin(IP)) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;
         }
@@ -214,13 +214,13 @@ public class EmulatorEngine {
 
     private byte readRaw(int address) {
         byte value = rawMemory[address];
-        if (recording) debugger.access(address, 0, value & 255, false);
+        if (recording) debugger.access(address, value & 255, false);
         return value;
     }
 
     private void writeRaw(int address, byte value) {
         rawMemory[address] = value;
-        if (recording) debugger.access(address, 0, value & 255, true);
+        if (recording) debugger.access(address, value & 255, true);
     }
 
     public int getLoopLevel() {

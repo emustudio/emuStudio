@@ -33,17 +33,16 @@ public final class DebuggerMemoryImpl implements DebuggerMemory {
         if (session == old) setSession(null);
     }
 
-    @Override public String label(int bank, int address) { return lookup(bank, address, true); }
-    @Override public String comment(int bank, int address) { return lookup(bank, address, false); }
+    @Override public String label(int address) { return lookup(address, true); }
+    @Override public String comment(int address) { return lookup(address, false); }
 
-    private String lookup(int bank, int address, boolean label) {
+    private String lookup(int address, boolean label) {
         DebugSession current = session;
         if (current == null) return "";
         try {
             ProgramIndex.Snapshot snapshot = current.programIndex().snapshot();
-            int physicalBank = snapshot.layout().physicalBank(bank, address);
             StringBuilder result = new StringBuilder();
-            snapshot.forEachAnnotationStartingAt(physicalBank, address, annotation -> {
+            snapshot.forEachAnnotationStartingAt(address, annotation -> {
                 boolean matches = label ? annotation.kind().equals(ProgramIndex.Kinds.LABEL)
                         : annotation.kind().startsWith("emuStudio.user/");
                 if (matches && !annotation.text().isEmpty()) {
@@ -57,12 +56,12 @@ public final class DebuggerMemoryImpl implements DebuggerMemory {
         }
     }
 
-    @Override public boolean isCurrentInstruction(int bank, int address) {
+    @Override public boolean isCurrentInstruction(int address) {
         DebugSession current = session;
-        if (current == null || current.memory == null || current.cpu.getInstructionLocation() != address) return false;
+        if (current == null || current.cpu.getInstructionLocation() != address) return false;
         try {
             ProgramIndex.Layout layout = current.programIndex().snapshot().layout();
-            return layout.physicalBank(bank, address) == layout.physicalBank(current.memory.getBank(address), address);
+            return address >= 0 && address < layout.addressSpaceSize();
         } catch (IllegalArgumentException | IllegalStateException e) { return false; }
     }
 

@@ -68,7 +68,7 @@ public class FlowAnalysisTest {
 
         assertEquals(List.of(0), addresses(analysis));
         assertTrue(analysis.truncated());
-        assertNull(index.snapshot().instructionAt(0, 1));
+        assertNull(index.snapshot().instructionAt(1));
         assertEquals("next", predecessors(analysis, 1).get(0).kind);
         verify(disassembler, never()).getFlow(1);
     }
@@ -79,7 +79,7 @@ public class FlowAnalysisTest {
         instruction(disassembler, 0, "JP 3", InstructionFlow.Kind.JUMP, 1, false, List.of(3));
         ProgramIndex index = index(6);
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(8, 10, new ProgramIndex.Range(0, 2, 5), ProgramIndex.Kinds.DATA, "table");
+            update.putAnnotation(8, 10, new ProgramIndex.Range(2, 5), ProgramIndex.Kinds.DATA, "table");
             assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
         }
 
@@ -101,7 +101,7 @@ public class FlowAnalysisTest {
 
         assertEquals(List.of(0), addresses(analysis));
         assertTrue(edges(analysis).isEmpty());
-        assertEquals(ProgramIndex.InstructionKind.JUMP, index.snapshot().instructionAt(0, 0).kind());
+        assertEquals(ProgramIndex.InstructionKind.JUMP, index.snapshot().instructionAt(0).kind());
         assertFalse(analysis.truncated());
     }
 
@@ -145,17 +145,16 @@ public class FlowAnalysisTest {
     }
 
     @Test
-    public void bankedAndCommonEndpointsUsePhysicalBanksIndependentOfUiSelection() throws Exception {
+    public void edgesConnectCpuVisibleInstructionAddresses() throws Exception {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "CALL 6", InstructionFlow.Kind.CALL, 2, false, List.of(6));
         instruction(disassembler, 6, "JP 0", InstructionFlow.Kind.JUMP, 7, false, List.of(0));
-        ProgramIndex index = ProgramIndex.create("banked", 8, 2, 4);
+        ProgramIndex index = ProgramIndex.create("flow", 8);
 
-        FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, index, 1).publish();
+        FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, index).publish();
 
-        assertNotNull(index.snapshot().instructionAt(1, 0));
-        assertNull(index.snapshot().instructionAt(0, 0));
-        assertSame(index.snapshot().instructionAt(0, 6), index.snapshot().instructionAt(1, 6));
+        assertNotNull(index.snapshot().instructionAt(0));
+        assertNotNull(index.snapshot().instructionAt(6));
         FlowAnalysis.Edge call = predecessors(analysis, 6).get(0);
         assertEquals(0, call.from);
         assertEquals(6, call.to);
@@ -172,13 +171,13 @@ public class FlowAnalysisTest {
         FlowAnalysis analysis = reachable(disassembler, 0, 1, index);
 
         ProgramIndex.Snapshot old = index.snapshot();
-        assertEquals(2, old.instructionAt(0, 0).cells().end);
+        assertEquals(2, old.instructionAt(0).cells().end);
         index.memoryChanged(); // Adapter reports a write to either covered cell, including address 1.
 
         assertFalse(analysis.isCurrent(index));
         assertEquals(ProgramIndex.FlowState.STALE, index.snapshot().flowState());
-        assertNull(index.snapshot().instructionAt(0, 0));
-        assertNotNull(old.instructionAt(0, 0));
+        assertNull(index.snapshot().instructionAt(0));
+        assertNotNull(old.instructionAt(0));
         assertFalse(analysis.isCurrent(index(4)));
     }
 
@@ -187,16 +186,16 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "HALT", InstructionFlow.Kind.STOP, 1, false, List.of());
         ProgramIndex index = index(4);
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index, 0);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index);
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 0, 1), "comment", "changed");
+            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 1), "comment", "changed");
             update.commit();
         }
         assertThrows(IllegalStateException.class, pending::publish);
         assertEquals(ProgramIndex.FlowState.NOT_BUILT, index.snapshot().flowState());
         assertThrows(IllegalStateException.class, pending::publish);
 
-        FlowAnalysis.Pending memoryPending = FlowAnalysis.reachable(disassembler, 0, 10, index, 0);
+        FlowAnalysis.Pending memoryPending = FlowAnalysis.reachable(disassembler, 0, 10, index);
         index.memoryChanged();
         assertThrows(IllegalStateException.class, memoryPending::publish);
     }
@@ -206,7 +205,7 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "HALT", InstructionFlow.Kind.STOP, 1, false, List.of());
         ProgramIndex index = index(4);
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index, 0);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index);
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
             update.put(7, 0, true);
             update.commit();
@@ -231,10 +230,10 @@ public class FlowAnalysisTest {
         ProgramIndex.Snapshot capturedBase = index.snapshot();
         index.memoryChanged();
 
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(capturedDecoder, 0, 10, index, capturedBase, 0);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(capturedDecoder, 0, 10, index, capturedBase);
 
         assertThrows(IllegalStateException.class, pending::publish);
-        assertNull(index.snapshot().instructionAt(0, 0));
+        assertNull(index.snapshot().instructionAt(0));
     }
 
     @Test
@@ -242,19 +241,18 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         ProgramIndex index = index(4);
 
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, -1, 1, index, 0));
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 4, 1, index, 0));
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 0, index, 0));
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 100001, index, 0));
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 1, index, 1));
+        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, -1, 1, index));
+        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 4, 1, index));
+        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 0, index));
+        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 100001, index));
 
         verifyNoInteractions(disassembler);
     }
 
-    private static ProgramIndex index(int size) { return ProgramIndex.create("test", size, 1, size); }
+    private static ProgramIndex index(int size) { return ProgramIndex.create("test", size); }
 
     private static FlowAnalysis reachable(Disassembler disassembler, int start, int limit, ProgramIndex index) {
-        return FlowAnalysis.reachable(disassembler, start, limit, index, 0).publish();
+        return FlowAnalysis.reachable(disassembler, start, limit, index).publish();
     }
 
     private static List<Integer> addresses(FlowAnalysis analysis) {

@@ -20,7 +20,7 @@ public class ProgramIndexAdapterBenchmark {
     @State(Scope.Thread)
     public static class Adapters {
         @Param({"1", "1000", "10000", "50000"}) public int entries;
-        @Param({"single", "banked"}) public String layout;
+        @Param({"single", "clustered"}) public String layout;
         BenchmarkData data;
         AnnotationIndex adapter;
         BaselineAnnotationIndex baseline;
@@ -28,16 +28,16 @@ public class ProgramIndexAdapterBenchmark {
 
         @Setup public void setup() throws IOException {
             data = new BenchmarkData(layout, entries);
-            layoutMetadata = ProgramIndex.create("bench", data.size, data.banks, data.common).snapshot().layout();
+            layoutMetadata = ProgramIndex.create("bench", data.size).snapshot().layout();
             baseline = data.baseline(layoutMetadata);
-            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size, data.banks, data.common));
+            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size));
             adapter.importProperties(baseline.properties());
             // Build the adapter's immutable projection before timing steady-state point queries.
-            adapter.get(data.bank[0], data.address[0]);
+            adapter.get(data.address[0]);
             for (int i = 0; i < data.count; i++) {
-                AnnotationIndex.Entry current = adapter.get(data.bank[i], data.address[i]);
-                BaselineAnnotationIndex.Entry old = baseline.get(data.bank[i], data.address[i]);
-                if (current == null || old == null || current.bank != old.bank || current.address != old.address
+                AnnotationIndex.Entry current = adapter.get(data.address[i]);
+                BaselineAnnotationIndex.Entry old = baseline.get(data.address[i]);
+                if (current == null || old == null || current.address != old.address
                         || !current.label.equals(old.label) || !current.comment.equals(old.comment)
                         || !current.kind.equals(old.kind))
                     throw new IllegalStateException("Annotation adapter workload differs from baseline");
@@ -47,19 +47,19 @@ public class ProgramIndexAdapterBenchmark {
 
     @Benchmark public Object adapterPointHit(Adapters state) {
         int i = state.data.next();
-        return state.adapter.get(state.data.bank[i], state.data.address[i]);
+        return state.adapter.get(state.data.address[i]);
     }
 
     @Benchmark public Object adapterPointMiss(Adapters state) {
-        return state.adapter.get((state.data.cursor++ & Integer.MAX_VALUE) % state.data.banks, state.data.size - 1);
+        return state.adapter.get(state.data.size - 1);
     }
 
     @Benchmark public Object oldPointHit(Adapters state) {
         int i = state.data.next();
-        return state.baseline.get(state.data.bank[i], state.data.address[i]);
+        return state.baseline.get(state.data.address[i]);
     }
 
     @Benchmark public Object oldPointMiss(Adapters state) {
-        return state.baseline.get((state.data.cursor++ & Integer.MAX_VALUE) % state.data.banks, state.data.size - 1);
+        return state.baseline.get(state.data.size - 1);
     }
 }

@@ -42,11 +42,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     }
 
     @Override
-    public int getAddressSpaceSize() {
-        return Integer.MAX_VALUE;
-    }
-
-    @Override
     public MemoryContextAnnotations annotations() {
         return annotations;
     }

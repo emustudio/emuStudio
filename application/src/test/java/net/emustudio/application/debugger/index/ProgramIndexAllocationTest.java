@@ -88,7 +88,7 @@ public class ProgramIndexAllocationTest {
         int cursor;
 
         Workload(int size, int common) {
-            index = ProgramIndex.create("allocation", size, 2, common);
+            index = ProgramIndex.create("allocation", size);
             int[] starts = {0, 32, 4096, size / 2, common - 2, common, size - 2};
             addresses = new int[starts.length * 2 + 3];
             addresses[starts.length * 2] = 128;
@@ -102,17 +102,17 @@ public class ProgramIndexAllocationTest {
                     addresses[2 * i] = address;
                     addresses[2 * i + 1] = address + 1;
                     sources[i] = new SourceSpan("file:///allocation.asm", 2000, i * 2, i * 2 + 3);
-                    content.putMapping(1, i, new Range(1, address, address + 2), sources[i]);
-                    content.putAnnotation(1, i, new Range(1, address, address + 2), Kinds.LABEL, "label" + i % 2);
-                    content.putInstruction(new Range(1, address, address + 2), InstructionKind.CALL);
+                    content.putMapping(1, i, new Range(address, address + 2), sources[i]);
+                    content.putAnnotation(1, i, new Range(address, address + 2), Kinds.LABEL, "label" + i % 2);
+                    content.putInstruction(new Range(address, address + 2), InstructionKind.CALL);
                     int next = starts[(i + 1) % starts.length];
-                    content.putEdge(1, address, next, EdgeKind.CALL);
-                    content.putEdge(1, address, address + 1, EdgeKind.FALL_THROUGH);
-                    content.putEdge(1, address, next, EdgeKind.BRANCH);
+                    content.putEdge(address, next, EdgeKind.CALL);
+                    content.putEdge(address, address + 1, EdgeKind.FALL_THROUGH);
+                    content.putEdge(address, next, EdgeKind.BRANCH);
                 }
-                content.putAnnotation(2, 1, new Range(1, 0, 128), "region", "outer");
-                content.putAnnotation(2, 2, new Range(1, 16, 64), "region", "nested");
-                content.putAnnotation(2, 3, new Range(1, common - 2, common + 2), "region", "crossing");
+                content.putAnnotation(2, 1, new Range(0, 128), "region", "outer");
+                content.putAnnotation(2, 2, new Range(16, 64), "region", "nested");
+                content.putAnnotation(2, 3, new Range(common - 2, common + 2), "region", "crossing");
                 assertEquals(CommitResult.PUBLISHED, content.commit());
             }
             sources[starts.length] = new SourceSpan("file:///allocation.asm", 2001, 0, 1);
@@ -132,15 +132,15 @@ public class ProgramIndexAllocationTest {
                 int bank = (selected / addresses.length) & 1;
                 int address = addresses[selected % addresses.length];
                 Snapshot snapshot = index.snapshot();
-                snapshot.forEachMappingAt(bank, address, VALUES);
-                snapshot.forEachAnnotationStartingAt(bank, address, VALUES);
-                snapshot.forEachAnnotationCovering(bank, address, VALUES);
+                snapshot.forEachMappingAt(address, VALUES);
+                snapshot.forEachAnnotationStartingAt(address, VALUES);
+                snapshot.forEachAnnotationCovering(address, VALUES);
                 snapshot.forEachMappingOverlappingSource(sources[selected % sources.length], VALUES);
                 consumed += snapshot.hasExecutionBreakpoint(address) ? 1 : 0;
                 snapshot.forEachExecutionBreakpoint(address, VALUES);
-                Instruction instruction = snapshot.instructionAt(bank, address);
+                Instruction instruction = snapshot.instructionAt(address);
                 if (instruction != null) consumed += instruction.cells().end;
-                snapshot.forEachSuccessor(bank, address, EDGES);
+                snapshot.forEachSuccessor(address, EDGES);
                 snapshot.forEachAnnotation(VALUES);
                 snapshot.forEachInstruction(VALUES);
             }

@@ -78,6 +78,12 @@ public class MemoryStub implements ByteMemoryContext {
     }
 
     @Override
+    public Byte readBank(int address, int bank) {
+        if (bank != 0) throw new IllegalArgumentException("Unknown test bank");
+        return read(address);
+    }
+
+    @Override
     public Byte[][] getRawMemory() {
         return memory;
     }

@@ -62,12 +62,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     public synchronized ProgramIndex programIndex() {
         if (closed) throw new IllegalStateException("Debugger session closed");
         ProgramIndex.Layout layout = programIndex == null ? null : programIndex.snapshot().layout();
-        int size = memory == null ? cpu.getAddressSpaceSize() : memory.getAddressSpaceSize();
-        int banks = memory == null ? 1 : memory.getBanksCount();
-        int common = memory == null ? 0 : memory.getCommonBoundary();
-        if (layout == null || layout.addressSpaceSize() != size
-                || layout.bankCount() != banks || layout.commonBoundary() != common) {
-            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size, banks, common), size, banks, common);
+        int size = cpu.getAddressSpaceSize();
+        if (layout == null || layout.addressSpaceSize() != size) {
+            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size), size);
             synchronized (indexPublicationLock) {
                 programIndex = replacement;
             }
@@ -121,9 +118,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         }
     }
 
-    private String metadataIdentity(int size, int banks, int common) {
+    private String metadataIdentity(int size) {
         try {
-            String identity = cpu.getTitle() + ":" + metadataNamespace + ":" + size + ":" + banks + ":" + common;
+            String identity = cpu.getTitle() + ":" + metadataNamespace + ":" + size;
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8));
             StringBuilder text = new StringBuilder();
             for (byte value : digest) text.append(String.format("%02x", value & 255));
@@ -186,7 +183,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                             // landing on a configured breakpoint must inspect that address too.
                             int at = cpu.getInstructionLocation();
                             if (cpu.isBreakpointSupported() && cpu.isBreakpointSet(at))
-                                pendingHit = new BreakpointHit(at, memory == null ? 0 : memory.getBank(at), null);
+                                pendingHit = new BreakpointHit(at, null);
                         }
                     }
                     metadataChanged();
@@ -315,15 +312,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     /** Use the CPU's wired decoder off the UI thread; publish only while its paused root is current. */
     public FlowAnalysis analyzeFlow(int start, int limit) {
         Stamp stamp = liveStamp();
-        int bank = memory == null ? 0 : memory.getSelectedBank();
-        stamp.base.layout().physicalBank(bank, start);
-        Runnable validate = () -> {
-            requireCurrent(stamp);
-            if (bank != (memory == null ? 0 : memory.getSelectedBank()))
-                throw new IllegalStateException("Analysis discarded: mapped memory bank changed");
-        };
+        Runnable validate = () -> requireCurrent(stamp);
         Disassembler decoder = guardedDecoder(cpu.getDisassembler(), validate);
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, stamp.index, stamp.base, bank);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, stamp.index, stamp.base);
         synchronized (this) {
             validate.run();
             return pending.publish();
@@ -518,12 +509,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         candidateOrder = new int[evaluationRules.length];
     }
 
-    public long evaluate(String expression, int bank) {
-        return WatchExpression.evaluate(expression, debug, memory, bank);
+    public long evaluate(String expression) {
+        return WatchExpression.evaluate(expression, debug, memory);
     }
 
     @Override
-    public synchronized boolean beforeInstruction(int address, int bank) {
+    public synchronized boolean beforeInstruction(int address) {
         if (stoppedAddress == address) {
             stoppedAddress = -1;
             return false;
@@ -543,7 +534,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         && execution && rule.kind.equals("EXEC") && rule.address == address) {
                     stoppedAddress = address;
                     status = "Breakpoint: " + rule.name;
-                    pendingHit = new BreakpointHit(address, bank, rule);
+                    pendingHit = new BreakpointHit(address, rule);
                     return true;
                 }
             }
@@ -555,8 +546,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         return false;
     }
 
-    private boolean condition(Rule rule, int bank) {
-        return rule.condition.isBlank() || evaluate(rule.condition, bank) != 0;
+    private boolean condition(Rule rule) {
+        return rule.condition.isBlank() || evaluate(rule.condition) != 0;
     }
 
     @Override
@@ -583,17 +574,14 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                                     .filter(
                                             a ->
                                                     a.address == rule.address
-                                                            && (rule.bank < 0
-                                                                    || rule.bank == a.bank)
                                                             && a.write
                                                                     == rule.kind.equals("WRITE"))
                                     .findFirst().orElse(null);
                     if (match != null
-                            && condition(
-                                    rule, memory == null ? event.bank : memory.getSelectedBank())
+                            && condition(rule)
                             && ++rule.hits >= rule.afterHits) {
                         status = "Watchpoint: " + rule.name;
-                        pendingHit = new BreakpointHit(match.address, match.bank, rule);
+                        pendingHit = new BreakpointHit(match.address, rule);
                         return true;
                     }
                 }
@@ -675,12 +663,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     static final class BreakpointHit {
-        final int address, bank;
+        final int address;
         final Rule rule;
 
-        BreakpointHit(int address, int bank, Rule rule) {
+        BreakpointHit(int address, Rule rule) {
             this.address = address;
-            this.bank = bank;
             this.rule = rule;
         }
     }
@@ -688,7 +675,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void writeSettings() throws IOException {
         if (settings == null) throw new IOException("Computer configuration path unavailable");
         Properties p = new Properties();
-        p.setProperty("version", "1");
+        p.setProperty("version", "2");
         p.setProperty("cpu", cpu.getTitle());
         p.setProperty("watches", Integer.toString(watches.size()));
         for (int i = 0; i < watches.size(); i++) p.setProperty("watch." + i, watches.get(i));
@@ -699,7 +686,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             p.setProperty(k + "name", r.name);
             p.setProperty(k + "kind", r.kind);
             p.setProperty(k + "address", Integer.toString(r.address));
-            if (r instanceof AccessRule) p.setProperty(k + "bank", Integer.toString(((AccessRule) r).bank));
             p.setProperty(k + "condition", r.condition);
             p.setProperty(k + "enabled", Boolean.toString(r.enabled));
             p.setProperty(k + "after", Long.toString(r.afterHits));
@@ -719,7 +705,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void load() throws IOException {
         if (settings == null || !Files.isRegularFile(settings)) return;
         Properties p = AtomicProperties.load(settings);
-        if (!"1".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu")))
+        if (!"2".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu")))
             throw new IOException("Debugger settings belong to another CPU/version");
         try {
             int ordinary = count(p, "ordinary");
@@ -743,14 +729,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 Rule r;
                 if ("READ".equals(kind) || "WRITE".equals(kind))
                     r = new AccessRule(p.getProperty(k + "name"), kind,
-                            Integer.parseInt(p.getProperty(k + "address")), Integer.parseInt(p.getProperty(k + "bank")),
+                            Integer.parseInt(p.getProperty(k + "address")),
                             p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
                 else
                     r = new Rule(p.getProperty(k + "name"), kind, Integer.parseInt(p.getProperty(k + "address")),
                             p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
                 r.enabled = Boolean.parseBoolean(p.getProperty(k + "enabled"));
-                if (memory != null && r instanceof AccessRule && ((AccessRule) r).bank >= memory.getBanksCount())
-                    throw new IllegalArgumentException("Breakpoint bank outside memory");
                 if (r.address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
                 if ("EXEC".equals(kind) && cpu.isBreakpointSupported()) {
@@ -829,12 +813,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public static final class AccessRule extends Rule {
-        public final int bank;
-
-        public AccessRule(String name, String kind, int address, int bank, String condition, long afterHits) {
+        public AccessRule(String name, String kind, int address, String condition, long afterHits) {
             super(name, kind, address, condition, afterHits, true);
-            if (bank < -1) throw new IllegalArgumentException("Invalid watchpoint bank");
-            this.bank = bank;
         }
     }
 }

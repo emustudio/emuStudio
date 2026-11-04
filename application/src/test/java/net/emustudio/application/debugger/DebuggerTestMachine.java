@@ -43,15 +43,11 @@ final class DebuggerTestMachine {
         when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(banks[0].length);
-        when(memory.getAddressSpaceSize()).thenReturn(banks[0].length);
-        when(memory.getBanksCount()).thenReturn(banks.length);
-        when(memory.getCommonBoundary()).thenReturn(commonBoundary);
-        when(memory.readBank(anyInt(), anyInt())).thenAnswer(call -> {
+        when(memory.read(anyInt())).thenAnswer(call -> {
             int address = call.getArgument(0);
-            int bank = call.getArgument(1);
-            return banks[address < commonBoundary ? bank : 0][address];
+            return banks[0][address];
         });
-        when(memory.getBank(anyInt())).thenAnswer(call -> 0);
+        when(memory.peek(anyInt())).thenAnswer(call -> memory.read(call.getArgument(0)));
         doAnswer(call -> { memoryListeners.add(call.getArgument(0)); return null; })
                 .when(memory).addMemoryListener(any());
         doAnswer(call -> { memoryListeners.remove(call.getArgument(0)); return null; })

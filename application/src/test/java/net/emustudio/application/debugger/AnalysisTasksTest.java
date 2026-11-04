@@ -36,7 +36,7 @@ public class AnalysisTasksTest {
                     ProgramIndex index = session.programIndex();
                     if (metadata) {
                         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-                            edit.putAnnotation(7, 1, new ProgramIndex.Range(0, 0, 1), "comment", "changed");
+                            edit.putAnnotation(7, 1, new ProgramIndex.Range(0, 1), "comment", "changed");
                             edit.commit();
                         }
                     } else {

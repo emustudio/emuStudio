@@ -51,7 +51,7 @@ public class DebugHooksTest {
         replay(input, output);
         EmulatorEngine engine = new EmulatorEngine(memory, input, output);
         engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address, int bank) { return true; }
+            @Override public boolean beforeInstruction(int address) { return true; }
         });
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(0, engine.IP.get());

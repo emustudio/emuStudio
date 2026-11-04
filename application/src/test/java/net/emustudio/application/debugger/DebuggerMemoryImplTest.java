@@ -10,7 +10,6 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 public class DebuggerMemoryImplTest {
@@ -19,53 +18,50 @@ public class DebuggerMemoryImplTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32, false);
         DebuggerMemoryImpl view = new DebuggerMemoryImpl();
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.annotations().put(new AnnotationIndex.Entry(0, 4, "user", "note", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "user", "note", "DATA"));
             ProgramIndex index = session.programIndex();
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-                update.putAnnotation(2, 1, new ProgramIndex.Range(0, 5, 6), ProgramIndex.Kinds.LABEL, "source");
+                update.putAnnotation(2, 1, new ProgramIndex.Range(5, 6), ProgramIndex.Kinds.LABEL, "source");
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
             view.setSession(session);
 
             session.clearSourceMappings();
 
-            assertEquals("", view.label(0, 5));
-            assertEquals("user", view.label(0, 4));
-            assertEquals("note", view.comment(0, 4));
+            assertEquals("", view.label(5));
+            assertEquals("user", view.label(4));
+            assertEquals("note", view.comment(4));
         }
     }
 
     @Test
-    public void metadataFollowsSelectedBankAndSharedMemory() throws Exception {
+    public void metadataUsesCpuVisibleAddresses() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[2][32], 16, false);
         DebuggerMemoryImpl view = new DebuggerMemoryImpl();
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.annotations().put(new AnnotationIndex.Entry(0, 4, "zero", "first", "DATA"));
-            session.annotations().put(new AnnotationIndex.Entry(1, 4, "one", "second", "DATA"));
-            session.annotations().put(new AnnotationIndex.Entry(1, 20, "shared", "common", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "one", "second", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(20, "shared", "common", "DATA"));
             view.setSession(session);
 
-            assertEquals("zero", view.label(0, 4));
-            assertEquals("second", view.comment(1, 4));
-            assertEquals("one", view.label(1, 4));
-            assertEquals("shared", view.label(0, 20));
-            assertEquals("common", view.comment(1, 20));
-            assertEquals("", view.label(1, 5));
+            assertEquals("second", view.comment(4));
+            assertEquals("one", view.label(4));
+            assertEquals("shared", view.label(20));
+            assertEquals("common", view.comment(20));
+            assertEquals("", view.label(5));
         }
     }
 
     @Test
-    public void currentInstructionRespectsBankAndSharedMemory() throws Exception {
+    public void currentInstructionMatchesCpuVisibleAddress() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[2][32], 16, false);
         when(machine.cpu.getInstructionLocation()).thenReturn(4, 4, 20);
-        when(machine.memory.getBank(anyInt())).thenReturn(1);
         DebuggerMemoryImpl view = new DebuggerMemoryImpl();
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             view.setSession(session);
 
-            assertTrue(view.isCurrentInstruction(1, 4));
-            assertFalse(view.isCurrentInstruction(0, 4));
-            assertTrue(view.isCurrentInstruction(0, 20));
+            assertTrue(view.isCurrentInstruction(4));
+            assertFalse(view.isCurrentInstruction(5));
+            assertTrue(view.isCurrentInstruction(20));
         }
     }
 
@@ -80,17 +76,17 @@ public class DebuggerMemoryImplTest {
             view.setSession(session);
             changes.set(0);
 
-            session.annotations().put(new AnnotationIndex.Entry(0, 4, "entry", "note", "DATA"));
+            session.annotations().put(new AnnotationIndex.Entry(4, "entry", "note", "DATA"));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             assertEquals(2, changes.get());
 
             view.setSession(null);
             changes.set(0);
-            session.annotations().remove(0, 4);
+            session.annotations().remove(4);
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             assertEquals(0, changes.get());
-            assertEquals("", view.label(0, 4));
-            assertFalse(view.isCurrentInstruction(0, 4));
+            assertEquals("", view.label(4));
+            assertFalse(view.isCurrentInstruction(4));
         }
         view.removeListener(listener);
     }

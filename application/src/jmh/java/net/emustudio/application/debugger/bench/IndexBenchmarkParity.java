@@ -11,7 +11,7 @@ public final class IndexBenchmarkParity {
 
     public static void main(String[] arguments) {
         int cases = 0;
-        for (String layout : new String[] {"single", "banked", "sparse"}) {
+        for (String layout : new String[] {"single", "clustered", "sparse"}) {
             for (int entries : new int[] {1, 1000, 10000, 50000}) {
                 ProgramIndexMetadataBenchmark.Metadata state = new ProgramIndexMetadataBenchmark.Metadata();
                 state.layout = layout;
@@ -26,7 +26,7 @@ public final class IndexBenchmarkParity {
                     int point = state.data.queries[query];
                     long expected = 0;
                     for (int i = 0; i < entries; i++)
-                        if (state.data.overlaps(state.data.ranges[i], state.data.bank[point],
+                        if (state.data.overlaps(state.data.ranges[i],
                                 state.data.address[point], state.data.address[point] + 1)) expected += i + 1;
                     state.data.cursor = query;
                     equal(expected, benchmark.pointCovering(state), "annotation covering " + layout + " " + entries);
@@ -41,12 +41,12 @@ public final class IndexBenchmarkParity {
                     points.setup();
                     for (int query = 0; query < 16; query++) {
                         int point = points.data.queries[query];
-                        BaselineAnnotationIndex.Entry old = points.baseline.get(points.data.bank[point], points.data.address[point]);
+                        BaselineAnnotationIndex.Entry old = points.baseline.get(points.data.address[point]);
                         points.sink.last = null;
-                        points.snapshot.forEachAnnotationStartingAt(points.data.bank[point], points.data.address[point], points.sink);
+                        points.snapshot.forEachAnnotationStartingAt(points.data.address[point], points.sink);
                         ProgramIndex.Annotation current = points.sink.last;
                         if (old == null || current == null || !old.label.equals(current.text())
-                                || old.bank != current.range().bank || old.address != current.range().start)
+                                || old.address != current.range().start)
                             throw new IllegalStateException("Point baseline mismatch " + layout + " " + entries);
                     }
                     cases++;

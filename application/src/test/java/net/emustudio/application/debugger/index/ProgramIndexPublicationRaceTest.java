@@ -29,7 +29,7 @@ public class ProgramIndexPublicationRaceTest {
         ExecutorService workers = Executors.newFixedThreadPool(2);
         try {
             for (int attempt = 0; attempt < 20; attempt++) {
-                ProgramIndex index = create("same-component-race", 65536, 2, 49152);
+                ProgramIndex index = create("same-component-race", 65536);
                 Snapshot base = index.snapshot();
                 CountDownLatch staged = new CountDownLatch(2), release = new CountDownLatch(1);
                 Future<CommitResult> first = workers.submit(() -> edit(index, base, 1, content, staged, release));
@@ -59,8 +59,8 @@ public class ProgramIndexPublicationRaceTest {
                                      CountDownLatch staged, CountDownLatch release) throws InterruptedException {
         if (content) {
             try (ContentUpdate update = index.updateContent(base)) {
-                update.putAnnotation(owner, 1, new Range(0, 0, 1), "comment", "first");
-                update.putAnnotation(owner, 2, new Range(1, 1, 2), "comment", "second");
+                update.putAnnotation(owner, 1, new Range(0, 1), "comment", "first");
+                update.putAnnotation(owner, 2, new Range(1, 2), "comment", "second");
                 staged.countDown();
                 assertTrue(release.await(5, TimeUnit.SECONDS));
                 return update.commit();

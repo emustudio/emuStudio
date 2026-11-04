@@ -70,11 +70,10 @@ public class UtilsTest extends AbstractSwingTest {
             return config;
         });
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(cpu.getAddressSpaceSize()).thenReturn(8);
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(8);
-        when(memory.getAddressSpaceSize()).thenReturn(8);
-        when(memory.getBanksCount()).thenReturn(1);
-        when(memory.readBank(anyInt(), anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
+        when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).getMemoryContext(Utils.EMUSTUDIO_ID, MemoryContext.class);
         try (DebugSession session = new DebugSession(cpu, memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -92,7 +91,7 @@ public class UtilsTest extends AbstractSwingTest {
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
                 assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));
-                verify(memory, never()).readBank(anyInt(), anyInt());
+                verify(memory, never()).read(anyInt());
                 verify(dialogs, never()).showError(anyString(), anyString());
             } finally {
                 runOnEdt(debugger::close);

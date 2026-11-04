@@ -20,18 +20,18 @@ public final class FlowGraph {
     private final byte[] outgoingKinds;
     private final ProgramIndex.Instruction[] instructions;
 
-    FlowGraph(ProgramIndex.Layout layout, Map<Long, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
-        Set<Long> keys = new TreeSet<>(decoded.keySet());
+    FlowGraph(ProgramIndex.Layout layout, Map<Integer, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
+        Set<Integer> keys = new TreeSet<>(decoded.keySet());
         for (Edge e : edges) {
             if (!decoded.containsKey(e.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
             keys.add(e.to);
         }
         addresses = new int[keys.size()];
         instructions = new ProgramIndex.Instruction[keys.size()];
-        Map<Long, Integer> ids = new TreeMap<>();
+        Map<Integer, Integer> ids = new TreeMap<>();
         int i = 0;
-        for (long key : keys) {
-            addresses[i] = AddressTable.address(key);
+        for (int key : keys) {
+            addresses[i] = key;
             instructions[i] = decoded.get(key);
             ids.put(key, ++i);
         }
@@ -54,8 +54,8 @@ public final class FlowGraph {
         }
     }
 
-    ProgramIndex.Instruction instructionAt(int bank, int address) {
-        int id = nodes.get(bank, address);
+    ProgramIndex.Instruction instructionAt(int address) {
+        int id = nodes.get(address);
         return id == 0 ? null : instructions[id - 1];
     }
 
@@ -63,8 +63,8 @@ public final class FlowGraph {
         for (ProgramIndex.Instruction instruction : instructions) if (instruction != null) visitor.accept(instruction);
     }
 
-    void successors(int bank, int address, ProgramIndex.EdgeVisitor visitor) {
-        int id = nodes.get(bank, address) - 1;
+    void successors(int address, ProgramIndex.EdgeVisitor visitor) {
+        int id = nodes.get(address) - 1;
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
             int to = outgoing[at];
@@ -73,12 +73,12 @@ public final class FlowGraph {
     }
 
     static final class Edge implements Comparable<Edge> {
-        final long from, to;
+        final int from, to;
         final ProgramIndex.EdgeKind kind;
-        Edge(long from, long to, ProgramIndex.EdgeKind kind) { this.from = from; this.to = to; this.kind = kind; }
+        Edge(int from, int to, ProgramIndex.EdgeKind kind) { this.from = from; this.to = to; this.kind = kind; }
         @Override public int compareTo(Edge other) {
-            int comparison = Long.compare(from, other.from);
-            if (comparison == 0) comparison = Long.compare(to, other.to);
+            int comparison = Integer.compare(from, other.from);
+            if (comparison == 0) comparison = Integer.compare(to, other.to);
             return comparison == 0 ? kind.compareTo(other.kind) : comparison;
         }
     }

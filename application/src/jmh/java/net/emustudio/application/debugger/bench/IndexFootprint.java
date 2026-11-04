@@ -20,11 +20,11 @@ public final class IndexFootprint {
         System.out.println("# " + System.getProperty("java.vm.name") + " " + System.getProperty("java.version"));
         System.out.println("# Reachable object-graph bytes. Shared layout metadata and Class objects excluded; aliases counted once.");
         System.out.println("layout,entries,structure,bytes");
-        for (String layout : new String[] {"single", "banked", "sparse"}) {
+        for (String layout : new String[] {"single", "clustered", "sparse"}) {
             for (int count : new int[] {1, 1000, 10000, 50000}) {
                 BenchmarkData data = new BenchmarkData(layout, count);
                 if (!layout.equals("sparse")) {
-                    ProgramIndex.Layout layoutMetadata = ProgramIndex.create("bench", data.size, data.banks, data.common).snapshot().layout();
+                    ProgramIndex.Layout layoutMetadata = ProgramIndex.create("bench", data.size).snapshot().layout();
                     System.out.printf("%s,%d,old_annotations,%d%n", layout, count, bytes(data.baseline(layoutMetadata), layoutMetadata));
                 }
                 System.out.printf("%s,%d,index_annotations,%d%n", layout, count, bytes(data.index(false)));

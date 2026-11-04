@@ -25,29 +25,26 @@ public class ProgramIndexGraphBenchmark {
     @State(Scope.Thread)
     public static class Graphs {
         @Param({"1", "1000", "10000"}) public int nodes;
-        @Param({"single", "banked", "sparse"}) public String layout;
+        @Param({"single", "clustered", "sparse"}) public String layout;
         ProgramIndex index;
         ProgramIndex.Snapshot snapshot;
         FlowAnalysis analysis;
         BaselineFlowAnalysis baseline;
         Disassembler decoder;
         int[] addresses, queries = new int[1024];
-        int size, banks, common, bank, cursor;
+        int size, cursor;
         final EdgeSink sink = new EdgeSink();
 
         @Setup public void setup() {
             size = layout.equals("sparse") ? Integer.MAX_VALUE : 65536;
-            banks = layout.equals("single") ? 1 : 4;
-            common = layout.equals("single") ? size : size - 16384;
-            bank = banks - 1;
             addresses = new int[nodes];
             for (int i = 0; i < nodes; i++) addresses[i] = layout.equals("sparse") ? i * 100003
-                    : layout.equals("banked") && i % 8 == 0 ? common + i / 8 : i;
+                    : layout.equals("clustered") && i % 8 == 0 ? size - 16384 + i / 8 : i;
             decoder = new FixtureDecoder(addresses);
-            index = ProgramIndex.create("graph", size, banks, common);
-            analysis = FlowAnalysis.reachable(decoder, addresses[0], nodes, index, bank).publish();
+            index = ProgramIndex.create("graph", size);
+            analysis = FlowAnalysis.reachable(decoder, addresses[0], nodes, index).publish();
             snapshot = index.snapshot();
-            baseline = new BaselineFlowAnalysis(decoder, addresses[0], nodes, null, bank);
+            baseline = new BaselineFlowAnalysis(decoder, addresses[0], nodes, null);
             Random random = new Random(454);
             for (int i = 0; i < queries.length; i++) queries[i] = random.nextInt(nodes);
         }
@@ -57,7 +54,7 @@ public class ProgramIndexGraphBenchmark {
 
     @Benchmark public long indexedSuccessors(Graphs state) {
         state.sink.checksum = 0;
-        state.snapshot.forEachSuccessor(state.bank, state.nextAddress(), state.sink);
+        state.snapshot.forEachSuccessor(state.nextAddress(), state.sink);
         return state.sink.checksum;
     }
 
@@ -71,13 +68,13 @@ public class ProgramIndexGraphBenchmark {
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Object oldFullRebuild(Graphs state) {
-        return new BaselineFlowAnalysis(state.decoder, state.addresses[0], state.nodes, null, state.bank);
+        return new BaselineFlowAnalysis(state.decoder, state.addresses[0], state.nodes, null);
     }
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Object indexedFullRebuild(Graphs state) {
-        ProgramIndex index = ProgramIndex.create("graph", state.size, state.banks, state.common);
-        return FlowAnalysis.reachable(state.decoder, state.addresses[0], state.nodes, index, state.bank).publish();
+        ProgramIndex index = ProgramIndex.create("graph", state.size);
+        return FlowAnalysis.reachable(state.decoder, state.addresses[0], state.nodes, index).publish();
     }
 
     static final class EdgeSink implements ProgramIndex.EdgeVisitor {

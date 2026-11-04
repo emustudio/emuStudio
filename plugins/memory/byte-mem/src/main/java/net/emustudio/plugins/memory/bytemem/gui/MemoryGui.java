@@ -146,8 +146,9 @@ public class MemoryGui extends DialogBase {
         txtValueHex.setText(String.format("%02X", data));
         txtValueOct.setText(String.format("%02o", data));
         txtValueBin.setText(formatBinaryString(data, 8));
-        String label = debuggerMemory == null ? "" : debuggerMemory.label(tableModel.getCurrentBank(), address);
-        String annotation = debuggerMemory == null ? "" : debuggerMemory.comment(tableModel.getCurrentBank(), address);
+        boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
+        String label = mapped ? debuggerMemory.label(address) : "";
+        String annotation = mapped ? debuggerMemory.comment(address) : "";
         txtLabel.setText(label);
         txtLabel.setToolTipText(label.isEmpty() ? null : "Label: " + label);
         txtAnnotation.setText(annotation);

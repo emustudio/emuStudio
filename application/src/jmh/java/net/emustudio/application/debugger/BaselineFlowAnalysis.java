@@ -18,7 +18,7 @@ public final class BaselineFlowAnalysis {
     public boolean truncated;
 
     public BaselineFlowAnalysis(
-            Disassembler dis, int start, int limit, BaselineAnnotationIndex annotations, int bank) {
+            Disassembler dis, int start, int limit, BaselineAnnotationIndex annotations) {
         if (start < 0 || limit < 1 || limit > 10000)
             throw new IllegalArgumentException("Invalid flow bounds");
         Deque<Integer> pending = new ArrayDeque<>();
@@ -28,7 +28,7 @@ public final class BaselineFlowAnalysis {
             if (instructions.containsKey(at)) continue;
             try {
                 BaselineAnnotationIndex.Entry annotation =
-                        annotations == null ? null : annotations.get(bank, at);
+                        annotations == null ? null : annotations.get(at);
                 if (annotation != null && annotation.kind.equals("DATA")) continue;
                 Optional<InstructionFlow> decoded = dis.getFlow(at);
                 if (decoded.isEmpty()) continue;

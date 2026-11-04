@@ -62,11 +62,11 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
-        int bank = tableModel.getCurrentBank();
         int address = tableModel.toAddress(row, column);
-        String label = debuggerMemory == null ? "" : debuggerMemory.label(bank, address);
-        String comment = debuggerMemory == null ? "" : debuggerMemory.comment(bank, address);
-        boolean current = debuggerMemory != null && debuggerMemory.isCurrentInstruction(bank, address);
+        boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
+        String label = mapped ? debuggerMemory.label(address) : "";
+        String comment = mapped ? debuggerMemory.comment(address) : "";
+        boolean current = mapped && debuggerMemory.isCurrentInstruction(address);
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");

@@ -6,15 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Primitive address -> compact payload/list ID table. Zero means absent.
- * Each dense address table has an 8 MiB budget (2,097,152 physical cells).
- * Shared suffix exists only in bank zero. Sparse tables use 1024-cell pages,
+ * Each dense address table has an 8 MiB budget (2,097,152 cells).
+ * Sparse tables use 1024-cell pages,
  * a two-level directory (at most 2048 top-level entries for an int domain).
  * Uniform pages/directories hold a single ID, so a long covered range does not
- * allocate all its cells. Banks, directory leaves and pages are allocated lazily.
+ * allocate all its cells. Directory leaves and pages are allocated lazily.
  * Pages with at most 16 nondefault cells retain sorted primitive offset/ID pairs;
  * their bounded binary search trades a few comparisons for sparse retained memory.
  */
@@ -22,52 +21,33 @@ final class AddressTable {
     private static final long DENSE_CELLS = 2L * 1024 * 1024;
     private static final int SHIFT = 10;
     private static final int MASK = (1 << SHIFT) - 1;
-    private final int[] banks;
-    private final Partition[] partitions;
+    private final Partition partition;
 
-    AddressTable(ProgramIndex.Layout layout, Map<Long, Integer> entries) {
+    AddressTable(ProgramIndex.Layout layout, Map<Integer, Integer> entries) {
         this(layout, pointSegments(entries));
     }
 
-    AddressTable(ProgramIndex.Layout layout, List<BankEntries> entries) {
+    AddressTable(ProgramIndex.Layout layout, List<Segment> entries) {
         this(layout, entries, 0);
     }
 
-    static AddressTable bitmapWords(ProgramIndex.Layout layout, Map<Long, Integer> entries) {
+    static AddressTable bitmapWords(ProgramIndex.Layout layout, Map<Integer, Integer> entries) {
         return new AddressTable(layout, pointSegments(entries), 6);
     }
 
-    private AddressTable(ProgramIndex.Layout layout, List<BankEntries> entries, int cellShift) {
-        banks = new int[entries.size()];
-        partitions = new Partition[banks.length];
+    private AddressTable(ProgramIndex.Layout layout, List<Segment> entries, int cellShift) {
         int addressUnits = units(layout.addressSpaceSize(), cellShift);
-        int bankUnits = units(layout.commonBoundary(), cellShift);
-        long physicalCells = addressUnits + (long) (layout.bankCount() - 1) * bankUnits;
-        boolean dense = physicalCells <= DENSE_CELLS;
-        int i = 0;
-        for (BankEntries group : entries) {
-            int bank = group.bank;
-            int size = bank <= 0 ? addressUnits : bankUnits;
-            banks[i] = bank;
-            partitions[i++] = new Partition(size, dense, group.segments);
-        }
+        partition = entries.isEmpty() ? null : new Partition(addressUnits, addressUnits <= DENSE_CELLS, entries);
     }
 
     private static int units(int cells, int shift) {
         return (int) (((long) cells + (1L << shift) - 1) >>> shift);
     }
 
-    private static List<BankEntries> pointSegments(Map<Long, Integer> entries) {
-        Map<Integer, BankEntries> grouped = new TreeMap<>();
-        entries.forEach((key, value) -> grouped.computeIfAbsent(bank(key), BankEntries::new)
-                .segments.add(new Segment(address(key), address(key) + 1, value)));
-        return new ArrayList<>(grouped.values());
-    }
-
-    static final class BankEntries {
-        final int bank;
-        final List<Segment> segments = new ArrayList<>();
-        BankEntries(int bank) { this.bank = bank; }
+    private static List<Segment> pointSegments(Map<Integer, Integer> entries) {
+        List<Segment> segments = new ArrayList<>();
+        entries.forEach((address, value) -> segments.add(new Segment(address, address + 1, value)));
+        return segments;
     }
 
     static final class Segment {
@@ -75,24 +55,9 @@ final class AddressTable {
         Segment(int start, int end, int id) { this.start = start; this.end = end; this.id = id; }
     }
 
-    int get(int bank, int address) {
-        int at = Arrays.binarySearch(banks, bank);
-        return at < 0 ? 0 : partitions[at].get(address);
+    int get(int address) {
+        return partition == null ? 0 : partition.get(address);
     }
-
-    interface PartVisitor { void accept(int bank, int start, int end); }
-
-    /** Splits a canonical range at the common boundary; common cells belong to physical bank zero. */
-    static void split(ProgramIndex.Layout layout, ProgramIndex.Range range, PartVisitor visitor) {
-        int lowerEnd = Math.min(range.end, layout.commonBoundary());
-        if (range.start < lowerEnd) visitor.accept(range.bank, range.start, lowerEnd);
-        int upperStart = Math.max(range.start, layout.commonBoundary());
-        if (upperStart < range.end) visitor.accept(0, upperStart, range.end);
-    }
-
-    static long key(int bank, int address) { return ((long) bank << 32) | (address & 0xffffffffL); }
-    static int bank(long key) { return (int) (key >>> 32); }
-    static int address(long key) { return (int) key; }
 
     private static final class Partition {
         private final int[] dense;

@@ -16,14 +16,12 @@ public final class FlowAnalysis {
     private final ProgramIndex index;
     private final ProgramIndex.Snapshot snapshot;
     private final Map<Integer, String> listing;
-    private final int bank;
 
     private FlowAnalysis(ProgramIndex index, ProgramIndex.Snapshot snapshot,
-                         Map<Integer, String> listing, int bank) {
+                         Map<Integer, String> listing) {
         this.index = index;
         this.snapshot = snapshot;
         this.listing = Map.copyOf(listing);
-        this.bank = bank;
     }
 
     /**
@@ -32,15 +30,15 @@ public final class FlowAnalysis {
      * The limit bounds attempted undecodable addresses as well as scheduled instructions.
      */
     public static Pending reachable(Disassembler disassembler, int start, int limit,
-                                    ProgramIndex index, int bank) {
-        return reachable(disassembler, start, limit, index, index.snapshot(), bank);
+                                    ProgramIndex index) {
+        return reachable(disassembler, start, limit, index, index.snapshot());
     }
 
     /** Uses the metadata root from before live decoding. */
     public static Pending reachable(Disassembler disassembler, int start, int limit,
-                                    ProgramIndex index, ProgramIndex.Snapshot base, int bank) {
-        Builder builder = new Builder(disassembler, limit, index, base, bank);
-        builder.base.layout().physicalBank(bank, start);
+                                    ProgramIndex index, ProgramIndex.Snapshot base) {
+        Builder builder = new Builder(disassembler, limit, index, base);
+        if (start < 0 || start >= builder.size) throw new IllegalArgumentException("Address outside memory");
         Deque<Integer> pending = new ArrayDeque<>();
         Set<Integer> scheduled = new HashSet<>();
         Set<Integer> visited = new HashSet<>();
@@ -78,7 +76,6 @@ public final class FlowAnalysis {
                 && current.flowState() != ProgramIndex.FlowState.NOT_BUILT;
     }
 
-    public int bank() { return bank; }
     public boolean truncated() { return snapshot.flowState() == ProgramIndex.FlowState.TRUNCATED; }
     public String mnemonic(int address) { return listing.getOrDefault(address, ""); }
 
@@ -88,8 +85,7 @@ public final class FlowAnalysis {
 
     public void forEachEdge(ProgramIndex.EdgeVisitor visitor) {
         Objects.requireNonNull(visitor);
-        snapshot.forEachInstruction(instruction -> snapshot.forEachSuccessor(
-                instruction.cells().bank, instruction.cells().start, visitor));
+        snapshot.forEachInstruction(instruction -> snapshot.forEachSuccessor(instruction.cells().start, visitor));
     }
 
     /** Staged decoder output; publish only after the adapter validates its paused session. */
@@ -108,7 +104,7 @@ public final class FlowAnalysis {
                 for (Decoded decoded : builder.instructions.values())
                     update.putInstruction(decoded.cells, decoded.kind);
                 for (Edge edge : builder.edges)
-                    update.putEdge(builder.bank, edge.from, edge.to, edge.edgeKind);
+                    update.putEdge(edge.from, edge.to, edge.edgeKind);
                 if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
                     throw new IllegalStateException("Flow analysis discarded: program metadata or memory changed");
             }
@@ -116,7 +112,7 @@ public final class FlowAnalysis {
             if (published.contentRevision() != builder.base.contentRevision() + 1
                     || published.memoryRevision() != builder.base.memoryRevision())
                 throw new IllegalStateException("Flow analysis discarded: graph replaced during publication");
-            return new FlowAnalysis(builder.index, published, builder.listing, builder.bank);
+            return new FlowAnalysis(builder.index, published, builder.listing);
         }
     }
 
@@ -124,7 +120,7 @@ public final class FlowAnalysis {
         final Disassembler disassembler;
         final ProgramIndex index;
         final ProgramIndex.Snapshot base;
-        final int bank, size, edgeLimit;
+        final int size, edgeLimit;
         final Map<Integer, Decoded> instructions = new LinkedHashMap<>();
         final Map<Integer, String> listing = new LinkedHashMap<>();
         final List<Edge> edges = new ArrayList<>();
@@ -132,21 +128,19 @@ public final class FlowAnalysis {
         int targetAttempts;
         boolean truncated;
 
-        Builder(Disassembler disassembler, int limit, ProgramIndex index, ProgramIndex.Snapshot base, int bank) {
+        Builder(Disassembler disassembler, int limit, ProgramIndex index, ProgramIndex.Snapshot base) {
             if (limit < 1 || limit > 100000) throw new IllegalArgumentException("Invalid flow bounds");
             this.disassembler = Objects.requireNonNull(disassembler);
             this.index = Objects.requireNonNull(index);
             this.base = Objects.requireNonNull(base);
-            this.bank = bank;
             this.size = base.layout().addressSpaceSize();
-            base.layout().physicalBank(bank, 0);
             // Bound even a malformed decoder returning a huge target list. Partial results say TRUNCATED.
             edgeLimit = limit * 8;
         }
 
         Decoded decode(int address) {
             data.found = false;
-            base.forEachAnnotationCovering(bank, address, data);
+            base.forEachAnnotationCovering(address, data);
             if (data.found) return null;
             try {
                 Optional<InstructionFlow> result = disassembler.getFlow(address);
@@ -155,7 +149,7 @@ public final class FlowAnalysis {
                 int end = disassembler.getNextInstructionPosition(address);
                 if (end <= address || end > size) return null;
                 String mnemonic = disassembler.disassemble(address).mnemo;
-                ProgramIndex.Range cells = new ProgramIndex.Range(bank, address, end);
+                ProgramIndex.Range cells = new ProgramIndex.Range(address, end);
                 List<Integer> destinations = new ArrayList<>();
                 ProgramIndex.EdgeKind targetKind = flow.kind == InstructionFlow.Kind.CALL
                         ? ProgramIndex.EdgeKind.CALL : ProgramIndex.EdgeKind.BRANCH;

@@ -4,7 +4,7 @@ package net.emustudio.application.debugger;
 
 import net.emustudio.application.debugger.index.ProgramIndex;
 
-// Benchmark-only baseline from 184f8d5a49fd40d99e553a80496c508e2e699618; string-key storage preserved; image dependency reduced to layout metadata.
+// Benchmark-only string-key comparison model, using CPU-visible addresses and layout metadata.
 
 import java.io.*;
 import java.nio.file.*;
@@ -19,22 +19,21 @@ public final class BaselineAnnotationIndex {
         this.layout = layout;
     }
 
-    private String key(int bank, int address) {
-        return layout.physicalBank(bank, address) + ":" + address;
+    private String key(int address) {
+        if (address < 0 || address >= layout.addressSpaceSize()) throw new IllegalArgumentException("Address outside memory");
+        return Integer.toString(address);
     }
 
-    public Entry get(int bank, int address) {
-        return entries.get(key(bank, address));
+    public Entry get(int address) {
+        return entries.get(key(address));
     }
 
     public void put(Entry entry) {
-        int bank = layout.physicalBank(entry.bank, entry.address);
         if (!List.of("UNKNOWN", "CODE", "DATA").contains(entry.kind))
             throw new IllegalArgumentException("Invalid annotation kind");
         entries.put(
-                key(bank, entry.address),
+                key(entry.address),
                 new Entry(
-                        bank,
                         entry.address,
                         entry.label,
                         entry.comment,
@@ -42,8 +41,8 @@ public final class BaselineAnnotationIndex {
                         entry.kind));
     }
 
-    public void remove(int bank, int address) {
-        entries.remove(key(bank, address));
+    public void remove(int address) {
+        entries.remove(key(address));
     }
 
     public List<Entry> entries() {
@@ -61,14 +60,15 @@ public final class BaselineAnnotationIndex {
 
     public Properties properties() {
         Properties p = new Properties();
-        p.setProperty("version", "1");
+        p.setProperty("version", "3");
         p.setProperty("image.identity", layout.imageId());
         p.setProperty("entries", Integer.toString(entries.size()));
         int i = 0;
         for (Entry e : entries.values()) {
-            String k = "entry." + (i++) + ".";
-            p.setProperty(k + "bank", Integer.toString(e.bank));
+            String k = "entry." + i + ".";
+            p.setProperty(k + "id", Long.toString(2L * i++));
             p.setProperty(k + "address", Integer.toString(e.address));
+            p.setProperty(k + "end", Integer.toString(e.address + 1));
             p.setProperty(k + "label", e.label);
             p.setProperty(k + "comment", e.comment);
             p.setProperty(k + "bookmark", Boolean.toString(e.bookmark));
@@ -86,7 +86,7 @@ public final class BaselineAnnotationIndex {
     }
 
     public void importProperties(Properties p) throws IOException {
-        if (!"1".equals(p.getProperty("version"))
+        if (!"3".equals(p.getProperty("version"))
                 || !layout.imageId().equals(p.getProperty("image.identity")))
             throw new IOException("Annotations belong to another memory image/layout");
         BaselineAnnotationIndex imported = new BaselineAnnotationIndex(layout);
@@ -98,7 +98,6 @@ public final class BaselineAnnotationIndex {
                 String k = "entry." + i + ".";
                 imported.put(
                         new Entry(
-                                Integer.parseInt(p.getProperty(k + "bank")),
                                 Integer.parseInt(p.getProperty(k + "address")),
                                 p.getProperty(k + "label", ""),
                                 p.getProperty(k + "comment", ""),
@@ -112,18 +111,16 @@ public final class BaselineAnnotationIndex {
     }
 
     public static final class Entry {
-        public final int bank, address;
+        public final int address;
         public final String label, comment, kind;
         public final boolean bookmark;
 
         public Entry(
-                int bank,
                 int address,
                 String label,
                 String comment,
                 boolean bookmark,
                 String kind) {
-            this.bank = bank;
             this.address = address;
             this.label = Objects.requireNonNull(label);
             this.comment = Objects.requireNonNull(comment);
@@ -133,7 +130,7 @@ public final class BaselineAnnotationIndex {
 
         @Override
         public String toString() {
-            return String.format("bank %d:%04X %s %s", bank, address, label, comment);
+            return String.format("%04X %s %s", address, label, comment);
         }
     }
 }

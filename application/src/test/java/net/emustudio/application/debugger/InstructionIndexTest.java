@@ -5,42 +5,44 @@ package net.emustudio.application.debugger;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import org.junit.Test;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
 public class InstructionIndexTest {
     @Test
-    public void logicalBoundariesFollowTheMappingWhileCapturedViewsRemainStable() {
+    public void logicalBoundariesFollowPublishedRevisionsWhileCapturedViewsRemainStable() {
         ProgramIndex index = bankedIndex();
-        AtomicInteger bank = new AtomicInteger();
-        InstructionIndex instructions = new InstructionIndex(index::snapshot, bank::get);
+        InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View first = instructions.snapshot();
         assertEquals(2, first.nextAddress(0));
         assertEquals(10, first.nextAddress(8));
         assertSame(first, instructions.snapshot());
 
-        bank.set(1);
+        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
+            update.replaceFlow(false);
+            update.putInstruction(new ProgramIndex.Range(0, 3), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(8, 10), ProgramIndex.InstructionKind.LINEAR);
+            update.commit();
+        }
         InstructionIndex.View second = instructions.snapshot();
         assertNotSame(first, second);
         assertEquals(3, second.nextAddress(0));
         assertEquals(10, second.nextAddress(8));
         assertEquals(2, first.nextAddress(0));
 
-        bank.set(0);
-        assertEquals(2, instructions.snapshot().nextAddress(0));
+        assertEquals(3, instructions.snapshot().nextAddress(0));
     }
 
     @Test
-    public void crossingCommonBoundaryRetainsItsLogicalInstructionEnd() {
+    public void instructionCoverageRetainsItsLogicalEnd() {
         ProgramIndex index = bankedIndex();
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false);
-            update.putInstruction(new ProgramIndex.Range(1, 7, 10), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(7, 10), ProgramIndex.InstructionKind.LINEAR);
             update.commit();
         }
-        InstructionIndex instructions = new InstructionIndex(index::snapshot, () -> 1);
+        InstructionIndex instructions = new InstructionIndex(index::snapshot);
         assertEquals(10, instructions.snapshot().nextAddress(7));
         assertEquals(-1, instructions.snapshot().nextAddress(8));
     }
@@ -48,7 +50,7 @@ public class InstructionIndexTest {
     @Test
     public void operandMutationInvalidatesCurrentCoverageButPreservesHistoricalView() {
         ProgramIndex index = bankedIndex();
-        InstructionIndex instructions = new InstructionIndex(index::snapshot, () -> 0);
+        InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View before = instructions.snapshot();
         index.memoryChanged();
         InstructionIndex.View after = instructions.snapshot();
@@ -60,7 +62,7 @@ public class InstructionIndexTest {
     @Test
     public void breakpointEditsDoNotInvalidateInstructionPages() {
         ProgramIndex index = bankedIndex();
-        InstructionIndex instructions = new InstructionIndex(index::snapshot, () -> 0);
+        InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View before = instructions.snapshot();
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
             update.put(1, 0, true);
@@ -72,13 +74,13 @@ public class InstructionIndexTest {
     @Test
     public void metadataAndImageChangesInvalidateViewsEvenWithMatchingRevisionNumbers() {
         AtomicReference<ProgramIndex> index = new AtomicReference<>(bankedIndex());
-        InstructionIndex instructions = new InstructionIndex(() -> index.get().snapshot(), () -> 0);
+        InstructionIndex instructions = new InstructionIndex(() -> index.get().snapshot());
         InstructionIndex.View before = instructions.snapshot();
         index.set(bankedIndex()); // New image/layout, with the same revision numbers.
         assertNotSame(before, instructions.snapshot());
         before = instructions.snapshot();
         try (ProgramIndex.ContentUpdate update = index.get().updateContent(index.get().snapshot())) {
-            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 0, 1), ProgramIndex.Kinds.DATA, "");
+            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 1), ProgramIndex.Kinds.DATA, "");
             update.commit();
         }
         assertNotSame(before, instructions.snapshot());
@@ -90,12 +92,10 @@ public class InstructionIndexTest {
     }
 
     @Test
-    public void commonOnlyLayoutIgnoresSelectedBankChangesAndUnknownAddressesStayUnknown() {
-        ProgramIndex index = ProgramIndex.create("shared", 16, 2, 0);
-        AtomicInteger bank = new AtomicInteger();
-        InstructionIndex instructions = new InstructionIndex(index::snapshot, bank::get);
+    public void unknownAddressesStayUnknown() {
+        ProgramIndex index = ProgramIndex.create("shared", 16);
+        InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View first = instructions.snapshot();
-        bank.set(1);
         assertSame(first, instructions.snapshot());
         assertEquals(-1, first.nextAddress(-1));
         assertEquals(-1, first.nextAddress(0));
@@ -104,12 +104,11 @@ public class InstructionIndexTest {
     }
 
     private static ProgramIndex bankedIndex() {
-        ProgramIndex index = ProgramIndex.create("banked", 16, 2, 8);
+        ProgramIndex index = ProgramIndex.create("banked", 16);
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false);
-            update.putInstruction(new ProgramIndex.Range(0, 0, 2), ProgramIndex.InstructionKind.LINEAR);
-            update.putInstruction(new ProgramIndex.Range(1, 0, 3), ProgramIndex.InstructionKind.LINEAR);
-            update.putInstruction(new ProgramIndex.Range(1, 8, 10), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
+            update.putInstruction(new ProgramIndex.Range(8, 10), ProgramIndex.InstructionKind.LINEAR);
             update.commit();
         }
         return index;

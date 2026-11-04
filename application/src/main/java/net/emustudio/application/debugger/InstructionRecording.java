@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 
 /** Versioned execution recordings. Buffered writes apply backpressure; readers retain only one page. */
 public final class InstructionRecording {
-    private static final int MAGIC = 0x454D5554, VERSION = 1;
+    private static final int MAGIC = 0x454D5554, VERSION = 2;
     private static final int EVENT = 1, END = 0, MAX_REGISTERS = 256, MAX_ACCESSES = 65536;
 
     private InstructionRecording() {}
@@ -68,7 +68,6 @@ public final class InstructionRecording {
                 out.writeByte(EVENT);
                 out.writeLong(event.sequence);
                 out.writeInt(event.address);
-                out.writeInt(event.bank);
                 out.writeUTF(event.mnemonic);
                 out.writeUTF(event.opcodes);
                 out.writeBoolean(event.completed);
@@ -78,7 +77,6 @@ public final class InstructionRecording {
                 out.writeInt(event.accesses.size());
                 for (DebugCPU.Access a : event.accesses) {
                     out.writeInt(a.address);
-                    out.writeInt(a.bank);
                     out.writeInt(a.value);
                     out.writeBoolean(a.write);
                 }
@@ -191,8 +189,8 @@ public final class InstructionRecording {
                     } else if (marker == EVENT) {
                         long previousSequence = lastSequence;
                         long sequence = in.readLong();
-                        int address = in.readInt(), bank = in.readInt();
-                        if (sequence <= lastSequence || bank < 0)
+                        int address = in.readInt();
+                        if (sequence <= lastSequence || address < 0)
                             throw new IOException("Invalid recording sequence or address");
                         String mnemonic = in.readUTF(), opcodes = in.readUTF();
                         boolean completed = in.readBoolean();
@@ -200,14 +198,13 @@ public final class InstructionRecording {
                         int size = readCount(in, MAX_ACCESSES, "memory accesses");
                         List<DebugCPU.Access> accesses = new ArrayList<>();
                         for (int i = 0; i < size; i++) {
-                            int at = in.readInt(), accessBank = in.readInt(), value = in.readInt();
+                            int at = in.readInt(), value = in.readInt();
                             boolean write = in.readBoolean();
-                            if (accessBank < 0)
+                            if (at < 0)
                                 throw new IOException("Invalid recorded memory access");
-                            accesses.add(new DebugCPU.Access(at, accessBank, value, write));
+                            accesses.add(new DebugCPU.Access(at, value, write));
                         }
-                        DebugCPU.Instruction event = new DebugCPU.Instruction(sequence, address, bank, mnemonic, opcodes,
-                                before, after, accesses, completed);
+                        DebugCPU.Instruction event = new DebugCPU.Instruction(sequence, address, mnemonic, opcodes, before, after, accesses, completed);
                         count++;
                         lastSequence = sequence;
                         if (matches.test(event)) {
@@ -275,14 +272,14 @@ public final class InstructionRecording {
 
     private static void writeTextEvents(BufferedWriter out, List<DebugCPU.Instruction> events) throws IOException {
         for (DebugCPU.Instruction event : events) {
-            out.write(String.format(Locale.ROOT, "#%d | bank=%d PC=%04X | %s | %s | %s%n",
-                    event.sequence, event.bank, event.address, event.opcodes, event.mnemonic,
+            out.write(String.format(Locale.ROOT, "#%d | PC=%04X | %s | %s | %s%n",
+                    event.sequence, event.address, event.opcodes, event.mnemonic,
                     event.completed ? "completed" : "failed"));
             writeTextRegisters(out, "before", event.before);
             writeTextRegisters(out, "after", event.after);
             for (DebugCPU.Access a : event.accesses)
-                out.write(String.format(Locale.ROOT, "  %s bank=%d:%04X value=%02X%n",
-                        a.write ? "WRITE" : "READ", a.bank, a.address, a.value));
+                out.write(String.format(Locale.ROOT, "  %s %04X value=%02X%n",
+                        a.write ? "WRITE" : "READ", a.address, a.value));
         }
     }
 

@@ -22,49 +22,40 @@ final class RangePostings<T> {
 
     RangePostings(ProgramIndex.Layout layout, T[] values, Function<? super T, ProgramIndex.Range> range) {
         this.values = values;
-        Map<Integer, Map<Integer, List<Integer>>> events = new TreeMap<>();
+        Map<Integer, List<Integer>> events = new TreeMap<>();
         for (int i = 0; i < values.length; i++) {
-            int id = i;
-            AddressTable.split(layout, range.apply(values[id]), (bank, start, end) -> add(events, bank, start, end, id));
+            ProgramIndex.Range cells = range.apply(values[i]);
+            events.computeIfAbsent(cells.start, ignored -> new ArrayList<>()).add(i + 1);
+            events.computeIfAbsent(cells.end, ignored -> new ArrayList<>()).add(-i - 1);
         }
-        List<AddressTable.BankEntries> partitions = new ArrayList<>();
+        List<AddressTable.Segment> segments = new ArrayList<>();
         PostingBuilder postings = new PostingBuilder();
-        for (Map.Entry<Integer, Map<Integer, List<Integer>>> bank : events.entrySet()) {
-            AddressTable.BankEntries partition = new AddressTable.BankEntries(bank.getKey());
-            int root = 0;
-            int previous = 0;
-            for (Map.Entry<Integer, List<Integer>> event : bank.getValue().entrySet()) {
-                int at = event.getKey();
-                if (previous < at && root != 0)
-                    partition.segments.add(new AddressTable.Segment(previous, at, root));
-                for (int change : event.getValue()) {
-                    int id = change > 0 ? change - 1 : -change - 1;
-                    root = postings.set(root, 0, values.length, id, change > 0);
-                }
-                previous = at;
+        int root = 0;
+        int previous = 0;
+        for (Map.Entry<Integer, List<Integer>> event : events.entrySet()) {
+            int at = event.getKey();
+            if (previous < at && root != 0)
+                segments.add(new AddressTable.Segment(previous, at, root));
+            for (int change : event.getValue()) {
+                int id = change > 0 ? change - 1 : -change - 1;
+                root = postings.set(root, 0, values.length, id, change > 0);
             }
-            partitions.add(partition);
+            previous = at;
         }
         left = Arrays.copyOf(postings.left, postings.size);
         right = Arrays.copyOf(postings.right, postings.size);
-        addresses = new AddressTable(layout, partitions);
+        addresses = new AddressTable(layout, segments);
     }
 
-    private static void add(Map<Integer, Map<Integer, List<Integer>>> events, int bank, int start, int end, int id) {
-        Map<Integer, List<Integer>> positions = events.computeIfAbsent(bank, ignored -> new TreeMap<>());
-        positions.computeIfAbsent(start, ignored -> new ArrayList<>()).add(id + 1);
-        positions.computeIfAbsent(end, ignored -> new ArrayList<>()).add(-id - 1);
+    void visit(int address, Consumer<? super T> visitor) {
+        visitNode(addresses.get(address), visitor);
     }
 
-    void visit(int bank, int address, Consumer<? super T> visitor) {
-        visit(addresses.get(bank, address), visitor);
-    }
-
-    private void visit(int node, Consumer<? super T> visitor) {
+    private void visitNode(int node, Consumer<? super T> visitor) {
         if (node < 0) visitor.accept(values[-node - 1]);
         else if (node > 0) {
-            visit(left[node], visitor);
-            visit(right[node], visitor);
+            visitNode(left[node], visitor);
+            visitNode(right[node], visitor);
         }
     }
 

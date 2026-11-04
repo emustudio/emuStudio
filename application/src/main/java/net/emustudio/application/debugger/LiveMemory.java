@@ -9,9 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 
-/** Explicit-bank live byte reads. No memory cells are retained; stale operations fail. */
+/** CPU-visible live byte reads. No memory cells are retained; stale operations fail. */
 public final class LiveMemory {
-    public final int common;
     private final MemoryContext<?> memory;
     private final ProgramIndex.Layout layout;
     private final Runnable checkCurrent;
@@ -21,7 +20,6 @@ public final class LiveMemory {
         this.layout = Objects.requireNonNull(layout);
         this.checkCurrent = Objects.requireNonNull(checkCurrent);
         if (memory.getCellTypeClass() != Byte.class) throw new IllegalArgumentException("Byte memory required");
-        common = layout.commonBoundary();
     }
 
     public void requireCurrent() {
@@ -30,13 +28,10 @@ public final class LiveMemory {
     }
 
     public int size() { return layout.addressSpaceSize(); }
-    public int bankCount() { return layout.bankCount(); }
-    public int physicalBank(int at, int bank) { return layout.physicalBank(bank, at); }
-
-    public int value(int at, int bank) {
-        int physical = physicalBank(at, bank);
+    public int value(int at) {
+        if (at < 0 || at >= size()) throw new IllegalArgumentException("Address outside memory");
         requireCurrent();
-        int value = ((Byte) memory.readBank(at, physical)) & 255;
+        int value = ((Byte) memory.peek(at)) & 255;
         requireCurrent();
         return value;
     }
@@ -64,15 +59,14 @@ public final class LiveMemory {
         return new byte[][] {bytes, masks};
     }
 
-    public List<Integer> search(int bank, byte[] bytes, byte[] masks) {
-        physicalBank(0, bank);
+    public List<Integer> search(byte[] bytes, byte[] masks) {
         if (bytes.length == 0 || bytes.length != masks.length) throw new IllegalArgumentException("Invalid pattern");
         requireCurrent();
         List<Integer> result = new ArrayList<>();
         for (int at = 0; at <= size() - bytes.length; at++) {
             boolean match = true;
             for (int i = 0; i < bytes.length; i++)
-                if ((value(at + i, bank) & (masks[i] & 255)) != (bytes[i] & masks[i] & 255)) {
+                if ((value(at + i) & (masks[i] & 255)) != (bytes[i] & masks[i] & 255)) {
                     match = false;
                     break;
                 }
@@ -91,26 +85,25 @@ public final class LiveMemory {
         return result;
     }
 
-    public long number(int bank, int at, int width, boolean little) {
+    public long number(int at, int width, boolean little) {
         if (width < 1 || width > 8 || at < 0 || at > size() - width)
             throw new IllegalArgumentException("Value outside memory");
         long value = 0;
         for (int i = 0; i < width; i++)
-            value |= (long) value(at + i, bank) << (8 * (little ? i : width - 1 - i));
+            value |= (long) value(at + i) << (8 * (little ? i : width - 1 - i));
         requireCurrent();
         return value;
     }
 
     /** Result text is derived output, not a saved memory image. */
-    public Map<Integer, String> strings(int bank, int minimum) {
-        physicalBank(0, bank);
+    public Map<Integer, String> strings(int minimum) {
         if (minimum < 1) throw new IllegalArgumentException("Minimum length must be positive");
         requireCurrent();
         Map<Integer, String> result = new LinkedHashMap<>();
         StringBuilder text = new StringBuilder();
         int start = 0;
         for (int at = 0; at < size(); at++) {
-            int value = value(at, bank);
+            int value = value(at);
             if (value >= 32 && value <= 126) text.append((char) value);
             else {
                 if (text.length() >= minimum) result.put(start, text.toString());

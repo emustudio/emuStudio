@@ -157,7 +157,7 @@ public class EmulatorPanel extends JPanel {
                     && !isBreakpointCellSelected()
                     && runState != CPU.RunState.STATE_RUNNING && debugTable.getSelectedRow() >= 0) {
                 int location = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(debugTable.getSelectedRow()));
-                if (location >= 0) inspection.followAddress(location, memoryContext == null ? 0 : memoryContext.getSelectedBank());
+                if (location >= 0) inspection.followAddress(location);
             }
         });
         debugTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "showSource");

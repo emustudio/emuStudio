@@ -18,7 +18,7 @@ public class ProgramIndexBreakpointBenchmark {
     @State(Scope.Thread)
     public static class Rules {
         @Param({"0", "1", "1000", "10000"}) public int rules;
-        @Param({"single", "banked", "sparse"}) public String layout;
+        @Param({"single", "clustered", "sparse"}) public String layout;
         ProgramIndex index;
         ProgramIndex.Snapshot snapshot;
         int size, banks, common, cursor;
@@ -33,7 +33,7 @@ public class ProgramIndexBreakpointBenchmark {
         }
 
         ProgramIndex create() {
-            ProgramIndex created = ProgramIndex.create("rules", size, banks, common);
+            ProgramIndex created = ProgramIndex.create("rules", size);
             try (ProgramIndex.BreakpointUpdate update = created.updateBreakpoints(created.snapshot())) {
                 for (int i = 0; i < rules; i++) update.put(i, address(i), i % 3 != 2);
                 update.commit();
