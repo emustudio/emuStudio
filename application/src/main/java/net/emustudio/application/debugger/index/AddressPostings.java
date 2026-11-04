@@ -36,6 +36,10 @@ final class AddressPostings<T> {
         addresses = new AddressTable(layout, ids);
     }
 
+    static void add(Map<Long, List<Integer>> postings, long key, int id) {
+        postings.computeIfAbsent(key, ignored -> new ArrayList<>()).add(id);
+    }
+
     void visit(int bank, int address, Consumer<? super T> visitor) {
         int id = addresses.get(bank, address);
         if (id != 0) for (int entry : lists[id - 1]) visitor.accept(values[entry]);

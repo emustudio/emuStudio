@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 /**
@@ -39,6 +40,30 @@ public final class ProgramIndex {
     public Snapshot snapshot() { return root.get(); }
     public ContentUpdate updateContent(Snapshot base) { return new ContentEdit(own(base)); }
     public BreakpointUpdate updateBreakpoints(Snapshot base) { return new BreakpointEdit(own(base)); }
+
+    /**
+     * Replays a logical edit against fresh roots until it publishes. The edit returns false to
+     * abandon without committing. Unbounded: callers must not race a continuous writer.
+     */
+    public boolean editContent(BiPredicate<Snapshot, ContentUpdate> edit) {
+        while (true) {
+            Snapshot base = snapshot();
+            try (ContentUpdate update = updateContent(base)) {
+                if (!edit.test(base, update)) return false;
+                if (update.commit() == CommitResult.PUBLISHED) return true;
+            }
+        }
+    }
+
+    /** Breakpoint counterpart of {@link #editContent}. */
+    public void editBreakpoints(BiPredicate<Snapshot, BreakpointUpdate> edit) {
+        while (true) {
+            Snapshot base = snapshot();
+            try (BreakpointUpdate update = updateBreakpoints(base)) {
+                if (!edit.test(base, update) || update.commit() == CommitResult.PUBLISHED) return;
+            }
+        }
+    }
 
     /**
      * Advances memory revision, retains historical mappings, and makes current graph queries
@@ -80,6 +105,10 @@ public final class ProgramIndex {
         Layout layout();
         long contentRevision();
         long memoryRevision();
+        /** Same content and memory revisions; meaningful only for snapshots of one index. */
+        default boolean sameRevisions(Snapshot other) {
+            return contentRevision() == other.contentRevision() && memoryRevision() == other.memoryRevision();
+        }
         void forEachAnnotation(Consumer<? super Annotation> visitor);
         void forEachMappingAt(int bank, int address, Consumer<? super Mapping> visitor);
         /** Exact document identity AND revision; explicit half-open source spans only. */
@@ -491,9 +520,7 @@ public final class ProgramIndex {
         final SourceIndex sources;
         Mappings(Layout layout, Mapping[] values) {
             this.values = values;
-            Range[] coverage = new Range[values.length];
-            for (int i = 0; i < values.length; i++) coverage[i] = values[i].range();
-            ranges = new RangePostings<>(layout, values, coverage);
+            ranges = new RangePostings<>(layout, values, Mapping::range);
             sources = new SourceIndex(values);
         }
     }
@@ -503,9 +530,7 @@ public final class ProgramIndex {
         final RangeIndex<Annotation> ranges;
         Annotations(Layout layout, Annotation[] values) {
             this.values = values;
-            Range[] coverage = new Range[values.length];
-            for (int i = 0; i < values.length; i++) coverage[i] = values[i].range();
-            ranges = new RangeIndex<>(layout, values, coverage);
+            ranges = new RangeIndex<>(layout, values, Annotation::range);
         }
     }
 

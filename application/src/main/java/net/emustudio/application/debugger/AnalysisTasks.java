@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import javax.swing.SwingUtilities;
@@ -40,11 +39,8 @@ final class AnalysisTasks implements AutoCloseable {
         requireEdt();
         if (closed) throw new IllegalStateException("Analysis window closed");
         if (active != null) throw new IllegalStateException("Analysis already in progress");
-        ProgramIndex index = session.memory != null || session.cpu.getAddressSpaceSize() > 0 ? session.programIndex() : null;
-        long generation = session.pausedGeneration();
-        ProgramIndex.Snapshot base = index == null ? null : index.snapshot();
-        long memoryRevision = base == null ? 0 : base.memoryRevision();
-        long contentRevision = base == null ? 0 : base.contentRevision();
+        if (session.memory != null || session.cpu.getAddressSpaceSize() > 0) session.programIndex();
+        DebugSession.Stamp stamp = session.pausedStamp();
         FutureTask<T> task =
                 new FutureTask<T>(operation) {
                     @Override
@@ -53,8 +49,7 @@ final class AnalysisTasks implements AutoCloseable {
                             super.run();
                         } finally {
                             // Future cancellation does not establish that the operation has exited.
-                            SwingUtilities.invokeLater(() -> complete(this, generation, index, memoryRevision,
-                                    publishesContent ? -1 : contentRevision, apply));
+                            SwingUtilities.invokeLater(() -> complete(this, stamp, !publishesContent, apply));
                         }
                     }
                 };
@@ -63,20 +58,12 @@ final class AnalysisTasks implements AutoCloseable {
         executor.execute(task);
     }
 
-    private <T> void complete(FutureTask<T> task, long generation, ProgramIndex index,
-                              long memoryRevision, long contentRevision, Consumer<T> apply) {
+    private <T> void complete(FutureTask<T> task, DebugSession.Stamp stamp, boolean content, Consumer<T> apply) {
         if (closed || active != task) return;
         active = null;
         try {
-            session.applyPaused(generation, () -> {
-                ProgramIndex.Snapshot current = index == null ? null : index.snapshot();
-                if (index != null && (session.programIndex() != index
-                        || current.memoryRevision() != memoryRevision))
-                    throw new IllegalStateException("Analysis discarded: memory image changed");
-                if (current != null && contentRevision >= 0 && current.contentRevision() != contentRevision)
-                    throw new IllegalStateException("Analysis discarded: source or metadata changed");
-                apply.accept(result(task));
-            });
+            session.applyCurrent(stamp, content, "Analysis discarded: memory, source or metadata changed",
+                    () -> apply.accept(result(task)));
         } catch (CancellationException e) {
             failure.accept(new IllegalStateException("Analysis cancelled", e));
         } catch (RuntimeException e) {

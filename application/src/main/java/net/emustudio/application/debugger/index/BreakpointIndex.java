@@ -21,7 +21,7 @@ final class BreakpointIndex {
         for (int i = 0; i < values.length; i++) {
             ProgramIndex.Breakpoint b = values[i];
             if (!b.enabled()) continue;
-            RangeIndex.add(entries, AddressTable.key(0, b.address()), i);
+            AddressPostings.add(entries, AddressTable.key(0, b.address()), i);
             long key = AddressTable.key(0, b.address() >>> 6);
             bitmap.merge(key, 1L << (b.address() & 63), (a, c) -> a | c);
         }

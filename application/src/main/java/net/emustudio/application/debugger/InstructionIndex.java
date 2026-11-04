@@ -45,9 +45,7 @@ public final class InstructionIndex {
         }
 
         private boolean matches(ProgramIndex.Snapshot other, int otherBank) {
-            return snapshot.layout() == other.layout() && bank == otherBank
-                    && snapshot.contentRevision() == other.contentRevision()
-                    && snapshot.memoryRevision() == other.memoryRevision();
+            return snapshot.layout() == other.layout() && bank == otherBank && snapshot.sameRevisions(other);
         }
 
         /**

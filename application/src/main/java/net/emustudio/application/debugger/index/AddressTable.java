@@ -80,6 +80,16 @@ final class AddressTable {
         return at < 0 ? 0 : partitions[at].get(address);
     }
 
+    interface PartVisitor { void accept(int bank, int start, int end); }
+
+    /** Splits a canonical range at the common boundary; common cells belong to physical bank zero. */
+    static void split(ProgramIndex.Layout layout, ProgramIndex.Range range, PartVisitor visitor) {
+        int lowerEnd = Math.min(range.end, layout.commonBoundary());
+        if (range.start < lowerEnd) visitor.accept(range.bank, range.start, lowerEnd);
+        int upperStart = Math.max(range.start, layout.commonBoundary());
+        if (upperStart < range.end) visitor.accept(0, upperStart, range.end);
+    }
+
     static long key(int bank, int address) { return ((long) bank << 32) | (address & 0xffffffffL); }
     static int bank(long key) { return (int) (key >>> 32); }
     static int address(long key) { return (int) key; }

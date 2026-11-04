@@ -97,23 +97,23 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     /** Live reads never retain a copy of memory cells. Reacquire after a machine or metadata edit. */
     public LiveMemory liveMemory() {
         if (memory == null) throw new IllegalStateException("Memory unavailable");
-        LiveWork work = liveWork();
-        return new LiveMemory(memory, work.base.layout(), work::requireCurrent);
+        Stamp stamp = liveStamp();
+        return new LiveMemory(memory, stamp.base.layout(), () -> requireCurrent(stamp));
     }
 
     /** User metadata loads without reading or storing memory cells. */
     public AnnotationIndex annotations() throws IOException {
-        LiveWork work = liveWork();
+        Stamp stamp = liveStamp();
         synchronized (this) {
             if (annotations != null) return annotations;
         }
-        Path path = annotationPath(work.base.layout().imageId());
+        Path path = annotationPath(stamp.base.layout().imageId());
         Properties loaded = path != null && Files.isRegularFile(path) ? AtomicProperties.load(path) : null;
         synchronized (this) {
-            work.requireCurrent();
+            requireCurrent(stamp);
             if (annotations == null) {
-                AnnotationIndex installed = new AnnotationIndex(work.index, this::metadataChanged);
-                if (loaded != null && installed.installProperties(loaded, work.base) != ProgramIndex.CommitResult.PUBLISHED)
+                AnnotationIndex installed = new AnnotationIndex(stamp.index, this::metadataChanged);
+                if (loaded != null && installed.installProperties(loaded, stamp.base) != ProgramIndex.CommitResult.PUBLISHED)
                     throw new IllegalStateException("Metadata discarded: machine or metadata changed while loading");
                 annotations = installed;
             }
@@ -253,7 +253,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 generation++;
                 invalidateIndex();
                 if (memory != null && !closed) programIndex();
-                operation.stamp = new SourceStamp(this);
+                operation.stamp = new Stamp(programIndex, generation);
                 if (activeMutations == 0) activeSourceCapture = null;
             }
         }
@@ -267,40 +267,55 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         apply.run();
     }
 
-    private synchronized LiveWork liveWork() {
+    private synchronized Stamp liveStamp() {
         requirePaused();
         requireNoMutation();
-        ProgramIndex index = programIndex();
-        return new LiveWork(index, index.snapshot(), generation);
+        programIndex();
+        return new Stamp(programIndex, generation);
     }
 
-    private final class LiveWork {
+    /** Paused stamp for analyses that may run without a program index. */
+    synchronized Stamp pausedStamp() {
+        return new Stamp(programIndex, pausedGeneration());
+    }
+
+    /** Machine generation and index revisions observed together; later work is valid only while both hold. */
+    static final class Stamp {
         final ProgramIndex index;
         final ProgramIndex.Snapshot base;
-        final long expectedGeneration;
+        final long generation;
 
-        LiveWork(ProgramIndex index, ProgramIndex.Snapshot base, long expectedGeneration) {
+        private Stamp(ProgramIndex index, long generation) {
             this.index = index;
-            this.base = base;
-            this.expectedGeneration = expectedGeneration;
+            this.base = index == null ? null : index.snapshot();
+            this.generation = generation;
         }
 
-        void requireCurrent() {
-            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
-            synchronized (DebugSession.this) {
-                applyPaused(expectedGeneration, () -> {});
-                ProgramIndex.Snapshot current = index.snapshot();
-                if (programIndex() != index || current.memoryRevision() != base.memoryRevision()
-                        || current.contentRevision() != base.contentRevision())
-                    throw new IllegalStateException("Analysis discarded: memory, source or metadata changed");
-            }
+        private boolean matches(ProgramIndex current, boolean content) {
+            if (current != index) return false;
+            if (index == null) return true;
+            ProgramIndex.Snapshot now = index.snapshot();
+            return content ? now.sameRevisions(base) : now.memoryRevision() == base.memoryRevision();
         }
+    }
+
+    /** Runs apply only while the stamped generation and index revisions (content optionally) are current. */
+    synchronized void applyCurrent(Stamp stamp, boolean content, String message, Runnable apply) {
+        applyPaused(stamp.generation, () -> {
+            if (!stamp.matches(programIndex, content)) throw new IllegalStateException(message);
+            apply.run();
+        });
+    }
+
+    private void requireCurrent(Stamp stamp) {
+        if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+        applyCurrent(stamp, true, "Analysis discarded: memory, source or metadata changed", () -> {});
     }
 
     /** Decode live, explicit-bank memory off the UI thread; publish only while its paused root is current. */
     public FlowAnalysis analyzeFlow(int bank, int start, int limit) {
-        LiveWork work = liveWork();
-        work.base.layout().physicalBank(bank, start);
+        Stamp stamp = liveStamp();
+        stamp.base.layout().physicalBank(bank, start);
         Disassembler original = cpu.getDisassembler();
         Optional<Disassembler> explicit = original.forBank(bank);
         Disassembler selected = explicit.orElseGet(() -> {
@@ -309,12 +324,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             return original;
         });
         Runnable validate = () -> {
-            work.requireCurrent();
+            requireCurrent(stamp);
             if (explicit.isEmpty() && bank != (memory == null ? 0 : memory.getSelectedBank()))
                 throw new IllegalStateException("Analysis discarded: mapped memory bank changed");
         };
         Disassembler decoder = guardedDecoder(selected, validate);
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, work.index, work.base, bank);
+        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, stamp.index, stamp.base, bank);
         synchronized (this) {
             validate.run();
             return pending.publish();
@@ -352,37 +367,20 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (activeMutations > 1) throw new IllegalStateException("Concurrent machine mutations prevent source capture");
         if (activeMutations == 1) return activeSourceCapture;
         SourceCaptureGuard guard = new SourceCaptureGuard();
-        guard.stamp = new SourceStamp(this);
+        guard.stamp = new Stamp(programIndex, generation);
         return guard;
     }
 
     public synchronized void applySourceCapture(SourceCaptureGuard guard, Runnable apply) {
         Objects.requireNonNull(guard);
-        SourceStamp stamp = guard.stamp;
+        Stamp stamp = guard.stamp;
         if (stamp == null) throw new IllegalStateException("Compilation mutation has not finished");
-        applyPaused(stamp.generation, () -> {});
-        ProgramIndex.Snapshot current = programIndex == null ? null : programIndex.snapshot();
-        if (programIndex != stamp.index || (current != null && (current.memoryRevision() != stamp.memory
-                || current.contentRevision() != stamp.content)))
-            throw new IllegalStateException("Source mappings discarded: machine or metadata changed after compilation");
-        apply.run();
+        applyCurrent(stamp, true, "Source mappings discarded: machine or metadata changed after compilation", apply);
     }
 
     public static final class SourceCaptureGuard {
-        private volatile SourceStamp stamp;
+        private volatile Stamp stamp;
         private SourceCaptureGuard() { }
-    }
-
-    private static final class SourceStamp {
-        final ProgramIndex index;
-        final long generation, content, memory;
-        SourceStamp(DebugSession session) {
-            index = session.programIndex;
-            generation = session.generation;
-            ProgramIndex.Snapshot snapshot = index == null ? null : index.snapshot();
-            content = snapshot == null ? 0 : snapshot.contentRevision();
-            memory = snapshot == null ? 0 : snapshot.memoryRevision();
-        }
     }
 
     private void invalidateAnalysis() {
@@ -479,55 +477,51 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void synchronizeBreakpoints() {
         if (programIndex == null && memory == null && cpu.getAddressSpaceSize() <= 0) return;
         ProgramIndex index = programIndex();
-        for (;;) {
-            ProgramIndex.Snapshot base = index.snapshot();
-            try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(base)) {
-                for (long id : indexedBreakpointIds) update.remove(id);
-                Set<Long> ids = new HashSet<>();
-                for (Rule rule : rules) {
-                    if (!rule.kind.equals("EXEC")) continue;
-                    if (rule.address >= base.layout().addressSpaceSize()) continue;
-                    Long id = executionRuleIds.get(rule);
-                    if (id == null) {
-                        id = nextExecutionRuleId++;
-                        executionRuleIds.put(rule, id);
-                    }
-                    update.put(id, rule.address, rule.enabled);
+        Set<Long> ids = new HashSet<>();
+        index.editBreakpoints((base, update) -> {
+            ids.clear();
+            for (long id : indexedBreakpointIds) update.remove(id);
+            for (Rule rule : rules) {
+                if (!rule.kind.equals("EXEC")) continue;
+                if (rule.address >= base.layout().addressSpaceSize()) continue;
+                Long id = executionRuleIds.get(rule);
+                if (id == null) {
+                    id = nextExecutionRuleId++;
+                    executionRuleIds.put(rule, id);
+                }
+                update.put(id, rule.address, rule.enabled);
+                ids.add(id);
+            }
+            if (cpu.isBreakpointSupported()) {
+                Set<Integer> nativeRules = new TreeSet<>(cpu.getBreakpoints());
+                nativeRules.addAll(disabledBreakpoints);
+                for (int address : nativeRules) {
+                    if (address < 0 || address >= base.layout().addressSpaceSize()) continue;
+                    long id = Long.MIN_VALUE + address;
+                    update.put(id, address, cpu.isBreakpointSet(address));
                     ids.add(id);
                 }
-                if (cpu.isBreakpointSupported()) {
-                    Set<Integer> nativeRules = new TreeSet<>(cpu.getBreakpoints());
-                    nativeRules.addAll(disabledBreakpoints);
-                    for (int address : nativeRules) {
-                        if (address < 0 || address >= base.layout().addressSpaceSize()) continue;
-                        long id = Long.MIN_VALUE + address;
-                        update.put(id, address, cpu.isBreakpointSet(address));
-                        ids.add(id);
-                    }
-                }
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) {
-                    indexedBreakpointIds.clear();
-                    indexedBreakpointIds.addAll(ids);
-                    evaluationRules = rules.toArray(new Rule[0]);
-                    executionRuleIds.entrySet().removeIf(entry -> !ids.contains(entry.getValue()));
-                    TreeMap<Long, Integer> orderById = new TreeMap<>();
-                    for (int i = 0; i < evaluationRules.length; i++) {
-                        Rule rule = evaluationRules[i];
-                        Long id = executionRuleIds.get(rule);
-                        if (rule.kind.equals("EXEC") && id != null) orderById.put(id, i);
-                    }
-                    executionRuleKeys = new long[orderById.size()];
-                    executionRuleOrder = new int[orderById.size()];
-                    int slot = 0;
-                    for (Map.Entry<Long, Integer> entry : orderById.entrySet()) {
-                        executionRuleKeys[slot] = entry.getKey();
-                        executionRuleOrder[slot++] = entry.getValue();
-                    }
-                    candidateOrder = new int[evaluationRules.length];
-                    return;
-                }
             }
+            return true;
+        });
+        indexedBreakpointIds.clear();
+        indexedBreakpointIds.addAll(ids);
+        evaluationRules = rules.toArray(new Rule[0]);
+        executionRuleIds.entrySet().removeIf(entry -> !ids.contains(entry.getValue()));
+        TreeMap<Long, Integer> orderById = new TreeMap<>();
+        for (int i = 0; i < evaluationRules.length; i++) {
+            Rule rule = evaluationRules[i];
+            Long id = executionRuleIds.get(rule);
+            if (rule.kind.equals("EXEC") && id != null) orderById.put(id, i);
         }
+        executionRuleKeys = new long[orderById.size()];
+        executionRuleOrder = new int[orderById.size()];
+        int slot = 0;
+        for (Map.Entry<Long, Integer> entry : orderById.entrySet()) {
+            executionRuleKeys[slot] = entry.getKey();
+            executionRuleOrder[slot++] = entry.getValue();
+        }
+        candidateOrder = new int[evaluationRules.length];
     }
 
     public long evaluate(String expression, int bank) {

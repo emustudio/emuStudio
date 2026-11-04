@@ -68,14 +68,15 @@ public final class AnnotationIndex {
 
     public void remove(Entry entry) {
         if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
-        for (;;) {
-            ProgramIndex.Snapshot base = index.snapshot();
-            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
-                update.removeAnnotation(OWNER, entry.id).removeAnnotation(OWNER, entry.id + 1);
-                update.removeAnnotation(TYPE_OWNER, entry.id);
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
-            }
-        }
+        index.editContent((base, update) -> {
+            removeEntry(update, entry.id);
+            return true;
+        });
+        changed.run();
+    }
+
+    private static void removeEntry(ProgramIndex.ContentUpdate update, long id) {
+        update.removeAnnotation(OWNER, id).removeAnnotation(OWNER, id + 1).removeAnnotation(TYPE_OWNER, id);
     }
 
     private static void validateKind(String kind) {
@@ -83,15 +84,22 @@ public final class AnnotationIndex {
             throw new IllegalArgumentException("Invalid annotation kind");
     }
 
+    /** Validates the entry's range against the layout and returns its physical bank. */
+    private static int physicalBank(ProgramIndex.Layout layout, Entry entry) {
+        int bank = layout.physicalBank(entry.bank, entry.address);
+        if (entry.end <= entry.address || entry.end > layout.addressSpaceSize()
+                || (bank != 0 && entry.address < layout.commonBoundary() && entry.end > layout.commonBoundary()))
+            throw new IllegalArgumentException("Invalid annotation range or range crosses bank boundary");
+        return bank;
+    }
+
     private void edit(List<Entry> entries, boolean clear) {
         // Replay a logical editor operation against fresh content, never a derived analysis result.
-        for (;;) {
-            ProgramIndex.Snapshot base = index.snapshot();
-            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
-                stage(update, base, entries, clear);
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
-            }
-        }
+        index.editContent((base, update) -> {
+            stage(update, base, entries, clear);
+            return true;
+        });
+        changed.run();
     }
 
     /** Disk-loaded metadata commits only against the root from before the I/O. */
@@ -108,11 +116,7 @@ public final class AnnotationIndex {
         if (clear) update.removeAnnotations(OWNER).removeAnnotations(TYPE_OWNER);
         for (Entry entry : entries) {
             validateKind(entry.kind);
-            ProgramIndex.Layout layout = base.layout();
-            int bank = layout.physicalBank(entry.bank, entry.address);
-            if (entry.end <= entry.address || entry.end > layout.addressSpaceSize()
-                    || (bank != 0 && entry.address < layout.commonBoundary() && entry.end > layout.commonBoundary()))
-                throw new IllegalArgumentException("Invalid annotation range or range crosses bank boundary");
+            int bank = physicalBank(base.layout(), entry);
             ProgramIndex.Annotation old = lookup(base, bank, entry.address).marker;
             long id = entry.id >= 0 ? entry.id : old == null ? IDS.getAndAdd(2) : old.entryId();
             ProgramIndex.Range range = new ProgramIndex.Range(bank, entry.address, entry.end);
@@ -130,16 +134,13 @@ public final class AnnotationIndex {
     }
 
     public void remove(int bank, int address) {
-        for (;;) {
-            ProgramIndex.Snapshot base = index.snapshot();
+        boolean removed = index.editContent((base, update) -> {
             ProgramIndex.Annotation old = lookup(base, bank, address).marker;
-            if (old == null) return;
-            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
-                update.removeAnnotation(OWNER, old.entryId()).removeAnnotation(OWNER, old.entryId() + 1);
-                update.removeAnnotation(TYPE_OWNER, old.entryId());
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) { changed.run(); return; }
-            }
-        }
+            if (old == null) return false;
+            removeEntry(update, old.entryId());
+            return true;
+        });
+        if (removed) changed.run();
     }
 
     void clear() { edit(List.of(), true); }
@@ -217,11 +218,7 @@ public final class AnnotationIndex {
                         p.getProperty(k + "comment", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
-                int bank = index.snapshot().layout().physicalBank(entry.bank, entry.address);
-                ProgramIndex.Layout layout = index.snapshot().layout();
-                if (entry.end <= address || entry.end > layout.addressSpaceSize()
-                        || (bank != 0 && address < layout.commonBoundary() && entry.end > layout.commonBoundary()))
-                    throw new IllegalArgumentException("Invalid annotation range");
+                int bank = physicalBank(index.snapshot().layout(), entry);
                 long key = "1".equals(version) ? ((long) bank << 32) | (address & 0xffffffffL) : id;
                 if ("2".equals(version) && imported.containsKey(key)) throw new IllegalArgumentException("Duplicate annotation id");
                 imported.put(key, entry);

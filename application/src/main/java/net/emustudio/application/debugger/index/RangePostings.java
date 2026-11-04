@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Sweep explicit endpoints into roots of an immutable primitive posting tree.
@@ -19,15 +20,12 @@ final class RangePostings<T> {
     private final int[] left, right;
     private final AddressTable addresses;
 
-    RangePostings(ProgramIndex.Layout layout, T[] values, ProgramIndex.Range[] ranges) {
+    RangePostings(ProgramIndex.Layout layout, T[] values, Function<? super T, ProgramIndex.Range> range) {
         this.values = values;
         Map<Integer, Map<Integer, List<Integer>>> events = new TreeMap<>();
-        for (int id = 0; id < ranges.length; id++) {
-            ProgramIndex.Range r = ranges[id];
-            int lowerEnd = Math.min(r.end, layout.commonBoundary());
-            if (r.start < lowerEnd) add(events, r.bank, r.start, lowerEnd, id);
-            int upperStart = Math.max(r.start, layout.commonBoundary());
-            if (upperStart < r.end) add(events, 0, upperStart, r.end, id);
+        for (int i = 0; i < values.length; i++) {
+            int id = i;
+            AddressTable.split(layout, range.apply(values[id]), (bank, start, end) -> add(events, bank, start, end, id));
         }
         List<AddressTable.BankEntries> partitions = new ArrayList<>();
         PostingBuilder postings = new PostingBuilder();

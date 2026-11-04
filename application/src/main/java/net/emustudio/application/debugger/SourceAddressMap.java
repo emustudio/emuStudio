@@ -139,13 +139,10 @@ public final class SourceAddressMap {
 
     /** Retries until published; callers must hold off memory revisions, or the retry can starve. */
     static void clearPublished(ProgramIndex index) {
-        for (;;) {
-            ProgramIndex.Snapshot base = index.snapshot();
-            try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
-                update.removeMappings(MAPPING_OWNER).removeAnnotations(MAPPING_OWNER);
-                if (update.commit() == ProgramIndex.CommitResult.PUBLISHED) return;
-            }
-        }
+        index.editContent((base, update) -> {
+            update.removeMappings(MAPPING_OWNER).removeAnnotations(MAPPING_OWNER);
+            return true;
+        });
     }
 
     public boolean matches(Path path, String text) {

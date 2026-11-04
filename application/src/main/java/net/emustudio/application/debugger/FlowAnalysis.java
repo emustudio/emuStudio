@@ -73,8 +73,7 @@ public final class FlowAnalysis {
     public boolean isCurrent(ProgramIndex currentIndex) {
         if (currentIndex != index) return false;
         ProgramIndex.Snapshot current = index.snapshot();
-        return current.contentRevision() == snapshot.contentRevision()
-                && current.memoryRevision() == snapshot.memoryRevision()
+        return current.sameRevisions(snapshot)
                 && current.flowState() != ProgramIndex.FlowState.STALE
                 && current.flowState() != ProgramIndex.FlowState.NOT_BUILT;
     }
