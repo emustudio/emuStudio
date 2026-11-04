@@ -109,7 +109,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
+            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             f.running(true);
             runOnEdt(() -> f.pane.insert("; edited while running\n", 0));
             JLabel status = findComponent(f.debugger, JLabel.class,
@@ -131,7 +131,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             JLabel source = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
             assertFalse(onEdt(f.debugger::isInspectionPinned));
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
+            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             f.sourceLine(3);
             assertTrue(onEdt(f.debugger::isInspectionPinned));
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
@@ -184,7 +184,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertEquals(3, f.line());
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
 
-            JCheckBoxMenuItem pin = onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0));
+            JCheckBoxMenuItem pin = onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3));
             triggerButton(pin);
             f.sourceLine(1);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
@@ -218,7 +218,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             clearInvocations(f.original);
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(0)));
+            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             when(f.cpu.getInstructionLocation()).thenReturn(2);
             f.running(true);
             f.running(false);
@@ -386,8 +386,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             compilerEvents = captor.getValue();
             showInFrame(debugger);
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findButtonByTooltip(debugger, "Analyze from address")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findButtonByTooltip(debugger, "Analyze from address")::isEnabled));
+            while (!onEdt(findButtonByTooltip(debugger, "Analyze from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
+            assertTrue(onEdt(findButtonByTooltip(debugger, "Analyze from PC")::isEnabled));
         }
 
         void compile(boolean fail) {

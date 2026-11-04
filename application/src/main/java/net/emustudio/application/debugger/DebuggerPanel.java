@@ -239,7 +239,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         watchPanel = watchPanel();
         breakpointPanel = rulePanel();
         tabs.addTab("Breakpoints", breakpointPanel);
-        tabs.addTab("References", flowPanel());
+        tabs.addTab("Inspection", flowPanel());
         tabs.addTab("History", historyPanel());
         add(tabs, BorderLayout.CENTER);
         JPanel context = gui.panel("insets 2 6, fillx, hidemode 3", "[grow]", "");
@@ -252,18 +252,46 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
         JPopupMenu selectionMenu = new JPopupMenu();
+        JMenuItem inspect = new JMenuItem("Inspect");
+        inspect.addActionListener(event -> guard(() -> {
+            int address = selectedInstructionAddress();
+            navigate(address);
+            tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+            analyzeFlow(address);
+        }));
+        JMenuItem goToSource = new JMenuItem("Go to source");
+        goToSource.addActionListener(event -> guard(() -> showSource(selectedInstructionAddress())));
+        selectionMenu.add(inspect);
+        selectionMenu.add(goToSource);
+        selectionMenu.addSeparator();
         selectionMenu.add(pinInspection);
+        pinInspection.setToolTipText("Keep the inspected address when execution or source selection changes");
         pinInspection.addActionListener(event -> {
             pinnedSelection = pinInspection.isSelected();
             graph.repaint();
         });
         selectionMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent event) {
+                boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running && !tasks.isBusy();
+                inspect.setEnabled(enabled);
+                goToSource.setEnabled(enabled);
                 pinInspection.setSelected(isInspectionPinned());
                 pinInspection.setEnabled(!running && !tasks.isBusy());
             }
             public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent event) {}
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent event) {}
+        });
+        table.addMouseListener(new MouseAdapter() {
+            private void selectPopupRow(MouseEvent event) {
+                if (!event.isPopupTrigger() && !SwingUtilities.isRightMouseButton(event)) return;
+                int row = table.rowAtPoint(event.getPoint());
+                if (isInstructionView()) {
+                    if (row >= 0) table.setRowSelectionInterval(row, row);
+                    else table.clearSelection();
+                }
+            }
+            @Override public void mousePressed(MouseEvent event) { selectPopupRow(event); }
+            @Override public void mouseReleased(MouseEvent event) { selectPopupRow(event); }
         });
         table.setComponentPopupMenu(selectionMenu);
         refresh();
@@ -496,6 +524,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void showSelectedSource() {
         guard(() -> showSource(inspectedAddress));
+    }
+
+    private int selectedInstructionAddress() {
+        int row = table.getSelectedRow();
+        if (!isInstructionView() || row < 0) throw new IllegalStateException("Select an instruction first");
+        int address = instructionModel.getLocationAt(table.convertRowIndexToModel(row));
+        if (address < 0) throw new IllegalStateException("Select an instruction first");
+        return address;
     }
 
     public void setExecutionRunning(boolean running) {
@@ -1123,7 +1159,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JPanel panel = borderPanel(0);
         JPanel tools = row();
         JToolBar actions = line(tools);
-        actions.add(button(ICON_FIND, "Analyze from address", this::analyzeFlow));
+        JButton analyzePc = button(ICON_FIND, "Analyze from PC", this::analyzeFlow);
+        analyzePc.setText("Analyze from PC");
+        actions.add(analyzePc);
+        JButton analyzeSelection = button(ICON_FIND, "Analyze from selected instruction", () -> analyzeFlow(lastInstructionAddress));
+        analyzeSelection.setText("Analyze from selected instruction");
+        actions.add(analyzeSelection);
         goToFlowInstruction = button(ICON_STEP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
         updateFlowNavigation();
         actions.add(goToFlowInstruction);
@@ -1163,7 +1204,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void analyzeFlow() {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        analyzeFlow(inspectedAddress);
+        analyzeFlow(session.cpu.getInstructionLocation());
     }
 
     private void analyzeFlow(int address) {
@@ -2438,7 +2479,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         @Override public String getToolTipText(MouseEvent event) {
-            if (flow == null) return "Analyze from address to show flow";
+            if (flow == null) return "Analyze from PC or selected instruction to show flow";
             if (!current()) return "Flow analysis is stale. Analyze again.";
             if (selectionStart == null && candidateLane == null) invalidateLabels();
             Point point = modelPoint(event.getPoint());
@@ -2461,14 +2502,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             branchNodes.clear();
             lanes.clear();
             selectedLane = -1;
-            selectedNode = inspectedAddress;
-            flow.forEachInstruction(instruction -> {
-                int at = instruction.cells().start;
+            selectedNode = start;
+            Map<Integer, ProgramIndex.Instruction> instructions = new HashMap<>();
+            flow.forEachInstruction(instruction -> instructions.put(instruction.cells().start, instruction));
+            Map<Integer, List<Integer>> successors = new HashMap<>();
+            flow.forEachEdge((from, to, kind) ->
+                    successors.computeIfAbsent(from, ignored -> new ArrayList<>()).add(to));
+            Deque<Integer> pending = new ArrayDeque<>();
+            Set<Integer> visited = new HashSet<>();
+            pending.add(start);
+            while (!pending.isEmpty()) {
+                int at = pending.removeFirst();
+                if (!visited.add(at)) continue;
+                ProgramIndex.Instruction instruction = instructions.get(at);
+                if (instruction == null) continue;
                 int i = boxes.size();
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
                 instructionEnds.put(at, instruction.cells().end);
                 if (instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
-            });
+                pending.addAll(successors.getOrDefault(at, List.of()));
+            }
             if (index != null) {
                 List<AnnotationIndex.Entry> visible = new ArrayList<>();
                 for (AnnotationIndex.Entry annotation : index.entries()) {
@@ -2559,7 +2612,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             super.paintComponent(graphics);
             if (flow == null) {
                 graphics.setColor(getForeground());
-                graphics.drawString("Analyze from address to show flow.", 25, 35);
+                graphics.drawString("Analyze from PC or selected instruction to show flow.", 25, 35);
                 return;
             }
             if (!current()) {

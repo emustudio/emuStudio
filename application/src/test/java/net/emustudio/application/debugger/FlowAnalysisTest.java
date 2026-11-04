@@ -19,6 +19,21 @@ import static org.mockito.Mockito.*;
 
 public class FlowAnalysisTest {
     @Test
+    public void analysisStartsAtRequestedAddressAndFollowsBackwardBranches() throws Exception {
+        Disassembler disassembler = mock(Disassembler.class);
+        instruction(disassembler, 3, "JP 1", InstructionFlow.Kind.JUMP, 4, true, List.of(1));
+        instruction(disassembler, 1, "RET", InstructionFlow.Kind.RETURN, 2, false, List.of());
+        instruction(disassembler, 4, "HALT", InstructionFlow.Kind.STOP, 5, false, List.of());
+
+        FlowAnalysis analysis = reachable(disassembler, 3, 10, index(8));
+
+        assertEquals(List.of(1, 3, 4), addresses(analysis));
+        assertEquals(3, predecessors(analysis, 1).get(0).from);
+        verify(disassembler, never()).getFlow(0);
+        verify(disassembler, never()).getFlow(2);
+    }
+
+    @Test
     public void callVisitsTargetAndFallThroughAndDistinguishesIncomingFromCalls() throws Exception {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "CALL 4", InstructionFlow.Kind.CALL, 1, true, List.of(4));
