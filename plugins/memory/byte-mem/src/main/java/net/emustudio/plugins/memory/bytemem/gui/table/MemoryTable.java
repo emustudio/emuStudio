@@ -2,7 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.DebuggerMemory;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -14,7 +15,7 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 public class MemoryTable extends JTable {
     private final MemoryTableModel tableModel;
 
-    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, DebuggerMemory debuggerMemory) {
+    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, AnnotationEngine annotations, ExecutionState executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         setModel(this.tableModel);
@@ -23,7 +24,7 @@ public class MemoryTable extends JTable {
         setFocusCycleRoot(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         getTableHeader().setFont(FONT_MONOSPACED);
-        setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight(), debuggerMemory));
+        setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight(), annotations, executionState));
         setToolTipText("");
         setOpaque(true);
 

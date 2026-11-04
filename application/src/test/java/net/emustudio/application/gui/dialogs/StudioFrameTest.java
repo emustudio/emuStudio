@@ -12,8 +12,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -87,8 +86,13 @@ public class StudioFrameTest extends AbstractSwingTest {
         ComputerConfig computerConfig = mock(ComputerConfig.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
         DebugTableModel model = createDebugTableModel();
-        Annotations annotations = new Annotations();
-        annotations.add(12, new SourceCodeAnnotation(4, SourceCodePosition.of(2, 0, sourceFile.toString())));
+        AnnotationEngine annotations = new AnnotationEngine();
+        annotations.put(new AnnotationEngine.Entry(4, 1, 12, 13, "source", "",
+                SourceCodePosition.of(2, 0, sourceFile.toString())));
+        CPU sessionCpu = mock(CPU.class);
+        when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
+        when(memoryContext.getSize()).thenReturn(256);
+        DebugSession session = new DebugSession(sessionCpu, memoryContext, null, annotations);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
@@ -96,7 +100,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.empty());
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
-        when(memoryContext.annotations()).thenReturn(annotations);
+        when(computer.getDebugger()).thenReturn(Optional.of(session));
         when(model.getLocationAt(0)).thenReturn(12);
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
@@ -119,6 +123,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
         assertEquals("emuStudio [Demo computer] — linked.asm", onEdt(frame::getTitle));
         assertEquals(onEdt(() -> textEditor.getLineStartOffset(1)), onEdt(textEditor::getCaretPosition));
+        session.close();
     }
 
     private StudioFrame createFrame(Path fileName) {

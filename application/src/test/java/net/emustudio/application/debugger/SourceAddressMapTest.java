@@ -9,8 +9,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.SourceToken;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -20,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,17 +27,17 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class SourceAddressMapTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    private static final Map<MemoryContext<?>, AnnotationEngine> ENGINES = new IdentityHashMap<>();
 
     @Test
     public void exactMappingUsesCpuVisibleAddresses() throws Exception {
         Path source = source("program.asm", "NOP\nHALT\n");
-        SourceCodeAnnotation banked = annotation(source, 1, 0);
-        SourceCodeAnnotation common = annotation(source, 2, 0);
+        SourceCodePosition banked = annotation(source, 1, 0);
+        SourceCodePosition common = annotation(source, 2, 0);
         MemoryContext<Byte> memory = memory(8, 2, 4, 1, Map.of(1, Set.of(banked), 6, Set.of(common)));
 
         SourceAddressMap map = capture(compiler(), memory,
@@ -69,19 +69,40 @@ public class SourceAddressMapTest {
     }
 
     @Test
-    public void changedAnnotationInvalidatesPreviouslyCapturedAddress() throws Exception {
-        Path source = source("program.asm", "NOP\n");
-        Map<Integer, Set<SourceCodeAnnotation>> annotations = new HashMap<>();
+    public void replacingCompilerAnnotationsImmediatelyUpdatesSourceNavigation() throws Exception {
+        Path source = source("program.asm", "NOP\nHALT\n");
+        Map<Integer, Set<SourceCodePosition>> annotations = new HashMap<>();
         annotations.put(0, Set.of(annotation(source, 1, 0)));
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, annotations);
-        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"));
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
         assertTrue(map.sourceAt(0).isPresent());
 
-        // A later compilation can publish new annotation objects for the same positions.
-        annotations.put(0, Set.of(annotation(source, 1, 0)));
+        annotations.clear();
+        annotations.put(2, Set.of(annotation(source, 2, 0)));
+        replaceSources(ENGINES.get(memory), annotations);
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
+        assertEquals(2, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
+        assertEquals(2, map.sourceAt(2).orElseThrow().position.line);
+    }
+
+    @Test
+    public void mappingAddedDuringLookupCannotAppearUniquelyMapped() throws Exception {
+        Path source = source("concurrent.asm", "NOP\nHALT\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        AnnotationEngine engine = spy(ENGINES.get(memory));
+        ENGINES.put(memory, engine);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
+        java.util.concurrent.atomic.AtomicBoolean first = new java.util.concurrent.atomic.AtomicBoolean(true);
+        doAnswer(call -> {
+            Object result = call.callRealMethod();
+            if (first.getAndSet(false))
+                engine.put(new AnnotationEngine.Entry(2, 1, 0, 1, "source", "", annotation(source, 2, 0)));
+            return result;
+        }).when(engine).all();
+
+        assertTrue(map.sourceAt(0).isEmpty());
     }
 
     @Test
@@ -140,9 +161,7 @@ public class SourceAddressMapTest {
         assertTrue(map.sourceAt(0).isEmpty());
         assertEquals(0, map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow().address);
         assertEquals(0, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        map.programIndex().snapshot().forEachMappingAt(0, mappings::add);
-        assertEquals(2, mappings.size());
+        assertEquals(2, ENGINES.get(memory).at(0).size());
     }
 
     @Test
@@ -159,12 +178,6 @@ public class SourceAddressMapTest {
         SourceAddressMap map = capture(compiler, memory, Map.of(source, text));
 
         assertEquals(6, map.sourceAt(0).orElseThrow().position.column);
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        map.programIndex().snapshot().forEachMappingAt(0, mappings::add);
-        ProgramIndex.SourceSpan span = mappings.get(0).source();
-        assertEquals(source.toUri().toString(), span.fileId);
-        assertEquals(opcodeOffset, span.startOffset);
-        assertEquals(opcodeOffset + 3, span.endOffset);
         assertTrue(map.diagnostics().isEmpty());
     }
 
@@ -196,10 +209,7 @@ public class SourceAddressMapTest {
         when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UNKNOWN);
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 6))));
         ProgramIndex index = ProgramIndex.create("unknown-units", 4);
-        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(99, 1, new ProgramIndex.Range(2, 3), ProgramIndex.Kinds.LABEL, "user");
-            update.commit();
-        }
+        ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
 
         SourceAddressMap map = capture(compiler, memory, Map.of(source, text), index);
 
@@ -209,11 +219,7 @@ public class SourceAddressMapTest {
         assertTrue(map.diagnostics().get(0).contains("does not declare a source column convention"));
         assertEquals("value", map.symbols().get(0).name);
         assertTrue(map.symbols().get(0).sourceOnly);
-        List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        index.snapshot().forEachAnnotation(a -> {
-            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) labels.add(a);
-        });
-        assertEquals(1, labels.size());
+        assertEquals("user", ENGINES.get(memory).get(99, 1).text);
         SourceAddressMap noCompiler = capture(null, memory, Map.of(source, text), index);
         assertTrue(noCompiler.sourceAt(0).isEmpty());
         assertTrue(noCompiler.diagnostics().get(0).contains("does not declare"));
@@ -232,12 +238,8 @@ public class SourceAddressMapTest {
 
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, text));
 
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        for (int address = 0; address < 5; address++)
-            map.programIndex().snapshot().forEachMappingAt(address, mappings::add);
-        assertEquals(1, mappings.size());
-        assertEquals(0, mappings.get(0).source().startOffset);
-        assertEquals(1, mappings.get(0).source().endOffset);
+        assertTrue(map.sourceAt(0).isPresent());
+        for (int address = 1; address < 5; address++) assertTrue(map.sourceAt(address).isEmpty());
         assertEquals(4, map.diagnostics().size());
         assertTrue(map.diagnostics().get(0).contains("EOF has no extent"));
     }
@@ -248,17 +250,12 @@ public class SourceAddressMapTest {
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
         ProgramIndex index = ProgramIndex.create("image", 4);
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
-        ProgramIndex.Snapshot old = index.snapshot();
 
         index.memoryChanged();
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        old.forEachMappingAt(0, mappings::add);
-        assertEquals(1, mappings.size());
-        assertEquals(old.memoryRevision(), mappings.get(0).memoryRevision());
-        assertNotEquals(index.snapshot().memoryRevision(), mappings.get(0).memoryRevision());
+        assertEquals(1, ENGINES.get(memory).at(0).size());
     }
 
     @Test
@@ -266,31 +263,14 @@ public class SourceAddressMapTest {
         Path source = source("recompile.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
         ProgramIndex index = ProgramIndex.create("image", 4);
-        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putMapping(99, 1, new ProgramIndex.Range(3, 4),
-                    new ProgramIndex.SourceSpan("other:source", 0, 0, 1));
-            update.putAnnotation(99, 1, new ProgramIndex.Range(2, 3), ProgramIndex.Kinds.LABEL, "user");
-            assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
-        }
+        ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
         SourceAddressMap first = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
-        List<ProgramIndex.Mapping> previous = new ArrayList<>();
-        index.snapshot().forEachMappingAt(0, previous::add);
-
+        replaceSources(ENGINES.get(memory), Map.of(0, Set.of(annotation(source, 1, 0))));
         SourceAddressMap second = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
 
-        assertTrue(first.sourceAt(0).isEmpty());
+        assertTrue(first.sourceAt(0).isPresent());
         assertTrue(second.sourceAt(0).isPresent());
-        List<ProgramIndex.Mapping> stale = new ArrayList<>();
-        index.snapshot().forEachMappingOverlappingSource(previous.get(0).source(), stale::add);
-        assertTrue(stale.isEmpty());
-        List<ProgramIndex.Mapping> other = new ArrayList<>();
-        index.snapshot().forEachMappingAt(3, other::add);
-        assertEquals(99, other.get(0).ownerId());
-        List<ProgramIndex.Annotation> annotations = new ArrayList<>();
-        index.snapshot().forEachAnnotation(a -> {
-            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) annotations.add(a);
-        });
-        assertEquals(1, annotations.size());
+        assertEquals("user", ENGINES.get(memory).get(99, 1).text);
     }
 
     @Test
@@ -306,11 +286,8 @@ public class SourceAddressMapTest {
 
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, left.toString())).isEmpty());
         assertEquals(2, map.addressOf(SourceCodePosition.of(1, 0, right.toString())).orElseThrow().address);
-        List<ProgramIndex.Mapping> atLeft = new ArrayList<>();
-        map.programIndex().snapshot().forEachMappingAt(0, atLeft::add);
-        List<ProgramIndex.Mapping> repeated = new ArrayList<>();
-        map.programIndex().snapshot().forEachMappingOverlappingSource(atLeft.get(0).source(), repeated::add);
-        assertEquals(2, repeated.size());
+        assertEquals(1, map.sourceAt(0).orElseThrow().position.line);
+        assertEquals(1, map.sourceAt(1).orElseThrow().position.line);
     }
 
     @Test
@@ -318,35 +295,31 @@ public class SourceAddressMapTest {
         Path source = source("race.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
         ProgramIndex index = ProgramIndex.create("image", 4);
-        when(memory.annotations().getAll(SourceCodeAnnotation.class)).thenAnswer(call -> {
+        AnnotationEngine engine = spy(ENGINES.get(memory));
+        ENGINES.put(memory, engine);
+        doAnswer(call -> {
             index.memoryChanged();
-            return Map.of(0, Set.of(annotation(source, 1, 0)));
-        });
+            return call.callRealMethod();
+        }).when(engine).all();
 
         IOException failure = assertThrows(IOException.class,
                 () -> capture(compiler(), memory, Map.of(source, "NOP\n"), index));
 
         assertTrue(failure.getMessage().contains("changed during capture"));
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        for (int address = 0; address < 4; address++)
-            index.snapshot().forEachMappingAt(address, mappings::add);
-        assertTrue(mappings.isEmpty());
+        assertEquals(1, engine.all().size());
     }
 
     @Test
     public void sourceMappingsDoNotRequireByteCells() throws Exception {
         Path source = source("words.asm", "LOAD 1\n");
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
-        MemoryContextAnnotations annotations = mock(MemoryContextAnnotations.class);
-        SourceCodeAnnotation annotation = annotation(source, 1, 0);
+        AnnotationEngine annotations = new AnnotationEngine();
+        replaceSources(annotations, Map.of(1, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(8);
         when(memory.getCellTypeClass()).thenReturn(Integer.class);
-        when(memory.annotations()).thenReturn(annotations);
-        when(annotations.getAll(SourceCodeAnnotation.class)).thenReturn(Map.of(1, Set.of(annotation)));
-        when(annotations.get(1, SourceCodeAnnotation.class)).thenReturn(Set.of(annotation));
         ProgramIndex index = ProgramIndex.create("words", 8);
 
-        SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT);
+        SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT, annotations);
 
         assertEquals(1, map.sourceAt(1).orElseThrow().address);
         verify(memory, never()).read(anyInt());
@@ -404,7 +377,7 @@ public class SourceAddressMapTest {
                 new SourceToken(Token.INCLUDE_PATH, 8, "root.asm", null, null, null, "root.asm")));
 
         SourceInputs inputs = SourceInputs.capture(compiler, root);
-        SourceAddressMap.capture(compiler, null, inputs, null);
+        SourceAddressMap.capture(compiler, null, inputs, null, null);
 
         assertEquals(List.of(root, child), List.copyOf(inputs.files().keySet()));
         assertEquals("include child.asm\n", inputs.files().get(root).text);
@@ -419,7 +392,7 @@ public class SourceAddressMapTest {
         Path source = source("program.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
 
-        assertThrows(IllegalArgumentException.class, () -> SourceAddressMap.capture(compiler(), memory, SourceInputs.of(null, Map.of(source, "NOP\n")), null));
+        assertThrows(IllegalArgumentException.class, () -> SourceAddressMap.capture(compiler(), memory, SourceInputs.of(null, Map.of(source, "NOP\n")), null, ENGINES.get(memory)));
     }
 
     @Test
@@ -458,12 +431,7 @@ public class SourceAddressMapTest {
         assertEquals("value", constant.name);
         assertTrue(constant.location.isEmpty());
         assertTrue(constant.sourceOnly);
-        List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        map.programIndex().snapshot().forEachAnnotation(a -> {
-            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("entry")) labels.add(a);
-        });
-        assertEquals(1, labels.size());
-        assertEquals(0, labels.get(0).range().start);
+        assertTrue(ENGINES.get(memory).all().stream().noneMatch(label -> label.kind.equals(ProgramIndex.Kinds.LABEL)));
     }
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts)
@@ -474,7 +442,7 @@ public class SourceAddressMapTest {
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts,
                                             ProgramIndex index) throws IOException {
-        return SourceAddressMap.capture(compiler, memory, SourceInputs.of(compiler, texts), index);
+        return SourceAddressMap.capture(compiler, memory, SourceInputs.of(compiler, texts), index, ENGINES.get(memory));
     }
 
     private Path source(String name, String text) throws IOException {
@@ -483,8 +451,8 @@ public class SourceAddressMapTest {
         return file;
     }
 
-    private static SourceCodeAnnotation annotation(Path file, int line, int column) {
-        return new SourceCodeAnnotation(1, SourceCodePosition.of(line, column, file.toString()));
+    private static SourceCodePosition annotation(Path file, int line, int column) {
+        return SourceCodePosition.of(line, column, file.toString());
     }
 
     private static Compiler compiler() {
@@ -503,14 +471,20 @@ public class SourceAddressMapTest {
 
     @SuppressWarnings("unchecked")
     private static MemoryContext<Byte> memory(int size, int bankCount, int common, int selectedBank,
-                                               Map<Integer, Set<SourceCodeAnnotation>> contents) {
+                                               Map<Integer, Set<SourceCodePosition>> contents) {
         MemoryContext<Byte> memory = mock(MemoryContext.class);
-        MemoryContextAnnotations annotations = mock(MemoryContextAnnotations.class);
         when(memory.getSize()).thenReturn(size);
-        when(memory.annotations()).thenReturn(annotations);
-        when(annotations.getAll(SourceCodeAnnotation.class)).thenReturn(contents);
-        when(annotations.get(anyInt(), eq(SourceCodeAnnotation.class))).thenAnswer(
-                call -> contents.getOrDefault(call.getArgument(0), Set.of()));
+        AnnotationEngine engine = new AnnotationEngine();
+        replaceSources(engine, contents);
+        ENGINES.put(memory, engine);
         return memory;
+    }
+
+    private static void replaceSources(AnnotationEngine engine, Map<Integer, Set<SourceCodePosition>> contents) {
+        List<AnnotationEngine.Entry> entries = new ArrayList<>();
+        for (Map.Entry<Integer, Set<SourceCodePosition>> at : contents.entrySet())
+            for (SourceCodePosition source : at.getValue())
+                entries.add(new AnnotationEngine.Entry(1, entries.size(), at.getKey(), at.getKey() + 1, "source", "", source));
+        engine.replaceOwner(1, entries);
     }
 }

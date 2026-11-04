@@ -15,8 +15,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
@@ -342,19 +341,23 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     }
 
     @Test
-    public void doubleClickingAnnotatedInstructionNavigatesToSource() {
+    public void doubleClickingAnnotatedInstructionNavigatesToSource() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
         DebugTableModel model = createDebugTableModel();
         SourceCodePosition position = SourceCodePosition.of(7, 3, "program.asm");
-        Annotations annotations = new Annotations();
-        annotations.add(42, new SourceCodeAnnotation(5, position));
+        AnnotationEngine annotations = new AnnotationEngine();
+        annotations.put(new AnnotationEngine.Entry(5, 1, 42, 43, "source", "", position));
+        CPU sessionCpu = mock(CPU.class);
+        when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
+        when(memoryContext.getSize()).thenReturn(256);
+        DebugSession session = new DebugSession(sessionCpu, memoryContext, null, annotations);
         AtomicReference<SourceCodePosition> navigated = new AtomicReference<>();
 
         when(computer.getCPU()).thenReturn(Optional.empty());
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
-        when(memoryContext.annotations()).thenReturn(annotations);
+        when(computer.getDebugger()).thenReturn(Optional.of(session));
         when(model.getLocationAt(0)).thenReturn(42);
 
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(
@@ -370,6 +373,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         )));
 
         assertEquals(position, navigated.get());
+        runOnEdt(panel::close);
+        session.close();
     }
 
     @Test

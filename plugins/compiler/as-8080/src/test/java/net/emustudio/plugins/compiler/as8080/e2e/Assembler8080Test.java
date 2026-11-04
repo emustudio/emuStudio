@@ -2,11 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.e2e;
 
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 public class Assembler8080Test extends AbstractCompilerTest {
 
@@ -24,8 +25,52 @@ public class Assembler8080Test extends AbstractCompilerTest {
     public void testCompilationAddsSourceCodeAnnotations() {
         compile("nop\nmov a,b");
 
-        assertEquals(1, annotations.get(0, SourceCodeAnnotation.class).iterator().next().getPosition().line);
-        assertEquals(2, annotations.get(1, SourceCodeAnnotation.class).iterator().next().getPosition().line);
+        assertEquals(1, annotations.at(0).get(0).source.line);
+        assertEquals(2, annotations.at(1).get(0).source.line);
+    }
+
+    @Test
+    public void compilationPublishesResolvedLabelsAlongsideMappings() {
+        compile("constant equ 1\nstart:\nnop\nnext: mov a,b");
+
+        assertEquals("start", annotations.at(0).stream().filter(entry -> entry.kind.equals("label"))
+                .findFirst().orElseThrow().text);
+        assertEquals("next", annotations.at(1).stream().filter(entry -> entry.kind.equals("label"))
+                .findFirst().orElseThrow().text);
+        assertEquals(2, annotations.all().stream().filter(entry -> entry.kind.equals("label")).count());
+        assertEquals(2, annotations.all().stream().filter(entry -> entry.kind.equals("source")).count());
+    }
+
+    @Test
+    public void compilesWithoutAnnotationService() {
+        annotations = null;
+
+        compile("first: nop\nmov a,b");
+
+        assertProgram(0x00, 0x78);
+    }
+
+    @Test
+    public void recompilationReplacesCompilerMappingsAndKeepsUserAnnotations() {
+        annotations.put(new Entry(-1, 1, 1, 2, "label", "user", null));
+        compile("nop\nmov a,b");
+
+        compile("nop");
+
+        assertEquals(1, annotations.at(0).size());
+        assertEquals("user", annotations.at(1).get(0).text);
+        assertEquals(1, annotations.at(1).size());
+    }
+
+    @Test
+    public void failedCompilationKeepsPreviousMappings() {
+        compile("first: nop\nmov a,b");
+
+        assertThrows(RuntimeException.class, () -> compile("rst 10"));
+
+        assertEquals(2, annotations.at(1).get(0).source.line);
+        assertEquals("first", annotations.at(0).stream().filter(entry -> entry.kind.equals("label"))
+                .findFirst().orElseThrow().text);
     }
 
     @Test

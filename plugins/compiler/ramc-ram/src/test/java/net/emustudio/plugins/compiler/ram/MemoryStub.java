@@ -3,7 +3,6 @@
 package net.emustudio.plugins.compiler.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamLabel;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
@@ -15,12 +14,6 @@ public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements
     private final RamInstruction[] memory = new RamInstruction[1000];
     private final Map<Integer, RamLabel> labels = new HashMap<>();
     private final List<RamValue> inputs = new ArrayList<>();
-    private final MemoryContextAnnotations annotations;
-
-    protected MemoryStub(MemoryContextAnnotations annotations) {
-        this.annotations = Objects.requireNonNull(annotations);
-    }
-
     @Override
     public RamInstruction read(int address) {
         return memory[address];
@@ -56,11 +49,6 @@ public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements
     @Override
     public int getSize() {
         return memory.length;
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return annotations;
     }
 
     @Override

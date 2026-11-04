@@ -5,7 +5,6 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
@@ -243,11 +242,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     @Override
     public int getSize() {
         return memory.getSize();
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return memory.annotations();
     }
 
     public void destroy() {

@@ -204,8 +204,11 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
                     debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
-                            path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"));
-                    if (applicationApi != null) applicationApi.getDebuggerMemory().setSession(debugger);
+                            path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
+                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.AnnotationEngine()
+                                    : applicationApi.getAnnotations());
+                    if (getCPU().get().getAddressSpaceSize() > 0) debugger.annotations();
+                    if (applicationApi != null) applicationApi.getExecutionState().setSession(debugger);
                 } catch (IOException e) {
                     throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
                 }
@@ -265,7 +268,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             return;
         }
         destroyed = true;
-        if (applicationApi != null && debugger != null) applicationApi.getDebuggerMemory().clearSession(debugger);
+        if (applicationApi != null && debugger != null) applicationApi.getExecutionState().clearSession(debugger);
         if (debugger != null) {
             try {
                 debugger.close();

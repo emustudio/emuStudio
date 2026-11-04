@@ -14,7 +14,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 
@@ -63,6 +62,7 @@ public class EmulatorPanel extends JPanel {
     private final ShowDeviceGuiAction showDeviceGuiAction;
 
     private final MemoryContext<?> memoryContext;
+    private final net.emustudio.application.debugger.DebugSession session;
     private final MemoryContext.MemoryListener memoryListener;
     private final DebuggerPanel inspection;
     private final CPU cpu;
@@ -76,6 +76,7 @@ public class EmulatorPanel extends JPanel {
         this.gui = Objects.requireNonNull(gui);
         Objects.requireNonNull(sourceNavigator);
         this.memoryContext = memoryContext;
+        this.session = computer.getDebugger().orElse(null);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.statusWindow = gui.section("CPU status / registers", "insets 0, fill", "[grow]", "[grow]");
         this.listingState = gui.label("Running — pause to inspect instructions.");
@@ -337,12 +338,7 @@ public class EmulatorPanel extends JPanel {
         if (memoryContext == null) return;
         int address = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(viewRow));
         if (address < 0) return;
-        Optional.ofNullable(memoryContext.annotations())
-                .map(annotations -> annotations.get(address, SourceCodeAnnotation.class))
-                .flatMap(annotations -> annotations.stream()
-                        .min(Comparator.comparingLong(SourceCodeAnnotation::getPluginId)))
-                .map(SourceCodeAnnotation::getPosition)
-                .ifPresent(sourceNavigator);
+        if (session != null) session.sourceAt(address).ifPresent(sourceNavigator);
     }
 
     public CPU.RunState getRunState() {

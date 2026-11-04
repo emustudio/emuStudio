@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import net.emustudio.application.debugger.index.ProgramIndex;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -21,6 +22,38 @@ public class AnnotationIndexTest {
     private static ProgramIndex emptyLike(ProgramIndex index) {
         ProgramIndex.Layout layout = index.snapshot().layout();
         return ProgramIndex.create(layout.imageId(), layout.addressSpaceSize());
+    }
+
+    @Test
+    public void replacingCompilerAnnotationsPreservesUserMetadata() {
+        AnnotationEngine engine = new AnnotationEngine();
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8), engine, () -> {});
+        annotations.put(new AnnotationIndex.Entry(1, "user", "CODE"));
+        engine.put(new AnnotationEngine.Entry(10, 1, 1, 2, "source", "old", null));
+
+        engine.replaceOwner(10, List.of(new AnnotationEngine.Entry(10, 2, 2, 3, "source", "new", null)));
+
+        assertEquals("user", annotations.get(1).label);
+        assertNull(engine.get(10, 1));
+        assertEquals("new", engine.get(10, 2).text);
+    }
+
+    @Test
+    public void loadingMetadataRejectsConcurrentEngineChange() throws Exception {
+        AnnotationEngine engine = new AnnotationEngine();
+        ProgramIndex index = ProgramIndex.create("test", 8);
+        AnnotationIndex live = new AnnotationIndex(index, engine, () -> {});
+        AnnotationIndex saved = new AnnotationIndex(ProgramIndex.create("test", 8));
+        saved.put(new AnnotationIndex.Entry(1, "saved", "DATA"));
+        long revision = engine.revision();
+        ProgramIndex.Snapshot base = index.snapshot();
+        engine.put(new AnnotationEngine.Entry(42, 1, 0, 1, "custom", "changed", null));
+
+        ProgramIndex.CommitResult result = live.installProperties(saved.properties(), base, revision);
+
+        assertEquals(ProgramIndex.CommitResult.STALE, result);
+        assertNull(live.get(1));
+        assertEquals("changed", engine.get(42, 1).text);
     }
 
     @Test
@@ -38,23 +71,15 @@ public class AnnotationIndexTest {
     @Test
     public void metadataLoadPreservesCompilerMappingsAndOtherOwners() throws Exception {
         ProgramIndex image = ProgramIndex.create("test", 2);
-        AnnotationIndex live = new AnnotationIndex(emptyLike(image));
+        AnnotationEngine engine = new AnnotationEngine();
+        AnnotationIndex live = new AnnotationIndex(emptyLike(image), engine, () -> {});
         AnnotationIndex captured = new AnnotationIndex(emptyLike(image));
         captured.put(new AnnotationIndex.Entry(0, "user", "CODE"));
         ProgramIndex index = live.programIndex();
-        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.putMapping(2, 7, new ProgramIndex.Range(0, 1), new ProgramIndex.SourceSpan("file:///test.asm", 0, 0, 1));
-            edit.putAnnotation(9, 8, new ProgramIndex.Range(1, 2), "custom:note", "keep");
-            edit.commit();
-        }
+        engine.put(new AnnotationEngine.Entry(9, 8, 1, 2, "custom:note", "keep", null));
         assertEquals(ProgramIndex.CommitResult.PUBLISHED, live.installProperties(captured.properties(), index.snapshot()));
         assertEquals("user", live.get(0).label);
-        java.util.ArrayList<ProgramIndex.Mapping> mappings = new java.util.ArrayList<>();
-        index.snapshot().forEachMappingAt(0, mappings::add);
-        assertEquals(1, mappings.size());
-        java.util.ArrayList<ProgramIndex.Annotation> other = new java.util.ArrayList<>();
-        index.snapshot().forEachAnnotation(annotation -> { if (annotation.ownerId() == 9) other.add(annotation); });
-        assertEquals("keep", other.get(0).text());
+        assertEquals("keep", engine.get(9, 8).text);
     }
 
     @Test
@@ -75,29 +100,18 @@ public class AnnotationIndexTest {
     @Test
     public void clearingUserMetadataPreservesCompilerAndOtherOwners() {
         ProgramIndex image = ProgramIndex.create("test", 2);
-        AnnotationIndex annotations = new AnnotationIndex(emptyLike(image));
+        AnnotationEngine engine = new AnnotationEngine();
+        AnnotationIndex annotations = new AnnotationIndex(emptyLike(image), engine, () -> {});
         annotations.put(new AnnotationIndex.Entry(0, "user", "DATA"));
-        ProgramIndex index = annotations.programIndex();
-        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putMapping(2, 1, new ProgramIndex.Range(0, 1), new ProgramIndex.SourceSpan("file:/test", 1, 0, 1));
-            update.putAnnotation(2, 1, new ProgramIndex.Range(0, 1), ProgramIndex.Kinds.LABEL, "compiler");
-            update.putAnnotation(99, 1, new ProgramIndex.Range(0, 2), "custom:region", "external");
-            assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
-        }
-        List<ProgramIndex.Annotation> labels = new ArrayList<>();
-        index.snapshot().forEachAnnotation(a -> {
-            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) labels.add(a);
-        });
-        assertEquals(1, labels.size());
+        engine.put(new AnnotationEngine.Entry(2, 1, 0, 1, "label", "compiler", null));
+        engine.put(new AnnotationEngine.Entry(99, 1, 0, 2, "custom:region", "external", null));
+
         annotations.clear();
+
         assertNull(annotations.get(0));
         assertTrue(annotations.entries().isEmpty());
-        labels.clear();
-        index.snapshot().forEachAnnotation(labels::add);
-        assertEquals(2, labels.size());
-        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
-        index.snapshot().forEachMappingAt(0, mappings::add);
-        assertEquals(1, mappings.size());
+        assertEquals("compiler", engine.get(2, 1).text);
+        assertEquals("external", engine.get(99, 1).text);
     }
 
     @Test
@@ -107,7 +121,7 @@ public class AnnotationIndexTest {
 
         AnnotationIndex.Entry shared = annotations.get(1);
         assertEquals("shared", shared.label);
-        assertSame(shared, annotations.get(1));
+        assertEquals(shared.id, annotations.get(1).id);
 
         annotations.remove(1);
         assertNull(annotations.get(1));
@@ -235,7 +249,8 @@ public class AnnotationIndexTest {
 
     @Test
     public void rangesOutsideAddressSpaceAreRejectedWithoutChanges() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8));
+        AnnotationEngine engine = new AnnotationEngine();
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8), engine, () -> {});
 
         assertThrows(IllegalArgumentException.class,
                 () -> annotations.add(new AnnotationIndex.Entry(-1, 3, 9, "outside", "UNKNOWN")));
@@ -245,13 +260,13 @@ public class AnnotationIndexTest {
 
     @Test
     public void rangesCanCoverAnyContiguousCpuVisibleCells() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8));
+        AnnotationEngine engine = new AnnotationEngine();
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8), engine, () -> {});
 
         AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 3, 5, "shared", "UNKNOWN"));
 
-        List<ProgramIndex.Annotation> covering = new ArrayList<>();
-        annotations.programIndex().snapshot().forEachAnnotationCovering(4, covering::add);
-        assertTrue(covering.stream().anyMatch(annotation -> annotation.entryId() == entry.id));
+        assertTrue(engine.at(4).stream().anyMatch(annotation -> annotation.ownerId == AnnotationIndex.OWNER
+                && annotation.entryId == entry.id));
     }
 
     @Test

@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
@@ -109,11 +108,6 @@ public class MemoryStub implements ByteMemoryContext {
     @Override
     public boolean areMemoryNotificationsEnabled() {
         return false;
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return null;
     }
 
     @Override

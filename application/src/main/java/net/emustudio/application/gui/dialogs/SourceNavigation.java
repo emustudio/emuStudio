@@ -41,12 +41,9 @@ final class SourceNavigation implements AutoCloseable {
                 inputCaptureFailed = false;
                 compiling = true;
                 inputs = SourceInputs.empty();
-                mappings = SourceAddressMap.empty();
             }
-            session.clearSourceMappings();
             SwingUtilities.invokeLater(() -> {
                 if (!closed && current == compilation) {
-                    debugger.setSymbols(java.util.List::of);
                     showStatus("Compiling sources…", false);
                 }
             });
@@ -104,7 +101,7 @@ final class SourceNavigation implements AutoCloseable {
                     session.applySourceCapture(guard, () -> {
                         try {
                             result[0] = SourceAddressMap.capture(compiler, session.memory, sourceInputs,
-                                    session.memory == null ? null : session.programIndex());
+                                    session.memory == null ? null : session.programIndex(), session.annotationEngine);
                         } catch (java.io.IOException e) {
                             throw new UncheckedIOException(e);
                         }

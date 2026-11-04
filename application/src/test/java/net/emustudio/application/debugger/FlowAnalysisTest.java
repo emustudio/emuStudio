@@ -93,10 +93,8 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "JP 3", InstructionFlow.Kind.JUMP, 1, false, List.of(3));
         ProgramIndex index = index(6);
-        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(8, 10, new ProgramIndex.Range(2, 5), ProgramIndex.Kinds.DATA, "table");
-            assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
-        }
+        index.annotationEngine().put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                8, 10, 2, 5, ProgramIndex.Kinds.DATA, "table", null));
 
         FlowAnalysis analysis = reachable(disassembler, 0, 10, index);
 
@@ -202,10 +200,8 @@ public class FlowAnalysisTest {
         instruction(disassembler, 0, "HALT", InstructionFlow.Kind.STOP, 1, false, List.of());
         ProgramIndex index = index(4);
         FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index);
-        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 1), "comment", "changed");
-            update.commit();
-        }
+        index.annotationEngine().put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                1, 1, 0, 1, "comment", "changed", null));
         assertThrows(IllegalStateException.class, pending::publish);
         assertEquals(ProgramIndex.FlowState.NOT_BUILT, index.snapshot().flowState());
         assertThrows(IllegalStateException.class, pending::publish);

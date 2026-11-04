@@ -8,6 +8,9 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.settings.PluginConnection;
+import net.emustudio.application.ApplicationApiImpl;
+import net.emustudio.application.debugger.AnnotationIndex;
+import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -18,9 +21,14 @@ import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.InOrder;
 
 import javax.swing.*;
@@ -31,6 +39,46 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class VirtualComputerTest {
+    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void initializationLoadsUserAnnotationsIntoSharedEngineWithoutOpeningDebuggerOrReadingMemory() throws Exception {
+        java.nio.file.Path computerPath = temporary.getRoot().toPath().resolve("computer.toml");
+        java.nio.file.Path debuggerPath = computerPath.resolveSibling(computerPath.getFileName() + ".debugger");
+        CPU cpu = mock(CPU.class);
+        MemoryContext<Byte> memory = mock(MemoryContext.class);
+        when(cpu.getTitle()).thenReturn("Test CPU");
+        when(cpu.getAddressSpaceSize()).thenReturn(16);
+        when(cpu.getDebugger()).thenReturn(Optional.empty());
+        when(memory.getSize()).thenReturn(16);
+        try (DebugSession seed = new DebugSession(cpu, memory, debuggerPath)) {
+            seed.annotations().put(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
+            seed.saveAnnotations();
+        }
+        clearInvocations(memory);
+
+        ContextPoolImpl contextPool = mock(ContextPoolImpl.class);
+        doReturn(memory).when(contextPool).getMemoryContext(0, MemoryContext.class);
+        ApplicationApiImpl api = new ApplicationApiImpl(mock(DebuggerTable.class), contextPool, mock(Dialogs.class), null);
+        ComputerConfig config = mock(ComputerConfig.class);
+        when(config.getPath()).thenReturn(computerPath);
+        VirtualComputer computer = new VirtualComputer(config, plugins(plugin(1, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu)));
+        java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
+        apiField.setAccessible(true);
+        apiField.set(computer, api);
+
+        try {
+            computer.initialize(contextPool);
+
+            assertTrue(api.getAnnotations().at(3).stream().anyMatch(entry -> entry.text.equals("saved label")));
+            assertSame(api.getAnnotations(), computer.getDebugger().orElseThrow().annotationEngine);
+            verify(memory, never()).read(anyInt());
+            verify(memory, never()).peek(anyInt());
+        } finally {
+            computer.close();
+        }
+    }
 
     @Test
     public void getCPUWorks() {
@@ -457,7 +505,6 @@ public class VirtualComputerTest {
         @Override public void destroy() {}
         @Override public void showSettings(JFrame parent) {}
         @Override public boolean isShowSettingsSupported() { return false; }
-        @Override public net.emustudio.emulib.plugins.memory.annotations.MemoryAnnotations getAnnotations() { return null; }
         @Override public int getSize() { return 0; }
         @Override public String getTitle() { return "memory"; }
         @Override public String getVersion() { return "memory"; }

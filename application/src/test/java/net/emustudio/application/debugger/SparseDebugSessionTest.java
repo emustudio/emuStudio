@@ -35,11 +35,8 @@ public class SparseDebugSessionTest {
             assertEquals(0, memory.getSize());
             assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;
-            try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
-                update.putAnnotation(99, 1, new ProgramIndex.Range(address, Integer.MAX_VALUE),
-                        ProgramIndex.Kinds.LABEL, "last cell");
-                assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
-            }
+            session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                    99, 1, address, Integer.MAX_VALUE, ProgramIndex.Kinds.LABEL, "last cell", null));
             try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
                 update.put(1, address, true);
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
@@ -55,11 +52,7 @@ public class SparseDebugSessionTest {
             occupancy.set(0);
             listener.get().memorySizeChanged();
             assertSame(index, session.programIndex());
-            List<ProgramIndex.Annotation> labels = new ArrayList<>();
-            index.snapshot().forEachAnnotation(a -> {
-                if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("last cell")) labels.add(a);
-            });
-            assertEquals(1, labels.size());
+            assertEquals("last cell", session.annotationEngine.get(99, 1).text);
             assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
             verify(memory, never()).read(anyInt());
             verify(memory, never()).read(anyInt());

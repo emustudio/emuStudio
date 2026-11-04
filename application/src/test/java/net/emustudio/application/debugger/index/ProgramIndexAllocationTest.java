@@ -71,9 +71,7 @@ public class ProgramIndexAllocationTest {
     }
 
     private static void consume(Object value) {
-        if (value instanceof Mapping) consumed += ((Mapping) value).entryId();
-        else if (value instanceof Annotation) consumed += ((Annotation) value).entryId();
-        else if (value instanceof Breakpoint) consumed += ((Breakpoint) value).id();
+        if (value instanceof Breakpoint) consumed += ((Breakpoint) value).id();
         else consumed += ((Instruction) value).cells().start;
     }
 
@@ -84,7 +82,6 @@ public class ProgramIndexAllocationTest {
     private static final class Workload {
         final ProgramIndex index;
         final int[] addresses;
-        final SourceSpan[] sources;
         int cursor;
 
         Workload(int size, int common) {
@@ -94,28 +91,20 @@ public class ProgramIndexAllocationTest {
             addresses[starts.length * 2] = 128;
             addresses[starts.length * 2 + 1] = size / 4 + 17;
             addresses[starts.length * 2 + 2] = common - 1025;
-            sources = new SourceSpan[starts.length + 1];
             try (ContentUpdate content = index.updateContent(index.snapshot())) {
                 content.replaceFlow(false);
                 for (int i = 0; i < starts.length; i++) {
                     int address = starts[i];
                     addresses[2 * i] = address;
                     addresses[2 * i + 1] = address + 1;
-                    sources[i] = new SourceSpan("file:///allocation.asm", 2000, i * 2, i * 2 + 3);
-                    content.putMapping(1, i, new Range(address, address + 2), sources[i]);
-                    content.putAnnotation(1, i, new Range(address, address + 2), Kinds.LABEL, "label" + i % 2);
                     content.putInstruction(new Range(address, address + 2), InstructionKind.CALL);
                     int next = starts[(i + 1) % starts.length];
                     content.putEdge(address, next, EdgeKind.CALL);
                     content.putEdge(address, address + 1, EdgeKind.FALL_THROUGH);
                     content.putEdge(address, next, EdgeKind.BRANCH);
                 }
-                content.putAnnotation(2, 1, new Range(0, 128), "region", "outer");
-                content.putAnnotation(2, 2, new Range(16, 64), "region", "nested");
-                content.putAnnotation(2, 3, new Range(common - 2, common + 2), "region", "crossing");
                 assertEquals(CommitResult.PUBLISHED, content.commit());
             }
-            sources[starts.length] = new SourceSpan("file:///allocation.asm", 2001, 0, 1);
             try (BreakpointUpdate breakpoints = index.updateBreakpoints(index.snapshot())) {
                 for (int i = 0; i < starts.length; i++) {
                     breakpoints.put(i, starts[i], true);
@@ -129,19 +118,13 @@ public class ProgramIndexAllocationTest {
         void query(int iterations) {
             for (int i = 0; i < iterations; i++) {
                 int selected = cursor++ & Integer.MAX_VALUE;
-                int bank = (selected / addresses.length) & 1;
                 int address = addresses[selected % addresses.length];
                 Snapshot snapshot = index.snapshot();
-                snapshot.forEachMappingAt(address, VALUES);
-                snapshot.forEachAnnotationStartingAt(address, VALUES);
-                snapshot.forEachAnnotationCovering(address, VALUES);
-                snapshot.forEachMappingOverlappingSource(sources[selected % sources.length], VALUES);
                 consumed += snapshot.hasExecutionBreakpoint(address) ? 1 : 0;
                 snapshot.forEachExecutionBreakpoint(address, VALUES);
                 Instruction instruction = snapshot.instructionAt(address);
                 if (instruction != null) consumed += instruction.cells().end;
                 snapshot.forEachSuccessor(address, EDGES);
-                snapshot.forEachAnnotation(VALUES);
                 snapshot.forEachInstruction(VALUES);
             }
         }

@@ -35,10 +35,8 @@ public class AnalysisTasksTest {
                     assertTrue(entered.await(2, TimeUnit.SECONDS));
                     ProgramIndex index = session.programIndex();
                     if (metadata) {
-                        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-                            edit.putAnnotation(7, 1, new ProgramIndex.Range(0, 1), "comment", "changed");
-                            edit.commit();
-                        }
+                        session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                                7, 1, 0, 1, "comment", "changed", null));
                     } else {
                         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
                             edit.put(7, 0, true).commit();

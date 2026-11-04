@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import org.junit.Before;
@@ -25,7 +24,7 @@ public class EmulatorEngineTest {
 
     @Before
     public void setup() {
-        memory = new MemoryStub(new Annotations());
+        memory = new MemoryStub();
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
     }

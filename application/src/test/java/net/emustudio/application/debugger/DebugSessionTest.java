@@ -630,6 +630,40 @@ public class DebugSessionTest {
         }
     }
 
+    @Test
+    public void metadataLoadRetriesConcurrentChangesAndPreservesLiveUserEdits() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("concurrent-debug.properties");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3, false);
+        long editedId;
+        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+            editedId = session.annotations().add(new AnnotationIndex.Entry(0, "disk old", "CODE")).id;
+            session.annotations().add(new AnnotationIndex.Entry(1, "disk retained", "DATA"));
+            session.saveAnnotations();
+        }
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3, false);
+        net.emustudio.emulib.runtime.annotations.AnnotationEngine engine = spy(
+                new net.emustudio.emulib.runtime.annotations.AnnotationEngine());
+        AtomicBoolean firstRevision = new AtomicBoolean(true);
+        doAnswer(call -> {
+            long revision = (long) call.callRealMethod();
+            if (firstRevision.getAndSet(false)) {
+                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                        AnnotationIndex.OWNER, editedId, 0, 1, AnnotationIndex.USER_KIND + "CODE", "live edit", null));
+                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                        17, 1, 2, 3, "source", "", null));
+            }
+            return revision;
+        }).when(engine).revision();
+
+        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings, engine)) {
+            AnnotationIndex annotations = session.annotations();
+
+            assertEquals("live edit", annotations.get(0).label);
+            assertEquals("disk retained", annotations.get(1).label);
+            assertNotNull(engine.get(17, 1));
+        }
+    }
+
     private static DebugCPU.Instruction instruction(long sequence, List<DebugCPU.Access> accesses) {
         return new DebugCPU.Instruction(sequence, 0, "NOP", "00", Map.of(), Map.of(), accesses, true);
     }

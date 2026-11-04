@@ -79,10 +79,7 @@ public class InstructionIndexTest {
         index.set(bankedIndex()); // New image/layout, with the same revision numbers.
         assertNotSame(before, instructions.snapshot());
         before = instructions.snapshot();
-        try (ProgramIndex.ContentUpdate update = index.get().updateContent(index.get().snapshot())) {
-            update.putAnnotation(1, 1, new ProgramIndex.Range(0, 1), ProgramIndex.Kinds.DATA, "");
-            update.commit();
-        }
+        index.get().annotationsChanged();
         assertNotSame(before, instructions.snapshot());
         assertEquals(-1, instructions.snapshot().nextAddress(0));
         InstructionIndex.View metadata = instructions.snapshot();

@@ -41,7 +41,7 @@ public class ProgramIndexPublicationRaceTest {
                 assertEquals(1, results.stream().filter(result -> result == CommitResult.STALE).count());
                 Snapshot current = index.snapshot();
                 int[] entries = {0};
-                if (content) current.forEachAnnotation(annotation -> entries[0]++);
+                if (content) current.forEachInstruction(instruction -> entries[0]++);
                 else {
                     current.forEachExecutionBreakpoint(0, breakpoint -> entries[0]++);
                     current.forEachExecutionBreakpoint(1, breakpoint -> entries[0]++);
@@ -59,8 +59,9 @@ public class ProgramIndexPublicationRaceTest {
                                      CountDownLatch staged, CountDownLatch release) throws InterruptedException {
         if (content) {
             try (ContentUpdate update = index.updateContent(base)) {
-                update.putAnnotation(owner, 1, new Range(0, 1), "comment", "first");
-                update.putAnnotation(owner, 2, new Range(1, 2), "comment", "second");
+                update.replaceFlow(false);
+                update.putInstruction(new Range(0, 1), InstructionKind.LINEAR);
+                update.putInstruction(new Range(1, 2), InstructionKind.STOP);
                 staged.countDown();
                 assertTrue(release.await(5, TimeUnit.SECONDS));
                 return update.commit();

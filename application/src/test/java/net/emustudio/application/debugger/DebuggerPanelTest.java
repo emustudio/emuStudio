@@ -609,13 +609,10 @@ public class DebuggerPanelTest {
     @Test
     public void goToSourcePopupUsesSelectedInstruction() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {})) {
-            net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations annotations =
-                    mock(net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations.class);
             net.emustudio.emulib.plugins.compiler.SourceCodePosition position =
                     mock(net.emustudio.emulib.plugins.compiler.SourceCodePosition.class);
-            when(workspace.machine.memory.annotations()).thenReturn(annotations);
-            when(annotations.get(1, net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation.class))
-                    .thenReturn(java.util.Set.of(new net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation(1, position)));
+            workspace.session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                    1, 0, 1, 2, "source", "", position));
 
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.navigate(1);

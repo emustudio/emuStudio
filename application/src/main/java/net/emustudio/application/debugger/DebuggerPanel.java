@@ -13,7 +13,6 @@ import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
 
 import java.awt.*;
@@ -1889,16 +1888,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void showSource(int at) {
-        if (session.memory == null || session.memory.annotations() == null) return;
-        Set<SourceCodeAnnotation> source =
-                session.memory.annotations().get(at, SourceCodeAnnotation.class);
-        if (source.isEmpty())
-            throw new IllegalStateException("No current source mapping at this address");
-        sourceNavigator.accept(
-                source.stream()
-                        .min(Comparator.comparingLong(SourceCodeAnnotation::getPluginId))
-                        .get()
-                        .getPosition());
+        session.sourceAt(at)
+                .ifPresentOrElse(sourceNavigator, () -> {
+                    throw new IllegalStateException("No current source mapping at this address");
+                });
     }
 
     private void refreshAnnotations(String filter) {
@@ -1975,15 +1968,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private String labelsAt(int address) {
-        String annotation = index == null ? "" : index.entries().stream()
-                .filter(entry -> entry.address == address)
-                .map(entry -> entry.label.trim()).filter(label -> !label.isEmpty()).distinct()
+        return session.annotationEngine.at(address).stream()
+                .filter(entry -> entry.start == address)
+                .filter(entry -> entry.kind.startsWith(AnnotationIndex.USER_KIND)
+                        || (sourceMappingsCurrent && entry.kind.equals(ProgramIndex.Kinds.LABEL)))
+                .map(entry -> entry.text.trim()).filter(label -> !label.isEmpty()).distinct()
                 .collect(java.util.stream.Collectors.joining(", "));
-        String labels = (sourceMappingsCurrent ? compiledSymbols.get() : List.<SourceAddressMap.Symbol>of()).stream()
-                .filter(symbol -> symbol.location.filter(location -> location.address == address).isPresent())
-                .map(symbol -> symbol.name).distinct().collect(java.util.stream.Collectors.joining(", "));
-        return annotation.isEmpty() ? labels
-                : labels.isEmpty() || labels.equals(annotation) ? annotation : annotation + ", " + labels;
     }
 
     private static <T> void updateRows(DefaultListModel<T> model, List<T> values) {

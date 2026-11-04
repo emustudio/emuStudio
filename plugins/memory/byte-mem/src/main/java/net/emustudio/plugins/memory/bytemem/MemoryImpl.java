@@ -40,7 +40,7 @@ public class MemoryImpl extends AbstractMemory {
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.context = new MemoryContextImpl(getAnnotations());
+        this.context = new MemoryContextImpl();
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             ContextPool contextPool = applicationApi.getContextPool();
@@ -224,7 +224,7 @@ public class MemoryImpl extends AbstractMemory {
         if (!guiNotSupported) {
             if (gui == null) {
                 gui = new MemoryGui(parent, this, context, settings, applicationApi.getDialogs(), applicationApi.getGUI(),
-                        applicationApi.getDebuggerMemory());
+                        applicationApi.getAnnotations(), applicationApi.getExecutionState());
             }
             gui.setVisible(true);
         }

@@ -15,8 +15,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -89,14 +88,23 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
+    public void sourceNavigationRejectsCapturedMappingAfterMemoryMutation() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            assertTrue(f.session.sourceAt(2).isPresent());
+
+            f.session.runMutation(() -> {});
+
+            assertTrue(f.annotations.at(2).stream().anyMatch(entry -> entry.source != null));
+            assertTrue(f.session.sourceAt(2).isEmpty());
+        }
+    }
+
+    @Test(timeout = 10000)
     public void mutationBeforeDeferredCompilerCaptureCannotPublishOldSourceAsCurrent() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false, () -> f.session.runMutation(() -> {}));
 
-            AtomicInteger mappings = new AtomicInteger();
-            for (int address = 0; address < 32; address++)
-                f.session.programIndex().snapshot().forEachMappingAt(address, mapping -> mappings.incrementAndGet());
-            assertEquals(0, mappings.get());
             JLabel status = findComponent(f.debugger, JLabel.class,
                     label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
             assertTrue(onEdt(status::getText).contains("Source mappings unavailable"));
@@ -311,7 +319,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final CPU cpu = mock(CPU.class);
         final Compiler compiler = mock(Compiler.class);
         final MemoryContext<Byte> memory;
-        final Annotations annotations = new Annotations();
+        final AnnotationEngine annotations = new AnnotationEngine();
         final AtomicInteger bank = new AtomicInteger();
         final DebugSession session;
         final TabbedEditor editor;
@@ -329,7 +337,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             path = files.newFile("program.asm").toPath();
             Files.writeString(path, text);
             memory = mock(MemoryContext.class);
-            when(memory.annotations()).thenReturn(annotations);
             when(memory.getSize()).thenReturn(32);
             when(memory.getAddressSpaceSize()).thenReturn(32);
             when(memory.getBanksCount()).thenReturn(2);
@@ -354,7 +361,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 if (opcode >= 0 && opcode < end) tokens.add(new SourceToken(Token.RESERVED, opcode, "nop", null, null, null));
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
-            session = new DebugSession(cpu, memory, null);
+            session = new DebugSession(cpu, memory, null, annotations);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
@@ -397,11 +404,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
         void compile(boolean fail, Runnable afterFinish) {
             runOnEdt(() -> {
                 compilerEvents.onStart();
-                annotations.clear();
-                for (int i = 0; i < 3; i++) annotations.add(i * 2,
-                        new SourceCodeAnnotation(7, SourceCodePosition.of(i + 1,
-                                text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
-                if (fail) compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
+                if (fail) {
+                    compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
+                } else {
+                    java.util.List<AnnotationEngine.Entry> mappings = new java.util.ArrayList<>();
+                    for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i, i * 2, i * 2 + 1,
+                            "source", "", SourceCodePosition.of(i + 1,
+                            text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
+                    annotations.replaceOwner(7, mappings);
+                }
                 compilerEvents.onFinish();
                 afterFinish.run();
                 bank.set(0);
