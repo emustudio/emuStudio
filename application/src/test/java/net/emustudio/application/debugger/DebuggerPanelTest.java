@@ -544,6 +544,14 @@ public class DebuggerPanelTest {
                     assertEquals(1, references.getModel().getSize());
                     FlowAnalysis.Edge edge = (FlowAnalysis.Edge) references.getModel().getElementAt(0);
                     assertEquals("call", edge.kind);
+                    @SuppressWarnings("unchecked") JList<FlowAnalysis.Edge> list = (JList<FlowAnalysis.Edge>) references;
+                    Component rendered = list.getCellRenderer().getListCellRendererComponent(list, edge, 0, false, false);
+                    assertTrue(((JLabel) rendered).getText().contains("NOP"));
+                    list.setSelectedIndex(0);
+                    button(workspace.panel, "Go to reference target").doClick(0);
+                    assertEquals(1, workspace.table.getSelectedRow());
+                    button(workspace.panel, "Go to reference source").doClick(0);
+                    assertEquals(0, workspace.table.getSelectedRow());
                     assertTrue(workspace.table.isEnabled());
                 });
                 verify(workspace.session.cpu.getDisassembler(), never()).getFlow(anyInt());

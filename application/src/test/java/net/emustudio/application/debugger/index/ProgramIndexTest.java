@@ -151,11 +151,11 @@ public class ProgramIndexTest {
                     .putInstruction(new Range(2, 0, 3), InstructionKind.CALL, false)
                     .putInstruction(new Range(2, 3, 4), InstructionKind.JUMP, true)
                     .putInstruction(new Range(2, 16, 17), InstructionKind.RETURN, false)
-                    .putEdge(2, 0, 2, 3, EdgeKind.FALL_THROUGH)
-                    .putEdge(2, 0, 2, 3, EdgeKind.CALL)
-                    .putEdge(2, 0, 2, 3, EdgeKind.CALL)
-                    .putEdge(2, 3, 2, 3, EdgeKind.BRANCH)
-                    .putEdge(2, 3, 1, 20, EdgeKind.BRANCH);
+                    .putEdge(2, 0, 3, EdgeKind.FALL_THROUGH)
+                    .putEdge(2, 0, 3, EdgeKind.CALL)
+                    .putEdge(2, 0, 3, EdgeKind.CALL)
+                    .putEdge(2, 3, 3, EdgeKind.BRANCH)
+                    .putEdge(2, 3, 20, EdgeKind.BRANCH);
             edit.commit();
         }
         Snapshot snapshot = index.snapshot();
@@ -165,9 +165,9 @@ public class ProgramIndexTest {
         assertNull(snapshot.instructionAt(0, 0));
         assertTrue(snapshot.instructionAt(2, 3).unresolvedSuccessors());
         assertEquals(0, snapshot.instructionAt(1, 16).cells().bank);
-        assertEquals(Set.of("2:0>2:3:FALL_THROUGH", "2:0>2:3:CALL", "2:3>2:3:BRANCH"), edges(snapshot, 2, 3, true));
+        assertEquals(Set.of("0>3:FALL_THROUGH", "0>3:CALL", "3>3:BRANCH"), edges(snapshot, 2, 3, true));
         assertNull(snapshot.instructionAt(0, 20));
-        assertEquals(Set.of("2:3>0:20:BRANCH"), edges(snapshot, 1, 20, true));
+        assertEquals(Set.of("3>20:BRANCH"), edges(snapshot, 1, 20, true));
         assertTrue(edges(snapshot, 0, 20, false).isEmpty());
         List<Instruction> instructions = new ArrayList<>();
         snapshot.forEachInstruction(instructions::add);
@@ -217,7 +217,7 @@ public class ProgramIndexTest {
         Snapshot beforeInvalid = index.snapshot();
         ContentUpdate invalid = index.updateContent(beforeInvalid);
         invalid.putAnnotation(1, 4, new Range(0, 3, 4), Kinds.COMMENT, "discard");
-        invalid.replaceFlow(false).putEdge(0, 5, 0, 6, EdgeKind.CALL);
+        invalid.replaceFlow(false).putEdge(0, 5, 6, EdgeKind.CALL);
         assertThrows(IllegalArgumentException.class, invalid::commit);
         assertSame(beforeInvalid, index.snapshot());
         BreakpointUpdate b1 = index.updateBreakpoints(beforeInvalid), b2 = index.updateBreakpoints(beforeInvalid);
@@ -304,7 +304,7 @@ public class ProgramIndexTest {
             edit.putMapping(1, 1, new Range(999999, 7, Integer.MAX_VALUE), source(0, 1));
             edit.putAnnotation(1, 2, new Range(999999, 1999999999, Integer.MAX_VALUE), Kinds.REGION, "large");
             edit.replaceFlow(false).putInstruction(new Range(999999, 7, 9), InstructionKind.JUMP, false)
-                    .putEdge(999999, 7, 999999, Integer.MAX_VALUE - 1, EdgeKind.BRANCH).commit();
+                    .putEdge(999999, 7, Integer.MAX_VALUE - 1, EdgeKind.BRANCH).commit();
         }
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
             edit.put(1, Integer.MAX_VALUE - 1, true, "").commit();
@@ -314,7 +314,7 @@ public class ProgramIndexTest {
         assertEquals(Set.of(2L), annotationsAt(index.snapshot(), 123, Integer.MAX_VALUE - 1));
         assertTrue(index.snapshot().hasExecutionBreakpoint(Integer.MAX_VALUE - 1));
         assertNotNull(index.snapshot().instructionAt(999999, 7));
-        assertEquals(Set.of("999999:7>0:2147483646:BRANCH"), edges(index.snapshot(), 0, Integer.MAX_VALUE - 1, true));
+        assertEquals(Set.of("7>2147483646:BRANCH"), edges(index.snapshot(), 0, Integer.MAX_VALUE - 1, true));
     }
 
     @Test public void randomizedIntervalsMatchIndependentBankNormalizationScan() {
@@ -451,8 +451,8 @@ public class ProgramIndexTest {
             for (int i = 0; i < 700; i++) {
                 int from = random.nextInt(200), to = random.nextInt(256);
                 EdgeKind kind = EdgeKind.values()[random.nextInt(3)];
-                edit.putEdge(0, from, 0, to, kind);
-                graph.add(edge(0, from, 0, to, kind));
+                edit.putEdge(0, from, to, kind);
+                graph.add(edge(from, to, kind));
             }
             edit.commit();
         }
@@ -473,8 +473,8 @@ public class ProgramIndexTest {
         for (int address = 0; address < 256; address++) {
             Set<String> incoming = new HashSet<>(), outgoing = new HashSet<>();
             for (String e : graph) {
-                if (e.startsWith("0:" + address + ">")) outgoing.add(e);
-                if (e.contains(">0:" + address + ":")) incoming.add(e);
+                if (e.startsWith(address + ">")) outgoing.add(e);
+                if (e.contains(">" + address + ":")) incoming.add(e);
             }
             assertEquals(incoming, edges(index.snapshot(), 0, address, true));
             assertEquals(outgoing, edges(index.snapshot(), 0, address, false));
@@ -484,7 +484,7 @@ public class ProgramIndexTest {
     private static void buildTinyFlow(ProgramIndex index) {
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false).putInstruction(new Range(0, 0, 3), InstructionKind.LINEAR, false)
-                    .putEdge(0, 0, 0, 3, EdgeKind.FALL_THROUGH).commit();
+                    .putEdge(0, 0, 3, EdgeKind.FALL_THROUGH).commit();
         }
     }
     private static SourceSpan source(int from, int to) { return new SourceSpan("file:///source.asm", 0, from, to); }
@@ -511,12 +511,12 @@ public class ProgramIndexTest {
         snapshot.forEachAnnotationCovering(bank, address, values::add);
         return annotationIds(values);
     }
-    private static String edge(int fromBank, int from, int toBank, int to, EdgeKind kind) {
-        return fromBank + ":" + from + ">" + toBank + ":" + to + ":" + kind;
+    private static String edge(int from, int to, EdgeKind kind) {
+        return from + ">" + to + ":" + kind;
     }
     private static Set<String> edges(Snapshot snapshot, int bank, int address, boolean incoming) {
         Set<String> edges = new HashSet<>();
-        EdgeVisitor visitor = (fb, fa, tb, ta, kind) -> assertTrue("Duplicate edge", edges.add(edge(fb, fa, tb, ta, kind)));
+        EdgeVisitor visitor = (from, to, kind) -> assertTrue("Duplicate edge", edges.add(edge(from, to, kind)));
         if (incoming) snapshot.forEachPredecessor(bank, address, visitor);
         else snapshot.forEachSuccessor(bank, address, visitor);
         return edges;

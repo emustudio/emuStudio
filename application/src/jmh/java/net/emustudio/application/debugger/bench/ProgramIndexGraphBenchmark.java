@@ -95,7 +95,7 @@ public class ProgramIndexGraphBenchmark {
 
     static final class EdgeSink implements ProgramIndex.EdgeVisitor {
         long checksum;
-        @Override public void accept(int fromBank, int from, int toBank, int to, ProgramIndex.EdgeKind kind) {
+        @Override public void accept(int from, int to, ProgramIndex.EdgeKind kind) {
             checksum += (from ^ to) + 1L;
         }
     }

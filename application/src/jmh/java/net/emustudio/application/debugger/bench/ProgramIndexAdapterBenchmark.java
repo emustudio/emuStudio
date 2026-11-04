@@ -39,7 +39,7 @@ public class ProgramIndexAdapterBenchmark {
                 BaselineAnnotationIndex.Entry old = baseline.get(data.bank[i], data.address[i]);
                 if (current == null || old == null || current.bank != old.bank || current.address != old.address
                         || !current.label.equals(old.label) || !current.comment.equals(old.comment)
-                        || current.bookmark != old.bookmark || !current.kind.equals(old.kind))
+                        || !current.kind.equals(old.kind))
                     throw new IllegalStateException("Annotation adapter workload differs from baseline");
             }
         }

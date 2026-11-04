@@ -21,7 +21,6 @@ public class PerformFindSequenceActionTest {
     private Dialogs dialogs;
     private AtomicReference<byte[]> sequence;
     private AtomicInteger from;
-    private boolean disposed;
 
     @Before
     public void setUp() {
@@ -29,7 +28,6 @@ public class PerformFindSequenceActionTest {
         replay(dialogs);
         sequence = new AtomicReference<>();
         from = new AtomicInteger(-1);
-        disposed = false;
     }
 
     private PerformFindSequenceAction createAction(
@@ -39,7 +37,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField(findText);
 
         return new PerformFindSequenceAction(
-                dialogs, () -> disposed = true, (value, address) -> {
+                dialogs, (value, address) -> {
                     sequence.set(value);
                     from.set(address);
                 },
@@ -51,19 +49,13 @@ public class PerformFindSequenceActionTest {
     @Test(expected = NullPointerException.class)
     public void testNullDialogsThrows() {
         JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(null, () -> {}, (value, from) -> {}, () -> true, () -> PerformFindSequenceAction.Format.TEXT, () -> ByteOrder.BIG_ENDIAN, 0, txt, txt);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testNullDisposeThrows() {
-        JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(dialogs, null, (value, from) -> {}, () -> true, () -> PerformFindSequenceAction.Format.TEXT, () -> ByteOrder.BIG_ENDIAN, 0, txt, txt);
+        new PerformFindSequenceAction(null, (value, from) -> {}, () -> true, () -> PerformFindSequenceAction.Format.TEXT, () -> ByteOrder.BIG_ENDIAN, 0, txt, txt);
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullStartSearchThrows() {
         JTextComponent txt = new JTextField();
-        new PerformFindSequenceAction(dialogs, () -> {}, null, () -> true, () -> PerformFindSequenceAction.Format.TEXT, () -> ByteOrder.BIG_ENDIAN, 0, txt, txt);
+        new PerformFindSequenceAction(dialogs, null, () -> true, () -> PerformFindSequenceAction.Format.TEXT, () -> ByteOrder.BIG_ENDIAN, 0, txt, txt);
     }
 
     @Test
@@ -110,7 +102,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, (value, from) -> {},
+                strictDialogs, (value, from) -> {},
                 () -> true, () -> PerformFindSequenceAction.Format.BYTES, () -> ByteOrder.BIG_ENDIAN,
                 0, txtPosition, txtFindText
         );
@@ -130,7 +122,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("0xAA");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, (value, from) -> {},
+                strictDialogs, (value, from) -> {},
                 () -> false, () -> PerformFindSequenceAction.Format.BYTES, () -> ByteOrder.BIG_ENDIAN,
                 0, txtPosition, txtFindText
         );
@@ -150,7 +142,7 @@ public class PerformFindSequenceActionTest {
         JTextComponent txtFindText = new JTextField("xyz");
 
         PerformFindSequenceAction action = new PerformFindSequenceAction(
-                strictDialogs, () -> {}, (value, from) -> {},
+                strictDialogs, (value, from) -> {},
                 () -> true, () -> PerformFindSequenceAction.Format.BYTES, () -> ByteOrder.BIG_ENDIAN,
                 0, txtPosition, txtFindText
         );
@@ -160,19 +152,11 @@ public class PerformFindSequenceActionTest {
     }
 
     @Test
-    public void testDisposeCalledOnSuccess() {
-        PerformFindSequenceAction action = createAction(true, false, "", "0x42", 0);
-        action.actionPerformed(new ActionEvent(this, 0, ""));
-
-        assertEquals(true, disposed);
-    }
-
-    @Test
     public void numericFormatsProduceExpectedBytes() {
         for (ByteOrder order : new ByteOrder[]{ByteOrder.BIG_ENDIAN, ByteOrder.LITTLE_ENDIAN}) {
             for (PerformFindSequenceAction.Format format : new PerformFindSequenceAction.Format[]{PerformFindSequenceAction.Format.INT16, PerformFindSequenceAction.Format.INT32, PerformFindSequenceAction.Format.INT64, PerformFindSequenceAction.Format.FLOAT32, PerformFindSequenceAction.Format.FLOAT64}) {
                 JTextField value = new JTextField("1");
-                PerformFindSequenceAction action = new PerformFindSequenceAction(dialogs, () -> {}, (bytes, address) -> sequence.set(bytes), () -> true, () -> format, () -> order, 0, new JTextField("0"), value);
+                PerformFindSequenceAction action = new PerformFindSequenceAction(dialogs, (bytes, address) -> sequence.set(bytes), () -> true, () -> format, () -> order, 0, new JTextField("0"), value);
 
                 action.actionPerformed(new ActionEvent(this, 0, ""));
 

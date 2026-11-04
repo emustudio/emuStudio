@@ -185,11 +185,11 @@ public class FlowAnalysisTest {
         assertNull(analysis.snapshot().instructionAt(0, 0));
         assertSame(analysis.snapshot().instructionAt(0, 6), analysis.snapshot().instructionAt(1, 6));
         FlowAnalysis.Edge call = analysis.predecessors(6).get(0);
-        assertEquals(1, call.fromBank);
-        assertEquals(0, call.toBank);
+        assertEquals(0, call.from);
+        assertEquals(6, call.to);
         FlowAnalysis.Edge branch = analysis.predecessors(0).get(0);
-        assertEquals(0, branch.fromBank);
-        assertEquals(1, branch.toBank);
+        assertEquals(6, branch.from);
+        assertEquals(0, branch.to);
     }
 
     @Test
@@ -292,7 +292,7 @@ public class FlowAnalysisTest {
 
     private static List<String> edges(FlowAnalysis analysis) {
         List<String> result = new ArrayList<>();
-        analysis.forEachEdge((fromBank, from, toBank, to, kind) -> result.add(from + ":" + to + ":" + kind));
+        analysis.forEachEdge((from, to, kind) -> result.add(from + ":" + to + ":" + kind));
         return result;
     }
 

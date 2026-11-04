@@ -1549,15 +1549,25 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 { showIncomingReferences(referenceFlow, inspectedAddress); referenceMode.setText(String.format("Incoming to %04X: %d%s", inspectedAddress, referenceRows.size(), referenceFlow.truncated() ? " (partial)" : "")); }
                             else analyzeFlow(true, nodes, referenceMode);
                         }));
-        actions.add(
-                button(ICON_JUMP, "Go to reference",
+        JButton goToSource = button(ICON_JUMP, "Go to reference source",
                         () -> {
                             FlowAnalysis.Edge e = references.getSelectedValue();
                             if (e != null) {
                                 requireCurrentReferences();
-                                navigate(e.from, e.fromBank);
+                                navigate(e.from, referenceFlow.bank());
                             }
-                        }));
+                        });
+        goToSource.setText("Source");
+        actions.add(goToSource);
+        JButton goToTarget = button(ICON_JUMP, "Go to reference target", () -> {
+            FlowAnalysis.Edge edge = references.getSelectedValue();
+            if (edge != null) {
+                requireCurrentReferences();
+                navigate(edge.to, referenceFlow.bank());
+            }
+        });
+        goToTarget.setText("Target");
+        actions.add(goToTarget);
         actions.add(label("Instruction", nodes));
         actions.add(nodes);
         actions.add(button(ICON_STEP, "Go to instruction", () -> {
@@ -1568,6 +1578,25 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }));
         graph.getAccessibleContext().setAccessibleDescription("Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
         references.getAccessibleContext().setAccessibleName("Static references");
+        references.getAccessibleContext().setAccessibleDescription("Select a reference; press Enter or double-click to visit its source. Use Go to reference target to visit its destination.");
+        references.setCellRenderer(new DefaultListCellRenderer() {
+            @Override public Component getListCellRendererComponent(JList<?> list, Object value, int row, boolean selected, boolean focus) {
+                super.getListCellRendererComponent(list, value, row, selected, focus);
+                FlowAnalysis.Edge edge = (FlowAnalysis.Edge) value;
+                String instruction = referenceFlow == null ? "" : referenceFlow.mnemonic(edge.from);
+                setText(String.format("%04X  %s  →  %04X  (%s)", edge.from, instruction, edge.to, edge.kind));
+                setToolTipText(String.format("%s from %04X to %04X (bank %d)", edge.kind, edge.from, edge.to, referenceFlow.bank()));
+                return this;
+            }
+        });
+        references.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event)) return;
+                int row = references.locationToIndex(event.getPoint());
+                if (row >= 0 && references.getCellBounds(row, row).contains(event.getPoint()))
+                    references.getActionMap().get("followReference").actionPerformed(new ActionEvent(references, ActionEvent.ACTION_PERFORMED, "followReference"));
+            }
+        });
         references.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "followReference");
         references.getActionMap().put("followReference", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -1575,7 +1604,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     FlowAnalysis.Edge edge = references.getSelectedValue();
                     if (edge != null) {
                         requireCurrentReferences();
-                        navigate(edge.from, edge.fromBank);
+                        navigate(edge.from, referenceFlow.bank());
                     }
                 });
             }
@@ -1585,8 +1614,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         referencePanel.add(referenceMode, BorderLayout.NORTH);
         referencePanel.add(gui.scrollPane(references), BorderLayout.CENTER);
         referencePanel.setMinimumSize(new Dimension(0, 0));
-        JSplitPane split = gui.splitPaneLeftToRight(referencePanel, gui.scrollPane(graph), .2);
-        split.setResizeWeight(0);
+        JPanel graphPanel = new JPanel(new BorderLayout());
+        graphPanel.add(gui.label("Select an instruction to show its connections"), BorderLayout.NORTH);
+        graphPanel.add(gui.scrollPane(graph), BorderLayout.CENTER);
+        JSplitPane split = gui.splitPaneLeftToRight(referencePanel, graphPanel, .4);
         p.add(split);
         return p;
     }
@@ -1607,10 +1638,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 referenceMode.setText(String.format("Incoming to %04X: %d", address, referenceRows.size()));
             }
             else {
-                referenceMode.setText(String.format("Branches and calls from %04X", address));
-                flow.forEachEdge((fromBank, from, toBank, to, kind) -> {
+                referenceMode.setText(String.format("Reachable branches and calls (start %04X)", address));
+                flow.forEachEdge((from, to, kind) -> {
                     if (kind != ProgramIndex.EdgeKind.FALL_THROUGH)
-                        referenceRows.addElement(new FlowAnalysis.Edge(fromBank, from, toBank, to, kind));
+                        referenceRows.addElement(new FlowAnalysis.Edge(from, to, kind));
                 });
                 referenceMode.setText(referenceMode.getText() + ": " + referenceRows.size());
                 graph.setFlow(flow);
@@ -2700,12 +2731,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         private void selectNode(int address) {
-            Rectangle previous = boxes.get(selectedNode);
             selectedNode = address;
-            if (previous != null) repaint(previous.x - 2, previous.y - 2, previous.width + 5, previous.height + 5);
             Rectangle selected = boxes.get(address);
             if (selected != null) {
-                repaint(selected.x - 2, selected.y - 2, selected.width + 5, selected.height + 5);
+                updateGraphSize();
+                repaint();
                 scrollRectToVisible(selected);
             }
         }
@@ -2729,7 +2759,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
                 if (entry.getValue().contains(event.getPoint()))
                     return String.format("%04X · %s", entry.getKey(), flow.mnemonic(entry.getKey()));
-            return "Click or use arrow keys to select; double-click or press Enter to navigate";
+            return "Lines show connections to and from the selected instruction. Double-click or press Enter to navigate.";
         }
 
         void clearFlow() {
@@ -2753,10 +2783,25 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 int i = boxes.size();
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
             });
-            int i = boxes.size();
-            setPreferredSize(new Dimension(460, Math.max(400, i * 90 + 50)));
+            if (!boxes.containsKey(selectedNode) && !boxes.isEmpty()) selectedNode = boxes.keySet().iterator().next();
+            updateGraphSize();
             revalidate();
             repaint();
+        }
+
+        private List<FlowAnalysis.Edge> selectedEdges() {
+            List<FlowAnalysis.Edge> edges = new ArrayList<>();
+            if (flow != null) flow.forEachEdge((from, to, kind) -> {
+                if ((from == selectedNode || to == selectedNode) && boxes.containsKey(from) && boxes.containsKey(to))
+                    edges.add(new FlowAnalysis.Edge(from, to, kind));
+            });
+            return edges;
+        }
+
+        private void updateGraphSize() {
+            setPreferredSize(new Dimension(Math.max(460, 290 + selectedEdges().size() * 20),
+                    Math.max(400, boxes.size() * 90 + 50)));
+            revalidate();
         }
 
         @Override
@@ -2775,19 +2820,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             Graphics2D g = (Graphics2D) graphics.create();
             Rectangle clip = g.getClipBounds();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            flow.forEachEdge((fromBank, from, toBank, to, kind) -> {
+            List<FlowAnalysis.Edge> edges = selectedEdges();
+            for (int edgeIndex = 0; edgeIndex < edges.size(); edgeIndex++) {
+                FlowAnalysis.Edge edge = edges.get(edgeIndex);
+                int from = edge.from, to = edge.to;
                 Rectangle a = boxes.get(from), b = boxes.get(to);
-                if (a == null || b == null) return;
+                if (a == null || b == null) continue;
                 Rectangle bounds = a.union(b);
-                bounds.grow(200, 20);
-                if (clip != null && !clip.intersects(bounds)) return;
+                bounds.grow(getPreferredSize().width, 20);
+                if (clip != null && !clip.intersects(bounds)) continue;
                 g.setColor(getForeground());
-                boolean fallThrough = kind == ProgramIndex.EdgeKind.FALL_THROUGH && b.y == a.y + 90;
-                int lane = a.x + a.width + 35 + Math.floorMod(from, 6) * 20;
+                boolean fallThrough = edge.kind.equals("next") && b.y == a.y + 90;
+                int lane = a.x + a.width + 35 + edgeIndex * 20;
                 int x = fallThrough ? a.x + a.width / 2 : a.x + a.width;
-                int y = fallThrough ? a.y + a.height : a.y + (from == to ? a.height / 3 : a.height / 2);
+                int offset = Math.floorMod(edgeIndex, 9) * 5 - 20;
+                int y = fallThrough ? a.y + a.height : a.y + (from == to ? a.height / 3 : a.height / 2 + offset);
                 int tx = fallThrough ? b.x + b.width / 2 : b.x + b.width;
-                int ty = fallThrough ? b.y : b.y + (from == to ? 2 * b.height / 3 : b.height / 2);
+                int ty = fallThrough ? b.y : b.y + (from == to ? 2 * b.height / 3 : b.height / 2 + offset);
                 if (fallThrough) g.drawLine(x, y, tx, ty);
                 else {
                     g.drawLine(x, y, lane, y);
@@ -2801,15 +2850,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             ty,
                             tx - (int) (10 * Math.cos(angle + delta)),
                             ty - (int) (10 * Math.sin(angle + delta)));
-                if (kind != ProgramIndex.EdgeKind.FALL_THROUGH) {
-                    String label = kind.name().toLowerCase(Locale.ROOT);
-                    int labelX = lane + 4, labelY = (y + ty) / 2;
-                    g.setColor(getBackground());
-                    g.fillRect(labelX - 4, labelY - 12, g.getFontMetrics().stringWidth(label) + 8, 16);
-                    g.setColor(getForeground());
-                    g.drawString(label, labelX, labelY);
-                }
-            });
+            }
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
                 Rectangle box = entry.getValue();
                 if (clip != null && !clip.intersects(box)) continue;

@@ -120,7 +120,7 @@ public final class ProgramIndex {
         ContentUpdate replaceFlow(boolean truncated);
         ContentUpdate putInstruction(Range cells, InstructionKind kind, boolean unresolvedSuccessors);
         /** Known undecoded destinations are permitted. Unknown indirect targets are never edges. */
-        ContentUpdate putEdge(int fromBank, int fromAddress, int toBank, int toAddress, EdgeKind kind);
+        ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind);
         /**
          * Compares content AND memory revisions, preserving latest independent breakpoint state.
          * Source or CODE/DATA edits stale retained flow. replaceFlow supplies resulting flow.
@@ -166,7 +166,7 @@ public final class ProgramIndex {
     }
     @FunctionalInterface
     public interface EdgeVisitor {
-        void accept(int fromBank, int fromAddress, int toBank, int toAddress, EdgeKind kind);
+        void accept(int fromAddress, int toAddress, EdgeKind kind);
     }
 
     /** Nonempty half-open cell range. Layout validates its upper bound and bank. */
@@ -430,10 +430,10 @@ public final class ProgramIndex {
             instructions.put(AddressTable.key(checked.bank, checked.start), new InstructionValue(checked, kind, unresolvedSuccessors));
             return this;
         }
-        @Override public ContentUpdate putEdge(int fromBank, int fromAddress, int toBank, int toAddress, EdgeKind kind) {
+        @Override public ContentUpdate putEdge(int bank, int fromAddress, int toAddress, EdgeKind kind) {
             requireFlow();
-            long from = AddressTable.key(bank(layout, fromBank, fromAddress), fromAddress);
-            long to = AddressTable.key(bank(layout, toBank, toAddress), toAddress);
+            long from = AddressTable.key(bank(layout, bank, fromAddress), fromAddress);
+            long to = AddressTable.key(bank(layout, bank, toAddress), toAddress);
             edges.add(new FlowGraph.Edge(from, to, required(kind, "kind")));
             return this;
         }

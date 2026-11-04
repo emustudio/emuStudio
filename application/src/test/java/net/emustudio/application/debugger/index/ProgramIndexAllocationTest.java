@@ -77,8 +77,8 @@ public class ProgramIndexAllocationTest {
         else consumed += ((Instruction) value).cells().start;
     }
 
-    private static void consumeEdge(int fromBank, int from, int toBank, int to, EdgeKind kind) {
-        consumed += fromBank + from + toBank + to + kind.ordinal();
+    private static void consumeEdge(int from, int to, EdgeKind kind) {
+        consumed += from + to + kind.ordinal();
     }
 
     private static final class Workload {
@@ -106,9 +106,9 @@ public class ProgramIndexAllocationTest {
                     content.putAnnotation(1, i, new Range(1, address, address + 2), Kinds.LABEL, "label" + i % 2);
                     content.putInstruction(new Range(1, address, address + 2), InstructionKind.CALL, false);
                     int next = starts[(i + 1) % starts.length];
-                    content.putEdge(1, address, 1, next, EdgeKind.CALL);
-                    content.putEdge(1, address, 1, address + 1, EdgeKind.FALL_THROUGH);
-                    content.putEdge(1, address, 1, next, EdgeKind.BRANCH);
+                    content.putEdge(1, address, next, EdgeKind.CALL);
+                    content.putEdge(1, address, address + 1, EdgeKind.FALL_THROUGH);
+                    content.putEdge(1, address, next, EdgeKind.BRANCH);
                 }
                 content.putAnnotation(2, 1, new Range(1, 0, 128), Kinds.REGION, "outer");
                 content.putAnnotation(2, 2, new Range(1, 16, 64), Kinds.REGION, "nested");

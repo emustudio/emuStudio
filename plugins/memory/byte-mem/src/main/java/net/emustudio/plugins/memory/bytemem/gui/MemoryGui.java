@@ -29,6 +29,7 @@ public class MemoryGui extends DialogBase {
     private final MemoryTableModel tableModel;
     private final DebuggerMemory debuggerMemory;
     private boolean listening;
+    private boolean handlingSearchEscape;
     private final Runnable debuggerListener;
     private final JLabel lblBanksCount = new JLabel("0");
     private JLabel lblPageCount;
@@ -48,6 +49,7 @@ public class MemoryGui extends DialogBase {
     private final LoadImageAction loadImageAction;
     private final GotoAddressAction gotoAddressAction;
     private final FindSequenceAction findSequenceAction;
+    private final FindSequencePanel findSequencePanel;
     private final NavigateSequenceAction findNextAction;
     private final NavigateSequenceAction findPreviousAction;
     private final JLabel lblSearchStatus = new JLabel(" ");
@@ -81,7 +83,8 @@ public class MemoryGui extends DialogBase {
         }, gui);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
-        this.findSequenceAction = new FindSequenceAction(dialogs, search, this::getCurrentAddress, this, gui);
+        this.findSequencePanel = new FindSequencePanel(dialogs, gui, this::getCurrentAddress, search::start, this::hideFindSequence);
+        this.findSequenceAction = new FindSequenceAction(findSequencePanel::showSearch);
         this.findNextAction = new NavigateSequenceAction(search, false);
         this.findPreviousAction = new NavigateSequenceAction(search, true);
 
@@ -215,8 +218,9 @@ public class MemoryGui extends DialogBase {
 
         JSplitPane splitPane = gui.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
 
-        JPanel content = gui.panel("insets 0", "[grow]", "[]6[grow]");
+        JPanel content = gui.panel("insets 0, hidemode 3", "[grow]", "[][]6[grow]");
         content.add(toolBar, "growx, wrap");
+        content.add(findSequencePanel, "growx, wrap");
         content.add(splitPane, "grow");
 
         return content;
@@ -224,6 +228,25 @@ public class MemoryGui extends DialogBase {
 
     private int getCurrentAddress() {
         return tableModel.getPage() * (tableModel.getRowCount() * tableModel.getColumnCount());
+    }
+
+    private void hideFindSequence() {
+        findSequencePanel.setVisible(false);
+        table.requestFocusInWindow();
+    }
+
+    @Override
+    protected boolean shouldCloseOnEscape() {
+        if (handlingSearchEscape) return false;
+        if (findSequencePanel != null && findSequencePanel.isVisible()) {
+            Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            if (focused instanceof JComboBox && ((JComboBox<?>) focused).isPopupVisible()) return false;
+            handlingSearchEscape = true;
+            hideFindSequence();
+            SwingUtilities.invokeLater(() -> handlingSearchEscape = false);
+            return false;
+        }
+        return true;
     }
 
     @Override

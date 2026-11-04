@@ -24,7 +24,6 @@ public class PerformFindSequenceAction extends AbstractAction {
     public final static String ERROR_NUMBER_FORMAT = "Cannot parse sequence of bytes. Bytes (in correct radix format) must be separated with spaces.";
     private final static Logger LOGGER = LoggerFactory.getLogger(PerformFindSequenceAction.class);
     private final Dialogs dialogs;
-    private final Runnable dispose;
     private final BiConsumer<byte[], Integer> startSearch;
 
     private final Supplier<Boolean> isCurrentPage;
@@ -36,8 +35,7 @@ public class PerformFindSequenceAction extends AbstractAction {
 
     private final RadixUtils radixUtils = RadixUtils.getInstance();
 
-    public PerformFindSequenceAction(Dialogs dialogs, Runnable dispose,
-                                     BiConsumer<byte[], Integer> startSearch,
+    public PerformFindSequenceAction(Dialogs dialogs, BiConsumer<byte[], Integer> startSearch,
                                      Supplier<Boolean> isCurrentPage,
                                      Supplier<Format> format, Supplier<ByteOrder> byteOrder,
                                      int currentAddress,
@@ -45,7 +43,6 @@ public class PerformFindSequenceAction extends AbstractAction {
                                      JTextComponent txtFindText) {
 
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.dispose = Objects.requireNonNull(dispose);
         this.startSearch = Objects.requireNonNull(startSearch);
 
         this.currentAddress = currentAddress;
@@ -100,7 +97,6 @@ public class PerformFindSequenceAction extends AbstractAction {
             }
 
             startSearch.accept(sequenceToFind, from);
-            dispose.run();
         } catch (Exception ex) {
             LOGGER.debug(lastError.message, ex);
             dialogs.showError(lastError.message, "Find sequence");

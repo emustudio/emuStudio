@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 public final class FlowGraph {
     private static final ProgramIndex.EdgeKind[] KINDS = ProgramIndex.EdgeKind.values();
     private final AddressTable nodes;
-    private final int[] banks, addresses, outgoingOffsets, incomingOffsets, outgoing, incoming;
+    private final int[] addresses, outgoingOffsets, incomingOffsets, outgoing, incoming;
     private final byte[] outgoingKinds, incomingKinds;
     private final ProgramIndex.Instruction[] instructions;
 
@@ -26,13 +26,11 @@ public final class FlowGraph {
             if (!decoded.containsKey(e.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
             keys.add(e.to);
         }
-        banks = new int[keys.size()];
         addresses = new int[keys.size()];
         instructions = new ProgramIndex.Instruction[keys.size()];
         Map<Long, Integer> ids = new TreeMap<>();
         int i = 0;
         for (long key : keys) {
-            banks[i] = AddressTable.bank(key);
             addresses[i] = AddressTable.address(key);
             instructions[i] = decoded.get(key);
             ids.put(key, ++i);
@@ -77,7 +75,7 @@ public final class FlowGraph {
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
             int to = outgoing[at];
-            visitor.accept(banks[id], addresses[id], banks[to], addresses[to], KINDS[outgoingKinds[at]]);
+            visitor.accept(addresses[id], addresses[to], KINDS[outgoingKinds[at]]);
         }
     }
 
@@ -86,7 +84,7 @@ public final class FlowGraph {
         if (id < 0) return;
         for (int at = incomingOffsets[id]; at < incomingOffsets[id + 1]; at++) {
             int from = incoming[at];
-            visitor.accept(banks[from], addresses[from], banks[id], addresses[id], KINDS[incomingKinds[at]]);
+            visitor.accept(addresses[from], addresses[id], KINDS[incomingKinds[at]]);
         }
     }
 

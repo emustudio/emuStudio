@@ -118,15 +118,15 @@ public final class FlowAnalysis {
     public List<Edge> predecessors(int address) {
         List<Edge> result = new ArrayList<>();
         snapshot.forEachPredecessor(bank, address,
-                (fromBank, from, toBank, to, kind) -> result.add(new Edge(fromBank, from, toBank, to, kind)));
+                (from, to, kind) -> result.add(new Edge(from, to, kind)));
         return result;
     }
 
     /** Call sites only; deliberately distinct from the old callers() incoming-edge semantics. */
     public List<Edge> callSites(int address) {
         List<Edge> result = new ArrayList<>();
-        snapshot.forEachPredecessor(bank, address, (fromBank, from, toBank, to, kind) -> {
-            if (kind == ProgramIndex.EdgeKind.CALL) result.add(new Edge(fromBank, from, toBank, to, kind));
+        snapshot.forEachPredecessor(bank, address, (from, to, kind) -> {
+            if (kind == ProgramIndex.EdgeKind.CALL) result.add(new Edge(from, to, kind));
         });
         return result;
     }
@@ -147,7 +147,7 @@ public final class FlowAnalysis {
                 for (Decoded decoded : builder.instructions.values())
                     update.putInstruction(decoded.cells, decoded.kind, decoded.unresolved);
                 for (Edge edge : builder.edges)
-                    update.putEdge(edge.fromBank, edge.from, edge.toBank, edge.to, edge.edgeKind);
+                    update.putEdge(builder.bank, edge.from, edge.to, edge.edgeKind);
                 if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
                     throw new IllegalStateException("Flow analysis discarded: program metadata or memory changed");
             }
@@ -228,8 +228,7 @@ public final class FlowAnalysis {
         }
 
         private void addEdge(int from, int to, ProgramIndex.EdgeKind kind) {
-            edges.add(new Edge(base.layout().physicalBank(bank, from), from,
-                    base.layout().physicalBank(bank, to), to, kind));
+            edges.add(new Edge(from, to, kind));
         }
 
     }
@@ -257,14 +256,12 @@ public final class FlowAnalysis {
     }
 
     public static final class Edge {
-        public final int fromBank, from, toBank, to;
+        public final int from, to;
         public final String kind;
         private final ProgramIndex.EdgeKind edgeKind;
 
-        public Edge(int fromBank, int from, int toBank, int to, ProgramIndex.EdgeKind kind) {
-            this.fromBank = fromBank;
+        public Edge(int from, int to, ProgramIndex.EdgeKind kind) {
             this.from = from;
-            this.toBank = toBank;
             this.to = to;
             this.edgeKind = Objects.requireNonNull(kind);
             switch (kind) {
