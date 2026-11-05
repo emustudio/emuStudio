@@ -92,13 +92,18 @@ public class EmulationController implements Closeable {
     }
 
     public void step() {
-        submitExecution(() -> {
-            if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
-                return; // invalid state
-            }
-            countDownLatch = new CountDownLatch(1);
-            cpu.step();
-            awaitLatch();
+        step(() -> {});
+    }
+
+    public void step(Runnable completed) {
+        executor.submit(() -> {
+            if (runState != CPU.RunState.STATE_STOPPED_BREAK) return;
+            runExecution(() -> {
+                countDownLatch = new CountDownLatch(1);
+                cpu.step();
+                awaitLatch();
+            });
+            completed.run();
         });
     }
 

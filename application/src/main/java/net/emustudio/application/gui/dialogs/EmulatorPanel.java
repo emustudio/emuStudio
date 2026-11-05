@@ -126,7 +126,7 @@ public class EmulatorPanel extends JPanel {
         this.pauseAction = new PauseAction(emulationController, () -> this.setStateNotRunning(CPU.RunState.STATE_STOPPED_BREAK, false));
         this.runAction = new RunAction(emulationController, debugTable);
         this.runTimedAction = new RunTimedAction(emulationController, dialogs);
-        this.stepAction = new StepAction(emulationController);
+        this.stepAction = new StepAction(emulationController, () -> SwingUtilities.invokeLater(this::stepCompleted));
         this.jumpAction = new JumpAction(computer, dialogs, this::refreshDebugTable);
         this.cpu = computer.getCPU().orElse(null);
         panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
@@ -396,6 +396,10 @@ public class EmulatorPanel extends JPanel {
         if (!closed && debugTable.isEnabled()) {
             debugTable.repaint();
         }
+    }
+
+    private void stepCompleted() {
+        if (!closed && inspection != null) inspection.stepCompleted();
     }
 
 

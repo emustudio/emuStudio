@@ -128,6 +128,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int lastInstructionAddress;
     private final GraphPanel graph = new GraphPanel();
     private JButton goToFlowInstruction;
+    private boolean flowFromPc;
     private final Map<String, Long> watchValues = new HashMap<>();
     private AnnotationIndex index;
     private boolean navigating;
@@ -795,7 +796,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
         refreshAnnotations(annotationFilter.getText());
         table.repaint();
-        if (graph.flow != null) analyzeFlow(graph.start);
+        if (graph.flow != null) analyzeFlow(graph.start, flowFromPc);
     }
 
     public boolean confirmSaveAnnotations() {
@@ -1201,13 +1202,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void analyzeFlow() {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        analyzeFlow(session.cpu.getInstructionLocation());
+        analyzeFlow(session.cpu.getInstructionLocation(), true);
     }
 
     private void analyzeFlow(int address) {
+        analyzeFlow(address, false);
+    }
+
+    public void stepCompleted() {
+        if (!disposed && flowFromPc && tabs.getSelectedIndex() == tabs.indexOfTab("Inspection") && !tasks.isBusy())
+            guard(this::analyzeFlow);
+    }
+
+    private void analyzeFlow(int address, boolean fromPc) {
         tasks.submit(() -> session.analyzeFlow(address, 256), flow -> {
             if (!flow.isCurrent(session.programIndex()))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
+            flowFromPc = fromPc;
             graph.start = address;
             graph.setFlow(flow);
         }, true);

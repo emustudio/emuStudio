@@ -584,6 +584,36 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void steppingReanalyzesVisiblePcBasedFlow() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            Disassembler decoder = session.cpu.getDisassembler();
+            when(decoder.getFlow(0)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of())));
+            when(decoder.getFlow(1)).thenAnswer(call -> {
+                reanalyzed.countDown();
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of()));
+            });
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Analyze from PC").doClick(0);
+            });
+            assertTrue(shown.await(5, TimeUnit.SECONDS));
+
+            SwingUtilities.invokeAndWait(() -> {
+                when(workspace.session.cpu.getInstructionLocation()).thenReturn(1);
+                workspace.panel.stepCompleted();
+            });
+            assertTrue("Stepping should analyze the new PC", reanalyzed.await(5, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
     public void inspectionCanAnalyzeSelectedInstructionInsteadOfPc() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4, session -> {
@@ -604,6 +634,8 @@ public class DebuggerPanelTest {
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
             assertNotNull(workspace.session.programIndex().snapshot().instructionAt(1));
             assertNull(workspace.session.programIndex().snapshot().instructionAt(3));
+            SwingUtilities.invokeAndWait(workspace.panel::stepCompleted);
+            verify(workspace.session.cpu.getDisassembler(), never()).getFlow(3);
         }
     }
 
