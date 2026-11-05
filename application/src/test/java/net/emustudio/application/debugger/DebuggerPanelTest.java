@@ -536,9 +536,11 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
                 assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
-                        0, 0, 40, 40, 0, false)).contains("0003"));
+                        0, 0, 40, 40, 0, false)).contains("0001"));
                 assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
-                        0, 0, 40, 130, 0, false)).contains("0001"));
+                        0, 0, 40, 130, 0, false)).contains("0003"));
+                assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                        0, 0, 40, 220, 0, false)).contains("0004"));
                 button(workspace.panel, "Go to instruction").doClick(0);
                 assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
             });

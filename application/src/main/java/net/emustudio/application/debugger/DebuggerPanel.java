@@ -2518,11 +2518,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (!visited.add(at)) continue;
                 ProgramIndex.Instruction instruction = instructions.get(at);
                 if (instruction == null) continue;
+                pending.addAll(successors.getOrDefault(at, List.of()));
+            }
+            for (int at : new TreeSet<>(visited)) {
+                ProgramIndex.Instruction instruction = instructions.get(at);
+                if (instruction == null) continue;
                 int i = boxes.size();
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
                 instructionEnds.put(at, instruction.cells().end);
                 if (instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
-                pending.addAll(successors.getOrDefault(at, List.of()));
             }
             if (index != null) {
                 List<AnnotationIndex.Entry> visible = new ArrayList<>();
