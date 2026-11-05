@@ -2632,11 +2632,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 graphics.drawString("Analyze from PC or selected instruction to show flow.", 25, 35);
                 return;
             }
-            if (!current()) {
-                graphics.setColor(getForeground());
-                graphics.drawString("Flow analysis is stale. Analyze again.", 25, 35);
-                return;
-            }
             if (selectionStart == null && candidateLane == null) invalidateLabels();
             Graphics2D g = (Graphics2D) graphics.create();
             double scale = zoomLevels[zoomIndex] / 100.0;

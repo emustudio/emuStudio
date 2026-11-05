@@ -585,13 +585,14 @@ public class DebuggerPanelTest {
 
     @Test
     public void steppingReanalyzesVisiblePcBasedFlow() throws Exception {
-        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
+        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1), release = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
             Disassembler decoder = session.cpu.getDisassembler();
             when(decoder.getFlow(0)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of())));
             when(decoder.getFlow(1)).thenAnswer(call -> {
                 reanalyzed.countDown();
+                assertTrue(release.await(5, TimeUnit.SECONDS));
                 return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of()));
             });
         })) {
@@ -605,11 +606,23 @@ public class DebuggerPanelTest {
             });
             assertTrue(shown.await(5, TimeUnit.SECONDS));
 
-            SwingUtilities.invokeAndWait(() -> {
-                when(workspace.session.cpu.getInstructionLocation()).thenReturn(1);
-                workspace.panel.stepCompleted();
-            });
-            assertTrue("Stepping should analyze the new PC", reanalyzed.await(5, TimeUnit.SECONDS));
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                    graph.setSize(graph.getPreferredSize());
+                    java.awt.image.BufferedImage before = new java.awt.image.BufferedImage(460, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics beforeGraphics = before.getGraphics();
+                    try { graph.paint(beforeGraphics); } finally { beforeGraphics.dispose(); }
+                    workspace.session.runExecution(() -> {});
+                    when(workspace.session.cpu.getInstructionLocation()).thenReturn(1);
+                    workspace.panel.stepCompleted();
+                    java.awt.image.BufferedImage during = new java.awt.image.BufferedImage(460, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics duringGraphics = during.getGraphics();
+                    try { graph.paint(duringGraphics); } finally { duringGraphics.dispose(); }
+                    assertEquals("Existing graph remains visible during analysis", before.getRGB(100, 50), during.getRGB(100, 50));
+                });
+                assertTrue("Stepping should analyze the new PC", reanalyzed.await(5, TimeUnit.SECONDS));
+            } finally { release.countDown(); }
         }
     }
 
