@@ -65,7 +65,7 @@ public class DebuggerPanelTest {
             java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                 Container annotations = (Container) tabs.getSelectedComponent();
                 assertNull(findComponent(annotations, JButton.class, "Save annotation"));
                 assertFalse(button(annotations, "Edit selected annotation").isEnabled());
@@ -99,12 +99,85 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void searchingSelectsAnAnnotationOutsideTheAnalyzedFlow() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 12, 14, "buffer", "DATA"));
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                assertEquals(-1, tabs.indexOfTab("Annotations"));
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                Container panel = (Container) tabs.getSelectedComponent();
+                AbstractButton edit = button(panel, "Edit selected annotation");
+                AbstractButton delete = button(panel, "Delete selected annotation");
+                assertFalse(edit.isEnabled());
+                assertFalse(delete.isEnabled());
+                for (String name : List.of("Annotate inspected address", "Edit selected annotation",
+                        "Delete selected annotation", "Import annotations", "Export annotations")) {
+                    AbstractButton action = button(panel, name);
+                    assertTrue(action.getText() == null || action.getText().isEmpty());
+                    assertNotNull(action.getIcon());
+                }
+
+                JTextField search = component(panel, JTextField.class, "Search annotations");
+                search.setText("buffer");
+                search.postActionEvent();
+
+                JPanel graph = component(panel, JPanel.class, "Instruction flow graph");
+                assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("buffer"));
+                assertTrue(edit.isEnabled());
+                assertTrue(delete.isEnabled());
+                assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                        0, 0, 10, 40, 0, false)).contains("buffer"));
+                doubleClickLaneAndCancel(graph, 10, 40, "buffer");
+                graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                        0, 0, 300, 300, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                assertFalse(edit.isEnabled());
+                assertFalse(delete.isEnabled());
+            });
+        }
+    }
+
+    @Test
+    public void annotationToolbarExportsAndImportsUserAnnotations() throws Exception {
+        Path file = temporary.getRoot().toPath().resolve("annotations.properties");
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 5, "buffer", "DATA"));
+            SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Export annotations", file));
+            assertTrue(java.nio.file.Files.isRegularFile(file));
+            workspace.session.annotations().clear();
+
+            SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Import annotations", file));
+
+            assertEquals("buffer", workspace.session.annotations().get(3).label);
+        }
+    }
+
+    private static void chooseAnnotationFile(Container panel, String action, Path file) {
+        AtomicBoolean chosen = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (Window window : Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing()) continue;
+                JFileChooser chooser = findComponent((Container) window, JFileChooser.class, null);
+                if (chooser == null) continue;
+                ((Timer) event.getSource()).stop();
+                chooser.setSelectedFile(file.toFile());
+                chosen.set(true);
+                chooser.approveSelection();
+            }
+        });
+        timer.start();
+        try { button(panel, action).doClick(0); }
+        finally { timer.stop(); }
+        assertTrue("Expected file chooser", chosen.get());
+    }
+
+    @Test
     public void escapeDiscardsAnnotationDraftWithoutConfirmation() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                 Container annotations = (Container) tabs.getSelectedComponent();
                 Timer timer = new Timer(100, event -> {
                     for (java.awt.Window window : java.awt.Window.getWindows()) {
@@ -139,7 +212,7 @@ public class DebuggerPanelTest {
         try (Workspace workspace = workspace(new byte[][] {new byte[8], new byte[8]}, 8, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                 Container panel = (Container) tabs.getSelectedComponent();
                 editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
                     annotationField(dialog, "Address").setText("0x0001");
@@ -151,7 +224,8 @@ public class DebuggerPanelTest {
                     annotationField(dialog, "End address").setText("0x0005");
                     annotationField(dialog, "Label").setText("second");
                 });
-                @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(panel, JList.class, "Annotations");
+                JTextField search = component(panel, JTextField.class, "Search annotations");
+                @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
                 assertEquals(2, list.getModel().getSize());
                 int firstRow = list.getModel().getElementAt(0).label.equals("first") ? 0 : 1;
                 list.setSelectedIndex(firstRow);
@@ -211,7 +285,7 @@ public class DebuggerPanelTest {
                 for (String name : List.of("Inspect address", "Find strings", "Show source"))
                     assertNull(name, findComponent(workspace.panel, AbstractButton.class, name));
                 assertNotNull(workspace.panel.watchesPanel());
-                assertTrue(tabs.indexOfTab("Annotations") >= 0);
+                assertEquals(-1, tabs.indexOfTab("Annotations"));
             });
         }
     }
@@ -747,7 +821,7 @@ public class DebuggerPanelTest {
                     assertEquals(30, graphScroll.getVerticalScrollBar().getUnitIncrement());
                     AtomicInteger symbolReads = new AtomicInteger();
                     workspace.panel.setSymbols(() -> { symbolReads.incrementAndGet(); return List.of(); });
-                    workspace.panel.setSourceNavigationStatus("Source mapping current", true);
+                    workspace.panel.setSourceMappingsCurrent(true);
                     graph.setSize(graph.getPreferredSize());
                     java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(600, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
                     java.awt.Graphics2D graphics = image.createGraphics();

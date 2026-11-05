@@ -77,12 +77,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
 
             f.sourceLine(3);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
-            JLabel status = findComponent(f.debugger, JLabel.class,
-                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(status::getText).contains("Memory image changed"));
             runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
             assertEquals(3, f.line());
-            assertTrue(onEdt(status::getText).contains("Memory image changed"));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }
@@ -117,9 +113,9 @@ public class SourceNavigationTest extends AbstractSwingTest {
         try (Fixture f = new Fixture()) {
             f.compile(false, () -> f.session.runMutation(() -> {}));
 
-            JLabel status = findComponent(f.debugger, JLabel.class,
-                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(status::getText).contains("Source mappings unavailable"));
+            runOnEdt(() -> { f.debugger.showInstructions(); f.table.setRowSelectionInterval(0, 0); });
+            f.sourceLine(2);
+            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
         }
     }
 
@@ -132,36 +128,29 @@ public class SourceNavigationTest extends AbstractSwingTest {
             triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             f.running(true);
             runOnEdt(() -> f.pane.insert("; edited while running\n", 0));
-            JLabel status = findComponent(f.debugger, JLabel.class,
-                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(status::getText).contains("Source changed"));
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.running(false);
-            assertTrue(onEdt(status::getText).contains("Source changed"));
+            f.sourceLine(3);
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }
 
     @Test(timeout = 10000)
-    public void pinAndStaleSourceStatesExplainWhyFollowingStops() throws Exception {
+    public void pinAndStaleSourcesStopAutomaticFollowing() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            JLabel source = findComponent(f.debugger, JLabel.class,
-                    label -> "Source synchronization status".equals(label.getAccessibleContext().getAccessibleName()));
             assertFalse(onEdt(f.debugger::isInspectionPinned));
             triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             f.sourceLine(3);
             assertTrue(onEdt(f.debugger::isInspectionPinned));
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
-            assertTrue(onEdt(source::getText).contains("Source changed"));
-            assertTrue(onEdt(source::isVisible));
             runOnEdt(() -> { f.pane.setText(f.text); assertTrue(f.editor.saveFile()); });
             f.compile(false);
             f.sourceLine(2);
-            assertFalse(onEdt(source::isVisible));
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }

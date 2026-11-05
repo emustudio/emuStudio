@@ -45,7 +45,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private boolean pinnedSelection;
     private final JCheckBoxMenuItem pinInspection = new JCheckBoxMenuItem("Pin inspection");
     private java.util.function.Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
-    private final JLabel sourceContext = new JLabel();
     private boolean sourceMappingsCurrent;
     private final DebugSession session;
     private final GUI gui;
@@ -66,6 +65,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JPanel annotationList = new JPanel(new CardLayout());
     private final JLabel annotationEmpty = new JLabel("", SwingConstants.CENTER);
     private final JTextField annotationFilter;
+    private JButton editAnnotation, deleteAnnotation;
+    private final JPopupMenu annotationResults = new JPopupMenu();
     private final Set<String> changedWatches = new HashSet<>();
     private List<String> displayedWatches = List.of();
     private List<DebugSession.AccessRule> displayedMemoryWatches = List.of();
@@ -233,19 +234,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
-        if (byteMemory) {
-            tabs.addTab("Annotations", annotationPanel());
-        }
         watchPanel = watchPanel();
         breakpointPanel = rulePanel();
         tabs.addTab("Breakpoints", breakpointPanel);
         tabs.addTab("Inspection", flowPanel());
         tabs.addTab("History", historyPanel());
         add(tabs, BorderLayout.CENTER);
-        JPanel context = gui.panel("insets 2 6, fillx, hidemode 3", "[grow]", "");
-        sourceContext.getAccessibleContext().setAccessibleName("Source synchronization status");
-        context.add(sourceContext, "growx");
-        add(context, BorderLayout.NORTH);
         tabs.addChangeListener(event -> activateView());
         activateView();
         session.cpu.addCPUListener(stateListener);
@@ -320,11 +314,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return pinnedSelection;
     }
 
-    public void setSourceNavigationStatus(String message, boolean current) {
-        sourceContext.setText(message);
-        sourceContext.setToolTipText(message);
-        sourceContext.getAccessibleContext().setAccessibleDescription(message);
-        sourceContext.setVisible(!message.isEmpty() && !"Source mapping current".equals(message));
+    public void setSourceMappingsCurrent(boolean current) {
         sourceMappingsCurrent = current;
         graph.invalidateLabels();
         table.repaint();
@@ -386,7 +376,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         index = loaded;
         if (annotationForm != null) annotationForm.load(inspectedAddress);
         refreshAnnotations(annotationFilter.getText());
-        if (annotationForm != null) selectAnnotationTarget();
         table.repaint();
         requestRefresh();
     }
@@ -668,8 +657,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         notifyAddressSelection(visit);
     }
 
-    private JPanel annotationPanel() {
-        JPanel panel = borderPanel(4);
+    private void annotationTools(JPanel tools) {
         annotations.setCellRenderer(new DetailRenderer<>((entry, row) -> {
             String kind = "Data";
             if (entry.kind.equals("UNKNOWN")) kind = "Unspecified";
@@ -682,70 +670,73 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotations.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         annotationList.add(gui.scrollPane(annotations), "list");
         annotationList.add(annotationEmpty, "empty");
-        panel.add(annotationList, BorderLayout.CENTER);
+        annotationResults.setLayout(new BorderLayout());
+        annotationResults.add(annotationList, BorderLayout.CENTER);
+        annotationResults.setPreferredSize(new Dimension(320, 200));
+        annotationFilter.setComponentPopupMenu(annotationResults);
+        annotationFilter.setToolTipText("Search annotations");
+        annotationFilter.getAccessibleContext().setAccessibleName("Search annotations");
         annotationForm = new AnnotationForm();
-        JPanel tools = row();
-        JButton editAnnotation = button(ICON_RENAME, "Edit selected annotation", () -> {
+        editAnnotation = button(ICON_RENAME, "Edit selected annotation", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (entry != null) showAnnotationEditor(entry.address, "Edit annotation", entry);
         });
-        editAnnotation.setText("Edit");
         editAnnotation.setEnabled(false);
         annotations.addListSelectionListener(e -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
-            editAnnotation.setEnabled(entry != null);
-            if (updatingAnnotations || e.getValueIsAdjusting() || entry == null
-                    || annotationForm.matches(entry)) return;
+            updateAnnotationActions();
+            if (updatingAnnotations || e.getValueIsAdjusting() || entry == null) return;
             if (!confirmSaveAnnotations()) {
                 selectAnnotationTarget();
                 return;
             }
             annotationForm.loadEntry(entry);
-            graph.selectAnnotation(entry.id);
+            graph.showAnnotation(entry);
+            annotationResults.setVisible(false);
             guard(() -> navigate(entry.address, true, NavigationTarget.SOURCE_DATA));
         });
         JToolBar filterTools = line(tools, label("Search annotations", annotationFilter), annotationFilter);
-        JButton newAnnotation = button(ICON_RENAME, "Annotate inspected address", () -> {
+        JButton newAnnotation = button(ICON_ADD, "Annotate inspected address", () -> {
             if (!confirmSaveAnnotations()) return;
             showAnnotationEditor(inspectedAddress, "New annotation", null);
         });
-        newAnnotation.setText("New");
         filterTools.add(newAnnotation);
         filterTools.add(editAnnotation);
-        JPopupMenu management = new JPopupMenu();
-        management.add(annotationMenuItem("Import annotations…", () -> {
+        deleteAnnotation = button(ICON_REMOVE, "Delete selected annotation", () -> {
+            AnnotationIndex.Entry entry = annotations.getSelectedValue();
+            if (entry == null || !confirmSaveAnnotations()) return;
+            if (!confirm(String.format("Delete annotation at %04X?", entry.address), "Delete annotation")) return;
+            changeAnnotations(() -> index.remove(entry));
+            annotationForm.load(entry.address);
+        });
+        deleteAnnotation.setEnabled(false);
+        filterTools.add(deleteAnnotation);
+        filterTools.add(button(ICON_OPEN_FILE, "Import annotations", () -> {
             if (!confirmSaveAnnotations()) return;
             Path path = choose(false, false);
             if (path == null) return;
             changeAnnotations(() -> index.load(path));
             annotationForm.load(annotationForm.address);
         }));
-        JMenuItem delete = annotationMenuItem("Delete selected annotation…", () -> {
-            AnnotationIndex.Entry entry = annotations.getSelectedValue();
-            if (entry == null || !confirmSaveAnnotations()) return;
-            if (!confirm(String.format("Delete annotation at %04X?", entry.address),
-                    "Delete annotation")) return;
-            changeAnnotations(() -> index.remove(entry));
-            annotationForm.load(entry.address);
-        });
-        management.add(delete);
-        management.addSeparator();
-        management.add(annotationMenuItem("Clear all annotations…", () -> {
-            if (!confirmSaveAnnotations()) return;
-            if (!confirm("Remove all annotations from this image?", "Clear annotations")) return;
-            changeAnnotations(index::clear);
-            annotationForm.load(inspectedAddress);
+        filterTools.add(button(ICON_SAVE, "Export annotations", () -> {
+            Path path = choose(true, false);
+            if (path != null && (!Files.exists(path) || confirm("Replace existing file?", "Export annotations")))
+                index.save(path);
         }));
-        JButton manage = new JButton("Manage…");
-        manage.getAccessibleContext().setAccessibleName("Manage annotations");
-        manage.addActionListener(event -> {
-            delete.setEnabled(annotations.getSelectedValue() != null);
-            management.show(manage, 0, manage.getHeight());
+        onTextChange(() -> {
+            refreshAnnotations(annotationFilter.getText());
+            if (annotationFilter.isShowing() && annotationFilter.hasFocus() && !annotationFilter.getText().isEmpty())
+                annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
+        }, annotationFilter);
+        annotationFilter.addActionListener(event -> {
+            if (!annotationRows.isEmpty()) annotations.setSelectedIndex(0);
         });
-        filterTools.add(manage);
-        onTextChange(() -> refreshAnnotations(annotationFilter.getText()), annotationFilter);
-        panel.add(scrollTools(tools), BorderLayout.NORTH);
-        return panel;
+    }
+
+    private void updateAnnotationActions() {
+        boolean selected = annotations.getSelectedValue() != null;
+        if (editAnnotation != null) editAnnotation.setEnabled(selected);
+        if (deleteAnnotation != null) deleteAnnotation.setEnabled(selected);
     }
 
     private void showAnnotationEditor(int address, String title, AnnotationIndex.Entry entry) {
@@ -763,12 +754,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         dialog.setVisible(true);
         annotationForm.onSaved = () -> {};
         annotationForm.load(address);
-    }
-
-    private JMenuItem annotationMenuItem(String text, Operation operation) {
-        JMenuItem item = new JMenuItem(text);
-        item.addActionListener(event -> guard(operation));
-        return item;
     }
 
     private boolean confirm(String message, String title) {
@@ -797,6 +782,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refreshAnnotations(annotationFilter.getText());
         table.repaint();
         if (graph.flow != null) analyzeFlow(graph.start, flowFromPc);
+        else {
+            graph.lanes.clear();
+            graph.selectedLane = -1;
+            AnnotationIndex.Entry selected = annotations.getSelectedValue();
+            if (selected != null) graph.showAnnotation(selected);
+            graph.updateGraphSize();
+            graph.repaint();
+        }
     }
 
     public boolean confirmSaveAnnotations() {
@@ -1174,6 +1167,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(label("Zoom", zoom));
         zoom.getAccessibleContext().setAccessibleName("Graph zoom");
         actions.add(zoom);
+        if (byteMemory) annotationTools(tools);
         graph.getAccessibleContext().setAccessibleDescription(
                 "Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
         panel.add(scrollTools(tools), BorderLayout.NORTH);
@@ -1923,8 +1917,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         } finally {
             updatingAnnotations = wasUpdating;
         }
+        updateAnnotationActions();
         annotationEmpty.setText(index == null || index.entries().isEmpty()
-                ? "<html>No annotations yet.<br>Select an address in Debugger or Memory, choose New, then Save.</html>"
+                ? "<html>No annotations yet.<br>Select an address and create an annotation.</html>"
                 : "<html>No matching annotations.<br>Change Search annotations.</html>");
         ((CardLayout) annotationList.getLayout()).show(annotationList, entries.isEmpty() ? "empty" : "list");
     }
@@ -2365,6 +2360,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 }
                             }
                             selectedLane = -1;
+                            annotations.clearSelection();
                             selectNode(-1);
                         }
                     };
@@ -2434,19 +2430,24 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private void editLane(int lane) {
             AnnotationIndex.Entry annotation = lanes.get(lane).annotation;
             guard(() -> {
-                requireCurrent();
                 if (confirmSaveAnnotations())
                     showAnnotationEditor(annotation.address, "Edit annotation", annotation);
             });
         }
 
-        private void selectAnnotation(long id) {
+        private void showAnnotation(AnnotationIndex.Entry annotation) {
             for (int i = 0; i < lanes.size(); i++) {
-                if (lanes.get(i).annotation.id == id) {
+                if (lanes.get(i).annotation.id == annotation.id) {
                     selectLane(i);
                     return;
                 }
             }
+            int top = boxes.values().stream().mapToInt(box -> box.y + box.height).max().orElse(10) + 25;
+            for (AnnotationLane lane : lanes) top = Math.max(top, lane.bounds.y + lane.bounds.height + 12);
+            Rectangle bounds = new Rectangle(5, top, 220, 45);
+            lanes.add(new AnnotationLane(annotation, bounds, new Rectangle(8, top + 3, 100, 24)));
+            updateGraphSize();
+            selectLane(lanes.size() - 1);
         }
 
         private int laneColorIndex(long id) {
@@ -2492,8 +2493,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         @Override public String getToolTipText(MouseEvent event) {
-            if (flow == null) return "Analyze from PC or selected instruction to show flow";
-            if (!current()) return "Flow analysis is stale. Analyze again.";
+            if (flow != null && !current()) return "Flow analysis is stale. Analyze again.";
             if (selectionStart == null && candidateLane == null) invalidateLabels();
             Point point = modelPoint(event.getPoint());
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
@@ -2504,7 +2504,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (lane.header.contains(point))
                     return String.format("%s · %04X–%04X", laneTitle(lane.annotation),
                             lane.annotation.address, lane.annotation.end - 1);
-            return null;
+            return flow == null ? "Analyze from PC or selected instruction to show flow" : null;
         }
 
         void setFlow(FlowAnalysis flow) {
@@ -2559,6 +2559,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
             }
             if (!boxes.containsKey(selectedNode) && !boxes.isEmpty()) selectedNode = boxes.keySet().iterator().next();
+            AnnotationIndex.Entry selectedAnnotation = annotations.getSelectedValue();
+            if (selectedAnnotation != null) showAnnotation(selectedAnnotation);
             updateFlowNavigation();
             updateSelectedEdges();
             updateGraphSize();
@@ -2619,15 +2621,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         private void updateGraphSize() {
             double scale = zoomLevels[zoomIndex] / 100.0;
+            int bottom = lanes.stream().mapToInt(lane -> lane.bounds.y + lane.bounds.height + 20).max().orElse(0);
             setPreferredSize(new Dimension((int) Math.ceil(Math.max(460, 290 + lanes.size() * 114 + selectedEdges.size() * 20) * scale),
-                    (int) Math.ceil(Math.max(400, boxes.size() * 90 + 50) * scale)));
+                    (int) Math.ceil(Math.max(Math.max(400, boxes.size() * 90 + 50), bottom) * scale)));
             revalidate();
         }
 
         @Override
         protected void paintComponent(Graphics graphics) {
             super.paintComponent(graphics);
-            if (flow == null) {
+            if (flow == null && lanes.isEmpty()) {
                 graphics.setColor(getForeground());
                 graphics.drawString("Analyze from PC or selected instruction to show flow.", 25, 35);
                 return;
