@@ -99,6 +99,38 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void inspectionToolbarShowsAllAnnotationsWhenEmptySearchIsClicked() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 8, 9, "second", "DATA"));
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                Container inspection = (Container) tabs.getSelectedComponent();
+                JTextField search = component(inspection, JTextField.class, "Search annotations");
+                JToolBar toolbar = (JToolBar) SwingUtilities.getAncestorOfClass(JToolBar.class, search);
+                assertSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Analyze from PC")));
+                assertSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Export annotations")));
+                assertNull(findComponent(inspection, JLabel.class, "Search annotations"));
+                JFrame frame = new JFrame();
+                try {
+                    frame.setContentPane(workspace.panel);
+                    frame.setSize(900, 600);
+                    frame.setVisible(true);
+                    search.dispatchEvent(new java.awt.event.MouseEvent(search, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            0, 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    JPopupMenu popup = search.getComponentPopupMenu();
+                    assertTrue(popup.isVisible());
+                    JList<?> results = component(popup, JList.class, "Annotations");
+                    assertEquals(2, results.getModel().getSize());
+                    assertEquals("first", ((AnnotationIndex.Entry) results.getModel().getElementAt(0)).label);
+                    assertEquals("second", ((AnnotationIndex.Entry) results.getModel().getElementAt(1)).label);
+                } finally { frame.dispose(); }
+            });
+        }
+    }
+
+    @Test
     public void searchingSelectsAnAnnotationOutsideTheAnalyzedFlow() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
             workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 12, 14, "buffer", "DATA"));

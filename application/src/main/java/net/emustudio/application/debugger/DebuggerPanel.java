@@ -657,7 +657,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         notifyAddressSelection(visit);
     }
 
-    private void annotationTools(JPanel tools) {
+    private void annotationTools(JToolBar tools) {
         annotations.setCellRenderer(new DetailRenderer<>((entry, row) -> {
             String kind = "Data";
             if (entry.kind.equals("UNKNOWN")) kind = "Unspecified";
@@ -695,13 +695,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             annotationResults.setVisible(false);
             guard(() -> navigate(entry.address, true, NavigationTarget.SOURCE_DATA));
         });
-        JToolBar filterTools = line(tools, label("Search annotations", annotationFilter), annotationFilter);
+        tools.addSeparator();
+        tools.add(annotationFilter);
         JButton newAnnotation = button(ICON_ADD, "Annotate inspected address", () -> {
             if (!confirmSaveAnnotations()) return;
             showAnnotationEditor(inspectedAddress, "New annotation", null);
         });
-        filterTools.add(newAnnotation);
-        filterTools.add(editAnnotation);
+        tools.add(newAnnotation);
+        tools.add(editAnnotation);
         deleteAnnotation = button(ICON_REMOVE, "Delete selected annotation", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (entry == null || !confirmSaveAnnotations()) return;
@@ -710,24 +711,32 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             annotationForm.load(entry.address);
         });
         deleteAnnotation.setEnabled(false);
-        filterTools.add(deleteAnnotation);
-        filterTools.add(button(ICON_OPEN_FILE, "Import annotations", () -> {
+        tools.add(deleteAnnotation);
+        tools.add(button(ICON_OPEN_FILE, "Import annotations", () -> {
             if (!confirmSaveAnnotations()) return;
             Path path = choose(false, false);
             if (path == null) return;
             changeAnnotations(() -> index.load(path));
             annotationForm.load(annotationForm.address);
         }));
-        filterTools.add(button(ICON_SAVE, "Export annotations", () -> {
+        tools.add(button(ICON_SAVE, "Export annotations", () -> {
             Path path = choose(true, false);
             if (path != null && (!Files.exists(path) || confirm("Replace existing file?", "Export annotations")))
                 index.save(path);
         }));
         onTextChange(() -> {
             refreshAnnotations(annotationFilter.getText());
-            if (annotationFilter.isShowing() && annotationFilter.hasFocus() && !annotationFilter.getText().isEmpty())
+            if (annotationFilter.isShowing() && annotationFilter.hasFocus())
                 annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
         }, annotationFilter);
+        annotationFilter.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent event) {
+                if (SwingUtilities.isLeftMouseButton(event) && annotationFilter.isShowing()) {
+                    refreshAnnotations(annotationFilter.getText());
+                    annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
+                }
+            }
+        });
         annotationFilter.addActionListener(event -> {
             if (!annotationRows.isEmpty()) annotations.setSelectedIndex(0);
         });
@@ -1167,7 +1176,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(label("Zoom", zoom));
         zoom.getAccessibleContext().setAccessibleName("Graph zoom");
         actions.add(zoom);
-        if (byteMemory) annotationTools(tools);
+        if (byteMemory) annotationTools(actions);
         graph.getAccessibleContext().setAccessibleDescription(
                 "Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
         panel.add(scrollTools(tools), BorderLayout.NORTH);
