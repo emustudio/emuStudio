@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
@@ -162,7 +163,7 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "CALL 6", InstructionFlow.Kind.CALL, 2, false, List.of(6));
         instruction(disassembler, 6, "JP 0", InstructionFlow.Kind.JUMP, 7, false, List.of(0));
-        ProgramIndex index = ProgramIndex.create("flow", 8);
+        ProgramIndex index = ProgramIndex.create("flow", 8, new AnnotationEngine());
 
         FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, index).publish();
 
@@ -260,7 +261,7 @@ public class FlowAnalysisTest {
         verifyNoInteractions(disassembler);
     }
 
-    private static ProgramIndex index(int size) { return ProgramIndex.create("test", size); }
+    private static ProgramIndex index(int size) { return ProgramIndex.create("test", size, new AnnotationEngine()); }
 
     private static FlowAnalysis reachable(Disassembler disassembler, int start, int limit, ProgramIndex index) {
         return FlowAnalysis.reachable(disassembler, start, limit, index).publish();

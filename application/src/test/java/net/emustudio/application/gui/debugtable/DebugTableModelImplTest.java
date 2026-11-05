@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.application.debugger.InstructionIndex;
@@ -332,7 +333,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void currentIndexedInstructionCoverageSuppliesLengthsWithoutLiveDecode() {
-        ProgramIndex index = ProgramIndex.create("indexed-page", 16);
+        ProgramIndex index = ProgramIndex.create("indexed-page", 16, new AnnotationEngine());
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
             for (int at = 0; at < 16; at += 2)
@@ -358,7 +359,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void cpuAddressesBeyondSmallerMemoryIndexRetainDecoderFallback() {
-        ProgramIndex index = ProgramIndex.create("partial-memory", 8);
+        ProgramIndex index = ProgramIndex.create("partial-memory", 8, new AnnotationEngine());
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(countedCpu(new AtomicInteger(), at -> at + 1, 12, 16));
         model.setMaxRows(3);
@@ -371,7 +372,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void revisionChangeInvalidatesOperandCellAndFallbackWithoutUiNotification() {
-        ProgramIndex index = ProgramIndex.create("operand-edit", 16);
+        ProgramIndex index = ProgramIndex.create("operand-edit", 16, new AnnotationEngine());
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
             edit.putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
@@ -394,7 +395,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void previousInstructionRefreshesRevisionBeforeAnyTableCellIsRead() {
-        ProgramIndex index = ProgramIndex.create("previous-after-edit", 16);
+        ProgramIndex index = ProgramIndex.create("previous-after-edit", 16, new AnnotationEngine());
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(countedCpu(calls, at -> at == 0 ? length.get() : at == 2 ? 4 : at + 1, 4, 16));
@@ -412,7 +413,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void instructionViewChangesLengthsAtTheSamePcAfterPublication() {
-        ProgramIndex index = ProgramIndex.create("instruction-page", 16);
+        ProgramIndex index = ProgramIndex.create("instruction-page", 16, new AnnotationEngine());
         try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(false);
             for (int at = 0; at < 16; at += 2)
@@ -445,7 +446,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void breakpointOnlyPublicationKeepsMaterializedInstructionPage() {
-        ProgramIndex index = ProgramIndex.create("breakpoint-page", 16);
+        ProgramIndex index = ProgramIndex.create("breakpoint-page", 16, new AnnotationEngine());
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(countedCpu(calls, at -> at + 1, 4, 16));

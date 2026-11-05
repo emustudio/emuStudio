@@ -232,6 +232,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         generation++;
                         if (value == CPU.RunState.STATE_RUNNING) {
                             pendingHit = null;
+                            if (sourceMappings == null) sourceMappingsCleared = true;
                             synchronizeBreakpoints();
                             invalidateIndex();
                         }
@@ -287,21 +288,32 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     /** Invalidates analysis before and after a machine edit, even if the CPU emits no event. */
     public void runMutation(Runnable mutation) {
-        runMachineOperation(mutation);
+        runMachineOperation(mutation, true);
     }
 
     public void runExecution(Runnable execution) {
-        runMachineOperation(execution);
+        runMachineOperation(execution, true);
     }
 
-    private void runMachineOperation(Runnable mutation) {
+    /** Compilers report memory writes through the memory listener while execution is paused. */
+    public void runCompilation(Runnable compilation) {
+        boolean restoreNotifications = memory != null && !memory.areMemoryNotificationsEnabled();
+        if (restoreNotifications) memory.setMemoryNotificationsEnabled(true);
+        try {
+            runMachineOperation(compilation, false);
+        } finally {
+            if (restoreNotifications) memory.setMemoryNotificationsEnabled(false);
+        }
+    }
+
+    private void runMachineOperation(Runnable mutation, boolean invalidateMemory) {
         Objects.requireNonNull(mutation);
         SourceCaptureGuard operation = new SourceCaptureGuard();
         synchronized (this) {
             if (closed) throw new IllegalStateException("Debugger session closed");
             pendingHit = null;
             generation++;
-            invalidateIndex();
+            if (invalidateMemory) invalidateIndex();
             activeMutations++;
             activeSourceCapture = operation;
         }
@@ -311,7 +323,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             synchronized (this) {
                 activeMutations--;
                 generation++;
-                invalidateIndex();
+                if (invalidateMemory) invalidateIndex();
                 if (memory != null && !closed) programIndex();
                 operation.stamp = new Stamp(programIndex, generation);
                 if (activeMutations == 0) activeSourceCapture = null;
@@ -438,6 +450,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         // analysis lease, so its publication cannot race a blocked memory-listener callback.
         invalidateIndex();
         synchronized (this) {
+            if (sourceMappings == null) sourceMappingsCleared = true;
             generation++;
         }
     }

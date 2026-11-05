@@ -126,7 +126,7 @@ public class SourceAddressMapTest {
                 Map.of(address, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(0);
 
-        ProgramIndex index = ProgramIndex.create("sparse", Integer.MAX_VALUE);
+        ProgramIndex index = ProgramIndex.create("sparse", Integer.MAX_VALUE, new AnnotationEngine());
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "HALT\n"), index);
 
         assertEquals(Integer.MAX_VALUE, map.programIndex().snapshot().layout().addressSpaceSize());
@@ -208,7 +208,7 @@ public class SourceAddressMapTest {
                 new SourceToken(Token.SYMBOL_DEFINITION, 0, "value", "value", null, null)));
         when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UNKNOWN);
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 6))));
-        ProgramIndex index = ProgramIndex.create("unknown-units", 4);
+        ProgramIndex index = ProgramIndex.create("unknown-units", 4, new AnnotationEngine());
         ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
 
         SourceAddressMap map = capture(compiler, memory, Map.of(source, text), index);
@@ -248,7 +248,7 @@ public class SourceAddressMapTest {
     public void memoryRevisionMakesBindingsHistoricalWithoutErasingProvenance() throws Exception {
         Path source = source("history.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4);
+        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
 
         index.memoryChanged();
@@ -262,7 +262,7 @@ public class SourceAddressMapTest {
     public void refreshingSourceOwnerPreservesOtherOwnersAndRejectsOldSourceRevision() throws Exception {
         Path source = source("recompile.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4);
+        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
         ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
         SourceAddressMap first = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
         replaceSources(ENGINES.get(memory), Map.of(0, Set.of(annotation(source, 1, 0))));
@@ -294,7 +294,7 @@ public class SourceAddressMapTest {
     public void memoryChangeDuringCaptureRejectsPublication() throws Exception {
         Path source = source("race.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4);
+        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
         AnnotationEngine engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         doAnswer(call -> {
@@ -317,7 +317,7 @@ public class SourceAddressMapTest {
         replaceSources(annotations, Map.of(1, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(8);
         when(memory.getCellTypeClass()).thenReturn(Integer.class);
-        ProgramIndex index = ProgramIndex.create("words", 8);
+        ProgramIndex index = ProgramIndex.create("words", 8, new AnnotationEngine());
 
         SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT, annotations);
 
@@ -436,7 +436,7 @@ public class SourceAddressMapTest {
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts)
             throws IOException {
-        ProgramIndex index = memory == null ? null : ProgramIndex.create("test", memory.getSize());
+        ProgramIndex index = memory == null ? null : ProgramIndex.create("test", memory.getSize(), new AnnotationEngine());
         return capture(compiler, memory, texts, index);
     }
 

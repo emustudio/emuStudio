@@ -72,7 +72,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.sourceLine(2);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             net.emustudio.application.debugger.index.ProgramIndex previous = f.session.programIndex();
-            when(f.memory.getAddressSpaceSize()).thenReturn(64);
+            when(f.cpu.getAddressSpaceSize()).thenReturn(64);
             assertNotSame(previous, f.session.programIndex());
 
             f.sourceLine(3);
@@ -97,6 +97,18 @@ public class SourceNavigationTest extends AbstractSwingTest {
 
             assertTrue(f.annotations.at(2).stream().anyMatch(entry -> entry.source != null));
             assertTrue(f.session.sourceAt(2).isEmpty());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void failedCompilationPreservesCapturedSourceMapping() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            assertTrue(f.session.sourceAt(2).isPresent());
+
+            f.session.runCompilation(() -> f.compile(true));
+
+            assertTrue(f.session.sourceAt(2).isPresent());
         }
     }
 
@@ -237,7 +249,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void dirtyAndSavedEditsFailedCompilationAndRunningCpuNeverUseOldMappings() throws Exception {
+    public void failedCompilationPreservesMappingsWhileDirtyEditsAndRunningCpuBlockNavigation() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
@@ -254,7 +266,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.sourceLine(2);
             f.compile(true);
             f.sourceLine(3);
-            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             f.compile(false);
             f.sourceLine(2);
             f.running(true);
@@ -297,19 +309,18 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void compileBankIsCapturedBeforeCpuResetAndCloseDetachesSourceListener() throws Exception {
+    public void closingSourceNavigationDetachesCompilerListener() throws Exception {
         try (Fixture f = new Fixture()) {
             f.bank.set(1);
             f.compile(false); // Fixture resets selected CPU bank before queued UI work.
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
-            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
-            // Following compiled bank 1 must leave the live CPU bank at 0.
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
             assertEquals(0, f.bank.get());
             runOnEdt(f.navigation::close);
             verify(f.compiler).removeCompilerListener(f.compilerEvents);
             f.sourceLine(2);
-            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
         }
     }
 
@@ -338,12 +349,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             Files.writeString(path, text);
             memory = mock(MemoryContext.class);
             when(memory.getSize()).thenReturn(32);
-            when(memory.getAddressSpaceSize()).thenReturn(32);
-            when(memory.getBanksCount()).thenReturn(2);
-            when(memory.getCommonBoundary()).thenReturn(16);
-            when(memory.getSelectedBank()).thenAnswer(c -> bank.get());
             when(memory.getCellTypeClass()).thenReturn(Byte.class);
-            when(memory.readBank(anyInt(), anyInt())).thenReturn((byte) 0);
+            when(memory.read(anyInt())).thenReturn((byte) 0);
             when(cpu.getAddressSpaceSize()).thenReturn(32);
             when(cpu.getTitle()).thenReturn("Source navigation CPU");
             Disassembler disassembler = mock(Disassembler.class);
@@ -385,7 +392,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             table = findComponent(debugger, JTable.class, t -> true);
             runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {
                 if (!event.getValueIsAdjusting() && debugger.isInstructionView() && table.getSelectedRow() >= 0)
-                    debugger.followAddress(original.getLocationAt(table.convertRowIndexToModel(table.getSelectedRow())), bank.get());
+                    debugger.followAddress(original.getLocationAt(table.convertRowIndexToModel(table.getSelectedRow())));
             }));
             navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger));
             ArgumentCaptor<CompilerListener> captor = ArgumentCaptor.forClass(CompilerListener.class);
@@ -411,6 +418,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
                     for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i, i * 2, i * 2 + 1,
                             "source", "", SourceCodePosition.of(i + 1,
                             text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
+                    for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i + 3,
+                            i * 2, i * 2 + 1, "label", List.of("first", "second", "third").get(i), null));
                     annotations.replaceOwner(7, mappings);
                 }
                 compilerEvents.onFinish();

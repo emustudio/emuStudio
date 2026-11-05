@@ -653,7 +653,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         navigating = true;
         try {
             inspectedAddress = at;
-            if (graph.boxes.containsKey(at)) graph.selectNode(at);
+            if (graph.boxes.containsKey(at) && graph.selectedNode != at) graph.selectNode(at);
             if (target != NavigationTarget.SOURCE_DATA) {
                 if (visit && target == NavigationTarget.LISTING) showInstructions();
                 lastInstructionAddress = at;
@@ -1158,13 +1158,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JPanel panel = borderPanel(0);
         JPanel tools = row();
         JToolBar actions = line(tools);
-        JButton analyzePc = button(ICON_FIND, "Analyze from PC", this::analyzeFlow);
-        analyzePc.setText("Analyze from PC");
+        JButton analyzePc = button(ICON_CPU, "Analyze from PC", this::analyzeFlow);
         actions.add(analyzePc);
         JButton analyzeSelection = button(ICON_FIND, "Analyze from selected instruction", () -> analyzeFlow(lastInstructionAddress));
-        analyzeSelection.setText("Analyze from selected instruction");
         actions.add(analyzeSelection);
-        goToFlowInstruction = button(ICON_STEP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
+        goToFlowInstruction = button(ICON_JUMP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
         updateFlowNavigation();
         actions.add(goToFlowInstruction);
         JComboBox<String> zoom = new JComboBox<>(new String[]{"50%", "75%", "100%", "125%", "150%", "200%", "250%", "300%"});
@@ -1958,7 +1956,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         List<AnnotationIndex.Entry> all = index.entries();
         for (AnnotationIndex.Entry entry : entries) {
             int colorIndex = graph.laneColorIndex(entry.id);
-            if (colorIndex < 0) colorIndex = all.indexOf(entry);
+            if (colorIndex < 0) {
+                for (int i = 0; i < all.size(); i++) {
+                    if (all.get(i).id == entry.id) { colorIndex = i; break; }
+                }
+            }
             Color lane = laneFill(colorIndex);
             background = new Color((lane.getRed() * 28 + background.getRed() * 227 + 127) / 255,
                     (lane.getGreen() * 28 + background.getGreen() * 227 + 127) / 255,
@@ -2242,7 +2244,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         List<Integer> addresses = new ArrayList<>(boxes.keySet());
                         if (addresses.isEmpty()) return;
                         int current = addresses.indexOf(selectedNode);
-                        selectNode(addresses.get(current < 0 ? 0 : Math.floorMod(current + delta, addresses.size())));
+                        selectInstruction(addresses.get(current < 0 ? 0 : Math.floorMod(current + delta, addresses.size())), true);
                     }
                 });
             }
@@ -2325,7 +2327,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
                                 if (entry.getValue().contains(point)) {
                                     requestFocusInWindow();
-                                    selectNode(entry.getKey());
+                                    selectInstruction(entry.getKey(), false);
                                     if (e.getClickCount() == 2) followNode(entry.getKey());
                                     return;
                                 }
@@ -2446,13 +2448,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         private void selectNode(int address) {
+            selectNode(address, true);
+        }
+
+        private void selectInstruction(int address, boolean scroll) {
+            if (!current()) return;
+            selectNode(address, scroll);
+            guard(() -> navigate(address, false, NavigationTarget.LISTING));
+        }
+
+        private void selectNode(int address, boolean scroll) {
             selectedNode = address;
             updateFlowNavigation();
             Rectangle selected = boxes.get(address);
             updateSelectedEdges();
             updateGraphSize();
             repaint();
-            if (selected != null) scrollRectToVisible(viewRect(selected));
+            if (scroll && selected != null) scrollRectToVisible(viewRect(selected));
         }
 
         private void followNode(int address) {

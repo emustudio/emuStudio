@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 /**
  * Immutable, in-memory queries for one debugger session's memory image and layout.
@@ -28,16 +29,11 @@ public final class ProgramIndex {
     private ProgramIndex(String imageId, int size, AnnotationEngine annotationEngine) {
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         layout = new IndexLayout(imageId, size);
-        Content empty = new Content(null);
-        root = new AtomicReference<>(new View(identity, layout, empty, new BreakpointIndex(layout, new Breakpoint[0]),
+        root = new AtomicReference<>(new View(identity, layout, null, new BreakpointIndex(layout, new Breakpoint[0]),
                 0, 0, 0, FlowState.NOT_BUILT));
     }
 
     /** Creates an empty index, copying and validating its immutable layout. */
-    public static ProgramIndex create(String imageId, int addressSpaceSize) {
-        return new ProgramIndex(imageId, addressSpaceSize, new AnnotationEngine());
-    }
-
     public static ProgramIndex create(String imageId, int addressSpaceSize, AnnotationEngine annotationEngine) {
         return new ProgramIndex(imageId, addressSpaceSize, annotationEngine);
     }
@@ -46,13 +42,9 @@ public final class ProgramIndex {
 
     /** Invalidates graph results after live annotation changes. */
     public void annotationsChanged() {
-        while (true) {
-            View old = root.get();
-            View next = new View(identity, layout, old.content, old.breakpoints, old.contentRevision + 1,
-                    old.breakpointRevision, old.memoryRevision,
-                    old.flowState == FlowState.NOT_BUILT ? FlowState.NOT_BUILT : FlowState.STALE);
-            if (root.compareAndSet(old, next)) return;
-        }
+        update(old -> new View(identity, layout, old.flow, old.breakpoints, old.contentRevision + 1,
+                old.breakpointRevision, old.memoryRevision,
+                old.flowState == FlowState.NOT_BUILT ? FlowState.NOT_BUILT : FlowState.STALE));
     }
 
     /** Returns the existing coherent immutable root, without copying. */
@@ -61,20 +53,9 @@ public final class ProgramIndex {
     public BreakpointUpdate updateBreakpoints(Snapshot base) { return new BreakpointEdit(own(base)); }
 
     /**
-     * Replays a logical edit against fresh roots until it publishes. The edit returns false to
-     * abandon without committing. Unbounded: callers must not race a continuous writer.
+     * Replays a logical breakpoint edit against fresh roots until it publishes. The edit returns
+     * false to abandon without committing. Unbounded: callers must not race a continuous writer.
      */
-    public boolean editContent(BiPredicate<Snapshot, ContentUpdate> edit) {
-        while (true) {
-            Snapshot base = snapshot();
-            try (ContentUpdate update = updateContent(base)) {
-                if (!edit.test(base, update)) return false;
-                if (update.commit() == CommitResult.PUBLISHED) return true;
-            }
-        }
-    }
-
-    /** Breakpoint counterpart of {@link #editContent}. */
     public void editBreakpoints(BiPredicate<Snapshot, BreakpointUpdate> edit) {
         while (true) {
             Snapshot base = snapshot();
@@ -91,11 +72,17 @@ public final class ProgramIndex {
      * live memory. Analysis requires a stable capture or a verified paused lifecycle.
      */
     public void memoryChanged() {
+        update(old -> new View(identity, layout, old.flow, old.breakpoints, old.contentRevision, old.breakpointRevision,
+                old.memoryRevision + 1, FlowState.STALE));
+    }
+
+    /** Publishes change(current) with retry on contention; a null result abandons without publishing. */
+    private boolean update(UnaryOperator<View> change) {
         while (true) {
-            View old = root.get();
-            View next = new View(identity, layout, old.content, old.breakpoints, old.contentRevision, old.breakpointRevision,
-                    old.memoryRevision + 1, FlowState.STALE);
-            if (root.compareAndSet(old, next)) return;
+            View current = root.get();
+            View next = change.apply(current);
+            if (next == null) return false;
+            if (root.compareAndSet(current, next)) return true;
         }
     }
 
@@ -106,7 +93,6 @@ public final class ProgramIndex {
 
     public static final class Kinds {
         public static final String LABEL = "label";
-        public static final String CODE = "code";
         public static final String DATA = "data";
         private Kinds() { }
     }
@@ -229,16 +215,16 @@ public final class ProgramIndex {
     private static final class View implements Snapshot {
         final Object identity;
         final IndexLayout layout;
-        final Content content;
+        final FlowGraph flow;
         final BreakpointIndex breakpoints;
         final long contentRevision, breakpointRevision, memoryRevision;
         final FlowState flowState;
 
-        View(Object identity, IndexLayout layout, Content content, BreakpointIndex breakpoints, long contentRevision, long breakpointRevision,
+        View(Object identity, IndexLayout layout, FlowGraph flow, BreakpointIndex breakpoints, long contentRevision, long breakpointRevision,
              long memoryRevision, FlowState flowState) {
             this.identity = identity;
             this.layout = layout;
-            this.content = content;
+            this.flow = flow;
             this.breakpoints = breakpoints;
             this.contentRevision = contentRevision;
             this.breakpointRevision = breakpointRevision;
@@ -263,16 +249,16 @@ public final class ProgramIndex {
         private boolean flowAvailable() { return flowState == FlowState.CURRENT || flowState == FlowState.TRUNCATED; }
         @Override public Instruction instructionAt(int address) {
             layout.checkAddress(address);
-            return flowAvailable() ? content.flow.instructionAt(address) : null;
+            return flowAvailable() ? flow.instructionAt(address) : null;
         }
         @Override public void forEachSuccessor(int address, EdgeVisitor visitor) {
             layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.successors(address, visitor);
+            if (flowAvailable()) flow.successors(address, visitor);
         }
         @Override public void forEachInstruction(Consumer<? super Instruction> visitor) {
             Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.instructions(visitor);
+            if (flowAvailable()) flow.instructions(visitor);
         }
     }
 
@@ -348,19 +334,17 @@ public final class ProgramIndex {
         @Override public CommitResult commit() {
             requireOpen();
             open = false;
-            FlowGraph flow = instructions == null ? base.content.flow
+            FlowGraph flow = instructions == null ? base.flow
                     : new FlowGraph(layout, instructions, edges);
-            Content content = new Content(flow);
-            FlowState state = base.flowState;
-            if (instructions != null) state = truncated ? FlowState.TRUNCATED : FlowState.CURRENT;
-            while (true) {
-                View current = root.get();
-                if (current.contentRevision != base.contentRevision || current.memoryRevision != base.memoryRevision)
-                    return CommitResult.STALE;
-                View next = new View(identity, layout, content, current.breakpoints, current.contentRevision + 1,
-                        current.breakpointRevision, current.memoryRevision, state);
-                if (root.compareAndSet(current, next)) return CommitResult.PUBLISHED;
-            }
+            FlowState state;
+            if (instructions == null) state = base.flowState;
+            else state = truncated ? FlowState.TRUNCATED : FlowState.CURRENT;
+            boolean done = update(current ->
+                    current.contentRevision != base.contentRevision || current.memoryRevision != base.memoryRevision
+                            ? null
+                            : new View(identity, layout, flow, current.breakpoints, current.contentRevision + 1,
+                                    current.breakpointRevision, current.memoryRevision, state));
+            return done ? CommitResult.PUBLISHED : CommitResult.STALE;
         }
     }
 
@@ -391,20 +375,11 @@ public final class ProgramIndex {
             open = false;
             BreakpointIndex nextBreakpoints = values == null ? base.breakpoints
                     : new BreakpointIndex(layout, values.values().toArray(new Breakpoint[0]));
-            while (true) {
-                View current = root.get();
-                if (current.breakpointRevision != base.breakpointRevision) return CommitResult.STALE;
-                View next = new View(identity, layout, current.content, nextBreakpoints, current.contentRevision,
-                        current.breakpointRevision + 1, current.memoryRevision, current.flowState);
-                if (root.compareAndSet(current, next)) return CommitResult.PUBLISHED;
-            }
-        }
-    }
-
-    private static final class Content {
-        final FlowGraph flow;
-        Content(FlowGraph flow) {
-            this.flow = flow;
+            boolean done = update(current -> current.breakpointRevision != base.breakpointRevision
+                    ? null
+                    : new View(identity, layout, current.flow, nextBreakpoints, current.contentRevision,
+                            current.breakpointRevision + 1, current.memoryRevision, current.flowState));
+            return done ? CommitResult.PUBLISHED : CommitResult.STALE;
         }
     }
 

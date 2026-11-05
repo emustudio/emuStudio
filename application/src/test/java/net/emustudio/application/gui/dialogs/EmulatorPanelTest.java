@@ -8,6 +8,7 @@ import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
@@ -67,7 +68,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     }
 
     @Test
-    public void breakpointMouseAndEnterToggleTwoStatesWithoutRepagingOrOpeningSource() throws Exception {
+    public void instructionSelectionDoesNotToggleBreakpointsOrOpenSource() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
         Set<Integer> addresses = new HashSet<>();
@@ -88,7 +89,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, model,
                     mock(Dialogs.class), mock(EmulationController.class), null, source::set, new EmuStudioGui()));
             showInFrame(panel);
-            JTable table = findComponent(panel, JTable.class, t -> true);
+            JTable table = findComponent(panel, DebugTableImpl.class, t -> true);
             clearInvocations(model);
             runOnEdt(() -> {
                 java.awt.Rectangle cell = table.getCellRect(1, 0, true);
@@ -98,18 +99,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_CLICKED, 3, 0, x, y, 1, false, MouseEvent.BUTTON1));
             });
             runOnEdt(() -> {});
-            assertEquals(Set.of(4), addresses);
-            assertEquals(Boolean.TRUE, onEdt(() -> table.getValueAt(1, 0)));
-            runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
-                    new java.awt.event.ActionEvent(table, 0, "")));
-            runOnEdt(() -> {});
-            assertEquals(Boolean.FALSE, onEdt(() -> table.getValueAt(1, 0)));
             assertTrue(addresses.isEmpty());
             runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
-            assertEquals(Boolean.TRUE, onEdt(() -> table.getValueAt(1, 0)));
-            assertEquals(Set.of(4), addresses);
+            assertTrue(addresses.isEmpty());
             verify(model, never()).showAddress(anyInt());
             assertNull(source.get());
             runOnEdt(panel::close);

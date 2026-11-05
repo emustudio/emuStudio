@@ -94,7 +94,7 @@ public class DebuggerPanelTest {
                 timer.stop();
             });
             if (failure.get() != null) throw new AssertionError(failure.get());
-            assertEquals("entry", workspace.session.annotations().get(0, 1).label);
+            assertEquals("entry", workspace.session.annotations().get(1).label);
         }
     }
 
@@ -130,7 +130,7 @@ public class DebuggerPanelTest {
                 assertTrue(workspace.panel.confirmSaveAnnotations());
             });
             if (failure.get() != null) throw new AssertionError(failure.get());
-            assertNull(workspace.session.annotations().get(0, 0));
+            assertNull(workspace.session.annotations().get(0));
         }
     }
 
@@ -145,13 +145,11 @@ public class DebuggerPanelTest {
                     annotationField(dialog, "Address").setText("0x0001");
                     annotationField(dialog, "End address").setText("0x0004");
                     annotationField(dialog, "Label").setText("first");
-                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
                 });
                 editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
                     annotationField(dialog, "Address").setText("0x0002");
                     annotationField(dialog, "End address").setText("0x0005");
                     annotationField(dialog, "Label").setText("second");
-                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
                 });
                 @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(panel, JList.class, "Annotations");
                 assertEquals(2, list.getModel().getSize());
@@ -167,10 +165,8 @@ public class DebuggerPanelTest {
             assertEquals(2, entries.size());
             AnnotationIndex.Entry updated = entries.stream().filter(entry -> entry.label.equals("updated")).findFirst().orElseThrow();
             AnnotationIndex.Entry second = entries.stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
-            assertEquals(1, updated.bank);
             assertEquals(1, updated.address);
             assertEquals(7, updated.end);
-            assertEquals(1, second.bank);
             assertEquals(2, second.address);
             assertEquals(6, second.end);
         }
@@ -237,30 +233,29 @@ public class DebuggerPanelTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
-    public void browsingAnotherBankChangesInspectionWithoutMovingCpu() throws Exception {
+    public void browsingAnAddressChangesInspectionWithoutMovingCpu() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2, 3}, {4, 5, 3}}, 2, session -> {})) {
             List<String> selections = new ArrayList<>();
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.setAddressSelectionListener((address, bank, visit) ->
-                        selections.add(address + ":" + bank + ":" + visit));
-                workspace.panel.navigate(1, 1);
+                workspace.panel.setAddressSelectionListener((address, visit) ->
+                        selections.add(address + ":" + visit));
+                workspace.panel.navigate(1);
 
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals("Instruction listing", workspace.table.getAccessibleContext().getAccessibleName());
             });
 
-            assertEquals(List.of("1:1:true"), selections);
+            assertEquals(List.of("1:true"), selections);
             verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
         }
     }
 
     @Test
-    public void navigationRejectsAddressesAndBanksOutsideMemory() throws Exception {
+    public void navigationRejectsAddressesOutsideMemory() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(-1, 0));
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(2, 0));
-                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(0, 1));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(-1));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(2));
                 assertTrue(workspace.panel.isInstructionView());
             });
         }
@@ -284,9 +279,9 @@ public class DebuggerPanelTest {
 
     @Test
     public void breakpointListActionsTargetVisibleExecutionRuleAmongMemoryWatches() throws Exception {
-        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 0, -1, "", 1);
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 0, "", 1);
         DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, "", 1);
-        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, "", 1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
                 session -> session.rules.addAll(List.of(read, execute, write)))) {
             SwingUtilities.invokeAndWait(() -> {
@@ -312,8 +307,8 @@ public class DebuggerPanelTest {
     @Test
     public void memoryWatchActionsTargetVisibleWatchAmongExecutionRules() throws Exception {
         DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 0, "", 1);
-        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 1, -1, "", 1);
-        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, "", 1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
                 session -> session.rules.addAll(List.of(execute, read, write)))) {
             SwingUtilities.invokeAndWait(() -> {
@@ -334,7 +329,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void executionControlsHaveNoBankSelectorWhileMemoryWatchesKeepTheirBank() throws Exception {
+    public void executionControlsAndMemoryWatchesUseCpuVisibleAddresses() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.showBreakpoints();
@@ -347,12 +342,11 @@ public class DebuggerPanelTest {
                 assertFalse(rows.getModel().getElementAt(0).toString().contains("bank"));
 
                 Container watches = workspace.panel.watchesPanel();
-                JComboBox<?> bank = component(watches, JComboBox.class, "Memory watch bank");
-                bank.setSelectedIndex(2); // All banks, Bank 0, Bank 1.
+                assertNull(findComponent(watches, JComboBox.class, "Memory watch bank"));
                 button(watches, "Add memory watch").doClick(0);
                 DebugSession.AccessRule watch = (DebugSession.AccessRule) workspace.session.rules.stream()
                         .filter(rule -> rule instanceof DebugSession.AccessRule).findFirst().orElseThrow();
-                assertEquals(1, watch.bank);
+                assertEquals(0, watch.address);
                 assertEquals("WRITE", watch.kind);
             });
         }
@@ -476,7 +470,7 @@ public class DebuggerPanelTest {
                     session.setBreakpoint(1, true);
                 })) {
             SwingUtilities.invokeAndWait(() -> {
-                assertTrue(workspace.session.beforeInstruction(1, 0));
+                assertTrue(workspace.session.beforeInstruction(1));
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
@@ -548,6 +542,42 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").doClick(0);
                 assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
             });
+        }
+    }
+
+    @Test
+    public void selectingGraphInstructionUpdatesDebuggerAndAnalysisStart() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
+        AtomicInteger reads = new AtomicInteger();
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            Disassembler decoder = session.cpu.getDisassembler();
+            when(decoder.getFlow(0)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.JUMP, 1, true, List.of(1))));
+            when(decoder.getFlow(1)).thenAnswer(call -> {
+                if (reads.incrementAndGet() == 2) reanalyzed.countDown();
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of()));
+            });
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Analyze from PC").doClick(0);
+            });
+            assertTrue(shown.await(5, TimeUnit.SECONDS));
+
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                        0, 0, 40, 130, 1, false, java.awt.event.MouseEvent.BUTTON1));
+
+                assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
+                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+            });
+            assertTrue("Analysis should start at the selected graph instruction", reanalyzed.await(5, TimeUnit.SECONDS));
         }
     }
 
@@ -703,6 +733,28 @@ public class DebuggerPanelTest {
                     assertTrue(annotationIndex.entries().stream().anyMatch(entry -> entry.label.equals("region")));
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    for (String name : List.of("Analyze from PC", "Analyze from selected instruction", "Go to instruction")) {
+                        AbstractButton action = button(workspace.panel, name);
+                        assertTrue(action.getText() == null || action.getText().isEmpty());
+                        assertNotNull(action.getIcon());
+                    }
+                    JViewport graphViewport = graphScroll.getViewport();
+                    graphViewport.setViewSize(graph.getPreferredSize());
+                    graphViewport.setExtentSize(new Dimension(200, 100));
+                    graphViewport.setViewPosition(new Point(270, 130));
+                    Point beforeClick = graphViewport.getViewPosition();
+                    for (int count = 1; count <= 2; count++) {
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                                System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 280, 140, count, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                                System.currentTimeMillis(), 0, 280, 140, count, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                                System.currentTimeMillis(), 0, 280, 140, count, false, java.awt.event.MouseEvent.BUTTON1));
+                        if (count == 1) assertEquals(beforeClick, graphViewport.getViewPosition());
+                    }
+                    assertTrue(workspace.panel.isInstructionView());
+                    assertEquals(1, workspace.table.getSelectedRow());
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                     graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
                             System.currentTimeMillis(), 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
                     assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
@@ -815,7 +867,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void flowUsesCpuDecoderRegardlessOfInspectionBank() throws Exception {
+    public void flowUsesCpuDecoderForInspectedAddress() throws Exception {
         CountDownLatch decoded = new CountDownLatch(1), shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {
             Disassembler decoder = session.cpu.getDisassembler();
@@ -828,7 +880,7 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                workspace.panel.navigate(0, 1);
+                workspace.panel.navigate(0);
                 button(workspace.panel, "Analyze from PC").doClick(0);
             });
             assertTrue("CPU decoder should run", decoded.await(5, TimeUnit.SECONDS));
@@ -837,7 +889,6 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").doClick(0);
                 assertTrue(workspace.panel.isInstructionView());
             });
-            assertEquals(0, workspace.machine.memory.getSelectedBank());
             verify(workspace.dialogs, never()).showError(anyString(), eq("Debugger"));
         }
     }

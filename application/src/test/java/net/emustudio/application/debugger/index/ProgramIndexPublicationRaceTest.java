@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import org.junit.Test;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ProgramIndexPublicationRaceTest {
         ExecutorService workers = Executors.newFixedThreadPool(2);
         try {
             for (int attempt = 0; attempt < 20; attempt++) {
-                ProgramIndex index = create("same-component-race", 65536);
+                ProgramIndex index = create("same-component-race", 65536, new AnnotationEngine());
                 Snapshot base = index.snapshot();
                 CountDownLatch staged = new CountDownLatch(2), release = new CountDownLatch(1);
                 Future<CommitResult> first = workers.submit(() -> edit(index, base, 1, content, staged, release));
