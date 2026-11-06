@@ -109,7 +109,7 @@ public class DebuggerPanelTest {
                 Container inspection = (Container) tabs.getSelectedComponent();
                 JTextField search = component(inspection, JTextField.class, "Search annotations");
                 JToolBar toolbar = (JToolBar) SwingUtilities.getAncestorOfClass(JToolBar.class, search);
-                assertSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Analyze from PC")));
+                assertNotSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Analyze from PC")));
                 assertSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Export annotations")));
                 assertNull(findComponent(inspection, JLabel.class, "Search annotations"));
                 JFrame frame = new JFrame();
@@ -125,9 +125,121 @@ public class DebuggerPanelTest {
                     assertEquals(2, results.getModel().getSize());
                     assertEquals("first", ((AnnotationIndex.Entry) results.getModel().getElementAt(0)).label);
                     assertEquals("second", ((AnnotationIndex.Entry) results.getModel().getElementAt(1)).label);
+                    results.setSelectedIndex(1);
+                    java.awt.Rectangle selected = results.getCellBounds(1, 1);
+                    results.dispatchEvent(new java.awt.event.MouseEvent(results, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            0, 0, selected.x + 2, selected.y + 2, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(popup.isVisible());
+                    assertTrue(component(workspace.panel, JPanel.class, "Instruction flow graph")
+                            .getAccessibleContext().getAccessibleDescription().contains("second"));
                 } finally { frame.dispose(); }
             });
         }
+    }
+
+    @Test
+    public void annotationSearchKeyboardPreviewsThenActivatesTheChosenResult() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 8, 9, "second", "DATA"));
+            List<Integer> visits = new ArrayList<>();
+            JFrame frame = new JFrame();
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    frame.setContentPane(workspace.panel);
+                    frame.setSize(560, 420);
+                    frame.setVisible(true);
+                    JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                    JPopupMenu popup = search.getComponentPopupMenu();
+                    JList<?> results = component(popup, JList.class, "Annotations");
+
+                    pressKey(search, "DOWN");
+                    pressKey(search, "DOWN");
+
+                    assertTrue(popup.isVisible());
+                    assertEquals(1, results.getSelectedIndex());
+                    assertTrue(visits.isEmpty());
+
+                    search.postActionEvent();
+
+                    assertFalse(popup.isVisible());
+                    assertEquals(List.of(8), visits);
+                    assertTrue(component(workspace.panel, JPanel.class, "Instruction flow graph")
+                            .getAccessibleContext().getAccessibleDescription().contains("second"));
+
+                    pressKey(search, "UP");
+                    assertTrue(popup.isVisible());
+                    assertEquals(0, results.getSelectedIndex());
+                    pressKey(search, "ESCAPE");
+                    assertFalse(popup.isVisible());
+                    assertEquals(List.of(8), visits);
+                    assertEquals("", search.getText());
+
+                    pressKey(search, "DOWN");
+                    search.postActionEvent();
+                    pressKey(search, "DOWN");
+                    pressKey(search, "UP");
+                    search.postActionEvent();
+                    assertFalse(popup.isVisible());
+                    assertEquals(List.of(8, 8, 3), visits);
+                });
+            } finally { SwingUtilities.invokeAndWait(frame::dispose); }
+        }
+    }
+
+    @Test
+    public void annotationSearchHandlesEmptyResultsAndClosesWithTheWorkspace() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
+            List<Integer> visits = new ArrayList<>();
+            JFrame frame = new JFrame();
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    frame.setContentPane(workspace.panel);
+                    frame.setSize(560, 420);
+                    frame.setVisible(true);
+                    JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                    JPopupMenu popup = search.getComponentPopupMenu();
+
+                    search.setText("missing");
+                    pressKey(search, "DOWN");
+                    pressKey(search, "UP");
+                    search.postActionEvent();
+
+                    assertEquals(0, component(popup, JList.class, "Annotations").getModel().getSize());
+                    assertTrue(visits.isEmpty());
+                    pressKey(search, "ESCAPE");
+                    assertEquals("missing", search.getText());
+
+                    search.setText("");
+                    pressKey(search, "DOWN");
+                    assertTrue(popup.isVisible());
+                    workspace.panel.close();
+
+                    assertFalse(popup.isVisible());
+                    search.postActionEvent();
+                    search.setText("first");
+                    search.dispatchEvent(new java.awt.event.MouseEvent(search, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            0, 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(popup.isVisible());
+                    assertTrue(visits.isEmpty());
+                });
+            } finally { SwingUtilities.invokeAndWait(frame::dispose); }
+        }
+    }
+
+    private static void pressKey(JComponent component, String key) {
+        Object binding = component.getInputMap().get(KeyStroke.getKeyStroke(key));
+        assertNotNull("Missing key binding: " + key, binding);
+        Action action = component.getActionMap().get(binding);
+        assertNotNull("Missing key action: " + key, action);
+        action.actionPerformed(new java.awt.event.ActionEvent(component, java.awt.event.ActionEvent.ACTION_PERFORMED, key));
     }
 
     @Test
@@ -374,11 +486,22 @@ public class DebuggerPanelTest {
                 workspace.panel.setExecutionRunning(true);
                 assertFalse(workspace.table.isEnabled());
                 assertFalse(workspace.table.isVisible());
+                for (String name : List.of("Analyze from PC", "Analyze from selected instruction",
+                        "Go to instruction", "Annotate inspected address", "Edit selected annotation",
+                        "Delete selected annotation", "Import annotations", "Export annotations"))
+                    assertFalse(name, button(workspace.panel, name).isEnabled());
+                assertFalse(component(workspace.panel, JTextField.class, "Search annotations").isEnabled());
+                assertTrue(component(workspace.panel, JComboBox.class, "Graph zoom").isEnabled());
 
                 workspace.panel.setExecutionRunning(false);
                 workspace.panel.showInstructions();
                 assertTrue(workspace.table.isVisible());
                 assertTrue(workspace.table.isEnabled());
+                assertTrue(button(workspace.panel, "Analyze from PC").isEnabled());
+                assertTrue(button(workspace.panel, "Analyze from selected instruction").isEnabled());
+                assertFalse(button(workspace.panel, "Edit selected annotation").isEnabled());
+                assertFalse(button(workspace.panel, "Delete selected annotation").isEnabled());
+                assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
             });
         }
     }
@@ -761,31 +884,42 @@ public class DebuggerPanelTest {
     @Test
     public void inspectPopupAnalyzesRightClickedInstruction() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
-            when(session.cpu.getDisassembler().getFlow(1)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {
+            when(session.cpu.getDisassembler().getFlow(5)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 6, false, List.of())));
         })) {
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.navigate(0);
+                workspace.table.getSelectionModel().addListSelectionListener(event -> {
+                    int selected = workspace.table.getSelectedRow();
+                    if (!event.getValueIsAdjusting() && selected >= 0 && workspace.panel.isInstructionView())
+                        workspace.panel.followAddress(workspace.table.instructionModel().getLocationAt(selected));
+                });
+                workspace.panel.navigate(4);
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
                 workspace.table.setSize(workspace.table.getPreferredSize());
-                java.awt.Rectangle row = workspace.table.getCellRect(1, 1, true);
+                java.awt.Rectangle row = workspace.table.getCellRect(2, 1, true);
+                assertEquals(5, workspace.table.instructionModel().getLocationAt(2));
                 workspace.table.dispatchEvent(new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_PRESSED, 0, java.awt.event.InputEvent.BUTTON3_DOWN_MASK,
                         row.x + 2, row.y + 2, 1, false, java.awt.event.MouseEvent.BUTTON3));
-                assertEquals(1, workspace.table.getSelectedRow());
+                workspace.table.dispatchEvent(new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_RELEASED, 1, 0,
+                        row.x + 2, row.y + 2, 1, false, java.awt.event.MouseEvent.BUTTON3));
+                assertEquals(5, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 ((JMenuItem) workspace.table.getComponentPopupMenu().getComponent(0)).doClick(0);
             });
 
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
-            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(1));
-            assertNull(workspace.session.programIndex().snapshot().instructionAt(0));
+            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(5));
+            assertNull(workspace.session.programIndex().snapshot().instructionAt(4));
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
+                assertEquals(5, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
             });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
         }
     }
 
@@ -888,9 +1022,10 @@ public class DebuggerPanelTest {
                     tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                     for (String name : List.of("Analyze from PC", "Analyze from selected instruction", "Go to instruction")) {
                         AbstractButton action = button(workspace.panel, name);
-                        assertTrue(action.getText() == null || action.getText().isEmpty());
                         assertNotNull(action.getIcon());
                     }
+                    assertEquals("PC", button(workspace.panel, "Analyze from PC").getText());
+                    assertEquals("Selected", button(workspace.panel, "Analyze from selected instruction").getText());
                     JViewport graphViewport = graphScroll.getViewport();
                     graphViewport.setViewSize(graph.getPreferredSize());
                     graphViewport.setExtentSize(new Dimension(200, 100));

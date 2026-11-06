@@ -20,3 +20,7 @@ python3 resources/icons/generate.py --check  # verify
 PNG masters provide the 22px images; matching SVGs render the 44px variants. SVG-only masters are
 emuStudio-specific art. Tango artwork ([0.8.90](https://tango.freedesktop.org/releases/tango-icon-theme-0.8.90.tar.gz))
 is public domain (`TANGO-COPYING`, `TANGO-AUTHORS`); new SVGs and the generator are GPL-3.0-or-later.
+
+Inspection toolbar artwork uses PNG-only masters in `inspection/light/` and `inspection/dark/`,
+with explicit `@2x.png` masters for 44px. The manifest copies these into the application's main
+resources. These emuStudio-specific PNGs are GPL-3.0-or-later.

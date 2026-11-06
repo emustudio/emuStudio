@@ -32,7 +32,6 @@ public class BreakpointDialog extends DialogBase {
     private final Predicate<Request> submit;
     private final IntPredicate breakpointSet;
     private JTextField txtAddress;
-    private JLabel existingState;
     private JButton unset;
 
     public BreakpointDialog(JFrame parent, Dialogs dialogs, GUI gui, int initialAddress, int breakpointLimit,
@@ -59,10 +58,6 @@ public class BreakpointDialog extends DialogBase {
         panel.add(label);
         panel.add(txtAddress, "growx, wrap");
 
-        existingState = gui.label("");
-        existingState.getAccessibleContext().setAccessibleName("Existing breakpoint state");
-        panel.add(existingState, "span, wrap, gapbottom unrel");
-
         JPanel buttons = gui.panel("insets 0, fillx", "[grow][][]", "");
         unset = gui.button("Unset", () -> submit(Operation.UNSET));
         JButton set = gui.button("Set", () -> submit(Operation.SET));
@@ -86,10 +81,8 @@ public class BreakpointDialog extends DialogBase {
             int address = RadixUtils.getInstance().parseRadix(txtAddress.getText());
             if (address < 0 || address >= breakpointLimit) throw new NumberFormatException();
             boolean enabled = breakpointSet.test(address);
-            existingState.setText(enabled ? "Execution breakpoint on" : "No execution breakpoint at this address");
             unset.setEnabled(enabled);
         } catch (NumberFormatException e) {
-            existingState.setText("Enter a decimal or hexadecimal address");
             unset.setEnabled(false);
         }
     }

@@ -2,6 +2,8 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
@@ -61,7 +63,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JPanel breakpointPanel;
     private final JPanel watchPanel;
     private AnnotationForm annotationForm;
-    private boolean updatingAnnotations;
     private final JPanel annotationList = new JPanel(new CardLayout());
     private final JLabel annotationEmpty = new JLabel("", SwingConstants.CENTER);
     private final JTextField annotationFilter;
@@ -129,6 +130,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int lastInstructionAddress;
     private final GraphPanel graph = new GraphPanel();
     private JButton goToFlowInstruction;
+    private final JLabel flowOrigin = new JLabel();
+    private final List<JButton> inspectionButtons = new ArrayList<>();
     private boolean flowFromPc;
     private final Map<String, Long> watchValues = new HashMap<>();
     private AnnotationIndex index;
@@ -285,7 +288,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
             }
             @Override public void mousePressed(MouseEvent event) { selectPopupRow(event); }
-            @Override public void mouseReleased(MouseEvent event) { selectPopupRow(event); }
+            @Override public void mouseReleased(MouseEvent event) {
+                // Right-button press already selected the instruction and may have recentered the listing.
+                if (!SwingUtilities.isRightMouseButton(event)) selectPopupRow(event);
+            }
         });
         table.setComponentPopupMenu(selectionMenu);
         refresh();
@@ -366,6 +372,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void close() {
         if (disposed) return;
         disposed = true;
+        annotationResults.setVisible(false);
+        annotationFilter.setComponentPopupMenu(null);
         tasks.close();
         session.cpu.removeCPUListener(stateListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
@@ -394,6 +402,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void setBusy(boolean busy) {
         if (busy) {
+            annotationResults.setVisible(false);
             rememberAndDisable(this);
             if (watchPanel != null) rememberAndDisable(watchPanel);
             if (historyAnalysis && historyWorkControls != null) {
@@ -480,6 +489,42 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return button;
     }
 
+    private JButton inspectionButton(String icon, String tooltip, Operation operation) {
+        Action action = new AbstractAction(tooltip) {
+            @Override public void actionPerformed(ActionEvent event) { guard(operation); }
+        };
+        action.putValue(Action.SHORT_DESCRIPTION, tooltip);
+        JButton button = gui.toolbarButton(action);
+        button.setFocusable(true);
+        button.getAccessibleContext().setAccessibleName(tooltip);
+        button.putClientProperty("inspectionIcon", icon);
+        button.setIcon(loadInspectionIcon(icon, button, false));
+        button.setDisabledIcon(loadInspectionIcon(icon, button, true));
+        inspectionButtons.add(button);
+        return button;
+    }
+
+    private static Icon loadInspectionIcon(String name, JComponent component, boolean disabled) {
+        String theme = FlatLaf.isLafDark() ? "dark" : "light";
+        ImageIcon image = GUI.loadIcon("/net/emustudio/application/gui/icons/inspection/"
+                + theme + "/" + name + ".png", DebuggerPanel.class);
+        if (disabled) image = (ImageIcon) UIManager.getLookAndFeel().getDisabledIcon(component, image);
+        return new ScaledImageIcon(image);
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (inspectionButtons == null) return;
+        for (JButton button : inspectionButtons) {
+            String icon = (String) button.getClientProperty("inspectionIcon");
+            button.setIcon(loadInspectionIcon(icon, button, false));
+            button.setDisabledIcon(loadInspectionIcon(icon, button, true));
+        }
+        if (annotationFilter != null)
+            annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search", annotationFilter, false));
+    }
+
     private JToggleButton toggleButton(String icon, String tooltip) {
         JToggleButton button = gui.toolbarToggleButton(event -> {}, icon, tooltip);
         button.setFocusable(true);
@@ -529,7 +574,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void updateExecutionState() {
-        table.setEnabled(!running && !tasks.isBusy());
+        boolean paused = !running && !tasks.isBusy();
+        table.setEnabled(paused);
+        inspectionButtons.stream()
+                .filter(button -> button != goToFlowInstruction && button != editAnnotation && button != deleteAnnotation)
+                .forEach(button -> button.setEnabled(paused));
+        annotationFilter.setEnabled(paused);
+        if (!paused) annotationResults.setVisible(false);
+        updateAnnotationActions();
+        updateFlowNavigation();
         boolean visible = !running || !isInstructionView();
         table.setVisible(visible);
         tableScroll.setVisible(visible);
@@ -673,37 +726,37 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationResults.setLayout(new BorderLayout());
         annotationResults.add(annotationList, BorderLayout.CENTER);
         annotationResults.setPreferredSize(new Dimension(320, 200));
+        annotationResults.setFocusable(false);
         annotationFilter.setComponentPopupMenu(annotationResults);
         annotationFilter.setToolTipText("Search annotations");
         annotationFilter.getAccessibleContext().setAccessibleName("Search annotations");
+        annotationFilter.putClientProperty("JTextField.placeholderText", "Search annotations");
+        annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search", annotationFilter, false));
+        annotationFilter.putClientProperty("FlatLaf.style", "placeholderForeground: $TextField.foreground");
         annotationForm = new AnnotationForm();
-        editAnnotation = button(ICON_RENAME, "Edit selected annotation", () -> {
+        editAnnotation = inspectionButton("edit-annotation", "Edit selected annotation", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (entry != null) showAnnotationEditor(entry.address, "Edit annotation", entry);
         });
         editAnnotation.setEnabled(false);
-        annotations.addListSelectionListener(e -> {
-            AnnotationIndex.Entry entry = annotations.getSelectedValue();
-            updateAnnotationActions();
-            if (updatingAnnotations || e.getValueIsAdjusting() || entry == null) return;
-            if (!confirmSaveAnnotations()) {
-                selectAnnotationTarget();
-                return;
+        annotations.addListSelectionListener(e -> updateAnnotationActions());
+        annotations.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent event) {
+                int row = annotations.locationToIndex(event.getPoint());
+                if (SwingUtilities.isLeftMouseButton(event) && row >= 0
+                        && annotations.getCellBounds(row, row).contains(event.getPoint()))
+                    guard(DebuggerPanel.this::activateAnnotationResult);
             }
-            annotationForm.loadEntry(entry);
-            graph.showAnnotation(entry);
-            annotationResults.setVisible(false);
-            guard(() -> navigate(entry.address, true, NavigationTarget.SOURCE_DATA));
         });
+        tools.add(annotationFilter, "growx, pushx, wmin 160");
         tools.addSeparator();
-        tools.add(annotationFilter);
-        JButton newAnnotation = button(ICON_ADD, "Annotate inspected address", () -> {
+        JButton newAnnotation = inspectionButton("add-annotation", "Annotate inspected address", () -> {
             if (!confirmSaveAnnotations()) return;
             showAnnotationEditor(inspectedAddress, "New annotation", null);
         });
         tools.add(newAnnotation);
         tools.add(editAnnotation);
-        deleteAnnotation = button(ICON_REMOVE, "Delete selected annotation", () -> {
+        deleteAnnotation = inspectionButton("remove-annotation", "Delete selected annotation", () -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (entry == null || !confirmSaveAnnotations()) return;
             if (!confirm(String.format("Delete annotation at %04X?", entry.address), "Delete annotation")) return;
@@ -712,38 +765,82 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         });
         deleteAnnotation.setEnabled(false);
         tools.add(deleteAnnotation);
-        tools.add(button(ICON_OPEN_FILE, "Import annotations", () -> {
+        tools.addSeparator();
+        tools.add(inspectionButton("import", "Import annotations", () -> {
             if (!confirmSaveAnnotations()) return;
             Path path = choose(false, false);
             if (path == null) return;
             changeAnnotations(() -> index.load(path));
             annotationForm.load(annotationForm.address);
         }));
-        tools.add(button(ICON_SAVE, "Export annotations", () -> {
+        tools.add(inspectionButton("export", "Export annotations", () -> {
             Path path = choose(true, false);
             if (path != null && (!Files.exists(path) || confirm("Replace existing file?", "Export annotations")))
                 index.save(path);
         }));
         onTextChange(() -> {
+            if (disposed || running || tasks.isBusy()) return;
             refreshAnnotations(annotationFilter.getText());
             if (annotationFilter.isShowing() && annotationFilter.hasFocus())
                 annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
         }, annotationFilter);
         annotationFilter.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent event) {
-                if (SwingUtilities.isLeftMouseButton(event) && annotationFilter.isShowing()) {
+                if (!disposed && !running && !tasks.isBusy()
+                        && SwingUtilities.isLeftMouseButton(event) && annotationFilter.isShowing()) {
                     refreshAnnotations(annotationFilter.getText());
                     annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
                 }
             }
         });
-        annotationFilter.addActionListener(event -> {
-            if (!annotationRows.isEmpty()) annotations.setSelectedIndex(0);
+        annotationFilter.addActionListener(event -> guard(this::activateAnnotationResult));
+        bindAnnotationSearchKey(annotationFilter, "DOWN", () -> moveAnnotationResult(1));
+        bindAnnotationSearchKey(annotationFilter, "UP", () -> moveAnnotationResult(-1));
+        bindAnnotationSearchKey(annotationFilter, "ESCAPE", () -> annotationResults.setVisible(false));
+        bindAnnotationSearchKey(annotations, "ENTER", this::activateAnnotationResult);
+        bindAnnotationSearchKey(annotations, "ESCAPE", () -> {
+            annotationResults.setVisible(false);
+            annotationFilter.requestFocusInWindow();
         });
     }
 
+    private void bindAnnotationSearchKey(JComponent component, String key, Operation operation) {
+        String action = "annotationSearch" + key;
+        component.getInputMap().put(KeyStroke.getKeyStroke(key), action);
+        component.getActionMap().put(action, new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) { guard(operation); }
+        });
+    }
+
+    private void moveAnnotationResult(int direction) {
+        if (annotationFilter.isShowing() && !annotationResults.isVisible()) {
+            refreshAnnotations(annotationFilter.getText());
+            annotationResults.show(annotationFilter, 0, annotationFilter.getHeight());
+        }
+        if (annotationRows.isEmpty()) return;
+        int selected = annotations.getSelectedIndex();
+        int next = selected < 0 ? (direction > 0 ? 0 : annotationRows.size() - 1)
+                : Math.max(0, Math.min(annotationRows.size() - 1, selected + direction));
+        annotations.setSelectedIndex(next);
+        annotations.ensureIndexIsVisible(next);
+    }
+
+    private void activateAnnotationResult() {
+        if (annotations.getSelectedIndex() < 0 && !annotationRows.isEmpty()) annotations.setSelectedIndex(0);
+        AnnotationIndex.Entry entry = annotations.getSelectedValue();
+        if (entry == null) return;
+        if (!confirmSaveAnnotations()) {
+            selectAnnotationTarget();
+            return;
+        }
+        annotationForm.loadEntry(entry);
+        graph.showAnnotation(entry);
+        annotationResults.setVisible(false);
+        navigate(entry.address, true, NavigationTarget.SOURCE_DATA);
+    }
+
     private void updateAnnotationActions() {
-        boolean selected = annotations.getSelectedValue() != null;
+        boolean selected = !running && !tasks.isBusy() && annotations.getSelectedValue() != null;
         if (editAnnotation != null) editAnnotation.setEnabled(selected);
         if (deleteAnnotation != null) deleteAnnotation.setEnabled(selected);
     }
@@ -811,17 +908,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void selectAnnotationTarget() {
-        updatingAnnotations = true;
-        try {
-            annotations.clearSelection();
-            for (int i = 0; i < annotationRows.size(); i++) {
-                if (annotationForm.matches(annotationRows.get(i))) {
-                    annotations.setSelectedIndex(i);
-                    break;
-                }
+        annotations.clearSelection();
+        for (int i = 0; i < annotationRows.size(); i++) {
+            if (annotationForm.matches(annotationRows.get(i))) {
+                annotations.setSelectedIndex(i);
+                break;
             }
-        } finally {
-            updatingAnnotations = false;
         }
     }
 
@@ -1159,24 +1251,33 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private JPanel flowPanel() {
         JPanel panel = borderPanel(0);
-        JPanel tools = row();
+        JPanel tools = new InspectionTools();
         JToolBar actions = line(tools);
-        JButton analyzePc = button(ICON_CPU, "Analyze from PC", this::analyzeFlow);
+        JButton analyzePc = inspectionButton("analyze", "Analyze from PC", this::analyzeFlow);
+        analyzePc.setHideActionText(false);
+        analyzePc.setText("PC");
         actions.add(analyzePc);
-        JButton analyzeSelection = button(ICON_FIND, "Analyze from selected instruction", () -> analyzeFlow(lastInstructionAddress));
+        JButton analyzeSelection = inspectionButton("analyze", "Analyze from selected instruction", () -> analyzeFlow(lastInstructionAddress));
+        analyzeSelection.setHideActionText(false);
+        analyzeSelection.setText("Selected");
         actions.add(analyzeSelection);
-        goToFlowInstruction = button(ICON_JUMP, "Go to instruction", () -> graph.followNode(graph.selectedNode));
+        actions.addSeparator();
+        goToFlowInstruction = inspectionButton("go-to-instruction", "Go to instruction", () -> graph.followNode(graph.selectedNode));
         updateFlowNavigation();
         actions.add(goToFlowInstruction);
+        flowOrigin.getAccessibleContext().setAccessibleName("Analysis origin");
+        flowOrigin.setMinimumSize(new Dimension(0, 0));
+        actions.add(flowOrigin, "gapleft unrel, shrinkprio 110");
+        actions.add(Box.createHorizontalGlue(), "pushx, growx");
         JComboBox<String> zoom = new JComboBox<>(new String[]{"50%", "75%", "100%", "125%", "150%", "200%", "250%", "300%"});
         zoom.setSelectedItem("100%");
         zoom.setName("Graph zoom");
         zoom.addActionListener(event -> graph.setZoom(zoom.getSelectedIndex(), null));
         graph.zoomControl = zoom;
-        actions.add(label("Zoom", zoom));
         zoom.getAccessibleContext().setAccessibleName("Graph zoom");
+        zoom.setToolTipText("Graph zoom (Ctrl+mouse wheel)");
         actions.add(zoom);
-        if (byteMemory) annotationTools(actions);
+        if (byteMemory) annotationTools(line(tools));
         graph.getAccessibleContext().setAccessibleDescription(
                 "Select an instruction with the mouse or arrow keys; press Enter or double-click to navigate. Indirect targets may be unresolved.");
         panel.add(scrollTools(tools), BorderLayout.NORTH);
@@ -1200,7 +1301,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateFlowNavigation() {
         if (goToFlowInstruction != null)
-            goToFlowInstruction.setEnabled(graph.boxes.containsKey(graph.selectedNode));
+            goToFlowInstruction.setEnabled(!running && !tasks.isBusy() && graph.boxes.containsKey(graph.selectedNode));
     }
 
     private void analyzeFlow() {
@@ -1224,7 +1325,28 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             flowFromPc = fromPc;
             graph.start = address;
             graph.setFlow(flow);
+            flowOrigin.setText(String.format("%04X · %s", address, fromPc ? "PC" : "Selected"));
+            flowOrigin.setToolTipText(String.format("Flow analyzed from %s at %04X", fromPc ? "PC" : "selected instruction", address));
+            flowOrigin.getAccessibleContext().setAccessibleDescription(flowOrigin.getToolTipText());
         }, true);
+    }
+
+    /** Shrink flexible fields before resorting to horizontal toolbar scrolling. */
+    private static final class InspectionTools extends JPanel implements Scrollable {
+        InspectionTools() {
+            super(new net.miginfocom.swing.MigLayout("insets 4, fillx, hidemode 3", "[grow]", ""));
+        }
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public boolean getScrollableTracksViewportWidth() {
+            return getParent() != null && getParent().getWidth() >= getMinimumSize().width;
+        }
+        @Override public boolean getScrollableTracksViewportHeight() { return true; }
+        @Override public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+            return com.formdev.flatlaf.util.UIScale.scale(16);
+        }
+        @Override public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+            return Math.max(getScrollableUnitIncrement(visible, orientation, direction), visible.width / 2);
+        }
     }
 
     private JPanel historyPanel() {
@@ -1909,22 +2031,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void refreshAnnotations(String filter) {
         AnnotationIndex.Entry selected = annotations.getSelectedValue();
         List<AnnotationIndex.Entry> entries = index == null ? List.of() : index.search(filter);
-        boolean wasUpdating = updatingAnnotations;
-        updatingAnnotations = true;
-        try {
-            updateRows(annotationRows, entries);
-            annotations.clearSelection();
-            if (selected != null) {
-                for (int i = 0; i < annotationRows.size(); i++) {
-                    AnnotationIndex.Entry entry = annotationRows.get(i);
-                    if (entry.id == selected.id) {
-                        annotations.setSelectedIndex(i);
-                        break;
-                    }
+        updateRows(annotationRows, entries);
+        annotations.clearSelection();
+        if (selected != null) {
+            for (int i = 0; i < annotationRows.size(); i++) {
+                AnnotationIndex.Entry entry = annotationRows.get(i);
+                if (entry.id == selected.id) {
+                    annotations.setSelectedIndex(i);
+                    break;
                 }
             }
-        } finally {
-            updatingAnnotations = wasUpdating;
         }
         updateAnnotationActions();
         annotationEmpty.setText(index == null || index.entries().isEmpty()
@@ -2422,10 +2538,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!visible && !annotationFilter.getText().isEmpty()) annotationFilter.setText("");
             for (int i = 0; i < annotationRows.size(); i++) {
                 if (annotationRows.get(i).id == selected.annotation.id) {
-                    boolean wasUpdating = updatingAnnotations;
-                    updatingAnnotations = true;
-                    try { annotations.setSelectedIndex(i); }
-                    finally { updatingAnnotations = wasUpdating; }
+                    annotations.setSelectedIndex(i);
                     annotationForm.loadEntry(selected.annotation);
                     break;
                 }

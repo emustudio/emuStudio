@@ -1,4 +1,24 @@
 {
+  "application/src/main/resources/net/emustudio/application/gui/icons/inspection/light": {
+    "analyze.png": "inspection/light/analyze.png",
+    "go-to-instruction.png": "inspection/light/go-to-instruction.png",
+    "search.png": "inspection/light/search.png",
+    "add-annotation.png": "inspection/light/add-annotation.png",
+    "edit-annotation.png": "inspection/light/edit-annotation.png",
+    "remove-annotation.png": "inspection/light/remove-annotation.png",
+    "import.png": "inspection/light/import.png",
+    "export.png": "inspection/light/export.png"
+  },
+  "application/src/main/resources/net/emustudio/application/gui/icons/inspection/dark": {
+    "analyze.png": "inspection/dark/analyze.png",
+    "go-to-instruction.png": "inspection/dark/go-to-instruction.png",
+    "search.png": "inspection/dark/search.png",
+    "add-annotation.png": "inspection/dark/add-annotation.png",
+    "edit-annotation.png": "inspection/dark/edit-annotation.png",
+    "remove-annotation.png": "inspection/dark/remove-annotation.png",
+    "import.png": "inspection/dark/import.png",
+    "export.png": "inspection/dark/export.png"
+  },
   "../emuLib/src/main/resources/net/emustudio/emulib/runtime/ui/icons": {
     "add.png": "list-add.png",
     "ascii.png": "ascii.svg",
