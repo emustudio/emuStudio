@@ -7,6 +7,8 @@ import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.util.Objects;
 
 class TextCellRenderer extends DefaultTableCellRenderer {
@@ -39,6 +41,34 @@ class TextCellRenderer extends DefaultTableCellRenderer {
         setToolTipText(current ? "Current instruction (PC)" : null);
         getAccessibleContext().setAccessibleDescription(current ? "Current instruction (PC)" : null);
         return this;
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        if (!getFont().isBold() || !isEnabled() || getText() == null || getText().isEmpty()) return;
+        // Most monospaced fonts map extra-heavy weights to the same bold face.
+        // Add a small outline to make breakpoint text visibly heavier at the same size.
+        FontMetrics metrics = getFontMetrics(getFont());
+        Insets insets = getInsets();
+        Rectangle view = new Rectangle(insets.left, insets.top,
+                getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
+        Rectangle icon = new Rectangle(), text = new Rectangle();
+        String visible = SwingUtilities.layoutCompoundLabel(this, metrics, getText(), getIcon(),
+                getVerticalAlignment(), getHorizontalAlignment(), getVerticalTextPosition(),
+                getHorizontalTextPosition(), view, icon, text, getIconTextGap());
+        if (visible.isEmpty()) return;
+        Graphics2D g = (Graphics2D) graphics.create();
+        try {
+            g.clip(view);
+            g.setColor(getForeground());
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(.6f));
+            TextLayout layout = new TextLayout(visible, getFont(), g.getFontRenderContext());
+            g.draw(layout.getOutline(AffineTransform.getTranslateInstance(text.x, text.y + metrics.getAscent())));
+        } finally {
+            g.dispose();
+        }
     }
 
     private static final Icon EMPTY_MARKER = new Marker(false);

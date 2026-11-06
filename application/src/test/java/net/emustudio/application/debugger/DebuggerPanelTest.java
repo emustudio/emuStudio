@@ -646,13 +646,17 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
+    public void instructionRowsShowLabelFirstAndBreakpointsAsBoldText() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
                 session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
+                assertEquals(List.of("label", "address", "instruction", "opcode"),
+                        java.util.stream.IntStream.range(0, workspace.table.getColumnCount())
+                                .mapToObj(workspace.table::getColumnName).collect(java.util.stream.Collectors.toList()));
+                assertEquals("", workspace.table.getValueAt(0, 0));
                 for (int col = 0; col < workspace.table.getColumnCount(); col++) {
                     String name = workspace.table.getColumnName(col);
                     assertFalse(List.of("bp", "Label", "Comment").contains(name));
@@ -674,7 +678,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
+    public void instructionRowsAndTooltipsCoverAnnotationRangeAndUseLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
                 session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "UNKNOWN"));
@@ -699,6 +703,20 @@ public class DebuggerPanelTest {
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
                 assertEquals("range | inner", workspace.table.getToolTipText(hoverSecond));
                 assertNotEquals(expected, workspace.table.createToolTip().getBackground());
+                java.awt.Color overlap = workspace.table.createToolTip().getBackground();
+                workspace.table.clearSelection();
+                for (int col = 0; col < workspace.table.getColumnCount(); col++) {
+                    assertEquals(overlap, workspace.table.prepareRenderer(
+                            workspace.table.getCellRenderer(1, col), 1, col).getBackground());
+                    assertEquals(workspace.table.getBackground(), workspace.table.prepareRenderer(
+                            workspace.table.getCellRenderer(2, col), 2, col).getBackground());
+                }
+
+                workspace.table.setRowSelectionInterval(1, 1);
+                assertEquals(workspace.table.getSelectionBackground(), workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(1, 0), 1, 0).getBackground());
+                assertEquals(new java.awt.Color(255, 179, 179), workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(0, 0), 0, 0).getBackground());
 
                 java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
                 java.awt.event.MouseEvent hoverThird = new java.awt.event.MouseEvent(workspace.table,

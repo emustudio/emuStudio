@@ -40,25 +40,27 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
-    public void labelsAppearOnAddressCellsAndDisappearWhenSourceChanges() throws Exception {
+    public void compilerLabelsAppearInFirstColumnAndDisappearWhenSourceChanges() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             JTabbedPane tabs = findComponent(f.debugger, JTabbedPane.class, pane -> true);
             assertEquals(-1, onEdt(() -> tabs.indexOfTab("Symbols")).intValue());
-            String tooltip = onEdt(() -> {
-                java.awt.Rectangle cell = f.table.getCellRect(1, 0, true);
-                return f.table.getToolTipText(new java.awt.event.MouseEvent(f.table, 0, 0, 0, cell.x + 2, cell.y + 2, 0, false));
-            });
-            assertEquals("second", tooltip);
-            assertEquals(new java.awt.Color(210, 210, 210), onEdt(() ->
+            assertEquals("label", onEdt(() -> f.table.getColumnName(0)));
+            assertEquals("first", onEdt(() -> f.table.getValueAt(0, 0)));
+            assertEquals("second", onEdt(() -> f.table.getValueAt(1, 0)));
+            assertEquals("third", onEdt(() -> f.table.getValueAt(2, 0)));
+            assertEquals("", onEdt(() -> f.table.getValueAt(3, 0)));
+            assertFalse(onEdt(() -> f.table.isCellEditable(1, 0)));
+            assertEquals(onEdt(f.table::getBackground), onEdt(() ->
                     f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
             runOnEdt(() -> f.table.setRowSelectionInterval(1, 1));
-            assertEquals(new java.awt.Color(110, 110, 110), onEdt(() ->
+            assertEquals(onEdt(f.table::getSelectionBackground), onEdt(() ->
                     f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
             assertEquals(onEdt(f.table::getBackground), onEdt(() ->
                     f.table.prepareRenderer(f.table.getCellRenderer(3, 0), 3, 0).getBackground()));
             runOnEdt(() -> { f.pane.insert("; edited\n", 0); f.table.clearSelection(); });
+            assertEquals("", onEdt(() -> f.table.getValueAt(1, 0)));
             assertEquals(onEdt(f.table::getBackground), onEdt(() ->
                     f.table.prepareRenderer(f.table.getCellRenderer(1, 0), 1, 0).getBackground()));
         }

@@ -188,7 +188,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         for (int c = 0; c < instructionModel.getColumnCount(); c++)
             if (instructionModel.getColumnAt(c) instanceof BreakpointColumn) { bp = c; break; }
         addedBreakpointColumn = bp < 0 && (session.cpu.isBreakpointSupported() || session.debug != null);
-        breakpointColumn = addedBreakpointColumn ? 0 : bp;
+        breakpointColumn = addedBreakpointColumn ? 1 : bp < 0 ? -1 : bp + 1;
         this.byteMemory = session.memory != null && session.memory.getCellTypeClass() == Byte.class
                 && session.memory.getSize() > 0;
         this.instructionRows = new InstructionAnnotationsModel();
@@ -213,21 +213,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
             return annotationTooltip(instructionModel.getLocationAt(row));
         });
-        table.setRowTooltipBackground(row -> {
+        table.setRowBackground(row -> {
             if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
-            return annotationTooltipBackground(instructionModel.getLocationAt(row));
+            return annotationBackground(instructionModel.getLocationAt(row));
         });
-        table.setAddressPresentation(column -> table.getModel() == instructionRows && column != breakpointColumn
-                && instructionRows.baseColumn(column) >= 0
-                && instructionRows.baseColumn(column) < instructionModel.getColumnCount()
-                && instructionModel.getColumnAt(instructionRows.baseColumn(column)) instanceof net.emustudio.emulib.runtime.ui.debugger.AddressColumn,
-                row -> {
-                    if (disposed || running || tasks.isBusy()) return null;
-                    int address = instructionModel.getLocationAt(row);
-                    String result = labelsAt(address);
-                    if (result.isEmpty()) return null;
-                    return result;
-                });
         setLayout(new BorderLayout(6, 6));
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -319,6 +308,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void setSourceMappingsCurrent(boolean current) {
         sourceMappingsCurrent = current;
         graph.invalidateLabels();
+        configureInstructionColumns();
         table.repaint();
         graph.repaint();
     }
@@ -2044,12 +2034,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         ((CardLayout) annotationList.getLayout()).show(annotationList, entries.isEmpty() ? "empty" : "list");
     }
 
-    private AnnotationIndex.Entry annotationAt(int at) {
-        if (index == null) return null;
-        ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
-        return at >= 0 && at < layout.addressSpaceSize() ? index.get(at) : null;
-    }
-
     private List<AnnotationIndex.Entry> annotationsCovering(int address) {
         if (index == null) return List.of();
         ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
@@ -2074,7 +2058,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return Color.getHSBColor((index * .19f) % 1f, .55f, .78f);
     }
 
-    private Color annotationTooltipBackground(int address) {
+    private Color annotationBackground(int address) {
         List<AnnotationIndex.Entry> entries = annotationsCovering(address);
         if (entries.isEmpty()) return null;
         Color background = graph.getBackground();
@@ -2095,11 +2079,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return background;
     }
 
-    private String labelsAt(int address) {
+    private String sourceLabelsAt(int address) {
+        if (!sourceMappingsCurrent || address < 0) return "";
         return session.annotationEngine.at(address).stream()
                 .filter(entry -> entry.start == address)
-                .filter(entry -> entry.kind.startsWith(AnnotationIndex.USER_KIND)
-                        || (sourceMappingsCurrent && entry.kind.equals(ProgramIndex.Kinds.LABEL)))
+                .filter(entry -> entry.kind.equals(ProgramIndex.Kinds.LABEL))
                 .map(entry -> entry.text.trim()).filter(label -> !label.isEmpty()).distinct()
                 .collect(java.util.stream.Collectors.joining(", "));
     }
@@ -2269,37 +2253,35 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private final class InstructionAnnotationsModel extends AbstractTableModel implements TableModelListener {
-        private int baseColumn(int col) { return col - (addedBreakpointColumn ? 1 : 0); }
-        private int baseCount() { return instructionModel.getColumnCount() + (addedBreakpointColumn ? 1 : 0); }
+        private int baseColumn(int col) { return col - 1 - (addedBreakpointColumn ? 1 : 0); }
         @Override public int getRowCount() { return instructionModel.getRowCount(); }
-        @Override public int getColumnCount() { return baseCount(); }
+        @Override public int getColumnCount() { return instructionModel.getColumnCount() + 1 + (addedBreakpointColumn ? 1 : 0); }
         @Override public String getColumnName(int col) {
+            if (col == 0) return "label";
             if (col == breakpointColumn) return "bp";
-            if (col < baseCount()) return instructionModel.getColumnName(baseColumn(col));
-            return "Label";
+            return instructionModel.getColumnName(baseColumn(col));
         }
         @Override public Class<?> getColumnClass(int col) {
+            if (col == 0) return String.class;
             if (col == breakpointColumn) return Boolean.class;
-            return col < baseCount() ? instructionModel.getColumnClass(baseColumn(col)) : String.class;
+            return instructionModel.getColumnClass(baseColumn(col));
         }
         @Override public Object getValueAt(int row, int col) {
             if (disposed || tasks.isBusy() || running) return null;
+            if (col == 0) return sourceLabelsAt(instructionModel.getLocationAt(row));
             if (col == breakpointColumn) {
                 int address = instructionModel.getLocationAt(row);
                 return address < 0 ? null : session.isBreakpointSet(address);
             }
-            if (col < baseCount()) return instructionModel.getValueAt(row, baseColumn(col));
-            int at = instructionModel.getLocationAt(row);
-            AnnotationIndex.Entry entry = annotationAt(at);
-            if (entry == null) return "";
-            return entry.label;
+            return instructionModel.getValueAt(row, baseColumn(col));
         }
         @Override public boolean isCellEditable(int row, int col) {
-            if (disposed || tasks.isBusy() || running) return false;
+            if (col == 0 || disposed || tasks.isBusy() || running) return false;
             if (col == breakpointColumn) return instructionModel.getLocationAt(row) >= 0;
-            return col < baseCount() && instructionModel.isCellEditable(row, baseColumn(col));
+            return instructionModel.isCellEditable(row, baseColumn(col));
         }
         @Override public void setValueAt(Object value, int row, int col) {
+            if (col == 0) return;
             if (col == breakpointColumn && value instanceof Boolean) {
                 int address = instructionModel.getLocationAt(row);
                 // Finish the edit before breakpoint refreshes. Keep the listing visible so
@@ -2309,7 +2291,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             (Boolean) value ? BreakpointDialog.Operation.SET : BreakpointDialog.Operation.UNSET,
                             address));
                 });
-            } else if (col < baseCount()) instructionModel.setValueAt(value, row, baseColumn(col));
+            } else instructionModel.setValueAt(value, row, baseColumn(col));
         }
         @Override public void tableChanged(TableModelEvent event) {
             if (event.getFirstRow() == TableModelEvent.HEADER_ROW) {
