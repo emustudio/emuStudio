@@ -27,7 +27,10 @@ public class RamDisassembler implements Disassembler {
         String mnemo = String.format("%s %s%s",
                 in.getOpcode().toString().toLowerCase(), in.getDirection().value(),
                 operandValue != null ? operandValue.getStringRepresentation().toUpperCase() : "");
-        return new DisassembledInstruction(memLocation, mnemo, "");
+        String encoding = in.getOpcode().name() + " " + in.getDirection().name();
+        if (operandValue != null) encoding += " " + operandValue.getStringRepresentation();
+        if (in.getLabel() != null) encoding += " @" + in.getLabel().getAddress();
+        return new DisassembledInstruction(memLocation, mnemo, encoding);
     }
 
     @Override

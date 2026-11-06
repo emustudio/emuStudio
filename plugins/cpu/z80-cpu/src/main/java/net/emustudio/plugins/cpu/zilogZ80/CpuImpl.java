@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.nio.file.Path;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -52,7 +50,7 @@ public class CpuImpl extends AbstractCPU {
         }
         context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerZ80(
-                this, pluginID, applicationApi.getContextPool(), settings, context
+                pluginID, applicationApi.getContextPool(), context
         );
     }
 
@@ -78,25 +76,15 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = new net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler(
-                initializer.getDisassembler(), initializer.getEngine().debugger.memory(), true);
+        disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, initializer.shouldDumpInstructions(), applicationApi.getDialogs(), applicationApi.getGUI()
+                    this, context, applicationApi.getGUI()
             );
-        }
-    }
-
-    public void loadSnapshot(Path path) throws IOException {
-        ZxSpectrumSnapshot snapshot = ZxSpectrumSnapshotLoader.load(path);
-        reset(snapshot.programCounter);
-        engine.loadSnapshot(snapshot);
-        if (statusPanel != null) {
-            statusPanel.updateGUI();
         }
     }
 
@@ -158,7 +146,6 @@ public class CpuImpl extends AbstractCPU {
         frequencyCalculator.stop();
         frequencyCalculator.close();
         context.clearDevices();
-        initializer.destroy();
     }
 
     @Override

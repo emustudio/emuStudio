@@ -40,4 +40,44 @@ public class FlowMetadataTest {
         assertEquals(java.util.List.of(0x38), flow(0xff).targets);
         assertEquals(InstructionFlow.Kind.STOP, flow(0x76).kind);
     }
+
+    @Test
+    public void decoderUsesPluginWiringForEveryInstructionByte() throws Exception {
+        byte[][] cells = {{0, 0x34, 0}, {(byte) 0xcd, 0, 0x12}};
+        int[] wiring = {1, 0, 1};
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+            @Override public Byte read(int address) { return cells[wiring[address]][address]; }
+            @Override public Byte[] read(int address, int count) {
+                Byte[] values = new Byte[count];
+                for (int i = 0; i < count; i++) values[i] = read(address + i);
+                return values;
+            }
+        };
+        Disassembler decoder = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, false);
+
+        assertEquals(java.util.List.of(0x1234), decoder.getFlow(0).orElseThrow().targets);
+        assertEquals(3, decoder.getNextInstructionPosition(0));
+        String mnemonic = decoder.disassemble(0).mnemo;
+        cells[1][1] = 0x78;
+        wiring[1] = 1;
+
+        assertEquals(java.util.List.of(0x1278), decoder.getFlow(0).orElseThrow().targets);
+        assertNotEquals(mnemonic, decoder.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void decoderReadsUpdatedOperandsAndDisassembly() throws Exception {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory.write(0, (byte) 0xcd);
+        memory.write(1, (byte) 0x34);
+        memory.write(2, (byte) 0x12);
+        Disassembler live = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, false);
+        assertEquals(java.util.List.of(0x1234), live.getFlow(0).orElseThrow().targets);
+        String mnemonic = live.disassemble(0).mnemo;
+
+        memory.write(1, (byte) 0x78);
+
+        assertEquals(java.util.List.of(0x1278), live.getFlow(0).orElseThrow().targets);
+        assertNotEquals(mnemonic, live.disassemble(0).mnemo);
+    }
 }

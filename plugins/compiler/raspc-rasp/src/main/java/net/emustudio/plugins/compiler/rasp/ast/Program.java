@@ -64,9 +64,7 @@ public class Program {
     }
 
     public void saveToFile(Path filename, Map<Integer, Integer> compiled) throws IOException {
-        RaspMemoryContext.serialize(filename, getProgramLocation(compiled), new RaspMemoryContext.RaspMemory(
-                this.labels.values(), compiled, inputs
-        ));
+        RaspMemoryContext.serialize(filename, getProgramLocation(compiled), labels.values(), compiled, inputs);
     }
 
     public int getProgramLocation(Map<Integer, Integer> compiled) {

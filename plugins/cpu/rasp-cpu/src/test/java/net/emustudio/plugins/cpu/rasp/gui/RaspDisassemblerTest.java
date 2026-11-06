@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 import static org.easymock.EasyMock.*;
@@ -20,6 +21,28 @@ public class RaspDisassemblerTest {
     @Before
     public void setUp() {
         memory = createNiceMock(RaspMemoryContext.class);
+    }
+
+    @Test
+    public void decoderReadsLiveWordCellsAndLabelNames() throws Exception {
+        AtomicReference<String> name = new AtomicReference<>("OLD");
+        RaspLabel label = createNiceMock(RaspLabel.class);
+        expect(label.getAddress()).andReturn(10).anyTimes();
+        expect(label.getLabel()).andAnswer(name::get).anyTimes();
+        replay(label);
+        expect(memory.read(0)).andReturn(JMP).anyTimes();
+        expect(memory.read(1)).andReturn(10).anyTimes();
+        expect(memory.disassembleMnemo(JMP)).andReturn(Optional.of("JMP")).anyTimes();
+        expect(memory.isInstruction(JMP)).andReturn(true).anyTimes();
+        expect(memory.getLabel(10)).andReturn(Optional.of(label)).anyTimes();
+        replay(memory);
+        RaspDisassembler live = new RaspDisassembler(memory);
+        assertTrue(live.disassemble(0).mnemo.contains("OLD"));
+
+        name.set("NEW");
+
+        assertTrue(live.disassemble(0).mnemo.contains("NEW"));
+        assertEquals(2, live.getNextInstructionPosition(0));
     }
 
     @Test

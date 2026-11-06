@@ -417,10 +417,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
 
     @Test
     public void testResetSetsIP() {
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory, input, storage, output);
 
         engine.reset(10);
@@ -439,10 +436,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         expect(val2.getStringValue()).andReturn("hello").anyTimes();
         replay(val2);
 
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), List.of(val1, val2)
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(List.of(val1, val2)).anyTimes();
         replay(memory);
 
         input.clear();

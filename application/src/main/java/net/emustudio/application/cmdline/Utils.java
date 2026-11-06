@@ -27,7 +27,9 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.SwingUtilities;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -93,7 +95,8 @@ public class Utils {
 
     @SuppressWarnings("unchecked")
     public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, DialogsGui dialogs,
-                                      DebugTableModel debugTableModel, ContextPool contextPool, Path inputFile, EmuStudioGui gui) {
+                                      DebugTableModel debugTableModel, ContextPool contextPool, Path inputFile, EmuStudioGui gui)
+            throws InterruptedException, InvocationTargetException {
         MemoryContext<?> memoryContext = null;
         try {
             memoryContext = contextPool.getMemoryContext(EMUSTUDIO_ID, MemoryContext.class);
@@ -101,11 +104,19 @@ public class Utils {
             LOGGER.warn("No memory context is available", e);
         }
 
-        StudioFrame mainWindow = new StudioFrame(
-                computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile, gui
-        );
+        MemoryContext<?> windowMemory = memoryContext;
+        Runnable showWindow = () -> {
+            StudioFrame mainWindow = new StudioFrame(
+                    computer, appSettings, dialogs, debugTableModel, windowMemory, inputFile, gui
+            );
 
-        dialogs.setParent(mainWindow);
-        mainWindow.setVisible(true);
+            dialogs.setParent(mainWindow);
+            mainWindow.setVisible(true);
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            showWindow.run();
+        } else {
+            SwingUtilities.invokeAndWait(showWindow);
+        }
     }
 }

@@ -14,8 +14,11 @@ import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Test;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
 import java.util.Optional;
@@ -41,28 +44,56 @@ public class EditorPanelTest extends AbstractSwingTest {
                 frame.validate();
             });
             assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
-            runOnEdt(() -> { editor.searchBar().showSearch(); frame.validate(); });
+            runOnEdt(() -> { editor.searchBar().showReplace(); frame.validate(); });
             assertTrue(onEdt(() -> editor.searchBar().getHeight() < 120));
             assertTrue(onEdt(() -> editor.getView().getHeight() > 300));
         } finally { runOnEdt(panel::dispose); }
     }
 
     @Test
-    public void fontZoomSliderTracksShortcutsWheelAndActiveTabs() {
+    public void findShowsOneRowAndReplacementCanBeRevealedWithoutLosingTheQuery() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        EditorPanel panel = createPanel(dialogs, editor);
+        JFrame frame = showInFrame(panel);
+        try {
+            runOnEdt(() -> panel.getFindAction().actionPerformed(new ActionEvent(panel, 0, "Find")));
+            JTextField find = findComponent(panel, JTextField.class,
+                    field -> "Find text".equals(field.getAccessibleContext().getAccessibleName()));
+            JTextField replacement = findComponent(panel, JTextField.class,
+                    field -> "Replacement text".equals(field.getAccessibleContext().getAccessibleName()));
+            assertFalse(onEdt(replacement::isVisible));
+            int findHeight = onEdt(() -> { frame.validate(); return editor.searchBar().getHeight(); });
+            setText(find, "counter");
+            triggerButton(findComponent(panel, JToggleButton.class,
+                    button -> "Show replacement controls".equals(button.getToolTipText())));
+            assertTrue(onEdt(replacement::isVisible));
+            assertEquals("counter", onEdt(find::getText));
+            assertTrue(onEdt(() -> { frame.validate(); return editor.searchBar().getHeight(); }) > findHeight);
+            runOnEdt(() -> panel.getFindAction().actionPerformed(new ActionEvent(panel, 0, "Find")));
+            assertFalse(onEdt(replacement::isVisible));
+            runOnEdt(() -> panel.getReplaceAction().actionPerformed(new ActionEvent(panel, 0, "Replace")));
+            assertTrue(onEdt(replacement::isVisible));
+            assertEquals("counter", onEdt(find::getText));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
+    public void fontZoomComboTracksShortcutsWheelAndActiveTabs() {
         Dialogs dialogs = mock(Dialogs.class);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
         EditorPanel panel = createPanel(dialogs, editor);
         try {
-            JSlider slider = findComponent(panel, JSlider.class, component -> true);
-            JLabel percentage = findLabel(panel, "100%");
+            JComboBox<?> zoom = findComponent(panel, JComboBox.class,
+                    component -> "Font zoom".equals(component.getAccessibleContext().getAccessibleName()));
             TextEditorPane text = findComponent(panel, TextEditorPane.class, component -> true);
             int baseSize = FONT_CODE.getSize();
 
-            assertEquals(30, onEdt(slider::getMinimum).intValue());
-            assertEquals(350, onEdt(slider::getMaximum).intValue());
-            runOnEdt(() -> slider.setValue(200));
+            assertTrue(onEdt(zoom::isEditable));
+            assertEquals("100%", onEdt(zoom::getSelectedItem));
+            runOnEdt(() -> zoom.setSelectedItem("200%"));
             assertEquals(baseSize * 2, onEdt(editor::getFontSize).intValue());
-            assertEquals("200%", onEdt(percentage::getText));
+            assertEquals("200%", onEdt(zoom::getSelectedItem));
 
             for (KeyStroke key : List.of(
                     KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.CTRL_DOWN_MASK),
@@ -75,11 +106,11 @@ public class EditorPanelTest extends AbstractSwingTest {
             invokeKeyBinding(text, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK));
             invokeKeyBinding(text, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, KeyEvent.CTRL_DOWN_MASK));
             assertEquals(baseSize * 2 + 2, onEdt(editor::getFontSize), 0.001f);
-            assertEquals(Math.round((baseSize * 2 + 2) * 100.0f / baseSize) + "%", onEdt(percentage::getText));
+            assertEquals(Math.round((baseSize * 2 + 2) * 100.0f / baseSize) + "%", onEdt(zoom::getSelectedItem));
 
             JScrollPane scroll = (JScrollPane) ((JTabbedPane) editor.getView()).getSelectedComponent();
             runOnEdt(() -> {
-                slider.setValue(slider.getMaximum());
+                zoom.setSelectedItem("350%");
                 MouseWheelEvent wheel = new MouseWheelEvent(scroll, MouseWheelEvent.MOUSE_WHEEL,
                         System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, 0, 0, 0, false,
                         MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1);
@@ -88,32 +119,61 @@ public class EditorPanelTest extends AbstractSwingTest {
                 }
             });
             assertEquals(baseSize * 3.5f, onEdt(editor::getFontSize), 0.001f);
-            assertEquals(350, onEdt(slider::getValue).intValue());
-            assertEquals("350%", onEdt(percentage::getText));
+            assertEquals("350%", onEdt(zoom::getSelectedItem));
             invokeKeyBinding(text, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK));
             assertEquals(baseSize * 3.5f, onEdt(editor::getFontSize), 0.001f);
 
             runOnEdt(editor::newFile);
-            assertEquals(100, onEdt(slider::getValue).intValue());
-            assertEquals("100%", onEdt(percentage::getText));
+            assertEquals("100%", onEdt(zoom::getSelectedItem));
             runOnEdt(() -> ((JTabbedPane) editor.getView()).setSelectedIndex(0));
-            assertEquals(350, onEdt(slider::getValue).intValue());
+            assertEquals("350%", onEdt(zoom::getSelectedItem));
             runOnEdt(editor::closeCurrent);
-            assertEquals(100, onEdt(slider::getValue).intValue());
-            runOnEdt(() -> slider.setValue(200));
+            assertEquals("100%", onEdt(zoom::getSelectedItem));
+            runOnEdt(() -> zoom.setSelectedItem("200%"));
             runOnEdt(editor::closeCurrent);
-            assertEquals(100, onEdt(slider::getValue).intValue());
-            assertEquals("100%", onEdt(percentage::getText));
+            assertEquals("100%", onEdt(zoom::getSelectedItem));
             runOnEdt(() -> editor.setFontSize(0));
             assertEquals(baseSize * 0.3f, onEdt(editor::getFontSize), 0.001f);
-            assertEquals(30, onEdt(slider::getValue).intValue());
-            assertEquals("30%", onEdt(percentage::getText));
+            assertEquals("30%", onEdt(zoom::getSelectedItem));
             TextEditorPane currentText = findComponent(panel, TextEditorPane.class, component -> true);
             invokeKeyBinding(currentText, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK));
             assertEquals(baseSize * 0.3f, onEdt(editor::getFontSize), 0.001f);
             runOnEdt(() -> editor.setFontSize(1000));
             assertEquals(baseSize * 3.5f, onEdt(editor::getFontSize), 0.001f);
-            assertEquals("350%", onEdt(percentage::getText));
+            assertEquals("350%", onEdt(zoom::getSelectedItem));
+        } finally {
+            runOnEdt(panel::dispose);
+        }
+    }
+
+    @Test
+    public void customFontZoomAcceptsPercentagesAndRestoresInvalidInput() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        EditorPanel panel = createPanel(dialogs, editor);
+        try {
+            JComboBox<?> zoom = findComponent(panel, JComboBox.class,
+                    component -> "Font zoom".equals(component.getAccessibleContext().getAccessibleName()));
+            JTextField input = onEdt(() -> (JTextField) zoom.getEditor().getEditorComponent());
+            for (String value : List.of("113", " 113 % ", "", "abc", "NaN", "100%%", "99999999999999999")) {
+                runOnEdt(() -> {
+                    input.setText(value);
+                    input.postActionEvent();
+                });
+                assertEquals(FONT_CODE.getSize2D() * 1.13f, onEdt(editor::getFontSize), 0.001f);
+                assertEquals("113%", onEdt(zoom::getSelectedItem));
+                assertEquals("113%", onEdt(input::getText));
+            }
+            runOnEdt(() -> {
+                input.setText("10");
+                input.postActionEvent();
+            });
+            assertEquals("30%", onEdt(input::getText));
+            runOnEdt(() -> {
+                input.setText("500%");
+                input.postActionEvent();
+            });
+            assertEquals("350%", onEdt(input::getText));
         } finally {
             runOnEdt(panel::dispose);
         }
@@ -156,6 +216,41 @@ public class EditorPanelTest extends AbstractSwingTest {
         } finally {
             runOnEdt(panel::dispose);
         }
+    }
+
+    @Test
+    public void draggingCompilerDividerResizesEditorOnlyOnRelease() {
+        EditorPanel panel = createPanel(mock(Dialogs.class), createEditor(false, true));
+        JFrame frame = showInFrame(panel);
+        JSplitPane split = findComponent(panel, JSplitPane.class, component -> true);
+        try {
+            runOnEdt(() -> {
+                frame.setSize(1000, 650);
+                frame.validate();
+                split.setDividerLocation(350);
+                frame.validate();
+                BasicSplitPaneDivider divider = ((BasicSplitPaneUI) split.getUI()).getDivider();
+                int height = split.getTopComponent().getHeight();
+                int location = split.getDividerLocation();
+                int x = divider.getWidth() / 2, y = divider.getHeight() / 2;
+                long time = System.currentTimeMillis();
+                divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_PRESSED,
+                        time, MouseEvent.BUTTON1_DOWN_MASK, x, y, 1, false, MouseEvent.BUTTON1));
+                for (int distance : new int[]{20, 40, 60}) {
+                    int dragY = location - distance - divider.getY() + y;
+                    divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_DRAGGED,
+                            time + distance, MouseEvent.BUTTON1_DOWN_MASK, x, dragY, 0, false, MouseEvent.NOBUTTON));
+                    frame.validate();
+                    assertEquals("Dragging must not repeatedly resize the source editor",
+                            height, split.getTopComponent().getHeight());
+                }
+                divider.dispatchEvent(new MouseEvent(divider, MouseEvent.MOUSE_RELEASED,
+                        time + 61, 0, x, location - 60 - divider.getY() + y, 1, false, MouseEvent.BUTTON1));
+                frame.validate();
+                assertEquals(location - 60, split.getDividerLocation());
+                assertEquals(height - 60, split.getTopComponent().getHeight());
+            });
+        } finally { runOnEdt(panel::dispose); }
     }
 
     @Test

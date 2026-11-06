@@ -156,11 +156,12 @@ public class EmulatorActionsTest {
         EmulationController controller = mock(EmulationController.class);
 
         new ResetAction(controller).actionPerformed(null);
-        new StepAction(controller).actionPerformed(null);
+        Runnable stepCompleted = () -> {};
+        new StepAction(controller, stepCompleted).actionPerformed(null);
         new StopAction(controller).actionPerformed(null);
 
         verify(controller).reset();
-        verify(controller).step();
+        verify(controller).step(stepCompleted);
         verify(controller).stop();
     }
 

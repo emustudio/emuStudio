@@ -7,6 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition.ColumnUnit;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -43,6 +44,11 @@ import java.util.Optional;
 )
 @SuppressWarnings("unused")
 public class AssemblerZ80 extends AbstractCompiler {
+    @Override
+    public ColumnUnit getSourcePositionColumnUnit() {
+        return ColumnUnit.CODE_POINT;
+    }
+
     private final static Logger LOGGER = LoggerFactory.getLogger(AssemblerZ80.class);
     private final static List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
             new FileExtension("asm", "Assembler source file"),
@@ -101,6 +107,7 @@ public class AssemblerZ80 extends AbstractCompiler {
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
+            EvaluateExprVisitor evaluator = new EvaluateExprVisitor();
             BaseNodeVisitor[] visitors =
                     new BaseNodeVisitor[]{
                     new ExpandIncludesVisitor(),
@@ -110,7 +117,7 @@ public class AssemblerZ80 extends AbstractCompiler {
                     // macro expansion could bring re-definition of declarations, but we cannot check declarations again
                     // until the macro is properly integrated (b/c we could see multiple macro defs on multiple calls)
                     new CheckDeclarationsVisitor(),
-                    new EvaluateExprVisitor(),
+                    evaluator,
                     new CheckExprSizesVisitor(),
                     new CollectExprsInOpcodeVisitor(),
                     new GenerateCodeVisitor(hex)
@@ -132,9 +139,11 @@ public class AssemblerZ80 extends AbstractCompiler {
 
                 if (memory != null) {
                     hex.loadIntoMemory(memory, b -> b);
-                    Optional.ofNullable(memory.annotations()).ifPresent(annotations -> {
-                        annotations.removeAll(pluginID);
-                        new SourceCodeAnnotationsVisitor(pluginID, annotations).visit(program);
+                    Optional.ofNullable(applicationApi.getAnnotations()).ifPresent(annotations -> {
+                        SourceCodeAnnotationsVisitor sourceMappings = new SourceCodeAnnotationsVisitor(pluginID);
+                        sourceMappings.visit(program);
+                        evaluator.labels().forEach(label -> sourceMappings.addLabel(label.getKey(), label.getValue()));
+                        annotations.replaceOwner(pluginID, sourceMappings.annotations());
                     });
                     notifyInfo("Compiled file was loaded into memory.");
                 } else {

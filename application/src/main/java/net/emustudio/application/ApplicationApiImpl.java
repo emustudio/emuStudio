@@ -4,6 +4,7 @@ package net.emustudio.application;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
@@ -17,6 +18,12 @@ public class ApplicationApiImpl implements ApplicationApi {
     private final Dialogs dialogs;
     private final GUI gui;
     private final AtomicInteger programLocation = new AtomicInteger();
+    private final AnnotationEngine annotations = new AnnotationEngine();
+    private final ExecutionStateImpl executionState = new ExecutionStateImpl();
+
+    @Override public ExecutionStateImpl getExecutionState() { return executionState; }
+
+    @Override public AnnotationEngine getAnnotations() { return annotations; }
 
     public ApplicationApiImpl(DebuggerTable debuggerTable, ContextPool contextPool, Dialogs dialogs, GUI gui) {
         this.debuggerTable = Objects.requireNonNull(debuggerTable);

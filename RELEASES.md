@@ -195,8 +195,8 @@ All issues for the milestone are listed [here](https://github.com/emustudio/emuS
 
 - fix: selected value is white and has white background (invisible)
 - fix: Could not open memory image from "all files (.)" filter
-- fix: with banking: no memory content is shown in the table (e.g. loaded image)
-- fix: in case of banked memory, during load image first ask about memory location, then bank index
+- fix: loaded memory content is shown in the table
+- fix: load image dialog asks for memory location first
 - fix: Find sequence dialog does not search by pressing ENTER
 
 ## 8080-cpu:

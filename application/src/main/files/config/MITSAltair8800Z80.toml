@@ -47,9 +47,6 @@ type = "CPU"
 
 # Uncomment the following for specific settings (and remove settings = {} above)
 #[CPU.settings]
-#printCode = true
-#printCodeUseCache = true
-#printCodeFileName = "filename"   # (optional)
 
 [[DEVICE]]
 schemaPoint = "460,240"

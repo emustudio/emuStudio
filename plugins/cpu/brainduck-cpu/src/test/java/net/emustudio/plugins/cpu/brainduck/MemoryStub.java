@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
@@ -78,6 +77,12 @@ public class MemoryStub implements ByteMemoryContext {
     }
 
     @Override
+    public Byte readBank(int address, int bank) {
+        if (bank != 0) throw new IllegalArgumentException("Unknown test bank");
+        return read(address);
+    }
+
+    @Override
     public Byte[][] getRawMemory() {
         return memory;
     }
@@ -103,11 +108,6 @@ public class MemoryStub implements ByteMemoryContext {
     @Override
     public boolean areMemoryNotificationsEnabled() {
         return false;
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return null;
     }
 
     @Override

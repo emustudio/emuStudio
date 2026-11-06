@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.*;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.Bits;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -45,16 +46,39 @@ public class EmulatorEngine {
 
     public final AtomicInteger Acc = new AtomicInteger();
     public final AtomicInteger CI = new AtomicInteger();
-    private final MemoryContext<Byte> memory;
-    private final Decoder decoder;
+    private MemoryContext<Byte> memory;
+    public final DebugProbe debugger;
+    private Decoder decoder;
     private final Function<Integer, Boolean> isBreakpointSet;
     private final Bits emptyBits = new Bits(0, 0);
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
+
+    private static Disassembler recordingDisassembler(MemoryContext<Byte> memory) {
+        DecoderImpl decoder = new DecoderImpl(memory);
+        return new Disassembler() {
+            @Override public DisassembledInstruction disassemble(int address) {
+                // Generated disassemblers cache by address; each capture must see current code.
+                return new DisassemblerImpl(memory, decoder).disassemble(address);
+            }
+            @Override public int getNextInstructionPosition(int address) {
+                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(address);
+            }
+        };
+    }
 
     EmulatorEngine(MemoryContext<Byte> memory, Function<Integer, Boolean> isBreakpointSet) {
         this.memory = Objects.requireNonNull(memory);
         this.isBreakpointSet = Objects.requireNonNull(isBreakpointSet);
         this.decoder = new DecoderImpl(memory);
+        debugger = new DebugProbe("SSEM", memory, recordingDisassembler(memory));
+        debugger.register("PC", 32, () -> Integer.toUnsignedLong(CI.get() + 4), value -> CI.set((int) value - 4));
+        debugger.register("CI", 32, () -> Integer.toUnsignedLong(CI.get()), value -> CI.set((int) value));
+        debugger.register("ACC", 32, () -> Integer.toUnsignedLong(Acc.get()), value -> Acc.set((int) value));
+        MemoryContext<Byte> instrumented = debugger.instrumentedMemory();
+        debugger.onActivityChanged(active -> {
+            this.memory = active ? instrumented : memory;
+            this.decoder = new DecoderImpl(this.memory);
+        });
     }
 
     void reset(int startingPos) {
@@ -63,6 +87,22 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
+        if (!debugger.isActive()) return stepInstruction();
+        if (!debugger.begin(CI.get() + 4)) return CPU.RunState.STATE_STOPPED_BREAK;
+        boolean completed = false;
+        CPU.RunState result;
+        boolean stop;
+        try {
+            result = stepInstruction();
+            completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
+                    && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+        } finally {
+            stop = debugger.end(completed);
+        }
+        return stop && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+    }
+
+    private CPU.RunState stepInstruction() {
         try {
             DecodedInstruction instruction = decoder.decode(CI.addAndGet(4));
             int lineAddress = Optional.ofNullable(instruction.bits[LINE]).orElse(emptyBits).reverseBits().number * 4;

@@ -51,6 +51,11 @@ public class MemoryTableModel extends AbstractTableModel {
         return address < memory.getCommonBoundary();
     }
 
+    /** Whether the displayed physical cell belongs to the current CPU-visible mapping. */
+    public boolean isMappedAddress(int address) {
+        return address >= memory.getCommonBoundary() || currentBank == memory.getSelectedBank();
+    }
+
     public void setAsciiMode(boolean asciiMode) {
         this.asciiMode = asciiMode;
         fireTableDataChanged();

@@ -34,12 +34,14 @@ public class ViewComputerDialog extends DialogBase {
 
     private JComboBox<String> cmbDevice;
     private JLabel lblComputerName;
+    private JLabel lblCategory;
     private JLabel lblCopyright;
     private JLabel lblFileName;
     private JLabel lblName;
     private JLabel lblSelectDevice;
     private JLabel lblVersion;
     private JTextArea txtDescription;
+    private JPanel descriptionPanel, metadataPanel;
 
     public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs, GUI gui) {
         super(parent, "Computer information preview", true);
@@ -65,12 +67,16 @@ public class ViewComputerDialog extends DialogBase {
     }
 
     private void showPluginInfo(Plugin plugin, PluginConfig config) {
+        boolean available = plugin != null && config != null;
+        descriptionPanel.setVisible(available);
+        metadataPanel.setVisible(available);
         if (plugin != null && config != null) {
             lblName.setText(plugin.getTitle());
             lblVersion.setText(plugin.getVersion());
             lblFileName.setText(config.getPluginFile());
             lblCopyright.setText(plugin.getCopyright());
             txtDescription.setText(plugin.getDescription());
+            txtDescription.setCaretPosition(0);
             lblCopyright.setVisible(true);
             lblVersion.setVisible(true);
             lblFileName.setVisible(true);
@@ -91,12 +97,18 @@ public class ViewComputerDialog extends DialogBase {
 
         lblSelectDevice = gui.label("Select device:");
         cmbDevice = new JComboBox<>();
+        lblSelectDevice.setLabelFor(cmbDevice);
         lblName = gui.labelBold("");
         lblFileName = gui.label("");
         lblVersion = gui.label("");
         lblCopyright = gui.label("");
 
-        txtDescription = gui.textAreaReadOnly(5, 20);
+        txtDescription = gui.textAreaReadOnly(0, 20);
+        txtDescription.setLineWrap(true);
+        txtDescription.setWrapStyleWord(true);
+        txtDescription.setFont(UIManager.getFont("Label.font"));
+        txtDescription.getAccessibleContext().setAccessibleName("Plugin description");
+        lblCategory = gui.labelBold("CPU information");
 
         cmbDevice.addActionListener(e -> {
             int index = cmbDevice.getSelectedIndex();
@@ -117,6 +129,7 @@ public class ViewComputerDialog extends DialogBase {
         JToolBar infoToolbar = gui.toolBarVertical();
 
         JToggleButton btnCompiler = gui.toolbarToggleButton(e -> {
+            lblCategory.setText("Compiler information");
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showOptionalPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
@@ -128,6 +141,7 @@ public class ViewComputerDialog extends DialogBase {
         infoToolbar.add(btnCompiler);
 
         JToggleButton btnCPU = gui.toolbarToggleButton(e -> {
+            lblCategory.setText("CPU information");
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showOptionalPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
@@ -139,6 +153,7 @@ public class ViewComputerDialog extends DialogBase {
         infoToolbar.add(btnCPU);
 
         JToggleButton btnMemory = gui.toolbarToggleButton(e -> {
+                    lblCategory.setText("Memory information");
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
                     showOptionalPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
@@ -150,6 +165,7 @@ public class ViewComputerDialog extends DialogBase {
         infoToolbar.add(btnMemory);
 
         JToggleButton btnDevice = gui.toolbarToggleButton(e -> {
+                    lblCategory.setText("Device information");
                     lblSelectDevice.setVisible(true);
                     cmbDevice.setVisible(true);
                     if (cmbDevice.getItemCount() > 0) {
@@ -165,17 +181,23 @@ public class ViewComputerDialog extends DialogBase {
         pluginButtonGroup.add(btnDevice);
         infoToolbar.add(btnDevice);
 
-        JPanel descriptionPanel = gui.section("Short description", "insets dialog", "[grow]", "[grow]");
-        descriptionPanel.add(gui.scrollPane(txtDescription), "grow");
+        for (java.awt.Component component : infoToolbar.getComponents()) component.setFocusable(true);
+        descriptionPanel = gui.section("Description", "insets dialog", "[grow]", "[grow]");
+        descriptionPanel.add(gui.scrollPane(txtDescription), "growx, h 20:pref:240");
 
-        JPanel infoPanel = gui.panel("insets dialog", "[grow]", "[][][][][][grow]");
+        JPanel infoPanel = gui.panel("insets dialog, hidemode 3", "[grow]", "[][][][][][grow]");
+        infoPanel.add(lblCategory, "wrap, gapbottom 6");
         infoPanel.add(lblSelectDevice, "split 2");
         infoPanel.add(cmbDevice, "grow, wrap");
         infoPanel.add(lblName, "wrap");
-        infoPanel.add(lblFileName, "wrap");
-        infoPanel.add(lblVersion, "wrap");
-        infoPanel.add(lblCopyright, "wrap");
-        infoPanel.add(descriptionPanel, "grow");
+        infoPanel.add(descriptionPanel, "growx, wrap");
+        metadataPanel = gui.panel("insets 0, hidemode 3", "[][grow]", "[][][]");
+        metadataPanel.add(gui.label("Version"));
+        metadataPanel.add(lblVersion, "growx, wrap");
+        metadataPanel.add(gui.label("Plugin file"));
+        metadataPanel.add(lblFileName, "growx, wrap");
+        metadataPanel.add(lblCopyright, "span, growx");
+        infoPanel.add(metadataPanel, "growx, wrap");
 
         JPanel infoTab = gui.panel("insets dialog", "[][grow]", "[grow]");
         infoTab.add(infoToolbar, "grow");
@@ -184,7 +206,8 @@ public class ViewComputerDialog extends DialogBase {
         // Schema tab
         JToolBar schemaToolbar = gui.toolBarVertical();
 
-        JButton btnSave = gui.button(ICON_SAVE, "Save schema image", panelSchema::saveSchemaImage);
+        JButton btnSave = gui.toolbarButton(event -> panelSchema.saveSchemaImage(), ICON_SAVE, "Save schema image");
+        btnSave.setFocusable(true);
         schemaToolbar.add(btnSave);
 
         JScrollPane scrollPane = gui.scrollPane(panelSchema);

@@ -56,6 +56,22 @@ Build the full project:
 ./gradlew build
 ```
 
+Install Eclipse Temurin 11 for the Swing tests. Gradle selects it explicitly because their Cacio toolkit is incompatible
+with IntelliJ's JetBrains Runtime.
+
+Snapshot dependencies resolve from Maven local first. After updating sibling repositories, refresh their snapshots with
+`publishToMavenLocal` in emuLib, cpu-testsuite, Edigen, and edigen-gradle-plugin, in that order. Use JDK 21 for those builds.
+For edigen-gradle-plugin, add `-PedigenPath=../edigen` to use the same generator sources.
+Alternatively, build directly against sibling sources:
+
+```bash
+./gradlew build -PemuLibPath=../emuLib -PcpuTestSuitePath=../cpu-testsuite \
+  --include-build ../edigen --include-build ../edigen-gradle-plugin
+```
+
+Run composite builds with JDK 21 and keep Temurin 11 installed for tests. After upgrading the Edigen plugin, run
+`./gradlew clean` once to remove generated outputs from the previous plugin.
+
 Create a distributable archive:
 
 ```bash
@@ -81,6 +97,22 @@ There are several related projects used by emuStudio that contributors should be
 - Contributing guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Developer documentation: <https://emustudio.github.io/documentation/developer/getting_started/contributing>
 - Release notes: [`RELEASES.md`](RELEASES.md)
+
+## Instruction recording
+
+The debugger's History view records recent instructions or continuously saves them to a file. Recordings include
+execution-time disassembly and opcode bytes, before/after registers, guest memory accesses and completion status.
+Save and reopen `.emutrace` recordings for offline inspection, or export readable text. History is read-only;
+it does not rewind the machine.
+
+For startup or headless recording, use the same recorder through automation:
+
+```bash
+./emuStudio -cf config/MITSAltair8800.toml auto --no-gui --waitmax 5000 --record-instructions run.emutrace
+```
+
+The 8080 and Z80 plugins support recording through emuLib's optional debugging port. Buffered file output applies
+backpressure and can slow execution. See the [recording guide](https://www.emustudio.net/documentation/user/application/debugger-analysis#instruction-recording).
 
 ## Acknowledgements
 

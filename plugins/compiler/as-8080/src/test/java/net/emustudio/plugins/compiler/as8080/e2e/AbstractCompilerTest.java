@@ -7,9 +7,8 @@ import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -32,19 +31,14 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected Assembler8080 compiler;
     protected MemoryStub<Byte> memoryStub;
-    protected MemoryContextAnnotations annotations;
+    protected AnnotationEngine annotations;
     private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        annotations = new Annotations();
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
-            @Override
-            public MemoryContextAnnotations annotations() {
-                return annotations;
-            }
-        };
+        annotations = new AnnotationEngine();
+        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
@@ -52,6 +46,7 @@ public abstract class AbstractCompilerTest {
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool);
+        expect(applicationApi.getAnnotations()).andAnswer(() -> annotations).anyTimes();
         replay(applicationApi);
 
         compiler = new Assembler8080(0L, applicationApi, PluginSettings.UNAVAILABLE);

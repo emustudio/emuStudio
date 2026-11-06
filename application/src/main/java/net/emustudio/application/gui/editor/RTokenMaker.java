@@ -72,6 +72,11 @@ public class RTokenMaker extends TokenMakerBase {
     }
 
     @Override
+    public String getBracketPairs() {
+        return "{}()[]";
+    }
+
+    @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
 

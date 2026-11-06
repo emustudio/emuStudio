@@ -3,6 +3,8 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
+import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
@@ -15,6 +17,8 @@ import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
 
 public class EmulatorEngine {
     public final AtomicInteger IP = new AtomicInteger();
+    public final DebugProbe debugger;
+    boolean debugStopped;
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
     private final RaspMemoryContext memory;
@@ -44,20 +48,43 @@ public class EmulatorEngine {
         this.inputTape = Objects.requireNonNull(inputTape);
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
+        debugger = new DebugProbe("RASP", memory, new RaspDisassembler(memory));
+        debugger.register("PC", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
+        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
+        debugger.register("ACC", 32, () -> Integer.toUnsignedLong(memory.read(0)), value -> memory.write(0, (int) value));
     }
 
     protected void reset(int location) {
         IP.set(location);
         int position = 0;
         inputTape.clear();
-        for (int input : memory.getSnapshot().inputs) {
+        for (int input : memory.getInputs()) {
             inputTape.setSymbolAt(position++, new TapeSymbol(input));
         }
         outputTape.clear();
     }
 
     public CPU.RunState step() throws IOException {
-        int opcode = memory.read(IP.getAndIncrement());
+        debugStopped = false;
+        if (!debugger.isActive()) return stepInstruction();
+        if (!debugger.begin(IP.get())) {
+            debugStopped = true;
+            return CPU.RunState.STATE_STOPPED_BREAK;
+        }
+        boolean completed = false;
+        CPU.RunState result;
+        try {
+            result = stepInstruction();
+            completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
+                    && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+        } finally {
+            debugStopped = debugger.end(completed);
+        }
+        return debugStopped && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+    }
+
+    private CPU.RunState stepInstruction() throws IOException {
+        int opcode = readWord(IP.getAndIncrement());
         if (!memory.isInstruction(opcode)) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
@@ -76,121 +103,121 @@ public class EmulatorEngine {
     }
 
     private CPU.RunState read() {
-        int register = memory.read(IP.getAndIncrement());
+        int register = readWord(IP.getAndIncrement());
         int input = inputTape.readData().number;
 
         inputTape.moveRight();
-        memory.write(register, input);
+        writeWord(register, input);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState write_c() {
-        int constant = memory.read(IP.getAndIncrement());
+        int constant = readWord(IP.getAndIncrement());
         outputTape.writeData(new TapeSymbol(constant));
         outputTape.moveRight();
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState write() {
-        int register = memory.read(IP.getAndIncrement());
-        int value = memory.read(register);
+        int register = readWord(IP.getAndIncrement());
+        int value = readWord(register);
         outputTape.writeData(new TapeSymbol(value));
         outputTape.moveRight();
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState load_c() {
-        int value = memory.read(IP.getAndIncrement());
-        memory.write(0, value);
+        int value = readWord(IP.getAndIncrement());
+        writeWord(0, value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState load() {
-        int register = memory.read(IP.getAndIncrement());
-        memory.write(0, memory.read(register));
+        int register = readWord(IP.getAndIncrement());
+        writeWord(0, readWord(register));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState store() {
-        int register = memory.read(IP.getAndIncrement());
-        memory.write(register, memory.read(0));
+        int register = readWord(IP.getAndIncrement());
+        writeWord(register, readWord(0));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState add_c() {
-        int value = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
-        memory.write(0, r0 + value);
+        int value = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
+        writeWord(0, r0 + value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState add() {
-        int register = memory.read(IP.getAndIncrement());
-        int value = memory.read(register);
-        int r0 = memory.read(0);
-        memory.write(0, r0 + value);
+        int register = readWord(IP.getAndIncrement());
+        int value = readWord(register);
+        int r0 = readWord(0);
+        writeWord(0, r0 + value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState sub_c() {
-        int value = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
-        memory.write(0, r0 - value);
+        int value = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
+        writeWord(0, r0 - value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState sub() {
-        int register = memory.read(IP.getAndIncrement());
-        int value = memory.read(register);
-        int r0 = memory.read(0);
-        memory.write(0, r0 - value);
+        int register = readWord(IP.getAndIncrement());
+        int value = readWord(register);
+        int r0 = readWord(0);
+        writeWord(0, r0 - value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState mul_c() {
-        int value = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
-        memory.write(0, r0 * value);
+        int value = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
+        writeWord(0, r0 * value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState mul() {
-        int register = memory.read(IP.getAndIncrement());
-        int value = memory.read(register);
-        int r0 = memory.read(0);
-        memory.write(0, r0 * value);
+        int register = readWord(IP.getAndIncrement());
+        int value = readWord(register);
+        int r0 = readWord(0);
+        writeWord(0, r0 * value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState div_c() {
-        int value = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
+        int value = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
         if (value == 0) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        memory.write(0, r0 / value);
+        writeWord(0, r0 / value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState div() {
-        int register = memory.read(IP.getAndIncrement());
-        int value = memory.read(register);
-        int r0 = memory.read(0);
+        int register = readWord(IP.getAndIncrement());
+        int value = readWord(register);
+        int r0 = readWord(0);
         if (value == 0) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        memory.write(0, r0 / value);
+        writeWord(0, r0 / value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState jmp() {
-        IP.set(memory.read(IP.get()));
+        IP.set(readWord(IP.get()));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState jz() {
-        int address = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
+        int address = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
         if (r0 == 0) {
             IP.set(address);
         }
@@ -198,8 +225,8 @@ public class EmulatorEngine {
     }
 
     private CPU.RunState jgtz() {
-        int address = memory.read(IP.getAndIncrement());
-        int r0 = memory.read(0);
+        int address = readWord(IP.getAndIncrement());
+        int r0 = readWord(0);
         if (r0 > 0) {
             IP.set(address);
         }
@@ -208,6 +235,17 @@ public class EmulatorEngine {
 
     private CPU.RunState halt() {
         return CPU.RunState.STATE_STOPPED_NORMAL;
+    }
+
+    private int readWord(int address) {
+        int value = memory.read(address);
+        if (debugger.isActive()) debugger.access(address, value, false);
+        return value;
+    }
+
+    private void writeWord(int address, int value) {
+        memory.write(address, value);
+        if (debugger.isActive()) debugger.access(address, value, true);
     }
 
     @FunctionalInterface

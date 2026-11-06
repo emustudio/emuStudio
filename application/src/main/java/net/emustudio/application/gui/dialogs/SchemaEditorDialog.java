@@ -53,6 +53,8 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     private ButtonGroup groupDraw;
     private JScrollPane scrollScheme;
     private JSlider sliderGridGap;
+    private final JLabel toolStatus = new JLabel("Select and move components. Choose a toolbar tool to edit the schema.");
+    private String pluginHint = "Choose a component tool first";
 
     public SchemaEditorDialog(JDialog parent, Schema schema, Dialogs dialogs, GUI gui) {
         super(parent, "Computer editor [" + schema.getComputerConfig().getName() + "]", true);
@@ -74,12 +76,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         panel.addMouseMotionListener(panel);
         GUI.addKeyListenerRecursively(this, this);
 
-        panel.addToolListener(() -> {
-            panel.setTool(Tool.TOOL_NOTHING, null);
-            cmbPlugin.setModel(EMPTY_MODEL);
-            groupDraw.clearSelection();
-            buttonSelected = false;
-        });
+        panel.addToolListener(this::resetTool);
     }
 
     @Override
@@ -96,7 +93,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     public void keyPressed(KeyEvent e) {
         int kCode = e.getKeyCode();
         if (kCode == KeyEvent.VK_ESCAPE) {
-            panel.cancelDrawing();
+            resetTool();
             schema.select(-1, -1, 0, 0);
         } else if (kCode == KeyEvent.VK_DELETE) {
             panel.cancelDrawing();
@@ -169,6 +166,12 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         );
         JToolBar.Separator separator4 = new JToolBar.Separator();
         cmbPlugin = new JComboBox<>();
+        cmbPlugin.setEnabled(false);
+        cmbPlugin.getAccessibleContext().setAccessibleName("Plugin to place");
+        DefaultListCellRenderer pluginRenderer = new DefaultListCellRenderer();
+        cmbPlugin.setRenderer((list, value, index, selected, focus) ->
+                pluginRenderer.getListCellRendererComponent(list, value == null ? pluginHint : value,
+                        index, selected, focus));
         JToolBar.Separator separator5 = new JToolBar.Separator();
         btnUseGrid = gui.toolbarToggleButton(
                 this::btnUseGridActionPerformed,
@@ -202,7 +205,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         groupDraw.add(btnLine);
         groupDraw.add(btnDelete);
 
-        cmbPlugin.setToolTipText("Select plug-in");
+        cmbPlugin.setToolTipText(pluginHint);
         cmbPlugin.addActionListener(this::cmbPluginActionPerformed);
         toolDraw.add(cmbPlugin);
         toolDraw.add(separator5);
@@ -218,8 +221,13 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        JPanel mainPanel = gui.panel("insets dialog", "[grow][]", "[][grow]");
+        for (Component component : toolDraw.getComponents())
+            if (component instanceof AbstractButton) component.setFocusable(true);
+        toolStatus.setName("schemaToolStatus");
+        toolStatus.getAccessibleContext().setAccessibleDescription("Current schema tool and next action");
+        JPanel mainPanel = gui.panel("insets dialog", "[grow][]", "[][][grow]");
         mainPanel.add(toolDraw, "growx, span, wrap");
+        mainPanel.add(toolStatus, "growx, span, wrap");
         mainPanel.add(scrollScheme, "grow");
         mainPanel.add(sliderGridGap, "w 31!, growy");
 
@@ -260,14 +268,17 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     }
 
     private void btnLineActionPerformed(ActionEvent evt) {
+        pluginLoadId.incrementAndGet();
         panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
+        cmbPlugin.setEnabled(false);
         if (buttonSelected) {
-            groupDraw.clearSelection();
+            resetTool();
             return;
         }
         panel.setTool(Tool.TOOL_CONNECTION, null);
         buttonSelected = true;
+        setToolStatus("Connection tool — choose components to connect; Esc cancels.", "Connection tool does not need a plugin");
     }
 
     private void cmbPluginActionPerformed(ActionEvent evt) {
@@ -283,6 +294,9 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
             } else if (btnDevice.isSelected()) {
                 panel.setTool(Tool.TOOL_DEVICE, fileName);
             }
+            String type = btnCompiler.isSelected() ? "compiler" : btnCPU.isSelected() ? "CPU"
+                    : btnRAM.isSelected() ? "memory" : "device";
+            setToolStatus("Place " + type + " — click the canvas; Esc cancels.", "Choose a " + type + " plugin");
         }, panel::cancelDrawing);
     }
 
@@ -323,13 +337,16 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     }
 
     private void btnDeleteActionPerformed(ActionEvent evt) {
+        pluginLoadId.incrementAndGet();
         panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
+        cmbPlugin.setEnabled(false);
         if (buttonSelected) {
-            groupDraw.clearSelection();
+            resetTool();
         } else {
             panel.setTool(Tool.TOOL_DELETE, null);
             buttonSelected = true;
+            setToolStatus("Delete tool — choose a component or connection; Esc cancels.", "Delete tool does not need a plugin");
         }
     }
 
@@ -357,8 +374,10 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
 
     private void resetComboWithPluginFiles(PLUGIN_TYPE pluginType) {
         int loadId = pluginLoadId.incrementAndGet();
+        String type = pluginType == PLUGIN_TYPE.CPU ? "CPU" : pluginType.name().toLowerCase(java.util.Locale.ROOT);
         cmbPlugin.setModel(EMPTY_MODEL);
         cmbPlugin.setEnabled(false);
+        setToolStatus("Loading " + type + " plugins…", "Loading plugins…");
 
         new SwingWorker<List<String>, Void>() {
             @Override
@@ -368,16 +387,20 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
 
             @Override
             protected void done() {
-                if (loadId != pluginLoadId.get()) {
+                if (loadId != pluginLoadId.get() || !isDisplayable()) {
                     return;
                 }
-                cmbPlugin.setEnabled(true);
                 try {
                     cmbPlugin.setModel(new PluginComboModel(get()));
+                    cmbPlugin.setEnabled(cmbPlugin.getItemCount() > 0);
+                    if (cmbPlugin.getItemCount() == 0)
+                        setToolStatus("No " + type + " plugins installed. Choose another tool.", "No plugins installed");
                     selectFirstPlugin();
                 } catch (Exception e) {
                     LOGGER.error("Could not load plugin files", e);
                     cmbPlugin.setModel(EMPTY_MODEL);
+                    cmbPlugin.setEnabled(false);
+                    setToolStatus("Could not load " + type + " plugins. Choose the tool again to retry.", "Plugin loading failed");
                 }
             }
         }.execute();
@@ -385,12 +408,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
 
     private boolean checkUnsetDrawingTool() {
         if (buttonSelected) {
-            pluginLoadId.incrementAndGet();
-            cmbPlugin.setEnabled(true);
-            cmbPlugin.setModel(EMPTY_MODEL);
-            groupDraw.clearSelection();
-            panel.setTool(Tool.TOOL_NOTHING, null);
-            buttonSelected = false;
+            resetTool();
             return false;
         }
         return true;
@@ -400,5 +418,22 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         if (cmbPlugin.getItemCount() > 0) {
             cmbPlugin.setSelectedIndex(0);
         }
+    }
+
+    private void setToolStatus(String status, String hint) {
+        toolStatus.setText(status);
+        pluginHint = hint;
+        cmbPlugin.setToolTipText(hint);
+        cmbPlugin.repaint();
+    }
+
+    private void resetTool() {
+        pluginLoadId.incrementAndGet();
+        groupDraw.clearSelection();
+        buttonSelected = false;
+        panel.setTool(Tool.TOOL_NOTHING, null);
+        cmbPlugin.setModel(EMPTY_MODEL);
+        cmbPlugin.setEnabled(false);
+        setToolStatus("Select and move components. Choose a toolbar tool to edit the schema.", "Choose a component tool first");
     }
 }

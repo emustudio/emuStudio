@@ -74,9 +74,7 @@ public class Program {
         for (RamInstruction instruction : instructions) {
             programMemory.put(instruction.getAddress(), instruction);
         }
-        RamMemoryContext.serialize(filename, new RamMemoryContext.RamMemory(
-                this.labels.values(), programMemory, inputs
-        ));
+        RamMemoryContext.serialize(filename, labels.values(), programMemory, inputs);
     }
 
     private Optional<Label> getLabel(String name) {

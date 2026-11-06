@@ -56,10 +56,7 @@ public class CpuImplTest {
 
     private void initCpu() throws Exception {
         if (!initialized) {
-            RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                    Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-            );
-            expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+            expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
             replay(memory, inputTape, outputTape, storageTape);
             cpu.initialize();
             initialized = true;
@@ -147,10 +144,7 @@ public class CpuImplTest {
         expect(storageTape.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol(42))).anyTimes();
         replay(storageTape);
 
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory, inputTape, outputTape);
 
         cpu.initialize();
@@ -173,10 +167,7 @@ public class CpuImplTest {
         replay(haltInstr);
 
         expect(memory.read(0)).andReturn(haltInstr).anyTimes();
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory);
 
         storageTape.setLeftBounded(true);
@@ -262,10 +253,7 @@ public class CpuImplTest {
         replay(haltInstr);
 
         expect(memory.read(anyInt())).andReturn(haltInstr).anyTimes();
-        RamMemoryContext.RamMemory snapshot = new RamMemoryContext.RamMemory(
-                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
-        );
-        expect(memory.getSnapshot()).andReturn(snapshot).anyTimes();
+        expect(memory.getInputs()).andReturn(Collections.emptyList()).anyTimes();
         replay(memory);
 
         storageTape.setLeftBounded(anyBoolean());
@@ -343,5 +331,24 @@ public class CpuImplTest {
         initCpu();
         JPanel panel = cpu.getStatusPanel();
         assertNotNull(panel);
+    }
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactTypedInstruction() throws Exception {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
+        expect(instruction.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
+        expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
+        replay(instruction);
+        expect(memory.read(0)).andReturn(instruction).anyTimes();
+        initCpu();
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(1, cpu.getInstructionLocation());
     }
 }

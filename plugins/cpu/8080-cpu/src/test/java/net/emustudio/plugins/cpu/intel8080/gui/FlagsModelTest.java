@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import static net.emustudio.plugins.cpu.intel8080.EmulatorEngine.*;
 import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -21,6 +23,8 @@ public class FlagsModelTest {
     @Before
     public void setUp() {
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
+        replay(memory);
         engine = new EmulatorEngine(memory, new Context8080Impl());
         flagsModel = new FlagsModel(engine);
     }

@@ -68,6 +68,7 @@ public class OpenComputerDialog extends DialogBase {
         saveSchemaAction = new SaveSchemaAction(preview);
 
         lstConfig.setModel(configurationsModel);
+        lstConfig.getAccessibleContext().setAccessibleName("Virtual computers");
 
         buildContent();
         setMinimumSize(new Dimension(700, 500));
@@ -90,11 +91,11 @@ public class OpenComputerDialog extends DialogBase {
         JButton btnRename = gui.toolbarButton(renameComputerAction);
         JButton btnSaveSchemaImage = gui.toolbarButton(saveSchemaAction);
         JScrollPane scrollPreview = gui.scrollPane(preview);
-        configurationPanel = gui.panel("insets 10, fillx, wrap 1", "[grow]", "");
+        configurationPanel = gui.panel("insets 10, fillx, wrap 1, hidemode 3", "[grow]", "");
         JScrollPane scrollConfiguration = gui.scrollPane(configurationPanel);
         scrollPreview.setMinimumSize(new Dimension(0, 100));
         scrollConfiguration.setMinimumSize(new Dimension(0, 100));
-        JSplitPane splitPreview = gui.splitPaneTopToBottom(scrollPreview, scrollConfiguration, 0.5);
+        JSplitPane splitPreview = gui.splitPaneTopToBottom(scrollPreview, scrollConfiguration, 0.6);
         JButton btnClose = new JButton();
         JLabel lblLogo = gui.createLogoJLabel();
 
@@ -115,6 +116,9 @@ public class OpenComputerDialog extends DialogBase {
         toolConfig.add(btnEdit);
         toolConfig.add(btnRename);
         toolConfig.add(btnSaveSchemaImage);
+        for (Component component : toolConfig.getComponents()) {
+            if (component instanceof AbstractButton) component.setFocusable(true);
+        }
 
         JPanel panelConfig = gui.panel("insets 0, fill", "[][grow]", "[grow]");
         panelConfig.add(toolConfig, "growy");
@@ -124,17 +128,28 @@ public class OpenComputerDialog extends DialogBase {
         splitConfig.setLeftComponent(panelConfig);
         splitConfig.setRightComponent(splitPreview);
 
-        JLabel lblIntroduction = gui.labelPadded("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>", 5, 10, 5, 10);
-
-        JLabel lblPlease = gui.labelPadded("Please select computer you wish to emulate:", 5, 10, 5, 10);
-
-        // Create a vertical panel for introduction and selection prompt
-        JPanel textPanel = gui.panel("insets 0, flowy, fill", "[grow]", "[]0[grow]");
+        JLabel lblIntroduction = gui.labelTitle("Open virtual computer");
+        JLabel lblPlease = gui.label("Select a virtual computer to inspect its components or open it.");
+        JPanel textPanel = gui.panel("insets 0, flowy, fillx", "[grow]", "[][][]");
         textPanel.add(lblIntroduction);
         textPanel.add(lblPlease);
+        textPanel.add(gui.label("emuStudio " + getVersion()));
 
         // Create header panel with logo and introduction
-        JPanel headerPanel = gui.panel("insets 15", "[]10[grow]", "[grow]");
+        Icon logo = lblLogo.getIcon();
+        lblLogo.setIcon(new Icon() {
+            public int getIconWidth() { return 56; }
+            public int getIconHeight() { return 56; }
+            public void paintIcon(Component component, Graphics graphics, int x, int y) {
+                Graphics2D scaled = (Graphics2D) graphics.create();
+                try {
+                    scaled.translate(x, y);
+                    scaled.scale(56.0 / logo.getIconWidth(), 56.0 / logo.getIconHeight());
+                    logo.paintIcon(component, scaled, 0, 0);
+                } finally { scaled.dispose(); }
+            }
+        });
+        JPanel headerPanel = gui.panel("insets dialog", "[]12[grow]", "[]");
         headerPanel.add(lblLogo);
         headerPanel.add(textPanel, "grow");
 
@@ -146,7 +161,7 @@ public class OpenComputerDialog extends DialogBase {
 
         SwingUtilities.invokeLater(() -> {
             splitConfig.setDividerLocation(270);
-            splitPreview.setDividerLocation(0.5);
+            splitPreview.setDividerLocation(0.6);
         });
 
         // Center Panel: Header + SplitPane

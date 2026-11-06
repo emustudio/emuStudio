@@ -8,7 +8,6 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
@@ -17,13 +16,13 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_COMPILER;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
 public class CompileAction extends AbstractAction {
-
     private final VirtualComputer computer;
     private final Dialogs dialogs;
     private final Editor editor;
@@ -47,7 +46,6 @@ public class CompileAction extends AbstractAction {
 
         setEnabled(computer.getCompiler().isPresent());
         computer.getCompiler().ifPresent(c -> c.addCompilerListener(new CompilerListener() {
-
             @Override
             public void onStart() {
                 compilerOutput.append("Compiling started...\n");
@@ -78,17 +76,29 @@ public class CompileAction extends AbstractAction {
                     compilerOutput.setText("");
 
                     Runnable compile = () -> {
+                        AtomicBoolean failed = new AtomicBoolean();
+                        CompilerListener result = new CompilerListener() {
+                            @Override public void onStart() { }
+                            @Override public void onMessage(CompilerMessage message) {
+                                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) failed.set(true);
+                            }
+                            @Override public void onFinish() { }
+                        };
+                        compiler.addCompilerListener(result);
                         try {
-                            computer.getMemory().ifPresent(Memory::reset);
                             compiler.compile(file.toPath(), Optional.empty());
-                            computer.getCPU().ifPresent(Plugin::reset);
+                            if (!failed.get()) computer.getCPU().ifPresent(Plugin::reset);
                         } catch (Exception e) {
                             compilerOutput.append("Could not compile file: " + e + "\n");
+                        } finally {
+                            compiler.removeCompilerListener(result);
                         }
                     };
-                    computer.getDebugger().ifPresentOrElse(debugger -> debugger.runMutation(compile), compile);
+                    computer.getDebugger().ifPresentOrElse(debugger -> debugger.runCompilation(compile), compile);
                 });
             }
-        }, () -> dialogs.showError("Compiler is not set", "Compile"));
+        }, () -> {
+            dialogs.showError("Compiler is not set", "Compile");
+        });
     }
 }

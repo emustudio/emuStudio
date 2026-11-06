@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.ArgumentMatchers.any;
@@ -136,6 +137,23 @@ public class EmulationControllerTest {
         awaitFor(controller::step, 1);
 
         assertEquals(1, cpuStub.stepCalled.get());
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, listener.runState);
+    }
+
+    @Test(timeout = 2000)
+    public void stepCompletionRunsAfterCpuStops() throws Exception {
+        EmulationController controller = createPlainEmulationController();
+        cpuReset();
+        CountDownLatch completed = new CountDownLatch(1);
+        AtomicInteger stepsAtCompletion = new AtomicInteger();
+
+        controller.step(() -> {
+            stepsAtCompletion.set(cpuStub.stepCalled.get());
+            completed.countDown();
+        });
+
+        assertTrue(completed.await(1, TimeUnit.SECONDS));
+        assertEquals(1, stepsAtCompletion.get());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, listener.runState);
     }
 

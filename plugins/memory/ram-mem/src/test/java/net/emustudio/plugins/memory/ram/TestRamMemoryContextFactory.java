@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram;
 
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 
 /**
  * Test helper to create MemoryContextImpl instances from tests
@@ -10,7 +9,7 @@ import net.emustudio.emulib.plugins.memory.annotations.Annotations;
  */
 public class TestRamMemoryContextFactory {
     public static MemoryContextImpl create() {
-        return new MemoryContextImpl(new Annotations());
+        return new MemoryContextImpl();
     }
 }
 

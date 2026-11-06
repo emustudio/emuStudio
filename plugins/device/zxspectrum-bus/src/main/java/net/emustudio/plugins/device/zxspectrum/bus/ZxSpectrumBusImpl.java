@@ -5,7 +5,6 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
@@ -139,7 +138,12 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public byte readMemoryNotContended(int location) {
-        return memory.read(location);
+        return memory.peek(location);
+    }
+
+    @Override
+    public Byte peek(int location) {
+        return memory.peek(location);
     }
 
     @Override
@@ -197,26 +201,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
-    public int getBanksCount() {
-        return memory.getBanksCount();
-    }
-
-    @Override
-    public int getSelectedBank() {
-        return memory.getSelectedBank();
-    }
-
-    @Override
-    public int getCommonBoundary() {
-        return memory.getCommonBoundary();
-    }
-
-    @Override
-    public Byte readBank(int at, int bank) {
-        return memory.readBank(at, bank);
-    }
-
-    @Override
     public Byte read(int location) {
         applyMemoryContention(location);
         return memory.read(location);
@@ -258,11 +242,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     @Override
     public int getSize() {
         return memory.getSize();
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return memory.annotations();
     }
 
     public void destroy() {

@@ -92,7 +92,8 @@ public class LoadImageActionTest {
         context.setInputs(List.of(42));
 
         File imageFile = tmpFolder.newFile("test.brasp");
-        RaspMemoryContext.serialize(imageFile.toPath(), 7, context.getSnapshot());
+        RaspMemoryContext.serialize(imageFile.toPath(), 7, List.of(createLabel(0, "START")),
+                java.util.Map.of(0, 1, 1, 15), List.of(42));
 
         // Clear context to verify loading works
         context.clear();
@@ -118,7 +119,7 @@ public class LoadImageActionTest {
         assertEquals(Integer.valueOf(15), context.read(1));
         assertTrue(context.getLabel(0).isPresent());
         assertEquals("START", context.getLabel(0).get().getLabel());
-        assertEquals(List.of(42), context.getSnapshot().inputs);
+        assertEquals(List.of(42), context.getInputs());
         assertTrue(repainted.get());
     }
 
@@ -171,13 +172,13 @@ public class LoadImageActionTest {
         // First call - creates and loads an image
         context.write(0, 1);
         File imageFile1 = tmpFolder.newFile("first.brasp");
-        RaspMemoryContext.serialize(imageFile1.toPath(), 0, context.getSnapshot());
+        RaspMemoryContext.serialize(imageFile1.toPath(), 0, List.of(), java.util.Map.of(0, 1), List.of());
         context.clear();
 
         // Second call
         context.write(0, 2);
         File imageFile2 = tmpFolder.newFile("second.brasp");
-        RaspMemoryContext.serialize(imageFile2.toPath(), 1, context.getSnapshot());
+        RaspMemoryContext.serialize(imageFile2.toPath(), 1, List.of(), java.util.Map.of(0, 2), List.of());
         context.clear();
 
         // First call returns imageFile1

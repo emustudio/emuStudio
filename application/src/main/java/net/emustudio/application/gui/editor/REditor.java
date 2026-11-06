@@ -26,6 +26,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -56,6 +57,7 @@ public class REditor implements Editor {
     private final Compiler compiler;
     private final EditorCommands commands;
     private REditor sharedWith;
+    private REditor splitView;
     private Consumer<Path> openFileHandler = path -> {
     };
     private boolean isnew = true;
@@ -72,7 +74,9 @@ public class REditor implements Editor {
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
-        textPane.setFont(FONT_CODE);
+        // RSyntaxTextArea 4.0.1 measures an empty suffix after trailing tabs.
+        // Kerning routes that measurement through TextLayout, which rejects empty text.
+        textPane.setFont(FONT_CODE.deriveFont(Collections.singletonMap(TextAttribute.KERNING, 0)));
 
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAutoIndentEnabled(true);
@@ -164,11 +168,30 @@ public class REditor implements Editor {
 
     void configure(EditorState state) {
         commands.configure(state);
+        if (sharedWith == null) restoreSyntaxStyle();
+    }
+
+    void setSyntaxStyle(String style) {
+        REditor source = sourceEditor();
+        source.textPane.setSyntaxEditingStyle(style);
+        if (source.splitView != null) source.splitView.textPane.setSyntaxEditingStyle(style);
+        source.persistSyntaxStyle();
+    }
+
+    private void restoreSyntaxStyle() {
+        String style = getCurrentFile().map(File::toPath).map(commands.state()::syntax)
+                .orElse(SourceFoldParser.COMPILER_STYLE);
+        setSyntaxStyle(style);
+    }
+
+    private void persistSyntaxStyle() {
+        getCurrentFile().ifPresent(file -> commands.state().syntax(file.toPath(), textPane.getSyntaxEditingStyle()));
     }
 
     REditor mirror() {
         REditor mirror = new REditor(dialogs, compiler);
         mirror.sharedWith = this;
+        splitView = mirror;
         mirror.textPane.setDocument(textPane.getDocument());
         mirror.commands.selections().installFilter();
         mirror.configure(commands.state());
@@ -251,6 +274,7 @@ public class REditor implements Editor {
             try {
                 textPane.save();
                 commands.persistBookmarks();
+                persistSyntaxStyle();
                 isnew = false;
                 return true;
             } catch (IOException e) {
@@ -276,6 +300,7 @@ public class REditor implements Editor {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
                 commands.persistBookmarks();
+                persistSyntaxStyle();
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
@@ -322,6 +347,7 @@ public class REditor implements Editor {
     }
 
     void dispose() {
+        if (sharedWith != null) sharedWith.splitView = null;
         changeListeners.forEach(textPane.getDocument()::removeDocumentListener);
         changeListeners.clear();
         commands.selections().clear();
@@ -385,6 +411,7 @@ public class REditor implements Editor {
             textPane.discardAllEdits();
             isnew = false;
             commands.restoreBookmarks();
+            restoreSyntaxStyle();
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
@@ -400,6 +427,7 @@ public class REditor implements Editor {
         textPane.setDirty(false);
         isnew = true;
         commands.clearBookmarks();
+        restoreSyntaxStyle();
     }
 
     @Override

@@ -3,6 +3,8 @@
 package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.emulib.runtime.ui.GUI;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
@@ -10,36 +12,62 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+
 /** Inline search scoped to the active source view or a captured selection. */
 public final class InlineSearchBar extends JPanel {
     final JTextField find = new JTextField(18), replace = new JTextField(14);
-    final JCheckBox matchCase = new JCheckBox("Case"), word = new JCheckBox("Word"), regex = new JCheckBox("Regex"),
-            preserve = new JCheckBox("Preserve case"), selection = new JCheckBox("Selection");
-    private final JLabel count = new JLabel("0 matches");
+    final JToggleButton matchCase = option("Aa", "Match case"), word = option("W", "Whole word"), regex = option(".*", "Regex"),
+            preserve = option("Aa", "Preserve case"), selection = option("[]", "Search only the captured selection in this pane");
+    private final JLabel count = new JLabel("0 results");
+    private final JToggleButton replacementToggle;
+    private final List<Component> replacementControls;
     private final Supplier<REditor> active;
-    private final Runnable preview;
     private TextEditorPane scopedPane;
     private Position scopeStart, scopeEnd;
     private boolean scopeStartsAtZero;
     private boolean moving;
 
-    InlineSearchBar(Supplier<REditor> active, Runnable preview) {
-        this.active = active; this.preview = preview;
-        setLayout(new GridLayout(2, 1));
-        JPanel fields = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 2));
-        JPanel options = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 2));
+    InlineSearchBar(Supplier<REditor> active) {
+        this.active = active;
+        count.setFont(count.getFont().deriveFont(count.getFont().getSize2D() * 0.85f));
+        GUI gui = new EmuStudioGui();
+        setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][200:400:,grow,fill][][][]", "[][][]"));
         find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
-        fields.add(new JLabel("Find")); fields.add(find); fields.add(new JLabel("Replace")); fields.add(replace);
-        button(fields, "Previous", () -> next(false)); button(fields, "Next", () -> next(true));
-        button(fields, "×", () -> { setVisible(false); active.get().grabFocus(); });
-        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex, preserve, selection}) options.add(option);
-        button(options, "Replace", this::replaceCurrent); button(options, "Replace all", this::replaceAll);
-        button(options, "Files…", preview); options.add(count);
-        add(fields); add(options);
+        JToolBar navigation = gui.toolBar();
+        replacementToggle = gui.toolbarToggleButton(e -> setReplacementVisible(
+                ((JToggleButton) e.getSource()).isSelected()), ICON_REPLACE, "Show replacement controls");
+        replacementToggle.setIcon(new ArrowIcon(true, true));
+        replacementToggle.setFocusable(true);
+        replacementToggle.getAccessibleContext().setAccessibleName("Show replacement controls");
+        navigation.add(replacementToggle);
+        JPanel matching = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        for (JToggleButton option : new JToggleButton[]{matchCase, word, regex, selection}) matching.add(option);
+        JToolBar navigationMatches = gui.toolBar();
+        JButton previous = button(gui, navigationMatches, ICON_MOVE_UP, "Previous match", () -> next(false));
+        previous.setIcon(new ArrowIcon(false, true));
+        JButton next = button(gui, navigationMatches, ICON_MOVE_DOWN, "Next match", () -> next(true));
+        next.setIcon(new ArrowIcon(false, false));
+        JToolBar closing = gui.toolBar();
+        JButton close = button(gui, closing, ICON_REMOVE, "Close search", () -> { setVisible(false); active.get().grabFocus(); });
+        close.setIcon(new CloseIcon());
+        add(navigation); add(find); add(matching); add(navigationMatches); add(closing, "wrap");
+        add(count, "skip 1, span, wrap");
+        JPanel replacements = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 0));
+        JButton replaceOne = new JButton("Replace");
+        replaceOne.addActionListener(e -> runReplacement(this::replaceCurrent));
+        JButton replaceAll = new JButton("Replace All");
+        replaceAll.addActionListener(e -> runReplacement(this::replaceAll));
+        replacements.add(replaceOne); replacements.add(replaceAll);
+        selection.setToolTipText("Search only the captured selection in this pane");
+        JLabel indent = new JLabel();
+        add(indent); add(replace); add(preserve); add(replacements, "span 3, wrap");
+        replacementControls = List.of(indent, replace, replacements, preserve);
+        setReplacementVisible(false);
         find.addActionListener(e -> next(true)); replace.addActionListener(e -> replaceCurrent());
         DocumentListener listener = REditor.onChange(this::refresh);
         find.getDocument().addDocumentListener(listener); replace.getDocument().addDocumentListener(listener);
-        for (JCheckBox option : new JCheckBox[]{matchCase, word, regex, preserve}) option.addActionListener(e -> refresh());
+        for (JToggleButton option : new JToggleButton[]{matchCase, word, regex, preserve}) option.addActionListener(e -> refresh());
         selection.addActionListener(e -> {
             scopedPane = active.get().textPane();
             try {
@@ -54,13 +82,77 @@ public final class InlineSearchBar extends JPanel {
         });
         setVisible(false);
     }
-    private void button(JPanel row, String label, Runnable runnable) {
-        JButton button = new JButton(label); button.addActionListener(e -> {
+    private static JToggleButton option(String text, String label) {
+        JToggleButton button = new JToggleButton(text);
+        button.setMargin(new Insets(2, 5, 2, 5));
+        button.setToolTipText(label);
+        button.getAccessibleContext().setAccessibleName(label);
+        return button;
+    }
+    private JButton button(GUI gui, JToolBar toolbar, String icon, String tooltip, Runnable runnable) {
+        JButton button = gui.toolbarButton(e -> {
             try { runnable.run(); }
             catch (IllegalArgumentException ex) { count.setText(ex.getMessage()); }
-        }); row.add(button);
+        }, icon, tooltip);
+        button.setFocusable(true);
+        button.getAccessibleContext().setAccessibleName(tooltip);
+        toolbar.add(button);
+        return button;
     }
-    public void showSearch() {
+    private static final class ArrowIcon implements Icon {
+        private final boolean disclosure, up;
+        ArrowIcon(boolean disclosure, boolean up) { this.disclosure = disclosure; this.up = up; }
+        public int getIconWidth() { return 16; }
+        public int getIconHeight() { return 16; }
+        public void paintIcon(Component c, Graphics graphics, int x, int y) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setColor(c.getForeground());
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            if (disclosure) {
+                if (((AbstractButton) c).isSelected()) { g.drawLine(x+4,y+6,x+8,y+10); g.drawLine(x+8,y+10,x+12,y+6); }
+                else { g.drawLine(x+6,y+4,x+10,y+8); g.drawLine(x+10,y+8,x+6,y+12); }
+            } else {
+                int tip = up ? 4 : 12, base = 8;
+                g.drawLine(x+8,y+4,x+8,y+12);
+                g.drawLine(x+8,y+tip,x+4,y+base); g.drawLine(x+8,y+tip,x+12,y+base);
+            }
+            g.dispose();
+        }
+    }
+    private static final class CloseIcon implements Icon {
+        public int getIconWidth() { return 16; }
+        public int getIconHeight() { return 16; }
+        public void paintIcon(Component c, Graphics graphics, int x, int y) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setColor(c.getForeground());
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.drawLine(x + 4, y + 4, x + 12, y + 12);
+            g.drawLine(x + 12, y + 4, x + 4, y + 12);
+            g.dispose();
+        }
+    }
+    private void runReplacement(Runnable action) {
+        try { action.run(); }
+        catch (IllegalArgumentException ex) { count.setText(ex.getMessage()); }
+    }
+    private void setReplacementVisible(boolean visible) {
+        replacementToggle.setSelected(visible);
+        replacementToggle.setToolTipText(visible ? "Hide replacement controls" : "Show replacement controls");
+        replacementToggle.getAccessibleContext().setAccessibleName(replacementToggle.getToolTipText());
+        for (Component control : replacementControls) control.setVisible(visible);
+        revalidate();
+        repaint();
+    }
+    public void showFind() {
+        showSearch(false);
+    }
+    public void showReplace() {
+        showSearch(true);
+    }
+    private void showSearch(boolean replacements) {
+        setReplacementVisible(replacements);
         String selected = active.get().getSelectedText();
         if (selected != null && !selected.isEmpty()) find.setText(selected);
         setVisible(true); find.requestFocusInWindow(); find.selectAll(); refresh();
@@ -80,10 +172,8 @@ public final class InlineSearchBar extends JPanel {
     void refresh() {
         if (!isVisible()) return;
         try {
-            List<EditorSearch.Match> matches = matches(); TextEditorPane pane = active.get().textPane();
-            int current = 0;
-            for (int i = 0; i < matches.size(); i++) if (selected(pane, matches.get(i))) current = i + 1;
-            count.setText(current + " of " + matches.size());
+            List<EditorSearch.Match> matches = matches();
+            count.setText(matches.size() + (matches.size() == 1 ? " result" : " results"));
         } catch (IllegalArgumentException e) { count.setText("Invalid search: " + e.getMessage()); }
     }
     boolean next(boolean forward) {

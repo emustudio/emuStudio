@@ -16,20 +16,18 @@ public final class WatchExpression {
     private final String text;
     private final DebugCPU cpu;
     private final MemoryContext<?> memory;
-    private final int bank;
     private int at;
 
-    private WatchExpression(String text, DebugCPU cpu, MemoryContext<?> memory, int bank) {
+    private WatchExpression(String text, DebugCPU cpu, MemoryContext<?> memory) {
         if (text == null || text.length() > 1024)
             throw new IllegalArgumentException("Expression too long");
         this.text = text;
         this.cpu = cpu;
         this.memory = memory;
-        this.bank = bank;
     }
 
-    public static long evaluate(String text, DebugCPU cpu, MemoryContext<?> memory, int bank) {
-        WatchExpression p = new WatchExpression(text, cpu, memory, bank);
+    public static long evaluate(String text, DebugCPU cpu, MemoryContext<?> memory) {
+        WatchExpression p = new WatchExpression(text, cpu, memory);
         LongSupplier value = p.expression(0);
         p.space();
         if (p.at != text.length()) throw p.error("Unexpected input");
@@ -190,7 +188,7 @@ public final class WatchExpression {
                 long value = 0;
                 for (int i = 0; i < width; i++)
                     value |=
-                            ((Byte) memory.readBank((int) location + i, bank) & 255L)
+                            ((Byte) memory.peek((int) location + i) & 255L)
                                     << (8 * (fn.endsWith("be") ? width - 1 - i : i));
                 return value;
             };

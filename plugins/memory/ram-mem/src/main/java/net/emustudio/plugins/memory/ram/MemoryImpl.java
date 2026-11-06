@@ -28,7 +28,7 @@ public class MemoryImpl extends AbstractMemory {
         ContextPool contextPool = applicationApi.getContextPool();
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        context = new MemoryContextImpl(getAnnotations());
+        context = new MemoryContextImpl();
         try {
             contextPool.register(pluginID, context, RamMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);

@@ -4,7 +4,6 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -771,23 +770,6 @@ public class ZxSpectrumBusImplTest {
         verify(memory);
     }
 
-    @Test
-    public void testAnnotationsDelegatesToMemory() {
-        ContextZ80 cpu = createNiceMock(ContextZ80.class);
-        expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).anyTimes();
-
-        MemoryContextAnnotations mockAnnotations = createMock(MemoryContextAnnotations.class);
-        MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
-        expect(memory.annotations()).andReturn(mockAnnotations).once();
-        replay(cpu, memory, mockAnnotations);
-
-        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
-        bus.initialize(cpu, memory);
-
-        assertSame(mockAnnotations, bus.annotations());
-        verify(memory);
-    }
-
     // ========== Frame cycle management tests ==========
 
     @Test
@@ -998,6 +980,7 @@ public class ZxSpectrumBusImplTest {
         }).anyTimes();
 
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.peek(anyInt())).andAnswer(() -> env.memoryValues.getOrDefault(((Integer) getCurrentArguments()[0]) & 0xFFFF, (byte) 0xFF)).anyTimes();
         expect(memory.read(anyInt())).andAnswer(() -> {
             int address = ((Integer) getCurrentArguments()[0]) & 0xFFFF;
             Byte value = env.memoryValues.get(address);
@@ -1051,6 +1034,7 @@ public class ZxSpectrumBusImplTest {
         }).anyTimes();
 
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.peek(anyInt())).andAnswer(() -> env.memoryValues.getOrDefault(((Integer) getCurrentArguments()[0]) & 0xFFFF, (byte) 0xFF)).anyTimes();
         expect(memory.read(anyInt())).andAnswer(() -> {
             int address = ((Integer) getCurrentArguments()[0]) & 0xFFFF;
             Byte value = env.memoryValues.get(address);

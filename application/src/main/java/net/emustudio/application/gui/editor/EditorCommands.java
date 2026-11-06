@@ -58,6 +58,9 @@ final class EditorCommands {
         for (String name : List.of("Sort lines", "Reverse lines", "Remove duplicate lines")) {
             add(name, 0, 0, () -> lines(text -> TextEdits.reorder(text, name), true));
         }
+        add("Uppercase", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaUpperSelectionCaseAction));
+        add("Lowercase", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaLowerSelectionCaseAction));
+        add("Invert case", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaInvertSelectionCaseAction));
         add("Trim trailing whitespace", 0, 0, () -> lines(text -> text.replaceAll("(?m)[ \\t]+$", ""), true));
         add("Tabs to spaces", 0, 0, () -> lines(text -> TextEdits.spaces(text, pane.getTabSize()), true));
         add("Leading spaces to tabs", 0, 0, () -> lines(text -> TextEdits.tabs(text, pane.getTabSize()), true));
@@ -108,17 +111,40 @@ final class EditorCommands {
     }
 
     List<JMenu> menus() {
-        JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
+        JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Uppercase", "Lowercase", "Invert case", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
         JMenu select = menu("Selection", "Select next occurrence", "Select all occurrences", "Column selection", "Expand selection", "Shrink selection");
         JMenu navigate = menu("Navigate", "Go to line / column", "Toggle bookmark", "Next bookmark", "Previous bookmark", "Name / number bookmark");
         JMenu macros = menu("Editing macros", "Start recording", "Stop recording", "Replay recording");
         JMenu view = menu("Editor display", "Collapse all", "Expand all", "Indentation settings", "Token colors");
+        view.add(syntaxMenu());
         toggle(view, "Whitespace", "Visible whitespace", pane::isWhitespaceVisible, pane::setWhitespaceVisible);
         toggle(view, "EndOfLine", "End-of-line markers", pane::getEOLMarkersVisible, pane::setEOLMarkersVisible);
         toggle(view, "IndentGuides", "Indentation guides", pane::getPaintTabLines, pane::setPaintTabLines);
         toggle(view, "Wrap", "Soft wrap", pane::getLineWrap, pane::setLineWrap);
         toggle(view, "Folding", "Code folding", pane::isCodeFoldingEnabled, pane::setCodeFoldingEnabled);
         return List.of(edit, select, navigate, macros, view);
+    }
+
+    private JMenu syntaxMenu() {
+        JMenu menu = new JMenu("Syntax highlighting");
+        ButtonGroup group = new ButtonGroup();
+        String[][] choices = {
+                {compiler == null ? "Default (plain text)" : "Default (selected compiler)", SourceFoldParser.COMPILER_STYLE},
+                {"Plain text", SyntaxConstants.SYNTAX_STYLE_NONE},
+                {"C", SyntaxConstants.SYNTAX_STYLE_C}, {"C++", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS},
+                {"HTML", SyntaxConstants.SYNTAX_STYLE_HTML}, {"INI", SyntaxConstants.SYNTAX_STYLE_INI},
+                {"Java", SyntaxConstants.SYNTAX_STYLE_JAVA}, {"JavaScript", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT},
+                {"JSON", SyntaxConstants.SYNTAX_STYLE_JSON}, {"Markdown", SyntaxConstants.SYNTAX_STYLE_MARKDOWN},
+                {"Python", SyntaxConstants.SYNTAX_STYLE_PYTHON}, {"Shell", SyntaxConstants.SYNTAX_STYLE_UNIX_SHELL},
+                {"XML", SyntaxConstants.SYNTAX_STYLE_XML}, {"YAML", SyntaxConstants.SYNTAX_STYLE_YAML}
+        };
+        for (String[] choice : choices) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(choice[0], choice[1].equals(pane.getSyntaxEditingStyle()));
+            item.addActionListener(e -> editor.setSyntaxStyle(choice[1]));
+            group.add(item);
+            menu.add(item);
+        }
+        return menu;
     }
 
     private JMenu menu(String title, String... names) {
@@ -158,6 +184,25 @@ final class EditorCommands {
     private void invoke(String key) {
         Action action = pane.getActionMap().get(key);
         if (action != null) action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, key));
+    }
+
+    private void changeCase(String key) {
+        List<MultipleSelection.Range> ranges = selections.ranges();
+        pane.beginAtomicEdit();
+        try {
+            if (ranges.isEmpty()) {
+                invoke(key);
+                return;
+            }
+            selections.clear();
+            for (int i = ranges.size() - 1; i >= 0; i--) {
+                MultipleSelection.Range range = ranges.get(i);
+                pane.select(range.start, range.end);
+                invoke(key);
+            }
+        } finally {
+            pane.endAtomicEdit();
+        }
     }
 
     private void lines(UnaryOperator<String> operation, boolean wholeFile) {

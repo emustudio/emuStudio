@@ -34,8 +34,10 @@ def main():
                     else:
                         command = ["magick", "-background", "none"]
                         if size == 44:
-                            source = source.with_suffix(".svg")
-                            command += ["-density", "192"]
+                            svg = source.with_suffix(".svg")
+                            source = svg if svg.exists() else source.with_name(source.stem + "@2x.png")
+                            if source.suffix == ".svg":
+                                command += ["-density", "192"]
                         command.append(str(source))
                         if key[1]:
                             command.append("-flop")

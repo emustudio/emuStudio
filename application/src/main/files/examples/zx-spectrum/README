@@ -7,11 +7,6 @@ ZX Spectrum 48K quick start
    The examples use `org 8000H`, so compilation writes them at address 32768.
 4. From Spectrum BASIC run `RANDOMIZE USR 32768`.
 
-The Z80 CPU status panel can also load a stopped 48K machine snapshot. Use
-`Load snapshot...` for `.sna` or `.z80` files. Z80 v1, v2, and v3 48K files are
-accepted; 128K and banked snapshots are rejected because this computer model has
-no compatible paging hardware.
-
 ROM and tape files can be found at:
 
 - https://www.planetemu.net/roms/sinclair-zx-spectrum-z80

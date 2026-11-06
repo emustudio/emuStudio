@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -9,9 +10,9 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -45,7 +46,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         assertEquals("emuStudio [Demo computer]", onEdt(frame::getTitle));
         assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
-        assertEquals("Debugger", onEdt(() -> tabs.getTitleAt(1)));
+        assertEquals("Emulator", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals("File", onEdt(() -> menuBar.getMenu(0).getText()));
         assertEquals("Edit", onEdt(() -> menuBar.getMenu(1).getText()));
         assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));
@@ -59,7 +60,8 @@ public class StudioFrameTest extends AbstractSwingTest {
             return labels;
         });
         org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Selection", "Navigate", "Editing macros",
-                "Editor display", "Find / replace in files…", "Refactor", "Split view")));
+                "Editor display", "Refactor", "Split view")));
+        org.junit.Assert.assertFalse(editingItems.contains("Find / replace in files…"));
     }
 
     @Test
@@ -84,8 +86,13 @@ public class StudioFrameTest extends AbstractSwingTest {
         ComputerConfig computerConfig = mock(ComputerConfig.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
         DebugTableModel model = createDebugTableModel();
-        Annotations annotations = new Annotations();
-        annotations.add(12, new SourceCodeAnnotation(4, SourceCodePosition.of(2, 0, sourceFile.toString())));
+        AnnotationEngine annotations = new AnnotationEngine();
+        annotations.put(new AnnotationEngine.Entry(4, 1, 12, 13, "source", "",
+                SourceCodePosition.of(2, 0, sourceFile.toString())));
+        CPU sessionCpu = mock(CPU.class);
+        when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
+        when(memoryContext.getSize()).thenReturn(256);
+        DebugSession session = new DebugSession(sessionCpu, memoryContext, null, annotations);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
@@ -93,7 +100,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.empty());
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
-        when(memoryContext.annotations()).thenReturn(annotations);
+        when(computer.getDebugger()).thenReturn(Optional.of(session));
         when(model.getLocationAt(0)).thenReturn(12);
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
@@ -116,9 +123,38 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
         assertEquals("emuStudio [Demo computer] — linked.asm", onEdt(frame::getTitle));
         assertEquals(onEdt(() -> textEditor.getLineStartOffset(1)), onEdt(textEditor::getCaretPosition));
+        session.close();
     }
 
     private StudioFrame createFrame(Path fileName) {
+        return createFrame(fileName, null);
+    }
+
+    @Test
+    public void enteringEmulatorSelectsDebuggerTab() throws Exception {
+        CPU cpu = mock(CPU.class);
+        when(cpu.getDebugger()).thenReturn(Optional.empty());
+        try (DebugSession session = new DebugSession(cpu, null, null)) {
+            StudioFrame frame = createFrame(null, session);
+            showFrame(frame);
+            JTabbedPane workspace = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
+            JTabbedPane views = findComponent(frame.getContentPane(), JTabbedPane.class,
+                    pane -> "debuggerViews".equals(pane.getName()));
+            runOnEdt(() -> {
+                views.setSelectedIndex(views.indexOfTab("History"));
+                workspace.setSelectedIndex(1);
+            });
+            assertEquals("Debugger", onEdt(() -> views.getTitleAt(views.getSelectedIndex())));
+            runOnEdt(() -> {
+                views.setSelectedIndex(views.indexOfTab("History"));
+                workspace.setSelectedIndex(0);
+                workspace.setSelectedIndex(1);
+            });
+            assertEquals("Debugger", onEdt(() -> views.getTitleAt(views.getSelectedIndex())));
+        }
+    }
+
+    private StudioFrame createFrame(Path fileName, DebugSession session) {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
 
@@ -128,6 +164,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.empty());
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
+        when(computer.getDebugger()).thenReturn(Optional.ofNullable(session));
 
         return onEdt(() -> new StudioFrame(
                 computer,

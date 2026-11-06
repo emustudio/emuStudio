@@ -17,7 +17,6 @@ public final class DebugScript {
             throws IOException, InterruptedException {
         session.requirePaused();
         List<String> lines = Files.readAllLines(script);
-        Path directory = script.toAbsolutePath().getParent();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
             if (line.isEmpty() || line.startsWith("#")) continue;
@@ -53,20 +52,9 @@ public final class DebugScript {
                             break;
                         }
                     case "ASSERT":
-                        if (session.evaluate(
-                                        args,
-                                        session.memory == null
-                                                ? 0
-                                                : session.memory.getSelectedBank())
+                        if (session.evaluate(args)
                                 == 0)
                             throw new IllegalArgumentException("Assertion failed: " + args);
-                        break;
-                    case "CAPTURE":
-                        if (args.isBlank()) throw new IllegalArgumentException("CAPTURE filename");
-                        Files.write(
-                                directory.resolve(args),
-                                MemoryAnalysis.capture(session.memory)
-                                        .bytes(session.memory.getSelectedBank()));
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown operation: " + op);

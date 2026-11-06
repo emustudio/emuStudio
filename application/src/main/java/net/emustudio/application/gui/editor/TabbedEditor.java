@@ -39,12 +39,15 @@ public class TabbedEditor implements Editor {
     private final List<Runnable> fontSizeChangeListeners = new ArrayList<>();
     private EditorState state = new EditorState(null);
     private REditor focusedEditor, splitMirror;
+    private SplitPaneView leftSplit, rightSplit;
     private int splitIndex = -1, secondaryIndex = -1;
     private InlineSearchBar searchBar;
     private final Deque<Location> back = new ArrayDeque<>(), forward = new ArrayDeque<>();
     private final Deque<Location> edits = new ArrayDeque<>();
     private Location location;
     private boolean navigating;
+    private boolean synchronizingPosition;
+    private Consumer<SourceCodePosition> sourcePositionChanged = position -> {};
 
     private static final class Location {
         final REditor editor;
@@ -75,8 +78,10 @@ public class TabbedEditor implements Editor {
                 focusedEditor.grabFocus();
             } else focusedEditor = null;
             if (!editors.isEmpty()) {
-                activeEditorChanged.run();
+                notifyActiveEditorChanged();
                 notifyFontSizeChanged();
+                remember(activeEditor(), activeEditor().textPane().getCaretPosition());
+                notifySourcePosition(activeEditor());
             }
         });
         notifyOpenFilesChanged();
@@ -84,6 +89,121 @@ public class TabbedEditor implements Editor {
 
     public void setActiveEditorChanged(Runnable activeEditorChanged) {
         this.activeEditorChanged = Objects.requireNonNull(activeEditorChanged);
+    }
+
+    private void notifyActiveEditorChanged() {
+        updatePaneContext();
+        activeEditorChanged.run();
+    }
+
+    private void updatePaneContext() {
+        if (editors.isEmpty()) return;
+        REditor active = activeEditor();
+        if (leftSplit != null) leftSplit.update(active);
+        if (rightSplit != null) rightSplit.update(active);
+    }
+
+    private final class SplitPaneView extends JPanel {
+        final REditor editor;
+        final String side;
+        final JLabel heading = new JLabel();
+
+        SplitPaneView(REditor editor, String side) {
+            super(new BorderLayout());
+            this.editor = editor;
+            this.side = side;
+            heading.setName("splitPaneTitle");
+            heading.setOpaque(true);
+            heading.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+            add(heading, BorderLayout.NORTH);
+            add(editor.getView());
+        }
+
+        void update(REditor active) {
+            boolean selected = editor == active;
+            heading.setText(side + " — " + title(editor) + (selected ? " — Active" : ""));
+            heading.setToolTipText(editor.getCurrentFile().map(File::getAbsolutePath).orElse(UNTITLED));
+            heading.setBackground(UIManager.getColor(selected ? "Table.selectionBackground" : "Panel.background"));
+            heading.setForeground(UIManager.getColor(selected ? "Table.selectionForeground" : "Label.foreground"));
+            heading.getAccessibleContext().setAccessibleName(heading.getText());
+        }
+    }
+
+    public void setSourcePositionChanged(Consumer<SourceCodePosition> listener) {
+        sourcePositionChanged = Objects.requireNonNull(listener);
+    }
+
+    public Optional<SourceCodePosition> currentSourcePosition() {
+        if (editors.isEmpty()) return Optional.empty();
+        REditor active = activeEditor();
+        return active.getCurrentFile().flatMap(file -> {
+            try {
+                int offset = active.textPane().getCaretPosition();
+                int line = active.textPane().getLineOfOffset(offset);
+                return Optional.of(SourceCodePosition.of(line + 1,
+                        offset - active.textPane().getLineStartOffset(line), file.toPath().toAbsolutePath().normalize().toString()));
+            } catch (BadLocationException e) { return Optional.empty(); }
+        });
+    }
+
+    /** Open buffer text, including unsaved edits and split mirrors; empty for files not open. */
+    public Optional<String> openSourceText(Path path) {
+        Path normalized = path.toAbsolutePath().normalize();
+        for (REditor candidate : editors) {
+            if (candidate.getCurrentFile().map(File::toPath).map(Path::toAbsolutePath)
+                    .map(Path::normalize).filter(normalized::equals).isPresent())
+                return Optional.of(candidate.textPane().getText());
+        }
+        return Optional.empty();
+    }
+
+    /** Follow a debugger selection without stealing focus, closing a split or recording an editor visit. */
+    public boolean synchronizePosition(SourceCodePosition position) {
+        boolean wasNavigating = navigating;
+        synchronizingPosition = true;
+        navigating = true;
+        try {
+            Path path = Path.of(position.fileName).toAbsolutePath().normalize();
+            REditor target = null;
+            for (REditor candidate : editors)
+                if (candidate.getCurrentFile().map(File::toPath).map(Path::toAbsolutePath)
+                        .map(Path::normalize).filter(path::equals).isPresent()) { target = candidate; break; }
+            if (target == null) {
+                target = createEditor();
+                if (!target.openFile(path)) { target.dispose(); return false; }
+                addEditor(target);
+                tabs.setSelectedIndex(editors.indexOf(target));
+                notifyOpenFilesChanged();
+            } else if (target != activeEditor().sourceEditor()) {
+                int index = editors.indexOf(target);
+                if (index != secondaryIndex) tabs.setSelectedIndex(index);
+                focusedEditor = target;
+            } else target = activeEditor();
+            target.setPosition(position);
+            location = new Location(target.sourceEditor(), target.textPane().getCaretPosition());
+            notifyActiveEditorChanged();
+            return true;
+        } finally {
+            navigating = wasNavigating;
+            synchronizingPosition = false;
+        }
+    }
+
+    /** Explicit symbol/debugger visits participate in the existing #453 source history. */
+    public boolean visitPosition(SourceCodePosition position) {
+        Location previous = location;
+        if (!synchronizePosition(position)) return false;
+        if (previous != null && (previous.editor != location.editor || previous.offset != location.offset)) {
+            back.push(previous);
+            while (back.size() > 200) back.removeLast();
+            forward.clear();
+        }
+        return true;
+    }
+
+    private void notifySourcePosition(REditor changed) {
+        if (!synchronizingPosition && !editors.isEmpty() && changed == activeEditor())
+            currentSourcePosition().ifPresent(sourcePositionChanged);
     }
 
     public boolean closeCurrent() {
@@ -106,7 +226,7 @@ public class TabbedEditor implements Editor {
             addEditor(createEditor());
         }
         notifyOpenFilesChanged();
-        activeEditorChanged.run();
+        notifyActiveEditorChanged();
         notifyFontSizeChanged();
         grabFocus();
         return true;
@@ -133,7 +253,7 @@ public class TabbedEditor implements Editor {
         REditor editor = createEditor();
         addEditor(editor);
         tabs.setSelectedIndex(editors.size() - 1);
-        activeEditorChanged.run();
+        notifyActiveEditorChanged();
     }
 
     @Override
@@ -148,7 +268,7 @@ public class TabbedEditor implements Editor {
         for (int i = 0; i < editors.size(); i++) {
             if (editors.get(i).getCurrentFile().map(File::toPath).map(Path::toAbsolutePath).map(Path::normalize).filter(normalized::equals).isPresent()) {
                 tabs.setSelectedIndex(i);
-                activeEditorChanged.run();
+                notifyActiveEditorChanged();
                 return true;
             }
         }
@@ -163,7 +283,7 @@ public class TabbedEditor implements Editor {
         tabs.setSelectedIndex(editors.indexOf(editor));
         updateTitle(editor);
         notifyOpenFilesChanged();
-        activeEditorChanged.run();
+        notifyActiveEditorChanged();
         return true;
     }
 
@@ -273,7 +393,7 @@ public class TabbedEditor implements Editor {
             if (editors.contains(editor)) {
                 updateTitle(editor);
                 if (editor == activeEditor()) {
-                    activeEditorChanged.run();
+                    notifyActiveEditorChanged();
                 }
             }
         }));
@@ -356,8 +476,9 @@ public class TabbedEditor implements Editor {
 
     public InlineSearchBar searchBar() {
         if (searchBar == null) {
-            searchBar = new InlineSearchBar(this::activeEditor, () -> new FilesSearchDialog(this, searchBar).setVisible(true));
+            searchBar = new InlineSearchBar(this::activeEditor);
             editors.forEach(searchBar::observe);
+            updatePaneContext();
         }
         return searchBar;
     }
@@ -385,15 +506,20 @@ public class TabbedEditor implements Editor {
             public void focusGained(FocusEvent e) {
                 focusedEditor = editor;
                 remember(editor, editor.textPane().getCaretPosition());
-                activeEditorChanged.run();
+                notifyActiveEditorChanged();
+                notifySourcePosition(editor);
             }
         });
-        editor.textPane().addCaretListener(e -> remember(editor, e.getDot()));
+        editor.textPane().addCaretListener(e -> {
+            remember(editor, e.getDot());
+            notifySourcePosition(editor);
+        });
         editor.addChangeListener(() -> {
             if (!navigating) {
                 edits.push(new Location(editor.sourceEditor(), editor.textPane().getCaretPosition()));
                 while (edits.size() > 200) edits.removeLast();
             }
+            notifySourcePosition(editor);
         });
         if (searchBar != null) searchBar.observe(editor);
     }
@@ -427,7 +553,7 @@ public class TabbedEditor implements Editor {
             next.editor.textPane().setCaretPosition(Math.min(next.offset, next.editor.textPane().getDocument().getLength()));
             location = next;
             next.editor.grabFocus();
-            activeEditorChanged.run();
+            notifyActiveEditorChanged();
         } finally {
             navigating = false;
         }
@@ -447,7 +573,6 @@ public class TabbedEditor implements Editor {
             addCommand(navigate, "Previous edit", () -> navigate(edits, back));
             addCommand(navigate, "Bookmarks…", this::showBookmarks);
             menu.addSeparator();
-            addCommand(menu, "Find / replace in files…", () -> new FilesSearchDialog(this, searchBar()).setVisible(true));
             JMenu refactor = new JMenu("Refactor");
             addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this));
             addCommand(refactor, "Extract selection…", () -> SourceRefactoring.extract(this));
@@ -530,13 +655,16 @@ public class TabbedEditor implements Editor {
         splitIndex = left;
         secondaryIndex = other;
         tabs.setComponentAt(left, new JPanel());
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, original.getView(), right.getView());
+        leftSplit = new SplitPaneView(original, "Left");
+        rightSplit = new SplitPaneView(right, "Right");
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplit, rightSplit);
         original.getView().setVisible(true);
         right.getView().setVisible(true);
         split.setResizeWeight(0.5);
         tabs.setComponentAt(left, split);
         split.setDividerLocation(Math.max(1, tabs.getWidth() / 2));
         focusedEditor = original;
+        notifyActiveEditorChanged();
     }
 
     void unsplit() {
@@ -551,10 +679,12 @@ public class TabbedEditor implements Editor {
             editors.get(splitIndex).commands().restoreBookmarks();
         }
         splitMirror = null;
+        leftSplit = rightSplit = null;
         splitIndex = -1;
         secondaryIndex = -1;
         focusedEditor = null;
         tabs.setSelectedIndex(editors.indexOf(focused));
+        notifyActiveEditorChanged();
     }
 
 
@@ -584,8 +714,12 @@ public class TabbedEditor implements Editor {
         int index = editors.indexOf(editor);
         if (index >= 0) {
             tabs.setTitleAt(index, title(editor));
-            ((TabHeader) tabs.getTabComponentAt(index)).updateTitle(title(editor));
+            TabHeader header = (TabHeader) tabs.getTabComponentAt(index);
+            if (header != null) {
+                header.updateTitle(title(editor));
+            }
         }
+        updatePaneContext();
     }
 
     private String title(REditor editor) {

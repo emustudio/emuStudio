@@ -38,6 +38,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private final Set<String> doNotEvaluateVariables = new HashSet<>();
     private final Set<String> forwardReferences = new HashSet<>();
     private final Map<String, List<String>> macroArguments = new HashMap<>();
+    private final List<Map.Entry<Integer, String>> labels = new ArrayList<>();
     private int currentAddress = 0;
     private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
@@ -45,6 +46,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
     // tracks unresolved nodes by identity: equal-looking nodes at different places must stay distinct
     private Set<Node> needMorePassThings = Collections.newSetFromMap(new IdentityHashMap<>());
     private String currentMacroId;
+
+    public List<Map.Entry<Integer, String>> labels() { return List.copyOf(labels); }
 
     @Override
     public void visit(Program node) {
@@ -148,6 +151,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Evaluated eval = node.eval(getCurrentAddress(), env);
         env.put(normalizeId(node.label), eval);
         if (eval != null) {
+            labels.add(new AbstractMap.SimpleImmutableEntry<>(eval.value, node.label));
             // we don't need to re-evaluate label
             node.exclude();
         } else {

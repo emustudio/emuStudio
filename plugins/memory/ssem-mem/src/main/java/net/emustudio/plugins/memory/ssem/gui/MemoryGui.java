@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
@@ -23,7 +22,6 @@ public class MemoryGui extends DialogBase {
     private final JScrollPane scrollPane = new JScrollPane();
 
     private final LoadImageAction loadImageAction;
-    private final DumpMemoryAction dumpMemoryAction;
     private final EraseMemoryAction eraseMemoryAction;
 
     public MemoryGui(JFrame parent, MemoryContext<Byte> memory, ApplicationApi api, GUI gui) {
@@ -37,7 +35,6 @@ public class MemoryGui extends DialogBase {
             table.revalidate();
             table.repaint();
         });
-        this.dumpMemoryAction = new DumpMemoryAction(api, memory);
         this.eraseMemoryAction = new EraseMemoryAction(
                 tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
 
@@ -53,7 +50,6 @@ public class MemoryGui extends DialogBase {
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBar.add(gui.toolbarButton(loadImageAction));
-        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(eraseMemoryAction));
 
