@@ -87,7 +87,7 @@ application {
   applicationName = 'emuStudio'
   mainClassName = 'net.emustudio.application.cmdline.Runner'
   applicationDefaultJvmArgs = [
-          '-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=true', '-Dsun.java2d.d3d=false',
+          '-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=false', '-Dsun.java2d.d3d=false',
           '-Dsun.java2d.noddraw=true'
   ]
   executableDir = ''
