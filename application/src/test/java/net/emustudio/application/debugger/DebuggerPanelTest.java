@@ -41,6 +41,70 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void instructionPopupTogglesBreakpointAtRightClickedAddress() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.table.setRowSelectionInterval(0, 0);
+                int address = workspace.table.instructionModel().getLocationAt(1);
+                java.awt.Rectangle cell = workspace.table.getCellRect(1, 0, true);
+                java.awt.event.MouseEvent click = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_PRESSED, 0, 0, cell.x + 1, cell.y + 1,
+                        1, false, java.awt.event.MouseEvent.BUTTON3);
+
+                for (java.awt.event.MouseListener listener : workspace.table.getMouseListeners())
+                    listener.mousePressed(click);
+                JPopupMenu popup = workspace.table.getComponentPopupMenu();
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                JMenuItem toggle = component(popup, JMenuItem.class, "Set breakpoint");
+                toggle.doClick(0);
+
+                assertTrue(workspace.session.isBreakpointSet(address));
+                assertFalse(workspace.session.isBreakpointSet(0));
+                assertEquals(1, workspace.breakpointChanges.get());
+                assertNull(findComponent(popup, JMenuItem.class, "Pin inspection"));
+                assertTrue(workspace.panel.isInstructionView());
+
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                assertEquals("Unset breakpoint", toggle.getText());
+                toggle.doClick(0);
+
+                assertFalse(workspace.session.isBreakpointSet(address));
+                assertEquals(2, workspace.breakpointChanges.get());
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                assertEquals("Set breakpoint", toggle.getText());
+            });
+        }
+    }
+
+    @Test
+    public void instructionPopupDisablesBreakpointWithoutSelectionOrWhileRunning() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.table.clearSelection();
+                JPopupMenu popup = workspace.table.getComponentPopupMenu();
+
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+
+                JMenuItem toggle = component(popup, JMenuItem.class, "Set breakpoint");
+                assertFalse(toggle.isEnabled());
+
+                workspace.table.setRowSelectionInterval(0, 0);
+                workspace.panel.setExecutionRunning(true);
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+
+                assertFalse(toggle.isEnabled());
+                toggle.doClick(0);
+                assertEquals(0, workspace.breakpointChanges.get());
+            });
+        }
+    }
+
+    @Test
     public void instructionViewAcceptsColumnsRenamedByWrapper() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
@@ -651,14 +715,12 @@ public class DebuggerPanelTest {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 1)));
                 assertTrue(workspace.session.isBreakpointSet(1));
-                assertFalse(workspace.panel.isInspectionPinned());
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.breakpointChanges.get());
 
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.UNSET, 1)));
                 assertFalse(workspace.session.isBreakpointSet(1));
-                assertFalse(workspace.panel.isInspectionPinned());
                 assertEquals(2, workspace.breakpointChanges.get());
             });
         }
@@ -691,7 +753,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void breakpointHitsFollowTheNextPcUnlessTheUserManuallyPinsInspection() throws Exception {
+    public void breakpointHitsFollowTheNextPc() throws Exception {
         AtomicInteger pc = new AtomicInteger(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4,
                 session -> {
@@ -705,7 +767,6 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                assertFalse(workspace.panel.isInspectionPinned());
             });
 
             SwingUtilities.invokeAndWait(() -> {
@@ -714,9 +775,6 @@ public class DebuggerPanelTest {
             });
             SwingUtilities.invokeAndWait(() -> {
                 assertEquals(2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
-                pin.doClick(0);
-                assertTrue(workspace.panel.isInspectionPinned());
             });
 
             SwingUtilities.invokeAndWait(() -> {
@@ -724,10 +782,7 @@ public class DebuggerPanelTest {
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
-                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
-                pin.doClick(0);
-                assertFalse(workspace.panel.isInspectionPinned());
+                assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
             });
             SwingUtilities.invokeAndWait(() -> workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK));
             SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow())));

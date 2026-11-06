@@ -125,29 +125,25 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             f.running(true);
             runOnEdt(() -> f.pane.insert("; edited while running\n", 0));
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.running(false);
             f.sourceLine(3);
-            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals(0, onEdt(() -> f.original.getLocationAt(f.table.getSelectedRow())).intValue());
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }
 
     @Test(timeout = 10000)
-    public void pinAndStaleSourcesStopAutomaticFollowing() throws Exception {
+    public void staleSourcesStopAutomaticFollowing() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
-            assertFalse(onEdt(f.debugger::isInspectionPinned));
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
-            f.sourceLine(3);
-            assertTrue(onEdt(f.debugger::isInspectionPinned));
-            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> f.pane.insert("; edited\n", 0));
+            f.sourceLine(3);
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             runOnEdt(() -> { f.pane.setText(f.text); assertTrue(f.editor.saveFile()); });
             f.compile(false);
             f.sourceLine(2);
@@ -182,7 +178,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void sourceBookmarksFollowAddressesAndPinnedInspectionStopsAutomaticFollowing() throws Exception {
+    public void sourceBookmarksFollowAddresses() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
@@ -193,12 +189,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertEquals(3, f.line());
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
 
-            JCheckBoxMenuItem pin = onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3));
-            triggerButton(pin);
             f.sourceLine(1);
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            assertTrue(onEdt(f.debugger::isInspectionPinned));
-            triggerButton(pin);
+            assertEquals(0, onEdt(f.table::getSelectedRow).intValue());
             f.sourceLine(2);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
         }
@@ -221,19 +213,17 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void genericInstructionPinKeepsListingAnchorDuringStepping() throws Exception {
+    public void genericInstructionsFollowPcDuringStepping() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             clearInvocations(f.original);
-            triggerButton(onEdt(() -> (JCheckBoxMenuItem) f.table.getComponentPopupMenu().getComponent(3)));
             when(f.cpu.getInstructionLocation()).thenReturn(2);
             f.running(true);
             f.running(false);
-            verify(f.original, never()).currentPage();
-            verify(f.original, never()).showAddress(anyInt());
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
+            verify(f.original).currentPage();
+            assertEquals(2, onEdt(() -> f.original.getLocationAt(f.table.getSelectedRow())).intValue());
         }
     }
 

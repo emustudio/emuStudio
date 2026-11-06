@@ -44,8 +44,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private AddressSelectionListener addressSelectionListener = (address, visit) -> {};
     private Runnable inspectionReadyListener = () -> {};
-    private boolean pinnedSelection;
-    private final JCheckBoxMenuItem pinInspection = new JCheckBoxMenuItem("Pin inspection");
     private java.util.function.Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebugSession session;
@@ -160,12 +158,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                 if (byteMemory && index == null) { initializeAnnotations(); return; }
                                 changedWatches.clear();
                                 if (inspectBreakpointHit()) { refresh(); return; }
-                                if (!pinnedSelection) {
-                                    instructionModel.currentPage();
-                                    lastInstructionAddress = session.cpu.getInstructionLocation();
-                                }
-                                if (!isInspectionPinned())
-                                    guard(() -> navigate(session.cpu.getInstructionLocation(), false, NavigationTarget.LISTING));
+                                instructionModel.currentPage();
+                                lastInstructionAddress = session.cpu.getInstructionLocation();
+                                guard(() -> navigate(session.cpu.getInstructionLocation(), false, NavigationTarget.LISTING));
                                 requestRefresh();
                             });
                 }
@@ -261,19 +256,24 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         selectionMenu.add(inspect);
         selectionMenu.add(goToSource);
         selectionMenu.addSeparator();
-        selectionMenu.add(pinInspection);
-        pinInspection.setToolTipText("Keep the inspected address when execution or source selection changes");
-        pinInspection.addActionListener(event -> {
-            pinnedSelection = pinInspection.isSelected();
-            graph.repaint();
-        });
+        JMenuItem toggleBreakpoint = new JMenuItem("Set breakpoint");
+        toggleBreakpoint.addActionListener(event -> guard(() -> {
+            int address = selectedInstructionAddress();
+            applyBreakpointRequest(new BreakpointDialog.Request(
+                    session.isBreakpointSet(address) ? BreakpointDialog.Operation.UNSET : BreakpointDialog.Operation.SET,
+                    address));
+        }));
+        selectionMenu.add(toggleBreakpoint);
         selectionMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent event) {
                 boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running && !tasks.isBusy();
                 inspect.setEnabled(enabled);
                 goToSource.setEnabled(enabled);
-                pinInspection.setSelected(isInspectionPinned());
-                pinInspection.setEnabled(!running && !tasks.isBusy());
+                boolean validAddress = enabled && instructionModel.getLocationAt(
+                        table.convertRowIndexToModel(table.getSelectedRow())) >= 0;
+                toggleBreakpoint.setEnabled(validAddress && isBreakpointDialogSupported());
+                toggleBreakpoint.setText(validAddress && session.isBreakpointSet(selectedInstructionAddress())
+                        ? "Unset breakpoint" : "Set breakpoint");
             }
             public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent event) {}
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent event) {}
@@ -316,10 +316,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         inspectionReadyListener = Objects.requireNonNull(listener);
     }
 
-    public boolean isInspectionPinned() {
-        return pinnedSelection;
-    }
-
     public void setSourceMappingsCurrent(boolean current) {
         sourceMappingsCurrent = current;
         graph.invalidateLabels();
@@ -333,9 +329,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             addressSelectionListener.selected(inspectedAddress, visit);
     }
 
-    /** Automatic source following keeps the active analysis tab and respects a pinned inspection. */
+    /** Automatic source following keeps the active analysis tab. */
     public void synchronizeSourceAddress(SourceAddressMap.Location location) {
-        if (isInspectionPinned()) return;
         if (!location.instruction) return;
         alignInstructionAddress(location.address);
         navigate(location.address, true, location.instruction ? NavigationTarget.SOURCE_INSTRUCTION : NavigationTarget.SOURCE_DATA);
