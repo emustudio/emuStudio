@@ -247,7 +247,7 @@ public class EmulatorEngine {
         return currentRunState;
     }
 
-    public CPU.RunState run(CPU cpu) {
+    public CPU.RunState run() {
         // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
         // in 1 millisecond time slot = 1 / 0.00025 = 4000 t-states are executed uncontrollably
         currentRunState = CPU.RunState.STATE_RUNNING;
@@ -255,11 +255,7 @@ public class EmulatorEngine {
                 () -> (double) context.getCPUFrequency(),
                 () -> {
                     try {
-                        if (cpu.isBreakpointSet(PC)) {
-                            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-                        } else {
-                            dispatch();
-                        }
+                        dispatch();
                     } catch (IndexOutOfBoundsException e) {
                         LOGGER.error("Unexpected error", e);
                         currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;

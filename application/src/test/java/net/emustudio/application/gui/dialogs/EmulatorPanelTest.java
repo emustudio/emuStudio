@@ -28,8 +28,6 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
@@ -126,14 +124,9 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     public void instructionSelectionDoesNotToggleBreakpointsOrOpenSource() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
-        Set<Integer> addresses = new HashSet<>();
+        when(cpu.getDebugger()).thenReturn(Optional.of(mock(DebugCPU.class)));
         when(cpu.getTitle()).thenReturn("Test CPU");
-        when(cpu.isBreakpointSupported()).thenReturn(true);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        when(cpu.isBreakpointSet(anyInt())).thenAnswer(c -> addresses.contains(c.getArgument(0)));
-        when(cpu.getBreakpoints()).thenAnswer(c -> Set.copyOf(addresses));
-        doAnswer(c -> addresses.add(c.getArgument(0))).when(cpu).setBreakpoint(anyInt());
-        doAnswer(c -> addresses.remove(c.getArgument(0))).when(cpu).unsetBreakpoint(anyInt());
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         DebugTableModel model = createDebugTableModel();
@@ -154,11 +147,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_CLICKED, 3, 0, x, y, 1, false, MouseEvent.BUTTON1));
             });
             runOnEdt(() -> {});
-            assertTrue(addresses.isEmpty());
+            assertTrue(session.rules.isEmpty());
             runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
-            assertTrue(addresses.isEmpty());
+            assertTrue(session.rules.isEmpty());
             verify(model, never()).showAddress(anyInt());
             assertNull(source.get());
             runOnEdt(panel::close);
@@ -166,21 +159,17 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     }
 
     @Test
-    public void nativeBreakpointControlRemainsAvailableWithoutBreakpointsTab() throws Exception {
+    public void applicationBreakpointControlRemainsAvailableWithoutBreakpointsTab() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
+        when(cpu.getDebugger()).thenReturn(Optional.of(mock(DebugCPU.class)));
         when(cpu.getTitle()).thenReturn("Test CPU");
-        Set<Integer> breakpoints = new HashSet<>(Set.of(42));
-        when(cpu.isBreakpointSupported()).thenReturn(true);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        when(cpu.getBreakpoints()).thenAnswer(invocation -> Set.copyOf(breakpoints));
-        when(cpu.isBreakpointSet(anyInt())).thenAnswer(invocation -> breakpoints.contains(invocation.getArgument(0)));
-        doAnswer(invocation -> breakpoints.add(invocation.getArgument(0))).when(cpu).setBreakpoint(anyInt());
-        doAnswer(invocation -> breakpoints.remove(invocation.getArgument(0))).when(cpu).unsetBreakpoint(anyInt());
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
 
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
+            session.setBreakpoint(42, true);
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
@@ -197,7 +186,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             assertTrue(SwingUtilities.isDescendingFrom(manager.watchesPanel(), columns.getRightComponent()));
 
             assertEquals("Debugger", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
-            assertEquals(Set.of(42), breakpoints);
+            assertTrue(session.isBreakpointSet(42));
             assertFalse(onEdt(() -> java.util.Arrays.stream(java.awt.Window.getWindows())
                     .anyMatch(window -> window instanceof JDialog && window.isShowing())));
             runOnEdt(panel::close);
@@ -230,7 +219,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             assertEquals(-1, onEdt(() -> tabs.indexOfTab("Breakpoints")).intValue());
             assertEquals(List.of(rule), session.rules);
             assertTrue(rule.enabled);
-            verify(cpu, never()).unsetBreakpoint(anyInt());
             runOnEdt(panel::close);
         }
     }
@@ -246,7 +234,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
 
         when(cpu.getStatusPanel()).thenReturn(new JPanel());
-        when(cpu.isBreakpointSupported()).thenReturn(false);
         when(memory.isShowSettingsSupported()).thenReturn(false);
         when(keyboard.getTitle()).thenReturn("Keyboard");
         when(keyboard.isShowSettingsSupported()).thenReturn(false);
@@ -306,7 +293,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         EmulationController emulationController = mock(EmulationController.class);
 
         when(cpu.getStatusPanel()).thenReturn(new JPanel());
-        when(cpu.isBreakpointSupported()).thenReturn(false);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());

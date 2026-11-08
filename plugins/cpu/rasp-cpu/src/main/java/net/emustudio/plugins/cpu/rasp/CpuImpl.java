@@ -72,7 +72,6 @@ public class CpuImpl extends AbstractCPU {
             DebuggerTable debugTable = applicationApi.getDebuggerTable();
             if (debugTable != null) {
                 ArrayList<DebuggerColumn<?>> debugColumns = new ArrayList<>();
-                debugColumns.add(new BreakpointColumn(this));
                 debugColumns.add(new AddressColumn("%d"));
                 debugColumns.add(new LabelDebugColumn(memory));
                 debugColumns.add(new MnemoColumn(disassembler));
@@ -103,9 +102,6 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                if (isBreakpointSet(engine.IP.get())) {
-                    throw new Breakpoint();
-                }
                 RunState tmpRunState = stepInternal();
                 if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
 
@@ -118,8 +114,6 @@ public class CpuImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (Breakpoint breakpoint) {
-                return RunState.STATE_STOPPED_BREAK;
             } catch (Exception ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_BAD_INSTR;

@@ -106,7 +106,7 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() {
         try {
             frequencyCalculator.start();
-            return engine.run(this);
+            return engine.run();
         } finally {
             frequencyCalculator.stop();
         }

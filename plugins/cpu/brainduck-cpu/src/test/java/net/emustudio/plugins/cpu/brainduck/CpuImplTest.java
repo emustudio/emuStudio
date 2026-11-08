@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -99,11 +100,14 @@ public class CpuImplTest {
 
     private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) {
         setupEmulator(program, null, input);
-        cpu.setBreakpoint(breakpoint);
+        DebugCPU.Listener listener = new DebugCPU.Listener() {
+            @Override public boolean beforeInstruction(int address) { return address == breakpoint; }
+        };
+        cpu.getDebugger().orElseThrow().addListener(listener);
         try {
             assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
         } finally {
-            cpu.unsetBreakpoint(breakpoint);
+            cpu.getDebugger().orElseThrow().removeListener(listener);
         }
     }
 

@@ -9,8 +9,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -22,19 +20,13 @@ final class DebuggerTestMachine {
     final MemoryContext<Byte> memory;
     final List<CPU.CPUListener> cpuListeners = new ArrayList<>();
     final List<MemoryContext.MemoryListener> memoryListeners = new ArrayList<>();
-    final Set<Integer> breakpoints = new TreeSet<>();
 
     @SuppressWarnings("unchecked")
-    DebuggerTestMachine(byte[][] banks, int commonBoundary, boolean nativeBreakpoints) {
+    DebuggerTestMachine(byte[][] banks, int commonBoundary) {
         memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(cpu.getAddressSpaceSize()).thenReturn(banks[0].length);
-        when(cpu.isBreakpointSupported()).thenReturn(nativeBreakpoints);
-        when(cpu.getBreakpoints()).thenAnswer(call -> new TreeSet<>(breakpoints));
-        when(cpu.isBreakpointSet(anyInt())).thenAnswer(call -> breakpoints.contains(call.getArgument(0)));
-        doAnswer(call -> { breakpoints.add(call.getArgument(0)); return null; }).when(cpu).setBreakpoint(anyInt());
-        doAnswer(call -> { breakpoints.remove(call.getArgument(0)); return null; }).when(cpu).unsetBreakpoint(anyInt());
         doAnswer(call -> { cpuListeners.add(call.getArgument(0)); return null; }).when(cpu).addCPUListener(any());
         doAnswer(call -> { cpuListeners.remove(call.getArgument(0)); return null; }).when(cpu).removeCPUListener(any());
         doAnswer(call -> { state(CPU.RunState.STATE_STOPPED_BREAK); return null; }).when(cpu).pause();

@@ -14,6 +14,26 @@ import java.util.*;
 
 public class DebugHooksTest {
     @Test
+    public void runStopsAtApplicationBreakpointBeforeExecutingInstruction() throws Exception {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory.write(0, new Byte[] {0x3e, 0x42, 0x3c}, 3);
+        EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
+        DebugCPU.Listener listener = new DebugCPU.Listener() {
+            @Override public boolean beforeInstruction(int address) { return address == 2; }
+        };
+        engine.debugger.addListener(listener);
+
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, engine.run());
+
+        assertEquals(2, engine.PC);
+        assertEquals(0x42, engine.regs[7]);
+        engine.debugger.removeListener(listener);
+        engine.step();
+        assertEquals(3, engine.PC);
+        assertEquals(0x43, engine.regs[7]);
+    }
+
+    @Test
     public void disabledProbeKeepsOriginalMemoryReference() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());

@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 public class LiveMemoryTest {
     @Test public void readsCurrentCellsWithoutRetainingThem() {
         byte[][] cells = {{1, 2, 9}, {3, 4, 99}};
-        DebuggerTestMachine machine = new DebuggerTestMachine(cells, 2, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(cells, 2);
         LiveMemory live = new LiveMemory(machine.memory, ProgramIndex.create("live", 3, new AnnotationEngine()).snapshot().layout(), () -> {});
         verify(machine.memory, never()).read(anyInt());
         assertEquals(3, live.size());
@@ -32,7 +32,7 @@ public class LiveMemoryTest {
 
     @Test public void searchesAndNumbersReadLiveMemoryAndReturnOnlyDerivedResults() {
         byte[][] cells = {{0x12, 0x34, 0x12, 0x3f, 0, 'H', 'I', 0, 'O', 'K'}};
-        DebuggerTestMachine machine = new DebuggerTestMachine(cells, cells[0].length, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(cells, cells[0].length);
         LiveMemory live = new LiveMemory(machine.memory,
                 ProgramIndex.create("live", cells[0].length, new AnnotationEngine()).snapshot().layout(), () -> {});
         byte[][] pattern = LiveMemory.pattern("12 3?");
@@ -63,7 +63,7 @@ public class LiveMemoryTest {
     }
 
     @Test public void guardsRunAfterReadsAndCancellationAndTypedMemoryAreRejected() {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1}}, 1);
         ProgramIndex.Layout layout = ProgramIndex.create("live", 1, new AnnotationEngine()).snapshot().layout();
         int[] checks = {0};
         LiveMemory live = new LiveMemory(machine.memory, layout, () -> {

@@ -51,7 +51,6 @@ public class ProgramIndexPaginationBenchmark {
                             case "getDisassembler": return decoder;
                             case "getAddressSpaceSize": return 65536;
                             case "getInstructionLocation": return pc;
-                            case "isBreakpointSupported": return false;
                             case "getDebugger": return Optional.empty();
                             case "hashCode": return System.identityHashCode(proxy);
                             case "equals": return proxy == args[0];

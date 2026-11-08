@@ -125,19 +125,15 @@ public class EmulatorEngine {
         return currentRunState;
     }
 
-    public CPU.RunState run(CPU cpu) {
+    public CPU.RunState run() {
         currentRunState = CPU.RunState.STATE_RUNNING;
         return preciseRunner.run(
                 () -> (double) context.getCPUFrequency(),
                 () -> {
                     try {
-                        if (cpu.isBreakpointSet(PC)) {
-                            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-                        } else {
-                            int cycles = dispatch();
-                            preciseRunner.addExecutedCycles(cycles);
-                            context.passedCycles(cycles);
-                        }
+                        int cycles = dispatch();
+                        preciseRunner.addExecutedCycles(cycles);
+                        context.passedCycles(cycles);
                     } catch (IndexOutOfBoundsException e) {
                         LOGGER.error("Unexpected error", e);
                         currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;

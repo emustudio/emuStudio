@@ -83,7 +83,7 @@ The instruction table uses an independent PC triangle, theme selection and keybo
 start at the top near memory boundaries. Memory strings are optional, while labels and comments share the available
 width. Execution breakpoints use the CPU-visible address only;
 conditions and hit counts remain advanced options. The breakpoint dialog accepts only a CPU address and Set/Unset actions.
-The caller gates dialog creation and its toolbar action on native CPU breakpoint support or portable debugger support;
+The caller gates dialog creation and its toolbar action on the CPU's `DebugCPU` execution hooks;
 the dialog itself handles only breakpoint state and address validation.
 
 History lists changed registers first in a stable order and can reveal unchanged values. Its label context comes from
@@ -168,8 +168,13 @@ resolve current mappings into address targets while paused; execution uses those
 rebinding from historical mappings. Actual notified writes, compilation, editor rule refreshes and image replacement
 discard those bindings. Conditional/global/source and watchpoint evaluation remain adapter work; execution rules use
 one address bitmap and rule postings at each portable instruction boundary. Execution/source rules and read/write access
-rules use CPU-visible addresses. Source bindings deduplicate resolved addresses. Native CPU breakpoint behavior stays native.
-Index maintenance alone never activates instruction/register tracing.
+rules use CPU-visible addresses. Source bindings deduplicate resolved addresses.
+The application owns all execution breakpoints, including enabled state and persistence. `DebugSession` publishes
+them into `ProgramIndex` and decides whether an instruction should stop through `DebugCPU.Listener.beforeInstruction`.
+CPU plugins invoke the hook and honor its result; `CPU` and `AbstractCPU` expose no breakpoint store or CRUD methods.
+The application supplies the breakpoint table column. The CPU's custom columns describe instructions only.
+An enabled breakpoint attaches the debug probe; removing or disabling the last rule detaches it when no recording is active.
+Debugger settings use version 3; older settings are archived by the existing incompatible-version handling.
 
 Flow analysis uses the CPU's disassembler with its plugin-provided memory wiring. Decoders and disassemblers read logical
 addresses through the current mapping supplied by the connected plugins. Analysis runs off Swing's event thread while paused, checks generation and index

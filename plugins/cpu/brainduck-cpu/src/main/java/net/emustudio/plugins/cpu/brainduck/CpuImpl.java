@@ -102,9 +102,6 @@ public class CpuImpl extends AbstractCPU {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    if (isBreakpointSet(engine.IP)) {
-                        throw new Breakpoint();
-                    }
                     RunState tmpRunState = stepInternal();
                     if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
@@ -116,8 +113,6 @@ public class CpuImpl extends AbstractCPU {
                 } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
                     return RunState.STATE_STOPPED_BAD_INSTR;
-                } catch (Breakpoint er) {
-                    return RunState.STATE_STOPPED_BREAK;
                 }
             }
         } finally {

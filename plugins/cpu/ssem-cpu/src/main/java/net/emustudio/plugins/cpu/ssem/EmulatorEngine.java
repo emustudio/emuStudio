@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
 
@@ -49,7 +48,6 @@ public class EmulatorEngine {
     private MemoryContext<Byte> memory;
     public final DebugProbe debugger;
     private Decoder decoder;
-    private final Function<Integer, Boolean> isBreakpointSet;
     private final Bits emptyBits = new Bits(0, 0);
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
@@ -66,9 +64,8 @@ public class EmulatorEngine {
         };
     }
 
-    EmulatorEngine(MemoryContext<Byte> memory, Function<Integer, Boolean> isBreakpointSet) {
+    EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
-        this.isBreakpointSet = Objects.requireNonNull(isBreakpointSet);
         this.decoder = new DecoderImpl(memory);
         debugger = new DebugProbe("SSEM", memory, recordingDisassembler(memory));
         debugger.register("PC", 32, () -> Integer.toUnsignedLong(CI.get() + 4), value -> CI.set((int) value - 4));
@@ -188,9 +185,6 @@ public class EmulatorEngine {
                 () -> FREQUENCY_KHZ,
                 () -> {
                     try {
-                        if (isBreakpointSet.apply(CI.get())) {
-                            return CPU.RunState.STATE_STOPPED_BREAK;
-                        }
                         preciseRunner.addExecutedCycles(INSTRUCTION_CYCLES);
                         return step();
                     } catch (IndexOutOfBoundsException e) {

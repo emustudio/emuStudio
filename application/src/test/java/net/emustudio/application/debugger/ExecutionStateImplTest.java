@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 public class ExecutionStateImplTest {
     @Test
     public void currentInstructionTracksActiveCpu() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32);
         ExecutionStateImpl state = new ExecutionStateImpl();
         when(machine.cpu.getInstructionLocation()).thenReturn(4, 20);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
@@ -31,7 +31,7 @@ public class ExecutionStateImplTest {
 
     @Test
     public void listenersDetachFromPreviousSession() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32);
         ExecutionStateImpl state = new ExecutionStateImpl();
         AtomicInteger changes = new AtomicInteger();
         Runnable listener = changes::incrementAndGet;

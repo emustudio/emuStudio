@@ -20,7 +20,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void metadataEditRejectsLateResultButBreakpointEditDoesNot() throws Exception {
         for (boolean metadata : new boolean[] {true, false}) {
-            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
             try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
                 Completion completion = new Completion();
                 AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
@@ -56,7 +56,7 @@ public class AnalysisTasksTest {
     }
     @Test(timeout = 15000)
     public void computesOffEventThreadAndAppliesResultOnEventThread() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
@@ -87,7 +87,7 @@ public class AnalysisTasksTest {
 
     @Test(timeout = 15000)
     public void operationFailureReportsOriginalCauseAndAllowsAnotherTask() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
@@ -113,7 +113,7 @@ public class AnalysisTasksTest {
 
     @Test(timeout = 15000)
     public void machineMutationWhileAnalysisRunsDiscardsItsResult() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
@@ -143,7 +143,7 @@ public class AnalysisTasksTest {
 
     @Test(timeout = 15000)
     public void cancellingDoesNotReleaseBusyStateBeforeOperationActuallyExits() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
@@ -185,7 +185,7 @@ public class AnalysisTasksTest {
 
     @Test(timeout = 15000)
     public void controlsRequireEventThreadAndPausedSession() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
             try {
@@ -205,7 +205,7 @@ public class AnalysisTasksTest {
 
     @Test(timeout = 15000)
     public void closedWindowRejectsNewAnalysis() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
             AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
             SwingUtilities.invokeAndWait(() -> {

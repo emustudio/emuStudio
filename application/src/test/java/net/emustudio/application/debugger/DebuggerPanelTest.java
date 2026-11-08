@@ -1588,7 +1588,7 @@ public class DebuggerPanelTest {
     private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");
         Workspace workspace = new Workspace();
-        workspace.machine = new DebuggerTestMachine(banks, common, false);
+        workspace.machine = new DebuggerTestMachine(banks, common);
         Disassembler disassembler = mock(Disassembler.class);
         when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->

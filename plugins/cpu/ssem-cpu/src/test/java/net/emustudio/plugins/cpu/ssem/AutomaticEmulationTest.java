@@ -34,7 +34,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         new AutomaticEmulation(cpu, engine, memory);
 
@@ -52,7 +52,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         AutomaticEmulation ae = new AutomaticEmulation(cpu, engine, memory);
         ae.destroy();
@@ -70,7 +70,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         new AutomaticEmulation(cpu, engine, memory);
 
@@ -95,7 +95,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         new AutomaticEmulation(cpu, engine, memory);
 
@@ -118,7 +118,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         new AutomaticEmulation(cpu, engine, memory);
 
@@ -141,7 +141,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
 
         new AutomaticEmulation(cpu, engine, memory);
 
@@ -160,7 +160,7 @@ public class AutomaticEmulationTest {
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         engine.Acc.set(42);
         engine.CI.set(8);
 
@@ -182,7 +182,7 @@ public class AutomaticEmulationTest {
     public void testConstructorRejectsNullCpu() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(null, engine, memory);
     }
 
@@ -201,7 +201,7 @@ public class AutomaticEmulationTest {
         replay(cpu);
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
-        EmulatorEngine engine = new EmulatorEngine(memory, p -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(cpu, engine, null);
     }
 }

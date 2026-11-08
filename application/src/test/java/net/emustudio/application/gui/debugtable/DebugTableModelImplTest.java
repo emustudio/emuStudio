@@ -9,7 +9,6 @@ import net.emustudio.application.debugger.InstructionIndex;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
-import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.ui.debugger.CannotSetDebuggerValueException;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
@@ -37,21 +36,15 @@ import static org.mockito.Mockito.when;
 public class DebugTableModelImplTest {
 
     @Test
-    public void defaultColumnsReflectBreakpointSupport() {
+    public void defaultColumnsContainOnlyCpuPresentation() {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(true, 0));
 
-        assertEquals(4, model.getColumnCount());
-        assertTrue(model.getColumnAt(0) instanceof BreakpointColumn);
-        assertEquals(Boolean.class, model.getColumnClass(0));
-        assertEquals("address", model.getColumnName(1));
+        model.setCPU(createCpu(0));
 
-        DebugTableModelImpl noBreakpoints = new DebugTableModelImpl();
-        noBreakpoints.setCPU(createCpu(false, 0));
-
-        assertEquals(3, noBreakpoints.getColumnCount());
-        assertTrue(noBreakpoints.getColumnAt(0) instanceof AddressColumn);
-        assertEquals(String.class, noBreakpoints.getColumnClass(0));
+        assertEquals(3, model.getColumnCount());
+        assertTrue(model.getColumnAt(0) instanceof AddressColumn);
+        assertEquals(String.class, model.getColumnClass(0));
+        assertEquals("address", model.getColumnName(0));
     }
 
     @Test
@@ -124,7 +117,7 @@ public class DebugTableModelImplTest {
         assertNull(model.getValueAt(0, 0));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
-        CPU cpu = createCpu(true, 12);
+        CPU cpu = createCpu(12);
         when(ida.rowToLocation(12, 0)).thenReturn(-1);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
@@ -141,7 +134,7 @@ public class DebugTableModelImplTest {
         model.setDebuggerColumns(List.of(mnemo));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
-        CPU cpu = createCpu(false, 7);
+        CPU cpu = createCpu(7);
         when(ida.rowToLocation(7, 1)).thenReturn(33);
         when(ida.rowToLocation(7, 2)).thenReturn(-1);
         setField(model, "ida", ida);
@@ -169,7 +162,7 @@ public class DebugTableModelImplTest {
         model.setDebuggerColumns(List.of(column));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
-        CPU cpu = createCpu(false, 9);
+        CPU cpu = createCpu(9);
         when(ida.rowToLocation(9, 0)).thenReturn(40);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
@@ -183,9 +176,11 @@ public class DebugTableModelImplTest {
     @Test
     public void breakpointColumnIsNotEditableForRowsWithoutInstructionLocation() {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        CPU cpu = createCpu(true, 0);
+        CPU cpu = createCpu(0);
         when(cpu.getAddressSpaceSize()).thenReturn(1);
         model.setCPU(cpu);
+
+        model.setDebuggerColumns(List.of(new TestColumn<>(Boolean.class, "Breakpoint", true)));
 
         assertTrue(model.isCellEditable(0, 0));
         assertFalse(model.isCellEditable(1, 0));
@@ -194,7 +189,7 @@ public class DebugTableModelImplTest {
     @Test
     public void debuggerHonorsCpuAddressSpaceBound() {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(false, 255));
+        model.setCPU(createCpu(255));
 
         assertNotNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2, 0));
         assertNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2 + 1, 0));
@@ -213,7 +208,7 @@ public class DebugTableModelImplTest {
         assertEquals(0, model.guessPreviousInstructionLocation());
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
-        CPU cpu = createCpu(true, 20);
+        CPU cpu = createCpu(20);
         when(ida.rowToLocation(20, 1)).thenReturn(-1);
         when(ida.rowToLocation(20, 2)).thenReturn(100);
         when(ida.rowToLocation(20, 3)).thenReturn(-1);
@@ -234,7 +229,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void browsingAndPagingLeaveCpuLocationAndCurrentInstructionMarkerIndependent() {
-        CPU cpu = createCpu(true, 20);
+        CPU cpu = createCpu(20);
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(cpu);
         model.setMaxRows(5);
@@ -260,7 +255,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void resizingBrowsedPageRetainsItsAnchorAndRebuildsAdjacentPages() {
-        CPU cpu = createCpu(false, 0);
+        CPU cpu = createCpu(0);
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(cpu);
         model.setMaxRows(9);
@@ -284,7 +279,7 @@ public class DebugTableModelImplTest {
 
     @Test
     public void previousInstructionAtBoundaryDoesNotGuessAnOperandAfterStepping() {
-        CPU cpu = createCpu(false, 0);
+        CPU cpu = createCpu(0);
         Disassembler disassembler = mock(Disassembler.class);
         when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call ->
                 (Integer) call.getArgument(0) == 0 ? 2 : (Integer) call.getArgument(0) + 1);
@@ -301,7 +296,7 @@ public class DebugTableModelImplTest {
     @Test
     public void resizingUnpaintedBrowsedPageRetainsItsCenter() {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(false, 0));
+        model.setCPU(createCpu(0));
         model.setMaxRows(9);
         model.showAddress(0);
         model.nextPage();
@@ -477,14 +472,12 @@ public class DebugTableModelImplTest {
         return cpu;
     }
 
-    private CPU createCpu(boolean breakpointSupported, int instructionLocation) {
+    private CPU createCpu(int instructionLocation) {
         Disassembler disassembler = new LinearDisassembler();
         CPU cpu = mock(CPU.class);
         when(cpu.getDisassembler()).thenReturn(disassembler);
         when(cpu.getInstructionLocation()).thenReturn(instructionLocation);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        when(cpu.isBreakpointSupported()).thenReturn(breakpointSupported);
-        when(cpu.isBreakpointSet(anyInt())).thenReturn(false);
         return cpu;
     }
 

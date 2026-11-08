@@ -14,7 +14,6 @@ import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -162,11 +161,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.tableScroll = Objects.requireNonNull(tableScroll);
         this.instructionView = Objects.requireNonNull(instructionView);
         this.instructionModel = table.instructionModel();
-        int bp = -1;
-        for (int c = 0; c < instructionModel.getColumnCount(); c++)
-            if (instructionModel.getColumnAt(c) instanceof BreakpointColumn) { bp = c; break; }
-        addedBreakpointColumn = bp < 0 && (session.cpu.isBreakpointSupported() || session.debug != null);
-        breakpointColumn = addedBreakpointColumn ? 1 : bp < 0 ? -1 : bp + 1;
+        addedBreakpointColumn = session.debug != null;
+        breakpointColumn = addedBreakpointColumn ? 1 : -1;
         this.byteMemory = session.memory != null && session.memory.getCellTypeClass() == Byte.class
                 && session.memory.getSize() > 0;
         this.instructionRows = new InstructionAnnotationsModel();
@@ -586,7 +582,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public boolean isBreakpointDialogSupported() {
-        return session.cpu.isBreakpointSupported() || session.debug != null;
+        return session.debug != null;
     }
 
     public void showBreakpointDialog(JFrame parent) {

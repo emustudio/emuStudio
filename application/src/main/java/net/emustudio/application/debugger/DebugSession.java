@@ -66,7 +66,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private boolean closed;
     private int activeMutations;
     private SourceCaptureGuard activeSourceCapture;
-    private final Set<Integer> disabledBreakpoints = new HashSet<>();
     private BreakpointHit pendingHit;
 
     /** Application-owned index; no memory cells are read to construct it. */
@@ -236,15 +235,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         if (value == CPU.RunState.STATE_RUNNING) {
                             pendingHit = null;
                             if (sourceMappings == null) sourceMappingsCleared = true;
-                            synchronizeBreakpoints();
+                            publishBreakpoints();
                             invalidateIndex();
-                        }
-                        else if (value == CPU.RunState.STATE_STOPPED_BREAK && pendingHit == null) {
-                            // Native CPUs stop before invoking the portable probe. A step or pause
-                            // landing on a configured breakpoint must inspect that address too.
-                            int at = cpu.getInstructionLocation();
-                            if (cpu.isBreakpointSupported() && cpu.isBreakpointSet(at))
-                                pendingHit = new BreakpointHit(at, null);
                         }
                     }
                     metadataChanged();
@@ -553,7 +545,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public synchronized void updateProbe() {
-        synchronizeBreakpoints();
+        publishBreakpoints();
         boolean needed = recording != null || historyLimit > 0 || rules.stream().anyMatch(r -> r.enabled);
         if (debug != null && needed != attached) {
             if (needed) debug.addListener(this);
@@ -563,7 +555,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     /** Replays logical editor state only at a supported paused edit/start boundary. */
-    private void synchronizeBreakpoints() {
+    private void publishBreakpoints() {
         if (programIndex == null && memory == null && cpu.getAddressSpaceSize() <= 0) return;
         ProgramIndex index = programIndex();
         Set<Long> ids = new HashSet<>();
@@ -580,16 +572,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 }
                 update.put(id, rule.address, rule.enabled);
                 ids.add(id);
-            }
-            if (cpu.isBreakpointSupported()) {
-                Set<Integer> nativeRules = new TreeSet<>(cpu.getBreakpoints());
-                nativeRules.addAll(disabledBreakpoints);
-                for (int address : nativeRules) {
-                    if (address < 0 || address >= base.layout().addressSpaceSize()) continue;
-                    long id = Long.MIN_VALUE + address;
-                    update.put(id, address, cpu.isBreakpointSet(address));
-                    ids.add(id);
-                }
             }
             return true;
         });
@@ -626,7 +608,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         stoppedAddress = -1;
         try {
             // UI editing is paused-only. Reacquire this immutable view at every instruction boundary.
-            if (state != CPU.RunState.STATE_RUNNING) synchronizeBreakpoints();
+            if (state != CPU.RunState.STATE_RUNNING) publishBreakpoints();
             ProgramIndex.Snapshot snapshot = programIndex == null ? null : programIndex.snapshot();
             boolean execution = snapshot != null && snapshot.hasExecutionBreakpoint(address);
             candidateCount = 0;
@@ -703,7 +685,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public boolean isBreakpointSet(int address) {
-        if (cpu.isBreakpointSupported()) return cpu.isBreakpointSet(address);
         return rules.stream().anyMatch(r -> isSimpleBreakpoint(r, address) && r.enabled);
     }
 
@@ -711,12 +692,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         requirePaused();
         if (address < 0 || address >= cpu.getAddressSpaceSize())
             throw new IllegalArgumentException("Address outside CPU");
-        if (cpu.isBreakpointSupported()) {
-            if (!enabled) cpu.unsetBreakpoint(address);
-            else cpu.setBreakpoint(address);
-            disabledBreakpoints.remove(address);
-            synchronizeBreakpoints();
-        } else if (debug != null) {
+        if (debug != null) {
             if (!enabled) rules.removeIf(r -> isSimpleBreakpoint(r, address));
             else {
                 Rule rule = rules.stream().filter(r -> isSimpleBreakpoint(r, address)).findFirst()
@@ -732,27 +708,15 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     List<Integer> ordinaryBreakpoints() {
-        Set<Integer> addresses = new TreeSet<>(cpu.getBreakpoints());
-        addresses.addAll(disabledBreakpoints);
+        Set<Integer> addresses = new TreeSet<>();
         for (Rule rule : rules) if (rule.kind.equals("EXEC")) addresses.add(rule.address);
         return new ArrayList<>(addresses);
     }
 
     void toggleOrdinaryBreakpoint(int address) {
         requirePaused();
-        if (!cpu.isBreakpointSupported()) {
-            rules.stream().filter(rule -> isSimpleBreakpoint(rule, address)).findFirst().ifPresent(rule -> rule.enabled = !rule.enabled);
-            updateProbe();
-            return;
-        }
-        if (cpu.isBreakpointSet(address)) {
-            cpu.unsetBreakpoint(address);
-            disabledBreakpoints.add(address);
-        } else {
-            cpu.setBreakpoint(address);
-            disabledBreakpoints.remove(address);
-        }
-        synchronizeBreakpoints();
+        rules.stream().filter(rule -> isSimpleBreakpoint(rule, address)).findFirst().ifPresent(rule -> rule.enabled = !rule.enabled);
+        updateProbe();
     }
 
     private boolean isSimpleBreakpoint(Rule rule, int address) {
@@ -780,7 +744,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void writeSettings() throws IOException {
         if (settings == null) throw new IOException("Computer configuration path unavailable");
         Properties p = new Properties();
-        p.setProperty("version", "2");
+        p.setProperty("version", "3");
         p.setProperty("cpu", cpu.getTitle());
         p.setProperty("watches", Integer.toString(watches.size()));
         for (int i = 0; i < watches.size(); i++) p.setProperty("watch." + i, watches.get(i));
@@ -795,12 +759,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             p.setProperty(k + "enabled", Boolean.toString(r.enabled));
             p.setProperty(k + "after", Long.toString(r.afterHits));
         }
-        List<Integer> ordinary = cpu.isBreakpointSupported() ? ordinaryBreakpoints() : List.of();
-        p.setProperty("ordinary", Integer.toString(ordinary.size()));
-        for (int i = 0; i < ordinary.size(); i++) {
-            p.setProperty("ordinary." + i, Integer.toString(ordinary.get(i)));
-            p.setProperty("ordinary." + i + ".enabled", Boolean.toString(cpu.isBreakpointSet(ordinary.get(i))));
-        }
         if (!p.equals(lastSaved)) {
             AtomicProperties.save(settings, p);
             lastSaved = p;
@@ -810,7 +768,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void load() throws IOException {
         if (settings == null || !Files.isRegularFile(settings)) return;
         Properties p = AtomicProperties.load(settings);
-        if (!"2".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu"))) {
+        if (!"3".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu"))) {
             Path archived = settings.resolveSibling(settings.getFileName() + ".incompatible-" + UUID.randomUUID());
             Files.move(settings, archived);
             org.slf4j.LoggerFactory.getLogger(DebugSession.class)
@@ -818,15 +776,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             return;
         }
         try {
-            int ordinary = count(p, "ordinary");
-            List<Integer> addresses = new ArrayList<>();
-            for (int i = 0; i < ordinary; i++) {
-                int address = Integer.parseInt(p.getProperty("ordinary." + i));
-                if (address < 0 || address >= cpu.getAddressSpaceSize())
-                    throw new IllegalArgumentException("Breakpoint address outside CPU");
-                if (Boolean.parseBoolean(p.getProperty("ordinary." + i + ".enabled", "true"))) addresses.add(address);
-                else disabledBreakpoints.add(address);
-            }
             int count = count(p, "watches");
             for (int i = 0; i < count; i++)
                 watches.add(Objects.requireNonNull(p.getProperty("watch." + i)));
@@ -847,15 +796,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 r.enabled = Boolean.parseBoolean(p.getProperty(k + "enabled"));
                 if (r.address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
-                if ("EXEC".equals(kind) && cpu.isBreakpointSupported()) {
-                    if (r.enabled) addresses.add(r.address);
-                    else disabledBreakpoints.add(r.address);
-                    continue;
-                }
                 rules.add(r);
             }
-            addresses.forEach(cpu::setBreakpoint);
-            disabledBreakpoints.forEach(cpu::unsetBreakpoint);
             lastSaved = p;
         } catch (RuntimeException e) {
             throw new IOException("Invalid debugger settings", e);

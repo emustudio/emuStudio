@@ -11,7 +11,6 @@ import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
 import net.emustudio.emulib.runtime.ui.debugger.OpcodeColumn;
@@ -51,7 +50,7 @@ public class CpuImpl extends AbstractCPU {
             );
         }
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-        engine = new EmulatorEngine(memory, this::isBreakpointSet);
+        engine = new EmulatorEngine(memory);
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
@@ -81,7 +80,7 @@ public class CpuImpl extends AbstractCPU {
         DebuggerTable debugTable = applicationApi.getDebuggerTable();
         if (debugTable != null) {
             debugTable.setDebuggerColumns(Arrays.asList(
-                    new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disassembler),
+                    new LineColumn(), new MnemoColumn(disassembler),
                     new OpcodeColumn(disassembler)
             ));
         }

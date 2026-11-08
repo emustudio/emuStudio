@@ -11,12 +11,30 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class DebugHooksTest {
+    @Test
+    public void runChecksApplicationBreakpointAtNextInstructionAddress() {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        memory.setMemory(new short[128]);
+        memory.write(1, (byte) 3);
+        memory.write(5, (byte) 3);
+        EmulatorEngine engine = new EmulatorEngine(memory);
+        engine.reset(-4);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean beforeInstruction(int address) { return address == 8; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.run());
+
+        assertEquals(4, engine.CI.get());
+        assertEquals(0, engine.Acc.get());
+    }
+
     @Test public void recordsActualFetchAddressAndRegistersDuringRun() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP skips the following instruction when ACC is negative.
         memory.write(9, (byte) 7); // STP at byte address 8.
-        EmulatorEngine engine = new EmulatorEngine(memory, address -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
         engine.Acc.set(-1);
         List<DebugCPU.Instruction> events = new ArrayList<>();
@@ -42,7 +60,7 @@ public class DebugHooksTest {
     @Test public void stopBeforeInstructionLeavesCiAndAccumulatorUntouched() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
-        EmulatorEngine engine = new EmulatorEngine(memory, address -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
         engine.debugger.addListener(new DebugCPU.Listener() {
             @Override public boolean beforeInstruction(int address) { return true; }
@@ -55,7 +73,7 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP.
-        EmulatorEngine engine = new EmulatorEngine(memory, address -> false);
+        EmulatorEngine engine = new EmulatorEngine(memory);
         List<DebugCPU.Instruction> events = new ArrayList<>();
         engine.debugger.addListener(new DebugCPU.Listener() {
             @Override public boolean afterInstruction(DebugCPU.Instruction event) {
