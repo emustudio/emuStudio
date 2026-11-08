@@ -36,7 +36,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.pause());
-            assertFalse(controller.isTimedRunning());
+            assertFalse(controller.snapshot().isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -51,7 +51,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
-            assertFalse(controller.isTimedRunning());
+            assertFalse(controller.snapshot().isTimedRunning());
             await(controller.reset());
             await(controller.step());
 
@@ -67,7 +67,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.reset());
-            assertFalse(controller.isTimedRunning());
+            assertFalse(controller.snapshot().isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -91,8 +91,8 @@ public class EmulationControllerSchedulingTest {
             awaitStep(2);
             awaitStep(3);
             assertNoStep();
-            assertFalse(controller.isTimedRunning());
-            assertEquals(STATE_STOPPED_NORMAL, controller.runState());
+            assertFalse(controller.snapshot().isTimedRunning());
+            assertEquals(STATE_STOPPED_NORMAL, controller.snapshot().runState());
         }
     }
 
@@ -115,7 +115,7 @@ public class EmulationControllerSchedulingTest {
 
             awaitStep(1);
             assertNoStep();
-            assertTrue(controller.isTimedRunning());
+            assertTrue(controller.snapshot().isTimedRunning());
             assertEquals(1, stepCount.get());
         } finally {
             gate.release.countDown();
@@ -196,7 +196,7 @@ public class EmulationControllerSchedulingTest {
 
         await(controller.closeAsync());
 
-        assertFalse(controller.isTimedRunning());
+        assertFalse(controller.snapshot().isTimedRunning());
         assertNoStep();
         assertThrows(ExecutionException.class, () -> await(controller.step()));
         await(controller.closeAsync());
@@ -220,7 +220,7 @@ public class EmulationControllerSchedulingTest {
             return null;
         }).when(cpu).sampleFrequency();
         EmulationController controller = controller(cpu);
-        controller.addCPUListener(listener(state -> commandThread.set(Thread.currentThread())));
+        controller.executionState().subscribe(listener(state -> commandThread.set(Thread.currentThread())));
 
         try {
             await(controller.start());

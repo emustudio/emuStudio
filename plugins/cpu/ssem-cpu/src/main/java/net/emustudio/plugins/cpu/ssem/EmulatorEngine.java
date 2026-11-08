@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.Bits;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -46,12 +45,13 @@ public class EmulatorEngine {
     public final AtomicInteger Acc = new AtomicInteger();
     public final AtomicInteger CI = new AtomicInteger();
     private MemoryContext<Byte> memory;
-    public final DebugProbe debugger;
+    public final MachineDebugging debugger;
     private Decoder decoder;
     private final Bits emptyBits = new Bits(0, 0);
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
-    private static Disassembler recordingDisassembler(MemoryContext<Byte> memory) {
+    private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
+        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
         DecoderImpl decoder = new DecoderImpl(memory);
         return new Disassembler() {
             @Override public DisassembledInstruction disassemble(int address) {
@@ -67,7 +67,7 @@ public class EmulatorEngine {
     EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
         this.decoder = new DecoderImpl(memory);
-        debugger = new DebugProbe("SSEM", memory, recordingDisassembler(memory));
+        debugger = new MachineDebugging("SSEM", memory, recordingDisassembler(memory));
         debugger.register("PC", 32, () -> Integer.toUnsignedLong(CI.get() + 4), value -> CI.set((int) value - 4));
         debugger.register("CI", 32, () -> Integer.toUnsignedLong(CI.get()), value -> CI.set((int) value));
         debugger.register("ACC", 32, () -> Integer.toUnsignedLong(Acc.get()), value -> Acc.set((int) value));
@@ -84,7 +84,7 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
-        if (!debugger.isActive()) return stepInstruction();
+        debugger.boundary();
         if (!debugger.begin(CI.get() + 4)) return CPU.RunState.STATE_STOPPED_BREAK;
         boolean completed = false;
         CPU.RunState result;

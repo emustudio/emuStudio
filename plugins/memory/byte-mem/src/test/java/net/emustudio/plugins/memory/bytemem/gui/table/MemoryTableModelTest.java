@@ -118,7 +118,9 @@ public class MemoryTableModelTest {
         ExecutionState execution = createNiceMock(ExecutionState.class);
         AtomicReference<Runnable> edit = new AtomicReference<>();
         CompletableFuture<Void> completion = new CompletableFuture<>();
-        expect(execution.mutate(anyObject(Runnable.class))).andAnswer(() -> {
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
             edit.set(getCurrentArgument(0));
             return completion;
         });
@@ -126,6 +128,7 @@ public class MemoryTableModelTest {
         MemoryTableModel deferred = new MemoryTableModel(context, execution);
         deferred.setCurrentBank(1);
 
+        assertTrue(deferred.isCellEditable(0, 0));
         deferred.setValueAt("0xAB", 0, 0);
         deferred.setCurrentBank(0);
         deferred.setPage(1);
@@ -145,9 +148,10 @@ public class MemoryTableModelTest {
     @Test
     public void rejectedHostEditLeavesMemoryUntouched() {
         ExecutionState execution = createNiceMock(ExecutionState.class);
-        expect(execution.runState()).andReturn(CPU.RunState.STATE_RUNNING).anyTimes();
-        expect(execution.mutate(anyObject(Runnable.class))).andReturn(CompletableFuture.failedFuture(
-                new IllegalStateException("Pause CPU first")));
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, true, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andReturn(CompletableFuture.failedFuture(
+                new IllegalStateException("Machine is closing")));
         replay(execution);
         MemoryTableModel rejected = new MemoryTableModel(context, execution);
 

@@ -4,7 +4,7 @@ package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
 import javax.swing.*;
@@ -22,14 +22,14 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final Color selectedForeground;
 
     private final MemoryTableModel tableModel;
-    private final AnnotationEngine annotations;
+    private final MemoryAnnotations annotations;
     private final ExecutionState executionState;
     private final JList<String> rowHeader;
     private final String[] addresses;
     private int currentPage;
 
     MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight,
-                       AnnotationEngine annotations, ExecutionState executionState) {
+                       MemoryAnnotations annotations, ExecutionState executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
         this.annotations = annotations;
         this.executionState = executionState;
@@ -69,7 +69,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         int address = tableModel.toAddress(row, column);
         boolean mapped = tableModel.isMappedAddress(address);
         String label = mapped ? AnnotationLabels.at(annotations, address) : "";
-        boolean current = mapped && executionState != null && executionState.currentInstruction() == address;
+        boolean current = mapped && executionState != null && executionState.snapshot().currentInstruction() == address;
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");

@@ -8,7 +8,7 @@ import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -31,13 +31,13 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected AssemblerZ80 compiler;
     protected MemoryStub<Byte> memoryStub;
-    protected AnnotationEngine annotations;
+    protected MemoryAnnotations annotations;
     private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        annotations = new AnnotationEngine();
+        annotations = new MemoryAnnotations();
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);

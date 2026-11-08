@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
@@ -30,7 +29,7 @@ public class EmulatorEngine {
     final static byte I_SCANLOOP = (byte) 0xA2; // [<] or [>]
 
     private final Byte[] rawMemory;
-    public final DebugProbe debugger;
+    public final MachineDebugging debugger;
     boolean debugStopped;
     private boolean recording;
     private final BrainCPUContextImpl context;
@@ -75,10 +74,11 @@ public class EmulatorEngine {
         this.rawMemory = Objects.requireNonNull(Objects.requireNonNull(memory.getRawMemory())[0]);
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
-        debugger = new DebugProbe("BrainDuck", memory, recordingDisassembler(rawBankZero(memory, rawMemory)));
-        debugger.register("PC", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
+        debugger = new MachineDebugging("BrainDuck", rawBankZero(memory, rawMemory), recordingDisassembler(rawBankZero(memory, rawMemory)));
         debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
         debugger.register("P", 32, () -> Integer.toUnsignedLong(P), value -> P = (int) value);
+        debugger.inspect("LOOP_DEPTH", loopPointers::size);
+        debugger.register("CELL", 8, () -> rawMemory[P] & 255, value -> rawMemory[P] = (byte) value);
     }
 
     public void reset(int adr) {
@@ -105,16 +105,16 @@ public class EmulatorEngine {
 
     CPU.RunState step(boolean optimize) {
         debugStopped = false;
-        if (!debugger.isActive()) return stepInstruction(optimize);
+        debugger.boundary();
         if (!debugger.begin(IP)) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;
         }
         boolean completed = false;
         CPU.RunState result = CPU.RunState.STATE_STOPPED_BAD_INSTR;
-        recording = true;
+        recording = debugger.isActive();
         try {
-            result = stepInstruction(false); // Grouped operations would hide guest instructions.
+            result = stepInstruction(!debugger.isActive() && optimize); // Observed execution retains each guest instruction.
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {

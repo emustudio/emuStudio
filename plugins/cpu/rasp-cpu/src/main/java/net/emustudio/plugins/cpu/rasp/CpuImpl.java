@@ -8,7 +8,6 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -30,7 +29,7 @@ import java.util.ArrayList;
         type = PLUGIN_TYPE.CPU,
         title = "Random Access Stored Program (RASP)"
 )
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RaspCpuContextImpl context = new RaspCpuContextImpl();
@@ -63,6 +62,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = new RaspDisassembler(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
@@ -82,7 +82,7 @@ public class CpuImpl extends AbstractCPU {
             if (applicationApi.getGUI() == null) {
                 return null;
             }
-            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), this::observeExecution);
+            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), applicationApi.getExecutionState());
         }
         return gui;
     }
@@ -127,9 +127,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {

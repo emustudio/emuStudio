@@ -24,5 +24,4 @@ python3 resources/icons/generate.py --check  # verify
 Both sizes render directly from SVGs. Inspection uses one icon set.
 Presentation images (welcome logo, ADM-3A background) keep their own size.
 
-Tango artwork is public domain (`TANGO-COPYING`, `TANGO-AUTHORS`);
-emuStudio-specific SVGs and the generator are GPL-3.0-or-later.
+Tango artwork is public domain; emuStudio-specific SVGs and the generator are GPL-3.0-or-later.

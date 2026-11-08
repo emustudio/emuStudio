@@ -9,6 +9,10 @@ import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -355,4 +359,31 @@ public class MemoryTableModelTest {
         assertEquals(33, MemoryTableModel.COLUMN_DEC_VALUE);
         assertEquals(34, MemoryTableModel.COLUMN_RAW_VALUE);
     }
+
+    @Test
+    public void runningBitEditMergesWithMemoryAtTheExecutionBoundary() {
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        AtomicReference<Runnable> pending = new AtomicReference<>();
+        CompletableFuture<Void> applied = new CompletableFuture<>();
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
+            pending.set(getCurrentArgument(0));
+            return applied;
+        });
+        replay(execution);
+        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryTableModel live = new MemoryTableModel(context, execution);
+
+        assertTrue(live.isCellEditable(0, 0));
+        live.setValueAt("1", 0, 0);
+        assertEquals(Byte.valueOf((byte) 0), context.read(0));
+        context.write(0, (byte) 0x40);
+        pending.get().run();
+        applied.complete(null);
+
+        assertEquals(Byte.valueOf((byte) 0xC0), context.read(0));
+        verify(execution);
+    }
+
 }

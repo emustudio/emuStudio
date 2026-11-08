@@ -4,7 +4,8 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Test;
 import java.util.*;
@@ -19,9 +20,11 @@ public class DebugHooksTest {
         memory.write(5, (byte) 3);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return address == 8; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { int address = engine.CI.get() + 4; return address == 8; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+}, true);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.run());
 
@@ -37,24 +40,25 @@ public class DebugHooksTest {
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
         engine.Acc.set(-1);
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
         assertEquals(2, events.size());
-        assertEquals(0, events.get(0).address);
-        assertEquals(8, events.get(1).address);
-        assertTrue(events.get(0).mnemonic.toLowerCase().contains("cmp"));
-        assertFalse(events.get(0).opcodes.isBlank());
-        assertEquals(Long.valueOf(0xffffffffL), events.get(0).before.get("ACC"));
-        assertEquals(Long.valueOf(8), events.get(0).after.get("PC"));
-        assertTrue(events.get(0).accesses.stream().anyMatch(a -> !a.write && a.address == 0));
-        assertEquals(1, events.get(0).sequence);
-        assertEquals(2, events.get(1).sequence);
+        assertEquals(0, events.get(0).programLocation.orElseThrow());
+        assertEquals(8, events.get(1).programLocation.orElseThrow());
+        assertTrue(events.get(0).summary.toLowerCase().contains("cmp"));
+        assertFalse(encoding(events.get(0)).isBlank());
+        assertEquals(Long.valueOf(0xffffffffL), state(events.get(0), "ACC", true));
+        assertEquals(Long.valueOf(8), state(events.get(0), "PC", false));
+        assertTrue(events.get(0).rows.stream().filter(row -> row.group.equals("Memory")).anyMatch(a -> !a.label.equals("Write @0000")));
     }
 
     @Test public void stopBeforeInstructionLeavesCiAndAccumulatorUntouched() {
@@ -62,9 +66,11 @@ public class DebugHooksTest {
         memory.setMemory(new short[128]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return true; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+}, true);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(-4, engine.CI.get());
         assertEquals(0, engine.Acc.get());
@@ -74,22 +80,24 @@ public class DebugHooksTest {
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP.
         EmulatorEngine engine = new EmulatorEngine(memory);
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         engine.reset(-4);
         engine.step();
         memory.write(1, (byte) 7); // Replace same address with STP.
         engine.reset(-4);
         engine.step();
-        assertTrue(events.get(0).mnemonic.toLowerCase().contains("cmp"));
-        assertTrue(events.get(1).mnemonic.toLowerCase().contains("stp"));
-        assertNotEquals(events.get(0).opcodes, events.get(1).opcodes);
-        assertEquals(2, events.get(1).sequence);
+        assertTrue(events.get(0).summary.toLowerCase().contains("cmp"));
+        assertTrue(events.get(1).summary.toLowerCase().contains("stp"));
+        assertNotEquals(encoding(events.get(0)), encoding(events.get(1)));
     }
 
     @Test
@@ -99,11 +107,24 @@ public class DebugHooksTest {
         memory.write(1, (byte) 7);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
         assertEquals(0, engine.CI.get());
+    }
+
+    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+        return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
+    }
+
+    private static Long state(net.emustudio.emulib.plugins.debugger.StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugins.debugger.ViewRow row = event.rows.stream()
+                .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
+        return Long.valueOf(before ? row.before : row.after);
     }
 }

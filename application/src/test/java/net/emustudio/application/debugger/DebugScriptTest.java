@@ -110,6 +110,32 @@ public class DebugScriptTest {
         verify(cpu, never()).step();
     }
 
+    @Test
+    public void falseAssertionReportsItsLineAndDoesNotExecuteAnotherStep() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[4]}, 4);
+        Path script = script("# Verify plugin-owned state\nASSERT A == 1\nSTEP 1\n");
+        try (DebugSession session = machine.session(temporary.getRoot().toPath().resolve("debug.properties"))) {
+            IOException failure = assertThrows(IOException.class, () -> DebugScript.run(session, script));
+
+            assertEquals("Script line 2: Assertion failed: A == 1", failure.getMessage());
+            verify(machine.cpu, never()).step();
+            verify(machine.cpu, never()).execute();
+        }
+    }
+
+    @Test
+    public void assertionUsesPluginSymbolicComparisonWithoutNumericHostConversion() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[4]}, 4);
+        machine.values.put("A", "ready");
+        Path script = script("ASSERT A == \"ready\"\n");
+        try (DebugSession session = machine.session(temporary.getRoot().toPath().resolve("debug.properties"))) {
+            DebugScript.run(session, script);
+
+            verify(machine.cpu, never()).step();
+            verify(machine.cpu, never()).execute();
+        }
+    }
+
     private Path script(String contents) throws IOException {
         Path path = temporary.newFile("commands.debug").toPath();
         Files.writeString(path, contents);
@@ -118,7 +144,6 @@ public class DebugScriptTest {
 
     private static CPU cpuWithoutDebugger() {
         CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
         return cpu;
     }
 }

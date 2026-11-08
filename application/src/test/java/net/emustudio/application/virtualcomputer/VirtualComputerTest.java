@@ -50,7 +50,6 @@ public class VirtualComputerTest {
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
         when(memory.getSize()).thenReturn(16);
         try (DebugSession seed = new DebugSession(cpu, memory, debuggerPath)) {
             seed.annotations().put(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
@@ -188,7 +187,7 @@ public class VirtualComputerTest {
             computer.initialize(contexts);
             assertTrue(computer.getCPU().isEmpty());
             assertTrue(computer.getDebugger().isEmpty());
-            assertFalse(api.getExecutionState().isBusy());
+            assertFalse(api.getExecutionState().snapshot().isBusy());
             api.getExecutionState().mutate(() -> {
                 thread.set(Thread.currentThread().getName());
                 memory.reset();
@@ -196,11 +195,11 @@ public class VirtualComputerTest {
 
             verify(memory).reset();
             assertEquals("machine-cpu", thread.get());
-            assertEquals(-1, api.getExecutionState().currentInstruction());
+            assertEquals(-1, api.getExecutionState().snapshot().currentInstruction());
         } finally {
             computer.close();
         }
-        assertTrue(api.getExecutionState().isBusy());
+        assertTrue(api.getExecutionState().snapshot().isBusy());
     }
 
     @Test

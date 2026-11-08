@@ -27,7 +27,7 @@ public class EraseMemoryAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        execution.mutate(context::clear).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+        execution.update(context::clear).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
             tableModel.fireTableDataChanged();
             if (failure != null) JOptionPane.showMessageDialog(null, failure.getMessage(), "Erase memory", JOptionPane.ERROR_MESSAGE);
         }));

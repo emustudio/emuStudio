@@ -21,39 +21,26 @@ class AutomaticEmulation {
     private final static String SSEM_FILE_NAME = "ssem.out";
 
     private final MemoryContext<Byte> memory;
-    private final ExecutionState execution;
     private final EmulatorEngine engine;
-    private final CPU.CPUListener listener;
+    private final ExecutionState.Subscription subscription;
 
     private volatile boolean waitingForStop = false;
 
     AutomaticEmulation(ExecutionState execution, EmulatorEngine engine, MemoryContext<Byte> memory) {
-        this.memory = Objects.requireNonNull(memory);
+        this.memory = MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
         this.engine = Objects.requireNonNull(engine);
-        this.execution = Objects.requireNonNull(execution);
-
-        listener = new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(CPU.RunState runState) {
-                if (runState == CPU.RunState.STATE_RUNNING) {
-                    waitingForStop = true;
-                } else if (waitingForStop) { // runState != STATE_RUNNING
-                    waitingForStop = false;
-                    snapshot();
-                }
+        subscription = Objects.requireNonNull(execution).subscribe(state -> {
+            if (state.runState() == CPU.RunState.STATE_RUNNING) {
+                waitingForStop = true;
+            } else if (!state.isBusy() && waitingForStop) {
+                waitingForStop = false;
+                snapshot();
             }
-
-            @Override
-            public void internalStateChanged() {
-
-            }
-        };
-
-        execution.addCPUListener(listener);
+        });
     }
 
     void destroy() {
-        execution.removeCPUListener(listener);
+        subscription.close();
     }
 
     private void snapshot() {

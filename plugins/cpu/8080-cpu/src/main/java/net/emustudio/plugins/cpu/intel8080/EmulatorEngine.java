@@ -5,7 +5,6 @@ package net.emustudio.plugins.cpu.intel8080;
 import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
@@ -40,7 +39,7 @@ public class EmulatorEngine {
             0xFF, 0x38
     );
     private MemoryContext<Byte> memory;
-    public final DebugProbe debugger;
+    public final MachineDebugging debugger;
     private boolean debuggerActive;
     private final Context8080Impl context;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
@@ -58,7 +57,7 @@ public class EmulatorEngine {
     private int lastOpcode;
 
     private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
-        MemoryContext<Byte> memory = DebugProbe.inspectionMemory(executionMemory);
+        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
         DecoderImpl decoder = new DecoderImpl(memory);
         return new Disassembler() {
             @Override public DisassembledInstruction disassemble(int at) {
@@ -72,7 +71,7 @@ public class EmulatorEngine {
     }
 
     public EmulatorEngine(MemoryContext<Byte> memory, Context8080Impl context) {
-        this.debugger = new DebugProbe("8080", memory, recordingDisassembler(memory));
+        this.debugger = new MachineDebugging("8080", memory, recordingDisassembler(memory));
         this.memory = memory;
         MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
         debugger.onActivityChanged(
@@ -147,9 +146,7 @@ public class EmulatorEngine {
     }
 
     private int dispatch() throws Throwable {
-        if (!debuggerActive) {
-            return dispatchRaw();
-        }
+        debugger.boundary();
         if (!debugger.begin(PC)) {
             currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
             return 0;

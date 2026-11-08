@@ -3,7 +3,8 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import org.junit.Test;
 import java.util.*;
 import static org.easymock.EasyMock.*;
@@ -20,42 +21,47 @@ public class DebugHooksTest {
         engine.reset(0);
         int data = engine.P;
         assertFalse(engine.debugger.isActive());
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step(true));
         assertEquals(1, engine.IP); // Optimizer otherwise groups both increments.
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step(true));
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step(true));
         assertEquals(3, events.size());
-        assertEquals(0, events.get(0).address);
-        assertEquals(1, events.get(1).address);
-        assertFalse(events.get(0).mnemonic.isBlank());
-        assertFalse(events.get(0).opcodes.isBlank());
-        assertTrue(events.get(0).accesses.stream().anyMatch(a -> a.write && a.address == data && a.value == 1));
-        assertTrue(events.get(1).accesses.stream().anyMatch(a -> a.write && a.address == data && a.value == 2));
+        assertEquals(0, events.get(0).programLocation.orElseThrow());
+        assertEquals(1, events.get(1).programLocation.orElseThrow());
+        assertFalse(events.get(0).summary.isBlank());
+        assertFalse(encoding(events.get(0)).isBlank());
+        assertTrue(events.get(0).rows.stream().filter(row -> row.group.equals("Memory")).anyMatch(a -> a.label.equals(String.format(Locale.ROOT, "Write @%04X", data)) && Long.parseLong(a.after) == 1));
+        assertTrue(events.get(1).rows.stream().filter(row -> row.group.equals("Memory")).anyMatch(a -> a.label.equals(String.format(Locale.ROOT, "Write @%04X", data)) && Long.parseLong(a.after) == 2));
         assertEquals(2, memory.read(data).intValue());
     }
 
-    @Test public void listenerCanStopBeforeAndAfterWithoutLosingNextInstruction() {
+    @Test public void listenerCanStopBeforeAndAfterWithoutLosingNextInstruction() throws Exception {
         MemoryStub memory = new MemoryStub();
         memory.setProgram(new byte[] {3, 0});
         BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
         replay(context);
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.reset(0);
-        DebugCPU.Listener before = new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return true; }
-        };
-        engine.debugger.addListener(before);
+        Debugging.Observer before = new Debugging.Observer() {
+            @Override public boolean beforeStep() { return true; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+};
+        AutoCloseable observation = engine.debugger.observe(before, true);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step(true));
         assertEquals(0, engine.IP);
         assertTrue(engine.debugStopped);
-        engine.debugger.removeListener(before);
+        observation.close();
         assertFalse(engine.debugger.isActive());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step(false));
         assertEquals(1, engine.IP);
@@ -67,22 +73,24 @@ public class DebugHooksTest {
         BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
         replay(context);
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         engine.reset(0);
         engine.step(false);
         memory.write(0, (byte) 1); // Replace + with > at same address.
         engine.reset(0);
         engine.step(false);
-        assertNotEquals(events.get(0).mnemonic, events.get(1).mnemonic);
-        assertNotEquals(events.get(0).opcodes, events.get(1).opcodes);
-        assertEquals(2, events.get(1).sequence);
-        assertEquals(0, events.get(1).address);
+        assertNotEquals(events.get(0).summary, events.get(1).summary);
+        assertNotEquals(encoding(events.get(0)), encoding(events.get(1)));
+        assertEquals(0, events.get(1).programLocation.orElseThrow());
     }
     @Test public void selectedBankDoesNotRelabelRawBankZeroExecution() {
         MemoryStub memory = new MemoryStub() {
@@ -101,18 +109,19 @@ public class DebugHooksTest {
         replay(context);
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.reset(0);
-        List<DebugCPU.Instruction> events = new ArrayList<>();
+        List<StepView> events = new ArrayList<>();
         List<Integer> beforeBanks = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { beforeBanks.add(address); return false; }
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { events.add(event); return false; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { int address = engine.IP; beforeBanks.add(address); return false; }
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); events.add(event); return false; }
+        }, true);
         engine.step(false);
         assertEquals(List.of(0), beforeBanks);
 
-        assertEquals("03", events.get(0).opcodes.trim());
+        assertEquals("03", encoding(events.get(0)).trim());
+        assertEquals("3", engine.debugger.compile("mem[0]").display().text);
         assertEquals(1, memory.getRawMemory()[0][engine.P].intValue());
-        assertSame(memory, engine.debugger.memory());
     }
 
     @Test
@@ -123,9 +132,12 @@ public class DebugHooksTest {
         replay(context);
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.reset(0);
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step(false));
         assertFalse(engine.debugStopped);
@@ -139,11 +151,19 @@ public class DebugHooksTest {
         replay(context);
         EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
         engine.reset(0);
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step(false));
         assertFalse(engine.debugStopped);
     }
+
+    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+        return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
+    }
+
 }

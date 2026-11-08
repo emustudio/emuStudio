@@ -113,6 +113,11 @@ Automation's `--record-instructions FILE` attaches the same recorder after optio
 first instruction, including `--no-gui` and `--debug-script` runs. Recording remains opt-in. Reverse execution,
 full-machine checkpoints, deterministic input replay, trace comparison and bus/cycle tracing remain separate work.
 
+## Machine-specific debugging design (#454, #457)
+
+The consolidated target design is [Machine-specific debugging](debugger-design.md).
+The sections above and validation evidence below describe implementation history, not the target interface.
+
 ## Validation
 
 ### ProgramIndex (#454)

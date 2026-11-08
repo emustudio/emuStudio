@@ -5,20 +5,19 @@ package net.emustudio.plugins.memory.ssem;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ExecutionState;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
-/** Inline host edit adapter for focused memory GUI tests. */
+/** Inline coordinator for isolated memory formatting/action tests, not pending-edit tests. */
 public final class TestExecutionState implements ExecutionState {
     private TestExecutionState() { }
     public static ExecutionState create() { return new TestExecutionState(); }
-    @Override public int currentInstruction() { return -1; }
-    @Override public CPU.RunState runState() { return CPU.RunState.STATE_STOPPED_BREAK; }
-    @Override public boolean isBusy() { return false; }
-    @Override public void addCPUListener(CPU.CPUListener listener) { }
-    @Override public void removeCPUListener(CPU.CPUListener listener) { }
-    @Override public void addListener(Runnable listener) { }
-    @Override public void removeListener(Runnable listener) { }
-
-    @Override public CompletableFuture<Void> mutate(Runnable mutation) {
+    @Override public Snapshot snapshot() {
+        return new Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, -1, Float.NaN);
+    }
+    @Override public Subscription subscribe(Consumer<Snapshot> listener) { return () -> { }; }
+    @Override public void processUpdates() { }
+    @Override public CompletableFuture<Void> mutate(Runnable mutation) { return update(mutation); }
+    @Override public CompletableFuture<Void> update(Runnable mutation) {
         CompletableFuture<Void> completed = new CompletableFuture<>();
         try { mutation.run(); completed.complete(null); }
         catch (RuntimeException failure) { completed.completeExceptionally(failure); }

@@ -8,10 +8,12 @@ import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugins.debugger.ValueView;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -20,30 +22,26 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
-/** Per-computer debug state. UI mutates rules/watches only while paused. */
-public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
+/** Host debugging policy; plugins interpret machine state at the execution seam. */
+public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private final net.emustudio.application.emulation.EmulationController execution;
     public net.emustudio.application.emulation.EmulationController execution() { return execution; }
     public final CPU cpu;
-    public final DebugCPU debug;
+    public final Debugging debug;
     public final MemoryContext<?> memory;
-    public final AnnotationEngine annotationEngine;
-    public final List<String> watches = new ArrayList<>();
-    public final List<Rule> rules = new ArrayList<>();
+    public final MemoryAnnotations annotationEngine;
+    public final List<String> watches = new CopyOnWriteArrayList<>();
+    public final List<Rule> rules = new CopyOnWriteArrayList<>();
     private final Path settings;
     private Properties lastSaved;
     private final String metadataNamespace;
     private AnnotationIndex annotations;
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
-    private final List<Runnable> metadataListeners = new CopyOnWriteArrayList<>();
-
-    public void addMetadataListener(Runnable listener) { metadataListeners.add(listener); }
-    public void removeMetadataListener(Runnable listener) { metadataListeners.remove(listener); }
-    private void metadataChanged() { metadataListeners.forEach(Runnable::run); }
     private volatile ProgramIndex programIndex;
     // Never acquire the session monitor while holding this lock in a memory notification.
     private final Object indexPublicationLock = new Object();
@@ -51,19 +49,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         synchronized (indexPublicationLock) {
             if (programIndex != null) programIndex.annotationsChanged();
         }
-        metadataChanged();
+
     };
     private final IdentityHashMap<Rule, Long> executionRuleIds = new IdentityHashMap<>();
     private long nextExecutionRuleId;
-    private long[] executionRuleKeys = new long[0];
-    private final Set<Long> indexedBreakpointIds = new HashSet<>();
     private Rule[] evaluationRules = new Rule[0];
-    private int[] executionRuleOrder = new int[0], candidateOrder = new int[0];
-    private int candidateCount;
-    private final Consumer<ProgramIndex.Breakpoint> collectExecutionCandidate = breakpoint -> {
-        int slot = Arrays.binarySearch(executionRuleKeys, breakpoint.id());
-        if (slot >= 0) candidateOrder[candidateCount++] = executionRuleOrder[slot];
-    };
     private long generation;
     private boolean closed;
     private int activeMutations;
@@ -82,7 +72,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 programIndex = replacement;
             }
             annotations = null;
-            indexedBreakpointIds.clear();
             generation++;
         }
         return programIndex;
@@ -94,7 +83,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             throw new IllegalStateException("Source mappings belong to another memory image");
         sourceMappings = mappings;
         sourceMappingsCleared = false;
-        metadataChanged();
+
     }
 
     /** Checks captured mappings for staleness; uncaptured compiler mappings remain directly accessible. */
@@ -112,7 +101,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         programIndex();
         sourceMappings = null;
         sourceMappingsCleared = true;
-        metadataChanged();
+
     }
 
     /** Live reads never retain a copy of memory cells. Reacquire after a machine or metadata edit. */
@@ -139,11 +128,11 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                     throw new IllegalStateException("Metadata discarded: machine layout changed while loading");
                 if (annotations != null) return annotations;
                 if (!stamp.matches(programIndex, true) || annotationEngine.revision() != annotationRevision) continue;
-                AnnotationIndex installed = new AnnotationIndex(stamp.index, annotationEngine, this::metadataChanged);
+                AnnotationIndex installed = new AnnotationIndex(stamp.index, annotationEngine);
                 if (loaded != null) {
                     // Live user edits win on ID collisions, including edits made while disk I/O was in flight.
                     Set<Long> existing = new HashSet<>();
-                    for (AnnotationEngine.Entry entry : annotationEngine.all())
+                    for (MemoryAnnotations.Entry entry : annotationEngine.all())
                         if (entry.ownerId == AnnotationIndex.OWNER) existing.add(entry.entryId);
                     Properties filtered = new Properties();
                     filtered.putAll(loaded);
@@ -203,7 +192,16 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         saveAnnotations();
     }
 
-    private final Deque<DebugCPU.Instruction> history = new ArrayDeque<>();
+    private final Deque<InstructionRecording.Event> history = new ArrayDeque<>();
+    private static final long MAX_HISTORY_BYTES = 32L * 1024 * 1024;
+    private long historyBytes, historyCaptured, nextSequence;
+    private boolean historyLimited;
+    private final Map<String, Debugging.Expression> expressions = new HashMap<>();
+    private volatile Map<String, ValueView> watchSnapshot = Map.of();
+    private volatile Map<String, String> watchFailures = Map.of();
+    private long nextWatchRefresh;
+    private AutoCloseable observation;
+    private boolean captureAttached, skipBeforeStep, observationDirty;
     private int historyLimit;
     public enum RecordingMode { FIRST, LAST, ADDRESS_RANGE, UNLIMITED }
     private RecordingMode recordingMode = RecordingMode.LAST;
@@ -211,7 +209,6 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private InstructionRecording.Writer recording;
     private Path recordingPath;
     private String recordingError = "";
-    private boolean attached;
     private int stoppedAddress = -1;
     public volatile String status = "";
     private volatile CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
@@ -225,61 +222,48 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 @Override
                 public void memorySizeChanged() {
                     invalidateAnalysis();
-                    metadataChanged();
-                }
-            };
-    private final CPU.CPUListener stateListener =
-            new CPU.CPUListener() {
-                @Override
-                public void runStateChanged(CPU.RunState value) {
-                    synchronized (DebugSession.this) {
-                        boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
-                        state = value;
-                        advanceHostGeneration();
-                        if (starting) {
-                            pendingHit = null;
-                            if (sourceMappings == null) sourceMappingsCleared = true;
-                            publishBreakpoints();
-                            invalidateIndex();
-                        }
-                    }
-                    metadataChanged();
-                }
 
-                @Override
-                public void internalStateChanged() {
-                    synchronized (DebugSession.this) {
-                        advanceHostGeneration();
-                    }
-                    metadataChanged();
                 }
             };
+    /** Host calls once per changed execution snapshot, before notifying views. */
+    public synchronized void executionChanged(CPU.RunState value) {
+        boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
+        state = value;
+        advanceHostGeneration();
+        if (starting) {
+            clearWatchChanges();
+            pendingHit = null;
+            if (sourceMappings == null) sourceMappingsCleared = true;
+            publishBreakpoints();
+            invalidateIndex();
+        }
+    }
 
     public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
-        this(cpu, memory, settings, new AnnotationEngine());
+        this(cpu, memory, settings, new MemoryAnnotations());
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, AnnotationEngine annotationEngine) throws IOException {
-        this(cpu, memory, settings, annotationEngine, null, List.of(), null);
+    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+        this(cpu, memory, settings, annotationEngine, null, List.of(), null, new net.emustudio.application.ExecutionStateImpl());
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, AnnotationEngine annotationEngine,
+    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
                         net.emustudio.emulib.plugins.memory.Memory memoryPlugin,
                         List<net.emustudio.emulib.plugins.device.Device> devices,
-                        net.emustudio.emulib.plugins.compiler.Compiler compiler) throws IOException {
+                        net.emustudio.emulib.plugins.compiler.Compiler compiler,
+                        net.emustudio.application.ExecutionStateImpl executionState) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
-        this.debug = cpu.getDebugger().orElse(null);
-        this.memory = debug == null ? memory : debug.memory();
+        this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
+        this.memory = memory;
         this.settings = settings;
         metadataNamespace = settings == null ? "session:" + UUID.randomUUID() : settings.toAbsolutePath().normalize().toUri().toString();
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) programIndex();
         annotationEngine.addListener(annotationListener);
         load();
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
-        updateProbe();
-        execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler);
-        execution.addCPUListener(stateListener);
+        execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler, executionState);
+        update(() -> {}).join();
     }
 
     public synchronized void requirePaused() {
@@ -295,15 +279,22 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     /** Invalidates analysis before and after a machine edit, even if the CPU emits no event. */
     public void runMutation(Runnable mutation) {
-        runMachineOperation(mutation, true);
+        synchronized (this) { stoppedAddress = -1; clearWatchChanges(); }
+        runExecution(mutation);
     }
 
     public void runExecution(Runnable execution) {
-        runMachineOperation(execution, true);
+        try {
+            runMachineOperation(execution, true);
+        } finally {
+            // A paused view must show the final machine value, even after a very short step.
+            synchronized (this) { if (!closed) refreshWatchesNow(); }
+        }
     }
 
     /** Compilers report memory writes through the memory listener while execution is paused. */
     public void runCompilation(Runnable compilation) {
+        synchronized (this) { stoppedAddress = -1; skipBeforeStep = false; }
         boolean restoreNotifications = memory != null && !memory.areMemoryNotificationsEnabled();
         if (restoreNotifications) memory.setMemoryNotificationsEnabled(true);
         try {
@@ -336,7 +327,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
-            if (!execution.isBusy()) operation.ready.complete(null);
+            if (!execution.snapshot().isBusy()) operation.ready.complete(null);
         }
     }
 
@@ -497,250 +488,349 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             throw new IllegalStateException("Analysis discarded: machine mutation in progress");
     }
 
+    /** Serializes debugger edits without pausing or invalidating program provenance. */
+    public CompletableFuture<Void> update(Runnable change) {
+        if (execution.isWorkerThread()) {
+            try { applyUpdate(change); return CompletableFuture.completedFuture(null); }
+            catch (Throwable failure) { return CompletableFuture.failedFuture(failure); }
+        }
+        return execution.update(() -> applyUpdate(change), false);
+    }
+
+    private synchronized void applyUpdate(Runnable change) {
+        if (closed) throw new IllegalStateException("Debugger session closed");
+        try {
+            change.run();
+        } finally {
+            // An I/O failure after editing settings must not leave hidden old runtime behavior.
+            updateProbe();
+            refreshWatchesNow();
+            Set<String> retainedExpressions = new HashSet<>(watches);
+            rules.forEach(rule -> retainedExpressions.add(ruleSource(rule)));
+            expressions.keySet().retainAll(retainedExpressions);
+            if (status.startsWith("Inactive rule ") && rules.stream().allMatch(rule -> rule.error.isBlank())) status = "";
+        }
+    }
+
+    public synchronized void prepareManualStep() { skipBeforeStep = true; }
+    public synchronized void completeManualStep() { skipBeforeStep = false; }
+
     public synchronized void record(int limit) {
-        requirePaused();
-        if (limit > 0 && debug == null)
-            throw new IllegalStateException("Instruction recording unsupported by this CPU");
-        if (limit < 0 || limit > 1000000)
-            throw new IllegalArgumentException("History limit must be 0..1000000");
+        if (limit > 0 && debug == null) throw new IllegalStateException("Instruction recording unsupported by this CPU");
+        if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
         historyLimit = limit;
+        if (limit > 0) {
+            if (status.equals(recordingError)) status = "";
+            recordingError = "";
+        }
         recordingMode = RecordingMode.LAST;
-        if (limit > 0) while (history.size() > limit) history.removeFirst();
+        trimHistory();
         updateProbe();
     }
 
     public synchronized void startNewRecording(int limit, RecordingMode mode, int from, int through) {
-        requirePaused();
         Objects.requireNonNull(mode);
         boolean bounded = mode == RecordingMode.FIRST || mode == RecordingMode.LAST;
-        if (bounded && (limit <= 0 || limit > 1_000_000))
-            throw new IllegalArgumentException("Recording limit must be 1..1000000");
-        if (mode == RecordingMode.ADDRESS_RANGE
-                && (from < 0 || through < from || through >= cpu.getAddressSpaceSize()))
+        if (bounded && (limit <= 0 || limit > 1_000_000)) throw new IllegalArgumentException("Recording limit must be 1..1000000");
+        if (mode == RecordingMode.ADDRESS_RANGE && (from < 0 || through < from || through >= cpu.getAddressSpaceSize()))
             throw new IllegalArgumentException("Recording range must be within CPU addresses, with From ≤ To");
         record(bounded ? limit : 1);
         historyLimit = bounded ? limit : Integer.MAX_VALUE;
         history.clear();
+        historyBytes = 0;
+        historyCaptured = 0;
+        historyLimited = false;
         recordingMode = mode;
         recordingFrom = from;
         recordingThrough = through;
     }
 
-    public synchronized boolean isRecording() {
-        return historyLimit > 0;
-    }
-
+    public synchronized boolean isRecording() { return historyLimit > 0; }
     public synchronized RecordingMode recordingMode() { return recordingMode; }
     public synchronized int recordingLimit() { return historyLimit; }
     public synchronized int recordingFrom() { return recordingFrom; }
     public synchronized int recordingThrough() { return recordingThrough; }
+    public synchronized List<InstructionRecording.Event> history() { return List.copyOf(history); }
 
-    public synchronized List<DebugCPU.Instruction> history() {
-        return List.copyOf(history);
-    }
-
-    public synchronized InstructionRecording.Header recordingHeader() {
+    private synchronized InstructionRecording.Header recordingHeader() {
         if (debug == null) throw new IllegalStateException("Instruction recording unsupported by this CPU");
-        return new InstructionRecording.Header(debug.processor(), debug.registers());
+        return new InstructionRecording.Header(cpu.getTitle());
     }
 
     public synchronized void recordTo(Path path) throws IOException {
-        requirePaused();
         if (recording != null) throw new IllegalStateException("Stop the current file recording first");
-        InstructionRecording.Writer writer = new InstructionRecording.Writer(path, recordingHeader());
-        recording = writer;
+        try {
+            recording = new InstructionRecording.Writer(path, recordingHeader());
+        } catch (IOException failure) {
+            stopFailedRecorder("Could not start recording: " + failure.getMessage());
+            throw failure;
+        }
         recordingPath = path.toAbsolutePath().normalize();
+        if (status.equals(recordingError)) status = "";
         recordingError = "";
         updateProbe();
     }
 
     public synchronized void stopRecordingFile() throws IOException {
-        requirePaused();
         InstructionRecording.Writer writer = recording;
         recording = null;
         recordingPath = null;
-        try {
-            if (writer != null) writer.close();
-        } catch (IOException e) {
-            recordingError = "Incomplete recording: " + e.getMessage();
+        try { if (writer != null) writer.close(); }
+        catch (IOException failure) {
+            recordingError = "Incomplete recording: " + failure.getMessage();
             status = recordingError;
-            throw e;
+            throw failure;
         } finally { updateProbe(); }
-        if (!recordingError.isBlank()) throw new IOException(recordingError);
     }
 
     public synchronized Path recordingPath() { return recordingPath; }
     public synchronized String recordingError() { return recordingError; }
 
     public void saveHistory(Path path, boolean text) throws IOException {
-        requirePaused();
         InstructionRecording.Header header = recordingHeader();
-        List<DebugCPU.Instruction> events = history();
+        List<InstructionRecording.Event> events = history();
         if (text) InstructionRecording.exportText(path, header, events);
         else InstructionRecording.write(path, header, events);
     }
 
     public synchronized void updateProbe() {
+        observationDirty = false;
+        compileRules();
         publishBreakpoints();
-        boolean needed = recording != null || historyLimit > 0 || rules.stream().anyMatch(r -> r.enabled);
-        if (debug != null && needed != attached) {
-            if (needed) debug.addListener(this);
-            else debug.removeListener(this);
-            attached = needed;
+        boolean needed = recording != null || historyLimit > 0 || !watches.isEmpty() || rules.stream().anyMatch(Rule::isActive);
+        boolean capture = recording != null || historyLimit > 0;
+        if (debug == null) return;
+        if (observation != null && (!needed || capture != captureAttached)) detachObservation();
+        if (needed && observation == null) {
+            observation = debug.observe(this, capture);
+            captureAttached = capture;
         }
+    }
+
+    private void detachObservation() {
+        AutoCloseable current = observation;
+        observation = null;
+        if (current != null) {
+            try { current.close(); }
+            catch (Exception failure) { status = "Debugger detach failed: " + failure.getMessage(); }
+        }
+    }
+
+    private void compileRules() {
+        for (Rule rule : rules) {
+            rule.compiled = null;
+            if (!rule.enabled) { rule.failed = false; rule.error = ""; continue; }
+            if (rule.failed) continue;
+            rule.error = "";
+            String text = ruleSource(rule);
+            if (text.isBlank() && rule.kind.equals("EXEC")) continue;
+            try { rule.compiled = expression(text); }
+            catch (RuntimeException failure) { rule.error = Objects.toString(failure.getMessage(), "Invalid condition"); }
+        }
+    }
+
+    private void trimHistory() {
+        while (!history.isEmpty() && ((historyLimit > 0 && history.size() > historyLimit) || historyBytes > MAX_HISTORY_BYTES)) {
+            if (historyBytes > MAX_HISTORY_BYTES && !historyLimited) {
+                historyLimited = true;
+                recordingError = "History retention limit reached; earlier captured steps are no longer retained";
+                status = recordingError;
+            }
+            InstructionRecording.Event removed = history.removeFirst();
+            try { historyBytes -= InstructionRecording.sizeOf(removed); }
+            catch (IOException impossible) { throw new IllegalStateException(impossible); }
+        }
+    }
+
+    private static String ruleSource(Rule rule) {
+        String text = rule.condition;
+        return rule.kind.equals("READ") || rule.kind.equals("WRITE")
+                ? rule.kind.toLowerCase(Locale.ROOT) + "(" + rule.address + ")"
+                        + (text.isBlank() ? "" : " && (" + text + ")")
+                : text;
     }
 
     /** Replays logical editor state only at a supported paused edit/start boundary. */
     private void publishBreakpoints() {
         if (programIndex == null && memory == null && cpu.getAddressSpaceSize() <= 0) return;
         ProgramIndex index = programIndex();
-        Set<Long> ids = new HashSet<>();
         index.editBreakpoints((base, update) -> {
-            ids.clear();
-            for (long id : indexedBreakpointIds) update.remove(id);
+            for (long id : executionRuleIds.values()) update.remove(id);
             for (Rule rule : rules) {
                 if (!rule.kind.equals("EXEC")) continue;
                 if (rule.address >= base.layout().addressSpaceSize()) continue;
-                Long id = executionRuleIds.get(rule);
-                if (id == null) {
-                    id = nextExecutionRuleId++;
-                    executionRuleIds.put(rule, id);
-                }
-                update.put(id, rule.address, rule.enabled);
-                ids.add(id);
+                long id = executionRuleIds.computeIfAbsent(rule, ignored -> nextExecutionRuleId++);
+                update.put(id, rule.address, rule.isActive());
             }
             return true;
         });
-        indexedBreakpointIds.clear();
-        indexedBreakpointIds.addAll(ids);
         evaluationRules = rules.toArray(new Rule[0]);
-        executionRuleIds.entrySet().removeIf(entry -> !ids.contains(entry.getValue()));
-        TreeMap<Long, Integer> orderById = new TreeMap<>();
-        for (int i = 0; i < evaluationRules.length; i++) {
-            Rule rule = evaluationRules[i];
-            Long id = executionRuleIds.get(rule);
-            if (rule.kind.equals("EXEC") && id != null) orderById.put(id, i);
-        }
-        executionRuleKeys = new long[orderById.size()];
-        executionRuleOrder = new int[orderById.size()];
-        int slot = 0;
-        for (Map.Entry<Long, Integer> entry : orderById.entrySet()) {
-            executionRuleKeys[slot] = entry.getKey();
-            executionRuleOrder[slot++] = entry.getValue();
-        }
-        candidateOrder = new int[evaluationRules.length];
+        executionRuleIds.keySet().removeIf(rule -> !rules.contains(rule)
+                || rule.address >= index.snapshot().layout().addressSpaceSize());
     }
 
-    public long evaluate(String expression) {
-        return WatchExpression.evaluate(expression, debug, memory);
+    private synchronized Debugging.Expression expression(String source) {
+        if (debug == null) throw new IllegalStateException("Expressions unsupported by this CPU");
+        return expressions.computeIfAbsent(source, debug::compile);
+    }
+
+    public boolean evaluateCondition(String source) {
+        if (execution.isWorkerThread()) return expression(source).test();
+        AtomicReference<Boolean> truth = new AtomicReference<>();
+        update(() -> truth.set(expression(source).test())).join();
+        return truth.get();
+    }
+
+    public Map<String, ValueView> watchValues() { return watchSnapshot; }
+    public Map<String, String> watchErrors() { return watchFailures; }
+    public CompletableFuture<Void> refreshWatches() { return update(() -> {}); }
+
+    private void refreshWatchesNow() {
+        Map<String, ValueView> values = new LinkedHashMap<>();
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (String watch : watches) {
+            String error = watchFailures.get(watch);
+            if (error != null) {
+                errors.put(watch, error);
+                continue;
+            }
+            try {
+                ValueView current = expression(watch).display();
+                ValueView previous = watchSnapshot.get(watch);
+                values.put(watch, new ValueView(current.text, current.formats,
+                        current.changed || previous != null && previous.changed));
+            }
+            catch (RuntimeException failure) {
+                errors.put(watch, Objects.toString(failure.getMessage(), "Watch evaluation failed"));
+            }
+        }
+        watchSnapshot = Map.copyOf(values);
+        watchFailures = Map.copyOf(errors);
+        nextWatchRefresh = System.nanoTime() + 50_000_000L;
+    }
+
+    private void sampleWatches() {
+        if (!watches.isEmpty() && System.nanoTime() >= nextWatchRefresh) refreshWatchesNow();
+    }
+
+    private void clearWatchChanges() {
+        Map<String, ValueView> cleared = new LinkedHashMap<>();
+        watchSnapshot.forEach((source, value) -> cleared.put(source, new ValueView(value.text, value.formats, false)));
+        watchSnapshot = Map.copyOf(cleared);
     }
 
     @Override
-    public synchronized boolean beforeInstruction(int address) {
-        if (stoppedAddress == address) {
+    public synchronized boolean beforeStep() {
+        int address = cpu.getInstructionLocation();
+        if (skipBeforeStep || stoppedAddress == address) {
+            skipBeforeStep = false;
             stoppedAddress = -1;
+            sampleWatches();
             return false;
         }
         stoppedAddress = -1;
-        try {
-            // UI editing is paused-only. Reacquire this immutable view at every instruction boundary.
-            if (state != CPU.RunState.STATE_RUNNING) publishBreakpoints();
-            ProgramIndex.Snapshot snapshot = programIndex == null ? null : programIndex.snapshot();
-            boolean execution = snapshot != null && snapshot.hasExecutionBreakpoint(address);
-            candidateCount = 0;
-            if (execution) snapshot.forEachExecutionBreakpoint(address, collectExecutionCandidate);
-            Arrays.sort(candidateOrder, 0, candidateCount);
-            for (int i = 0; i < candidateCount; i++) {
-                Rule rule = evaluationRules[candidateOrder[i]];
-                if (rule.enabled
-                        && execution && rule.kind.equals("EXEC") && rule.address == address) {
-                    stoppedAddress = address;
-                    status = "Breakpoint: " + rule.name;
-                    pendingHit = new BreakpointHit(address, rule);
-                    return true;
-                }
-            }
-        } catch (RuntimeException e) {
-            status = "Breakpoint evaluation failed: " + e.getMessage();
-            stoppedAddress = address;
-            return true;
-        }
-        return false;
+        return checkRules(address, true);
     }
 
-    private boolean condition(Rule rule) {
-        return rule.condition.isBlank() || evaluate(rule.condition) != 0;
+    private void deactivate(Rule rule, RuntimeException failure) {
+        rule.failed = true;
+        rule.error = Objects.toString(failure.getMessage(), "Condition evaluation failed");
+        status = "Inactive rule " + rule.name + ": " + rule.error;
+        org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn(status);
     }
 
     @Override
-    public synchronized boolean afterInstruction(DebugCPU.Instruction event) {
-        if (historyLimit > 0 && (recordingMode != RecordingMode.ADDRESS_RANGE
-                || (event.address >= recordingFrom && event.address <= recordingThrough))) {
-            if (recordingMode != RecordingMode.FIRST || history.size() < historyLimit) history.addLast(event);
-            while (history.size() > historyLimit) history.removeFirst();
-        }
-        if (recording != null) {
-            try { recording.append(event); }
-            catch (IOException e) {
-                recordingError = "Incomplete recording: " + e.getMessage();
-                status = recordingError;
-                // Return through the CPU probe to pause safely; listener changes wait for a paused boundary.
-                return true;
+    public synchronized boolean afterStep(boolean completed, Optional<StepView> captured) {
+        long sequence = ++nextSequence;
+        if (captured.isPresent()) {
+            InstructionRecording.Event event = new InstructionRecording.Event(sequence, completed, captured.get());
+            int address = event.view.programLocation.orElse(-1);
+            if (historyLimit > 0 && (recordingMode != RecordingMode.ADDRESS_RANGE
+                    || (address >= recordingFrom && address <= recordingThrough))) {
+                if (recordingMode != RecordingMode.FIRST || historyCaptured < historyLimit) {
+                    try {
+                        int bytes = InstructionRecording.sizeOf(event);
+                        historyCaptured++;
+                        history.addLast(event);
+                        historyBytes += bytes;
+                        trimHistory();
+                    } catch (IOException failure) { failed("History capture failed: " + failure.getMessage()); }
+                }
+            }
+            if (recording != null) {
+                try { recording.append(event); }
+                catch (IOException failure) { stopFailedRecorder("Incomplete recording: " + failure.getMessage()); }
             }
         }
-        try {
-            for (Rule candidate : rules)
-                if (candidate.enabled && candidate instanceof AccessRule) {
-                    AccessRule rule = (AccessRule) candidate;
-                    DebugCPU.Access match =
-                            event.accesses.stream()
-                                    .filter(
-                                            a ->
-                                                    a.address == rule.address
-                                                            && a.write
-                                                                    == rule.kind.equals("WRITE"))
-                                    .findFirst().orElse(null);
-                    if (match != null
-                            && condition(rule)
-                            && ++rule.hits >= rule.afterHits) {
-                        status = "Watchpoint: " + rule.name;
-                        pendingHit = new BreakpointHit(match.address, rule);
-                        return true;
-                    }
-                }
-        } catch (RuntimeException e) {
-            status = "Watchpoint evaluation failed: " + e.getMessage();
-            return true;
-        }
-        return false;
+        int address = captured.isPresent() && captured.get().programLocation.isPresent()
+                ? captured.get().programLocation.getAsInt() : cpu.getInstructionLocation();
+        return checkRules(address, false);
     }
 
-    public void save() throws IOException {
-        requirePaused();
-        writeSettings();
+    private boolean checkRules(int address, boolean before) {
+        boolean stop = false;
+        for (Rule rule : evaluationRules) {
+            boolean execution = rule.kind.equals("EXEC");
+            if (execution != before || (execution && rule.address != address) || !rule.isActive()) continue;
+            try {
+                boolean matches = rule.compiled == null ? ruleSource(rule).isBlank() : rule.compiled.test();
+                if (matches && ++rule.hits >= rule.afterHits) {
+                    if (before) stoppedAddress = address;
+                    status = (before ? "Breakpoint: " : "Watchpoint: ") + rule.name;
+                    pendingHit = new BreakpointHit(rule.address >= 0 ? rule.address : address, rule);
+                    stop = true;
+                }
+            } catch (RuntimeException failure) { deactivate(rule, failure); }
+        }
+        sampleWatches();
+        if (observationDirty) updateProbe();
+        return stop;
+    }
+
+    @Override
+    public synchronized void failed(String message) {
+        historyLimit = 0;
+        captureAttached = false;
+        stopFailedRecorder(message);
+    }
+
+    private void stopFailedRecorder(String message) {
+        observationDirty = true;
+        recordingError = message;
+        status = message;
+        InstructionRecording.Writer current = recording;
+        recording = null;
+        recordingPath = null;
+        if (current != null) {
+            try { current.abort(); }
+            catch (IOException failure) {
+                org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn("Could not close failed recording", failure);
+            }
+        }
+        org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn(message);
     }
 
     public boolean isBreakpointSet(int address) {
         return rules.stream().anyMatch(r -> isSimpleBreakpoint(r, address) && r.enabled);
     }
 
-    public void setBreakpoint(int address, boolean enabled) {
-        requirePaused();
+    public CompletableFuture<Void> setBreakpoint(int address, boolean enabled) {
         if (address < 0 || address >= cpu.getAddressSpaceSize())
             throw new IllegalArgumentException("Address outside CPU");
-        if (debug != null) {
-            if (!enabled) rules.removeIf(r -> isSimpleBreakpoint(r, address));
+        if (debug == null) throw new IllegalStateException("Breakpoints unavailable for this CPU");
+        return update(() -> {
+            if (!enabled) rules.removeIf(rule -> isSimpleBreakpoint(rule, address));
             else {
-                Rule rule = rules.stream().filter(r -> isSimpleBreakpoint(r, address)).findFirst()
+                Rule rule = rules.stream().filter(candidate -> isSimpleBreakpoint(candidate, address)).findFirst()
                         .orElseGet(() -> {
                             Rule added = new Rule("Breakpoint", "EXEC", address, "", 1);
                             rules.add(added);
                             return added;
                         });
                 rule.enabled = true;
+                rule.failed = false;
             }
-            updateProbe();
-        } else throw new IllegalStateException("Breakpoints unavailable for this CPU");
+        });
     }
 
     List<Integer> ordinaryBreakpoints() {
@@ -750,9 +840,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     void toggleOrdinaryBreakpoint(int address) {
-        requirePaused();
-        rules.stream().filter(rule -> isSimpleBreakpoint(rule, address)).findFirst().ifPresent(rule -> rule.enabled = !rule.enabled);
-        updateProbe();
+        update(() -> rules.stream().filter(rule -> isSimpleBreakpoint(rule, address))
+                .findFirst().ifPresent(rule -> rule.enabled = !rule.enabled));
     }
 
     private boolean isSimpleBreakpoint(Rule rule, int address) {
@@ -777,10 +866,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         }
     }
 
-    private void writeSettings() throws IOException {
+    public synchronized void save() throws IOException {
         if (settings == null) throw new IOException("Computer configuration path unavailable");
         Properties p = new Properties();
-        p.setProperty("version", "3");
+        p.setProperty("version", "4");
         p.setProperty("cpu", cpu.getTitle());
         p.setProperty("watches", Integer.toString(watches.size()));
         for (int i = 0; i < watches.size(); i++) p.setProperty("watch." + i, watches.get(i));
@@ -804,7 +893,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private void load() throws IOException {
         if (settings == null || !Files.isRegularFile(settings)) return;
         Properties p = AtomicProperties.load(settings);
-        if (!"3".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu"))) {
+        if (!"4".equals(p.getProperty("version")) || !cpu.getTitle().equals(p.getProperty("cpu"))) {
             Path archived = settings.resolveSibling(settings.getFileName() + ".incompatible-" + UUID.randomUUID());
             Files.move(settings, archived);
             org.slf4j.LoggerFactory.getLogger(DebugSession.class)
@@ -819,16 +908,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             for (int i = 0; i < count; i++) {
                 String k = "rule." + i + ".";
                 String kind = p.getProperty(k + "kind");
-                if ("SOURCE".equals(kind) || ("EXEC".equals(kind)
-                        && (!p.getProperty(k + "condition", "").isBlank() || !"1".equals(p.getProperty(k + "after"))))) continue;
-                Rule r;
-                if ("READ".equals(kind) || "WRITE".equals(kind))
-                    r = new AccessRule(p.getProperty(k + "name"), kind,
-                            Integer.parseInt(p.getProperty(k + "address")),
-                            p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
-                else
-                    r = new Rule(p.getProperty(k + "name"), kind, Integer.parseInt(p.getProperty(k + "address")),
-                            p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
+                if ("SOURCE".equals(kind)) throw new IllegalArgumentException("Unsupported source rule");
+                Rule r = new Rule(p.getProperty(k + "name"), kind, Integer.parseInt(p.getProperty(k + "address")),
+                        p.getProperty(k + "condition"), Long.parseLong(p.getProperty(k + "after")));
                 r.enabled = Boolean.parseBoolean(p.getProperty(k + "enabled"));
                 if (r.address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
@@ -856,16 +938,15 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         }
         if (settings != null)
             try {
-                writeSettings();
+                save();
             } catch (IOException e) {
                 org.slf4j.LoggerFactory.getLogger(DebugSession.class)
                         .error("Could not save debugger settings", e);
             }
-        execution.removeCPUListener(stateListener);
+
         annotationEngine.removeListener(annotationListener);
         if (memory != null) memory.removeMemoryListener(memoryListener);
-        if (debug != null) debug.removeListener(this);
-        attached = false;
+        detachObservation();
         synchronized (this) {
             closed = true;
             pendingHit = null;
@@ -873,25 +954,22 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         }
     }
 
-    public static class Rule {
+    public static final class Rule {
         public final String name, kind, condition;
         public final int address;
         public final long afterHits;
-        public boolean enabled = true;
-        public long hits;
+        public volatile boolean enabled = true;
+        public volatile long hits;
+        public volatile String error = "";
+        private Debugging.Expression compiled;
+        private boolean failed;
+        public boolean isActive() { return enabled && !failed && error.isBlank(); }
 
-        public Rule(
-                String name, String kind, int address, String condition, long afterHits) {
-            this(name, kind, address, condition, afterHits, false);
-        }
-
-        private Rule(String name, String kind, int address, String condition, long afterHits, boolean access) {
-            boolean validKind = access ? "READ".equals(kind) || "WRITE".equals(kind)
-                    : "EXEC".equals(kind) && condition != null && condition.isBlank() && afterHits == 1;
+        public Rule(String name, String kind, int address, String condition, long afterHits) {
             if (name == null
                     || name.isBlank()
-                    || !validKind
-                    || address < 0
+                    || !("EXEC".equals(kind) || "CONDITION".equals(kind) || "READ".equals(kind) || "WRITE".equals(kind))
+                    || (address < 0 && !"CONDITION".equals(kind))
                     || afterHits < 1) throw new IllegalArgumentException("Invalid breakpoint");
             this.name = name;
             this.kind = kind;
@@ -901,9 +979,4 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         }
     }
 
-    public static final class AccessRule extends Rule {
-        public AccessRule(String name, String kind, int address, String condition, long afterHits) {
-            super(name, kind, address, condition, afterHits, true);
-        }
-    }
 }

@@ -140,7 +140,8 @@ public class EmulatorActionsTest {
     public void pauseActionDelegatesToController() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.isTimedRunning()).thenReturn(false);
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
@@ -152,7 +153,8 @@ public class EmulatorActionsTest {
     public void pauseActionUpdatesStatusWhenTimedRunning() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.isTimedRunning()).thenReturn(true);
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+                CPU.RunState.STATE_STOPPED_BREAK, false, true, 0, Float.NaN));
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
@@ -287,7 +289,7 @@ public class EmulatorActionsTest {
     private static void executionFor(VirtualComputer computer) {
         EmulationController execution = mock(EmulationController.class);
         when(computer.getExecution()).thenReturn(Optional.of(execution));
-        when(execution.mutate(any())).thenAnswer(call -> {
+        org.mockito.stubbing.Answer<CompletableFuture<Void>> apply = call -> {
             CompletableFuture<Void> completed = new CompletableFuture<>();
             try {
                 ((Runnable) call.getArgument(0)).run();
@@ -296,7 +298,9 @@ public class EmulatorActionsTest {
                 completed.completeExceptionally(failure);
             }
             return completed;
-        });
+        };
+        when(execution.mutate(any())).thenAnswer(apply);
+        when(execution.update(any())).thenAnswer(apply);
     }
 
     private static void flushEdt() {

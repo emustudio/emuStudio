@@ -5,7 +5,6 @@ package net.emustudio.plugins.memory.rasp.gui;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import javax.swing.SwingUtilities;
 
 import javax.swing.table.AbstractTableModel;
@@ -32,7 +31,7 @@ public class RaspTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         //only numeric value (at column 1) is editable
-        return columnIndex == 1 && !execution.isBusy() && execution.runState() != CPU.RunState.STATE_RUNNING;
+        return columnIndex == 1 && !execution.snapshot().isBusy();
     }
 
     /**
@@ -110,7 +109,7 @@ public class RaspTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
             int numberValue = RadixUtils.getInstance().parseRadix((String) value);
-            execution.mutate(() -> memory.write(rowIndex, numberValue))
+            execution.update(() -> memory.write(rowIndex, numberValue))
                     .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(this::fireTableDataChanged));
         } catch (NumberFormatException e) {
             //do nothing, invalid value was inserted

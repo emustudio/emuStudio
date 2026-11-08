@@ -58,7 +58,7 @@ public class LoadImageAction extends AbstractAction {
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             setEnabled(false);
-            execution.mutate(() -> {
+            execution.update(() -> {
                 try { context.deserialize(path.toString(), setProgramLocation); }
                 catch (Exception failure) { throw new CompletionException(failure); }
             }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {

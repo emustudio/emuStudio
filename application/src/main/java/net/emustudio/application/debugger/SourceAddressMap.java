@@ -7,7 +7,7 @@ import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +19,7 @@ import java.util.*;
 /** Source navigation captured after a successful compilation, using CPU-visible addresses. */
 public final class SourceAddressMap {
     private final MemoryContext<?> memory;
-    private final AnnotationEngine annotations;
+    private final MemoryAnnotations annotations;
     private final ProgramIndex index;
     private final ProgramIndex.Layout layout;
     private final long revision;
@@ -30,7 +30,7 @@ public final class SourceAddressMap {
     private volatile Projection cachedProjection;
 
     private SourceAddressMap(MemoryContext<?> memory, ProgramIndex index, ProgramIndex.Snapshot base,
-                             AnnotationEngine annotations, SourceCodePosition.ColumnUnit columnUnit) {
+                             MemoryAnnotations annotations, SourceCodePosition.ColumnUnit columnUnit) {
         this.memory = memory;
         this.index = index;
         this.annotations = annotations;
@@ -50,14 +50,14 @@ public final class SourceAddressMap {
     public List<String> diagnostics() { return List.copyOf(diagnostics); }
 
     public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, SourceInputs inputs,
-                                           ProgramIndex index, AnnotationEngine annotations) throws IOException {
+                                           ProgramIndex index, MemoryAnnotations annotations) throws IOException {
         SourceCodePosition.ColumnUnit unit = compiler == null ? null : compiler.getSourcePositionColumnUnit();
         return capture(memory, inputs, index, unit == null ? SourceCodePosition.ColumnUnit.UNKNOWN : unit, annotations);
     }
 
     /** Capture source inputs, then validate the current compiler mappings. */
     static SourceAddressMap capture(MemoryContext<?> memory, SourceInputs inputs, ProgramIndex index,
-                                    SourceCodePosition.ColumnUnit columnUnit, AnnotationEngine annotations) throws IOException {
+                                    SourceCodePosition.ColumnUnit columnUnit, MemoryAnnotations annotations) throws IOException {
         Objects.requireNonNull(columnUnit);
         if (memory != null && index == null)
             throw new IllegalArgumentException("Source capture with memory requires its program index");
@@ -84,10 +84,10 @@ public final class SourceAddressMap {
             collectSymbols(projection);
             return projection;
         }
-        List<AnnotationEngine.Entry> mapped = new ArrayList<>();
-        for (AnnotationEngine.Entry entry : annotations.all())
+        List<MemoryAnnotations.Entry> mapped = new ArrayList<>();
+        for (MemoryAnnotations.Entry entry : annotations.all())
             if (entry.kind.equals("source") && entry.source != null) mapped.add(entry);
-        for (AnnotationEngine.Entry annotation : mapped) {
+        for (MemoryAnnotations.Entry annotation : mapped) {
             Path path = SourceInputs.normalize(Path.of(annotation.source.fileName));
             if (strict && !sources.containsKey(path))
                 throw new IOException("Source was not captured before compilation: " + path);
@@ -98,10 +98,10 @@ public final class SourceAddressMap {
             collectSymbols(projection);
             return projection;
         }
-        mapped.sort(Comparator.comparingInt((AnnotationEngine.Entry a) -> a.start)
+        mapped.sort(Comparator.comparingInt((MemoryAnnotations.Entry a) -> a.start)
                 .thenComparing(a -> a.source.fileName).thenComparingInt(a -> a.source.line)
                 .thenComparingInt(a -> a.source.column).thenComparingLong(a -> a.ownerId));
-        for (AnnotationEngine.Entry annotation : mapped) {
+        for (MemoryAnnotations.Entry annotation : mapped) {
             int address = annotation.start;
             SourceCodePosition position = annotation.source;
             Source source = sources.get(SourceInputs.normalize(Path.of(position.fileName)));
@@ -284,11 +284,11 @@ public final class SourceAddressMap {
     private static final class Entry {
         final long id;
         final Location location;
-        final AnnotationEngine.Entry annotation;
+        final MemoryAnnotations.Entry annotation;
         final Source source;
         final ProgramIndex.SourceSpan span;
 
-        Entry(long id, int address, AnnotationEngine.Entry annotation, Source source, ProgramIndex.SourceSpan span) {
+        Entry(long id, int address, MemoryAnnotations.Entry annotation, Source source, ProgramIndex.SourceSpan span) {
             this.id = id;
             location = new Location(address, source.text.position(span.startOffset),
                     source.text.instructionAt(span.startOffset));

@@ -43,6 +43,8 @@ public class CompileActionTest {
         compiler = mock(Compiler.class);
         compilerOutput = new JTextArea();
         EmulationController execution = mock(EmulationController.class);
+        when(execution.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
         when(computer.getExecution()).thenReturn(Optional.of(execution));
         when(execution.compile(any())).thenAnswer(call -> {
             CompletableFuture<CPU.RunState> result = new CompletableFuture<>();

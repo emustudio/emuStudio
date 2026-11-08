@@ -52,8 +52,7 @@ public final class DebugScript {
                             break;
                         }
                     case "ASSERT":
-                        if (session.evaluate(args)
-                                == 0)
+                        if (!session.evaluateCondition(args))
                             throw new IllegalArgumentException("Assertion failed: " + args);
                         break;
                     default:

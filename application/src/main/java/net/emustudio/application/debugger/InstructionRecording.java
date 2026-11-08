@@ -2,9 +2,12 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.NavLink;
+import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugins.debugger.ViewRow;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -12,24 +15,35 @@ import java.util.function.Predicate;
 
 /** Versioned execution recordings. Buffered writes apply backpressure; readers retain only one page. */
 public final class InstructionRecording {
-    private static final int MAGIC = 0x454D5554, VERSION = 2;
-    private static final int EVENT = 1, END = 0, MAX_REGISTERS = 256, MAX_ACCESSES = 65536;
+    private static final int MAGIC = 0x454D5554, VERSION = 4;
+    private static final int EVENT = 1, END = 0;
+    private static final int MAX_TEXT = 65536, MAX_ROWS = 4096, MAX_ITEMS = 256;
+    private static final int MAX_EVENT_BYTES = 8 * 1024 * 1024;
+    private static final int MAX_PAGE_BYTES = 32 * 1024 * 1024;
 
     private InstructionRecording() {}
 
+    public static final class Event {
+        public final long sequence;
+        public final boolean completed;
+        public final StepView view;
+        private volatile int encodedSize = -1;
+
+        public Event(long sequence, boolean completed, StepView view) {
+            if (sequence < 1) throw new IllegalArgumentException("Invalid recording sequence");
+            this.sequence = sequence;
+            this.completed = completed;
+            this.view = Objects.requireNonNull(view);
+        }
+    }
+
     public static final class Header {
         public final String processor;
-        public final List<DebugCPU.Register> registers;
 
-        public Header(String processor, List<DebugCPU.Register> registers) {
+        public Header(String processor) {
             this.processor = Objects.requireNonNull(processor);
-            this.registers = List.copyOf(registers);
-            if (processor.isBlank() || registers.size() > MAX_REGISTERS)
-                throw new IllegalArgumentException("Invalid recording processor/register definitions");
-            Set<String> names = new HashSet<>();
-            for (DebugCPU.Register r : registers)
-                if (r.name.isBlank() || !names.add(r.name) || r.bits < 1 || r.bits > 64)
-                    throw new IllegalArgumentException("Invalid recording register definition");
+            if (processor.isBlank() || processor.length() > MAX_TEXT)
+                throw new IllegalArgumentException("Invalid recording processor");
         }
     }
 
@@ -48,12 +62,7 @@ public final class InstructionRecording {
             try {
                 out.writeInt(MAGIC);
                 out.writeInt(VERSION);
-                out.writeUTF(header.processor);
-                out.writeInt(header.registers.size());
-                for (DebugCPU.Register r : header.registers) {
-                    out.writeUTF(r.name);
-                    out.writeInt(r.bits);
-                }
+                writeText(out, header.processor);
                 out.flush();
             } catch (IOException | RuntimeException e) {
                 try { out.close(); } catch (IOException closing) { e.addSuppressed(closing); }
@@ -61,30 +70,21 @@ public final class InstructionRecording {
             }
         }
 
-        public synchronized void append(DebugCPU.Instruction event) throws IOException {
+        public synchronized void append(Event event) throws IOException {
             if (closed || failed) throw new IOException("Recording is closed or failed");
             try {
                 if (event.sequence <= lastSequence) throw new IOException("Recording sequence is not increasing");
+                byte[] encoded = encode(event);
                 out.writeByte(EVENT);
                 out.writeLong(event.sequence);
-                out.writeInt(event.address);
-                out.writeUTF(event.mnemonic);
-                out.writeUTF(event.opcodes);
-                out.writeBoolean(event.completed);
-                writeRegisters(out, event.before);
-                writeRegisters(out, event.after);
-                if (event.accesses.size() > MAX_ACCESSES) throw new IOException("Too many accesses in instruction");
-                out.writeInt(event.accesses.size());
-                for (DebugCPU.Access a : event.accesses) {
-                    out.writeInt(a.address);
-                    out.writeInt(a.value);
-                    out.writeBoolean(a.write);
-                }
+                out.writeInt(encoded.length);
+                out.write(encoded);
                 count++;
                 lastSequence = event.sequence;
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException failure) {
                 failed = true;
-                throw e;
+                if (failure instanceof IOException) throw (IOException) failure;
+                throw new IOException("Invalid recording event", failure);
             }
         }
 
@@ -92,18 +92,19 @@ public final class InstructionRecording {
         public synchronized void close() throws IOException {
             if (closed) return;
             closed = true;
-            IOException failure = null;
-            try {
+            try (out) {
                 if (!failed) {
                     out.writeByte(END);
                     out.writeLong(count);
                     out.writeLong(lastSequence);
                 }
-                out.flush();
-            } catch (IOException e) { failure = e; }
-            try { out.close(); }
-            catch (IOException e) { if (failure == null) failure = e; else failure.addSuppressed(e); }
-            if (failure != null) throw failure;
+            }
+        }
+
+        /** Preserve the readable prefix without claiming a failed capture is complete. */
+        public synchronized void abort() throws IOException {
+            failed = true;
+            close();
         }
     }
 
@@ -124,11 +125,7 @@ public final class InstructionRecording {
             try {
                 if (in.readInt() != MAGIC || in.readInt() != VERSION)
                     throw new IOException("Unsupported instruction recording format/version");
-                String processor = in.readUTF();
-                int size = readCount(in, MAX_REGISTERS, "register definitions");
-                List<DebugCPU.Register> registers = new ArrayList<>();
-                for (int i = 0; i < size; i++) registers.add(new DebugCPU.Register(in.readUTF(), in.readInt()));
-                header = new Header(processor, registers);
+                header = new Header(readText(in));
                 firstEvent = in.getFilePointer();
             } catch (IOException | IllegalArgumentException e) {
                 try { in.close(); } catch (IOException closing) { e.addSuppressed(closing); }
@@ -167,14 +164,15 @@ public final class InstructionRecording {
         public boolean finished() { return finished; }
         public String status() { return status; }
 
-        public List<DebugCPU.Instruction> nextPage(int limit) throws IOException {
+        public List<Event> nextPage(int limit) throws IOException {
             return nextPage(limit, event -> true);
         }
 
-        public List<DebugCPU.Instruction> nextPage(int limit, Predicate<DebugCPU.Instruction> matches) throws IOException {
+        public List<Event> nextPage(int limit, Predicate<Event> matches) throws IOException {
             if (limit < 1 || limit > 10000) throw new IllegalArgumentException("Page size must be 1..10000");
             Objects.requireNonNull(matches);
-            List<DebugCPU.Instruction> page = new ArrayList<>();
+            List<Event> page = new ArrayList<>();
+            int pageBytes = 0;
             while (!finished) {
                 if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Recording scan interrupted");
                 try {
@@ -189,26 +187,23 @@ public final class InstructionRecording {
                     } else if (marker == EVENT) {
                         long previousSequence = lastSequence;
                         long sequence = in.readLong();
-                        int address = in.readInt();
-                        if (sequence <= lastSequence || address < 0)
-                            throw new IOException("Invalid recording sequence or address");
-                        String mnemonic = in.readUTF(), opcodes = in.readUTF();
-                        boolean completed = in.readBoolean();
-                        Map<String, Long> before = readRegisters(in), after = readRegisters(in);
-                        int size = readCount(in, MAX_ACCESSES, "memory accesses");
-                        List<DebugCPU.Access> accesses = new ArrayList<>();
-                        for (int i = 0; i < size; i++) {
-                            int at = in.readInt(), value = in.readInt();
-                            boolean write = in.readBoolean();
-                            if (at < 0)
-                                throw new IOException("Invalid recorded memory access");
-                            accesses.add(new DebugCPU.Access(at, value, write));
+                        int size = readCount(in, MAX_EVENT_BYTES, "event bytes");
+                        byte[] encoded = new byte[size];
+                        in.readFully(encoded);
+                        Event event;
+                        try (DataInputStream data = new DataInputStream(new ByteArrayInputStream(encoded))) {
+                            event = readEvent(data, sequence);
+                            event.encodedSize = size;
+                            if (data.read() != -1) throw new IOException("Unexpected event data");
+                        } catch (IllegalArgumentException failure) {
+                            throw new IOException("Invalid recorded presentation", failure);
                         }
-                        DebugCPU.Instruction event = new DebugCPU.Instruction(sequence, address, mnemonic, opcodes, before, after, accesses, completed);
+                        if (sequence <= lastSequence)
+                            throw new IOException("Invalid recording sequence");
                         count++;
                         lastSequence = sequence;
                         if (matches.test(event)) {
-                            if (page.size() == limit) {
+                            if (page.size() == limit || (!page.isEmpty() && pageBytes + size > MAX_PAGE_BYTES)) {
                                 // Skipped events belong to this page; the next match belongs to the next page.
                                 in.seek(position);
                                 count--;
@@ -216,6 +211,7 @@ public final class InstructionRecording {
                                 break;
                             }
                             page.add(event);
+                            pageBytes += size;
                         }
                     } else throw new IOException("Invalid recording event marker");
                 } catch (EOFException e) {
@@ -233,13 +229,13 @@ public final class InstructionRecording {
         @Override public void close() throws IOException { in.close(); }
     }
 
-    public static void write(Path path, Header header, List<DebugCPU.Instruction> events) throws IOException {
+    public static void write(Path path, Header header, List<Event> events) throws IOException {
         try (Writer writer = new Writer(path, header)) {
-            for (DebugCPU.Instruction event : events) writer.append(event);
+            for (Event event : events) writer.append(event);
         }
     }
 
-    public static void exportText(Path path, Header header, List<DebugCPU.Instruction> events) throws IOException {
+    public static void exportText(Path path, Header header, List<Event> events) throws IOException {
         try (BufferedWriter out = newTextFile(path)) {
             writeTextHeader(out, header);
             writeTextEvents(out, events);
@@ -265,49 +261,144 @@ public final class InstructionRecording {
     }
 
     private static void writeTextHeader(BufferedWriter out, Header header) throws IOException {
-        out.write("emuStudio instruction recording v" + VERSION + " | " + header.processor + "\n");
-        for (DebugCPU.Register r : header.registers) out.write(r.name + ":" + r.bits + " ");
+        out.write("emuStudio instruction recording v" + VERSION + " | " + header.processor);
         out.newLine();
     }
 
-    private static void writeTextEvents(BufferedWriter out, List<DebugCPU.Instruction> events) throws IOException {
-        for (DebugCPU.Instruction event : events) {
-            out.write(String.format(Locale.ROOT, "#%d | PC=%04X | %s | %s | %s%n",
-                    event.sequence, event.address, event.opcodes, event.mnemonic,
-                    event.completed ? "completed" : "failed"));
-            writeTextRegisters(out, "before", event.before);
-            writeTextRegisters(out, "after", event.after);
-            for (DebugCPU.Access a : event.accesses)
-                out.write(String.format(Locale.ROOT, "  %s %04X value=%02X%n",
-                        a.write ? "WRITE" : "READ", a.address, a.value));
+    private static void writeTextEvents(BufferedWriter out, List<Event> events) throws IOException {
+        for (Event event : events) {
+            out.write("#" + event.sequence + " | "
+                    + (event.view.programLocation.isPresent()
+                    ? String.format(Locale.ROOT, "PC=%04X | ", event.view.programLocation.getAsInt()) : "")
+                    + event.view.summary + " | " + (event.completed ? "completed" : "failed"));
+            out.newLine();
+            String group = "";
+            for (ViewRow row : event.view.rows) {
+                if (!row.group.equals(group)) {
+                    group = row.group;
+                    out.write("  " + group);
+                    out.newLine();
+                }
+                out.write("    " + row.label + ": " + row.before
+                        + (row.before.equals(row.after) ? "" : " → " + row.after)
+                        + (row.changed ? " [changed]" : ""));
+                out.newLine();
+                for (String tag : row.tags) {
+                    out.write("      tag: " + tag);
+                    out.newLine();
+                }
+                for (NavLink link : row.links) {
+                    out.write("      " + link.label + " -> earlier " + link.tag);
+                    out.newLine();
+                }
+            }
         }
     }
 
-    private static void writeTextRegisters(BufferedWriter out, String title, Map<String, Long> values) throws IOException {
-        out.write("  " + title + ":");
-        for (String name : new TreeSet<>(values.keySet()))
-            out.write(" " + name + "=" + Long.toHexString(values.get(name)).toUpperCase(Locale.ROOT));
-        out.newLine();
+    /** Encoded presentation size; also validates the individual-record byte limit. */
+    public static int sizeOf(Event event) throws IOException {
+        int size = event.encodedSize;
+        return size >= 0 ? size : encode(event).length;
     }
 
-    private static void writeRegisters(DataOutputStream out, Map<String, Long> values) throws IOException {
-        if (values.size() > MAX_REGISTERS) throw new IOException("Too many recorded registers");
-        out.writeInt(values.size());
-        for (String name : new TreeSet<>(values.keySet())) {
-            out.writeUTF(name);
-            out.writeLong(values.get(name));
+    /** Resolve a recorded link using only retained passive presentation, without loading a plugin. */
+    public static OptionalLong resolveEvent(List<Event> history, long ownerOrdinal, NavLink link) {
+        for (int i = history.size() - 1; i >= 0; i--) {
+            Event event = history.get(i);
+            if (event.sequence < ownerOrdinal
+                    && event.view.rows.stream().anyMatch(row -> row.tags.contains(link.tag)))
+                return OptionalLong.of(event.sequence);
         }
+        return OptionalLong.empty();
     }
 
-    private static Map<String, Long> readRegisters(DataInput in) throws IOException {
-        int count = readCount(in, MAX_REGISTERS, "register values");
-        Map<String, Long> values = new LinkedHashMap<>();
-        for (int i = 0; i < count; i++) {
-            String name = in.readUTF();
-            if (name.isBlank() || values.put(name, in.readLong()) != null)
-                throw new IOException("Invalid or duplicate recorded register");
+    private static byte[] encode(Event event) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        OutputStream bounded = new FilterOutputStream(bytes) {
+            private int size;
+            @Override public void write(int value) throws IOException {
+                if (++size > MAX_EVENT_BYTES) throw new IOException("Recording event exceeds byte limit");
+                out.write(value);
+            }
+            @Override public void write(byte[] values, int offset, int length) throws IOException {
+                if (length > MAX_EVENT_BYTES - size) throw new IOException("Recording event exceeds byte limit");
+                size += length;
+                out.write(values, offset, length);
+            }
+        };
+        try (DataOutputStream data = new DataOutputStream(bounded)) {
+            data.writeBoolean(event.completed);
+            writeText(data, event.view.summary);
+            writeText(data, event.view.foldKey);
+            if (event.view.programLocation == null
+                    || (event.view.programLocation.isPresent() && event.view.programLocation.getAsInt() < 0))
+                throw new IOException("Invalid program location");
+            data.writeInt(event.view.programLocation.orElse(-1));
+            writeCount(data, event.view.rows.size(), MAX_ROWS, "presentation rows");
+            for (ViewRow row : event.view.rows) {
+                writeText(data, row.group);
+                writeText(data, row.label);
+                writeText(data, row.before);
+                writeText(data, row.after);
+                data.writeBoolean(row.changed);
+                writeCount(data, row.tags.size(), MAX_ITEMS, "search tags");
+                for (String tag : row.tags) writeText(data, tag);
+                writeCount(data, row.links.size(), MAX_ITEMS, "navigation links");
+                for (NavLink link : row.links) {
+                    writeText(data, link.label);
+                    writeText(data, link.tag);
+                }
+            }
         }
-        return values;
+        byte[] encoded = bytes.toByteArray();
+        event.encodedSize = encoded.length;
+        return encoded;
+    }
+
+    private static Event readEvent(DataInputStream in, long sequence) throws IOException {
+        boolean completed = in.readBoolean();
+        String summary = readText(in), foldKey = readText(in);
+        int location = in.readInt();
+        if (location < -1) throw new IOException("Invalid program location");
+        int size = readCount(in, MAX_ROWS, "presentation rows");
+        List<ViewRow> rows = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            String group = readText(in), label = readText(in),
+                    before = readText(in), after = readText(in);
+            boolean changed = in.readBoolean();
+            int tagsCount = readCount(in, MAX_ITEMS, "search tags");
+            List<String> tags = new ArrayList<>();
+            for (int j = 0; j < tagsCount; j++) tags.add(readText(in));
+            int linksCount = readCount(in, MAX_ITEMS, "navigation links");
+            List<NavLink> links = new ArrayList<>();
+            for (int j = 0; j < linksCount; j++) {
+                links.add(new NavLink(readText(in), readText(in)));
+            }
+            rows.add(new ViewRow(group, label, before, after, changed, tags, links));
+        }
+        return new Event(sequence, completed,
+                new StepView(summary, foldKey, location < 0 ? OptionalInt.empty() : OptionalInt.of(location), rows));
+    }
+
+    private static void writeText(DataOutput out, String text) throws IOException {
+        if (text == null || text.length() > MAX_TEXT) throw new IOException("Invalid or oversized recording text");
+        byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
+        out.writeInt(encoded.length);
+        out.write(encoded);
+    }
+
+    private static String readText(DataInput in) throws IOException {
+        int length = readCount(in, MAX_TEXT * 4, "text bytes");
+        byte[] encoded = new byte[length];
+        in.readFully(encoded);
+        String text = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(encoded)).toString();
+        if (text.length() > MAX_TEXT) throw new IOException("Recording text exceeds limit");
+        return text;
+    }
+
+    private static void writeCount(DataOutput out, int count, int maximum, String what) throws IOException {
+        if (count > maximum) throw new IOException("Invalid count of " + what);
+        out.writeInt(count);
     }
 
     private static int readCount(DataInput in, int maximum, String what) throws IOException {

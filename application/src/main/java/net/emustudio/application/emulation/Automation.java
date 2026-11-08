@@ -94,8 +94,10 @@ public class Automation implements Runnable {
         try {
             computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
-            if ((debugScript != null || instructionRecording != null) && computer.getCPU().isEmpty())
-                throw new IllegalStateException("Debug scripts and recording require a CPU");
+            if (debugScript != null && computer.getCPU().isEmpty())
+                throw new IllegalStateException("Debug scripts require a CPU");
+            if (instructionRecording != null && computer.getCPU().isEmpty())
+                LOGGER.error("Could not start instruction recording: no CPU available");
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
                 if (programLocation != null) {
@@ -104,8 +106,16 @@ public class Automation implements Runnable {
                 if (inputFile == null || computer.getCompiler().isEmpty())
                     computer.getExecution().orElseThrow().compile(() -> {}, programLocation).join();
                 if (instructionRecording != null) {
-                    Unchecked.run(() -> computer.getDebugger().orElseThrow().recordTo(instructionRecording));
-                    recordingStarted = true;
+                    try {
+                        net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
+                        debugger.update(() -> {
+                            try { debugger.recordTo(instructionRecording); }
+                            catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+                        }).join();
+                        recordingStarted = true;
+                    } catch (Exception failure) {
+                        LOGGER.error("Could not start instruction recording; emulation continues", failure);
+                    }
                 }
                 if (debugScript != null) {
                     try { net.emustudio.application.debugger.DebugScript.run(computer.getDebugger().orElseThrow(), debugScript); }
@@ -120,12 +130,13 @@ public class Automation implements Runnable {
         } finally {
             if (recordingStarted) {
                 try {
-                    if (resultState == CPU.RunState.STATE_RUNNING) computer.getExecution().orElseThrow().pause().join();
-                    computer.getDebugger().orElseThrow().stopRecordingFile();
+                    net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
+                    debugger.update(() -> {
+                        try { debugger.stopRecordingFile(); }
+                        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+                    }).join();
                 } catch (Exception e) {
-                    successful = false;
                     LOGGER.error("Could not finish instruction recording", e);
-                    dialogs.showError("Instruction recording is incomplete. Please consult log file for details.", "Emulation automation");
                 }
                 recordingStarted = false;
             }
@@ -209,7 +220,7 @@ public class Automation implements Runnable {
                     : completion.get(waitForFinishMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException expected) {
             // CLI observation duration is independent of cooperative lifecycle completion.
-            resultState = execution.runState();
+            resultState = execution.snapshot().runState();
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException failure) {
@@ -218,9 +229,11 @@ public class Automation implements Runnable {
 
         switch (resultState) {
             case STATE_STOPPED_ADDR_FALLOUT:
+                successful = false;
                 LOGGER.error("Address fallout");
                 break;
             case STATE_STOPPED_BAD_INSTR:
+                successful = false;
                 LOGGER.error("Unknown instruction");
                 break;
             case STATE_STOPPED_BREAK:

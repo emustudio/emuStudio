@@ -3,7 +3,8 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -41,6 +42,9 @@ public class CpuImplTest {
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -98,16 +102,18 @@ public class CpuImplTest {
         }
     }
 
-    private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) {
+    private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) throws Exception {
         setupEmulator(program, null, input);
-        DebugCPU.Listener listener = new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return address == breakpoint; }
-        };
-        cpu.getDebugger().orElseThrow().addListener(listener);
+        Debugging.Observer listener = new Debugging.Observer() {
+            @Override public boolean beforeStep() { int address = cpu.getInstructionLocation(); return address == breakpoint; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+};
+        AutoCloseable observation = cpu.observe(listener, true);
         try {
             assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         } finally {
-            cpu.getDebugger().orElseThrow().removeListener(listener);
+            observation.close();
         }
     }
 
@@ -371,13 +377,16 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void recordingStopsContinuousExecutionAfterExactGuestInstruction() {
         setupEmulator(new byte[] {3, 3, 0}, null, null);
-        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
-        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
-            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+        java.util.List<StepView> events = new java.util.ArrayList<>();
+        cpu.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());

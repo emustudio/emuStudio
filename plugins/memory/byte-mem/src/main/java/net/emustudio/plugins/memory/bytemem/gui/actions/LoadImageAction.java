@@ -64,7 +64,7 @@ public class LoadImageAction extends AbstractAction {
             Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(loader));
             if (bank.isPresent()) {
                 setEnabled(false);
-                execution.mutate(() -> {
+                execution.update(() -> {
                     try { MemoryImageLoader.load(path, context, bank.get()); }
                     catch (Exception failure) { throw new CompletionException(failure); }
                 }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {

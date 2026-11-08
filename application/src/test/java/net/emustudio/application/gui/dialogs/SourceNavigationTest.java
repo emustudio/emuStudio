@@ -15,7 +15,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -345,7 +345,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final CPU cpu = mock(CPU.class);
         final Compiler compiler = mock(Compiler.class);
         final MemoryContext<Byte> memory;
-        final AnnotationEngine annotations = new AnnotationEngine();
+        final MemoryAnnotations annotations = new MemoryAnnotations();
         final AtomicInteger bank = new AtomicInteger();
         final DebugSession session;
         final TabbedEditor editor;
@@ -438,11 +438,11 @@ public class SourceNavigationTest extends AbstractSwingTest {
             if (fail) {
                 compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
             } else {
-                java.util.List<AnnotationEngine.Entry> mappings = new java.util.ArrayList<>();
-                for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i, i * 2, i * 2 + 1,
+                java.util.List<MemoryAnnotations.Entry> mappings = new java.util.ArrayList<>();
+                for (int i = 0; i < 3; i++) mappings.add(new MemoryAnnotations.Entry(7, i, i * 2, i * 2 + 1,
                         "source", "", SourceCodePosition.of(i + 1,
                         text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
-                for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i + 3,
+                for (int i = 0; i < 3; i++) mappings.add(new MemoryAnnotations.Entry(7, i + 3,
                         i * 2, i * 2 + 1, "label", List.of("first", "second", "third").get(i), null));
                 annotations.replaceOwner(7, mappings);
             }

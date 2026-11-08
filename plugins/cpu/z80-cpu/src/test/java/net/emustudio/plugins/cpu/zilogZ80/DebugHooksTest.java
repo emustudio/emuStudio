@@ -5,7 +5,8 @@ package net.emustudio.plugins.cpu.zilogZ80;
 import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import org.junit.Test;
@@ -18,16 +19,18 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3e, 0x42, 0x3c}, 3);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        DebugCPU.Listener listener = new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return address == 2; }
-        };
-        engine.debugger.addListener(listener);
+        Debugging.Observer listener = new Debugging.Observer() {
+            @Override public boolean beforeStep() { int address = engine.PC; return address == 2; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+};
+        AutoCloseable observation = engine.debugger.observe(listener, true);
 
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, engine.run());
 
         assertEquals(2, engine.PC);
         assertEquals(0x42, engine.regs[7]);
-        engine.debugger.removeListener(listener);
+        observation.close();
         engine.step();
         assertEquals(3, engine.PC);
         assertEquals(0x43, engine.regs[7]);
@@ -40,10 +43,14 @@ public class DebugHooksTest {
         java.lang.reflect.Field field = EmulatorEngine.class.getDeclaredField("memory");
         field.setAccessible(true);
         assertSame(memory, field.get(engine));
-        DebugCPU.Listener listener = new DebugCPU.Listener() {};
-        engine.debugger.addListener(listener);
+        Debugging.Observer listener = new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+};
+        AutoCloseable observation = engine.debugger.observe(listener, true);
         assertNotSame(memory, field.get(engine));
-        engine.debugger.removeListener(listener);
+        observation.close();
         assertSame(memory, field.get(engine));
         assertFalse(engine.debugger.isActive());
     }
@@ -53,30 +60,31 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3e, 0x42, 0x32, 0x00, 0x01}, 5);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(
-                new DebugCPU.Listener() {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(
+                new Debugging.Observer() {
                     @Override
-                    public boolean afterInstruction(DebugCPU.Instruction e) {
+                    public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView e = capture.orElseThrow();
                         events.add(e);
                         return false;
                     }
-                });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         engine.step();
         engine.step();
         assertEquals(2, events.size());
-        assertEquals(1, events.get(0).sequence);
-        assertEquals(2, events.get(1).sequence);
-        assertEquals(0, events.get(0).address);
-        assertEquals(2, events.get(1).address);
-        assertEquals("3E 42", events.get(0).opcodes.trim());
-        assertEquals("32 00 01", events.get(1).opcodes.trim());
-        assertFalse(events.get(0).mnemonic.isBlank());
-        assertEquals(Long.valueOf(0x42), events.get(0).after.get("A"));
+        assertEquals(0, events.get(0).programLocation.orElseThrow());
+        assertEquals(2, events.get(1).programLocation.orElseThrow());
+        assertEquals("3E 42", encoding(events.get(0)).trim());
+        assertEquals("32 00 01", encoding(events.get(1)).trim());
+        assertFalse(events.get(0).summary.isBlank());
+        assertEquals(Long.valueOf(0x42), state(events.get(0), "A", false));
         assertTrue(
-                events.get(1).accesses.stream()
-                        .anyMatch(a -> a.write && a.address == 0x100 && a.value == 0x42));
-        engine.debugger.memory().read(0);
+                events.get(1).rows.stream().filter(row -> row.group.equals("Memory"))
+                        .anyMatch(a -> a.label.equals("Write @0100") && Long.parseLong(a.after) == 0x42));
+        memory.read(0);
         assertEquals(2, events.size());
         assertEquals(0x42, memory.read(0x100) & 255);
     }
@@ -86,23 +94,22 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3c, (byte) 0xc3, 0x00, 0x00}, 4);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        List<DebugCPU.Instruction> events = collect(engine);
+        List<StepView> events = collect(engine);
         engine.step();
         engine.step();
         engine.step();
         assertEquals(3, events.size());
-        assertEquals(0, events.get(0).address);
-        assertEquals(1, events.get(1).address);
-        assertEquals(0, events.get(2).address);
-        assertEquals(Long.valueOf(1), events.get(0).after.get("A"));
-        assertEquals(Long.valueOf(2), events.get(2).after.get("A"));
-        assertEquals("3C", events.get(0).opcodes.trim());
+        assertEquals(0, events.get(0).programLocation.orElseThrow());
+        assertEquals(1, events.get(1).programLocation.orElseThrow());
+        assertEquals(0, events.get(2).programLocation.orElseThrow());
+        assertEquals(Long.valueOf(1), state(events.get(0), "A", false));
+        assertEquals(Long.valueOf(2), state(events.get(2), "A", false));
+        assertEquals("3C", encoding(events.get(0)).trim());
         memory.write(0, (byte) 0);
         engine.reset(0);
         engine.step();
-        assertEquals(4, events.get(3).sequence);
-        assertEquals("00", events.get(3).opcodes.trim());
-        assertEquals("3C", events.get(0).opcodes.trim());
+        assertEquals("00", encoding(events.get(3)).trim());
+        assertEquals("3C", encoding(events.get(0)).trim());
     }
 
     @Test
@@ -112,13 +119,13 @@ public class DebugHooksTest {
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
         engine.regs2[7] = 42;
         engine.flags2 = 0x28;
-        List<DebugCPU.Instruction> events = collect(engine);
+        List<StepView> events = collect(engine);
         engine.step();
         assertEquals(1, events.size());
-        assertEquals("DD 21 34 12", events.get(0).opcodes.trim());
-        assertEquals(Long.valueOf(0x1234), events.get(0).after.get("IX"));
-        assertEquals(Long.valueOf(42), events.get(0).after.get("A2"));
-        assertEquals(Long.valueOf(0x28), events.get(0).after.get("F2"));
+        assertEquals("DD 21 34 12", encoding(events.get(0)).trim());
+        assertEquals(Long.valueOf(0x1234), state(events.get(0), "IX", false));
+        assertEquals(Long.valueOf(42), state(events.get(0), "A2", false));
+        assertEquals(Long.valueOf(0x28), state(events.get(0), "F2", false));
     }
 
     @Test
@@ -131,20 +138,21 @@ public class DebugHooksTest {
         engine.interruptMode = 1;
         engine.IFF[0] = true;
         requestInterrupt(engine, new byte[] {(byte) 0xff});
-        List<DebugCPU.Instruction> events = collect(engine);
+        List<StepView> events = collect(engine);
         engine.step();
         assertEquals(1, events.size());
-        assertTrue(events.get(0).mnemonic.startsWith("INT acknowledge; "));
-        assertEquals("3E 42", events.get(0).opcodes.trim());
-        assertEquals(0x38, events.get(0).address);
-        assertEquals(Long.valueOf(0), events.get(0).before.get("PC"));
-        assertEquals(Long.valueOf(0x3a), events.get(0).after.get("PC"));
-        assertEquals(Long.valueOf(0x42), events.get(0).after.get("A"));
+        assertTrue(events.get(0).summary.startsWith("INT acknowledge; "));
+        assertEquals("3E 42", encoding(events.get(0)).trim());
+        assertEquals(0x38, events.get(0).programLocation.orElseThrow());
+        assertEquals(Long.valueOf(0), state(events.get(0), "PC", true));
+        assertEquals(Long.valueOf(0x3a), state(events.get(0), "PC", false));
+        assertEquals(Long.valueOf(0x42), state(events.get(0), "A", false));
         engine.requestNonMaskableInterrupt();
         engine.step();
-        assertEquals("NMI acknowledge", events.get(1).mnemonic);
-        assertEquals("", events.get(1).opcodes);
-        assertEquals(Long.valueOf(0x66), events.get(1).after.get("PC"));
+        assertEquals("NMI acknowledge", events.get(1).summary);
+        assertTrue(events.get(1).programLocation.isEmpty());
+        assertEquals("", encoding(events.get(1)));
+        assertEquals(Long.valueOf(0x66), state(events.get(1), "PC", false));
     }
 
     @Test
@@ -170,17 +178,17 @@ public class DebugHooksTest {
         engine.I = 1;
         engine.IFF[0] = true;
         engine.interruptMode = 2;
-        List<DebugCPU.Instruction> events = record ? collect(engine) : List.of();
+        List<StepView> events = record ? collect(engine) : List.of();
         requestInterrupt(engine, new byte[] {0});
         engine.step();
         assertEquals(0x202, engine.PC);
         assertEquals(0x42, engine.regs[7]);
         if (record) {
             assertEquals(1, events.size());
-            assertEquals(0x200, events.get(0).address);
+            assertEquals(0x200, events.get(0).programLocation.orElseThrow());
 
-            assertEquals("3E 42", events.get(0).opcodes.trim());
-            assertEquals(Long.valueOf(0), events.get(0).before.get("PC"));
+            assertEquals("3E 42", encoding(events.get(0)).trim());
+            assertEquals(Long.valueOf(0), state(events.get(0), "PC", true));
         }
         return new long[] {cycles[0], memory.guestReads};
     }
@@ -210,14 +218,17 @@ public class DebugHooksTest {
         }
     }
 
-    private static List<DebugCPU.Instruction> collect(EmulatorEngine engine) {
-        List<DebugCPU.Instruction> events = new ArrayList<>();
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) {
+    private static List<StepView> collect(EmulatorEngine engine) {
+        List<StepView> events = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         return events;
     }
 
@@ -226,13 +237,15 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        engine.debugger.addListener(
-                new DebugCPU.Listener() {
+        engine.debugger.observe(
+                new Debugging.Observer() {
                     @Override
-                    public boolean beforeInstruction(int pc) {
+                    public boolean beforeStep() {
                         return true;
                     }
-                });
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+}, true);
         engine.step();
         assertEquals(0, engine.PC);
         assertEquals(0, engine.regs[7]);
@@ -243,9 +256,12 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x76);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
     }
@@ -255,9 +271,12 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x76);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
     }
@@ -272,10 +291,23 @@ public class DebugHooksTest {
         };
         memory.write(0, new Byte[] {(byte) 0x3a, 0, 1}, 3);
         EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
-        engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
-        });
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow(); return true; }
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
 
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.run());
+    }
+
+    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+        return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
+    }
+
+    private static Long state(net.emustudio.emulib.plugins.debugger.StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugins.debugger.ViewRow row = event.rows.stream()
+                .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
+        return Long.valueOf(before ? row.before : row.after);
     }
 }

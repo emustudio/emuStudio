@@ -7,7 +7,7 @@ import net.emustudio.plugins.memory.bytemem.TestExecutionState;
 import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import java.util.concurrent.CompletableFuture;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,23 +19,22 @@ import static org.junit.Assert.*;
 
 public class MemoryTableTest {
     private MemoryTableModel tableModel;
-    private final AnnotationEngine metadata = new AnnotationEngine();
+    private final MemoryAnnotations metadata = new MemoryAnnotations();
     private final ExecutionState execution = new ExecutionState() {
-        public int currentInstruction() { return 3; }
-        public CPU.RunState runState() { return CPU.RunState.STATE_STOPPED_BREAK; }
-        public boolean isBusy() { return false; }
+        public Snapshot snapshot() {
+            return new Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, 3, Float.NaN);
+        }
+        public Subscription subscribe(java.util.function.Consumer<Snapshot> listener) { return () -> { }; }
         public CompletableFuture<Void> mutate(Runnable operation) { return TestExecutionState.create().mutate(operation); }
-        public void addCPUListener(CPU.CPUListener listener) { }
-        public void removeCPUListener(CPU.CPUListener listener) { }
-        public void addListener(Runnable listener) { }
-        public void removeListener(Runnable listener) { }
+        public CompletableFuture<Void> update(Runnable operation) { return TestExecutionState.create().update(operation); }
+        public void processUpdates() { }
     };
 
     @Before
     public void setUp() {
         tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4), TestExecutionState.create());
-        metadata.put(new AnnotationEngine.Entry(1, 1, 1, 2, "label", "<start>", null));
-        metadata.put(new AnnotationEngine.Entry(1, 2, 2, 3, "emuStudio.user/label", "Label & details", null));
+        metadata.put(new MemoryAnnotations.Entry(1, 1, 1, 2, "label", "<start>", null));
+        metadata.put(new MemoryAnnotations.Entry(1, 2, 2, 3, "emuStudio.user/label", "Label & details", null));
     }
 
     @Test(expected = NullPointerException.class)
@@ -113,7 +112,7 @@ public class MemoryTableTest {
     public void rendererUsesCurrentLabels() {
         MemoryTable table = new MemoryTable(tableModel, new JScrollPane(), metadata, execution);
         metadata.replaceOwner(1, java.util.List.of(
-                new AnnotationEngine.Entry(1, 3, 1, 2, "label", "new label", null)));
+                new MemoryAnnotations.Entry(1, 3, 1, 2, "label", "new label", null)));
 
         JLabel label = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 1), 0, 1);
 

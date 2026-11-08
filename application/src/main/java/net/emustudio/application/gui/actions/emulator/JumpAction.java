@@ -33,7 +33,7 @@ public class JumpAction extends AbstractAction {
             try {
                 dialogs.readInteger("Memory address:", "Jump to address", 0)
                         .ifPresent(address -> {
-                            computer.getExecution().orElseThrow().mutate(() -> {
+                            computer.getExecution().orElseThrow().update(() -> {
                                 if (!cpu.setInstructionLocation(address))
                                     throw new IllegalArgumentException("Invalid memory address (please check memory size)");
                             }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {

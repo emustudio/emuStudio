@@ -25,7 +25,7 @@ import javax.swing.*;
         title = "Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final ContextZ80Impl context = new ContextZ80Impl();
@@ -78,19 +78,23 @@ public class CpuImpl extends AbstractCPU {
         initializer.initialize();
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, applicationApi.getGUI(), this::observeExecution, applicationApi.getExecutionState()
+                    this, context, applicationApi.getGUI(), applicationApi.getExecutionState()
             );
         }
     }
 
     @Override
-    public java.util.Optional<net.emustudio.emulib.plugins.cpu.debug.DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     public EmulatorEngine getEngine() {
         return engine;
@@ -140,8 +144,8 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void sampleFrequency() {
-        frequencyCalculator.sample();
+    public float sampleFrequency() {
+        return frequencyCalculator.sample();
     }
 
     public FrequencyCalculator getFrequencyCalculator() {

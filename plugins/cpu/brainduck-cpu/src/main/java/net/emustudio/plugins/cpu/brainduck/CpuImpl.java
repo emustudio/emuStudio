@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -24,7 +23,7 @@ import java.io.IOException;
 
 @PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU")
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -55,6 +54,7 @@ public class CpuImpl extends AbstractCPU {
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
@@ -85,7 +85,7 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new StatusPanel(memory, this, applicationApi.getGUI(), this::observeExecution);
+        return new StatusPanel(memory, this, applicationApi.getGUI(), applicationApi.getExecutionState());
     }
 
     @Override
@@ -132,9 +132,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {

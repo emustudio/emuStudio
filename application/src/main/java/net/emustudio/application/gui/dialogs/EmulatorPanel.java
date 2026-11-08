@@ -14,6 +14,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 
@@ -67,7 +68,7 @@ public class EmulatorPanel extends JPanel {
     private final DebuggerPanel inspection;
     private final CPU cpu;
     private final EmulationController execution;
-    private CPU.CPUListener cpuListener;
+    private ExecutionState.Subscription executionSubscription;
     private boolean closed;
     private boolean commandBusy;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -288,33 +289,17 @@ public class EmulatorPanel extends JPanel {
             }
         };
 
-        if (cpu != null) {
-            cpuListener = new CPU.CPUListener() {
-
-            @Override
-            public void internalStateChanged() {
-                runOnEdt(() -> {
-                    updateExecutionControls();
-                    refreshDebugTable();
-                });
-            }
-
-            @Override
-            public void runStateChanged(CPU.RunState state) {
-                runState = state;
-                runOnEdt(() -> {
-                    if (closed) return;
-                    if (state == CPU.RunState.STATE_RUNNING) {
-                        setStateRunning();
-                    } else {
-                        setStateNotRunning(state, Optional.ofNullable(emulationController).filter(EmulationController::isTimedRunning).isPresent());
-                    }
-                    commandBusy = false;
-                    updateExecutionControls();
-                });
-            }
-            };
-            if (execution != null) execution.addCPUListener(cpuListener);
+        if (cpu != null && execution != null) {
+            executionSubscription = execution.executionState().subscribe(snapshot -> runOnEdt(() -> {
+                if (closed) return;
+                runState = snapshot.runState();
+                if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
+                else setStateNotRunning(runState, snapshot.isTimedRunning());
+                commandBusy = false;
+                updateExecutionControls();
+                refreshDebugTable();
+            }));
+            runState = execution.snapshot().runState();
         }
 
         // initial state
@@ -371,7 +356,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
-        if (execution != null && cpuListener != null) execution.removeCPUListener(cpuListener);
+        if (executionSubscription != null) executionSubscription.close();
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }
 
@@ -458,14 +443,14 @@ public class EmulatorPanel extends JPanel {
 
     private void setStateRunning() {
         resetAction.setEnabled(true);
-        jumpAction.setEnabled(false);
-        breakpointAction.setEnabled(false);
+        jumpAction.setEnabled(session != null && session.debug != null);
+        breakpointAction.setEnabled(inspection != null && inspection.isBreakpointDialogSupported());
         listingState.setText("Running — pause to inspect instructions.");
         stopAction.setEnabled(true);
         stepBackAction.setEnabled(false);
         runAction.setEnabled(false);
         stepAction.setEnabled(false);
-        jumpToBeginningAction.setEnabled(false);
+        jumpToBeginningAction.setEnabled(session != null && session.debug != null);
         pauseAction.setEnabled(true);
         runTimedAction.setEnabled(false);
         debugTable.setEnabled(false);
@@ -481,10 +466,11 @@ public class EmulatorPanel extends JPanel {
 
     private void updateExecutionControls() {
         if (closed || execution == null) return;
-        boolean busy = execution.isBusy();
+        ExecutionState.Snapshot snapshot = execution.snapshot();
+        boolean busy = snapshot.isBusy();
         if (!busy && commandBusy) {
             if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
-            else setStateNotRunning(runState, execution.isTimedRunning());
+            else setStateNotRunning(runState, snapshot.isTimedRunning());
         }
         commandBusy = busy;
         if (busy) {

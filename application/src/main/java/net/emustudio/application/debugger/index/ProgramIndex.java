@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,10 +23,10 @@ import java.util.function.UnaryOperator;
 public final class ProgramIndex {
     private final IndexLayout layout;
     private final Object identity = new Object();
-    private final AnnotationEngine annotationEngine;
+    private final MemoryAnnotations annotationEngine;
     private final AtomicReference<View> root;
 
-    private ProgramIndex(String imageId, int size, AnnotationEngine annotationEngine) {
+    private ProgramIndex(String imageId, int size, MemoryAnnotations annotationEngine) {
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         layout = new IndexLayout(imageId, size);
         root = new AtomicReference<>(new View(identity, layout, null, new BreakpointIndex(layout, new Breakpoint[0]),
@@ -34,11 +34,11 @@ public final class ProgramIndex {
     }
 
     /** Creates an empty index, copying and validating its immutable layout. */
-    public static ProgramIndex create(String imageId, int addressSpaceSize, AnnotationEngine annotationEngine) {
+    public static ProgramIndex create(String imageId, int addressSpaceSize, MemoryAnnotations annotationEngine) {
         return new ProgramIndex(imageId, addressSpaceSize, annotationEngine);
     }
 
-    public AnnotationEngine annotationEngine() { return annotationEngine; }
+    public MemoryAnnotations annotationEngine() { return annotationEngine; }
 
     /** Invalidates graph results after live annotation changes. */
     public void annotationsChanged() {

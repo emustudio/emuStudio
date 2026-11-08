@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +85,7 @@ public class MemoryTableModel extends AbstractTableModel {
         int bank = currentBank;
         try {
             byte data = (byte) (Integer.decode(String.valueOf(value)) & 0xFF);
-            execution.mutate(() -> memory.writeBank(address, data, bank)).whenComplete((ignored, failure) -> {
+            execution.update(() -> memory.writeBank(address, data, bank)).whenComplete((ignored, failure) -> {
                 if (failure != null) LOGGER.warn("Memory edit rejected", failure);
                 SwingUtilities.invokeLater(this::fireTableDataChanged);
             });
@@ -97,7 +96,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !execution.isBusy() && execution.runState() != CPU.RunState.STATE_RUNNING;
+        return !execution.snapshot().isBusy();
     }
 
     public Optional<Integer> findSequence(byte[] sequence, int from) {

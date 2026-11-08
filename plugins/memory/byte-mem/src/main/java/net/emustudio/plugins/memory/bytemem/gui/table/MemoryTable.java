@@ -3,7 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -15,7 +15,7 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 public class MemoryTable extends JTable {
     private final MemoryTableModel tableModel;
 
-    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, AnnotationEngine annotations, ExecutionState executionState) {
+    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, MemoryAnnotations annotations, ExecutionState executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         setModel(this.tableModel);

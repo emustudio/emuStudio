@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.ssem.gui.table;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import javax.swing.SwingUtilities;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
@@ -120,7 +119,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (isCellEditable(rowIndex, columnIndex)) {
-            execution.mutate(() -> {
+            execution.update(() -> {
                 Byte[] row = memory.read(rowIndex * 4, 4);
                 String str = String.valueOf(aValue);
 
@@ -182,7 +181,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columnIndex >= 0 && columnIndex <= 34
-                && !execution.isBusy() && execution.runState() != CPU.RunState.STATE_RUNNING;
+                && !execution.snapshot().isBusy();
     }
 
     public void dataChangedAt(int fromAddress, int toAddress) {

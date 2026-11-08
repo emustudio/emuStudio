@@ -12,6 +12,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+import static org.easymock.EasyMock.*;
 
 import static org.junit.Assert.*;
 
@@ -190,5 +195,31 @@ public class RaspTableModelTest {
         // RadixUtils.parseRadix doesn't support negative numbers, so value remains unchanged
         assertEquals(Integer.valueOf(50), context.read(0));
     }
+
+    @Test
+    public void runningMemoryEditWaitsForTheExecutionBoundary() {
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        AtomicReference<Runnable> pending = new AtomicReference<>();
+        CompletableFuture<Void> applied = new CompletableFuture<>();
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
+            pending.set(getCurrentArgument(0));
+            return applied;
+        });
+        replay(execution);
+        context.write(0, 3);
+        RaspTableModel live = new RaspTableModel(context, execution);
+
+        assertTrue(live.isCellEditable(0, 1));
+        live.setValueAt("42", 0, 1);
+        assertEquals(Integer.valueOf(3), context.read(0));
+        pending.get().run();
+        applied.complete(null);
+
+        assertEquals(Integer.valueOf(42), context.read(0));
+        verify(execution);
+    }
+
 }
 

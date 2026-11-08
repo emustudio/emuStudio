@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import org.openjdk.jmh.annotations.*;
 
@@ -34,7 +34,7 @@ public class ProgramIndexBreakpointBenchmark {
         }
 
         ProgramIndex create() {
-            ProgramIndex created = ProgramIndex.create("rules", size, new AnnotationEngine());
+            ProgramIndex created = ProgramIndex.create("rules", size, new MemoryAnnotations());
             try (ProgramIndex.BreakpointUpdate update = created.updateBreakpoints(created.snapshot())) {
                 for (int i = 0; i < rules; i++) update.put(i, address(i), i % 3 != 2);
                 update.commit();

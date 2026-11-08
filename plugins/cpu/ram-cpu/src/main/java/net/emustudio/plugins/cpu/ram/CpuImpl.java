@@ -8,7 +8,6 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -33,7 +32,7 @@ import java.util.Arrays;
         title = "Random Access Machine (RAM)"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RamCpuContextImpl context;
@@ -68,6 +67,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = new RamDisassembler(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
@@ -84,7 +84,7 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), this::observeExecution);
+        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), applicationApi.getExecutionState());
     }
 
     @Override
@@ -147,9 +147,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {

@@ -5,6 +5,7 @@ package net.emustudio.plugins.cpu.brainduck.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -25,7 +26,7 @@ import static org.junit.Assert.*;
 public class StatusPanelTest {
     private CpuImpl cpu;
     private StatusPanel panel;
-    private CPU.CPUListener observer;
+    private java.util.function.Consumer<ExecutionState.Snapshot> observer;
 
     @Before
     public void setUp() throws Exception {
@@ -34,7 +35,14 @@ public class StatusPanelTest {
         expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
         replay(contextPool);
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        expect(execution.subscribe(anyObject())).andAnswer(() -> {
+            observer = getCurrentArgument(0);
+            return () -> {};
+        }).anyTimes();
+        replay(execution);
         ApplicationApi application = createNiceMock(ApplicationApi.class);
+        expect(application.getExecutionState()).andReturn(execution).anyTimes();
         expect(application.getContextPool()).andReturn(contextPool).anyTimes();
         replay(application);
         cpu = new CpuImpl(0L, application, PluginSettings.UNAVAILABLE);
@@ -44,7 +52,7 @@ public class StatusPanelTest {
         expect(gui.panel(anyString(), anyString(), anyString())).andAnswer(JPanel::new).anyTimes();
         expect(gui.label(anyString())).andAnswer(() -> new JLabel((String) getCurrentArguments()[0])).anyTimes();
         replay(gui);
-        panel = new StatusPanel(memory, cpu, gui, listener -> observer = listener);
+        panel = new StatusPanel(memory, cpu, gui, execution);
     }
 
     @After
@@ -54,10 +62,10 @@ public class StatusPanelTest {
 
     @Test
     public void hostStateChangesReachStatusPanel() throws Exception {
-        observer.runStateChanged(CPU.RunState.STATE_RUNNING);
+        publish(CPU.RunState.STATE_RUNNING);
         SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "running")));
 
-        observer.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
+        publish(CPU.RunState.STATE_STOPPED_BREAK);
         SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "breakpoint")));
     }
 
@@ -65,7 +73,7 @@ public class StatusPanelTest {
     public void hostInternalChangeRefreshesInstructionPosition() throws Exception {
         cpu.setInstructionLocation(12);
 
-        observer.internalStateChanged();
+        publish(CPU.RunState.STATE_STOPPED_BREAK);
 
         SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "000C")));
     }
@@ -74,13 +82,16 @@ public class StatusPanelTest {
     public void addressFalloutStillRendersUnreachableMemory() throws Exception {
         cpu.getEngine().P = -1;
 
-        observer.runStateChanged(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
-        observer.internalStateChanged();
+        publish(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
 
         SwingUtilities.invokeAndWait(() -> {
             assertTrue(containsText(panel, "stopped (address fallout)"));
             assertTrue(containsText(panel, "[unreachable]"));
         });
+    }
+
+    private void publish(CPU.RunState state) {
+        observer.accept(new ExecutionState.Snapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
     }
 
     private static boolean containsText(Component component, String text) {

@@ -206,18 +206,20 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                     java.nio.file.Path path = computerConfig.getPath();
                     debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.AnnotationEngine()
-                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
+                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
+                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
+                            applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
                     if (getCPU().get().getAddressSpaceSize() > 0) debugger.annotations();
                     execution = debugger.execution();
-                    if (applicationApi != null) applicationApi.getExecutionState().setSession(debugger);
+
                 } catch (IOException e) {
                     throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
                 }
             } else {
                 execution = new net.emustudio.application.emulation.EmulationController(null,
-                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null));
-                if (applicationApi != null) applicationApi.getExecutionState().setExecution(execution);
+                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null),
+                        applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             closeAfterFailure(this, failure);
@@ -275,8 +277,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
         destroyed = true;
         if (execution != null) execution.close();
-        if (applicationApi != null && execution != null) applicationApi.getExecutionState().clearExecution(execution);
-        if (applicationApi != null && debugger != null) applicationApi.getExecutionState().clearSession(debugger);
+
+
         if (debugger != null) {
             try {
                 debugger.close();

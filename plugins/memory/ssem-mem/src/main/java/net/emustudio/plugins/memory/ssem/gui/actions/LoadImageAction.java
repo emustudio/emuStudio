@@ -57,7 +57,7 @@ public class LoadImageAction extends AbstractAction {
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             setEnabled(false);
-            api.getExecutionState().mutate(() -> {
+            api.getExecutionState().update(() -> {
                 try (FileInputStream stream = new FileInputStream(path.toFile())) {
                     ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
                     int startLine = code.getInt();

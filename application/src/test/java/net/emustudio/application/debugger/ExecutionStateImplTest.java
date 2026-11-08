@@ -3,52 +3,66 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.application.ExecutionStateImpl;
+import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ExecutionState;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 public class ExecutionStateImplTest {
     @Test
-    public void currentInstructionTracksActiveCpu() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32);
+    public void instructionLocationChangesOnlyWithPublishedSnapshot() throws Exception {
         ExecutionStateImpl state = new ExecutionStateImpl();
-        when(machine.cpu.getInstructionLocation()).thenReturn(4, 20);
-        try (DebugSession session = machine.session(null)) {
-            assertEquals(-1, state.currentInstruction());
-            state.setSession(session);
+        CPU cpu = mock(CPU.class);
+        try (EmulationController owner = new EmulationController(cpu, null, List.of(), null, null, state)) {
+            state.publish(owner, snapshot(4));
+            ExecutionState.Snapshot first = state.snapshot();
 
-            assertEquals(4, state.currentInstruction());
-            assertEquals(20, state.currentInstruction());
+            state.publish(owner, snapshot(20));
 
-            state.clearSession(session);
-            assertEquals(-1, state.currentInstruction());
+            assertEquals(4, first.currentInstruction());
+            assertEquals(20, state.snapshot().currentInstruction());
         }
     }
 
     @Test
-    public void listenersDetachFromPreviousSession() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32);
+    public void closedSubscriptionReceivesNoLaterNotifications() throws Exception {
         ExecutionStateImpl state = new ExecutionStateImpl();
         AtomicInteger changes = new AtomicInteger();
-        Runnable listener = changes::incrementAndGet;
-        state.addListener(listener);
-        try (DebugSession session = machine.session(null)) {
-            state.setSession(session);
-            changes.set(0);
+        try (EmulationController owner = new EmulationController(mock(CPU.class), null, List.of(), null, null, state)) {
+            ExecutionState.Subscription subscription = state.subscribe(value -> changes.incrementAndGet());
+            state.publish(owner, snapshot(4));
+            assertEquals(1, changes.get());
 
-            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertTrue(changes.get() > 0);
+            subscription.close();
+            state.publish(owner, snapshot(20));
 
-            state.clearSession(session);
-            changes.set(0);
-            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertEquals(0, changes.get());
+            assertEquals(1, changes.get());
+            assertEquals(20, state.snapshot().currentInstruction());
         }
-        state.removeListener(listener);
+    }
+
+    @Test
+    public void formerOwnerCannotPublishOrUnbindReplacement() throws Exception {
+        ExecutionStateImpl state = new ExecutionStateImpl();
+        try (EmulationController first = new EmulationController(mock(CPU.class), null, List.of(), null, null, state);
+             EmulationController second = new EmulationController(mock(CPU.class), null, List.of(), null, null, state)) {
+            state.publish(second, snapshot(20));
+
+            state.unbind(first);
+            state.publish(first, snapshot(99));
+            state.publish(second, snapshot(21));
+
+            assertEquals(21, state.snapshot().currentInstruction());
+        }
+    }
+
+    private static ExecutionState.Snapshot snapshot(int location) {
+        return new ExecutionState.Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, location, Float.NaN);
     }
 }

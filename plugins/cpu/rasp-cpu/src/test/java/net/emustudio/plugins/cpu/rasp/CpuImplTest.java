@@ -13,6 +13,8 @@ import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Optional;
@@ -37,6 +39,8 @@ public class CpuImplTest {
         memory = new MemoryStub();
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
+        expect(inputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(outputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
 
         expect(contextPool.getMemoryContext(eq(0L), eq(RaspMemoryContext.class))).andReturn(memory).anyTimes();
         expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
@@ -264,13 +268,16 @@ public class CpuImplTest {
         memory.write(0, JMP);
         memory.write(1, 0); // Infinite loop unless the recording stop is respected.
         cpu.reset(0);
-        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
-        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
-            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+        java.util.List<StepView> events = new java.util.ArrayList<>();
+        cpu.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(0, cpu.getInstructionLocation());

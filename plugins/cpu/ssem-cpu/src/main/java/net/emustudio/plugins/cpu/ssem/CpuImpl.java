@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -26,7 +25,7 @@ import java.util.Arrays;
         title = "SSEM CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private MemoryContext<Byte> memory;
@@ -51,6 +50,7 @@ public class CpuImpl extends AbstractCPU {
         }
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
             automaticEmulation = new AutomaticEmulation(applicationApi.getExecutionState(), engine, memory);
@@ -87,7 +87,7 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new CpuPanel(engine, memory, applicationApi.getGUI(), this::observeExecution);
+        return new CpuPanel(engine, memory, applicationApi.getGUI(), applicationApi.getExecutionState());
     }
 
     @Override
@@ -111,9 +111,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {

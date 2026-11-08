@@ -3,6 +3,7 @@
 package net.emustudio.application.emulation;
 
 import com.electronwill.nightconfig.core.Config;
+import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -27,7 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -172,6 +173,96 @@ public class AutomationTest {
 
         verify(cpu).execute();
         verify(dialogs, never()).showError(anyString(), anyString());
+    }
+
+    @Test
+    public void recordingOpenFailureDoesNotOverrideSuccessfulEmulation() throws Exception {
+        VirtualComputer computer = mockComputer(cpu);
+        DebugSession debugger = mock(DebugSession.class);
+        when(debugger.update(any())).thenAnswer(call -> {
+            try {
+                ((Runnable) call.getArgument(0)).run();
+                return java.util.concurrent.CompletableFuture.completedFuture(null);
+            } catch (RuntimeException failure) {
+                return java.util.concurrent.CompletableFuture.failedFuture(failure);
+            }
+        });
+        when(computer.getDebugger()).thenReturn(Optional.of(debugger));
+        doThrow(new java.io.IOException("disk unavailable")).when(debugger).recordTo(any());
+        Automation automation = new Automation(computer, null, NO_GUI_SETTINGS, dialogs,
+                200, null, EmulationProgress.NONE);
+        automation.setInstructionRecording(input.resolveSibling("instructions.emutrace"));
+
+        automation.run();
+
+        assertTrue(automation.isSuccessful());
+        verify(cpu).execute();
+        verify(debugger, never()).stopRecordingFile();
+        verify(dialogs, never()).showError(anyString(), anyString());
+    }
+
+    @Test
+    public void recordingCloseFailureDoesNotPauseRunningCpuOrOverrideResult() throws Exception {
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        when(cpu.execute()).thenAnswer(call -> {
+            release.await();
+            return CPU.RunState.STATE_STOPPED_NORMAL;
+        });
+        VirtualComputer computer = mockComputer(cpu);
+        DebugSession debugger = mock(DebugSession.class);
+        when(debugger.update(any())).thenAnswer(call -> {
+            try {
+                ((Runnable) call.getArgument(0)).run();
+                return java.util.concurrent.CompletableFuture.completedFuture(null);
+            } catch (RuntimeException failure) {
+                return java.util.concurrent.CompletableFuture.failedFuture(failure);
+            }
+        });
+        when(computer.getDebugger()).thenReturn(Optional.of(debugger));
+        doThrow(new java.io.IOException("disk full")).when(debugger).stopRecordingFile();
+        Automation automation = new Automation(computer, null, NO_GUI_SETTINGS, dialogs,
+                10, null, EmulationProgress.NONE);
+        automation.setInstructionRecording(input.resolveSibling("instructions.emutrace"));
+        try {
+            automation.run();
+
+            assertTrue(automation.isSuccessful());
+            assertEquals(CPU.RunState.STATE_RUNNING, computer.getExecution().orElseThrow().snapshot().runState());
+            verify(debugger).stopRecordingFile();
+            verify(dialogs, never()).showError(anyString(), anyString());
+        } finally {
+            release.countDown();
+            computer.getExecution().orElseThrow().runCompletion().get(5, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void falseScriptAssertionRemainsFatalWhenRecorderAlsoFails() throws Exception {
+        VirtualComputer computer = mockComputer(cpu);
+        DebugSession debugger = mock(DebugSession.class);
+        when(debugger.update(any())).thenAnswer(call -> {
+            try {
+                ((Runnable) call.getArgument(0)).run();
+                return java.util.concurrent.CompletableFuture.completedFuture(null);
+            } catch (RuntimeException failure) {
+                return java.util.concurrent.CompletableFuture.failedFuture(failure);
+            }
+        });
+        when(computer.getDebugger()).thenReturn(Optional.of(debugger));
+        doThrow(new java.io.IOException("disk full")).when(debugger).stopRecordingFile();
+        Path script = Files.createTempFile("assertion", ".debug");
+        Files.writeString(script, "ASSERT false\n");
+        Automation automation = new Automation(computer, null, NO_GUI_SETTINGS, dialogs,
+                200, null, EmulationProgress.NONE);
+        automation.setInstructionRecording(input.resolveSibling("instructions.emutrace"));
+        automation.setDebugScript(script);
+        try {
+            automation.run();
+
+            assertFalse(automation.isSuccessful());
+            verify(debugger).evaluateCondition("false");
+            verify(cpu, never()).execute();
+        } finally { Files.deleteIfExists(script); }
     }
 
     private void stubCompilation(CompilerMessage.MessageType messageType, String message) throws Exception {

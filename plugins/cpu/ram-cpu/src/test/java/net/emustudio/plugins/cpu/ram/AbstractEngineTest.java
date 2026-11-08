@@ -25,6 +25,9 @@ public abstract class AbstractEngineTest {
         input = createNiceMock(AbstractTapeContext.class);
         output = createNiceMock(AbstractTapeContext.class);
         storage = createNiceMock(AbstractTapeContext.class);
+        expect(input.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(output.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(storage.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
         engine = new EmulatorEngine(input, output, storage, memory);
     }
 

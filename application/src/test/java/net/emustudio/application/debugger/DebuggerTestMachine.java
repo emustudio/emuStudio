@@ -3,59 +3,118 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.ExpressionParser;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** In-memory CPU ports exercised through the real host execution module. */
+/** Plugin-owned expression meanings exercised through the real host execution worker. */
 final class DebuggerTestMachine {
-    final CPU cpu = mock(CPU.class);
-    final DebugCPU debug = mock(DebugCPU.class);
+    final CPU cpu;
+    final Debugging debug;
     final MemoryContext<Byte> memory;
     final List<MemoryContext.MemoryListener> memoryListeners = new ArrayList<>();
+    final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
+    final AtomicInteger detached = new AtomicInteger();
+    private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
     private DebugSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
+    private int accessed = -1;
+    private boolean wrote;
+
+    DebuggerTestMachine(byte[][] banks, int commonBoundary) throws Exception {
+        this(banks, commonBoundary, true);
+    }
 
     @SuppressWarnings("unchecked")
-    DebuggerTestMachine(byte[][] banks, int commonBoundary) throws Exception {
+    DebuggerTestMachine(byte[][] banks, int commonBoundary, boolean debugging) throws Exception {
+        cpu = debugging ? mock(CPU.class, withSettings().extraInterfaces(Debugging.class)) : mock(CPU.class);
+        debug = debugging ? (Debugging) cpu : null;
         memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
-        when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(cpu.getAddressSpaceSize()).thenReturn(banks[0].length);
         when(cpu.execute()).thenAnswer(call -> {
-            CountDownLatch wait = new CountDownLatch(1);
             entered.countDown();
-            try { wait.await(); }
-            catch (InterruptedException stopped) { Thread.currentThread().interrupt(); }
+            while (!Thread.currentThread().isInterrupted()) {
+                session.execution().processUpdates();
+                Thread.onSpinWait();
+            }
             return result.get();
         });
         when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
-        doReturn(memory).when(debug).memory();
-        when(debug.processor()).thenReturn("test-processor");
-        when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
+        if (debug != null) {
+            when(debug.compile(anyString())).thenAnswer(call -> ExpressionParser.parse(
+                    call.getArgument(0), this::variable, this::function));
+            when(debug.observe(any(), anyBoolean())).thenAnswer(call -> {
+                Debugging.Observer installed = call.getArgument(0);
+                if (!observer.compareAndSet(null, installed)) throw new IllegalStateException("Observer already installed");
+                return (AutoCloseable) () -> {
+                    if (observer.compareAndSet(installed, null)) detached.incrementAndGet();
+                };
+            });
+        }
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(banks[0].length);
-        when(memory.read(anyInt())).thenAnswer(call -> {
-            int address = call.getArgument(0);
-            return banks[0][address];
-        });
+        when(memory.read(anyInt())).thenAnswer(call -> banks[0][(int) call.getArgument(0)]);
         when(memory.peek(anyInt())).thenAnswer(call -> memory.read(call.getArgument(0)));
         doAnswer(call -> { memoryListeners.add(call.getArgument(0)); return null; })
                 .when(memory).addMemoryListener(any());
         doAnswer(call -> { memoryListeners.remove(call.getArgument(0)); return null; })
                 .when(memory).removeMemoryListener(any());
+    }
+
+    private Supplier<Object> variable(String name) {
+        String key = name.toUpperCase(Locale.ROOT);
+        if (key.equals("PC") || key.equals("IP")) return () -> (long) cpu.getInstructionLocation();
+        if (!values.containsKey(key)) throw new IllegalArgumentException("Unknown name: " + name);
+        return () -> values.get(key);
+    }
+
+    private Function<List<Object>, Object> function(String name) {
+        switch (name.toLowerCase(Locale.ROOT)) {
+            case "reg": return args -> args.get(0) instanceof String
+                    ? variable((String) args.get(0)).get() : args.get(0);
+            case "read": return args -> accessed == ((Number) args.get(0)).intValue() && !wrote;
+            case "write": return args -> accessed == ((Number) args.get(0)).intValue() && wrote;
+            case "mem": return args -> bytes(args, 1, false);
+            case "mem16": return args -> bytes(args, 2, false);
+            case "mem16be": return args -> bytes(args, 2, true);
+            case "mem32": return args -> bytes(args, 4, false);
+            case "mem32be": return args -> bytes(args, 4, true);
+            default: throw new IllegalArgumentException("Unknown function: " + name);
+        }
+    }
+
+    private long bytes(List<Object> arguments, int width, boolean bigEndian) {
+        int at = Math.toIntExact(((Number) arguments.get(0)).longValue());
+        if (at < 0 || at > memory.getSize() - width) throw new IllegalArgumentException("Outside byte memory");
+        long value = 0;
+        for (int i = 0; i < width; i++) value |= (memory.peek(at + i) & 255L) << (8 * (bigEndian ? width - i - 1 : i));
+        return value;
+    }
+
+    void accessed(int address, boolean write) { accessed = address; wrote = write; }
+
+    boolean beforeStep(int address) {
+        when(cpu.getInstructionLocation()).thenReturn(address);
+        return session.beforeStep();
     }
 
     void state(CPU.RunState state) {
@@ -65,7 +124,7 @@ final class DebuggerTestMachine {
             session.execution().start().join();
             try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
-        } else if (session.execution().runState() == CPU.RunState.STATE_RUNNING) {
+        } else if (session.execution().snapshot().runState() == CPU.RunState.STATE_RUNNING) {
             result.set(state);
             session.execution().pause().join();
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
@@ -73,8 +132,10 @@ final class DebuggerTestMachine {
         }
     }
 
-    DebugSession session(Path settings) throws IOException {
-        session = new DebugSession(cpu, memory, settings);
+    DebugSession session(Path settings) throws IOException { return session(settings, true); }
+
+    DebugSession session(Path settings, boolean withMemory) throws IOException {
+        session = new DebugSession(cpu, withMemory ? memory : null, settings);
         return session;
     }
 

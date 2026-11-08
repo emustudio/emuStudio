@@ -9,7 +9,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.SourceToken;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 
 public class SourceAddressMapTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
-    private static final Map<MemoryContext<?>, AnnotationEngine> ENGINES = new IdentityHashMap<>();
+    private static final Map<MemoryContext<?>, MemoryAnnotations> ENGINES = new IdentityHashMap<>();
 
     @Test
     public void exactMappingUsesCpuVisibleAddresses() throws Exception {
@@ -92,7 +92,7 @@ public class SourceAddressMapTest {
     public void unchangedSourceLookupsReuseProjectionUntilAnnotationsChange() throws Exception {
         Path source = source("program.asm", "NOP\nHALT\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        AnnotationEngine engine = spy(ENGINES.get(memory));
+        MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
         clearInvocations(engine);
@@ -117,7 +117,7 @@ public class SourceAddressMapTest {
     public void replacingAnnotationsDuringCachedLookupDoesNotReturnTheOldBinding() throws Exception {
         Path source = source("cached-race.asm", "NOP\nHALT\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        AnnotationEngine engine = spy(ENGINES.get(memory));
+        MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
         java.util.concurrent.atomic.AtomicBoolean first = new java.util.concurrent.atomic.AtomicBoolean(true);
@@ -138,15 +138,15 @@ public class SourceAddressMapTest {
     public void mappingAddedDuringLookupCannotAppearUniquelyMapped() throws Exception {
         Path source = source("concurrent.asm", "NOP\nHALT\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        AnnotationEngine engine = spy(ENGINES.get(memory));
+        MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
-        engine.put(new AnnotationEngine.Entry(3, 0, 3, 4, "label", "refresh", null));
+        engine.put(new MemoryAnnotations.Entry(3, 0, 3, 4, "label", "refresh", null));
         java.util.concurrent.atomic.AtomicBoolean first = new java.util.concurrent.atomic.AtomicBoolean(true);
         doAnswer(call -> {
             Object result = call.callRealMethod();
             if (first.getAndSet(false))
-                engine.put(new AnnotationEngine.Entry(2, 1, 0, 1, "source", "", annotation(source, 2, 0)));
+                engine.put(new MemoryAnnotations.Entry(2, 1, 0, 1, "source", "", annotation(source, 2, 0)));
             return result;
         }).when(engine).all();
 
@@ -174,7 +174,7 @@ public class SourceAddressMapTest {
                 Map.of(address, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(0);
 
-        ProgramIndex index = ProgramIndex.create("sparse", Integer.MAX_VALUE, new AnnotationEngine());
+        ProgramIndex index = ProgramIndex.create("sparse", Integer.MAX_VALUE, new MemoryAnnotations());
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "HALT\n"), index);
 
         assertEquals(Integer.MAX_VALUE, map.programIndex().snapshot().layout().addressSpaceSize());
@@ -256,8 +256,8 @@ public class SourceAddressMapTest {
                 new SourceToken(Token.SYMBOL_DEFINITION, 0, "value", "value", null, null)));
         when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UNKNOWN);
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 6))));
-        ProgramIndex index = ProgramIndex.create("unknown-units", 4, new AnnotationEngine());
-        ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
+        ProgramIndex index = ProgramIndex.create("unknown-units", 4, new MemoryAnnotations());
+        ENGINES.get(memory).put(new MemoryAnnotations.Entry(99, 1, 2, 3, "label", "user", null));
 
         SourceAddressMap map = capture(compiler, memory, Map.of(source, text), index);
 
@@ -296,7 +296,7 @@ public class SourceAddressMapTest {
     public void memoryRevisionMakesBindingsHistoricalWithoutErasingProvenance() throws Exception {
         Path source = source("history.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
+        ProgramIndex index = ProgramIndex.create("image", 4, new MemoryAnnotations());
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
 
         index.memoryChanged();
@@ -310,8 +310,8 @@ public class SourceAddressMapTest {
     public void refreshingSourceOwnerPreservesOtherOwnersAndRejectsOldSourceRevision() throws Exception {
         Path source = source("recompile.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
-        ENGINES.get(memory).put(new AnnotationEngine.Entry(99, 1, 2, 3, "label", "user", null));
+        ProgramIndex index = ProgramIndex.create("image", 4, new MemoryAnnotations());
+        ENGINES.get(memory).put(new MemoryAnnotations.Entry(99, 1, 2, 3, "label", "user", null));
         SourceAddressMap first = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
         replaceSources(ENGINES.get(memory), Map.of(0, Set.of(annotation(source, 1, 0))));
         SourceAddressMap second = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
@@ -342,8 +342,8 @@ public class SourceAddressMapTest {
     public void memoryChangeDuringCaptureRejectsPublication() throws Exception {
         Path source = source("race.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create("image", 4, new AnnotationEngine());
-        AnnotationEngine engine = spy(ENGINES.get(memory));
+        ProgramIndex index = ProgramIndex.create("image", 4, new MemoryAnnotations());
+        MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         doAnswer(call -> {
             index.memoryChanged();
@@ -361,11 +361,11 @@ public class SourceAddressMapTest {
     public void sourceMappingsDoNotRequireByteCells() throws Exception {
         Path source = source("words.asm", "LOAD 1\n");
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
-        AnnotationEngine annotations = new AnnotationEngine();
+        MemoryAnnotations annotations = new MemoryAnnotations();
         replaceSources(annotations, Map.of(1, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(8);
         when(memory.getCellTypeClass()).thenReturn(Integer.class);
-        ProgramIndex index = ProgramIndex.create("words", 8, new AnnotationEngine());
+        ProgramIndex index = ProgramIndex.create("words", 8, new MemoryAnnotations());
 
         SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT, annotations);
 
@@ -484,7 +484,7 @@ public class SourceAddressMapTest {
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts)
             throws IOException {
-        ProgramIndex index = memory == null ? null : ProgramIndex.create("test", memory.getSize(), new AnnotationEngine());
+        ProgramIndex index = memory == null ? null : ProgramIndex.create("test", memory.getSize(), new MemoryAnnotations());
         return capture(compiler, memory, texts, index);
     }
 
@@ -522,17 +522,17 @@ public class SourceAddressMapTest {
                                                Map<Integer, Set<SourceCodePosition>> contents) {
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         when(memory.getSize()).thenReturn(size);
-        AnnotationEngine engine = new AnnotationEngine();
+        MemoryAnnotations engine = new MemoryAnnotations();
         replaceSources(engine, contents);
         ENGINES.put(memory, engine);
         return memory;
     }
 
-    private static void replaceSources(AnnotationEngine engine, Map<Integer, Set<SourceCodePosition>> contents) {
-        List<AnnotationEngine.Entry> entries = new ArrayList<>();
+    private static void replaceSources(MemoryAnnotations engine, Map<Integer, Set<SourceCodePosition>> contents) {
+        List<MemoryAnnotations.Entry> entries = new ArrayList<>();
         for (Map.Entry<Integer, Set<SourceCodePosition>> at : contents.entrySet())
             for (SourceCodePosition source : at.getValue())
-                entries.add(new AnnotationEngine.Entry(1, entries.size(), at.getKey(), at.getKey() + 1, "source", "", source));
+                entries.add(new MemoryAnnotations.Entry(1, entries.size(), at.getKey(), at.getKey() + 1, "source", "", source));
         engine.replaceOwner(1, entries);
     }
 }

@@ -197,7 +197,7 @@ public class SettingsDialog extends DialogBase {
     }
 
     private void mutate(Runnable operation) {
-        execution.mutate(operation).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+        execution.update(operation).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
             if (failure != null) dialogs.showError(failure.getMessage(), "Memory settings");
             tblROM.revalidate();
             tblROM.repaint();
@@ -275,7 +275,7 @@ public class SettingsDialog extends DialogBase {
             Path imagePath = Path.of(imagesModel.getFileNameAtRow(index));
             int address = imagesModel.getImageAddressAtRow(index);
             int bank = imagesModel.getImageBankAtRow(index);
-            execution.mutate(() -> {
+            execution.update(() -> {
                 try { memory.loadImage(imagePath, address, bank); }
                 catch (Exception failure) { throw new CompletionException(failure); }
             }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {

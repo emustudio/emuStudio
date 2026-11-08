@@ -4,7 +4,7 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -28,9 +28,10 @@ public class MemoryGui extends DialogBase {
 
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
-    private final AnnotationEngine annotations;
+    private final MemoryAnnotations annotations;
     private final ExecutionState executionState;
     private boolean listening;
+    private ExecutionState.Subscription executionSubscription;
     private boolean handlingSearchEscape;
     private final Runnable debuggerListener;
     private final JLabel lblBanksCount = new JLabel("0");
@@ -58,7 +59,7 @@ public class MemoryGui extends DialogBase {
     private final SettingsAction settingsAction;
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui,
-                     AnnotationEngine annotations, ExecutionState executionState) {
+                     MemoryAnnotations annotations, ExecutionState executionState) {
         super(parent, "Byte Operating Memory", false);
         this.gui = gui;
         this.annotations = annotations;
@@ -251,14 +252,14 @@ public class MemoryGui extends DialogBase {
     public void setVisible(boolean visible) {
         if (visible && !listening) {
             if (annotations != null) annotations.addListener(debuggerListener);
-            if (executionState != null) executionState.addListener(debuggerListener);
+            if (executionState != null) executionSubscription = executionState.subscribe(snapshot -> debuggerListener.run());
             listening = true;
             table.repaint();
             updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
         } else if (!visible && listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionState != null) executionState.removeListener(debuggerListener);
+            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
         }
         super.setVisible(visible);
     }
@@ -268,7 +269,7 @@ public class MemoryGui extends DialogBase {
         if (listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionState != null) executionState.removeListener(debuggerListener);
+            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
         }
         super.dispose();
     }

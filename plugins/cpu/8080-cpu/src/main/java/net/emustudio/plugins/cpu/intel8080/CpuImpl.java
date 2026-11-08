@@ -24,7 +24,7 @@ import javax.swing.*;
         title = "Intel 8080 CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final Context8080Impl context = new Context8080Impl();
@@ -62,17 +62,18 @@ public class CpuImpl extends AbstractCPU {
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
         engine = initializer.getEngine();
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
-            statusPanel = new StatusPanel(this, context, applicationApi.getGUI(), this::observeExecution, applicationApi.getExecutionState());
+            statusPanel = new StatusPanel(this, context, applicationApi.getGUI(), applicationApi.getExecutionState());
         }
     }
 
     @Override
-    public void sampleFrequency() {
-        frequencyCalculator.sample();
+    public float sampleFrequency() {
+        return frequencyCalculator.sample();
     }
 
     public FrequencyCalculator getFrequencyCalculator() {
@@ -87,9 +88,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<net.emustudio.emulib.plugins.cpu.debug.DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     public EmulatorEngine getEngine() {
         return engine;

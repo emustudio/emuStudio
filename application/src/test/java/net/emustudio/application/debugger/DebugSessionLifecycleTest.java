@@ -6,7 +6,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import org.junit.Test;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,7 +17,6 @@ public class DebugSessionLifecycleTest {
     public void failedMemoryListenerRegistrationDoesNotStartAnOrphanScheduler() {
         CPU cpu = mock(CPU.class);
         MemoryContext<?> memory = mock(MemoryContext.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
         when(cpu.getAddressSpaceSize()).thenReturn(1);
         IllegalStateException failure = new IllegalStateException("Memory listener rejected");
         doThrow(failure).when(memory).addMemoryListener(any());

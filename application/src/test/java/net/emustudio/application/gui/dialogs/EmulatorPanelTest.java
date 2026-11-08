@@ -11,18 +11,19 @@ import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.ValueView;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -48,10 +49,10 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
-                    mock(Dialogs.class), mock(EmulationController.class), null, position -> {}, new EmuStudioGui()));
+                    mock(Dialogs.class), mockExecution(), null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             assertFalse(onEdt(findButtonByTooltip(panel, "Set breakpoint...")::isEnabled));
-            assertFalse(onEdt(findToggleButtonByTooltip(panel, "Start recording")::isEnabled));
+            assertFalse(onEdt(findToggleButtonByTooltip(panel, "Record instructions")::isEnabled));
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             assertFalse(manager.isBreakpointDialogSupported());
 
@@ -69,24 +70,36 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Test
     public void recordingToggleAfterResetStartsAndStopsRecordingWithoutButtonText() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
-        CPU cpu = mock(CPU.class);
-        DebugCPU debug = mock(DebugCPU.class);
+        CPU cpu = debuggingCpu();
         when(cpu.getTitle()).thenReturn("Recording CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
-                    createDebugTableModel(), mock(Dialogs.class), mock(EmulationController.class),
+                    createDebugTableModel(), mock(Dialogs.class), mockExecution(),
                     null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             JButton reset = findButtonByTooltip(panel, "Reset emulation");
-            JToggleButton recording = findToggleButtonByTooltip(panel, "Start recording");
+            JToggleButton recording = findToggleButtonByTooltip(panel, "Record instructions");
 
-            triggerButton(recording);
+            runOnEdt(() -> {
+                SwingUtilities.invokeLater(() -> {
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (window instanceof JDialog && window.isShowing()
+                                && "Record instructions".equals(((JDialog) window).getTitle())) {
+                            findButton((JDialog) window, "Start").doClick(0);
+                            return;
+                        }
+                    }
+                    throw new AssertionError("Recording dialog missing");
+                });
+                recording.doClick(0);
+            });
+            session.update(() -> {}).join();
+            runOnEdt(() -> {});
 
             assertTrue(session.isRecording());
             runOnEdt(() -> {
@@ -103,18 +116,20 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
             runOnEdt(() -> manager.setExecutionRunning(true));
 
-            assertFalse(onEdt(recording::isEnabled));
+            assertTrue(onEdt(recording::isEnabled));
             assertTrue(session.isRecording());
 
             runOnEdt(() -> manager.setExecutionRunning(false));
             triggerButton(recording);
+            session.update(() -> {}).join();
+            runOnEdt(() -> {});
 
             assertFalse(session.isRecording());
             runOnEdt(() -> {
                 assertFalse(recording.isSelected());
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
-                assertEquals("Start recording", recording.getToolTipText());
-                assertEquals("Start recording", recording.getAccessibleContext().getAccessibleName());
+                assertEquals("Record instructions", recording.getToolTipText());
+                assertEquals("Record instructions", recording.getAccessibleContext().getAccessibleName());
                 panel.close();
             });
         }
@@ -123,8 +138,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Test
     public void instructionSelectionDoesNotToggleBreakpointsOrOpenSource() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.of(mock(DebugCPU.class)));
+        CPU cpu = debuggingCpu();
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
@@ -135,7 +149,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, model,
-                    mock(Dialogs.class), mock(EmulationController.class), null, source::set, new EmuStudioGui()));
+                    mock(Dialogs.class), mockExecution(), null, source::set, new EmuStudioGui()));
             showInFrame(panel);
             JTable table = findComponent(panel, DebugTableImpl.class, t -> true);
             clearInvocations(model);
@@ -161,19 +175,18 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Test
     public void applicationBreakpointControlRemainsAvailableWithoutBreakpointsTab() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.of(mock(DebugCPU.class)));
+        CPU cpu = debuggingCpu();
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
 
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
-            session.setBreakpoint(42, true);
+            session.setBreakpoint(42, true).join();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
-                    mock(Dialogs.class), mock(EmulationController.class), null, position -> {}, new EmuStudioGui()));
+                    mock(Dialogs.class), mockExecution(), null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint...");
             assertTrue(onEdt(breakpointButton::isEnabled));
@@ -196,11 +209,9 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Test
     public void portableBreakpointControlRemainsAvailableWithoutBreakpointsTab() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
-        CPU cpu = mock(CPU.class);
-        DebugCPU debug = mock(DebugCPU.class);
+        CPU cpu = debuggingCpu();
         when(cpu.getTitle()).thenReturn("Portable CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
@@ -209,7 +220,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
-                    createDebugTableModel(), mock(Dialogs.class), mock(EmulationController.class),
+                    createDebugTableModel(), mock(Dialogs.class), mockExecution(),
                     null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint...");
@@ -249,7 +260,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 computer,
                 createDebugTableModel(),
                 dialogs,
-                mock(EmulationController.class),
+                mockExecution(),
                 memoryContext,
                 position -> {},
                 new EmuStudioGui()
@@ -290,13 +301,13 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
-        EmulationController emulationController = mock(EmulationController.class);
+        ExecutionFixture fixture = new ExecutionFixture();
+        EmulationController emulationController = fixture.controller;
 
         when(cpu.getStatusPanel()).thenReturn(new JPanel());
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
-        when(emulationController.isTimedRunning()).thenReturn(false);
 
         JFrame parent = showFrame(onEdt(JFrame::new));
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(
@@ -312,8 +323,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
         showInFrame(panel);
 
-        ArgumentCaptor<CPU.CPUListener> listenerCaptor = ArgumentCaptor.forClass(CPU.CPUListener.class);
-        verify(emulationController).addCPUListener(listenerCaptor.capture());
+        verify(fixture.state).subscribe(any());
         verify(memoryContext).addMemoryListener(any());
 
         JButton runButton = findButtonByTooltip(panel, "Run emulation");
@@ -328,7 +338,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertTrue(onEdt(debugTable::isEnabled));
         assertTrue(onEdt(debugTable::isVisible));
 
-        runOnEdt(() -> listenerCaptor.getValue().runStateChanged(CPU.RunState.STATE_RUNNING));
+        runOnEdt(() -> fixture.publish(CPU.RunState.STATE_RUNNING));
 
         verify(memoryContext, times(2)).removeMemoryListener(any());
         assertEquals(CPU.RunState.STATE_RUNNING, panel.getRunState());
@@ -338,7 +348,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertFalse(onEdt(debugTable::isEnabled));
         assertFalse(onEdt(debugTable::isVisible));
 
-        runOnEdt(() -> listenerCaptor.getValue().runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
+        runOnEdt(() -> fixture.publish(CPU.RunState.STATE_STOPPED_BREAK));
 
         verify(memoryContext, times(2)).addMemoryListener(any());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, panel.getRunState());
@@ -355,8 +365,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
         DebugTableModel model = createDebugTableModel();
         SourceCodePosition position = SourceCodePosition.of(7, 3, "program.asm");
-        AnnotationEngine annotations = new AnnotationEngine();
-        annotations.put(new AnnotationEngine.Entry(5, 1, 42, 43, "source", "", position));
+        MemoryAnnotations annotations = new MemoryAnnotations();
+        annotations.put(new MemoryAnnotations.Entry(5, 1, 42, 43, "source", "", position));
         CPU sessionCpu = mock(CPU.class);
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
         when(memoryContext.getSize()).thenReturn(256);
@@ -391,7 +401,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
         MemoryContext<?> memory = mock(MemoryContext.class);
-        EmulationController execution = mock(EmulationController.class);
+        ExecutionFixture fixture = new ExecutionFixture();
+        EmulationController execution = fixture.controller;
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, createDebugTableModel(),
@@ -406,9 +417,49 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertEquals(240, onEdt(split::getDividerLocation).intValue());
         runOnEdt(panel::close);
         runOnEdt(panel::close);
-        verify(execution, times(1)).removeCPUListener(any());
+        verify(fixture.subscription, times(1)).close();
         // Initial registration removes any previous copy, then close removes the final listener.
         verify(memory, times(2)).removeMemoryListener(any());
+    }
+
+    private static CPU debuggingCpu() {
+        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(Debugging.class));
+        Debugging debugging = (Debugging) cpu;
+        when(debugging.observe(any(), anyBoolean())).thenReturn(() -> {});
+        when(debugging.compile(anyString())).thenReturn(new Debugging.Expression() {
+            @Override public boolean test() { return true; }
+            @Override public ValueView display() { return new ValueView("ready", List.of(), false); }
+        });
+        return cpu;
+    }
+
+    private static EmulationController mockExecution() { return new ExecutionFixture().controller; }
+
+    private static final class ExecutionFixture {
+        final EmulationController controller = mock(EmulationController.class);
+        final ExecutionState state = mock(ExecutionState.class);
+        final ExecutionState.Subscription subscription = mock(ExecutionState.Subscription.class);
+        final AtomicReference<java.util.function.Consumer<ExecutionState.Snapshot>> listener = new AtomicReference<>();
+        private ExecutionState.Snapshot snapshot = snapshot(CPU.RunState.STATE_STOPPED_BREAK);
+
+        ExecutionFixture() {
+            when(controller.snapshot()).thenAnswer(call -> snapshot);
+            when(controller.executionState()).thenReturn(state);
+            when(state.snapshot()).thenAnswer(call -> snapshot);
+            when(state.subscribe(any())).thenAnswer(call -> {
+                listener.set(call.getArgument(0));
+                return subscription;
+            });
+        }
+
+        void publish(CPU.RunState runState) {
+            snapshot = snapshot(runState);
+            listener.get().accept(snapshot);
+        }
+
+        private static ExecutionState.Snapshot snapshot(CPU.RunState runState) {
+            return new ExecutionState.Snapshot(runState, false, false, 0, Float.NaN);
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

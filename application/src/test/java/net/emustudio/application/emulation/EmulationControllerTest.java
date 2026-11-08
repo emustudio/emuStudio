@@ -5,6 +5,7 @@ package net.emustudio.application.emulation;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.runtime.ExecutionState;
 import org.junit.Test;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class EmulationControllerTest {
             gate.awaitEntered();
 
             assertFalse(controller.runCompletion().isDone());
-            assertEquals(STATE_RUNNING, controller.runState());
+            assertEquals(STATE_RUNNING, controller.snapshot().runState());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -43,7 +44,7 @@ public class EmulationControllerTest {
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
         AtomicBoolean prematureNotification = new AtomicBoolean();
-        controller.addCPUListener(listener(state -> {
+        controller.executionState().subscribe(listener(state -> {
             if (state == STATE_STOPPED_BREAK && !gate.exited.get()) prematureNotification.set(true);
         }));
 
@@ -54,13 +55,13 @@ public class EmulationControllerTest {
             gate.awaitInterrupted();
 
             assertPending(paused);
-            assertEquals(STATE_RUNNING, controller.runState());
-            assertTrue(controller.isBusy());
+            assertEquals(STATE_RUNNING, controller.snapshot().runState());
+            assertTrue(controller.snapshot().isBusy());
             gate.release.countDown();
 
             assertEquals(STATE_STOPPED_BREAK, await(paused));
             assertFalse(prematureNotification.get());
-            assertFalse(controller.isBusy());
+            assertFalse(controller.snapshot().isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -96,7 +97,7 @@ public class EmulationControllerTest {
 
             assertEquals(STATE_STOPPED_BREAK, await(reset));
             assertEquals(List.of("exit", "memory", "device", "cpu"), order);
-            assertFalse(controller.isBusy());
+            assertFalse(controller.snapshot().isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -219,7 +220,7 @@ public class EmulationControllerTest {
 
             assertSame(failure, assertThrows(ExecutionException.class,
                     () -> await(controller.runCompletion())).getCause());
-            assertEquals(STATE_STOPPED_BAD_INSTR, controller.runState());
+            assertEquals(STATE_STOPPED_BAD_INSTR, controller.snapshot().runState());
             assertEquals(STATE_STOPPED_BREAK, await(controller.reset()));
             verify(cpu).reset();
         }
@@ -260,7 +261,7 @@ public class EmulationControllerTest {
             gate.release.countDown();
 
             assertEquals(STATE_STOPPED_BREAK, await(paused));
-            assertFalse(controller.isBusy());
+            assertFalse(controller.snapshot().isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -304,21 +305,25 @@ public class EmulationControllerTest {
         CPU cpu = mock(CPU.class);
         AtomicReference<Thread> stepThread = new AtomicReference<>();
         AtomicReference<Thread> editThread = new AtomicReference<>();
-        List<CPU.RunState> states = new CopyOnWriteArrayList<>();
+        List<ExecutionState.Snapshot> states = new CopyOnWriteArrayList<>();
         when(cpu.step()).thenAnswer(call -> {
             stepThread.set(Thread.currentThread());
             return STATE_RUNNING;
         });
 
         try (EmulationController controller = controller(cpu)) {
-            controller.addCPUListener(listener(states::add));
+            controller.executionState().subscribe(states::add);
 
             assertEquals(STATE_STOPPED_BREAK, await(controller.step()));
-            assertEquals(STATE_STOPPED_BREAK, states.get(states.size() - 1));
+            assertEquals(STATE_STOPPED_BREAK, states.get(states.size() - 1).runState());
+            int changes = states.size();
             await(controller.mutate(() -> editThread.set(Thread.currentThread())));
 
             assertSame(stepThread.get(), editThread.get());
             assertEquals("machine-cpu", editThread.get().getName());
+            assertTrue(states.get(changes).isBusy());
+            assertFalse(states.get(states.size() - 1).isBusy());
+            assertEquals(0, states.get(states.size() - 1).currentInstruction());
         }
     }
 
@@ -328,7 +333,7 @@ public class EmulationControllerTest {
         when(cpu.step()).thenReturn(STATE_STOPPED_BREAK);
 
         try (EmulationController controller = controller(cpu)) {
-            controller.addCPUListener(listener(state -> { throw new IllegalStateException("observer failed"); }));
+            controller.executionState().subscribe(listener(state -> { throw new IllegalStateException("observer failed"); }));
 
             assertEquals(STATE_STOPPED_BREAK, await(controller.step()));
             assertEquals(STATE_STOPPED_BREAK, await(controller.reset()));
@@ -345,8 +350,8 @@ public class EmulationControllerTest {
             CompletableFuture<Void> rejected = controller.mutate(() -> { throw failure; });
 
             assertSame(failure, assertThrows(ExecutionException.class, () -> await(rejected)).getCause());
-            assertEquals(STATE_STOPPED_BREAK, controller.runState());
-            assertFalse(controller.isBusy());
+            assertEquals(STATE_STOPPED_BREAK, controller.snapshot().runState());
+            assertFalse(controller.snapshot().isBusy());
             await(controller.mutate(() -> edited.set(true)));
             assertTrue(edited.get());
         }
@@ -367,7 +372,7 @@ public class EmulationControllerTest {
 
             assertEquals(terminal, await(stopped));
             assertEquals(terminal, await(controller.runCompletion()));
-            assertEquals(terminal, controller.runState());
+            assertEquals(terminal, controller.snapshot().runState());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -378,11 +383,9 @@ public class EmulationControllerTest {
         return new EmulationController(cpu, null, List.of(), null);
     }
 
-    static CPU.CPUListener listener(java.util.function.Consumer<CPU.RunState> changed) {
-        return new CPU.CPUListener() {
-            @Override public void runStateChanged(CPU.RunState state) { changed.accept(state); }
-            @Override public void internalStateChanged() { }
-        };
+    static java.util.function.Consumer<net.emustudio.emulib.runtime.ExecutionState.Snapshot> listener(
+            java.util.function.Consumer<CPU.RunState> changed) {
+        return snapshot -> changed.accept(snapshot.runState());
     }
 
     static <T> T await(CompletableFuture<T> future) throws Exception {

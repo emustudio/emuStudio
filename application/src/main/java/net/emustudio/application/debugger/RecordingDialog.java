@@ -17,6 +17,7 @@ final class RecordingDialog extends DialogBase {
     private final Runnable started;
     private final JComboBox<String> mode = new JComboBox<>(new String[] {
             "Keep first N instructions", "Keep last N instructions", "Custom Range", "Unlimited"});
+    private JButton start;
     private final JTextField count = new JTextField("1024", 10);
     private final JTextField from = new JTextField("0x0", 10);
     private final JTextField to = new JTextField(10);
@@ -45,7 +46,7 @@ final class RecordingDialog extends DialogBase {
         addAddress(panel, "To:", to);
         mode.addActionListener(event -> updateFields());
         updateFields();
-        JButton start = gui.button("Start", this::start);
+        start = gui.button("Start", this::start);
         panel.add(start, "span, alignx right");
         getRootPane().setDefaultButton(start);
         return panel;
@@ -72,9 +73,16 @@ final class RecordingDialog extends DialogBase {
             int limit = count.isEnabled() ? Integer.parseInt(count.getText().strip()) : 0;
             int first = from.isEnabled() ? address(from) : 0;
             int last = to.isEnabled() ? address(to) : 0;
-            session.startNewRecording(limit, selected, first, last);
-            started.run();
-            dispose();
+            start.setEnabled(false);
+            session.update(() -> session.startNewRecording(limit, selected, first, last))
+                    .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                        if (!isDisplayable()) return;
+                        if (failure != null) {
+                            start.setEnabled(true);
+                            Throwable cause = failure.getCause() == null ? failure : failure.getCause();
+                            dialogs.showError(cause.getMessage(), "Record instructions");
+                        } else { started.run(); dispose(); }
+                    }));
         } catch (IllegalArgumentException | IllegalStateException failure) {
             dialogs.showError(failure instanceof NumberFormatException
                     ? "Enter a valid instruction count or address (decimal or 0x-prefixed hexadecimal)."

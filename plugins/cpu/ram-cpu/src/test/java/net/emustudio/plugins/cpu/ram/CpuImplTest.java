@@ -15,6 +15,8 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -41,6 +43,9 @@ public class CpuImplTest {
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
         storageTape = createNiceMock(AbstractTapeContext.class);
+        expect(inputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(outputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(storageTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
 
         expect(contextPool.getMemoryContext(eq(0L), eq(RamMemoryContext.class))).andReturn(memory).anyTimes();
         expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
@@ -347,13 +352,16 @@ public class CpuImplTest {
         replay(instruction);
         expect(memory.read(0)).andReturn(instruction).anyTimes();
         initCpu();
-        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
-        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
-            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+        java.util.List<StepView> events = new java.util.ArrayList<>();
+        cpu.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
-        });
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());

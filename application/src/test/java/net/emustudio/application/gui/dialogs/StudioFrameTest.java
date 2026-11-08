@@ -12,7 +12,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -86,8 +86,8 @@ public class StudioFrameTest extends AbstractSwingTest {
         ComputerConfig computerConfig = mock(ComputerConfig.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
         DebugTableModel model = createDebugTableModel();
-        AnnotationEngine annotations = new AnnotationEngine();
-        annotations.put(new AnnotationEngine.Entry(4, 1, 12, 13, "source", "",
+        MemoryAnnotations annotations = new MemoryAnnotations();
+        annotations.put(new MemoryAnnotations.Entry(4, 1, 12, 13, "source", "",
                 SourceCodePosition.of(2, 0, sourceFile.toString())));
         CPU sessionCpu = mock(CPU.class);
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
@@ -133,7 +133,6 @@ public class StudioFrameTest extends AbstractSwingTest {
     @Test
     public void enteringEmulatorSelectsDebuggerTab() throws Exception {
         CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
         try (DebugSession session = new DebugSession(cpu, null, null)) {
             StudioFrame frame = createFrame(null, session);
             showFrame(frame);

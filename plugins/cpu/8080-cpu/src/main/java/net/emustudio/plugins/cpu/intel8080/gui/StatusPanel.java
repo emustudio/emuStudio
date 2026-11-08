@@ -19,7 +19,6 @@ import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexStrin
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
-    private final Consumer<CPU.CPUListener> observeExecution;
     private final ExecutionState execution;
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
@@ -46,9 +45,8 @@ public class StatusPanel extends JPanel {
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, Consumer<CPU.CPUListener> observeExecution, ExecutionState execution) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, ExecutionState execution) {
         this.gui = gui;
-        this.observeExecution = observeExecution;
         this.execution = execution;
         this.cpu = cpu;
         this.context = context;
@@ -56,27 +54,22 @@ public class StatusPanel extends JPanel {
         this.flagModel = new FlagsModel(engine);
 
         initComponents();
+        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblFlags.setModel(flagModel);
 
         setupListeners();
     }
 
     private void setupListeners() {
-        observeExecution.accept(new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(RunState state) {
-                runState = state;
-                updateGUI();
-            }
-
-            @Override
-            public void internalStateChanged() {
-                updateGUI();
-            }
+        PanelUpdater updater = new PanelUpdater();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
+            SwingUtilities.invokeLater(() -> {
+                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
+                spnFrequency.setEnabled(!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING);
+            });
         });
-        cpu.getFrequencyCalculator().addListener(
-                f -> SwingUtilities.invokeLater(() -> lblFrequency.setText(String.format("%.2f kHz", f)))
-        );
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
@@ -197,5 +190,36 @@ public class StatusPanel extends JPanel {
         field.setEditable(false);
         field.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
         return field;
+    }
+
+    private final class PanelUpdater {
+        public void runStateChanged(RunState state) {
+            runState = state;
+            SwingUtilities.invokeLater(() -> lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString()));
+        }
+
+        public void internalStateChanged() {
+            updateGUI();
+        }
+
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }
