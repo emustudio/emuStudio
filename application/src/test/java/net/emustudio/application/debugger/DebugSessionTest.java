@@ -493,6 +493,27 @@ public class DebugSessionTest {
     }
 
     @Test
+    public void newRecordingClearsPreviousCaptureAfterLimitValidation() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            session.record(2);
+            session.afterInstruction(instruction(1, List.of()));
+            List<DebugCPU.Instruction> previous = session.history();
+
+            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(0));
+            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(1_000_001));
+            assertEquals(previous, session.history());
+            session.startNewRecording(1);
+            session.afterInstruction(instruction(2, List.of()));
+            session.afterInstruction(instruction(3, List.of()));
+
+            assertEquals(1, previous.size());
+            assertEquals(1, session.history().size());
+            assertEquals(3, session.history().get(0).sequence);
+        }
+    }
+
+    @Test
     public void nativeBreakpointToggleRetainsDisabledAddress() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3, true);
         try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {

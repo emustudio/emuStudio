@@ -477,6 +477,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         updateProbe();
     }
 
+    public synchronized void startNewRecording(int limit) {
+        if (limit <= 0) throw new IllegalArgumentException("Recording limit must be positive");
+        record(limit);
+        history.clear();
+    }
+
     public synchronized boolean isRecording() {
         return historyLimit > 0;
     }

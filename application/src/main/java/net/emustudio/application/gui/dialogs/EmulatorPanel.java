@@ -369,6 +369,7 @@ public class EmulatorPanel extends JPanel {
 
     private void setupDebugToolbar() {
         toolDebug.add(gui.toolbarButton(resetAction));
+        if (inspection != null) toolDebug.add(inspection.recordingControl());
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
         toolDebug.add(gui.toolbarButton(stepBackAction));

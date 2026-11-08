@@ -41,6 +41,207 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void pcAnalysisFoldsRepeatsAndRevealsIndividualNavigationTargets() throws Exception {
+        assertAnalysisFolding("Analyze from PC");
+    }
+
+    @Test
+    public void selectionAnalysisFoldsRepeatsAndRevealsIndividualNavigationTargets() throws Exception {
+        assertAnalysisFolding("Analyze from selected instruction");
+    }
+
+    private void assertAnalysisFolding(String origin) throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {new byte[9]}, 9, session -> {
+            Disassembler decoder = session.cpu.getDisassembler();
+            for (int at = 0; at < 8; at++) when(decoder.getFlow(at)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.LINEAR, at + 1, true, List.of())));
+            when(decoder.getFlow(8)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 9, false, List.of())));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, origin).doClick(0);
+            });
+            assertTrue("Analysis should finish", shown.await(5, TimeUnit.SECONDS));
+
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                AbstractButton fold = button(workspace.panel, "Fold identical analysis repeats");
+                assertTrue(fold.isSelected());
+                int foldedHeight = graph.getPreferredSize().height;
+                assertEquals("0001–0007 · NOP × 7", graphTooltip(graph, 40, 130));
+                fold.doClick(0);
+                int unfoldedHeight = graph.getPreferredSize().height;
+                assertTrue(foldedHeight < unfoldedHeight);
+                fold.doClick(0);
+
+                assertTrue(graph.getPreferredSize().height < unfoldedHeight);
+                assertEquals("0001–0007 · NOP × 7", graphTooltip(graph, 40, 130));
+                workspace.panel.navigate(4);
+                assertEquals("0004 · NOP", graphTooltip(graph, 40, 220));
+                assertEquals(4, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                fold.doClick(0);
+                assertEquals("0001 · NOP", graphTooltip(graph, 40, 130));
+                assertEquals(unfoldedHeight, graph.getPreferredSize().height);
+            });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    private static String graphTooltip(JPanel graph, int x, int y) {
+        return graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                0, 0, x, y, 0, false));
+    }
+
+    @Test
+    public void foldedSelectionKeepsLabelsAndMovingPcVisible() throws Exception {
+        AtomicInteger pc = new AtomicInteger(4);
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {new byte[11]}, 11, session -> {
+            when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+            Disassembler decoder = session.cpu.getDisassembler();
+            for (int at = 0; at < 10; at++) when(decoder.getFlow(at)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.LINEAR, at + 1, true, List.of())));
+            when(decoder.getFlow(10)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 11, false, List.of())));
+        })) {
+            workspace.session.annotations().put(new AnnotationIndex.Entry(6, "checkpoint", "CODE"));
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(0);
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+            });
+            assertTrue("Analysis should finish", shown.await(5, TimeUnit.SECONDS));
+
+            SwingUtilities.invokeAndWait(() -> {
+                assertTrue(button(workspace.panel, "Fold identical analysis repeats").isSelected());
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+
+                assertEquals("0001–0003 · NOP × 3", graphTooltip(graph, 150, 130));
+                assertEquals("0004 · NOP", graphTooltip(graph, 150, 220));
+                assertEquals("checkpoint · 0006 · NOP", graphTooltip(graph, 150, 400));
+                pc.set(2);
+                workspace.panel.stepCompleted();
+                assertEquals("0002 · NOP", graphTooltip(graph, 150, 220));
+                assertEquals("0003–0005 · NOP × 3", graphTooltip(graph, 150, 310));
+            });
+        }
+    }
+
+    @Test
+    public void inspectionBrowsesIndependentRecordingsWithoutChangingLiveMachine() throws Exception {
+        net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction first =
+                new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction(1, 0, "INC A", "3C",
+                        java.util.Map.of("A", 1L), java.util.Map.of("A", 2L), List.of(), true);
+        net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction second =
+                new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction(2, 1, "NOP", "00",
+                        java.util.Map.of(), java.util.Map.of(), List.of(), true);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                button(workspace.panel, "Analyze recording").doClick(0);
+                assertEquals("No instructions recorded",
+                        component(workspace.panel, JLabel.class, "History empty state").getText());
+                workspace.panel.recordingControl().doClick(0);
+                workspace.session.afterInstruction(first);
+                workspace.panel.recordingControl().doClick(0);
+                JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
+                timeline.setRowSelectionInterval(0, 0);
+                assertTrue(component(workspace.panel, JTextArea.class, "Recorded instruction state")
+                        .getText().contains("A     1 → 2"));
+
+                workspace.panel.recordingControl().doClick(0);
+                workspace.session.afterInstruction(second);
+                workspace.panel.recordingControl().doClick(0);
+                JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");
+                assertEquals(3, recordings.getItemCount());
+                assertEquals(1, timeline.getRowCount());
+                assertEquals("NOP", timeline.getValueAt(0, 2));
+                recordings.setSelectedIndex(1);
+
+                assertEquals(1, timeline.getRowCount());
+                assertEquals("INC A", timeline.getValueAt(0, 2));
+                assertNull(findComponent(workspace.panel, AbstractButton.class, "Open recording…"));
+                assertNull(findComponent(workspace.panel, AbstractButton.class, "History filters"));
+            });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
+            verify(workspace.dialogs, never()).showError(anyString(), anyString());
+        }
+    }
+
+    @Test
+    public void instructionPopupTogglesBreakpointAtRightClickedAddress() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.table.setRowSelectionInterval(0, 0);
+                int address = workspace.table.instructionModel().getLocationAt(1);
+                java.awt.Rectangle cell = workspace.table.getCellRect(1, 0, true);
+                java.awt.event.MouseEvent click = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_PRESSED, 0, 0, cell.x + 1, cell.y + 1,
+                        1, false, java.awt.event.MouseEvent.BUTTON3);
+
+                for (java.awt.event.MouseListener listener : workspace.table.getMouseListeners())
+                    listener.mousePressed(click);
+                JPopupMenu popup = workspace.table.getComponentPopupMenu();
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                JMenuItem toggle = component(popup, JMenuItem.class, "Set breakpoint");
+                toggle.doClick(0);
+
+                assertTrue(workspace.session.isBreakpointSet(address));
+                assertFalse(workspace.session.isBreakpointSet(0));
+                assertEquals(1, workspace.breakpointChanges.get());
+                assertNull(findComponent(popup, JMenuItem.class, "Pin inspection"));
+                assertTrue(workspace.panel.isInstructionView());
+
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                assertEquals("Unset breakpoint", toggle.getText());
+                toggle.doClick(0);
+
+                assertFalse(workspace.session.isBreakpointSet(address));
+                assertEquals(2, workspace.breakpointChanges.get());
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                assertEquals("Set breakpoint", toggle.getText());
+            });
+        }
+    }
+
+    @Test
+    public void instructionPopupDisablesBreakpointWithoutSelectionOrWhileRunning() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.table.clearSelection();
+                JPopupMenu popup = workspace.table.getComponentPopupMenu();
+
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+
+                JMenuItem toggle = component(popup, JMenuItem.class, "Set breakpoint");
+                assertFalse(toggle.isEnabled());
+
+                workspace.table.setRowSelectionInterval(0, 0);
+                workspace.panel.setExecutionRunning(true);
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+
+                assertFalse(toggle.isEnabled());
+                toggle.doClick(0);
+                assertEquals(0, workspace.breakpointChanges.get());
+            });
+        }
+    }
+
+    @Test
     public void instructionViewAcceptsColumnsRenamedByWrapper() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
@@ -507,7 +708,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void breakpointListActionsTargetVisibleExecutionRuleAmongMemoryWatches() throws Exception {
+    public void debuggerTabsExcludeBreakpointManagerAndRetainExistingRules() throws Exception {
         DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 0, "", 1);
         DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, "", 1);
         DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, "", 1);
@@ -515,20 +716,11 @@ public class DebuggerPanelTest {
                 session -> session.rules.addAll(List.of(read, execute, write)))) {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
-                assertNull(findComponent(breakpoints, JToggleButton.class, "Advanced breakpoint options"));
-                JList<?> list = component(breakpoints, JList.class, "Breakpoints");
-                assertEquals(1, list.getModel().getSize());
-                list.setSelectedIndex(0);
-                button(breakpoints, "Enable / disable").doClick(0);
-                assertFalse(execute.enabled);
-                assertTrue(read.enabled);
-                assertTrue(write.enabled);
-                assertEquals(0, list.getSelectedIndex());
-
-                button(breakpoints, "Remove").doClick(0);
-                assertEquals(List.of(read, write), workspace.session.rules);
-                assertEquals(0, list.getModel().getSize());
+                assertEquals(List.of("Debugger", "Inspection"),
+                        java.util.stream.IntStream.range(0, tabs.getTabCount())
+                                .mapToObj(tabs::getTitleAt).collect(java.util.stream.Collectors.toList()));
+                assertNull(findComponent(workspace.panel, JList.class, "Breakpoints"));
+                assertEquals(List.of(read, execute, write), workspace.session.rules);
             });
         }
     }
@@ -561,14 +753,9 @@ public class DebuggerPanelTest {
     public void executionControlsAndMemoryWatchesUseCpuVisibleAddresses() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.showBreakpoints();
-                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
-                assertNull("Execution breakpoint form must not select a bank",
-                        findComponent(breakpoints, JComboBox.class, null));
-                button(breakpoints, "Add breakpoint").doClick(0);
-                JList<?> rows = component(breakpoints, JList.class, "Breakpoints");
-                assertFalse(rows.getModel().getElementAt(0).toString().contains("bank"));
+                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.SET, 0)));
+                assertTrue(workspace.session.isBreakpointSet(0));
 
                 Container watches = workspace.panel.watchesPanel();
                 assertNull(findComponent(watches, JComboBox.class, "Memory watch bank"));
@@ -582,13 +769,17 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
+    public void instructionRowsShowLabelFirstAndBreakpointsAsBoldText() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
                 session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
+                assertEquals(List.of("label", "address", "instruction", "opcode"),
+                        java.util.stream.IntStream.range(0, workspace.table.getColumnCount())
+                                .mapToObj(workspace.table::getColumnName).collect(java.util.stream.Collectors.toList()));
+                assertEquals("", workspace.table.getValueAt(0, 0));
                 for (int col = 0; col < workspace.table.getColumnCount(); col++) {
                     String name = workspace.table.getColumnName(col);
                     assertFalse(List.of("bp", "Label", "Comment").contains(name));
@@ -610,7 +801,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
+    public void instructionRowsAndTooltipsCoverAnnotationRangeAndUseLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
                 session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "UNKNOWN"));
@@ -635,6 +826,20 @@ public class DebuggerPanelTest {
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
                 assertEquals("range | inner", workspace.table.getToolTipText(hoverSecond));
                 assertNotEquals(expected, workspace.table.createToolTip().getBackground());
+                java.awt.Color overlap = workspace.table.createToolTip().getBackground();
+                workspace.table.clearSelection();
+                for (int col = 0; col < workspace.table.getColumnCount(); col++) {
+                    assertEquals(overlap, workspace.table.prepareRenderer(
+                            workspace.table.getCellRenderer(1, col), 1, col).getBackground());
+                    assertEquals(workspace.table.getBackground(), workspace.table.prepareRenderer(
+                            workspace.table.getCellRenderer(2, col), 2, col).getBackground());
+                }
+
+                workspace.table.setRowSelectionInterval(1, 1);
+                assertEquals(workspace.table.getSelectionBackground(), workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(1, 0), 1, 0).getBackground());
+                assertEquals(new java.awt.Color(255, 179, 179), workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(0, 0), 0, 0).getBackground());
 
                 java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
                 java.awt.event.MouseEvent hoverThird = new java.awt.event.MouseEvent(workspace.table,
@@ -651,14 +856,12 @@ public class DebuggerPanelTest {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 1)));
                 assertTrue(workspace.session.isBreakpointSet(1));
-                assertFalse(workspace.panel.isInspectionPinned());
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.breakpointChanges.get());
 
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.UNSET, 1)));
                 assertFalse(workspace.session.isBreakpointSet(1));
-                assertFalse(workspace.panel.isInspectionPinned());
                 assertEquals(2, workspace.breakpointChanges.get());
             });
         }
@@ -691,7 +894,7 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void breakpointHitsFollowTheNextPcUnlessTheUserManuallyPinsInspection() throws Exception {
+    public void breakpointHitsFollowTheNextPc() throws Exception {
         AtomicInteger pc = new AtomicInteger(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4,
                 session -> {
@@ -705,7 +908,6 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                assertFalse(workspace.panel.isInspectionPinned());
             });
 
             SwingUtilities.invokeAndWait(() -> {
@@ -714,9 +916,6 @@ public class DebuggerPanelTest {
             });
             SwingUtilities.invokeAndWait(() -> {
                 assertEquals(2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
-                pin.doClick(0);
-                assertTrue(workspace.panel.isInspectionPinned());
             });
 
             SwingUtilities.invokeAndWait(() -> {
@@ -724,10 +923,7 @@ public class DebuggerPanelTest {
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             });
             SwingUtilities.invokeAndWait(() -> {
-                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
-                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
-                pin.doClick(0);
-                assertFalse(workspace.panel.isInspectionPinned());
+                assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
             });
             SwingUtilities.invokeAndWait(() -> workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK));
             SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow())));
@@ -1024,8 +1220,8 @@ public class DebuggerPanelTest {
                         AbstractButton action = button(workspace.panel, name);
                         assertNotNull(action.getIcon());
                     }
-                    assertEquals("PC", button(workspace.panel, "Analyze from PC").getText());
-                    assertEquals("Selected", button(workspace.panel, "Analyze from selected instruction").getText());
+                    for (String name : List.of("Analyze from PC", "Analyze from selected instruction", "Analyze recording"))
+                        assertTrue(button(workspace.panel, name).getHideActionText());
                     JViewport graphViewport = graphScroll.getViewport();
                     graphViewport.setViewSize(graph.getPreferredSize());
                     graphViewport.setExtentSize(new Dimension(200, 100));

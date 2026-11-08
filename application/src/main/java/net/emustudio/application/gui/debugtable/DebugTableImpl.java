@@ -26,10 +26,8 @@ public class DebugTableImpl extends JTable {
     private final TextCellRenderer textRenderer;
     private IntPredicate breakpointRow = row -> false;
     private IntFunction<String> rowTooltip = row -> null;
-    private IntFunction<Color> rowTooltipBackground = row -> null;
+    private IntFunction<Color> rowBackground = row -> null;
     private Color tooltipBackground;
-    private IntFunction<String> addressTooltip = row -> null;
-    private IntPredicate addressColumn = column -> false;
 
     public DebugTableImpl(DebugTableModel tableModel) {
         super(Objects.requireNonNull(tableModel));
@@ -104,30 +102,16 @@ public class DebugTableImpl extends JTable {
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 
-    public void setAddressPresentation(IntPredicate addressColumn, IntFunction<String> addressTooltip) {
-        this.addressColumn = Objects.requireNonNull(addressColumn);
-        this.addressTooltip = Objects.requireNonNull(addressTooltip);
-    }
-
-    public void setRowTooltipBackground(IntFunction<Color> background) {
-        rowTooltipBackground = Objects.requireNonNull(background);
+    public void setRowBackground(IntFunction<Color> background) {
+        rowBackground = Objects.requireNonNull(background);
     }
 
     @Override
     public String getToolTipText(MouseEvent event) {
         int row = rowAtPoint(event.getPoint());
-        int column = columnAtPoint(event.getPoint());
         int modelRow = row < 0 ? -1 : convertRowIndexToModel(row);
         String tooltip = modelRow < 0 ? null : rowTooltip.apply(modelRow);
-        tooltipBackground = tooltip == null ? null : rowTooltipBackground.apply(modelRow);
-        if (row >= 0 && column >= 0 && addressColumn.test(convertColumnIndexToModel(column))) {
-            String label = addressTooltip.apply(modelRow);
-            if (label != null) {
-                if (tooltip == null || label.contains(tooltip)) return label;
-                if (tooltip.contains(label)) return tooltip;
-                return label + " | " + tooltip;
-            }
-        }
+        tooltipBackground = tooltip == null ? null : rowBackground.apply(modelRow);
         return tooltip != null ? tooltip : super.getToolTipText(event);
     }
 
@@ -140,14 +124,12 @@ public class DebugTableImpl extends JTable {
     @Override
     public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
         Component component = super.prepareRenderer(renderer, row, column);
-        component.setBackground(isCellSelected(row, column) ? getSelectionBackground() : getBackground());
-        if (addressColumn.test(convertColumnIndexToModel(column))
-                && addressTooltip.apply(convertRowIndexToModel(row)) != null) {
-            component.setBackground(isCellSelected(row, column) ? new Color(110, 110, 110) : new Color(210, 210, 210));
-        }
         int modelRow = convertRowIndexToModel(row);
+        Color background = rowBackground.apply(modelRow);
+        component.setBackground(isCellSelected(row, column) ? getSelectionBackground()
+                : background != null ? background : getBackground());
         if (tableModel.isRowAtCurrentInstruction(modelRow)) {
-            component.setBackground(new Color(255, 204, 204));
+            component.setBackground(new Color(255, 179, 179));
             component.setForeground(Color.BLACK);
         }
         Font font = component.getFont();

@@ -28,11 +28,43 @@ public class TextCellRendererTest {
         table.setRowSelectionInterval(0, 0);
 
         Component current = table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0);
-        assertEquals(new Color(255, 204, 204), current.getBackground());
+        assertEquals(new Color(255, 179, 179), current.getBackground());
         assertFalse(current.getFont().isBold());
         Component breakpoint = table.prepareRenderer(table.getCellRenderer(1, 0), 1, 0);
         assertEquals(table.getBackground(), breakpoint.getBackground());
         assertTrue(breakpoint.getFont().isBold());
+        assertFalse(table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0).getFont().isBold());
+    }
+
+    @Test
+    public void breakpointTextPaintsHeavierThanStandardBoldAtSameSize() {
+        DebugTableModel model = mock(DebugTableModel.class);
+        when(model.getRowCount()).thenReturn(1);
+        when(model.getColumnCount()).thenReturn(1);
+        when(model.getColumnName(0)).thenReturn("instruction");
+        when(model.getValueAt(0, 0)).thenReturn("CALL 1234");
+        doReturn(String.class).when(model).getColumnClass(0);
+        doReturn(new AddressColumn()).when(model).getColumnAt(0);
+        DebugTableImpl table = new DebugTableImpl(model);
+        table.setInstructionRowPresentation(row -> true, row -> null);
+
+        for (Color background : new Color[] {Color.WHITE, new Color(60, 63, 65)}) {
+            table.setBackground(background);
+            table.setForeground(background.equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
+            JLabel breakpoint = (JLabel) table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0);
+            JLabel standard = new JLabel(breakpoint.getText(), breakpoint.getIcon(), breakpoint.getHorizontalAlignment());
+            standard.setFont(breakpoint.getFont());
+            standard.setBorder(breakpoint.getBorder());
+            standard.setIconTextGap(breakpoint.getIconTextGap());
+            standard.setOpaque(true);
+            standard.setBackground(background);
+            standard.setForeground(table.getForeground());
+
+            assertEquals(table.getFont().getSize2D(), breakpoint.getFont().getSize2D(), 0);
+            assertTrue(paintedInk(breakpoint) > paintedInk(standard));
+        }
+
+        table.setInstructionRowPresentation(row -> false, row -> null);
         assertFalse(table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0).getFont().isBold());
     }
 
@@ -108,6 +140,25 @@ public class TextCellRendererTest {
             assertEquals(16.5f, renderer.getFont().getSize2D(), 0);
             assertEquals(Font.ITALIC, renderer.getFont().getStyle());
         }
+    }
+
+    private static long paintedInk(JLabel label) {
+        label.setSize(180, 30);
+        BufferedImage image = new BufferedImage(180, 30, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.createGraphics();
+        label.paint(graphics);
+        graphics.dispose();
+        Color background = label.getBackground();
+        long ink = 0;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                Color pixel = new Color(image.getRGB(x, y));
+                ink += Math.abs(pixel.getRed() - background.getRed())
+                        + Math.abs(pixel.getGreen() - background.getGreen())
+                        + Math.abs(pixel.getBlue() - background.getBlue());
+            }
+        }
+        return ink;
     }
 
     private static int paintedPixels(Icon icon, Component component) {

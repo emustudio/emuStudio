@@ -14,6 +14,7 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.InOrder;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -87,9 +88,10 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         }
 
         assertEquals(Integer.valueOf(0), securityManager.status);
-        verify(controller).close();
-        verify(computer).close();
-        verify(dispose).run();
+        InOrder shutdown = inOrder(controller, dispose, computer);
+        shutdown.verify(controller).close();
+        shutdown.verify(dispose).run();
+        shutdown.verify(computer).close();
     }
 
     @Test

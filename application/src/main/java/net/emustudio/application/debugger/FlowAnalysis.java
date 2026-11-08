@@ -4,6 +4,7 @@ package net.emustudio.application.debugger;
 
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 
@@ -17,13 +18,15 @@ public final class FlowAnalysis {
     private final ProgramIndex.Snapshot snapshot;
     private final long annotationRevision;
     private final Map<Integer, String> listing;
+    private final Map<Integer, String> opcodes;
 
     private FlowAnalysis(ProgramIndex index, ProgramIndex.Snapshot snapshot,
-                         long annotationRevision, Map<Integer, String> listing) {
+                         long annotationRevision, Map<Integer, String> listing, Map<Integer, String> opcodes) {
         this.index = index;
         this.snapshot = snapshot;
         this.annotationRevision = annotationRevision;
         this.listing = Map.copyOf(listing);
+        this.opcodes = Map.copyOf(opcodes);
     }
 
     /**
@@ -81,6 +84,49 @@ public final class FlowAnalysis {
     public boolean truncated() { return snapshot.flowState() == ProgramIndex.FlowState.TRUNCATED; }
     public String mnemonic(int address) { return listing.getOrDefault(address, ""); }
 
+    /** Consecutive identical linear instructions, split at entry points and caller-supplied boundaries. */
+    List<List<Integer>> instructionRuns(Set<Integer> addresses, Set<Integer> boundaries) {
+        Map<Integer, ProgramIndex.Instruction> instructions = new HashMap<>();
+        forEachInstruction(instruction -> instructions.put(instruction.cells().start, instruction));
+        Map<Integer, List<Edge>> incoming = new HashMap<>(), outgoing = new HashMap<>();
+        Set<Integer> separate = new HashSet<>(boundaries);
+        forEachEdge((from, to, kind) -> {
+            Edge edge = new Edge(from, to, kind);
+            incoming.computeIfAbsent(to, ignored -> new ArrayList<>()).add(edge);
+            outgoing.computeIfAbsent(from, ignored -> new ArrayList<>()).add(edge);
+            if (kind != ProgramIndex.EdgeKind.FALL_THROUGH) separate.add(to);
+        });
+        List<List<Integer>> runs = new ArrayList<>();
+        Integer previous = null;
+        List<Integer> run = null;
+        for (int address : new TreeSet<>(addresses)) {
+            ProgramIndex.Instruction next = instructions.get(address);
+            if (next == null) continue;
+            ProgramIndex.Instruction before = previous == null ? null : instructions.get(previous);
+            List<Edge> in = incoming.getOrDefault(address, List.of());
+            List<Edge> out = outgoing.getOrDefault(previous, List.of());
+            boolean identical = before != null
+                    && before.kind() == ProgramIndex.InstructionKind.LINEAR
+                    && next.kind() == ProgramIndex.InstructionKind.LINEAR
+                    && before.cells().end == address
+                    && before.cells().end - before.cells().start == next.cells().end - address
+                    && !separate.contains(previous) && !separate.contains(address)
+                    && in.size() == 1 && out.size() == 1
+                    && in.get(0).from == previous && in.get(0).edgeKind == ProgramIndex.EdgeKind.FALL_THROUGH
+                    && out.get(0).to == address && out.get(0).edgeKind == ProgramIndex.EdgeKind.FALL_THROUGH
+                    && !mnemonic(address).isBlank() && mnemonic(previous).equals(mnemonic(address))
+                    && !opcodes.getOrDefault(address, "").isBlank()
+                    && Objects.equals(opcodes.get(previous), opcodes.get(address));
+            if (!identical) {
+                run = new ArrayList<>();
+                runs.add(run);
+            }
+            run.add(address);
+            previous = address;
+        }
+        return runs;
+    }
+
     public void forEachInstruction(Consumer<? super ProgramIndex.Instruction> visitor) {
         snapshot.forEachInstruction(visitor);
     }
@@ -117,7 +163,7 @@ public final class FlowAnalysis {
             if (published.contentRevision() != builder.base.contentRevision() + 1
                     || published.memoryRevision() != builder.base.memoryRevision())
                 throw new IllegalStateException("Flow analysis discarded: graph replaced during publication");
-            return new FlowAnalysis(builder.index, published, builder.annotationRevision, builder.listing);
+            return new FlowAnalysis(builder.index, published, builder.annotationRevision, builder.listing, builder.opcodes);
         }
     }
 
@@ -129,6 +175,7 @@ public final class FlowAnalysis {
         final int size, edgeLimit;
         final Map<Integer, Decoded> instructions = new LinkedHashMap<>();
         final Map<Integer, String> listing = new LinkedHashMap<>();
+        final Map<Integer, String> opcodes = new LinkedHashMap<>();
         final List<Edge> edges = new ArrayList<>();
         int targetAttempts;
         boolean truncated;
@@ -154,7 +201,8 @@ public final class FlowAnalysis {
                 InstructionFlow flow = result.get();
                 int end = disassembler.getNextInstructionPosition(address);
                 if (end <= address || end > size) return null;
-                String mnemonic = disassembler.disassemble(address).mnemo;
+                DisassembledInstruction decodedInstruction = disassembler.disassemble(address);
+                String mnemonic = decodedInstruction.mnemo;
                 ProgramIndex.Range cells = new ProgramIndex.Range(address, end);
                 List<Integer> destinations = new ArrayList<>();
                 ProgramIndex.EdgeKind targetKind = flow.kind == InstructionFlow.Kind.CALL
@@ -178,6 +226,7 @@ public final class FlowAnalysis {
                 Decoded decoded = new Decoded(cells, ProgramIndex.InstructionKind.valueOf(flow.kind.name()), destinations);
                 instructions.put(address, decoded);
                 listing.put(address, mnemonic);
+                opcodes.put(address, decodedInstruction.opCode == null ? "" : decodedInstruction.opCode);
                 return decoded;
             } catch (InvalidInstructionException | IndexOutOfBoundsException | IllegalArgumentException ignored) {
                 return null;

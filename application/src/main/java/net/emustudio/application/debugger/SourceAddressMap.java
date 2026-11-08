@@ -27,6 +27,7 @@ public final class SourceAddressMap {
     private final Map<Path, Source> sources = new LinkedHashMap<>();
     private final List<String> diagnostics = new ArrayList<>();
     private final SourceCodePosition.ColumnUnit columnUnit;
+    private volatile Projection cachedProjection;
 
     private SourceAddressMap(MemoryContext<?> memory, ProgramIndex index, ProgramIndex.Snapshot base,
                              AnnotationEngine annotations, SourceCodePosition.ColumnUnit columnUnit) {
@@ -70,7 +71,7 @@ public final class SourceAddressMap {
                 throw new IOException("Source changed during compilation: " + input.path);
             result.sources.put(input.path, new Source(input, stamp));
         }
-        result.project(true);
+        result.cachedProjection = result.project(true);
         if (index != null && (!index.snapshot().sameRevisions(base)
                 || annotations != null && annotations.revision() != annotationRevision))
             throw new IOException("Source mappings discarded: memory or metadata changed during capture");
@@ -78,7 +79,7 @@ public final class SourceAddressMap {
     }
 
     private Projection project(boolean strict) throws IOException {
-        Projection projection = new Projection();
+        Projection projection = new Projection(annotations == null ? 0 : annotations.revision());
         if (annotations == null || layout == null) {
             collectSymbols(projection);
             return projection;
@@ -184,7 +185,15 @@ public final class SourceAddressMap {
     }
 
     private Projection currentProjection() {
-        try { return project(false); }
+        long annotationRevision = annotations == null ? 0 : annotations.revision();
+        Projection cached = cachedProjection;
+        if (cached != null && cached.annotationRevision == annotationRevision) return cached;
+        try {
+            Projection current = project(false);
+            if (annotations == null || annotations.revision() == current.annotationRevision)
+                cachedProjection = current;
+            return current;
+        }
         catch (IOException impossible) { throw new IllegalStateException(impossible); }
     }
 
@@ -290,8 +299,13 @@ public final class SourceAddressMap {
     }
 
     private static final class Projection {
+        final long annotationRevision;
         final List<Entry> entries = new ArrayList<>();
         final List<Declaration> declarations = new ArrayList<>();
+
+        Projection(long annotationRevision) {
+            this.annotationRevision = annotationRevision;
+        }
     }
 
     private static final class Declaration {

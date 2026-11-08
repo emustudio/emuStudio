@@ -14,11 +14,79 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class FlowAnalysisTest {
+    @Test
+    public void identicalRunsStopAtProtectedInstructionsAndLeaveAnalysisIntact() throws Exception {
+        Disassembler decoder = nopDecoder(6);
+        FlowAnalysis analysis = reachable(decoder, 0, 10, index(8));
+
+        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3, 4, 5), Set.of(0, 3));
+
+        assertEquals(List.of(List.of(0), List.of(1, 2), List.of(3), List.of(4, 5)), runs);
+        assertEquals(List.of(0, 1, 2, 3, 4, 5), addresses(analysis));
+        assertEquals(6, edges(analysis).size());
+    }
+
+    @Test
+    public void branchTargetsStaySeparateFromIdenticalNeighbors() throws Exception {
+        Disassembler decoder = nopDecoder(6);
+        instruction(decoder, 6, "JP 3", InstructionFlow.Kind.JUMP, 7, false, List.of(3));
+        FlowAnalysis analysis = reachable(decoder, 0, 10, index(8));
+
+        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3, 4, 5, 6), Set.of(0));
+
+        assertEquals(List.of(List.of(0), List.of(1, 2), List.of(3), List.of(4, 5), List.of(6)), runs);
+    }
+
+    @Test
+    public void equalMnemonicWithDifferentEncodingDoesNotFold() throws Exception {
+        Disassembler decoder = nopDecoder(4);
+        when(decoder.disassemble(2)).thenReturn(new DisassembledInstruction(2, "NOP", "DD00"));
+        FlowAnalysis analysis = reachable(decoder, 0, 10, index(6));
+
+        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3), Set.of());
+
+        assertEquals(List.of(List.of(0, 1), List.of(2), List.of(3)), runs);
+    }
+
+    @Test
+    public void missingEncodingAndDifferentMnemonicDoNotFold() throws Exception {
+        Disassembler decoder = nopDecoder(4);
+        when(decoder.disassemble(1)).thenReturn(new DisassembledInstruction(1, "NOP", ""));
+        when(decoder.disassemble(3)).thenReturn(new DisassembledInstruction(3, "INC A", "00"));
+        FlowAnalysis analysis = reachable(decoder, 0, 10, index(6));
+
+        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3), Set.of());
+
+        assertEquals(List.of(List.of(0), List.of(1), List.of(2), List.of(3)), runs);
+    }
+
+    @Test
+    public void onlyContiguousLinearFallThroughInstructionsFold() throws Exception {
+        Disassembler decoder = nopDecoder(5);
+        instruction(decoder, 1, "NOP", InstructionFlow.Kind.CALL, 2, true, List.of(4));
+        when(decoder.disassemble(1)).thenReturn(new DisassembledInstruction(1, "NOP", "00"));
+        FlowAnalysis analysis = reachable(decoder, 0, 10, index(8));
+
+        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 3, 4), Set.of());
+
+        assertEquals(List.of(List.of(0), List.of(1), List.of(3), List.of(4)), runs);
+    }
+
+    private static Disassembler nopDecoder(int count) throws Exception {
+        Disassembler decoder = mock(Disassembler.class);
+        for (int at = 0; at < count; at++) {
+            instruction(decoder, at, "NOP", InstructionFlow.Kind.LINEAR, at + 1, true, List.of());
+            when(decoder.disassemble(at)).thenReturn(new DisassembledInstruction(at, "NOP", "00"));
+        }
+        return decoder;
+    }
+
     @Test
     public void analysisStartsAtRequestedAddressAndFollowsBackwardBranches() throws Exception {
         Disassembler disassembler = mock(Disassembler.class);

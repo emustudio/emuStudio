@@ -27,6 +27,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 public class SourceAddressMapTest {
@@ -88,12 +89,59 @@ public class SourceAddressMapTest {
     }
 
     @Test
+    public void unchangedSourceLookupsReuseProjectionUntilAnnotationsChange() throws Exception {
+        Path source = source("program.asm", "NOP\nHALT\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        AnnotationEngine engine = spy(ENGINES.get(memory));
+        ENGINES.put(memory, engine);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
+        clearInvocations(engine);
+
+        for (int i = 0; i < 3; i++) {
+            assertEquals(1, map.sourceAt(0).orElseThrow().position.line);
+            assertEquals(0, map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow().address);
+            map.symbols();
+        }
+
+        verify(engine, never()).all();
+
+        replaceSources(engine, Map.of(2, Set.of(annotation(source, 2, 0))));
+
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertEquals(2, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
+        assertEquals(2, map.sourceAt(2).orElseThrow().position.line);
+        verify(engine, times(1)).all();
+    }
+
+    @Test
+    public void replacingAnnotationsDuringCachedLookupDoesNotReturnTheOldBinding() throws Exception {
+        Path source = source("cached-race.asm", "NOP\nHALT\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        AnnotationEngine engine = spy(ENGINES.get(memory));
+        ENGINES.put(memory, engine);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
+        java.util.concurrent.atomic.AtomicBoolean first = new java.util.concurrent.atomic.AtomicBoolean(true);
+        doAnswer(call -> {
+            Object result = call.callRealMethod();
+            if (first.getAndSet(false))
+                replaceSources(engine, Map.of(2, Set.of(annotation(source, 2, 0))));
+            return result;
+        }).when(engine).get(anyLong(), anyLong());
+
+        assertTrue(map.sourceAt(0).isEmpty());
+
+        assertEquals(2, map.sourceAt(2).orElseThrow().position.line);
+        assertEquals(2, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
+    }
+
+    @Test
     public void mappingAddedDuringLookupCannotAppearUniquelyMapped() throws Exception {
         Path source = source("concurrent.asm", "NOP\nHALT\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
         AnnotationEngine engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\nHALT\n"));
+        engine.put(new AnnotationEngine.Entry(3, 0, 3, 4, "label", "refresh", null));
         java.util.concurrent.atomic.AtomicBoolean first = new java.util.concurrent.atomic.AtomicBoolean(true);
         doAnswer(call -> {
             Object result = call.callRealMethod();
