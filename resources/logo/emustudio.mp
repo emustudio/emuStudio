@@ -1,5 +1,5 @@
 prologues:=3;
-outputtemplate:="png/%j-%c.png";
+outputtemplate:="emustudio.png";
 outputformat:="png";
 
 def computer(expr unit, pos_x, pos_y, color, discolor, s) =
@@ -78,10 +78,12 @@ beginfig(1);
   computer(u,0,0,black, white,1);
   computer(um,96, 145,(1,215/255,0),black,1);
 endfig;
+outputtemplate:="symbol.png";
 beginfig(2);
   computer(8,1,0.5, (1,215/255,0), white, 1); % (102/255, 153/255, 255/255));
   % computer(2.5,1+9.55,0.5+14.5,black, black, 1);
 endfig;
+outputtemplate:="monochrome.png";
 beginfig(3);
   u:=20;
   um:=6.25;

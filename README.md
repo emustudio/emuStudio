@@ -1,4 +1,4 @@
-# ![emuStudio logo](resources/logo-white.png "emuStudio logo") emuStudio
+# ![emuStudio logo](resources/logo/on-white.png "emuStudio logo") emuStudio
 
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
