@@ -11,6 +11,7 @@ import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.InstructionFlow;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import java.awt.Window;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +42,211 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
+    @Test
+    public void recordingNamesDescribeChosenScope() throws Exception {
+        List<DebugCPU.Instruction> events = new ArrayList<>();
+        for (int i = 0; i < 4; i++) events.add(new DebugCPU.Instruction(i + 1, i, "NOP", "00",
+                Map.of(), Map.of(), List.of(), true));
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Fold identical repeats").doClick(0);
+                JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");
+                JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
+                for (DebugSession.RecordingMode mode : DebugSession.RecordingMode.values()) {
+                    workspace.session.startNewRecording(2, mode, 1, 2);
+                    events.forEach(workspace.session::afterInstruction);
+                    workspace.panel.recordingControl().doClick(0);
+                    button(workspace.panel, "Analyze recording").doClick(0);
+                    String[] names = {"Recording 1 · First 2 instructions", "Recording 2 · Last 2 instructions",
+                            "Recording 3 · From 0x0001 to 0x0002", "Recording 4"};
+                    assertEquals(names[mode.ordinal()], recordings.getSelectedItem());
+                    assertEquals(mode == DebugSession.RecordingMode.UNLIMITED ? 4 : 2, timeline.getRowCount());
+                }
+                assertEquals("Record instructions", workspace.panel.recordingControl().getToolTipText());
+                assertFalse(workspace.panel.recordingControl().isSelected());
+            });
+        }
+    }
+
+    @Test
+    public void toolbarStartsOnlyAfterDialogStartAndEscCancels() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                Icon recordIcon = workspace.panel.recordingControl().getIcon();
+                SwingUtilities.invokeLater(() -> {
+                    RecordingDialog dialog = activeRecordingDialog();
+                    assertFalse(workspace.session.isRecording());
+                    assertFalse(dialog.isResizable());
+                    button(dialog, "Start").doClick(0);
+                });
+                workspace.panel.recordingControl().doClick(0);
+
+                assertTrue(workspace.session.isRecording());
+                assertEquals("Stop recording", workspace.panel.recordingControl().getToolTipText());
+                assertNotEquals(recordIcon, workspace.panel.recordingControl().getIcon());
+                workspace.session.afterInstruction(traceEvent(1, "NOP", "00", true));
+                workspace.panel.recordingControl().doClick(0);
+                SwingUtilities.invokeLater(() -> {
+                    RecordingDialog dialog = activeRecordingDialog();
+                    JRootPane root = dialog.getRootPane();
+                    Object key = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                            .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                    root.getActionMap().get(key).actionPerformed(
+                            new java.awt.event.ActionEvent(root, 0, "escape"));
+                });
+                workspace.panel.recordingControl().doClick(0);
+
+                assertFalse(workspace.session.isRecording());
+                assertFalse(workspace.panel.recordingControl().isSelected());
+                assertEquals(1, workspace.session.history().size());
+            });
+        }
+    }
+
+    private static RecordingDialog activeRecordingDialog() {
+        for (Window window : Window.getWindows())
+            if (window instanceof RecordingDialog && window.isShowing()) return (RecordingDialog) window;
+        throw new AssertionError("Recording dialog missing");
+    }
+
+    @Test
+    public void dialogEnablesOnlyRelevantFieldsAndRejectsInvalidInput() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                RecordingDialog dialog = new RecordingDialog(null, new EmuStudioGui(), workspace.dialogs,
+                        workspace.session, () -> {});
+                try {
+                    JComboBox<?> mode = component(dialog, JComboBox.class, "Capture");
+                    JTextField count = component(dialog, JTextField.class, "Instructions");
+                    JTextField from = component(dialog, JTextField.class, "From");
+                    JTextField to = component(dialog, JTextField.class, "To");
+                    for (int i = 0; i < 4; i++) {
+                        mode.setSelectedIndex(i);
+                        assertEquals(i < 2, count.isEnabled());
+                        assertEquals(i == 2, from.isEnabled());
+                        assertEquals(i == 2, to.isEnabled());
+                    }
+                    mode.setSelectedIndex(0);
+                    count.setText("0");
+                    button(dialog, "Start").doClick(0);
+                    assertFalse(workspace.session.isRecording());
+                    verify(workspace.dialogs).showError("Recording limit must be 1..1000000", "Record instructions");
+                    mode.setSelectedIndex(2);
+                    from.setText("3");
+                    to.setText("1");
+                    button(dialog, "Start").doClick(0);
+                    assertFalse(workspace.session.isRecording());
+                    from.setText("0x1");
+                    to.setText("2");
+                    button(dialog, "Start").doClick(0);
+
+                    assertTrue(workspace.session.isRecording());
+                    assertEquals(DebugSession.RecordingMode.ADDRESS_RANGE, workspace.session.recordingMode());
+                    assertEquals(1, workspace.session.recordingFrom());
+                    assertEquals(2, workspace.session.recordingThrough());
+                } finally {
+                    dialog.dispose();
+                }
+            });
+        }
+    }
+
+    @Test
+    public void recordingFoldsNopsAcrossChangingAddressesAndRegistersAndUnfoldsEveryEvent() throws Exception {
+        List<DebugCPU.Instruction> events = new ArrayList<>();
+        for (int i = 0; i < 3; i++) events.add(new DebugCPU.Instruction(3617234 + i, 0x2FBA + i, "nop", "00",
+                Map.of("PC", 0x2FBAL + i, "R", 0x5AL + i),
+                Map.of("PC", 0x2FBBL + i, "R", 0x5BL + i), List.of(), true));
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                showRecording(workspace, events);
+                JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
+
+                assertEquals(1, timeline.getRowCount());
+                assertEquals("3617234–3617236 (3)", timeline.getValueAt(0, 0));
+                assertEquals("2FBA → 2FBC", timeline.getValueAt(0, 1));
+                assertEquals("nop × 3", timeline.getValueAt(0, 2));
+                assertEquals("PC=2FBA→2FBD R=5A→5D", timeline.getValueAt(0, 3));
+                timeline.setRowSelectionInterval(0, 0);
+                String detail = component(workspace.panel, JTextArea.class, "Recorded instruction state").getText();
+                assertTrue(detail.contains("PC    2FBA → 2FBD"));
+                assertTrue(detail.contains("R     5A → 5D"));
+                button(workspace.panel, "Fold identical repeats").doClick(0);
+
+                assertEquals(3, timeline.getRowCount());
+                assertEquals("2FBB", timeline.getValueAt(1, 1));
+                timeline.setRowSelectionInterval(1, 1);
+                assertTrue(component(workspace.panel, JTextArea.class, "Recorded instruction state")
+                        .getText().contains("Sequence 3617235"));
+                assertEquals(events, workspace.session.history());
+            });
+        }
+    }
+
+    @Test
+    public void recordingFoldingKeepsEncodingChangesSequenceGapsAndFailuresSeparate() throws Exception {
+        List<DebugCPU.Instruction> events = List.of(
+                traceEvent(1, "NOP", "00", true), traceEvent(2, "NOP", "00", true),
+                traceEvent(3, "NOP", "DD00", true), traceEvent(4, "INC A", "DD00", true),
+                traceEvent(6, "INC A", "DD00", true), traceEvent(7, "INC A", "DD00", false),
+                traceEvent(8, "INC A", "DD00", false), traceEvent(9, "INC A", "DD00", true));
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                showRecording(workspace, events);
+                JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
+
+                assertEquals(7, timeline.getRowCount());
+                assertEquals("NOP × 2", timeline.getValueAt(0, 2));
+                assertEquals("NOP", timeline.getValueAt(1, 2));
+                assertEquals("6", timeline.getValueAt(3, 0));
+                assertEquals("INC A (failed)", timeline.getValueAt(4, 2));
+                assertEquals("INC A (failed)", timeline.getValueAt(5, 2));
+            });
+        }
+    }
+
+    @Test
+    public void foldedRecordingPreservesAllMemoryAccessesAndEarlierWriteSearchWithinRun() throws Exception {
+        List<DebugCPU.Instruction> events = List.of(
+                new DebugCPU.Instruction(1, 0, "INC (HL)", "34", Map.of("A", 0L), Map.of("A", 1L),
+                        List.of(new DebugCPU.Access(3, 1, true)), true),
+                new DebugCPU.Instruction(2, 1, "INC (HL)", "34", Map.of("A", 1L), Map.of("A", 0L),
+                        List.of(new DebugCPU.Access(3, 2, true)), true));
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                showRecording(workspace, events);
+                JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
+                timeline.setRowSelectionInterval(0, 0);
+                JTextArea detail = component(workspace.panel, JTextArea.class, "Recorded instruction state");
+                JComboBox<?> access = component(workspace.panel, JComboBox.class, "Memory access");
+
+                assertEquals("A=0→0 2 memory writes", timeline.getValueAt(0, 3));
+                assertTrue(detail.getText().contains("0 → 0 (changed within run)"));
+                assertTrue(detail.getText().contains("#1 · WRITE 0003 = 01"));
+                assertTrue(detail.getText().contains("#2 · WRITE 0003 = 02"));
+                assertEquals(2, access.getItemCount());
+                access.setSelectedIndex(1);
+                button(workspace.panel, "Find earlier write").doClick(0);
+
+                assertEquals(2, timeline.getRowCount());
+                assertEquals(0, timeline.getSelectedRow());
+                assertTrue(detail.getText().contains("Sequence 1 ·"));
+            });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    private static DebugCPU.Instruction traceEvent(long sequence, String mnemonic, String opcode, boolean completed) {
+        return new DebugCPU.Instruction(sequence, 0, mnemonic, opcode, Map.of(), Map.of(), List.of(), completed);
+    }
+
+    private static void showRecording(Workspace workspace, List<DebugCPU.Instruction> events) {
+        workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
+        events.forEach(workspace.session::afterInstruction);
+        workspace.panel.recordingControl().doClick(0);
+        button(workspace.panel, "Analyze recording").doClick(0);
+    }
+
     @Test
     public void pcAnalysisFoldsRepeatsAndRevealsIndividualNavigationTargets() throws Exception {
         assertAnalysisFolding("Analyze from PC");
@@ -150,7 +357,7 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Analyze recording").doClick(0);
                 assertEquals("No instructions recorded",
                         component(workspace.panel, JLabel.class, "History empty state").getText());
-                workspace.panel.recordingControl().doClick(0);
+                workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
                 workspace.session.afterInstruction(first);
                 workspace.panel.recordingControl().doClick(0);
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
@@ -158,7 +365,7 @@ public class DebuggerPanelTest {
                 assertTrue(component(workspace.panel, JTextArea.class, "Recorded instruction state")
                         .getText().contains("A     1 → 2"));
 
-                workspace.panel.recordingControl().doClick(0);
+                workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
                 workspace.session.afterInstruction(second);
                 workspace.panel.recordingControl().doClick(0);
                 JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");

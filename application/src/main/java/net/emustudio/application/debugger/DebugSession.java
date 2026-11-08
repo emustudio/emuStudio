@@ -203,6 +203,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     private final Deque<DebugCPU.Instruction> history = new ArrayDeque<>();
     private int historyLimit;
+    public enum RecordingMode { FIRST, LAST, ADDRESS_RANGE, UNLIMITED }
+    private RecordingMode recordingMode = RecordingMode.LAST;
+    private int recordingFrom, recordingThrough;
     private InstructionRecording.Writer recording;
     private Path recordingPath;
     private String recordingError = "";
@@ -473,19 +476,36 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (limit < 0 || limit > 1000000)
             throw new IllegalArgumentException("History limit must be 0..1000000");
         historyLimit = limit;
+        recordingMode = RecordingMode.LAST;
         if (limit > 0) while (history.size() > limit) history.removeFirst();
         updateProbe();
     }
 
-    public synchronized void startNewRecording(int limit) {
-        if (limit <= 0) throw new IllegalArgumentException("Recording limit must be positive");
-        record(limit);
+    public synchronized void startNewRecording(int limit, RecordingMode mode, int from, int through) {
+        requirePaused();
+        Objects.requireNonNull(mode);
+        boolean bounded = mode == RecordingMode.FIRST || mode == RecordingMode.LAST;
+        if (bounded && (limit <= 0 || limit > 1_000_000))
+            throw new IllegalArgumentException("Recording limit must be 1..1000000");
+        if (mode == RecordingMode.ADDRESS_RANGE
+                && (from < 0 || through < from || through >= cpu.getAddressSpaceSize()))
+            throw new IllegalArgumentException("Recording range must be within CPU addresses, with From ≤ To");
+        record(bounded ? limit : 1);
+        historyLimit = bounded ? limit : Integer.MAX_VALUE;
         history.clear();
+        recordingMode = mode;
+        recordingFrom = from;
+        recordingThrough = through;
     }
 
     public synchronized boolean isRecording() {
         return historyLimit > 0;
     }
+
+    public synchronized RecordingMode recordingMode() { return recordingMode; }
+    public synchronized int recordingLimit() { return historyLimit; }
+    public synchronized int recordingFrom() { return recordingFrom; }
+    public synchronized int recordingThrough() { return recordingThrough; }
 
     public synchronized List<DebugCPU.Instruction> history() {
         return List.copyOf(history);
@@ -636,8 +656,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     @Override
     public synchronized boolean afterInstruction(DebugCPU.Instruction event) {
-        if (historyLimit > 0) {
-            history.addLast(event);
+        if (historyLimit > 0 && (recordingMode != RecordingMode.ADDRESS_RANGE
+                || (event.address >= recordingFrom && event.address <= recordingThrough))) {
+            if (recordingMode != RecordingMode.FIRST || history.size() < historyLimit) history.addLast(event);
             while (history.size() > historyLimit) history.removeFirst();
         }
         if (recording != null) {

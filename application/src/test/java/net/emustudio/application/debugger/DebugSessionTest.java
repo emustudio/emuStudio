@@ -500,10 +500,10 @@ public class DebugSessionTest {
             session.afterInstruction(instruction(1, List.of()));
             List<DebugCPU.Instruction> previous = session.history();
 
-            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(0));
-            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(1_000_001));
+            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(0, DebugSession.RecordingMode.LAST, 0, 0));
+            assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(1_000_001, DebugSession.RecordingMode.LAST, 0, 0));
             assertEquals(previous, session.history());
-            session.startNewRecording(1);
+            session.startNewRecording(1, DebugSession.RecordingMode.LAST, 0, 0);
             session.afterInstruction(instruction(2, List.of()));
             session.afterInstruction(instruction(3, List.of()));
 
@@ -511,6 +511,72 @@ public class DebugSessionTest {
             assertEquals(1, session.history().size());
             assertEquals(3, session.history().get(0).sequence);
         }
+    }
+
+    @Test
+    public void firstInstructionsRemainWhenLaterExecutionExceedsLimit() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        DebugCPU.Instruction first = instruction(1, List.of()), second = instruction(2, List.of());
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            session.startNewRecording(2, DebugSession.RecordingMode.FIRST, 0, 0);
+
+            session.afterInstruction(first);
+            session.afterInstruction(second);
+            session.afterInstruction(instruction(3, List.of()));
+
+            assertEquals(List.of(first, second), session.history());
+            assertTrue(session.isRecording());
+            session.record(0);
+            session.afterInstruction(instruction(4, List.of()));
+            assertEquals(List.of(first, second), session.history());
+        }
+    }
+
+    @Test
+    public void addressRangeRetainsAllMatchesIncludingBothBounds() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8, false);
+        DebugCPU.Instruction from = addressInstruction(2, 3), through = addressInstruction(3, 5),
+                latest = addressInstruction(4, 4);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 3, 5);
+
+            session.afterInstruction(addressInstruction(1, 2));
+            session.afterInstruction(from);
+            session.afterInstruction(through);
+            assertEquals(List.of(from, through), session.history());
+            session.afterInstruction(latest);
+            session.afterInstruction(addressInstruction(5, 6));
+
+            assertEquals(List.of(from, through, latest), session.history());
+            session.record(0);
+            session.afterInstruction(addressInstruction(6, 3));
+            assertEquals(List.of(from, through, latest), session.history());
+        }
+    }
+
+    @Test
+    public void invalidAddressRangePreservesPreviousCaptureAndActiveMode() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8, false);
+        DebugCPU.Instruction first = addressInstruction(1, 0);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            session.startNewRecording(1, DebugSession.RecordingMode.FIRST, 0, 0);
+            session.afterInstruction(first);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 5, 3));
+            assertThrows(IllegalArgumentException.class,
+                    () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, -1, 3));
+            assertThrows(IllegalArgumentException.class,
+                    () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 0, 8));
+            session.afterInstruction(addressInstruction(2, 1));
+
+            assertTrue(session.isRecording());
+            assertEquals(List.of(first), session.history());
+        }
+    }
+
+    private static DebugCPU.Instruction addressInstruction(long sequence, int address) {
+        return new DebugCPU.Instruction(sequence, address, "NOP", "00", Map.of(), Map.of(), List.of(), true);
     }
 
     @Test

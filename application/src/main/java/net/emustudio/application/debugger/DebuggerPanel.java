@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
@@ -73,9 +72,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final List<int[]> historyGroups = new ArrayList<>();
     private final HistoryModel historyModel = new HistoryModel();
     private final JTable history = new JTable(historyModel);
-    private final JSpinner recentLimit = new JSpinner(new SpinnerNumberModel(1024, 1, 1_000_000, 1024));
     private final JComboBox<String> historyWriteTarget = new JComboBox<>();
     private List<DebugCPU.Access> selectedHistoryAccesses = List.of();
+    private List<Long> selectedHistorySequences = List.of();
     private final JCheckBox foldHistory = new JCheckBox("Fold identical repeats", true);
     private final JCheckBox foldFlow = new JCheckBox("Fold identical repeats", true);
     private final JComboBox<String> historyOrigin = new JComboBox<>(new String[] {"Current recording"});
@@ -461,9 +460,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private static Icon loadInspectionIcon(String name, JComponent component, boolean disabled) {
-        String theme = FlatLaf.isLafDark() ? "dark" : "light";
         ImageIcon image = GUI.loadIcon(name.startsWith("/") ? name
-                : "/net/emustudio/application/gui/icons/inspection/" + theme + "/" + name + ".png",
+                : "/net/emustudio/application/gui/icons/inspection/" + name + ".png",
                 DebuggerPanel.class);
         if (disabled) image = (ImageIcon) UIManager.getLookAndFeel().getDisabledIcon(component, image);
         return new ScaledImageIcon(image);
@@ -479,7 +477,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             button.setDisabledIcon(loadInspectionIcon(icon, button, true));
         }
         if (annotationFilter != null)
-            annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search", annotationFilter, false));
+            annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search-annotations", annotationFilter, false));
     }
 
     private JToggleButton toggleButton(String icon, String tooltip) {
@@ -533,7 +531,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void updateExecutionState() {
         boolean paused = !running && !tasks.isBusy();
         table.setEnabled(paused);
-        if (recordingControl != null) recordingControl.setEnabled(session.debug != null && paused);
+        if (recordingControl != null) updateRecordingControls(paused);
         inspectionButtons.stream()
                 .filter(button -> button != goToFlowInstruction && button != editAnnotation && button != deleteAnnotation)
                 .forEach(button -> button.setEnabled(paused));
@@ -685,7 +683,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationFilter.setToolTipText("Search annotations");
         annotationFilter.getAccessibleContext().setAccessibleName("Search annotations");
         annotationFilter.putClientProperty("JTextField.placeholderText", "Search annotations");
-        annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search", annotationFilter, false));
+        annotationFilter.putClientProperty("JTextField.leadingIcon", loadInspectionIcon("search-annotations", annotationFilter, false));
         annotationFilter.putClientProperty("FlatLaf.style", "placeholderForeground: $TextField.foreground");
         annotationForm = new AnnotationForm();
         editAnnotation = inspectionButton("edit-annotation", "Edit selected annotation", () -> {
@@ -720,14 +718,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         deleteAnnotation.setEnabled(false);
         tools.add(deleteAnnotation);
         tools.addSeparator();
-        tools.add(inspectionButton("import", "Import annotations", () -> {
+        tools.add(inspectionButton("import-annotations", "Import annotations", () -> {
             if (!confirmSaveAnnotations()) return;
             Path path = choose(false, false);
             if (path == null) return;
             changeAnnotations(() -> index.load(path));
             annotationForm.load(annotationForm.address);
         }));
-        tools.add(inspectionButton("export", "Export annotations", () -> {
+        tools.add(inspectionButton("export-annotations", "Export annotations", () -> {
             Path path = choose(true, false);
             if (path != null && (!Files.exists(path) || confirm("Replace existing file?", "Export annotations")))
                 index.save(path);
@@ -1282,11 +1280,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         history.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         gui.styleTable(history);
         history.setFont(new Font(Font.MONOSPACED, Font.PLAIN, history.getFont().getSize()));
-        int[] widths = {110, 80, 250, 300};
+        int[] widths = {170, 120, 250, 300};
         for (int column = 0; column < widths.length; column++)
             history.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
         JPanel tools = gui.panel("insets 4, fillx, hidemode 3", "[grow,fill]", "");
-        JPanel capture = gui.panel("insets 0, fillx, hidemode 3", "[][grow,fill][][]", "");
+        JPanel capture = gui.panel("insets 0, fillx, hidemode 3", "[][grow,fill]", "");
         historyOrigin.getAccessibleContext().setAccessibleName("Recording");
         historyOrigin.addActionListener(event -> guard(() -> {
             history.clearSelection();
@@ -1294,15 +1292,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }));
         capture.add(label("Recording", historyOrigin));
         capture.add(historyOrigin);
-        capture.add(label("Keep last", recentLimit));
-        capture.add(recentLimit);
-        recentLimit.setToolTipText("Maximum instructions retained in the current recording");
-        recentLimit.addChangeListener(event -> guard(() -> {
-            if (session.isRecording()) session.record(((Number) recentLimit.getValue()).intValue());
-            refreshHistory();
-        }));
-        recordingControl = toggleButton(ICON_RECORD, "Start recording");
-        recordingControl.addActionListener(event -> guard(this::toggleRecentRecording));
+        recordingControl = toggleButton(ICON_RECORD, "Record instructions");
+        recordingControl.addActionListener(event -> {
+            guard(this::toggleRecentRecording);
+            updateRecordingControls(!running && !tasks.isBusy());
+        });
         tools.add(capture, "growx, wrap");
         tools.add(foldHistory, "alignx right, wrap");
         foldHistory.addActionListener(event -> guard(this::refreshHistory));
@@ -1314,10 +1308,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!e.getValueIsAdjusting()) showHistoricalState(history.getSelectedRow());
         });
         p.add(scrollTools(tools), BorderLayout.NORTH);
-        JPanel detail = borderPanel(4);
+        JPanel detail = gui.section("Recorded state", "", "", "");
+        detail.setLayout(new BorderLayout(4, 4));
         JPanel detailTools = gui.panel("insets 4, fillx", "[grow,fill][]", "");
-        detailTools.add(gui.label("Recorded state · read-only"));
-        detailTools.add(showUnchangedRegisters);
+        detailTools.add(showUnchangedRegisters, "cell 1 0");
         detail.add(detailTools, BorderLayout.NORTH);
         detail.add(gui.scrollPane(historicalState));
         JButton earlier = historyButton("Find earlier write", ICON_FIND, this::previousRecordedWrite);
@@ -1338,7 +1332,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         historyEmptyTitle.getAccessibleContext().setAccessibleName("History empty state");
         empty.add(historyEmptyTitle, "wrap");
         empty.add(historyEmptyHint, "wrap");
-        historyEmptyRecord = historyButton("Start recording", ICON_RECORD, this::toggleRecentRecording);
+        historyEmptyRecord = historyButton("Record instructions", ICON_RECORD, this::toggleRecentRecording);
         empty.add(historyEmptyRecord, "wrap");
         historyBody.add(empty, "empty");
         p.add(historyBody);
@@ -1370,16 +1364,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void toggleRecentRecording() {
         if (session.isRecording()) {
+            DebugSession.RecordingMode mode = session.recordingMode();
+            int limit = session.recordingLimit();
+            int from = session.recordingFrom(), through = session.recordingThrough();
             session.record(0);
             List<DebugCPU.Instruction> captured = session.history();
             if (!captured.isEmpty()) {
                 recordings.add(captured);
-                historyOrigin.addItem("Recording " + recordings.size() + " · " + captured.size() + " instructions");
+                String scope = mode == DebugSession.RecordingMode.ADDRESS_RANGE
+                        ? String.format("From 0x%04X to 0x%04X", from, through)
+                        : mode == DebugSession.RecordingMode.UNLIMITED ? ""
+                        : (mode == DebugSession.RecordingMode.FIRST ? "First " : "Last ")
+                                + limit + " instructions";
+                historyOrigin.addItem("Recording " + recordings.size() + (scope.isEmpty() ? "" : " · " + scope));
                 historyOrigin.setSelectedIndex(recordings.size());
             }
         } else {
-            session.startNewRecording(((Number) recentLimit.getValue()).intValue());
-            historyOrigin.setSelectedIndex(0);
+            RecordingDialog dialog = new RecordingDialog(
+                    (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this), gui, dialogs, session,
+                    () -> historyOrigin.setSelectedIndex(0));
+            dialog.setVisible(true);
         }
         refreshHistory();
     }
@@ -1387,12 +1391,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void updateRecordingControls(boolean paused) {
         if (recordingControl == null) return;
         recordingControl.setSelected(session.isRecording());
-        String action = session.isRecording() ? "Stop recording" : "Start recording";
+        String action = session.isRecording() ? "Stop recording" : "Record instructions";
+        recordingControl.setIcon(GUI.loadIcon(session.isRecording() ? ICON_STOP : ICON_RECORD));
         recordingControl.setToolTipText(action);
         recordingControl.getAccessibleContext().setAccessibleName(action);
         recordingControl.setEnabled(session.debug != null && paused);
         historyEmptyRecord.setEnabled(session.debug != null && paused);
-        recentLimit.setEnabled(session.debug != null && paused);
         historyOrigin.setEnabled(paused);
         history.setEnabled(paused);
     }
@@ -1403,7 +1407,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             throw new IllegalArgumentException("Select a recorded memory access first");
         int address = selectedHistoryAccesses.get(access).address;
         int selected = history.getSelectedRow();
-        long before = selected < 0 ? Long.MAX_VALUE : displayedHistory.get(historyGroups.get(selected)[0]).sequence;
+        long before = selected < 0 ? Long.MAX_VALUE : selectedHistorySequences.get(access);
         for (int i = historySource.size() - 1; i >= 0; i--) {
             DebugCPU.Instruction event = historySource.get(i);
             if (event.sequence < before && event.accesses.stream().anyMatch(a -> a.write && a.address == address)) {
@@ -1469,15 +1473,24 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private static boolean sameRecordedInstruction(DebugCPU.Instruction first, DebugCPU.Instruction second) {
-        if (second.sequence != first.sequence + 1 || first.address != second.address
-                || first.completed != second.completed || !first.mnemonic.equals(second.mnemonic)
-                || !first.opcodes.equals(second.opcodes) || !first.before.equals(second.before)
-                || !first.after.equals(second.after) || first.accesses.size() != second.accesses.size()) return false;
-        for (int i = 0; i < first.accesses.size(); i++) {
-            DebugCPU.Access a = first.accesses.get(i), b = second.accesses.get(i);
-            if (a.address != b.address || a.value != b.value || a.write != b.write) return false;
+        return second.sequence == first.sequence + 1 && first.completed && second.completed
+                && !first.mnemonic.isBlank() && first.mnemonic.equals(second.mnemonic)
+                && !first.opcodes.isBlank() && first.opcodes.equals(second.opcodes);
+    }
+
+    private Set<String> recordedChanges(int[] group) {
+        Set<String> changed = new TreeSet<>();
+        for (int i = group[0]; i <= group[1]; i++) {
+            DebugCPU.Instruction event = displayedHistory.get(i);
+            for (String name : event.before.keySet())
+                if (!Objects.equals(event.before.get(name), event.after.get(name))) changed.add(name);
         }
-        return true;
+        return changed;
+    }
+
+    private String recordedAddress(DebugCPU.Instruction first, DebugCPU.Instruction last) {
+        return first.address == last.address ? String.format("%04X", first.address)
+                : String.format("%04X → %04X", first.address, last.address);
     }
 
     private final class HistoryModel extends AbstractTableModel {
@@ -1491,15 +1504,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             switch (column) {
                 case 0: return group[0] == group[1] ? Long.toString(event.sequence)
                         : event.sequence + "–" + last.sequence + " (" + (group[1] - group[0] + 1) + ")";
-                case 1: return String.format("%04X", event.address);
-                case 2: return event.mnemonic + (event.completed ? "" : " (failed)");
+                case 1: return recordedAddress(event, last);
+                case 2: return event.mnemonic + (event.completed ? "" : " (failed)")
+                        + (group[0] == group[1] ? "" : " × " + (group[1] - group[0] + 1));
                 default: {
                     List<String> values = new ArrayList<>();
-                    for (String name : new TreeSet<>(event.before.keySet()))
-                        if (!Objects.equals(event.before.get(name), event.after.get(name)))
-                            values.add(name + "=" + String.format("%X→%X", event.before.get(name), event.after.getOrDefault(name, 0L)));
-                    for (DebugCPU.Access access : event.accesses)
-                        if (access.write) values.add(String.format("%04X=%02X", access.address, access.value));
+                    for (String name : recordedChanges(group))
+                        values.add(name + "=" + String.format("%X→%X", event.before.getOrDefault(name, 0L),
+                                last.after.getOrDefault(name, 0L)));
+                    if (group[0] == group[1]) {
+                        for (DebugCPU.Access access : event.accesses)
+                            if (access.write) values.add(String.format("%04X=%02X", access.address, access.value));
+                    } else {
+                        long writes = 0;
+                        for (int i = group[0]; i <= group[1]; i++)
+                            writes += displayedHistory.get(i).accesses.stream().filter(access -> access.write).count();
+                        if (writes > 0) values.add(writes + " memory writes");
+                    }
                     return String.join(" ", values);
                 }
             }
@@ -1509,47 +1530,58 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void showHistoricalState(int selected) {
         if (selected < 0 || selected >= historyGroups.size()) {
             selectedHistoryAccesses = List.of();
+            selectedHistorySequences = List.of();
             historyWriteTarget.removeAllItems();
             historyWriteTarget.setEnabled(false);
             return;
         }
         int[] group = historyGroups.get(selected);
-        DebugCPU.Instruction event = displayedHistory.get(group[0]);
-        selectedHistoryAccesses = event.accesses;
+        DebugCPU.Instruction event = displayedHistory.get(group[0]), last = displayedHistory.get(group[1]);
+        boolean folded = group[0] != group[1];
+        selectedHistoryAccesses = new ArrayList<>();
+        selectedHistorySequences = new ArrayList<>();
         historyWriteTarget.removeAllItems();
-        for (DebugCPU.Access access : selectedHistoryAccesses)
-            historyWriteTarget.addItem(String.format("%s %04X = %02X", access.write ? "WRITE" : "READ",
-                    access.address, access.value));
-        historyWriteTarget.setEnabled(!selectedHistoryAccesses.isEmpty());
-        StringBuilder text = new StringBuilder(String.format("Sequence %d · %04X · %s · %s%s\n",
-                event.sequence, event.address, event.opcodes, event.mnemonic, event.completed ? "" : " (failed)"));
-        if (group[0] != group[1]) text.append("Identical recorded executions through sequence ")
-                .append(displayedHistory.get(group[1]).sequence).append("; unfold to inspect each event.\n");
-        text.append("\nChanged registers\n");
-        List<String> names = new ArrayList<>(event.before.keySet());
-        names.sort(String::compareTo);
-        boolean changed = false;
-        for (String name : names) {
-            long before = event.before.get(name), after = event.after.getOrDefault(name, before);
-            if (before != after) {
-                text.append(String.format("%-5s %X → %X\n", name, before, after));
-                changed = true;
+        for (int i = group[0]; i <= group[1]; i++) {
+            DebugCPU.Instruction instruction = displayedHistory.get(i);
+            for (DebugCPU.Access access : instruction.accesses) {
+                selectedHistoryAccesses.add(access);
+                selectedHistorySequences.add(instruction.sequence);
+                historyWriteTarget.addItem((folded ? "#" + instruction.sequence + " · " : "")
+                        + String.format("%s %04X = %02X", access.write ? "WRITE" : "READ", access.address, access.value));
             }
         }
-        if (!changed) text.append("None\n");
+        historyWriteTarget.setEnabled(!selectedHistoryAccesses.isEmpty());
+        StringBuilder text = new StringBuilder("Sequence " + event.sequence
+                + (folded ? "–" + last.sequence : "") + " · " + recordedAddress(event, last) + " · "
+                + event.opcodes + " · " + event.mnemonic + (event.completed ? "" : " (failed)") + "\n");
+        if (folded) text.append(group[1] - group[0] + 1)
+                .append(" matching instructions; unfold to inspect each event.\n");
+        text.append(folded ? "\nRegisters changed across run (first before → last after)\n" : "\nChanged registers\n");
+        List<String> names = new ArrayList<>(event.before.keySet());
+        names.sort(String::compareTo);
+        Set<String> changed = recordedChanges(group);
+        for (String name : names) {
+            long before = event.before.get(name), after = last.after.getOrDefault(name, before);
+            if (changed.contains(name))
+                text.append(String.format("%-5s %X → %X%s\n", name, before, after,
+                        folded && before == after ? " (changed within run)" : ""));
+        }
+        if (changed.isEmpty()) text.append("None\n");
         if (showUnchangedRegisters.isSelected()) {
             text.append("\nUnchanged registers\n");
             for (String name : names) {
                 long before = event.before.get(name);
-                if (before == event.after.getOrDefault(name, before))
+                if (!changed.contains(name))
                     text.append(String.format("%-5s %X\n", name, before));
             }
         }
         text.append("\nRecorded memory accesses\n");
-        if (event.accesses.isEmpty()) text.append("None\n");
-        for (DebugCPU.Access access : event.accesses)
-            text.append(String.format("%s %04X = %02X\n", access.write ? "WRITE" : "READ",
-                    access.address, access.value));
+        if (selectedHistoryAccesses.isEmpty()) text.append("None\n");
+        for (int i = 0; i < selectedHistoryAccesses.size(); i++) {
+            DebugCPU.Access access = selectedHistoryAccesses.get(i);
+            if (folded) text.append("#").append(selectedHistorySequences.get(i)).append(" · ");
+            text.append(String.format("%s %04X = %02X\n", access.write ? "WRITE" : "READ", access.address, access.value));
+        }
         historicalState.setText(text.toString());
         historicalState.setCaretPosition(0);
     }
