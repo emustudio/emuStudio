@@ -8,6 +8,7 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.plugins.compiler.*;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.folding.Fold;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
 
 public class EditingFeaturesTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
@@ -27,6 +30,128 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     }
     private void command(REditor editor, String name) {
         runOnEdt(() -> editor.commands().action(name).actionPerformed(new ActionEvent(editor.textPane(), 0, name)));
+    }
+    private JRadioButtonMenuItem syntaxChoice(REditor editor, String label) {
+        return onEdt(() -> {
+            JMenu display = editor.commands().menus().stream().filter(menu -> "Editor display".equals(menu.getText())).findFirst().orElseThrow();
+            JMenu syntax = Arrays.stream(display.getMenuComponents()).filter(JMenu.class::isInstance).map(JMenu.class::cast)
+                    .filter(menu -> "Syntax highlighting".equals(menu.getText())).findFirst().orElseThrow();
+            return Arrays.stream(syntax.getMenuComponents()).map(JRadioButtonMenuItem.class::cast)
+                    .filter(item -> label.equals(item.getText())).findFirst().orElseThrow();
+        });
+    }
+    @Test public void caseCommandsChangeOnlyTheSelectionAndUndoTogether() {
+        String[][] cases = {{"Uppercase", "MIXED"}, {"Lowercase", "mixed"}, {"Invert case", "mIxEd"}};
+        for (String[] test : cases) {
+            REditor editor = editor("before MiXeD after");
+            runOnEdt(() -> { editor.textPane().discardAllEdits(); editor.textPane().select(7, 12); });
+            command(editor, test[0]);
+            assertEquals("before " + test[1] + " after", onEdt(editor.textPane()::getText));
+            runOnEdt(editor.textPane()::undoLastAction);
+            assertEquals("before MiXeD after", onEdt(editor.textPane()::getText));
+            runOnEdt(() -> editor.textPane().setCaretPosition(0));
+            command(editor, test[0]);
+            assertEquals("before MiXeD after", onEdt(editor.textPane()::getText));
+        }
+    }
+    @Test public void caseCommandsTransformDifferentSelectionsWithoutCopyingTheFirst() {
+        String[][] cases = {{"Uppercase", "ASS keep ÉB"}, {"Lowercase", "aß keep éb"}, {"Invert case", "Aß keep Éb"}};
+        for (String[] test : cases) {
+            REditor editor = editor("aß keep éB");
+            runOnEdt(() -> {
+                editor.textPane().discardAllEdits();
+                editor.commands().selections().set(List.of(new MultipleSelection.Range(0, 2), new MultipleSelection.Range(8, 10)));
+            });
+            command(editor, test[0]);
+            assertEquals(test[1], onEdt(editor.textPane()::getText));
+            runOnEdt(editor.textPane()::undoLastAction);
+            assertEquals("aß keep éB", onEdt(editor.textPane()::getText));
+        }
+    }
+    @Test public void syntaxChoiceIsPerFileAndRestoredFromSettings() throws Exception {
+        Path source = Files.writeString(files.newFile("source.txt").toPath(), "public class Sample {}\n");
+        Path other = Files.writeString(files.newFile("other.txt").toPath(), "plain\n");
+        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        REditor editor = editor("");
+        runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.openFile(source); syntaxChoice(editor, "Java").doClick(); });
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(editor.textPane()::getSyntaxEditingStyle));
+        assertEquals(org.fife.ui.rsyntaxtextarea.Token.RESERVED_WORD, onEdt(() -> editor.textPane().getTokenListForLine(0).getType()).intValue());
+        assertFalse(onEdt(editor::isDirty));
+        REditor reopened = editor("");
+        runOnEdt(() -> { reopened.configure(new EditorState(settings)); reopened.openFile(source); });
+        assertTrue(onEdt(() -> syntaxChoice(reopened, "Java").isSelected()));
+        runOnEdt(() -> reopened.openFile(other));
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(reopened.textPane()::getSyntaxEditingStyle));
+        runOnEdt(() -> reopened.openFile(source));
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(reopened.textPane()::getSyntaxEditingStyle));
+        runOnEdt(reopened::newFile);
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(reopened.textPane()::getSyntaxEditingStyle));
+    }
+    @Test public void syntaxChoiceFollowsBothSplitViewsAndSurvivesClosingTheSplit() {
+        REditor editor = editor("public class Sample {}\n");
+        runOnEdt(() -> syntaxChoice(editor, "Java").doClick());
+        REditor mirror = onEdt(editor::mirror);
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(mirror.textPane()::getSyntaxEditingStyle));
+        runOnEdt(() -> syntaxChoice(mirror, "JSON").doClick());
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_JSON, onEdt(editor.textPane()::getSyntaxEditingStyle));
+        runOnEdt(() -> syntaxChoice(editor, "XML").doClick());
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_XML, onEdt(mirror.textPane()::getSyntaxEditingStyle));
+        runOnEdt(() -> { mirror.dispose(); syntaxChoice(editor, "Java").doClick(); });
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(editor.textPane()::getSyntaxEditingStyle));
+    }
+    @Test public void returningToCompilerSyntaxRestoresItsCommentRulesAndFolds() {
+        LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "block", null, null, null),
+                new SourceToken(Token.BLOCK_END, 13, "end", null, null, null))) {
+            public String[] getLineCommentStartAndEnd() { return new String[]{"##", null}; }
+        };
+        REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(lexer)));
+        runOnEdt(() -> {
+            editor.textPane().setText("block\n  body\nend\n");
+            syntaxChoice(editor, "Plain text").doClick();
+        });
+        assertEquals(SyntaxConstants.SYNTAX_STYLE_NONE, onEdt(editor.textPane()::getSyntaxEditingStyle));
+        runOnEdt(() -> { syntaxChoice(editor, "Default (selected compiler)").doClick(); editor.textPane().getFoldManager().reparse(); });
+        assertEquals(1, onEdt(() -> editor.textPane().getFoldManager().getFoldCount()).intValue());
+        runOnEdt(() -> editor.textPane().select(0, 5)); command(editor, "Toggle comment");
+        assertTrue(onEdt(editor.textPane()::getText).startsWith("##block\n"));
+    }
+    @Test public void compilerSyntaxMatchesNestedBracketsInBothDirections() {
+        String source = "([{}])";
+        List<Token> tokens = new ArrayList<>();
+        for (int i = 0; i < source.length(); i++)
+            tokens.add(new SourceToken(Token.SEPARATOR, i, source.substring(i, i + 1), null, null, null));
+        REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(new TokenLexer(tokens))));
+        runOnEdt(() -> editor.textPane().setText(source));
+        for (int i = 0; i < source.length(); i++) {
+            final int bracket = i;
+            java.awt.Point match = onEdt(() -> {
+                editor.textPane().setCaretPosition(bracket + 1);
+                return org.fife.ui.rsyntaxtextarea.RSyntaxUtilities.getMatchingBracketPosition(editor.textPane(), null);
+            });
+            assertEquals(new java.awt.Point(i, source.length() - 1 - i), match);
+        }
+        REditor comment = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(new TokenLexer(
+                List.of(new SourceToken(Token.COMMENT, 0, "()", null, null, null))))));
+        runOnEdt(() -> { comment.textPane().setText("()"); comment.textPane().setCaretPosition(1); });
+        assertEquals(-1, onEdt(() -> org.fife.ui.rsyntaxtextarea.RSyntaxUtilities
+                .getMatchingBracketPosition(comment.textPane(), null).y).intValue());
+    }
+    @Test public void savingUntitledSourceAndSaveAsKeepItsSyntaxChoice() throws Exception {
+        Path first = files.newFile("first.txt").toPath(), second = files.newFile("second.txt").toPath();
+        Dialogs dialogs = mock(Dialogs.class);
+        when(dialogs.chooseFile(eq("Save file"), eq("Save"), any(Path.class), eq(true), anyList()))
+                .thenReturn(Optional.of(first), Optional.of(second));
+        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        REditor editor = onEdt(() -> new REditor(dialogs));
+        runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.textPane().setText("{}"); syntaxChoice(editor, "JSON").doClick(); });
+        assertTrue(onEdt(editor::saveFile));
+        assertTrue(onEdt(editor::saveFileAs));
+        REditor reopened = editor("");
+        runOnEdt(() -> reopened.configure(new EditorState(settings)));
+        for (Path path : List.of(first, second)) {
+            runOnEdt(() -> reopened.openFile(path));
+            assertEquals(SyntaxConstants.SYNTAX_STYLE_JSON, onEdt(reopened.textPane()::getSyntaxEditingStyle));
+        }
     }
     @Test public void multipleSelectionsTypeAndUndoTogether() {
         REditor editor = editor("one two one"); TextEditorPane pane = editor.textPane();

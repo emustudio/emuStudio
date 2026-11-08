@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
-import org.fife.ui.rtextarea.RTextArea;
+import org.fife.ui.rtextarea.TextMode;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -18,7 +18,7 @@ final class MultipleSelection {
     /** Routes selection gestures before Swing's single-caret mouse handler. */
     static final class Pane extends TextEditorPane {
         private MultipleSelection selections;
-        Pane() { super(RTextArea.INSERT_MODE); }
+        Pane() { super(TextMode.INSERT); }
         @Override protected void processMouseEvent(MouseEvent e) {
             if (selections == null || !selections.mouse(e)) super.processMouseEvent(e);
         }
