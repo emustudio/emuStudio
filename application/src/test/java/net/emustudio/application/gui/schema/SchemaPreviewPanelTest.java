@@ -11,11 +11,15 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -36,6 +40,7 @@ public class SchemaPreviewPanelTest {
             compiler.measure(SchemaTestSupport.createGraphics());
 
             SchemaPreviewPanel panel = new SchemaPreviewPanel(schema, dialogs);
+            panel.setSize(45, 35);
             Graphics2D graphics = SchemaTestSupport.createGraphics();
             try {
                 panel.paintComponent(graphics);
@@ -51,8 +56,45 @@ public class SchemaPreviewPanelTest {
 
             panel.saveSchemaImage();
 
-            assertTrue(waitForImage(output));
+            BufferedImage saved = waitForImage(output);
+            assertNotNull("Schema image export did not finish", saved);
+            assertEquals(panel.getPreferredSize().width, saved.getWidth());
+            assertEquals(panel.getPreferredSize().height, saved.getHeight());
+            assertTrue(saved.getWidth() > panel.getWidth());
         }
+    }
+
+    @Test
+    public void fittingLargeSchemaPreservesPositionsAndSelection() throws Exception {
+        try (ComputerConfig config = SchemaTestSupport.createComputerConfig(temporaryFolder, "large preview")) {
+            Schema schema = new Schema(config, SchemaTestSupport.createAppSettings(false, 10));
+            schema.setCompilerElement(new Point(450, 500), "compiler.jar");
+            schema.setCpuElement(new Point(2200, 1500), "cpu.jar");
+            schema.selectAll();
+            List<Point> positions = schema.getAllElements().stream()
+                    .map(element -> new Point(element.getX(), element.getY())).collect(Collectors.toList());
+            SchemaPreviewPanel panel = new SchemaPreviewPanel(schema, mock(Dialogs.class));
+            panel.setSize(320, 180);
+            BufferedImage image = new BufferedImage(320, 180, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = image.createGraphics();
+            try { panel.paintComponent(graphics); } finally { graphics.dispose(); }
+
+            assertEquals(positions, schema.getAllElements().stream()
+                    .map(element -> new Point(element.getX(), element.getY())).collect(Collectors.toList()));
+            assertTrue(schema.getAllElements().stream().allMatch(element -> element.isSelected()));
+            assertTrue(panel.getPreferredSize().width > panel.getWidth());
+            assertTrue(panel.getScrollableTracksViewportWidth());
+            assertTrue(panel.getScrollableTracksViewportHeight());
+            assertTrue(hasDrawing(image, 0, 160));
+            assertTrue(hasDrawing(image, 160, 320));
+        }
+    }
+
+    private boolean hasDrawing(BufferedImage image, int from, int to) {
+        for (int x = from; x < to; x++)
+            for (int y = 0; y < image.getHeight(); y++)
+                if (image.getRGB(x, y) != Color.WHITE.getRGB()) return true;
+        return false;
     }
 
     @Test
@@ -74,13 +116,14 @@ public class SchemaPreviewPanelTest {
         throw new AssertionError("Missing compiler element");
     }
 
-    private boolean waitForImage(Path image) throws Exception {
+    private BufferedImage waitForImage(Path image) throws Exception {
         for (int i = 0; i < 200; i++) {
-            if (Files.size(image) > 0) {
-                return true;
-            }
+            try {
+                BufferedImage saved = javax.imageio.ImageIO.read(image.toFile());
+                if (saved != null) return saved;
+            } catch (IOException incomplete) { /* The export worker may still be writing. */ }
             Thread.sleep(10);
         }
-        return false;
+        return null;
     }
 }

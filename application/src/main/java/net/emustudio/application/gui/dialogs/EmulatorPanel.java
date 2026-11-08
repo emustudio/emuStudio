@@ -319,12 +319,19 @@ public class EmulatorPanel extends JPanel {
         return column >= 0 && debugTable.getColumnClass(column) == BreakpointState.class;
     }
 
+    public Optional<DebuggerPanel> getDebuggerPanel() {
+        return Optional.ofNullable(inspection);
+    }
+
     public void resizeComponents(int height) {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
         if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {
             splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
             sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - 140));
-            cpuWatches.setDividerLocation(Math.max(140, (splitLeftRight.getHeight() - 140) / 2));
+            JScrollPane status = (JScrollPane) cpuWatches.getTopComponent();
+            int preferredStatusHeight = status.getViewport().getView().getPreferredSize().height + 12;
+            int available = Math.max(140, splitLeftRight.getHeight() - 140 - 170);
+            cpuWatches.setDividerLocation(Math.min(Math.max(220, preferredStatusHeight), available));
             dividersInitialized = true;
         }
     }

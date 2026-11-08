@@ -99,6 +99,11 @@ public class OpenComputerDialogTest extends AbstractSwingTest {
             List<JTable> tables = onEdt(() -> Arrays.stream(configuration.getComponents())
                     .filter(JTable.class::isInstance).map(JTable.class::cast).collect(Collectors.toList()));
             assertEquals(5, tables.size());
+            findLabel(dialog, "CPU: test-cpu");
+            assertTrue(onEdt(() -> tables.stream().noneMatch(Component::isVisible)));
+            triggerButton(findComponent(dialog, JCheckBox.class,
+                    check -> "Show plugin configuration".equals(check.getText())));
+            assertTrue(onEdt(() -> tables.stream().allMatch(Component::isVisible)));
             assertEquals(Arrays.asList("CPU", "Memory", "Compiler", "Device (tape)", "Device (tape)"),
                     tables.stream().map(Component::getName).collect(Collectors.toList()));
             assertRow(tables.get(0), 0, "name", "test-cpu");

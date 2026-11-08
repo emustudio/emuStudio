@@ -100,7 +100,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             assertEquals("07", onEdt(() -> table.getValueAt(0, 1)));
             f.byteValue.set(9);
             assertEquals("07", onEdt(() -> table.getValueAt(0, 1)));
-            assertEquals(5, table.getColumnCount());
+            assertEquals(4, table.getColumnCount());
             for (int col = 0; col < table.getColumnCount(); col++)
                 assertFalse(table.getColumnName(col).toLowerCase().contains("decode"));
             triggerButton(findButtonByTooltip(f.panel, "Live memory"));
@@ -182,7 +182,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             f.byteValue.set(7);
             f.selectiveValue.set(true);
             JTextField value = findComponent(f.panel, JTextField.class,
-                    field -> "Value".equals(field.getAccessibleContext().getAccessibleName()) && field.getColumns() == 12);
+                    field -> "Search value".equals(field.getAccessibleContext().getAccessibleName()) && field.getColumns() == 12);
             setText(value, "07");
             triggerButton(findButtonByTooltip(f.panel, "Find"));
             awaitReady(f.panel);
@@ -564,6 +564,55 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             assertFalse(onEdt(f.panel::isInstructionView));
             assertEquals("Byte", onEdt(() -> table.getColumnName(1)));
             assertEquals(1, onEdt(table::getSelectedRow).intValue());
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void optionalStringColumnPreservesReorderedCommentWidthAndFindStringsExposesResults() throws Exception {
+        try (Fixture f = new Fixture()) {
+            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
+            assertEquals(4, onEdt(table::getColumnCount).intValue());
+            runOnEdt(() -> table.moveColumn(3, 0));
+            JCheckBox strings = findComponent(f.panel, JCheckBox.class, box -> "String column".equals(box.getText()));
+            triggerButton(findComponent(f.panel, JToggleButton.class,
+                    button -> "Compare / strings".equals(button.getToolTipText())));
+            triggerButton(strings);
+            assertEquals(5, onEdt(table::getColumnCount).intValue());
+            assertEquals("Comment", onEdt(() -> table.getColumnName(0)));
+            assertTrue(onEdt(() -> table.getColumnModel().getColumn(0).getMaxWidth()) > 360);
+            triggerButton(strings);
+            assertEquals(4, onEdt(table::getColumnCount).intValue());
+            f.byteValue.set(65);
+            triggerButton(findButtonByTooltip(f.panel, "Find strings"));
+            awaitReady(f.panel);
+            assertTrue(onEdt(strings::isSelected));
+            assertEquals(5, onEdt(table::getColumnCount).intValue());
+            assertEquals("AAAAAAAA", onEdt(() -> table.getModel().getValueAt(0, 4)));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void historyEmphasizesChangesAndRevealsUnchangedRegistersOnDemand() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.record(1024);
+            f.session.afterInstruction(new DebugCPU.Instruction(0, 0,
+                    java.util.Map.of("PC", 0L, "SP", 5L, "A", 1L),
+                    java.util.Map.of("PC", 1L, "SP", 5L, "A", 2L), List.of(), true));
+            f.refresh();
+            JList<?> history = findComponent(f.panel, JList.class,
+                    list -> "Recorded instructions".equals(list.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> history.setSelectedIndex(0));
+            JTextArea state = findComponent(f.panel, JTextArea.class,
+                    area -> "Recorded instruction state".equals(area.getAccessibleContext().getAccessibleName()));
+            String changes = onEdt(state::getText);
+            assertTrue(changes.contains("Changed registers"));
+            assertTrue(changes.indexOf("A ") < changes.indexOf("PC "));
+            assertFalse(changes.contains("SP "));
+            triggerButton(findComponent(f.panel, JCheckBox.class,
+                    box -> "Show unchanged registers".equals(box.getText())));
+            assertTrue(onEdt(state::getText).contains("SP "));
+            assertEquals(0, onEdt(history::getSelectedIndex).intValue());
             verify(f.cpu, never()).setInstructionLocation(anyInt());
         }
     }

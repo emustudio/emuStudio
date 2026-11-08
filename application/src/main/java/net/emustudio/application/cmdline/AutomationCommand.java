@@ -35,7 +35,7 @@ public class AutomationCommand implements Callable<Integer> {
     @CommandLine.ParentCommand
     private Runner runner;
 
-    @CommandLine.Option(names = {"-w", "--waitmax"}, paramLabel = "MILLIS", description = "limit emulation time to max MILLIS (force kill afterwards)")
+    @CommandLine.Option(names = {"-w", "--waitmax"}, paramLabel = "MILLIS", description = "wait at most MILLIS for the running CPU to stop")
     private int waitForFinishMillis = Automation.DONT_WAIT;
 
     @CommandLine.Option(names = "--gui", negatable = true, defaultValue = "true", fallbackValue = "true",

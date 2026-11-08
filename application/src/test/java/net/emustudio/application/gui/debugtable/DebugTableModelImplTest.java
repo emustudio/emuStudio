@@ -181,10 +181,11 @@ public class DebugTableModelImplTest {
     public void breakpointColumnIsNotEditableForRowsWithoutInstructionLocation() {
         DebugTableModelImpl model = new DebugTableModelImpl();
         CPU cpu = createCpu(true, 0);
+        when(cpu.getAddressSpaceSize()).thenReturn(1);
         model.setCPU(cpu);
 
-        assertFalse(model.isCellEditable(0, 0));
-        assertTrue(model.isCellEditable(PaginatingDisassembler.INSTR_PER_PAGE / 2, 0));
+        assertTrue(model.isCellEditable(0, 0));
+        assertFalse(model.isCellEditable(1, 0));
     }
 
     @Test
@@ -252,6 +253,57 @@ public class DebugTableModelImplTest {
         model.showAddress(255);
         assertEquals(1, model.getRowCount());
         assertEquals(255, model.getLocationAt(0));
+    }
+
+    @Test
+    public void resizingBrowsedPageRetainsItsAnchorAndRebuildsAdjacentPages() {
+        CPU cpu = createCpu(false, 0);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(cpu);
+        model.setMaxRows(9);
+        model.showAddress(0);
+        assertEquals(8, model.getLocationAt(8));
+        model.nextPage();
+        assertEquals(8, model.getLocationAt(0));
+        int anchor = model.getLocationAt(4);
+        model.setMaxRows(9); // A width-only resize must not move the browsed page.
+        assertEquals(anchor, model.getLocationAt(4));
+        model.setMaxRows(5);
+        assertEquals(anchor, model.getLocationAt(2));
+        int first = model.getLocationAt(0);
+        model.previousPage();
+        assertEquals(first, model.getLocationAt(4));
+        model.nextPage();
+        assertEquals(first, model.getLocationAt(0));
+        assertEquals(0, cpu.getInstructionLocation());
+        verify(cpu, org.mockito.Mockito.never()).setInstructionLocation(anyInt());
+    }
+
+    @Test
+    public void previousInstructionAtBoundaryDoesNotGuessAnOperandAfterStepping() {
+        CPU cpu = createCpu(false, 0);
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call ->
+                (Integer) call.getArgument(0) == 0 ? 2 : (Integer) call.getArgument(0) + 1);
+        when(cpu.getDisassembler()).thenReturn(disassembler);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(cpu);
+        model.setMaxRows(7);
+        assertEquals(0, model.getLocationAt(0));
+        when(cpu.getInstructionLocation()).thenReturn(2);
+        model.currentPage();
+        assertEquals(0, model.guessPreviousInstructionLocation());
+    }
+
+    @Test
+    public void resizingUnpaintedBrowsedPageRetainsItsCenter() {
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(createCpu(false, 0));
+        model.setMaxRows(9);
+        model.showAddress(0);
+        model.nextPage();
+        model.setMaxRows(5);
+        assertEquals(12, model.getLocationAt(2));
     }
 
     private CPU createCpu(boolean breakpointSupported, int instructionLocation) {

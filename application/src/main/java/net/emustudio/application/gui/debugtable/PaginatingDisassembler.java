@@ -65,9 +65,15 @@ public class PaginatingDisassembler {
     }
 
     synchronized void setInstructionsPerPage(int value) {
+        if (instructionsPerPage == value) return;
         instructionsPerPage = value;
         currentInstrRow = instructionsPerPage / 2;
         instrPerHalfPage = instructionsPerPage / 2;
+        // Page extents belong to the old row count. The model retains the browsed anchor.
+        bytesPerPageCache.clear();
+        pageIndex = 0;
+        currentPage = new Page(0, -1, -1);
+        bytesPerPageCache.put(0, currentPage);
     }
 
     int getCurrentInstructionRow() {
@@ -178,7 +184,7 @@ public class PaginatingDisassembler {
     }
 
     synchronized int rowToLocation(int currentLocation, int row) {
-        if (currentLocation < 0 || currentLocation > lastAddress) {
+        if (currentLocation < 0 || currentLocation > lastAddress || row < 0 || row >= instructionsPerPage) {
             return -1;
         }
         int tmpLastKnownCurrentLocation = lastKnownCurrentLocation;
@@ -196,7 +202,8 @@ public class PaginatingDisassembler {
 
         lastKnownCurrentLocation = currentLocation;
 
-        int newCurrentLocation = findCurrentLocationInPage(currentLocation, tmpCurrentPage);
+        int firstPageShift = boundaryRowShift(currentLocation);
+        int newCurrentLocation = findCurrentLocationInPage(currentLocation, tmpCurrentPage, firstPageShift);
         boolean updateCalled = false;
         if (newCurrentLocation != currentLocation || tmpCurrentPage.middleLocation == -1) {
             tmpCurrentPage.setMiddleLocation(newCurrentLocation);
@@ -204,20 +211,29 @@ public class PaginatingDisassembler {
             updateCalled = true;
         }
 
+        currentInstrRow = instrPerHalfPage - boundaryRowShift(newCurrentLocation);
+
         if (row == currentInstrRow) {
             if (!updateCalled) {
                 // update cache always on current instruction
                 callFlow.updateCache(currentLocation);
+            }
+            if (row == 0) tmpCurrentPage.setMin(newCurrentLocation);
+            if (row == instructionsPerPage - 1) {
+                tmpCurrentPage.setMax(newCurrentLocation);
+                List<Integer> next = new ArrayList<>();
+                callFlow.traverseForInstructionCount(newCurrentLocation, 1, next::add);
+                tmpCurrentPage.setLastPage(next.isEmpty() || next.get(0) > lastAddress);
             }
             return newCurrentLocation;
         }
 
         int half = callFlow.getLongestInstructionSize() * instrPerHalfPage;
 
-        if (row < instrPerHalfPage) {
+        if (row < currentInstrRow) {
             return findLocationBelowHalf(newCurrentLocation, row, half, tmpCurrentPage);
         } else {
-            return findLocationAboveHalf(newCurrentLocation, row, half, tmpCurrentPage);
+            return findLocationAboveHalf(newCurrentLocation, row, tmpCurrentPage);
         }
     }
 
@@ -229,7 +245,17 @@ public class PaginatingDisassembler {
         return instructionsPerPage * callFlow.getLongestInstructionSize();
     }
 
-    private int findCurrentLocationInPage(int currentLocation, Page tmpCurrentPage) {
+    /** Keep valid instructions at the top when the centered page reaches address zero. */
+    private int boundaryRowShift(int location) {
+        int half = callFlow.getLongestInstructionSize() * instrPerHalfPage;
+        if (location >= half) return 0;
+        List<Integer> previous = callFlow.getLocations(0, location);
+        int count = 0;
+        for (int at : previous) if (at < location) count++;
+        return Math.max(0, instrPerHalfPage - count);
+    }
+
+    private int findCurrentLocationInPage(int currentLocation, Page tmpCurrentPage, int firstPageShift) {
         if (tmpCurrentPage.index == 0) {
             return currentLocation;
         }
@@ -240,13 +266,13 @@ public class PaginatingDisassembler {
 
         int currentPageIndex = tmpCurrentPage.index;
         if (currentPageIndex > 0) {
-            return findIncreasing(currentLocation, tmpCurrentPage, currentPageIndex);
+            return findIncreasing(currentLocation, tmpCurrentPage, currentPageIndex, firstPageShift);
         } else {
             return findDecreasing(currentLocation, tmpCurrentPage, currentPageIndex);
         }
     }
 
-    private int findIncreasing(int currentLocation, Page tmpPage, int currentPageIndex) {
+    private int findIncreasing(int currentLocation, Page tmpPage, int currentPageIndex, int firstPageShift) {
         // currentLocation is below current page. We will traverse from the last known current location
         // to the current page's one and set it to the current page.
 
@@ -260,15 +286,19 @@ public class PaginatingDisassembler {
             }
         }
         int from = currentLocation;
+        int sourcePageIndex = 0;
         if (tmpPage.middleLocation >= 0) {
             from = tmpPage.middleLocation;
+            sourcePageIndex = tmpPage.index;
         }
 
         List<Integer> instructions = new ArrayList<>();
 
-        int maxBytesPP = maxBytesPerPage();
         int longestInstr = callFlow.getLongestInstructionSize();
-        long guessedLocation = (long) currentLocation + (long) currentPageIndex * (maxBytesPP - longestInstr);
+        int stride = Math.max(1, instructionsPerPage - 1);
+        int steps = (int) Math.min(Integer.MAX_VALUE, (long) (currentPageIndex - sourcePageIndex) * stride
+                + (sourcePageIndex == 0 ? firstPageShift : 0));
+        long guessedLocation = (long) currentLocation + ((long) currentPageIndex * stride + firstPageShift) * longestInstr;
         int guessUpTo = (int) Math.min(lastAddress, Math.max(0, guessedLocation));
 
         int result = callFlow.traverseUpTo(from, guessUpTo, instructions::add);
@@ -277,7 +307,7 @@ public class PaginatingDisassembler {
         }
 
         int instrCount = instructions.size();
-        if (instrCount < instructionsPerPage) {
+        if (instrCount <= steps) {
             // there is not enough instructions to reach currentRow. How to deal with it? Well, we can (in order):
             // 1. return the last instruction (if exists)
             // 2. If it doesn't, then return the middleLocation of tmpPage (if exists)
@@ -296,7 +326,7 @@ public class PaginatingDisassembler {
             return currentLocation; // if instrSize > 0, it still belongs to the "skip" group
         }
 
-        return instructions.listIterator(instructionsPerPage - 1).next();
+        return instructions.get(steps);
     }
 
     private int findDecreasing(int currentLocation, Page tmpPage, int currentPageIndex) {
@@ -319,7 +349,8 @@ public class PaginatingDisassembler {
         List<Integer> instructions = new ArrayList<>();
         int maxBytesPP = maxBytesPerPage();
         int longestInstr = callFlow.getLongestInstructionSize();
-        int from = Math.max(0, currentLocation + currentPageIndex * (maxBytesPP - longestInstr));
+        int from = (int) Math.max(0, (long) currentLocation
+                + (long) currentPageIndex * Math.max(longestInstr, maxBytesPP - longestInstr));
 
         int result = callFlow.traverseUpTo(from, to, instructions::add);
         if (result == to) {
@@ -327,14 +358,19 @@ public class PaginatingDisassembler {
         }
 
         int instrCount = instructions.size();
-        if (instrCount < instructionsPerPage) {
+        int stride = Math.max(1, instructionsPerPage - 1);
+        if (instrCount <= stride) {
             return 0;
         }
-        return instructions.listIterator(instrCount - instructionsPerPage).next();
+        return instructions.get(instrCount - stride - 1);
     }
 
-    private int findLocationAboveHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
-        int realUpTo = (int) Math.min(lastAddress, (long) currentLocation + half);
+    private int findLocationAboveHalf(int currentLocation, int row, Page tmpCurrentPage) {
+        int following = instructionsPerPage - currentInstrRow - 1;
+        int realUpTo = (int) Math.min(lastAddress, (long) currentLocation
+                + (long) callFlow.getLongestInstructionSize() * following);
+        int upperBound = nextPageBoundary(tmpCurrentPage);
+        realUpTo = Math.min(realUpTo, upperBound);
         if (currentLocation > realUpTo) {
             return -1;
         }
@@ -342,9 +378,10 @@ public class PaginatingDisassembler {
         List<Integer> halfPage = callFlow.getLocations(currentLocation, realUpTo);
         int loadedHalfSize = halfPage.size();
 
-        if (realUpTo < lastAddress && loadedHalfSize < instrPerHalfPage) {
+        if (realUpTo < upperBound && loadedHalfSize > 0 && loadedHalfSize < following + 1) {
             // try to fill it up (the "half" was not enough)
-            callFlow.traverseForInstructionCount(realUpTo, instrPerHalfPage - loadedHalfSize + 1, halfPage::add);
+            callFlow.traverseForInstructionCount(halfPage.get(loadedHalfSize - 1), following - loadedHalfSize + 1,
+                    location -> { if (location <= upperBound) halfPage.add(location); });
             loadedHalfSize = halfPage.size();
         }
 
@@ -354,25 +391,35 @@ public class PaginatingDisassembler {
         halfPage.remove(0); // current instruction would be twice otherwise
         loadedHalfSize--;
 
-        int lastInstructionIndex = instrPerHalfPage + loadedHalfSize;
+        int lastInstructionIndex = currentInstrRow + loadedHalfSize;
 
-        tmpCurrentPage.setLastPage(lastInstructionIndex < instructionsPerPage - 1);
+        tmpCurrentPage.setLastPage(upperBound == lastAddress && lastInstructionIndex < instructionsPerPage - 1);
+        tmpCurrentPage.setMax(loadedHalfSize == 0 ? currentLocation
+                : halfPage.get(Math.min(following, loadedHalfSize) - 1));
         if (row > lastInstructionIndex) {
             return -1;
         }
 
-        int rowLocation = halfPage.get(row - instrPerHalfPage - 1);
-        if (row == Math.min(instructionsPerPage - 1, lastInstructionIndex)) {
-            tmpCurrentPage.setMax(rowLocation);
-        }
-
+        int rowLocation = halfPage.get(row - currentInstrRow - 1);
         return rowLocation;
     }
 
-    private int findLocationBelowHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
+    private int nextPageBoundary(Page page) {
+        Page nextPage = bytesPerPageCache.get(page.index + 1);
+        if (nextPage != null && nextPage.minLocation >= 0) return nextPage.minLocation;
+        if (page.index >= 0) return lastAddress;
+        // A stepped CPU invalidates neighboring cached pages. Retain the partial first
+        // page's overlap with the following centered page while its cache rebuilds.
+        Page next = nextPage == null ? new Page(page.index + 1, -1, -1) : nextPage;
+        int middle = findCurrentLocationInPage(lastKnownCurrentLocation, next, boundaryRowShift(lastKnownCurrentLocation));
+        List<Integer> previous = precedingLocations(middle, callFlow.getLongestInstructionSize() * instrPerHalfPage);
+        return previous.isEmpty() ? middle : previous.get(0);
+    }
+
+    private List<Integer> precedingLocations(int currentLocation, int half) {
         int realFrom = Math.max(0, currentLocation - half);
 
-        List<Integer> halfPage = callFlow.getLocations(realFrom, currentLocation);
+        List<Integer> halfPage = new ArrayList<>(callFlow.getLocations(realFrom, currentLocation));
 
         int loadedHalfSize = halfPage.size();
         if (realFrom > 0 && loadedHalfSize < instructionsPerPage) {
@@ -395,8 +442,12 @@ public class PaginatingDisassembler {
             halfPage.remove(0);
             i++;
         }
+        return halfPage;
+    }
 
-        int firstInstructionIndex = instrPerHalfPage - halfPage.size();
+    private int findLocationBelowHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
+        List<Integer> halfPage = precedingLocations(currentLocation, half);
+        int firstInstructionIndex = currentInstrRow - halfPage.size();
         if (row < firstInstructionIndex) {
             return -1;
         }

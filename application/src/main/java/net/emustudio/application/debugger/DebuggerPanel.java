@@ -20,6 +20,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import javax.swing.*;
@@ -32,6 +33,24 @@ import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
 
 /** Unified debugger workspace. Instruction and byte modes share one table; browsing never changes PC. */
 public final class DebuggerPanel extends JPanel implements AutoCloseable {
+    @FunctionalInterface public interface AddressSelectionListener {
+        void selected(int address, int bank, boolean visit);
+    }
+
+    private AddressSelectionListener addressSelectionListener = (address, bank, visit) -> {};
+    private Runnable inspectionReadyListener = () -> {};
+    private boolean pinnedSelection, changingView, updatingSymbols;
+    private final JCheckBoxMenuItem pinInspection = new JCheckBoxMenuItem("Pin inspection");
+    private final DefaultListModel<SourceAddressMap.Symbol> symbolRows = new DefaultListModel<>();
+    private final JList<SourceAddressMap.Symbol> symbols = new JList<>(symbolRows);
+    private final JLabel symbolContext = new JLabel("Compile sources to browse symbols.");
+    private final JTextField symbolFilter = new JTextField(18);
+    private List<SourceAddressMap.Symbol> compiledSymbols = List.of();
+    private final JLabel inspectionContext = new JLabel();
+    private final JLabel sourceContext = new JLabel("Compile sources to synchronize navigation");
+    private final JLabel snapshotContext = new JLabel();
+    private boolean sourceMappingsCurrent;
+    private Consumer<SourceAddressMap.Symbol> symbolSelected = symbol -> {};
     private final DebugSession session;
     private final GUI gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
@@ -41,7 +60,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private boolean disposed;
     private boolean initializationPending;
     private JToggleButton recordingControl;
-    private final JLabel imageContext;
+    private final JLabel annotationContext;
     private final Dialogs dialogs;
     private final JTabbedPane tabs = new JTabbedPane();
     private final JPanel breakpointPanel;
@@ -67,6 +86,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JComboBox<String> width = new JComboBox<>(new String[] {"1", "2", "4", "8"});
     private final JComboBox<String> watchFormat = new JComboBox<>(new String[] {"Hex + decimal", "Binary", "ASCII"});
     private final JCheckBox bigEndian = new JCheckBox("Big endian");
+    private final JCheckBox capturedStrings = new JCheckBox("String column");
+    private final JCheckBox showUnchangedRegisters = new JCheckBox("Show unchanged registers");
     private final DefaultListModel<String> watchRows = new DefaultListModel<>();
     private final DefaultListModel<String> ruleRows = new DefaultListModel<>();
     private final DefaultListModel<AnnotationIndex.Entry> annotationRows = new DefaultListModel<>();
@@ -117,10 +138,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     }
                                     if (image == null) { initializeImage(); return; }
                                     changedWatches.clear();
-                                    instructionModel.currentPage();
-                                    lastInstructionAddress = session.cpu.getInstructionLocation();
                                     if (inspectBreakpointHit()) { refresh(); return; }
-                                    if (!session.keepsInspection(heldInspection))
+                                    if (!pinnedSelection) {
+                                        instructionModel.currentPage();
+                                        lastInstructionAddress = session.cpu.getInstructionLocation();
+                                    }
+                                    if (!isInspectionPinned())
                                         guard(
                                                 () ->
                                                         navigate(
@@ -175,7 +198,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.instructionRows = new InstructionAnnotationsModel();
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
-        imageContext = gui.label("No program capture yet");
+        annotationContext = gui.label("");
         memoryContext = gui.label("Live bytes — paused CPU");
         baselineContext = gui.label("Baseline: initial capture");
         resultContext = gui.label("All addresses");
@@ -194,9 +217,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JToolBar navigationActions = line(navigationToolbar, button(ICON_UNDO, "Back", () -> travel(backward, forward)),
                 button(ICON_REDO, "Forward", () -> travel(forward, backward)),
                 new JToolBar.Separator());
+        navigationActions.getAccessibleContext().setAccessibleName("Inspected address history and memory snapshot");
+        ((JComponent) navigationActions.getComponent(0)).getAccessibleContext()
+                .setAccessibleDescription("Previous inspected address; does not reverse CPU execution");
+        ((JComponent) navigationActions.getComponent(1)).getAccessibleContext()
+                .setAccessibleDescription("Next inspected address; does not advance CPU execution");
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Instructions", instructionView);
+        tabs.addTab("Symbols", symbolsPanel());
         if (byteMemory) {
             inspectionBank = session.memory.getSelectedBank();
             memoryView = memoryPanel();
@@ -212,9 +241,22 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.addTab("References", flowPanel());
         tabs.addTab("History", historyPanel());
         add(tabs, BorderLayout.CENTER);
+        JPanel context = gui.panel("insets 2 6, fillx, hidemode 3", "[][grow][]", "");
+        inspectionContext.getAccessibleContext().setAccessibleName("Inspection context");
+        sourceContext.getAccessibleContext().setAccessibleName("Source synchronization status");
+        snapshotContext.getAccessibleContext().setAccessibleName("Memory snapshot status");
+        context.add(inspectionContext);
+        context.add(sourceContext, "gapleft 12, growx");
+        context.add(snapshotContext, "gapleft 12");
+        add(context, BorderLayout.NORTH);
         JButton currentProgram = button(ICON_SNAPSHOT, "Take snapshot", () -> {
             if (index != null) session.saveAnnotations();
-            runAnalysis(session::captureImage, this::showImage);
+            runAnalysis(session::captureImage, captured -> {
+                showImage(captured);
+                snapshotContext.setText("Memory snapshot " + java.time.LocalTime.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
+                snapshotContext.setToolTipText("Current memory and metadata captured. This does not capture a screenshot.");
+            });
         });
         currentProgram.setEnabled(session.memory != null && session.memory.getCellTypeClass() == Byte.class);
         currentProgram.getAccessibleContext().setAccessibleDescription(
@@ -224,17 +266,38 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         activateView();
         session.cpu.addCPUListener(stateListener);
         setMinimumSize(new Dimension(300, 160));
+        JPopupMenu selectionMenu = new JPopupMenu();
+        selectionMenu.add(pinInspection);
+        pinInspection.addActionListener(event -> {
+            pinnedSelection = pinInspection.isSelected();
+            if (!pinnedSelection) heldInspection = null;
+            updateInspectionContext();
+        });
+        selectionMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent event) {
+                pinInspection.setSelected(isInspectionPinned());
+                pinInspection.setEnabled(!running && !tasks.isBusy());
+            }
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent event) {}
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent event) {}
+        });
+        table.setComponentPopupMenu(selectionMenu);
         table
                 .getSelectionModel()
                 .addListSelectionListener(
                         e -> {
-                            if (table.getModel() == model && !e.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
+                            if (!navigating && !changingView && table.getModel() == model
+                                    && !e.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
                                 int at =
                                         model.addressAt(
                                                 table.convertRowIndexToModel(
                                                         table.getSelectedRow()));
+                                if (at == inspectedAddress) return;
+                                rememberAddress(at, selectedBank());
+                                heldInspection = null;
                                 lastMemoryAddress = at;
                                 inspectedAddress = at;
+                                notifyAddressSelection(true);
                             }
                         });
         table.addMouseListener(
@@ -263,6 +326,147 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return navigationToolbar;
     }
 
+    public void setAddressSelectionListener(AddressSelectionListener listener) {
+        addressSelectionListener = Objects.requireNonNull(listener);
+    }
+
+    public void setInspectionReadyListener(Runnable listener) {
+        inspectionReadyListener = Objects.requireNonNull(listener);
+    }
+
+    public boolean isInspectionPinned() {
+        return pinnedSelection || session.keepsInspection(heldInspection);
+    }
+
+    public void setSourceNavigationStatus(String message, boolean current) {
+        sourceContext.setText(message);
+        sourceContext.setToolTipText(message);
+        sourceContext.getAccessibleContext().setAccessibleDescription(message);
+        sourceContext.setVisible(!"Source mapping current".equals(message));
+        sourceMappingsCurrent = current;
+        symbols.setEnabled(current && !running && !tasks.isBusy());
+        updateSymbolCount();
+    }
+
+    private void updateInspectionContext() {
+        inspectionContext.setText(running ? "Running — inspection paused"
+                : String.format("Inspect %04X · Bank %d · %s", inspectedAddress, selectedBank(),
+                        isInspectionPinned() ? "Pinned" : "Following"));
+        inspectionContext.setToolTipText("Browsing changes the inspected address, never the CPU's PC or bank. Right-click the listing to pin inspection.");
+        inspectionContext.getAccessibleContext().setAccessibleDescription(inspectionContext.getText());
+        graph.repaint();
+    }
+
+    private void notifyAddressSelection(boolean visit) {
+        updateInspectionContext();
+        if (!disposed && !running && !tasks.isBusy())
+            addressSelectionListener.selected(inspectedAddress, selectedBank(), visit);
+    }
+
+    /** Automatic source following keeps the active analysis tab and respects a pinned inspection. */
+    public void synchronizeSourceAddress(SourceAddressMap.Location location) {
+        if (isInspectionPinned()) return;
+        if (!location.instruction && memoryView == null) return;
+        if (location.instruction && location.bank == instructionBank())
+            alignInstructionAddress(location.address);
+        navigate(location.address, location.bank, true,
+                location.instruction ? NavigationTarget.SOURCE_INSTRUCTION : NavigationTarget.SOURCE_DATA);
+    }
+
+    public void alignInstructionAddress(int address) {
+        if (lastInstructionAddress == address) return;
+        lastInstructionAddress = address;
+        instructionModel.showAddress(address);
+    }
+
+    private void selectInstructionAddress() {
+        if (table.getModel() != instructionRows || running || disposed) return;
+        boolean wasNavigating = navigating;
+        navigating = true;
+        try {
+            for (int row = 0; row < instructionModel.getRowCount(); row++) {
+                if (instructionModel.getLocationAt(row) == lastInstructionAddress) {
+                    table.setRowSelectionInterval(row, row);
+                    break;
+                }
+            }
+        } finally { navigating = wasNavigating; }
+    }
+
+    public void setSymbols(List<SourceAddressMap.Symbol> values, Consumer<SourceAddressMap.Symbol> selection) {
+        updatingSymbols = true;
+        try {
+            symbolSelected = Objects.requireNonNull(selection);
+            compiledSymbols = List.copyOf(values);
+            filterSymbols();
+        } finally { updatingSymbols = false; }
+    }
+
+    public void selectSymbol(SourceCodePosition position, int address, int bank) {
+        SourceAddressMap.Symbol selected = null;
+        for (SourceAddressMap.Symbol symbol : compiledSymbols) {
+            if (!symbol.position.fileName.equals(position.fileName)) continue;
+            if (symbol.position.line == position.line) { selected = symbol; break; }
+            if (symbol.location.filter(location -> location.bank == bank && location.address <= address).isPresent()
+                    && (selected == null || symbol.position.line > selected.position.line)) selected = symbol;
+        }
+        updatingSymbols = true;
+        try { symbols.setSelectedValue(selected, true); if (selected == null) symbols.clearSelection(); }
+        finally { updatingSymbols = false; }
+    }
+
+    private JPanel symbolsPanel() {
+        JPanel panel = borderPanel(4);
+        symbols.getAccessibleContext().setAccessibleName("Compiled symbols");
+        symbols.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        symbols.setToolTipText("Definitions from the last successful compilation. Recompile changed sources to synchronize addresses.");
+        gui.styleList(symbols);
+        symbols.setCellRenderer(new DetailRenderer<>((symbol, row) -> new ListDetail(
+                symbol.location.map(at -> String.format("%04X · Bank %d", at.address, at.bank))
+                        .orElse(symbol.sourceOnly ? "Source only" : "Address unavailable"),
+                symbol.name, Path.of(symbol.position.fileName).getFileName() + ":" + symbol.position.line,
+                symbol.position.fileName + ":" + symbol.position.line)));
+        JPanel filter = gui.panel("insets 4, fillx", "[][grow]", "");
+        filter.add(label("Filter symbols", symbolFilter));
+        filter.add(symbolFilter, "growx");
+        symbolFilter.setToolTipText("Filter by symbol name, source file or address");
+        symbolFilter.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent event) { filterSymbols(); }
+        });
+        panel.add(filter, BorderLayout.NORTH);
+        symbols.addListSelectionListener(event -> {
+            if (!updatingSymbols && !event.getValueIsAdjusting() && symbols.getSelectedValue() != null)
+                symbolSelected.accept(symbols.getSelectedValue());
+        });
+        panel.add(gui.scrollPane(symbols));
+        panel.add(symbolContext, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private void filterSymbols() {
+        SourceAddressMap.Symbol selected = symbols.getSelectedValue();
+        String query = symbolFilter.getText().strip().toLowerCase(Locale.ROOT);
+        boolean wasUpdating = updatingSymbols;
+        updatingSymbols = true;
+        try {
+            updateRows(symbolRows, compiledSymbols.stream()
+                    .filter(symbol -> symbol.toString().toLowerCase(Locale.ROOT).contains(query))
+                    .collect(java.util.stream.Collectors.toList()));
+            if (selected != null && symbolRows.contains(selected)) symbols.setSelectedValue(selected, false);
+            else symbols.clearSelection();
+            updateSymbolCount();
+        } finally { updatingSymbols = wasUpdating; }
+    }
+
+    private void updateSymbolCount() {
+        symbolContext.setVisible(!compiledSymbols.isEmpty());
+        symbolContext.setText(symbolRows.size() == compiledSymbols.size() ? compiledSymbols.size() + " symbols"
+                : symbolRows.size() + " of " + compiledSymbols.size() + " symbols");
+        symbolContext.setToolTipText("Source-only declarations have no memory address. Names and addresses come from the last successful compilation.");
+    }
+
     @Override
     public void close() {
         if (disposed) return;
@@ -277,7 +481,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         session.installImage(captured);
         image = captured.image;
         if (initial) baseline = image;
-        imageContext.setText("Annotations/export image: " + image.identity().substring(0, 8));
+        annotationContext.setToolTipText("Annotations belong to memory image " + image.identity());
         index = captured.annotations;
         resetAnnotationEditor.run();
         refreshAnnotations(annotationFilter.getText());
@@ -315,6 +519,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (!disposed) initializeImage();
             }
             if (image != null && !tasks.isBusy()) guard(this::inspectBreakpointHit);
+            if (!disposed && image != null && !tasks.isBusy() && !running) inspectionReadyListener.run();
         }
     }
 
@@ -416,9 +621,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateExecutionState() {
         table.setEnabled(!running && !tasks.isBusy());
+        symbols.setEnabled(sourceMappingsCurrent && !running && !tasks.isBusy());
         boolean visible = !running || !isInstructionView();
         table.setVisible(visible);
         tableScroll.setVisible(visible);
+        updateInspectionContext();
     }
 
     private int instructionBank() {
@@ -426,51 +633,59 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void activateView() {
-        if (isInstructionView()) {
-            if (selectedBank() != instructionBank()) {
-                navigating = true;
-                try { inspectionBank = instructionBank(); resetMemoryView(); }
-                finally { navigating = false; }
-            }
-            instructionTableHolder.add(tableScroll);
-            table.showInstructions(instructionRows);
-            if (byteMemory) {
-                table.getColumnModel().getColumn(instructionRows.baseCount()).setPreferredWidth(110);
-                table.getColumnModel().getColumn(instructionRows.baseCount() + 1).setPreferredWidth(200);
-            }
-            inspectedAddress = lastInstructionAddress;
-            table.getAccessibleContext().setAccessibleName("Instruction listing");
-            tableScroll.getViewport().setViewPosition(new Point());
-            tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        } else if (memoryView != null && tabs.getSelectedComponent() == memoryView) {
-            if (session.keepsInspection(heldInspection)) {
-                navigating = true;
-                try {
+        boolean wasNavigating = navigating;
+        navigating = true;
+        changingView = true;
+        try {
+            if (isInstructionView()) {
+                if (selectedBank() != instructionBank()) {
+                    inspectionBank = instructionBank();
+                    resetMemoryView();
+                }
+                instructionTableHolder.add(tableScroll);
+                table.showInstructions(instructionRows);
+                if (byteMemory) {
+                    table.getColumnModel().getColumn(instructionRows.baseCount()).setPreferredWidth(110);
+                    table.getColumnModel().getColumn(instructionRows.baseCount() + 1).setPreferredWidth(200);
+                }
+                inspectedAddress = lastInstructionAddress;
+                selectInstructionAddress();
+                table.getAccessibleContext().setAccessibleName("Instruction listing");
+                tableScroll.getViewport().setViewPosition(new Point());
+                tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            } else if (memoryView != null && tabs.getSelectedComponent() == memoryView) {
+                if (session.keepsInspection(heldInspection)) {
                     if (selectedBank() != heldInspection.bank) resetMemoryView();
                     inspectionBank = heldInspection.bank;
                     lastMemoryAddress = heldInspection.address;
-                } finally { navigating = false; }
+                }
+                memoryView.add(tableScroll, BorderLayout.CENTER);
+                table.setModel(model);
+                table.setDefaultRenderer(Object.class, memoryRenderer);
+                table.setDefaultRenderer(String.class, memoryRenderer);
+                configureMemoryColumns();
+                table.getAccessibleContext().setAccessibleName("Memory bytes");
+                tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+                int target = lastMemoryAddress < 0 ? lastInstructionAddress : lastMemoryAddress;
+                if (target >= 0 && target < session.memory.getSize() && model.rowAt(target) < 0) {
+                    resetMemoryView();
+                    lastMemoryAddress = target;
+                }
+                inspectedAddress = target;
+                int row = model.rowAt(target);
+                if (target >= 0 && row >= 0) {
+                    table.setRowSelectionInterval(row, row);
+                    SwingUtilities.invokeLater(() -> {
+                        if (!disposed && table.getModel() == model && table.getSelectedRow() >= 0)
+                            table.scrollRectToVisible(table.getCellRect(table.getSelectedRow(), 0, true));
+                    });
+                }
             }
-            memoryView.add(tableScroll, BorderLayout.CENTER);
-            table.setModel(model);
-            table.setDefaultRenderer(Object.class, memoryRenderer);
-            table.setDefaultRenderer(String.class, memoryRenderer);
-            table.getAccessibleContext().setAccessibleName("Memory bytes");
-            tableScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            int target = lastMemoryAddress < 0 ? lastInstructionAddress : lastMemoryAddress;
-            inspectedAddress = target;
-            int row = model.rowAt(target);
-            if (target >= 0 && row >= 0) {
-                table.setRowSelectionInterval(row, row);
-                SwingUtilities.invokeLater(() -> {
-                    if (!disposed && table.getModel() == model && table.getSelectedRow() >= 0)
-                        table.scrollRectToVisible(table.getCellRect(table.getSelectedRow(), 0, true));
-                });
-            }
-        }
-        updateExecutionState();
-        revalidate();
-        repaint();
+            updateExecutionState();
+            revalidate();
+            repaint();
+        } finally { changingView = false; navigating = wasNavigating; }
+        if (!navigating) notifyAddressSelection(false);
     }
 
     public void showBreakpoints() {
@@ -486,7 +701,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         BreakpointDialog dialog = new BreakpointDialog(parent, dialogs, gui, inspectedAddress,
                 selectedBank(), byteMemory ? session.memory.getBanksCount() : 1,
                 session.cpu.getAddressSpaceSize(), byteMemory ? session.memory.getSize() : 0,
-                session.cpu.isBreakpointSupported() || session.debug != null, this::applyBreakpointRequest);
+                session.cpu.isBreakpointSupported() || session.debug != null, session::breakpointState, this::applyBreakpointRequest);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
@@ -537,6 +752,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!byteMemory || image == null || tasks.isBusy()) return false;
         DebugSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
+        instructionModel.currentPage();
+        lastInstructionAddress = session.cpu.getInstructionLocation();
         inspectLive(hit.address, hit.bank);
         heldInspection = hit;
         return true;
@@ -544,10 +761,23 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void followAddress(int at, int selected) {
         if (navigating || tasks.isBusy()) return;
-        if (!session.keepsInspection(heldInspection)) navigate(at, selected, true);
+        navigate(at, selected, true);
     }
 
     public void navigate(int at, int selected, boolean remember) {
+        navigate(at, selected, remember, NavigationTarget.LISTING);
+    }
+
+    private void rememberAddress(int at, int selected) {
+        if (inspectedAddress == at && selectedBank() == selected) return;
+        backward.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
+        while (backward.size() > 100) backward.removeFirst();
+        forward.clear();
+    }
+
+    private enum NavigationTarget { LISTING, SOURCE_INSTRUCTION, SOURCE_DATA }
+
+    private void navigate(int at, int selected, boolean remember, NavigationTarget target) {
         if (tasks.isBusy()) return;
         session.requirePaused();
         if (session.memory == null) return;
@@ -556,16 +786,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 || selected < 0
                 || selected >= (byteMemory ? session.memory.getBanksCount() : 1))
             throw new IllegalArgumentException("Address/bank outside memory");
-        if (remember && (inspectedAddress != at || selectedBank() != selected)) {
-            backward.addLast(new int[] {inspectedAddress, selectedBank(), table.getModel() == model ? 1 : 0});
-            while (backward.size() > 100) backward.removeFirst();
-            forward.clear();
-        }
+        if (table.getModel() == model && model.rowAt(at) < 0 && !remember) return;
+        if (remember) { rememberAddress(at, selected); heldInspection = null; lastMemoryAddress = at; }
         navigating = true;
         try {
             if (selectedBank() != selected) resetMemoryView();
             inspectionBank = selected;
-            if (selected != instructionBank() && memoryView != null) showMemory();
+            if (memoryView != null && (isInstructionView() || target == NavigationTarget.LISTING)
+                    && (selected != instructionBank() || target == NavigationTarget.SOURCE_DATA)) showMemory();
             inspectedAddress = at;
             if (table.getModel() == model && tabs.getSelectedComponent() == memoryView) {
                 int row = model.rowAt(at);
@@ -574,25 +802,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     row = at;
                 }
                 if (row >= 0) {
+                    lastMemoryAddress = at;
                     table.setRowSelectionInterval(row, row);
                     table.scrollRectToVisible(table.getCellRect(row, 0, true));
                 }
-            } else {
-                if (remember) showInstructions();
+            } else if (target != NavigationTarget.SOURCE_DATA && selected == instructionBank()) {
+                if (remember && target == NavigationTarget.LISTING) showInstructions();
                 lastInstructionAddress = at;
                 inspectedAddress = at;
                 instructionModel.showAddress(at);
-                for (int row = 0; table.getModel() == instructionRows && row < instructionModel.getRowCount(); row++) {
-                    if (instructionModel.getLocationAt(row) == at) {
-                        table.setRowSelectionInterval(row, row);
-                        table.scrollRectToVisible(table.getCellRect(row, 0, true));
-                        break;
-                    }
-                }
+                selectInstructionAddress();
             }
         } finally {
             navigating = false;
         }
+        notifyAddressSelection(remember);
     }
 
     private void travel(Deque<int[]> from, Deque<int[]> to) {
@@ -614,6 +838,31 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         memoryContext.setText("Live bytes — paused CPU");
         resultContext.setText("All addresses");
         model.showAll();
+    }
+
+    private void configureMemoryColumns() {
+        if (table.getModel() != model) return;
+        javax.swing.table.TableColumn strings = null;
+        for (int c = 0; c < table.getColumnCount(); c++)
+            if (table.getColumnModel().getColumn(c).getModelIndex() == 4)
+                strings = table.getColumnModel().getColumn(c);
+        if (!capturedStrings.isSelected() && strings != null) table.removeColumn(strings);
+        else if (capturedStrings.isSelected() && strings == null) {
+            strings = new javax.swing.table.TableColumn(4);
+            strings.setHeaderValue("Captured string");
+            strings.setPreferredWidth(180);
+            table.addColumn(strings);
+        }
+        for (int c = 0; c < table.getColumnCount(); c++) {
+            javax.swing.table.TableColumn column = table.getColumnModel().getColumn(c);
+            switch (column.getModelIndex()) {
+                case 0: column.setMaxWidth(110); column.setPreferredWidth(90); break;
+                case 1: column.setMaxWidth(75); column.setPreferredWidth(60); break;
+                case 2: column.setPreferredWidth(160); break;
+                case 3: column.setPreferredWidth(360); break;
+                default: break;
+            }
+        }
     }
 
     private JPanel memoryPanel() {
@@ -675,8 +924,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
         });
         pattern.addActionListener(e -> find.doClick());
-        line(controls, label("Find", findKind), findKind, label("Value", pattern), pattern,
+        findKind.getAccessibleContext().setAccessibleName("Search type");
+        line(controls, label("Find", pattern), findKind, pattern,
                 widthLabel, width, bigEndian, find);
+        pattern.getAccessibleContext().setAccessibleName("Search value");
         JComboBox<String> rescan = new JComboBox<>(new String[] {"Changed", "Equal", "Increased", "Decreased"});
         JToolBar resultTools = line(controls, resultContext, button(ICON_MOVE_UP, "Previous", () -> selectResult(-1)),
                 button(ICON_MOVE_DOWN, "Next", () -> selectResult(1)), rescan,
@@ -712,6 +963,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         resultTools.add(button(ICON_MEMORY, "Live memory", this::resetMemoryView));
         resultTools.add(more);
         resultTools.add(memoryContext);
+        capturedStrings.setToolTipText("Show or hide the captured-string column without changing memory or results");
+        capturedStrings.addActionListener(event -> configureMemoryColumns());
         JToolBar compareActions = line(compareTools, button(ICON_ASCII, "Find strings", () -> {
             int selected = selectedBank();
             runAnalysis(() -> {
@@ -721,6 +974,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 viewCapture = found.capture;
                 discoveredStrings = found.strings;
                 stringBank = selected;
+                capturedStrings.setSelected(true);
+                configureMemoryColumns();
                 memoryContext.setText("Captured bytes — ASCII strings, bank " + selected);
                 differences.clear();
                 model.show(new ArrayList<>(discoveredStrings.keySet()));
@@ -761,6 +1016,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             });
         }));
         compareActions.add(button(ICON_COMPILER, "Show source", () -> showSource(inspectedAddress)));
+        compareActions.add(capturedStrings);
         controls.add(compareTools, "span, growx, wrap");
         compareActions.add(baselineContext);
         panel.add(scrollTools(controls), BorderLayout.NORTH);
@@ -829,6 +1085,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private JPanel annotationPanel() {
         JPanel panel = borderPanel(4);
+        annotations.setCellRenderer(new DetailRenderer<>((entry, row) -> new ListDetail(
+                String.format("%04X · Bank %d", entry.address, entry.bank),
+                entry.label.isBlank() ? "Unnamed annotation" : entry.label,
+                entry.kind + (entry.bookmark ? " · Bookmark" : "")
+                        + (entry.comment.isBlank() ? "" : " · " + entry.comment), entry.toString())));
         annotations.getAccessibleContext().setAccessibleName("Annotations");
         panel.add(gui.scrollPane(annotations));
         JPanel tools = row();
@@ -836,9 +1097,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JCheckBox bookmark = new JCheckBox("Bookmark");
         JComboBox<String> kind = new JComboBox<>(new String[] {"UNKNOWN", "CODE", "DATA"});
         int[] editingTarget = {selectedBank(), 0};
-        JLabel editingContext = gui.label("Editing bank 0:0000");
-        Runnable updateEditingContext = () -> editingContext.setText(
-                String.format("Editing bank %d:%04X", editingTarget[0], editingTarget[1]));
+        annotationContext.getAccessibleContext().setAccessibleName("Annotation editing address");
+        Runnable updateEditingContext = () -> annotationContext.setText(
+                String.format("Edit %04X · Bank %d", editingTarget[1], editingTarget[0]));
         resetAnnotationEditor = () -> {
             annotations.clearSelection();
             editingTarget[0] = selectedBank();
@@ -850,8 +1111,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             kind.setSelectedItem(entry == null ? "UNKNOWN" : entry.kind);
             updateEditingContext.run();
         };
-        line(tools, imageContext, editingContext,
-                button(ICON_RENAME, "Annotate inspected address", () -> resetAnnotationEditor.run()));
         annotations.addListSelectionListener(e -> {
             AnnotationIndex.Entry entry = annotations.getSelectedValue();
             if (!e.getValueIsAdjusting() && entry != null) {
@@ -865,7 +1124,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 guard(() -> navigate(entry.address, entry.bank, true));
             }
         });
-        line(tools, label("Filter", annotationFilter), annotationFilter, bookmarksOnly,
+        JToolBar filterTools = line(tools, label("Filter", annotationFilter), annotationFilter, bookmarksOnly,
                 button(ICON_JUMP, "Go to annotation", () -> {
                     AnnotationIndex.Entry entry = annotations.getSelectedValue();
                     if (entry != null) navigate(entry.address, entry.bank, true);
@@ -878,20 +1137,28 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         model.refreshData();
                     }
                 }));
+        filterTools.addSeparator();
+        filterTools.add(annotationContext);
+        filterTools.add(button(ICON_RENAME, "Annotate inspected address", () -> resetAnnotationEditor.run()));
         annotationFilter.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { refreshAnnotations(annotationFilter.getText()); }
         });
         bookmarksOnly.addActionListener(e -> refreshAnnotations(annotationFilter.getText()));
-        line(tools, label("Label", labelField), labelField, label("Comment", comment), comment);
+        JPanel fields = gui.panel("insets 4, fillx", "[][120:180:240,fill][][grow,fill]", "");
+        fields.add(label("Label", labelField));
+        fields.add(labelField, "growx");
+        fields.add(label("Comment", comment));
+        fields.add(comment, "growx");
+        tools.add(fields, "span, growx, wrap");
         JToolBar annotationActions = line(tools, label("Kind", kind), kind, bookmark, button(ICON_SAVE, "Save annotation", () -> {
             index.put(new AnnotationIndex.Entry(editingTarget[0], editingTarget[1],
                     labelField.getText(), comment.getText(), bookmark.isSelected(), (String) kind.getSelectedItem()));
             session.saveAnnotations();
             refreshAnnotations(annotationFilter.getText());
             model.refreshData();
-        }), button(ICON_SAVE, "Save", () -> {
+        }), button(ICON_SAVE, "Export annotations", () -> {
             Path path = choose(true, false);
             if (path != null) index.save(path);
         }), button(ICON_LOAD, "Import", () -> {
@@ -926,20 +1193,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         watches.setFont(new Font(Font.MONOSPACED, Font.PLAIN, watches.getFont().getSize()));
         watches.getAccessibleContext().setAccessibleName("Watch expressions and values");
         watches.setToolTipText("Values use the inspected bank. Changed values are marked until the next execution stop.");
-        watches.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int row,
-                    boolean selected, boolean focus) {
-                Component cell = super.getListCellRendererComponent(list, value, row, selected, focus);
-                setToolTipText(String.valueOf(value));
-                if (!selected && row < displayedWatches.size() && changedWatches.contains(displayedWatches.get(row)))
-                    cell.setFont(cell.getFont().deriveFont(Font.BOLD));
-                return cell;
-            }
-        });
+        watches.setCellRenderer(new DetailRenderer<>((value, row) -> {
+            int separator = value.indexOf(" = ");
+            return separator < 0 ? new ListDetail("Error", value, "", value)
+                    : new ListDetail(value.substring(0, separator), value.substring(separator + 3), "", value);
+        }));
         panel.add(gui.scrollPane(watches));
         JPanel tools = row();
         JTextField expression = gui.textField("", 16);
+        expression.setToolTipText("Register or expression, for example A or mem[0x2000]. Values use the inspected bank.");
         JButton add = button(ICON_ADD, "Add", () -> {
             session.evaluate(expression.getText(), selectedBank());
             session.watches.add(expression.getText());
@@ -952,7 +1214,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         watchFormat.setToolTipText("Watch value format");
         watchFormat.getAccessibleContext().setAccessibleName("Watch value format");
 
-        line(tools, label("Expression", expression), expression, add);
+        JPanel entry = gui.panel("insets 4, fillx", "[][grow][]", "");
+        entry.add(label("Expression", expression));
+        entry.add(expression, "growx");
+        JToolBar entryActions = toolBar();
+        entryActions.add(add);
+        entry.add(entryActions);
+        tools.add(entry, "span, growx, wrap");
         JToolBar watchTools = line(tools, button(ICON_REMOVE, "Remove", () -> {
             int selected = watches.getSelectedIndex();
             if (selected >= 0) {
@@ -1003,11 +1271,33 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private JPanel rulePanel() {
         JPanel p = borderPanel(0);
         rules.getAccessibleContext().setAccessibleName("Breakpoints");
+        rules.setCellRenderer(new DetailRenderer<>((value, row) -> {
+            if (row >= 0 && row < displayedRules.size()) {
+                DebugSession.Rule rule = displayedRules.get(row);
+                String target = rule.kind.equals("SOURCE")
+                        ? Path.of(rule.source).getFileName() + ":" + rule.address : String.format("%04X", rule.address);
+                return new ListDetail(rule.enabled ? "Enabled" : "Disabled", rule.name,
+                        rule.kind + " · " + target + " · " + (rule.bank < 0 ? "All banks" : "Bank " + rule.bank)
+                                + " · hits " + rule.hits + " / " + rule.afterHits
+                                + (rule.keepInspection ? " · Keep inspection" : "")
+                                + (rule.condition.isBlank() ? "" : " · if " + rule.condition), value);
+            }
+            int ordinary = row - displayedRules.size();
+            return ordinary >= 0 && ordinary < ordinaryBreakpoints.size()
+                    ? new ListDetail("Enabled", String.format("EXEC · %04X", ordinaryBreakpoints.get(ordinary)),
+                            session.breakpointState(ordinaryBreakpoints.get(ordinary)) == BreakpointState.KEEP_INSPECTION
+                                    ? "Keep inspection while stepping" : "Inspect on hit", value)
+                    : new ListDetail("", value, "", value);
+        }));
         p.add(gui.scrollPane(rules));
         JPanel tools = row();
         JTextField name = gui.textField("Breakpoint", 10), at = gui.textField("0x0000", 7),
                 condition = gui.textField("", 18), hits = gui.textField("1", 3),
-                bankField = gui.textField("-1", 3), source = gui.textField("", 22);
+                source = gui.textField("", 22);
+        JComboBox<String> bankField = new JComboBox<>();
+        bankField.addItem("All banks");
+        for (int bank = 0; bank < (session.memory == null ? 1 : session.memory.getBanksCount()); bank++)
+            bankField.addItem("Bank " + bank);
         JComboBox<String> kind = new JComboBox<>(new String[] {"EXEC", "READ", "WRITE", "SOURCE"});
         JCheckBox keepInspection = new JCheckBox("Keep inspection while stepping");
         kind.getAccessibleContext().setAccessibleName("Breakpoint kind");
@@ -1024,7 +1314,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         });
         JButton addRule = button(ICON_ADD, "Add breakpoint", () -> {
             if (session.debug == null) throw new IllegalStateException("Advanced breakpoints unavailable for this CPU");
-            int ruleBank = Integer.parseInt(bankField.getText()), location = Integer.decode(at.getText());
+            int ruleBank = bankField.getSelectedIndex() - 1, location = Integer.decode(at.getText());
             String type = (String) kind.getSelectedItem();
             if (session.memory != null && ruleBank >= session.memory.getBanksCount())
                 throw new IllegalArgumentException("Bank outside memory; use -1 for all banks");
@@ -1045,11 +1335,25 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             rules.setSelectedIndex(session.rules.size() - 1);
             session.save();
         });
-        line(tools, label("Name", name), name, label("Kind", kind), kind, atLabel, at,
-                label("Bank (-1 all)", bankField), bankField);
-        line(tools, label("Condition", condition), condition, label("Stop from hit", hits), hits, addRule);
-        line(tools, keepInspection);
-        line(tools, sourceLabel, source);
+        JPanel fields = gui.panel("insets 4, fillx, hidemode 3", "[][grow,fill][][grow,fill][]", "");
+        fields.add(label("Name", name)); fields.add(name);
+        fields.add(label("Kind", kind)); fields.add(kind); fields.add(addRule, "wrap");
+        fields.add(atLabel); fields.add(at);
+        fields.add(label("Bank", bankField)); fields.add(bankField);
+        JToggleButton advanced = toggleButton(ICON_SETTINGS, "Advanced breakpoint options");
+        fields.add(advanced, "wrap");
+        fields.add(sourceLabel); fields.add(source, "span 3, growx, wrap");
+        tools.add(fields, "span, growx, wrap");
+        JPanel advancedFields = gui.panel("insets 4, fillx", "[][grow,fill][][70!,fill]", "");
+        advancedFields.add(label("Condition", condition)); advancedFields.add(condition);
+        advancedFields.add(label("Stop from hit", hits)); advancedFields.add(hits, "wrap");
+        advancedFields.add(keepInspection, "span, wrap");
+        advancedFields.setVisible(false);
+        advanced.addActionListener(event -> {
+            advancedFields.setVisible(advanced.isSelected());
+            tools.revalidate();
+        });
+        tools.add(advancedFields, "span, growx, wrap");
         addRule.setEnabled(session.debug != null);
 
         JToolBar actions = line(tools);
@@ -1219,7 +1523,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(button(ICON_STEP, "Go to instruction", () -> {
             if (nodes.getSelectedItem() != null) navigate((Integer) nodes.getSelectedItem(), selectedBank(), true);
         }));
-        tools.add(gui.label("Analyze an address, then select a reference or instruction. Indirect targets may be unresolved."), "span, wrap");
+        JLabel flowHint = gui.label("Select a reference or instruction to inspect. Indirect targets may be unresolved.");
+        flowHint.setToolTipText("Graph: arrow keys select instructions; Enter follows. PC marks the live instruction.");
+        graph.getAccessibleContext().setAccessibleDescription(flowHint.getToolTipText());
+        tools.add(flowHint, "span, wrap");
         references.getAccessibleContext().setAccessibleName("Static references");
         references.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "followReference");
         references.getActionMap().put("followReference", new AbstractAction() {
@@ -1241,6 +1548,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private JPanel historyPanel() {
         JPanel p = borderPanel(0);
         history.getAccessibleContext().setAccessibleName("Recorded instructions");
+        history.setCellRenderer(new DetailRenderer<>((value, row) -> {
+            if (row < 0 || row >= displayedHistory.size()) return new ListDetail("", value, "", value);
+            DebugCPU.Instruction event = displayedHistory.get(row);
+            AnnotationIndex.Entry annotation = annotationAt(event.address, event.bank);
+            String name = annotation == null || annotation.label.isBlank()
+                    ? (event.completed ? "Completed instruction" : "Instruction failed")
+                    : annotation.label + " (current label)";
+            long writes = event.accesses.stream().filter(access -> access.write).count();
+            return new ListDetail(String.format("%04X → %04X", event.address, event.after.getOrDefault("PC", 0L)),
+                    name, "Bank " + event.bank + " · " + (event.accesses.size() - writes) + " reads · " + writes + " writes",
+                    value + "; names use current annotations, register and memory values are recorded");
+        }));
         JPanel tools = borderPanel(0);
         JToggleButton recording = toggleButton(ICON_RECORD, "Record last 1024 instructions");
         recording.setSelected(session.isRecording());
@@ -1251,52 +1570,57 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JToolBar actions = toolBar();
         actions.add(recording);
         actions.add(button(ICON_REFRESH, "Refresh", this::refresh));
+        actions.add(showUnchangedRegisters);
+        showUnchangedRegisters.addActionListener(event -> showHistoricalState(history.getSelectedIndex()));
         tools.add(actions, BorderLayout.NORTH);
         tools.add(
                 gui.label(
-                        "Historical state is read-only. Move PC Back does not restore machine"
-                                + " state."),
+                        "Read-only history. Moving PC does not restore machine state."),
                 BorderLayout.SOUTH);
         historicalState.setEditable(false);
         historicalState.setFont(new Font(Font.MONOSPACED, Font.PLAIN, historicalState.getFont().getSize()));
         historicalState.getAccessibleContext().setAccessibleName("Recorded instruction state");
-        history.addListSelectionListener(
-                e -> {
-                    int selected = history.getSelectedIndex();
-                    List<DebugCPU.Instruction> events = displayedHistory;
-                    if (selected >= 0 && selected < events.size()) {
-                        DebugCPU.Instruction event = events.get(selected);
-                        StringBuilder text =
-                                new StringBuilder("Historical state — live CPU unchanged\n");
-                        event.before.forEach(
-                                (name, value) -> {
-                                    long after = event.after.get(name);
-                                    text.append(name)
-                                            .append(": ")
-                                            .append(String.format("%X", value))
-                                            .append(" → ")
-                                            .append(String.format("%X", after))
-                                            .append(value != after ? " *" : "")
-                                            .append('\n');
-                                });
-                        for (DebugCPU.Access a : event.accesses)
-                            text.append(
-                                    String.format(
-                                            "%s bank %d:%04X = %02X\n",
-                                            a.write ? "WRITE" : "READ",
-                                            a.bank,
-                                            a.address,
-                                            a.value));
-                        historicalState.setText(text.toString());
-                        historicalState.setCaretPosition(0);
-                    }
-                });
+        history.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) showHistoricalState(history.getSelectedIndex());
+        });
         p.add(tools, BorderLayout.NORTH);
         JSplitPane split =
                 gui.splitPaneLeftToRight(gui.scrollPane(history), gui.scrollPane(historicalState), .4);
         split.setResizeWeight(.4);
         p.add(split);
         return p;
+    }
+
+    private void showHistoricalState(int selected) {
+        if (selected < 0 || selected >= displayedHistory.size()) return;
+        DebugCPU.Instruction event = displayedHistory.get(selected);
+        StringBuilder text = new StringBuilder("Changed registers\n");
+        List<String> names = new ArrayList<>(event.before.keySet());
+        names.sort(String::compareTo);
+        boolean changed = false;
+        for (String name : names) {
+            long before = event.before.get(name), after = event.after.getOrDefault(name, before);
+            if (before != after) {
+                text.append(String.format("%-5s %X → %X\n", name, before, after));
+                changed = true;
+            }
+        }
+        if (!changed) text.append("None\n");
+        if (showUnchangedRegisters.isSelected()) {
+            text.append("\nUnchanged registers\n");
+            for (String name : names) {
+                long before = event.before.get(name);
+                if (before == event.after.getOrDefault(name, before))
+                    text.append(String.format("%-5s %X\n", name, before));
+            }
+        }
+        text.append("\nRecorded memory accesses\n");
+        if (event.accesses.isEmpty()) text.append("None\n");
+        for (DebugCPU.Access access : event.accesses)
+            text.append(String.format("%s bank %d:%04X = %02X\n", access.write ? "WRITE" : "READ",
+                    access.bank, access.address, access.value));
+        historicalState.setText(text.toString());
+        historicalState.setCaretPosition(0);
     }
 
     private void showSource(int at) {
@@ -1346,6 +1670,60 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             else if (!Objects.equals(model.get(i), values.get(i))) model.set(i, values.get(i));
         }
         while (model.size() > values.size()) model.remove(model.size() - 1);
+    }
+
+    private static final class ListDetail {
+        final String location, title, detail, tooltip;
+
+        ListDetail(String location, String title, String detail, String tooltip) {
+            this.location = location;
+            this.title = title;
+            this.detail = detail;
+            this.tooltip = tooltip;
+        }
+    }
+
+    /** Keep list navigation while giving addresses and descriptions stable, scannable columns. */
+    private static final class DetailRenderer<T> extends JPanel implements ListCellRenderer<T> {
+        private final DefaultListCellRenderer standard = new DefaultListCellRenderer();
+        private final JLabel location = new JLabel(), title = new JLabel(), detail = new JLabel();
+        private final JPanel text = new JPanel(new BorderLayout(0, 2));
+        private final BiFunction<T, Integer, ListDetail> describe;
+
+        DetailRenderer(BiFunction<T, Integer, ListDetail> describe) {
+            super(new BorderLayout(10, 0));
+            this.describe = describe;
+            location.setPreferredSize(new Dimension(122, 20));
+            location.setVerticalAlignment(SwingConstants.TOP);
+            for (JLabel label : List.of(location, title, detail)) label.putClientProperty("html.disable", true);
+            text.setOpaque(false);
+            text.add(title, BorderLayout.NORTH);
+            text.add(detail, BorderLayout.SOUTH);
+            add(location, BorderLayout.WEST);
+            add(text);
+        }
+
+        @Override public Component getListCellRendererComponent(JList<? extends T> list, T value,
+                int index, boolean selected, boolean focus) {
+            standard.getListCellRendererComponent(list, value, index, selected, focus);
+            ListDetail row = describe.apply(value, index);
+            setBackground(standard.getBackground());
+            setEnabled(list.isEnabled());
+            setBorder(BorderFactory.createCompoundBorder(standard.getBorder(), BorderFactory.createEmptyBorder(3, 4, 3, 4)));
+            for (JLabel label : List.of(location, title, detail)) {
+                label.setForeground(standard.getForeground());
+                label.setFont(list.getFont());
+                label.setEnabled(list.isEnabled());
+            }
+            location.setFont(new Font(Font.MONOSPACED, Font.PLAIN, list.getFont().getSize()));
+            location.setText(row.location);
+            title.setText(row.title);
+            detail.setText(row.detail);
+            detail.setVisible(!row.detail.isBlank());
+            setToolTipText(row.tooltip);
+            getAccessibleContext().setAccessibleName(row.location + ", " + row.title + ", " + row.detail);
+            return this;
+        }
     }
 
     private void refresh() {
@@ -1477,6 +1855,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public void tableChanged(TableModelEvent event) {
             if (event.getFirstRow() == TableModelEvent.HEADER_ROW) fireTableStructureChanged();
             else fireTableDataChanged();
+            selectInstructionAddress();
         }
     }
 
@@ -1530,24 +1909,62 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private final class GraphPanel extends JPanel {
         FlowAnalysis flow;
+        int bank, common;
         final Map<Integer, Rectangle> boxes = new LinkedHashMap<>();
 
         GraphPanel() {
+            setFocusable(true);
+            setToolTipText("");
+            getAccessibleContext().setAccessibleName("Instruction flow graph");
+            for (int code : new int[]{KeyEvent.VK_LEFT, KeyEvent.VK_UP, KeyEvent.VK_RIGHT, KeyEvent.VK_DOWN}) {
+                int delta = code == KeyEvent.VK_LEFT || code == KeyEvent.VK_UP ? -1 : 1;
+                String action = "flow" + code;
+                getInputMap().put(KeyStroke.getKeyStroke(code, 0), action);
+                getActionMap().put(action, new AbstractAction() {
+                    public void actionPerformed(ActionEvent event) {
+                        List<Integer> addresses = new ArrayList<>(boxes.keySet());
+                        if (addresses.isEmpty()) return;
+                        int current = addresses.indexOf(inspectedAddress);
+                        followNode(addresses.get(current < 0 ? 0 : Math.floorMod(current + delta, addresses.size())));
+                    }
+                });
+            }
+            getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "followFlow");
+            getActionMap().put("followFlow", new AbstractAction() {
+                public void actionPerformed(ActionEvent event) {
+                    if (boxes.containsKey(inspectedAddress)) followNode(inspectedAddress);
+                }
+            });
             addMouseListener(
                     new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             boxes.forEach(
                                     (at, box) -> {
-                                        if (box.contains(e.getPoint()))
-                                            guard(() -> navigate(at, selectedBank(), true));
+                                        if (box.contains(e.getPoint())) {
+                                            requestFocusInWindow();
+                                            followNode(at);
+                                        }
                                     });
                         }
                     });
         }
 
+        private void followNode(int address) {
+            guard(() -> navigate(address, bank, true, NavigationTarget.SOURCE_INSTRUCTION));
+        }
+
+        @Override public String getToolTipText(MouseEvent event) {
+            for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet())
+                if (entry.getValue().contains(event.getPoint()))
+                    return String.format("%04X · %s", entry.getKey(), flow.listing.get(entry.getKey()));
+            return "Arrow keys select an instruction; Enter follows it without changing the CPU";
+        }
+
         void setFlow(FlowAnalysis flow) {
             this.flow = flow;
+            bank = selectedBank();
+            common = session.memory == null ? 0 : session.memory.getCommonBoundary();
             boxes.clear();
             int i = 0;
             for (int at : flow.instructions.keySet()) {
@@ -1578,14 +1995,27 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                             ty,
                             tx - (int) (10 * Math.cos(angle + delta)),
                             ty - (int) (10 * Math.sin(angle + delta)));
+                if (!e.kind.equals("next")) {
+                    int labelX = (x + tx) / 2, labelY = (y + ty) / 2;
+                    g.setColor(getBackground());
+                    g.fillRect(labelX - 4, labelY - 12, g.getFontMetrics().stringWidth(e.kind) + 8, 16);
+                    g.setColor(getForeground());
+                    g.drawString(e.kind, labelX, labelY);
+                }
             }
             for (Map.Entry<Integer, Rectangle> entry : boxes.entrySet()) {
                 Rectangle box = entry.getValue();
-                g.setColor(getBackground());
+                boolean selected = (entry.getKey() >= common || bank == selectedBank()) && entry.getKey() == inspectedAddress;
+                boolean pc = !running && !tasks.isBusy()
+                        && (entry.getKey() >= common || bank == instructionBank()) && entry.getKey() == session.cpu.getInstructionLocation();
+                Color selectionBackground = UIManager.getColor("List.selectionBackground");
+                Color selectionForeground = UIManager.getColor("List.selectionForeground");
+                g.setColor(selected && selectionBackground != null ? selectionBackground : getBackground());
                 g.fillRect(box.x, box.y, box.width, box.height);
-                g.setColor(getForeground());
+                g.setColor(selected && selectionForeground != null ? selectionForeground : getForeground());
+                g.setStroke(new BasicStroke(selected ? 2 : 1));
                 g.drawRect(box.x, box.y, box.width, box.height);
-                g.drawString(String.format("%04X", entry.getKey()), box.x + 8, box.y + 20);
+                g.drawString(String.format("%04X%s", entry.getKey(), pc ? " · PC" : ""), box.x + 8, box.y + 20);
                 String text = flow.listing.get(entry.getKey());
                 g.drawString(
                         text.length() > 28 ? text.substring(0, 28) : text, box.x + 8, box.y + 42);

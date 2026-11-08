@@ -53,6 +53,8 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
 
             assertFalse(onEdt(gridButton::isSelected));
             assertEquals(42, onEdt(gridSlider::getValue).intValue());
+            assertFalse(onEdt(findComponent(dialog, JComboBox.class, combo -> true)::isEnabled));
+            findLabel(dialog, "Select and move components. Choose a toolbar tool to edit the schema.");
         }
     }
 
@@ -188,12 +190,17 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
             JComboBox<?> pluginCombo = findComponent(dialog, JComboBox.class, combo -> true);
 
             triggerButton(compilerButton);
-            getDrawingPanel(dialog).fireToolWasUsed();
+            runOnEdt(() -> {
+                try { getDrawingPanel(dialog).fireToolWasUsed(); }
+                catch (Exception e) { throw new RuntimeException(e); }
+            });
 
             assertEquals(DrawingPanel.Tool.TOOL_NOTHING, getDrawingModel(dialog).drawTool);
             assertFalse(readButtonSelected(dialog));
             assertFalse(onEdt(compilerButton::isSelected));
             assertEquals(0, onEdt(pluginCombo::getItemCount).intValue());
+            assertFalse(onEdt(pluginCombo::isEnabled));
+            findLabel(dialog, "Select and move components. Choose a toolbar tool to edit the schema.");
         } finally {
             cleanupPluginFile(plugin, PLUGIN_TYPE.COMPILER);
         }

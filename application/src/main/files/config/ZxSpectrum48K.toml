@@ -9,9 +9,10 @@ name = "ZX Spectrum 48K + AY"
 
 	[MEMORY.settings]
 		#memorySize = 49152
-		banksCount = 0
+		banksCount = 1
 		ROMfrom0 = 0
-		imageName0 = "/home/vbmacher/tmp/emuStudio/examples/zxspectrum-48k/48.rom"
+		# Supply your own 16 KB ROM as 48.rom in the installation directory, or set its path here.
+		imageName0 = "48.rom"
 		imageBank1 = 0
 		imageBank0 = 0
 		commonBoundary = 0

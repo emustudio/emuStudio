@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
+import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Test;
@@ -15,6 +16,38 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class BreakpointDialogTest extends AbstractSwingTest {
+    @Test
+    public void anExplicitKeepInspectionDraftSurvivesAddressEdits() {
+        AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
+        BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(), mock(Dialogs.class),
+                new EmuStudioGui(), 7, 0, 1, 256, 128, true, address -> BreakpointState.OFF,
+                request -> { submitted.set(request); return true; }));
+        showDialog(dialog);
+        triggerButton(findComponent(dialog, JCheckBox.class, box -> true));
+        setText(findComponent(dialog, JTextField.class, field -> true), "0x08");
+        triggerButton(findButton(dialog, "Set"));
+        assertEquals(8, submitted.get().address);
+        assertTrue(submitted.get().keepInspection);
+    }
+
+    @Test
+    public void existingBreakpointStateFollowsTheAddressAndPreventsMeaninglessUnset() {
+        BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(), mock(Dialogs.class),
+                new EmuStudioGui(), 7, 0, 1, 256, 128, true,
+                address -> address == 7 ? BreakpointState.KEEP_INSPECTION : BreakpointState.OFF,
+                request -> false));
+        showDialog(dialog);
+        JCheckBox keep = findComponent(dialog, JCheckBox.class, box -> true);
+        JLabel state = findComponent(dialog, JLabel.class,
+                label -> "Existing breakpoint state".equals(label.getAccessibleContext().getAccessibleName()));
+        assertTrue(onEdt(keep::isSelected));
+        assertTrue(onEdt(findButton(dialog, "Unset")::isEnabled));
+        setText(findComponent(dialog, JTextField.class, field -> true), "8");
+        assertTrue(onEdt(state::getText).contains("No execution breakpoint"));
+        assertFalse(onEdt(keep::isSelected));
+        assertFalse(onEdt(findButton(dialog, "Unset")::isEnabled));
+    }
+
     @Test
     public void setButtonSubmitsParsedAddressBankAndKeepInspection() {
         AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
@@ -70,7 +103,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
     public void singleBankIsFixedToZero() {
         AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
         BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(), mock(Dialogs.class),
-                new EmuStudioGui(), 7, 0, 1, 256, 128, true,
+                new EmuStudioGui(), 7, 0, 1, 256, 128, true, address -> BreakpointState.OFF,
                 request -> { submitted.set(request); return true; }));
         showDialog(dialog);
         JComboBox<?> bank = findComponent(dialog, JComboBox.class, field -> true);
@@ -112,7 +145,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
 
     private BreakpointDialog createDialog(Dialogs dialogs, boolean supported, Predicate<BreakpointDialog.Request> submit) {
         return onEdt(() -> {
-            BreakpointDialog result = new BreakpointDialog(new JFrame(), dialogs, new EmuStudioGui(), 7, 1, 2, 256, 128, supported, submit);
+            BreakpointDialog result = new BreakpointDialog(new JFrame(), dialogs, new EmuStudioGui(), 7, 1, 2, 256, 128, supported, address -> BreakpointState.ON, submit);
             result.setModal(false);
             return result;
         });
