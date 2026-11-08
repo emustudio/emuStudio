@@ -8,9 +8,11 @@ import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
+import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl;
+import net.emustudio.plugins.cpu.zilogZ80.gui.DecoderImpl;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
-import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
-import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,7 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  * (parallel with other hardware)
  */
 // TODO: set frequency runtime
-public class EmulatorEngine implements CpuEngine {
+public class EmulatorEngine {
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
 
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_Y = 0x20, FLAG_H = 0x10, FLAG_X = 0x8, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
@@ -80,14 +82,26 @@ public class EmulatorEngine implements CpuEngine {
     private int lastOpcode;
     private volatile RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
 
-    private volatile DispatchListener dispatchListener;
-
     // True only while an instruction (or interrupt) is being dispatched.
     // Guards cycle accounting so external memory reads do not affect active CPU timing state.
     private boolean dispatching = false;
 
+    private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
+        MemoryContext<Byte> memory = DebugProbe.inspectionMemory(executionMemory);
+        DecoderImpl decoder = new DecoderImpl(memory);
+        return new Disassembler() {
+            @Override public DisassembledInstruction disassemble(int at) {
+                // Generated disassemblers cache by address. A fresh view sees same-PC writes/bank changes.
+                return new DisassemblerImpl(memory, decoder).disassemble(at);
+            }
+            @Override public int getNextInstructionPosition(int at) {
+                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(at);
+            }
+        };
+    }
+
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
-        this.debugger = new DebugProbe("Z80", memory);
+        this.debugger = new DebugProbe("Z80", memory, recordingDisassembler(memory));
         this.memory = memory;
         MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
         debugger.onActivityChanged(
@@ -173,11 +187,6 @@ public class EmulatorEngine implements CpuEngine {
             flagsString += "C";
         }
         return flagsString;
-    }
-
-    @Override
-    public void setDispatchListener(DispatchListener dispatchListener) {
-        this.dispatchListener = dispatchListener;
     }
 
     public void addExecutedCyclesPerTimeSlice(long cycles) {
@@ -333,23 +342,20 @@ public class EmulatorEngine implements CpuEngine {
         boolean completed = false;
         try {
             dispatchRaw();
-            completed = true;
+            completed = currentRunState != CPU.RunState.STATE_STOPPED_BAD_INSTR
+                    && currentRunState != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
             if (debugger.end(completed)) currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
         }
     }
 
     private void dispatchRaw() throws Throwable {
-        DispatchListener tmpListener = dispatchListener;
-        if (tmpListener != null) {
-            tmpListener.beforeDispatch();
-        }
-
         dispatching = true;
         try {
             lastQ = Q;
             Q = 0;
             if (pendingNonMaskableInterrupt.getAndSet(false)) {
+                if (debuggerActive) debugger.describeInterrupt("NMI acknowledge", "");
                 // NMI acknowledge is an M1 cycle and advances the refresh register.
                 incrementR();
                 if (memory.read(PC) == 0x76) {
@@ -370,12 +376,14 @@ public class EmulatorEngine implements CpuEngine {
                 // Level-triggered interrupt mode (e.g., ZX Spectrum ULA holds INT for N T-states)
                 if (IFF[0] && levelInterrupt != null) {
                     doInterrupt();
+                    if (debuggerActive) debugger.captureInstruction(PC, "INT acknowledge; ");
                 }
                 // Don't discard when IFF[0]=false - signal persists until countdown expires
             } else {
                 // Edge-triggered interrupt mode (original behavior)
                 if (IFF[0] && !pendingInterrupts.isEmpty()) {
                     doInterrupt();
+                    if (debuggerActive) debugger.captureInstruction(PC, "INT acknowledge; ");
                 } else if (!pendingInterrupts.isEmpty()) {
                     pendingInterrupts.poll(); // if interrupts are disabled, ignore it; otherwise stack overflow
                 }
@@ -383,9 +391,6 @@ public class EmulatorEngine implements CpuEngine {
             DISPATCH(DISPATCH_TABLE);
         } finally {
             dispatching = false;
-            if (tmpListener != null) {
-                tmpListener.afterDispatch();
-            }
         }
     }
 
@@ -1210,7 +1215,6 @@ public class EmulatorEngine implements CpuEngine {
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
         Q = flags;
     }
-
 
     void I_ADC_A_B() {
         I_ADC_A(regs[REG_B]);
@@ -2091,7 +2095,6 @@ public class EmulatorEngine implements CpuEngine {
         Q = flags;
         advanceCycles(4);
     }
-
 
     void I_OUT_REF_C_B() {
         I_OUT_REF_C_R(regs[REG_B]);

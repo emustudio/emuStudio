@@ -48,6 +48,10 @@ public class AutomationCommand implements Callable<Integer> {
     @CommandLine.Option(names = "--debug-script", description = "run bounded STEP/RUN/ASSERT/CAPTURE operations after compile/reset")
     private java.nio.file.Path debugScript;
 
+    @CommandLine.Option(names = "--record-instructions", paramLabel = "FILE",
+            description = "record executed instructions to a new file, including without GUI")
+    private java.nio.file.Path instructionRecording;
+
 
     @Override
     public Integer call() {
@@ -97,6 +101,7 @@ public class AutomationCommand implements Callable<Integer> {
                 );
                 splash.ifPresent(Window::dispose);
                 automation.setDebugScript(debugScript);
+                automation.setInstructionRecording(instructionRecording);
                 automation.run();
                 if (!automation.isSuccessful()) return 1;
             }

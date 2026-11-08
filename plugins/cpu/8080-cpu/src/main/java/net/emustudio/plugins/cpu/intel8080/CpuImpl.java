@@ -49,7 +49,7 @@ public class CpuImpl extends AbstractCPU {
         }
         context.setCPUFrequency(settings.getInt("frequency_khz", Context8080Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerFor8080(
-                this, pluginID, applicationApi.getContextPool(), settings, context
+                pluginID, applicationApi.getContextPool(), context
         );
     }
 
@@ -68,7 +68,7 @@ public class CpuImpl extends AbstractCPU {
                 initializer.getDisassembler(), initializer.getEngine().debugger.memory(), false);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
-            statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions(), applicationApi.getGUI());
+            statusPanel = new StatusPanel(this, context, applicationApi.getGUI());
         }
     }
 
@@ -82,7 +82,6 @@ public class CpuImpl extends AbstractCPU {
         frequencyCalculator.stop();
         frequencyCalculator.close();
         context.clearDevices();
-        initializer.destroy();
     }
 
     @Override

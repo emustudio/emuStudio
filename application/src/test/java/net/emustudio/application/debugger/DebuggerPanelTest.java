@@ -267,7 +267,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
     public void recordingControlMatchesSessionAcrossRunAndPause() throws Exception {
         try (Fixture f = new Fixture()) {
             JToggleButton recording = findComponent(f.panel, JToggleButton.class,
-                    control -> "Record last 1024 instructions".equals(control.getToolTipText()));
+                    control -> "Record recent instructions".equals(control.getToolTipText()));
             ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
             verify(f.cpu, atLeastOnce()).addCPUListener(listeners.capture());
             listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING));
@@ -286,6 +286,47 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             f.stopped();
             assertTrue(onEdt(recording::isEnabled));
             assertTrue(onEdt(recording::isSelected));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void wordMemoryRecordingControlsAndHistoryRecoverAfterRunAndPause() throws Exception {
+        CPU cpu = mock(CPU.class);
+        DebugCPU debug = mock(DebugCPU.class);
+        MemoryContext<Integer> memory = mock(MemoryContext.class);
+        doReturn(Integer.class).when(memory).getCellTypeClass();
+        when(memory.getSize()).thenReturn(16);
+        when(memory.getBanksCount()).thenReturn(1);
+        doReturn(memory).when(debug).memory();
+        when(debug.processor()).thenReturn("word CPU");
+        when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("PC", 32)));
+        when(cpu.getDebugger()).thenReturn(Optional.of(debug));
+        when(cpu.getAddressSpaceSize()).thenReturn(16);
+        try (DebugSession session = new DebugSession(cpu, memory, null)) {
+            DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
+            try {
+                JToggleButton recording = findToggleButtonByTooltip(panel, "Record recent instructions");
+                triggerButton(recording);
+                java.nio.file.Path file = temporary.getRoot().toPath().resolve("word.emutrace");
+                session.recordTo(file);
+                ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
+                verify(cpu, atLeastOnce()).addCPUListener(listeners.capture());
+                listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING));
+                runOnEdt(() -> {});
+                assertFalse(onEdt(recording::isEnabled));
+                session.afterInstruction(historyEvent(1, 0, 42, 4));
+                listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
+                runOnEdt(() -> {});
+                assertTrue(onEdt(recording::isEnabled));
+                assertEquals(1, onEdt(historyTable(panel)::getRowCount).intValue());
+                JButton fileRecording = findButtonByTooltip(panel, "Stop file recording");
+                assertTrue(onEdt(fileRecording::isEnabled));
+                triggerButton(fileRecording);
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+                while (session.recordingPath() != null && System.nanoTime() < deadline) Thread.sleep(10);
+                runOnEdt(() -> {});
+                assertNull(session.recordingPath());
+            } finally { runOnEdt(panel::close); }
         }
     }
 
@@ -334,7 +375,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
 
             runOnEdt(f.panel::showInstructions);
             assertSame(table, findComponent(f.panel, JTable.class, ignored -> true));
-            assertEquals(1, countTables(f.panel));
+            assertEquals(2, countTables(f.panel)); // Shared instruction/byte table plus independent History table.
             assertEquals("bp", onEdt(() -> table.getColumnName(0)));
             assertEquals("Instruction", onEdt(() -> table.getColumnName(1)));
             assertEquals("nop", onEdt(() -> table.getValueAt(0, 1)));
@@ -348,7 +389,7 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             assertSame(bytes, onEdt(table::getModel));
             assertEquals(3, onEdt(table::getSelectedRow).intValue());
             assertEquals("09", onEdt(() -> table.getValueAt(3, 1)));
-            assertEquals(1, countTables(f.panel));
+            assertEquals(2, countTables(f.panel)); // Shared instruction/byte table plus independent History table.
         }
     }
 
@@ -596,13 +637,12 @@ public class DebuggerPanelTest extends AbstractSwingTest {
     public void historyEmphasizesChangesAndRevealsUnchangedRegistersOnDemand() throws Exception {
         try (Fixture f = new Fixture()) {
             f.session.record(1024);
-            f.session.afterInstruction(new DebugCPU.Instruction(0, 0,
+            f.session.afterInstruction(new DebugCPU.Instruction(1, 0, 0, "inc a", "3C",
                     java.util.Map.of("PC", 0L, "SP", 5L, "A", 1L),
                     java.util.Map.of("PC", 1L, "SP", 5L, "A", 2L), List.of(), true));
             f.refresh();
-            JList<?> history = findComponent(f.panel, JList.class,
-                    list -> "Recorded instructions".equals(list.getAccessibleContext().getAccessibleName()));
-            runOnEdt(() -> history.setSelectedIndex(0));
+            JTable history = historyTable(f.panel);
+            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
             JTextArea state = findComponent(f.panel, JTextArea.class,
                     area -> "Recorded instruction state".equals(area.getAccessibleContext().getAccessibleName()));
             String changes = onEdt(state::getText);
@@ -612,8 +652,144 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             triggerButton(findComponent(f.panel, JCheckBox.class,
                     box -> "Show unchanged registers".equals(box.getText())));
             assertTrue(onEdt(state::getText).contains("SP "));
-            assertEquals(0, onEdt(history::getSelectedIndex).intValue());
+            assertEquals(0, onEdt(history::getSelectedRow).intValue());
             verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    private JTable historyTable(DebuggerPanel panel) {
+        return findComponent(panel, JTable.class,
+                table -> "Recorded instructions".equals(table.getAccessibleContext().getAccessibleName()));
+    }
+
+    private JTextField historyField(DebuggerPanel panel, String name) {
+        return findComponent(panel, JTextField.class, field -> name.equals(field.getAccessibleContext().getAccessibleName()));
+    }
+
+    private DebugCPU.Instruction historyEvent(long sequence, int pc, int value, int writeAddress) {
+        return new DebugCPU.Instruction(sequence, pc, 1, "ld a, " + value, "3E " + String.format("%02X", value),
+                java.util.Map.of("PC", (long) pc, "A", 0L),
+                java.util.Map.of("PC", (long) pc + 2, "A", (long) value),
+                List.of(new DebugCPU.Access(writeAddress, 1, value, true)), true);
+    }
+
+    @Test(timeout = 10000)
+    public void historyFiltersKeepSequenceNumbersAndPreviousWriteRevealsEarlierEvent() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.record(10);
+            f.session.afterInstruction(historyEvent(10, 0, 1, 3));
+            f.session.afterInstruction(historyEvent(11, 2, 2, 4));
+            f.session.afterInstruction(historyEvent(12, 4, 3, 3));
+            f.refresh();
+            JTable history = historyTable(f.panel);
+            setText(historyField(f.panel, "PC from"), "0x2");
+            setText(historyField(f.panel, "Changed register"), "a");
+            setText(historyField(f.panel, "Memory address"), "3");
+            setText(historyField(f.panel, "Memory bank"), "1");
+            triggerButton(findButtonByTooltip(f.panel, "Apply history filters"));
+            assertEquals(1, onEdt(history::getRowCount).intValue());
+            assertEquals("12", onEdt(() -> history.getValueAt(0, 0)));
+            assertEquals("ld a, 3", onEdt(() -> history.getValueAt(0, 4)));
+            assertEquals("3E 03", onEdt(() -> history.getValueAt(0, 3)));
+            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
+            triggerButton(findButtonByTooltip(f.panel, "Previous recorded write"));
+            assertEquals(2, onEdt(history::getRowCount).intValue());
+            assertEquals("10", onEdt(() -> history.getValueAt(history.getSelectedRow(), 0)));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void historyFoldingPreservesRecordedEventsAndCanBeExpanded() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.record(10);
+            for (int i = 1; i <= 3; i++)
+                f.session.afterInstruction(new DebugCPU.Instruction(i, 0, 0, "jp 0", "C3 00 00",
+                        java.util.Map.of("PC", 0L), java.util.Map.of("PC", 0L), List.of(), true));
+            f.refresh();
+            JTable history = historyTable(f.panel);
+            JCheckBox fold = findComponent(f.panel, JCheckBox.class, box -> "Fold identical repeats".equals(box.getText()));
+            triggerButton(fold);
+            assertEquals(1, onEdt(history::getRowCount).intValue());
+            assertEquals("1–3 (3)", onEdt(() -> history.getValueAt(0, 0)));
+            assertEquals(3, f.session.history().size());
+            triggerButton(fold);
+            assertEquals(3, onEdt(history::getRowCount).intValue());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void recentHistoryLimitIsConfigurableAndPreservesVisibleSequence() throws Exception {
+        try (Fixture f = new Fixture()) {
+            JSpinner limit = findComponent(f.panel, JSpinner.class,
+                    spinner -> "Recent limit".equals(spinner.getAccessibleContext().getAccessibleName()));
+            runOnEdt(() -> limit.setValue(2));
+            triggerButton(findToggleButtonByTooltip(f.panel, "Record recent instructions"));
+            for (int i = 1; i <= 3; i++) f.session.afterInstruction(historyEvent(i, 0, i, 3));
+            f.refresh();
+            JTable history = historyTable(f.panel);
+            assertEquals(2, onEdt(history::getRowCount).intValue());
+            assertEquals("2", onEdt(() -> history.getValueAt(0, 0)));
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void offlineHistoryPagesUseCapturedProcessorAndValuesWithoutLiveAnnotations() throws Exception {
+        try (Fixture f = new Fixture()) {
+            java.nio.file.Path file = temporary.getRoot().toPath().resolve("offline.emutrace");
+            InstructionRecording.Header header = new InstructionRecording.Header("Z80 capture", List.of(new DebugCPU.Register("A", 8)));
+            java.util.ArrayList<DebugCPU.Instruction> events = new java.util.ArrayList<>();
+            for (int i = 1; i <= 1025; i++) events.add(historyEvent(i, 0x8000, 42, 0x9000));
+            InstructionRecording.write(file, header, events);
+            f.session.annotations().put(new AnnotationIndex.Entry(0, 0, "unrelated-live-label", "", false, "CODE"));
+            f.byteValue.set(99);
+            runOnEdt(() -> f.panel.openRecording(file));
+            awaitReady(f.panel);
+            JTable history = historyTable(f.panel);
+            assertEquals(1024, onEdt(history::getRowCount).intValue());
+            assertEquals("8000", onEdt(() -> history.getValueAt(0, 2)));
+            assertEquals("ld a, 42", onEdt(() -> history.getValueAt(0, 4)));
+            JLabel status = findComponent(f.panel, JLabel.class,
+                    label -> "Recording status".equals(label.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(status::getText).contains("Z80 capture"));
+            triggerButton(findButtonByTooltip(f.panel, "Next page"));
+            awaitReady(f.panel);
+            assertEquals(1, onEdt(history::getRowCount).intValue());
+            assertEquals("1025", onEdt(() -> history.getValueAt(0, 0)));
+            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
+            JTextArea state = findComponent(f.panel, JTextArea.class,
+                    area -> "Recorded instruction state".equals(area.getAccessibleContext().getAccessibleName()));
+            assertTrue(onEdt(state::getText).contains("WRITE bank 1:9000 = 2A"));
+            assertFalse(onEdt(state::getText).contains("unrelated-live-label"));
+            triggerButton(findButtonByTooltip(f.panel, "First page"));
+            awaitReady(f.panel);
+            assertEquals("1", onEdt(() -> history.getValueAt(0, 0)));
+            verify(f.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void offlineHistoryWorksWithoutCpuDebugSupport() throws Exception {
+        java.nio.file.Path file = temporary.getRoot().toPath().resolve("unsupported.emutrace");
+        InstructionRecording.write(file,
+                new InstructionRecording.Header("Recorded Z80", List.of(new DebugCPU.Register("A", 8))),
+                List.of(historyEvent(7, 0x8000, 42, 0x9000)));
+        CPU cpu = mock(CPU.class);
+        when(cpu.getDebugger()).thenReturn(Optional.empty());
+        try (DebugSession session = new DebugSession(cpu, null, null)) {
+            DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
+            try {
+                runOnEdt(() -> panel.openRecording(file));
+                JButton open = findButtonByTooltip(panel, "Open recording");
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+                while (!onEdt(open::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
+                assertTrue(onEdt(open::isEnabled));
+                JTable history = historyTable(panel);
+                assertEquals(1, onEdt(history::getRowCount).intValue());
+                assertEquals("7", onEdt(() -> history.getValueAt(0, 0)));
+                assertFalse(onEdt(findToggleButtonByTooltip(panel, "Record recent instructions")::isEnabled));
+                verify(cpu, never()).setInstructionLocation(anyInt());
+            } finally { runOnEdt(panel::close); }
         }
     }
 
@@ -637,7 +813,8 @@ public class DebuggerPanelTest extends AbstractSwingTest {
             when(memory.getCommonBoundary()).thenReturn(8);
             when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation ->
                     (byte) (selectiveValue.get() && (Integer) invocation.getArgument(0) != 3 ? 0 : byteValue.get()));
-            when(debug.memory()).thenReturn(memory);
+            doReturn(memory).when(debug).memory();
+            when(debug.processor()).thenReturn("Test CPU");
             when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
             when(cpu.getDebugger()).thenReturn(Optional.of(debug));
             when(cpu.getAddressSpaceSize()).thenReturn(8);

@@ -3,6 +3,8 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
+import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -17,6 +19,8 @@ import java.util.function.BiFunction;
 
 public class EmulatorEngine {
     public final AtomicInteger IP = new AtomicInteger();
+    public final DebugProbe debugger;
+    boolean debugStopped;
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
     private final AbstractTapeContext storageTape;
@@ -28,6 +32,9 @@ public class EmulatorEngine {
         this.outputTape = Objects.requireNonNull(outputTape);
         this.storageTape = Objects.requireNonNull(storageTape);
         this.memory = Objects.requireNonNull(memory);
+        debugger = new DebugProbe("RAM", memory, new RamDisassembler(memory));
+        debugger.register("PC", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
+        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
     }
 
     public boolean setInstructionLocation(int location) {
@@ -50,6 +57,25 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() {
+        debugStopped = false;
+        if (!debugger.isActive()) return stepInstruction();
+        if (!debugger.begin(IP.get())) {
+            debugStopped = true;
+            return CPU.RunState.STATE_STOPPED_BREAK;
+        }
+        boolean completed = false;
+        CPU.RunState result;
+        try {
+            result = stepInstruction();
+            completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
+                    && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+        } finally {
+            debugStopped = debugger.end(completed);
+        }
+        return debugStopped && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+    }
+
+    private CPU.RunState stepInstruction() {
         RamInstruction instruction = memory.read(IP.getAndIncrement());
         if (instruction == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;

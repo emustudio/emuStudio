@@ -14,7 +14,7 @@ public class WatchExpressionTest {
         DebugMemory m = new DebugMemory(16, 2, 8);
         m.values[1][2] = 0x34;
         m.values[1][3] = 0x12;
-        DebugProbe cpu = new DebugProbe("Z80", m);
+        DebugProbe cpu = new DebugProbe("Z80", m, org.mockito.Mockito.mock(net.emustudio.emulib.plugins.cpu.Disassembler.class));
         cpu.register("HL", 16, () -> 2, v -> {});
         assertEquals(0x1234, WatchExpression.evaluate("mem16[HL]", cpu, m, 1));
         assertEquals(0x3412, WatchExpression.evaluate("mem16be(reg(HL))", cpu, m, 1));

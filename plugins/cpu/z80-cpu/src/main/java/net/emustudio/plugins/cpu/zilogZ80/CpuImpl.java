@@ -52,7 +52,7 @@ public class CpuImpl extends AbstractCPU {
         }
         context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerZ80(
-                this, pluginID, applicationApi.getContextPool(), settings, context
+                pluginID, applicationApi.getContextPool(), context
         );
     }
 
@@ -86,7 +86,7 @@ public class CpuImpl extends AbstractCPU {
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, initializer.shouldDumpInstructions(), applicationApi.getDialogs(), applicationApi.getGUI()
+                    this, context, applicationApi.getDialogs(), applicationApi.getGUI()
             );
         }
     }
@@ -158,7 +158,6 @@ public class CpuImpl extends AbstractCPU {
         frequencyCalculator.stop();
         frequencyCalculator.close();
         context.clearDevices();
-        initializer.destroy();
     }
 
     @Override

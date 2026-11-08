@@ -37,8 +37,11 @@ public class Automation implements Runnable {
     private final EmulationProgress progress;
     private volatile CPU.RunState resultState;
     private Path debugScript;
+    private Path instructionRecording;
+    private boolean recordingStarted;
     private boolean successful=true;
     public void setDebugScript(Path path) { debugScript=path; }
+    public void setInstructionRecording(Path path) { instructionRecording = path; }
     public boolean isSuccessful() { return successful; }
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
@@ -87,7 +90,8 @@ public class Automation implements Runnable {
         try {
             computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
-            if (debugScript != null && computer.getCPU().isEmpty()) { throw new IllegalStateException("Debug script requires a CPU"); }
+            if ((debugScript != null || instructionRecording != null) && computer.getCPU().isEmpty())
+                throw new IllegalStateException("Debug scripts and recording require a CPU");
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
                 if (programLocation != null) {
@@ -95,6 +99,10 @@ public class Automation implements Runnable {
                     cpu.reset(programLocation);
                 } else {
                     cpu.reset();
+                }
+                if (instructionRecording != null) {
+                    Unchecked.run(() -> computer.getDebugger().orElseThrow().recordTo(instructionRecording));
+                    recordingStarted = true;
                 }
                 if (debugScript != null) {
                     try { net.emustudio.application.debugger.DebugScript.run(computer.getDebugger().orElseThrow(), debugScript); }
@@ -107,6 +115,17 @@ public class Automation implements Runnable {
             LOGGER.error("Error during automation", e);
             dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
         } finally {
+            if (recordingStarted) {
+                try {
+                    if (resultState == CPU.RunState.STATE_RUNNING) computer.getCPU().orElseThrow().pause();
+                    computer.getDebugger().orElseThrow().stopRecordingFile();
+                } catch (Exception e) {
+                    successful = false;
+                    LOGGER.error("Could not finish instruction recording", e);
+                    dialogs.showError("Instruction recording is incomplete. Please consult log file for details.", "Emulation automation");
+                }
+                recordingStarted = false;
+            }
             progress.dispose();
         }
     }

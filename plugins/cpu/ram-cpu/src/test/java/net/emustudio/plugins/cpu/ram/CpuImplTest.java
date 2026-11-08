@@ -344,4 +344,23 @@ public class CpuImplTest {
         JPanel panel = cpu.getStatusPanel();
         assertNotNull(panel);
     }
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactTypedInstruction() throws Exception {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
+        expect(instruction.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
+        expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
+        replay(instruction);
+        expect(memory.read(0)).andReturn(instruction).anyTimes();
+        initCpu();
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(1, cpu.getInstructionLocation());
+    }
 }

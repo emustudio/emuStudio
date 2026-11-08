@@ -251,4 +251,21 @@ public class CpuImplTest {
         cpu.execute();
         Thread.sleep(300);
     }
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactGuestInstruction() throws Exception {
+        initCpu();
+        memory.write(0, JMP);
+        memory.write(1, 0); // Infinite loop unless the recording stop is respected.
+        cpu.reset(0);
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(0, cpu.getInstructionLocation());
+    }
 }
