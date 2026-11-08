@@ -3,6 +3,9 @@
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -19,12 +22,17 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final Color selectedForeground;
 
     private final MemoryTableModel tableModel;
+    private final AnnotationEngine annotations;
+    private final ExecutionState executionState;
     private final JList<String> rowHeader;
     private final String[] addresses;
     private int currentPage;
 
-    MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight) {
+    MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight,
+                       AnnotationEngine annotations, ExecutionState executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
+        this.annotations = annotations;
+        this.executionState = executionState;
 
         setOpaque(true);
         setDoubleBuffered(true);
@@ -58,11 +66,25 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
+        int address = tableModel.toAddress(row, column);
+        boolean mapped = tableModel.isMappedAddress(address);
+        String label = mapped ? AnnotationLabels.at(annotations, address) : "";
+        boolean current = mapped && executionState != null && executionState.currentInstruction() == address;
+        StringBuilder tooltip = new StringBuilder("<html>");
+        if (current) tooltip.append("Current instruction<br>");
+        if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");
+        if (tableModel.isROMAt(row, column)) tooltip.append("Read-only memory<br>");
+        if (tableModel.isAtBANK(row, column)) tooltip.append("Banked memory<br>");
+        setToolTipText(tooltip.length() == 6 ? null : tooltip.append("</html>").toString());
         if (isSelected) {
             this.setBackground(selectedBackground);
             this.setForeground(selectedForeground);
         } else {
-            if (tableModel.isROMAt(row, column)) {
+            if (current) {
+                this.setBackground(new Color(255, 204, 204));
+            } else if (!label.isEmpty()) {
+                this.setBackground(new Color(230, 230, 230));
+            } else if (tableModel.isROMAt(row, column)) {
                 this.setBackground(ROM_COLOR);
             } else if (tableModel.isAtBANK(row, column)) {
                 this.setBackground(BANK_COLOR);
@@ -74,6 +96,11 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         remakeAddresses();
         setText(value.toString());
         return this;
+    }
+
+    private static String escape(String value) {
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\n", "<br>");
     }
 
     private void remakeAddresses() {

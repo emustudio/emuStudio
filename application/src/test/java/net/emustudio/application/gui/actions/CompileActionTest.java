@@ -18,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 import javax.swing.*;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -105,7 +107,7 @@ public class CompileActionTest {
     }
 
     @Test
-    public void actionCompilesCurrentFileAndResetsMemoryAndCpu() throws Exception {
+    public void actionCompilesCurrentFileAndResetsCpuWithoutResettingMemory() throws Exception {
         Memory memory = mock(Memory.class);
         CPU cpu = mock(CPU.class);
         File file = new File("program.asm");
@@ -126,9 +128,36 @@ public class CompileActionTest {
 
         assertEquals("", compilerOutput.getText());
         assertEquals(1, titleUpdates.get());
-        verify(memory).reset();
+        verify(memory, never()).reset();
         verify(compiler).compile(Path.of("program.asm"), Optional.empty());
         verify(cpu).reset();
+    }
+
+    @Test
+    public void failedCompilationDoesNotResetMemoryOrCpu() {
+        Memory memory = mock(Memory.class);
+        CPU cpu = mock(CPU.class);
+        List<CompilerListener> listeners = new ArrayList<>();
+        when(computer.getCompiler()).thenReturn(Optional.of(compiler));
+        when(computer.getMemory()).thenReturn(Optional.of(memory));
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDebugger()).thenReturn(Optional.empty());
+        when(editor.saveFile()).thenReturn(true);
+        when(editor.getCurrentFile()).thenReturn(Optional.of(new File("program.asm")));
+        doAnswer(call -> { listeners.add(call.getArgument(0)); return null; }).when(compiler).addCompilerListener(any());
+        doAnswer(call -> {
+            CompilerMessage error = new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "invalid");
+            List.copyOf(listeners).forEach(listener -> listener.onMessage(error));
+            return null;
+        }).when(compiler).compile(any(), any());
+        CompileAction action = new CompileAction(computer, dialogs, editor,
+                () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {});
+
+        action.actionPerformed(null);
+
+        verify(compiler).compile(any(), any());
+        verify(memory, never()).reset();
+        verify(cpu, never()).reset();
     }
 
     @Test
@@ -150,4 +179,5 @@ public class CompileActionTest {
         assertTrue(compilerOutput.getText().contains("Could not compile file:"));
         assertTrue(compilerOutput.getText().contains("compile failed"));
     }
+
 }

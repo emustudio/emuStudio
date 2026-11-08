@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,12 +19,23 @@ public class MemoryContextImplTest {
 
     @Before
     public void setUp() {
-        this.memory = new MemoryContextImpl(new Annotations());
+        this.memory = new MemoryContextImpl();
     }
 
     @Test
     public void testMemoryNotificationsAreEnabledByDefault() {
         assertTrue(memory.areMemoryNotificationsEnabled());
+    }
+
+    @Test
+    public void sizeReflectsLoadedCellsAcrossSparseLoadAndClear() {
+        assertEquals(0, memory.getSize());
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
+        memory.write(Integer.MAX_VALUE - 1, instruction);
+        assertEquals(1, memory.getSize());
+        assertEquals(instruction, memory.read(Integer.MAX_VALUE - 1));
+        memory.clear();
+        assertEquals(0, memory.getSize());
     }
 
     @Test

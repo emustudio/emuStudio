@@ -18,7 +18,7 @@ public class EmulatorEngineTest {
     @Before
     public void setUp() {
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
-        engine = new EmulatorEngine(memoryStub, p -> false);
+        engine = new EmulatorEngine(memoryStub);
     }
 
     @Test

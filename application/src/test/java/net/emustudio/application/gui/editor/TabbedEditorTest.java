@@ -4,6 +4,7 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Files;
@@ -25,6 +27,28 @@ import static org.mockito.Mockito.*;
 public class TabbedEditorTest extends AbstractSwingTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void updatesTitleWhileTabHeaderIsAbsent() throws Exception {
+        Path file = source("header.asm", "NOP");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), files -> { }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+
+        runOnEdt(() -> {
+            Component header = tabs.getTabComponentAt(0);
+            tabs.setTabComponentAt(0, null);
+            try {
+                assertTrue(editor.saveFile());
+                assertEquals("header.asm", tabs.getTitleAt(0));
+            } finally {
+                tabs.setTabComponentAt(0, header);
+            }
+            editor.activeEditor().textPane().append("\nHLT");
+        });
+
+        assertEquals("header.asm*", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("header.asm*", findLabel((Container) onEdt(() -> tabs.getTabComponentAt(0)), "header.asm*").getText());
+    }
 
     @Test
     public void opensFilesInTabsAndRoutesToSelectedTab() throws Exception {
@@ -207,6 +231,90 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(2, onEdt(tabs::getTabCount).intValue());
         assertEquals("library.asm", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals(include, editor.getCurrentFile().orElseThrow().toPath());
+    }
+
+    @Test
+    public void tabVisitThenDebuggerVisitReturnsToTheSelectedFileInSourceHistory() throws Exception {
+        Path first = source("a.asm", "nop\nhlt\n");
+        Path second = source("b.asm", "nop\nret\n");
+        Path third = source("c.asm", "nop\ninr a\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
+                List.of(first, second), paths -> {}));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        runOnEdt(() -> {
+            tabs.setSelectedIndex(0);
+            editor.setPosition(SourceCodePosition.of(2, 0, first.toString()));
+            tabs.setSelectedIndex(1); // No native-focus event needed to remember this visit.
+            editor.visitPosition(SourceCodePosition.of(2, 0, third.toString()));
+            JMenu menu = new JMenu("Edit");
+            editor.extendEditingMenu(menu);
+            JMenu navigate = (JMenu) java.util.Arrays.stream(menu.getMenuComponents())
+                    .filter(c -> c instanceof JMenu && "Navigate".equals(((JMenu) c).getText())).findFirst().orElseThrow();
+            for (Component component : navigate.getMenuComponents())
+                if (component instanceof JMenuItem && "Back".equals(((JMenuItem) component).getText()))
+                    ((JMenuItem) component).doClick(0);
+        });
+        assertEquals(second, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+    }
+
+    @Test
+    public void synchronizedPositionsKeepSplitAndDoNotEmitSourceFeedback() throws Exception {
+        Path file = source("split.asm", "nop\ninr a\nhlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        List<SourceCodePosition> selected = new ArrayList<>();
+        runOnEdt(() -> {
+            editor.setSourcePositionChanged(selected::add);
+            editor.split(true);
+        });
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        Component split = onEdt(tabs::getSelectedComponent);
+        runOnEdt(() -> editor.synchronizePosition(SourceCodePosition.of(3, 0, file.toString())));
+        assertSame(split, onEdt(tabs::getSelectedComponent));
+        assertTrue(selected.isEmpty());
+        assertEquals(3, onEdt(() -> editor.currentSourcePosition().orElseThrow().line).intValue());
+    }
+
+    @Test
+    public void splitFocusAndDebuggerFollowingKeepTheSearchTargetOnTheActivePane() throws Exception {
+        Path file = source("panes.asm", "nop\ninr a\nhlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        runOnEdt(() -> editor.split(true));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        JSplitPane split = onEdt(() -> (JSplitPane) tabs.getSelectedComponent());
+        TextEditorPane right = findComponent((Container) split.getRightComponent(), TextEditorPane.class, pane -> true);
+        findLabel((Container) split.getLeftComponent(), "Left — panes.asm — Active");
+        runOnEdt(() -> {
+            for (java.awt.event.FocusListener listener : right.getFocusListeners())
+                if (listener.getClass().getEnclosingClass() == TabbedEditor.class)
+                    listener.focusGained(new FocusEvent(right, FocusEvent.FOCUS_GAINED));
+        });
+        findLabel((Container) split.getRightComponent(), "Right — panes.asm — Active");
+        InlineSearchBar search = onEdt(editor::searchBar);
+        runOnEdt(() -> { search.find.setText("inr"); search.next(true); });
+        assertEquals("inr", onEdt(right::getSelectedText));
+        List<SourceCodePosition> notifications = new ArrayList<>();
+        runOnEdt(() -> {
+            editor.setSourcePositionChanged(notifications::add);
+            editor.synchronizePosition(SourceCodePosition.of(3, 0, file.toString()));
+        });
+        assertSame(split, onEdt(tabs::getSelectedComponent));
+        assertEquals(2, onEdt(() -> right.getLineOfOffset(right.getCaretPosition())).intValue());
+        assertTrue(notifications.isEmpty());
+        runOnEdt(editor::unsplit);
+    }
+
+    @Test
+    public void switchingTabsPreservesExistingSplit() throws Exception {
+        Path splitFile = source("split.asm", "nop\n"), otherFile = source("other.asm", "hlt\n");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
+                List.of(splitFile, otherFile), paths -> {}));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        runOnEdt(() -> { tabs.setSelectedIndex(0); editor.split(true); });
+        Component split = onEdt(tabs::getSelectedComponent);
+        runOnEdt(() -> tabs.setSelectedIndex(1));
+        assertEquals(otherFile, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+        runOnEdt(() -> tabs.setSelectedIndex(0));
+        assertSame(split, onEdt(tabs::getSelectedComponent));
     }
 
     private Path source(String name, String text) throws Exception {

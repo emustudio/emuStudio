@@ -9,7 +9,6 @@ import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
-import net.emustudio.plugins.memory.bytemem.loaders.MetadataSidecar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +62,6 @@ public class LoadImageAction extends AbstractAction {
                         this,
                         () -> {
                             MemoryImageLoader.load(path, context, bank.get());
-                            MetadataSidecar.load(path, context);
                         },
                         repaint,
                         cause -> {

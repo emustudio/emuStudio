@@ -4,7 +4,6 @@ package net.emustudio.plugins.compiler.rasp;
 
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -31,7 +30,7 @@ public abstract class AbstractCompilerTest {
 
     @Before
     public void setUp() throws Exception {
-        memoryStub = new MemoryStub(new Annotations());
+        memoryStub = new MemoryStub();
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemoryContext(0, RaspMemoryContext.class)).andReturn(memoryStub).anyTimes();

@@ -32,10 +32,15 @@ final class AnalysisTasks implements AutoCloseable {
     }
 
     <T> void submit(Callable<T> operation, Consumer<T> apply) {
+        submit(operation, apply, false);
+    }
+
+    <T> void submit(Callable<T> operation, Consumer<T> apply, boolean publishesContent) {
         requireEdt();
         if (closed) throw new IllegalStateException("Analysis window closed");
         if (active != null) throw new IllegalStateException("Analysis already in progress");
-        long generation = session.pausedGeneration();
+        if (session.memory != null || session.cpu.getAddressSpaceSize() > 0) session.programIndex();
+        DebugSession.Stamp stamp = session.pausedStamp();
         FutureTask<T> task =
                 new FutureTask<T>(operation) {
                     @Override
@@ -44,7 +49,7 @@ final class AnalysisTasks implements AutoCloseable {
                             super.run();
                         } finally {
                             // Future cancellation does not establish that the operation has exited.
-                            SwingUtilities.invokeLater(() -> complete(this, generation, apply));
+                            SwingUtilities.invokeLater(() -> complete(this, stamp, !publishesContent, apply));
                         }
                     }
                 };
@@ -53,11 +58,12 @@ final class AnalysisTasks implements AutoCloseable {
         executor.execute(task);
     }
 
-    private <T> void complete(FutureTask<T> task, long generation, Consumer<T> apply) {
+    private <T> void complete(FutureTask<T> task, DebugSession.Stamp stamp, boolean content, Consumer<T> apply) {
         if (closed || active != task) return;
         active = null;
         try {
-            session.applyPaused(generation, () -> apply.accept(result(task)));
+            session.applyCurrent(stamp, content, "Analysis discarded: memory, source or metadata changed",
+                    () -> apply.accept(result(task)));
         } catch (CancellationException e) {
             failure.accept(new IllegalStateException("Analysis cancelled", e));
         } catch (RuntimeException e) {

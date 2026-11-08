@@ -7,6 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -54,6 +55,7 @@ public class CpuImpl extends AbstractCPU {
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
     }
 
     @Override
@@ -100,10 +102,8 @@ public class CpuImpl extends AbstractCPU {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    if (isBreakpointSet(engine.IP)) {
-                        throw new Breakpoint();
-                    }
                     RunState tmpRunState = stepInternal();
+                    if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
                     }
@@ -113,8 +113,6 @@ public class CpuImpl extends AbstractCPU {
                 } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
                     return RunState.STATE_STOPPED_BAD_INSTR;
-                } catch (Breakpoint er) {
-                    return RunState.STATE_STOPPED_BREAK;
                 }
             }
         } finally {
@@ -132,6 +130,11 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected RunState stepInternal() throws IOException {
         return engine.step(optimize);
+    }
+
+    @Override
+    public java.util.Optional<DebugCPU> getDebugger() {
+        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
     }
 
     @Override

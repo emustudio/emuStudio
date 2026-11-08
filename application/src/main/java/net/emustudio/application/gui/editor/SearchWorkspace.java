@@ -3,11 +3,8 @@
 package net.emustudio.application.gui.editor;
 
 import java.io.*;
-import java.nio.charset.MalformedInputException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Reads immutable snapshots and checks them again before applying reviewed replacements.
@@ -17,7 +14,6 @@ final class SearchWorkspace {
         final Path path;
         final REditor buffer;
         final String text;
-        final List<EditorSearch.Match> matches = new ArrayList<>();
 
         Snapshot(Path path, REditor buffer, String text) {
             this.path = path;
@@ -42,42 +38,6 @@ final class SearchWorkspace {
         for (REditor editor : editors)
             result.add(new Snapshot(editor.getCurrentFile().map(file -> file.toPath().toAbsolutePath().normalize()).orElse(null), editor, editor.textPane().getText()));
         return result;
-    }
-
-    static List<Snapshot> folder(Path root, String includes, String excludes, List<Snapshot> open) throws IOException {
-        List<PathMatcher> include = matchers(includes), exclude = matchers(excludes);
-        Map<Path, Snapshot> buffers = new HashMap<>();
-        for (Snapshot snapshot : open) if (snapshot.path != null) buffers.put(snapshot.path, snapshot);
-        List<Snapshot> result = new ArrayList<>();
-        try (Stream<Path> paths = Files.walk(root)) {
-            Iterator<Path> iterator = paths.filter(Files::isRegularFile).filter(path -> !Files.isSymbolicLink(path)).sorted().iterator();
-            while (iterator.hasNext()) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Search cancelled");
-                Path path = iterator.next().toAbsolutePath().normalize(), relative = root.toAbsolutePath().normalize().relativize(path);
-                if (relative.toString().contains(".git" + File.separator) || !include.isEmpty() && !matches(include, relative) || matches(exclude, relative))
-                    continue;
-                Snapshot buffer = buffers.get(path);
-                if (buffer != null) result.add(buffer);
-                else {
-                    try {
-                        String text = Files.readString(path, StandardCharsets.UTF_8);
-                        if (text.indexOf('\0') < 0) result.add(new Snapshot(path, null, text));
-                    } catch (MalformedInputException e) { /* Not a UTF-8 text file. */ }
-                }
-            }
-        }
-        return result;
-    }
-
-    private static List<PathMatcher> matchers(String patterns) {
-        List<PathMatcher> result = new ArrayList<>();
-        for (String pattern : patterns.split(";"))
-            if (!pattern.isBlank()) result.add(FileSystems.getDefault().getPathMatcher("glob:" + pattern.trim()));
-        return result;
-    }
-
-    private static boolean matches(List<PathMatcher> matchers, Path path) {
-        return matchers.stream().anyMatch(matcher -> matcher.matches(path) || matcher.matches(path.getFileName()));
     }
 
     static void apply(Map<Snapshot, List<EditorSearch.Match>> reviewed) throws IOException {

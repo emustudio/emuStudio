@@ -14,11 +14,11 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public final class NavigateSequenceAction extends AbstractAction {
-    private static final String ICON_FILE = StandardIcons.ICON_FIND;
     private final Runnable navigate;
 
     public NavigateSequenceAction(MemorySearch search, boolean previous) {
-        super(previous ? "Find previous" : "Find next", loadIcon(ICON_FILE));
+        super(previous ? "Find previous" : "Find next",
+                loadIcon(previous ? StandardIcons.ICON_MOVE_UP : StandardIcons.ICON_MOVE_DOWN));
         Objects.requireNonNull(search);
         navigate = previous ? search::previous : search::next;
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(

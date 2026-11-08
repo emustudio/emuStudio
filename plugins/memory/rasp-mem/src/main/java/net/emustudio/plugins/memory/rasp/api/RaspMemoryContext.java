@@ -5,7 +5,6 @@ package net.emustudio.plugins.memory.rasp.api;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.memory.rasp.gui.Disassembler;
-import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.*;
@@ -26,7 +25,8 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
 
     void setInputs(List<Integer> inputs);
 
-    RaspMemory getSnapshot();
+    /** Immutable list of the program's configured input values. */
+    List<Integer> getInputs();
 
     @Override
     default Class<Integer> getCellTypeClass() {
@@ -41,9 +41,10 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
         return Disassembler.disassembleMnemo(opcode);
     }
 
-    static void serialize(Path filename, int programLocation, RaspMemory memory) throws IOException {
+    static void serialize(Path filename, int programLocation, Collection<? extends RaspLabel> programLabels,
+                          Map<Integer, Integer> programMemory, List<Integer> inputs) throws IOException {
         Map<Integer, String> labels = new HashMap<>();
-        for (RaspLabel label : memory.labels) {
+        for (RaspLabel label : programLabels) {
             labels.put(label.getAddress(), label.getLabel());
         }
 
@@ -52,23 +53,9 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
         try (ObjectOutput output = new ObjectOutputStream(buffer)) {
             output.writeObject(programLocation);
             output.writeObject(labels);
-            output.writeObject(memory.inputs);
-            output.writeObject(memory.programMemory);
+            output.writeObject(inputs);
+            output.writeObject(programMemory);
         }
     }
 
-    @Immutable
-    class RaspMemory {
-        public final List<RaspLabel> labels;
-        public final Map<Integer, Integer> programMemory;
-        public final List<Integer> inputs;
-
-        public RaspMemory(Collection<? extends RaspLabel> labels,
-                          Map<Integer, Integer> programMemory,
-                          List<Integer> inputs) {
-            this.labels = List.copyOf(labels);
-            this.programMemory = Map.copyOf(programMemory);
-            this.inputs = List.copyOf(inputs);
-        }
-    }
 }

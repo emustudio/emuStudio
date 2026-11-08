@@ -35,7 +35,7 @@ public class AutomationCommand implements Callable<Integer> {
     @CommandLine.ParentCommand
     private Runner runner;
 
-    @CommandLine.Option(names = {"-w", "--waitmax"}, paramLabel = "MILLIS", description = "limit emulation time to max MILLIS (force kill afterwards)")
+    @CommandLine.Option(names = {"-w", "--waitmax"}, paramLabel = "MILLIS", description = "wait at most MILLIS for the running CPU to stop")
     private int waitForFinishMillis = Automation.DONT_WAIT;
 
     @CommandLine.Option(names = "--gui", negatable = true, defaultValue = "true", fallbackValue = "true",
@@ -45,8 +45,12 @@ public class AutomationCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--program-location"}, description = "program start location", paramLabel = "LOCATION")
     private String programLocation = "-1";
 
-    @CommandLine.Option(names = "--debug-script", description = "run bounded STEP/RUN/ASSERT/CAPTURE operations after compile/reset")
+    @CommandLine.Option(names = "--debug-script", description = "run bounded STEP/RUN/ASSERT operations after compile/reset")
     private java.nio.file.Path debugScript;
+
+    @CommandLine.Option(names = "--record-instructions", paramLabel = "FILE",
+            description = "record executed instructions to a new file, including without GUI")
+    private java.nio.file.Path instructionRecording;
 
 
     @Override
@@ -97,6 +101,7 @@ public class AutomationCommand implements Callable<Integer> {
                 );
                 splash.ifPresent(Window::dispose);
                 automation.setDebugScript(debugScript);
+                automation.setInstructionRecording(instructionRecording);
                 automation.run();
                 if (!automation.isSuccessful()) return 1;
             }

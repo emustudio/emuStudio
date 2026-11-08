@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -33,7 +32,7 @@ public class CpuImplTest {
     @Before
     public void setup() throws Exception {
         contextPool = createNiceMock(ContextPool.class);
-        memory = new MemoryStub(new Annotations());
+        memory = new MemoryStub();
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
 
@@ -250,5 +249,22 @@ public class CpuImplTest {
         cpu.reset(0);
         cpu.execute();
         Thread.sleep(300);
+    }
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactGuestInstruction() throws Exception {
+        initCpu();
+        memory.write(0, JMP);
+        memory.write(1, 0); // Infinite loop unless the recording stop is respected.
+        cpu.reset(0);
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(0, cpu.getInstructionLocation());
     }
 }

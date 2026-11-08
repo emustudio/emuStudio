@@ -23,18 +23,23 @@ public class RaspDisassembler implements Disassembler {
     public DisassembledInstruction disassemble(int address) {
         int opcode = memory.read(address);
         Optional<String> mnemo = memory.disassembleMnemo(opcode);
+        Integer intOperand = mnemo.isPresent() && opcode != HALT ? memory.read(address + 1) : null;
+        String label = intOperand != null && isJump(opcode)
+                ? memory.getLabel(intOperand).map(RaspLabel::getLabel).orElse(null) : null;
         String operand = "";
+        String encoding = Integer.toHexString(opcode);
 
         if (mnemo.isPresent() && opcode != HALT) {
-            boolean isJump = (opcode == JMP) || (opcode == JZ) || (opcode == JGTZ);
-            int intOperand = memory.read(address + 1);
+            encoding += " " + Integer.toHexString(intOperand);
             String strOperand = String.valueOf(intOperand);
-            operand = isJump ? memory.getLabel(intOperand).map(RaspLabel::getLabel).orElse(strOperand) : strOperand;
+            operand = isJump(opcode) && label != null ? label : strOperand;
         }
 
         String strMnemo = String.format("%s %s", mnemo.orElse("").toLowerCase(), operand.toUpperCase()).trim();
-        return new DisassembledInstruction(address, strMnemo, Integer.toHexString(opcode));
+        return new DisassembledInstruction(address, strMnemo, encoding);
     }
+
+    private static boolean isJump(int opcode) { return opcode == JMP || opcode == JZ || opcode == JGTZ; }
 
     @Override
     public int getNextInstructionPosition(int address) throws IndexOutOfBoundsException {

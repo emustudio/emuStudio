@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -99,11 +100,14 @@ public class CpuImplTest {
 
     private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) {
         setupEmulator(program, null, input);
-        cpu.setBreakpoint(breakpoint);
+        DebugCPU.Listener listener = new DebugCPU.Listener() {
+            @Override public boolean beforeInstruction(int address) { return address == breakpoint; }
+        };
+        cpu.getDebugger().orElseThrow().addListener(listener);
         try {
             assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
         } finally {
-            cpu.unsetBreakpoint(breakpoint);
+            cpu.getDebugger().orElseThrow().removeListener(listener);
         }
     }
 
@@ -364,4 +368,19 @@ public class CpuImplTest {
         assertEquals(3, output.size());
     }
 
+    @Test(timeout = 3000)
+    public void recordingStopsContinuousExecutionAfterExactGuestInstruction() {
+        setupEmulator(new byte[] {3, 3, 0}, null, null);
+        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
+        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
+            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+                events.add(event);
+                return true;
+            }
+        });
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(1, events.size());
+        assertEquals(1, cpu.getInstructionLocation());
+        assertEquals(1, memory.read(cpu.getEngine().P).intValue());
+    }
 }

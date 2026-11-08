@@ -7,7 +7,6 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
-import net.emustudio.plugins.memory.rasp.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.rasp.gui.actions.LoadImageAction;
 
 import javax.swing.*;
@@ -22,7 +21,6 @@ public class MemoryGui extends DialogBase {
     private final JTable table;
 
     private final LoadImageAction loadImageAction;
-    private final DumpMemoryAction dumpMemoryAction;
     private final EraseMemoryAction eraseMemoryAction;
 
     public MemoryGui(JFrame parent, MemoryContextImpl context, ApplicationApi api, GUI gui) {
@@ -38,7 +36,6 @@ public class MemoryGui extends DialogBase {
             table.revalidate();
             table.repaint();
         }, api::setProgramLocation);
-        this.dumpMemoryAction = new DumpMemoryAction(api.getDialogs(), context, api::getProgramLocation);
         this.eraseMemoryAction = new EraseMemoryAction(
                 tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
 
@@ -65,7 +62,6 @@ public class MemoryGui extends DialogBase {
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBar.add(gui.toolbarButton(loadImageAction));
-        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
         toolBar.add(gui.toolbarButton(eraseMemoryAction));
 

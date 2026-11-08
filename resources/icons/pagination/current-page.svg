@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+<defs>
+ <linearGradient id="gray" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d3d7cf"/></linearGradient>
+ </defs>
+<path d="m11 3-8 8h5v5h6v-5h5z" fill="url(#gray)" stroke="#555753" stroke-linejoin="round"/><path d="m6 9 5-4 5 4" fill="none" stroke="#fff" opacity=".6"/><rect x="3.5" y="18.5" width="15" height="2" rx=".5" fill="url(#gray)" stroke="#555753"/>
+</svg>

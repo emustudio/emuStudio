@@ -8,11 +8,11 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
@@ -68,6 +68,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = new RamDisassembler(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
+        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
     }
 
     @Override
@@ -76,7 +77,7 @@ public class CpuImpl extends AbstractCPU {
             DebuggerTable debugTable = applicationApi.getDebuggerTable();
             if (debugTable != null) {
                 debugTable.setDebuggerColumns(Arrays.asList(
-                        new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
+                        new LabelDebugColumn(memory), new MnemoColumn(disassembler)
                 ));
             }
             debugTableInitialized = true;
@@ -125,18 +126,14 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                if (isBreakpointSet(engine.IP.get())) {
-                    throw new Breakpoint();
-                }
                 RunState tmpRunState = stepInternal();
+                if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                 if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                     return tmpRunState;
                 }
             } catch (IndexOutOfBoundsException ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (Breakpoint breakpoint) {
-                return RunState.STATE_STOPPED_BREAK;
             } catch (Exception ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_BAD_INSTR;
@@ -148,6 +145,11 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public RunState stepInternal() throws IOException {
         return engine.step();
+    }
+
+    @Override
+    public java.util.Optional<DebugCPU> getDebugger() {
+        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
     }
 
     @Override

@@ -4,8 +4,6 @@ package net.emustudio.plugins.memory.bytemem;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
-import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
@@ -17,14 +15,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     final static int DEFAULT_MEM_SIZE = 65536;
 
     private final RangeTree romRanges = new RangeTree();
-    private final MemoryContextAnnotations annotations;
     private volatile Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private volatile int bankSelect = 0;
     private int bankCommon = 0;
 
-    protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        this.annotations = Objects.requireNonNull(annotations);
+    protected MemoryContextImpl() {
     }
 
     void init(int size, int banks, int bankCommon) {
@@ -43,7 +39,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         for (Byte[] bank : mem) {
             Arrays.fill(bank, (byte) 0);
         }
-        removeAllSourceCode();
+
         notifyMemoryContentChanged(-1);
     }
 
@@ -101,7 +97,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     public void write(int to, Byte value) {
         if (!isReadOnly(to)) {
             mem[bank(to)][to] = value;
-            invalidateSourceCode(to, to);
+
             notifyMemoryContentChanged(to);
         }
     }
@@ -110,7 +106,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         if (!isReadOnly(to)) {
             int activeBank = (to < bankCommon) ? bank : 0;
             mem[activeBank][to] = val;
-            invalidateSourceCode(to, to);
+
             notifyMemoryContentChanged(to);
         }
     }
@@ -118,7 +114,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     public void write(int to, Byte[] values, int count) {
         if (!romRanges.intersects(to, to + count - 1)) {
             System.arraycopy(values, 0, mem[bank(to)], to, count);
-            invalidateSourceCode(to, to + count - 1);
+
             notifyMemoryContentChanged(to, to + count - 1);
         }
     }
@@ -131,11 +127,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     @Override
     public int getSize() {
         return mem[0].length;
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return annotations;
     }
 
     @Override
@@ -181,22 +172,4 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         return (address < bankCommon) ? bankSelect : 0;
     }
 
-    private void invalidateSourceCode(int from, int to) {
-        for (int address = from; address <= to; address++) {
-            var atAddress = annotations.get(address, SourceCodeAnnotation.class);
-            if (atAddress != null) {
-                for (SourceCodeAnnotation annotation : atAddress) {
-                    annotations.removeAll(annotation.getPluginId(), address);
-                }
-            }
-        }
-    }
-
-    private void removeAllSourceCode() {
-        var sourceCode = annotations.getAll(SourceCodeAnnotation.class);
-        if (sourceCode != null) {
-            sourceCode.forEach((address, values) ->
-                    values.forEach(annotation -> annotations.removeAll(annotation.getPluginId(), address)));
-        }
-    }
 }

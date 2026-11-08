@@ -9,9 +9,10 @@ name = "ZX Spectrum 48K + AY"
 
 	[MEMORY.settings]
 		#memorySize = 49152
-		banksCount = 0
+		banksCount = 1
 		ROMfrom0 = 0
-		imageName0 = "/home/vbmacher/tmp/emuStudio/examples/zxspectrum-48k/48.rom"
+		# Supply your own 16 KB ROM as 48.rom in the installation directory, or set its path here.
+		imageName0 = "48.rom"
 		imageBank1 = 0
 		imageBank0 = 0
 		commonBoundary = 0
@@ -51,9 +52,6 @@ name = "ZX Spectrum 48K + AY"
 
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,80"
 	path = "zxspectrum-ula.jar"
@@ -63,9 +61,6 @@ name = "ZX Spectrum 48K + AY"
 	type = "DEVICE"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "300,240"
 	path = "zxspectrum-bus.jar"
@@ -77,9 +72,6 @@ name = "ZX Spectrum 48K + AY"
 		model = "ZX_SPECTRUM_48K"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,240"
 	path = "audiotape-player.jar"
@@ -89,9 +81,6 @@ name = "ZX Spectrum 48K + AY"
 	type = "DEVICE"
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "500,400"
 	path = "audio-ay3_8910-chip.jar"

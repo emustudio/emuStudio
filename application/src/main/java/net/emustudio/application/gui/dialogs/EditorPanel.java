@@ -62,13 +62,13 @@ public class EditorPanel extends JPanel {
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
         this.findAction = new FindAction(findDialog, replaceDialog) {
             @Override public void actionPerformed(java.awt.event.ActionEvent event) {
-                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showFind();
                 else super.actionPerformed(event);
             }
         };
         this.replaceAction = new ReplaceAction(findDialog, replaceDialog) {
             @Override public void actionPerformed(java.awt.event.ActionEvent event) {
-                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showSearch();
+                if (editor instanceof TabbedEditor) ((TabbedEditor) editor).searchBar().showReplace();
                 else super.actionPerformed(event);
             }
         };
@@ -80,8 +80,9 @@ public class EditorPanel extends JPanel {
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
-
         splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        // Resize the syntax editor once on release rather than repainting it throughout the drag.
+        splitSource.setContinuousLayout(false);
         splitSource.setOneTouchExpandable(true);
         addHierarchyListener(event -> {
             if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
@@ -168,32 +169,43 @@ public class EditorPanel extends JPanel {
         mainToolBar.add(gui.toolbarButton(findAction));
         mainToolBar.addSeparator();
         JButton compileButton = gui.toolbarButton(compileAction);
-        compileButton.setHideActionText(false);
+        compileButton.getAccessibleContext().setAccessibleName("Save & Compile source file");
         mainToolBar.add(compileButton);
         mainToolBar.addSeparator();
 
-        JSlider fontZoom = new JSlider(MIN_FONT_ZOOM, MAX_FONT_ZOOM, 100);
+        JComboBox<String> fontZoom = new JComboBox<>(new String[]{
+                "30%", "50%", "75%", "100%", "125%", "150%", "175%", "200%", "250%", "300%", "350%"
+        });
+        fontZoom.setEditable(true);
+        fontZoom.setSelectedItem("100%");
         fontZoom.setToolTipText("Font zoom (Ctrl + / Ctrl -)");
         fontZoom.getAccessibleContext().setAccessibleName("Font zoom");
-        Dimension zoomSize = new Dimension(120, fontZoom.getPreferredSize().height);
+        Dimension zoomSize = new Dimension(90, fontZoom.getPreferredSize().height);
         fontZoom.setPreferredSize(zoomSize);
         fontZoom.setMaximumSize(zoomSize);
-        JLabel zoomPercentage = new JLabel();
-        zoomPercentage.setLabelFor(fontZoom);
         Runnable updateZoom = () -> {
             int zoom = Math.round(editor.getFontSize() * 100.0f / FONT_CODE.getSize2D());
-            fontZoom.setValue(zoom);
-            zoomPercentage.setText(zoom + "%");
+            String percentage = zoom + "%";
+            if (!percentage.equals(fontZoom.getSelectedItem())) {
+                fontZoom.setSelectedItem(percentage);
+            }
         };
         updateZoom.run();
-        fontZoom.addChangeListener(e -> {
-            if (fontZoom.getValue() != Math.round(editor.getFontSize() * 100.0f / FONT_CODE.getSize2D())) {
-                editor.setFontSize(FONT_CODE.getSize2D() * fontZoom.getValue() / 100.0f);
+        fontZoom.addActionListener(e -> {
+            String value = Objects.toString(fontZoom.getSelectedItem(), "").trim();
+            if (value.endsWith("%")) value = value.substring(0, value.length() - 1).trim();
+            try {
+                int zoom = Math.max(MIN_FONT_ZOOM, Math.min(MAX_FONT_ZOOM, Integer.parseInt(value)));
+                if (zoom != Math.round(editor.getFontSize() * 100.0f / FONT_CODE.getSize2D())) {
+                    editor.setFontSize(FONT_CODE.getSize2D() * zoom / 100.0f);
+                }
+            } catch (NumberFormatException ignored) {
+                // Restore the current zoom when the entered value is not a percentage.
             }
+            updateZoom.run();
         });
         editor.addFontSizeChangeListener(updateZoom);
         mainToolBar.add(fontZoom);
-        mainToolBar.add(zoomPercentage);
 
         return mainToolBar;
     }

@@ -6,7 +6,6 @@
 import argparse
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 
@@ -23,24 +22,37 @@ def main():
     errors = []
     with tempfile.TemporaryDirectory() as directory:
         cache = {}
+        # Render every catalog SVG, including artwork not currently packaged.
+        for source in sorted(sources.rglob("*.svg")):
+            for size in (22, 44):
+                output = Path(directory) / "render.png"
+                subprocess.run([
+                    "magick", "-background", "none", "-density", "192", str(source),
+                    "-resize", f"{size}x{size}!", "-strip", "PNG32:" + str(output)
+                ], check=True, capture_output=True)
+                data = output.read_bytes()
+                cache[(str(source.relative_to(sources)), False, size)] = data
+                target = source.with_suffix(".png")
+                if size == 44:
+                    target = target.with_name(target.stem + "@2x.png")
+                if args.check:
+                    if not target.exists() or target.read_bytes() != data:
+                        errors.append(str(target.relative_to(root)))
+                else:
+                    target.write_bytes(data)
         for entry in manifest:
+            if Path(entry["source"]).suffix != ".svg":
+                parser.error("Icon source must be SVG: " + entry["source"])
             for size in (22, 44):
                 key = (entry["source"], entry.get("flip", False), size)
                 if key not in cache:
                     source = sources / entry["source"]
                     output = Path(directory) / f"{len(cache)}.png"
-                    if size == 22 and source.suffix == ".png" and not key[1]:
-                        shutil.copyfile(source, output)
-                    else:
-                        command = ["magick", "-background", "none"]
-                        if size == 44:
-                            source = source.with_suffix(".svg")
-                            command += ["-density", "192"]
-                        command.append(str(source))
-                        if key[1]:
-                            command.append("-flop")
-                        command += ["-resize", f"{size}x{size}!", "-strip", "PNG32:" + str(output)]
-                        subprocess.run(command, check=True)
+                    command = ["magick", "-background", "none", "-density", "192", str(source)]
+                    if key[1]:
+                        command.append("-flop")
+                    command += ["-resize", f"{size}x{size}!", "-strip", "PNG32:" + str(output)]
+                    subprocess.run(command, check=True, capture_output=True)
                     cache[key] = output.read_bytes()
                 target = root / entry["target"]
                 if size == 44:

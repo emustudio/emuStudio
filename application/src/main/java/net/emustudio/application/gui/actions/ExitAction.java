@@ -36,8 +36,8 @@ public class ExitAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         if (confirmSave.get()) {
             Optional.ofNullable(emulationController).ifPresent(EmulationController::close);
-            computer.close();
             dispose.run();
+            computer.close();
 
             System.exit(0);
         }

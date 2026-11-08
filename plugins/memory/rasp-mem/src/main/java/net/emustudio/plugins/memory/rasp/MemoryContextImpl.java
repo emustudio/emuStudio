@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
@@ -18,10 +17,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
     private final ReadWriteLockSupport rwl = new ReadWriteLockSupport();
-    private final MemoryContextAnnotations annotations;
 
-    protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        this.annotations = Objects.requireNonNull(annotations);
+    protected MemoryContextImpl() {
     }
 
     @Override
@@ -38,11 +35,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     @Override
     public int getSize() {
         return rwl.lockRead(() -> memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0));
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return annotations;
     }
 
     @Override
@@ -115,8 +107,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     }
 
     @Override
-    public RaspMemory getSnapshot() {
-        return rwl.lockRead(() -> new RaspMemory(labels.values(), memory, inputs));
+    public List<Integer> getInputs() {
+        return rwl.lockRead(() -> List.copyOf(inputs));
     }
 
     // Keep throws IOException, ClassNotFoundException due to lock sneaky throw

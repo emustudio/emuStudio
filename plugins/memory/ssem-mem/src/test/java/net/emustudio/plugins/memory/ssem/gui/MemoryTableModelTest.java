@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
@@ -254,7 +253,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testGetValueAtDecColumn() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         Object decValue = model.getValueAt(0, MemoryTableModel.COLUMN_DEC_VALUE);
@@ -264,7 +263,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testGetValueAtBitColumn() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         // Write a known value to row 0
         memory.write(0, (byte) 0x80); // bit 0 = 1 (MSB)
 
@@ -305,7 +304,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testDataChangedAtFiresTableCellUpdated() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         // This should not throw - just exercises the dataChangedAt path
@@ -314,7 +313,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testDataChangedAtSingleAddress() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         // Should not throw
@@ -323,7 +322,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testSetValueWithInvalidHexDoesNotThrow() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         // Invalid hex should be caught and not throw
@@ -332,7 +331,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testSetCharValueShorterThan4Chars() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         // Should handle short strings without error
@@ -341,7 +340,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testSetCharValueLongerThan4Chars() {
-        MemoryContextImpl memory = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl memory = new MemoryContextImpl();
         MemoryTableModel model = new MemoryTableModel(memory);
 
         // Should truncate to 4 chars

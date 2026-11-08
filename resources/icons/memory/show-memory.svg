@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <!-- Integer coordinates keep grid edges crisp at both 22px and 44px. -->
+  <path fill="#333366" d="M2 2h18v18H2z"/>
+  <path fill="#FFFFFF" d="M3 3h16v16H3z"/>
+  <path fill="#666699" d="M8 3h1v16H8z M13 3h1v16h-1z M3 8h16v1H3z M3 13h16v1H3z"/>
+</svg>

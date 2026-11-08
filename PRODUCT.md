@@ -76,7 +76,7 @@ Preserve the name **emuStudio**. Existing logo and icon assets are available in
 - `AGENTS.md`: architecture, repository responsibilities, and change policies.
 - `application/src/main/files/config/`: bundled virtual computer configurations.
 - `application/src/main/files/examples/`: runnable example source material.
-- `resources/logo.png`, `resources/logo-white.png`, and `resources/icons/`:
+- `resources/logo/` and `resources/icons/`:
   existing identity assets; icon attribution lives alongside them.
 - [GitHub issue #433](https://github.com/emustudio/emuStudio/issues/433): release
   QA plan and the user-selected ticket for this initialization. A plan is not

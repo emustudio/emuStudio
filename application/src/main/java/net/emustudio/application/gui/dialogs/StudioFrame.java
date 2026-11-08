@@ -43,6 +43,7 @@ public class StudioFrame extends JFrame {
 
     private final EditorPanel editorPanel;
     private final EmulatorPanel emulatorPanel;
+    private final SourceNavigation sourceNavigation;
 
     private final SaveFileAsAction saveFileAsAction;
     private final CloseTabAction closeTabAction;
@@ -85,12 +86,16 @@ public class StudioFrame extends JFrame {
                 this, dialogs, editor, computer, this::updateWindowTitle, emulatorPanel::getRunState,
                 gui
         );
+        this.sourceNavigation = emulatorPanel.getDebuggerPanel()
+                .flatMap(panel -> computer.getDebugger().map(session ->
+                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel)))
+                .orElse(null);
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateWindowTitle);
         this.closeTabAction = new CloseTabAction(editor, this::updateWindowTitle);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
-        this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
+        this.exitAction = new ExitAction(this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
 
         this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings, gui);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);
@@ -146,7 +151,11 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.setFocusable(false);
         tabbedPane.addTab(SOURCE_CODE_EDITOR, editorPanel);
-        tabbedPane.addTab("Debugger", emulatorPanel);
+        tabbedPane.addTab("Emulator", emulatorPanel);
+        tabbedPane.addChangeListener(event -> {
+            if (tabbedPane.getSelectedComponent() == emulatorPanel)
+                emulatorPanel.getDebuggerPanel().ifPresent(panel -> panel.showInstructions());
+        });
 
         JMenuBar mainMenu = setupMainMenu();
         setJMenuBar(mainMenu);
@@ -201,10 +210,20 @@ public class StudioFrame extends JFrame {
         return mainMenuBar;
     }
 
+    boolean confirmSaveBeforeExit() {
+        return emulatorPanel.getDebuggerPanel().map(panel -> panel.confirmSaveAnnotations()).orElse(true)
+                && editorPanel.confirmSave();
+    }
+
     private void formWindowClosing() {
         emulatorPanel.close();
         editorPanel.dispose();
         dispose();
+    }
+
+    @Override public void dispose() {
+        if (sourceNavigation != null) sourceNavigation.close();
+        super.dispose();
     }
 
     private void updateWindowTitle() {

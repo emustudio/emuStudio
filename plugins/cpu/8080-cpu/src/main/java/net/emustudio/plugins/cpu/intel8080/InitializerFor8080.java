@@ -2,26 +2,23 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.DefaultInitializer;
-import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
+import net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
 
-import java.io.PrintStream;
 import java.util.Objects;
 
 public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
     private final Context8080Impl context;
 
 
-    public InitializerFor8080(Plugin plugin, long pluginId, ContextPool contextPool, PluginSettings settings,
+    public InitializerFor8080(long pluginId, ContextPool contextPool,
                               Context8080Impl context) {
-        super(plugin, pluginId, contextPool, settings);
+        super(pluginId, contextPool);
         this.context = Objects.requireNonNull(context);
     }
 
@@ -31,13 +28,7 @@ public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
     }
 
     @Override
-    protected DispatchListener createInstructionPrinter(Disassembler disassembler, EmulatorEngine engine,
-                                                        boolean useCache, PrintStream printStream) {
-        return new InstructionPrinter(disassembler, engine, useCache, printStream);
-    }
-
-    @Override
     protected Disassembler createDisassembler(MemoryContext<Byte> memory) {
-        return new DisassemblerImpl(memory, new DecoderImpl(memory));
+        return new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, false);
     }
 }
