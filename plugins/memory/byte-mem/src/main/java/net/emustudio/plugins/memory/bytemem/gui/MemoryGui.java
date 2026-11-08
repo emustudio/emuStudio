@@ -3,7 +3,8 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.DebuggerMemory;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -27,7 +28,8 @@ public class MemoryGui extends DialogBase {
 
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
-    private final DebuggerMemory debuggerMemory;
+    private final AnnotationEngine annotations;
+    private final ExecutionState executionState;
     private boolean listening;
     private boolean handlingSearchEscape;
     private final Runnable debuggerListener;
@@ -56,10 +58,11 @@ public class MemoryGui extends DialogBase {
     private final SettingsAction settingsAction;
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui,
-                     DebuggerMemory debuggerMemory) {
+                     AnnotationEngine annotations, ExecutionState executionState) {
         super(parent, "Byte Operating Memory", false);
         this.gui = gui;
-        this.debuggerMemory = debuggerMemory;
+        this.annotations = annotations;
+        this.executionState = executionState;
         this.lblPageCount = gui.labelBold("0");
 
         Objects.requireNonNull(context);
@@ -68,7 +71,7 @@ public class MemoryGui extends DialogBase {
         Objects.requireNonNull(dialogs);
 
         this.tableModel = new MemoryTableModel(context);
-        this.table = new MemoryTable(tableModel, paneMemory, debuggerMemory);
+        this.table = new MemoryTable(tableModel, paneMemory, annotations, executionState);
         this.debuggerListener = () -> SwingUtilities.invokeLater(() -> {
             if (listening) {
                 table.repaint();
@@ -145,8 +148,8 @@ public class MemoryGui extends DialogBase {
         txtValueHex.setText(String.format("%02X", data));
         txtValueOct.setText(String.format("%02o", data));
         txtValueBin.setText(formatBinaryString(data, 8));
-        boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
-        String label = mapped ? debuggerMemory.label(address) : "";
+        boolean mapped = tableModel.isMappedAddress(address);
+        String label = mapped ? AnnotationLabels.at(annotations, address) : "";
         txtLabel.setText(label);
         txtLabel.setToolTipText(label.isEmpty() ? null : "Label: " + label);
     }
@@ -246,14 +249,16 @@ public class MemoryGui extends DialogBase {
 
     @Override
     public void setVisible(boolean visible) {
-        if (visible && !listening && debuggerMemory != null) {
-            debuggerMemory.addListener(debuggerListener);
+        if (visible && !listening) {
+            if (annotations != null) annotations.addListener(debuggerListener);
+            if (executionState != null) executionState.addListener(debuggerListener);
             listening = true;
             table.repaint();
             updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
         } else if (!visible && listening) {
             listening = false;
-            debuggerMemory.removeListener(debuggerListener);
+            if (annotations != null) annotations.removeListener(debuggerListener);
+            if (executionState != null) executionState.removeListener(debuggerListener);
         }
         super.setVisible(visible);
     }
@@ -262,7 +267,8 @@ public class MemoryGui extends DialogBase {
     public void dispose() {
         if (listening) {
             listening = false;
-            debuggerMemory.removeListener(debuggerListener);
+            if (annotations != null) annotations.removeListener(debuggerListener);
+            if (executionState != null) executionState.removeListener(debuggerListener);
         }
         super.dispose();
     }

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.index.ProgramIndex;
 
 import java.lang.reflect.Array;
@@ -24,7 +25,7 @@ public final class IndexFootprint {
             for (int count : new int[] {1, 1000, 10000, 50000}) {
                 BenchmarkData data = new BenchmarkData(layout, count);
                 if (!layout.equals("sparse")) {
-                    ProgramIndex.Layout layoutMetadata = ProgramIndex.create("bench", data.size).snapshot().layout();
+                    ProgramIndex.Layout layoutMetadata = ProgramIndex.create("bench", data.size, new AnnotationEngine()).snapshot().layout();
                     System.out.printf("%s,%d,old_annotations,%d%n", layout, count, bytes(data.baseline(layoutMetadata), layoutMetadata));
                 }
                 System.out.printf("%s,%d,index_annotations,%d%n", layout, count, bytes(data.index(false)));

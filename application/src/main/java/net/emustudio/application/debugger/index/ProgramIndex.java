@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
-import java.util.Iterator;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 /**
  * Immutable, in-memory queries for one debugger session's memory image and layout.
@@ -22,18 +23,28 @@ import java.util.function.Consumer;
 public final class ProgramIndex {
     private final IndexLayout layout;
     private final Object identity = new Object();
+    private final AnnotationEngine annotationEngine;
     private final AtomicReference<View> root;
 
-    private ProgramIndex(String imageId, int size) {
+    private ProgramIndex(String imageId, int size, AnnotationEngine annotationEngine) {
+        this.annotationEngine = Objects.requireNonNull(annotationEngine);
         layout = new IndexLayout(imageId, size);
-        Content empty = new Content(new Mappings(layout, new Mapping[0]), new Annotations(layout, new Annotation[0]), null);
-        root = new AtomicReference<>(new View(identity, layout, empty, new BreakpointIndex(layout, new Breakpoint[0]),
+        root = new AtomicReference<>(new View(identity, layout, null, new BreakpointIndex(layout, new Breakpoint[0]),
                 0, 0, 0, FlowState.NOT_BUILT));
     }
 
     /** Creates an empty index, copying and validating its immutable layout. */
-    public static ProgramIndex create(String imageId, int addressSpaceSize) {
-        return new ProgramIndex(imageId, addressSpaceSize);
+    public static ProgramIndex create(String imageId, int addressSpaceSize, AnnotationEngine annotationEngine) {
+        return new ProgramIndex(imageId, addressSpaceSize, annotationEngine);
+    }
+
+    public AnnotationEngine annotationEngine() { return annotationEngine; }
+
+    /** Invalidates graph results after live annotation changes. */
+    public void annotationsChanged() {
+        update(old -> new View(identity, layout, old.flow, old.breakpoints, old.contentRevision + 1,
+                old.breakpointRevision, old.memoryRevision,
+                old.flowState == FlowState.NOT_BUILT ? FlowState.NOT_BUILT : FlowState.STALE));
     }
 
     /** Returns the existing coherent immutable root, without copying. */
@@ -42,20 +53,9 @@ public final class ProgramIndex {
     public BreakpointUpdate updateBreakpoints(Snapshot base) { return new BreakpointEdit(own(base)); }
 
     /**
-     * Replays a logical edit against fresh roots until it publishes. The edit returns false to
-     * abandon without committing. Unbounded: callers must not race a continuous writer.
+     * Replays a logical breakpoint edit against fresh roots until it publishes. The edit returns
+     * false to abandon without committing. Unbounded: callers must not race a continuous writer.
      */
-    public boolean editContent(BiPredicate<Snapshot, ContentUpdate> edit) {
-        while (true) {
-            Snapshot base = snapshot();
-            try (ContentUpdate update = updateContent(base)) {
-                if (!edit.test(base, update)) return false;
-                if (update.commit() == CommitResult.PUBLISHED) return true;
-            }
-        }
-    }
-
-    /** Breakpoint counterpart of {@link #editContent}. */
     public void editBreakpoints(BiPredicate<Snapshot, BreakpointUpdate> edit) {
         while (true) {
             Snapshot base = snapshot();
@@ -66,17 +66,23 @@ public final class ProgramIndex {
     }
 
     /**
-     * Advances memory revision, retains historical mappings, and makes current graph queries
+     * Advances memory revision and makes current graph queries
      * unavailable. Old snapshots retain their meaning. Adapters must call this on observable
      * writes and before execution if notifications are unreliable; a snapshot does not freeze
      * live memory. Analysis requires a stable capture or a verified paused lifecycle.
      */
     public void memoryChanged() {
+        update(old -> new View(identity, layout, old.flow, old.breakpoints, old.contentRevision, old.breakpointRevision,
+                old.memoryRevision + 1, FlowState.STALE));
+    }
+
+    /** Publishes change(current) with retry on contention; a null result abandons without publishing. */
+    private boolean update(UnaryOperator<View> change) {
         while (true) {
-            View old = root.get();
-            View next = new View(identity, layout, old.content, old.breakpoints, old.contentRevision, old.breakpointRevision,
-                    old.memoryRevision + 1, FlowState.STALE);
-            if (root.compareAndSet(old, next)) return;
+            View current = root.get();
+            View next = change.apply(current);
+            if (next == null) return false;
+            if (root.compareAndSet(current, next)) return true;
         }
     }
 
@@ -87,7 +93,6 @@ public final class ProgramIndex {
 
     public static final class Kinds {
         public static final String LABEL = "label";
-        public static final String CODE = "code";
         public static final String DATA = "data";
         private Kinds() { }
     }
@@ -105,12 +110,6 @@ public final class ProgramIndex {
         default boolean sameRevisions(Snapshot other) {
             return contentRevision() == other.contentRevision() && memoryRevision() == other.memoryRevision();
         }
-        void forEachAnnotation(Consumer<? super Annotation> visitor);
-        void forEachMappingAt(int address, Consumer<? super Mapping> visitor);
-        /** Exact document identity AND revision; explicit half-open source spans only. */
-        void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor);
-        void forEachAnnotationStartingAt(int address, Consumer<? super Annotation> visitor);
-        void forEachAnnotationCovering(int address, Consumer<? super Annotation> visitor);
         /** Enabled execution rules at the CPU-visible address. */
         boolean hasExecutionBreakpoint(int address);
         void forEachExecutionBreakpoint(int address, Consumer<? super Breakpoint> visitor);
@@ -123,24 +122,18 @@ public final class ProgramIndex {
     }
 
     /**
-     * Thread-confined lazy copy-on-write edit. Upserts use (ownerId, entryId), independently
-     * per category. The trusted application enforces ownership restrictions at plugin adapters.
+     * Thread-confined lazy copy-on-write edit of the control-flow graph.
      * Commit consumes the edit; a validation failure also consumes it. Close is
      * idempotent and publishes nothing. Failed edits cannot publish earlier staged entries.
      */
     public interface ContentUpdate extends AutoCloseable {
-        ContentUpdate removeMappings(long ownerId);
-        ContentUpdate putMapping(long ownerId, long entryId, Range range, SourceSpan source);
-        ContentUpdate removeAnnotations(long ownerId);
-        ContentUpdate putAnnotation(long ownerId, long entryId, Range range, String kind, String text);
-        ContentUpdate removeAnnotation(long ownerId, long entryId);
         ContentUpdate replaceFlow(boolean truncated);
         ContentUpdate putInstruction(Range cells, InstructionKind kind);
         /** Known undecoded destinations are permitted. Unknown indirect targets are never edges. */
         ContentUpdate putEdge(int fromAddress, int toAddress, EdgeKind kind);
         /**
          * Compares content AND memory revisions, preserving latest independent breakpoint state.
-         * Source or CODE/DATA edits stale retained flow. replaceFlow supplies resulting flow.
+         * replaceFlow supplies resulting flow.
          * Invalid edits throw IllegalArgumentException and publish nothing.
          */
         CommitResult commit();
@@ -156,20 +149,6 @@ public final class ProgramIndex {
         @Override void close();
     }
 
-    public interface Mapping {
-        long ownerId();
-        long entryId();
-        Range range();
-        SourceSpan source();
-        long memoryRevision();
-    }
-    public interface Annotation {
-        long ownerId();
-        long entryId();
-        Range range();
-        String kind();
-        String text();
-    }
     public interface Breakpoint {
         long id();
         int address();
@@ -236,16 +215,16 @@ public final class ProgramIndex {
     private static final class View implements Snapshot {
         final Object identity;
         final IndexLayout layout;
-        final Content content;
+        final FlowGraph flow;
         final BreakpointIndex breakpoints;
         final long contentRevision, breakpointRevision, memoryRevision;
         final FlowState flowState;
 
-        View(Object identity, IndexLayout layout, Content content, BreakpointIndex breakpoints, long contentRevision, long breakpointRevision,
+        View(Object identity, IndexLayout layout, FlowGraph flow, BreakpointIndex breakpoints, long contentRevision, long breakpointRevision,
              long memoryRevision, FlowState flowState) {
             this.identity = identity;
             this.layout = layout;
-            this.content = content;
+            this.flow = flow;
             this.breakpoints = breakpoints;
             this.contentRevision = contentRevision;
             this.breakpointRevision = breakpointRevision;
@@ -258,30 +237,6 @@ public final class ProgramIndex {
         @Override public long memoryRevision() { return memoryRevision; }
         @Override public FlowState flowState() { return flowState; }
 
-        @Override public void forEachAnnotation(Consumer<? super Annotation> visitor) {
-            Objects.requireNonNull(visitor, "visitor");
-            for (Annotation value : content.annotations.values) visitor.accept(value);
-        }
-        @Override public void forEachMappingAt(int address, Consumer<? super Mapping> visitor) {
-            layout.checkAddress(address);
-            Objects.requireNonNull(visitor, "visitor");
-            content.mappings.ranges.visit(address, visitor);
-        }
-        @Override public void forEachMappingOverlappingSource(SourceSpan span, Consumer<? super Mapping> visitor) {
-            Objects.requireNonNull(span, "span");
-            Objects.requireNonNull(visitor, "visitor");
-            content.mappings.sources.overlapping(span, visitor);
-        }
-        @Override public void forEachAnnotationStartingAt(int address, Consumer<? super Annotation> visitor) {
-            layout.checkAddress(address);
-            Objects.requireNonNull(visitor, "visitor");
-            content.annotations.ranges.startingAt(address, visitor);
-        }
-        @Override public void forEachAnnotationCovering(int address, Consumer<? super Annotation> visitor) {
-            layout.checkAddress(address);
-            Objects.requireNonNull(visitor, "visitor");
-            content.annotations.ranges.covering(address, visitor);
-        }
         @Override public boolean hasExecutionBreakpoint(int address) {
             layout.checkAddress(address);
             return breakpoints.has(address);
@@ -294,16 +249,16 @@ public final class ProgramIndex {
         private boolean flowAvailable() { return flowState == FlowState.CURRENT || flowState == FlowState.TRUNCATED; }
         @Override public Instruction instructionAt(int address) {
             layout.checkAddress(address);
-            return flowAvailable() ? content.flow.instructionAt(address) : null;
+            return flowAvailable() ? flow.instructionAt(address) : null;
         }
         @Override public void forEachSuccessor(int address, EdgeVisitor visitor) {
             layout.checkAddress(address);
             Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.successors(address, visitor);
+            if (flowAvailable()) flow.successors(address, visitor);
         }
         @Override public void forEachInstruction(Consumer<? super Instruction> visitor) {
             Objects.requireNonNull(visitor, "visitor");
-            if (flowAvailable()) content.flow.instructions(visitor);
+            if (flowAvailable()) flow.instructions(visitor);
         }
     }
 
@@ -343,72 +298,11 @@ public final class ProgramIndex {
 
     private final class ContentEdit extends Edit implements ContentUpdate {
         final View base;
-        Map<Key, Mapping> mappings;
-        Map<Key, Annotation> annotations;
         Map<Integer, Instruction> instructions;
         Set<FlowGraph.Edge> edges;
-        boolean truncated, metadataChangesFlow;
+        boolean truncated;
 
         ContentEdit(View base) { this.base = base; }
-        private Map<Key, Mapping> mappings() {
-            if (mappings == null) {
-                mappings = new TreeMap<>();
-                for (Mapping value : base.content.mappings.values)
-                    mappings.put(new Key(value.ownerId(), value.entryId()), value);
-            }
-            return mappings;
-        }
-        private Map<Key, Annotation> annotations() {
-            if (annotations == null) {
-                annotations = new TreeMap<>();
-                for (Annotation value : base.content.annotations.values)
-                    annotations.put(new Key(value.ownerId(), value.entryId()), value);
-            }
-            return annotations;
-        }
-        @Override public ContentUpdate removeMappings(long ownerId) {
-            requireOpen();
-            mappings().entrySet().removeIf(entry -> entry.getKey().owner == ownerId);
-            metadataChangesFlow = true;
-            return this;
-        }
-        @Override public ContentUpdate putMapping(long ownerId, long entryId, Range range, SourceSpan source) {
-            requireOpen();
-            Range checked = range(layout, range);
-            required(source, "source");
-            mappings().put(new Key(ownerId, entryId), new MappingValue(ownerId, entryId, checked, source, base.memoryRevision));
-            metadataChangesFlow = true;
-            return this;
-        }
-        @Override public ContentUpdate removeAnnotations(long ownerId) {
-            requireOpen();
-            Iterator<Annotation> iterator = annotations().values().iterator();
-            while (iterator.hasNext()) {
-                Annotation value = iterator.next();
-                if (value.ownerId() == ownerId) {
-                    metadataChangesFlow |= affectsFlow(value.kind());
-                    iterator.remove();
-                }
-            }
-            return this;
-        }
-        @Override public ContentUpdate putAnnotation(long ownerId, long entryId, Range range, String kind, String text) {
-            requireOpen();
-            Range checked = range(layout, range);
-            required(kind, "kind");
-            required(text, "text");
-            validate(!kind.isEmpty() && (!kind.equals(Kinds.LABEL) || !text.isEmpty()), "Empty annotation kind or label");
-            Annotation old = annotations().put(new Key(ownerId, entryId),
-                    new AnnotationValue(ownerId, entryId, checked, kind, text));
-            metadataChangesFlow |= affectsFlow(kind) || (old != null && affectsFlow(old.kind()));
-            return this;
-        }
-        @Override public ContentUpdate removeAnnotation(long ownerId, long entryId) {
-            requireOpen();
-            Annotation removed = annotations().remove(new Key(ownerId, entryId));
-            if (removed != null) metadataChangesFlow |= affectsFlow(removed.kind());
-            return this;
-        }
         @Override public ContentUpdate replaceFlow(boolean truncated) {
             requireOpen();
             instructions = new TreeMap<>();
@@ -440,26 +334,19 @@ public final class ProgramIndex {
         @Override public CommitResult commit() {
             requireOpen();
             open = false;
-            Mappings nextMappings = mappings == null ? base.content.mappings : new Mappings(layout, mappings.values().toArray(new Mapping[0]));
-            Annotations nextAnnotations = annotations == null ? base.content.annotations : new Annotations(layout, annotations.values().toArray(new Annotation[0]));
-            FlowGraph flow = instructions == null ? base.content.flow
+            FlowGraph flow = instructions == null ? base.flow
                     : new FlowGraph(layout, instructions, edges);
-            Content content = new Content(nextMappings, nextAnnotations, flow);
-            FlowState state = base.flowState;
-            if (instructions != null) state = truncated ? FlowState.TRUNCATED : FlowState.CURRENT;
-            else if (metadataChangesFlow && flow != null) state = FlowState.STALE;
-            while (true) {
-                View current = root.get();
-                if (current.contentRevision != base.contentRevision || current.memoryRevision != base.memoryRevision)
-                    return CommitResult.STALE;
-                View next = new View(identity, layout, content, current.breakpoints, current.contentRevision + 1,
-                        current.breakpointRevision, current.memoryRevision, state);
-                if (root.compareAndSet(current, next)) return CommitResult.PUBLISHED;
-            }
+            FlowState state;
+            if (instructions == null) state = base.flowState;
+            else state = truncated ? FlowState.TRUNCATED : FlowState.CURRENT;
+            boolean done = update(current ->
+                    current.contentRevision != base.contentRevision || current.memoryRevision != base.memoryRevision
+                            ? null
+                            : new View(identity, layout, flow, current.breakpoints, current.contentRevision + 1,
+                                    current.breakpointRevision, current.memoryRevision, state));
+            return done ? CommitResult.PUBLISHED : CommitResult.STALE;
         }
     }
-
-    private static boolean affectsFlow(String kind) { return kind.equals(Kinds.CODE) || kind.equals(Kinds.DATA); }
 
     private final class BreakpointEdit extends Edit implements BreakpointUpdate {
         final View base;
@@ -488,44 +375,11 @@ public final class ProgramIndex {
             open = false;
             BreakpointIndex nextBreakpoints = values == null ? base.breakpoints
                     : new BreakpointIndex(layout, values.values().toArray(new Breakpoint[0]));
-            while (true) {
-                View current = root.get();
-                if (current.breakpointRevision != base.breakpointRevision) return CommitResult.STALE;
-                View next = new View(identity, layout, current.content, nextBreakpoints, current.contentRevision,
-                        current.breakpointRevision + 1, current.memoryRevision, current.flowState);
-                if (root.compareAndSet(current, next)) return CommitResult.PUBLISHED;
-            }
-        }
-    }
-
-    private static final class Content {
-        final Mappings mappings;
-        final Annotations annotations;
-        final FlowGraph flow;
-        Content(Mappings mappings, Annotations annotations, FlowGraph flow) {
-            this.mappings = mappings;
-            this.annotations = annotations;
-            this.flow = flow;
-        }
-    }
-
-    private static final class Mappings {
-        final Mapping[] values;
-        final RangePostings<Mapping> ranges;
-        final SourceIndex sources;
-        Mappings(Layout layout, Mapping[] values) {
-            this.values = values;
-            ranges = new RangePostings<>(layout, values, Mapping::range);
-            sources = new SourceIndex(values);
-        }
-    }
-
-    private static final class Annotations {
-        final Annotation[] values;
-        final RangeIndex<Annotation> ranges;
-        Annotations(Layout layout, Annotation[] values) {
-            this.values = values;
-            ranges = new RangeIndex<>(layout, values, Annotation::range);
+            boolean done = update(current -> current.breakpointRevision != base.breakpointRevision
+                    ? null
+                    : new View(identity, layout, current.flow, nextBreakpoints, current.contentRevision,
+                            current.breakpointRevision + 1, current.memoryRevision, current.flowState));
+            return done ? CommitResult.PUBLISHED : CommitResult.STALE;
         }
     }
 
@@ -550,40 +404,6 @@ public final class ProgramIndex {
         }
     }
 
-    private static final class Key implements Comparable<Key> {
-        final long owner, entry;
-        Key(long owner, long entry) { this.owner = owner; this.entry = entry; }
-        @Override public int compareTo(Key other) {
-            int comparison = Long.compare(owner, other.owner);
-            return comparison == 0 ? Long.compare(entry, other.entry) : comparison;
-        }
-    }
-    private static final class MappingValue implements Mapping {
-        final long owner, entry, memory;
-        final Range range;
-        final SourceSpan source;
-        MappingValue(long owner, long entry, Range range, SourceSpan source, long memory) {
-            this.owner = owner; this.entry = entry; this.range = range; this.source = source; this.memory = memory;
-        }
-        @Override public long ownerId() { return owner; }
-        @Override public long entryId() { return entry; }
-        @Override public Range range() { return range; }
-        @Override public SourceSpan source() { return source; }
-        @Override public long memoryRevision() { return memory; }
-    }
-    private static final class AnnotationValue implements Annotation {
-        final long owner, entry;
-        final Range range;
-        final String kind, text;
-        AnnotationValue(long owner, long entry, Range range, String kind, String text) {
-            this.owner = owner; this.entry = entry; this.range = range; this.kind = kind; this.text = text;
-        }
-        @Override public long ownerId() { return owner; }
-        @Override public long entryId() { return entry; }
-        @Override public Range range() { return range; }
-        @Override public String kind() { return kind; }
-        @Override public String text() { return text; }
-    }
     private static final class BreakpointValue implements Breakpoint {
         final long id;
         final int address;

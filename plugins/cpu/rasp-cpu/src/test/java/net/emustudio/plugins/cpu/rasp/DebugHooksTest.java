@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import org.junit.Test;
 import java.util.*;
@@ -14,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class DebugHooksTest {
     @Test public void recordsIntegerWordsAndPreservesNegativeValues() throws Exception {
-        MemoryStub memory = new MemoryStub(new Annotations());
+        MemoryStub memory = new MemoryStub();
         memory.write(0, 0);
         memory.write(5, 4); // LOAD constant
         memory.write(6, -300);
@@ -44,7 +43,7 @@ public class DebugHooksTest {
     }
 
     @Test public void refusedInstructionDoesNotFetchOrAdvance() throws Exception {
-        MemoryStub memory = new MemoryStub(new Annotations());
+        MemoryStub memory = new MemoryStub();
         memory.write(0, HALT);
         AbstractTapeContext input = createNiceMock(AbstractTapeContext.class);
         AbstractTapeContext output = createNiceMock(AbstractTapeContext.class);

@@ -3,47 +3,42 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.application.debugger.index.ProgramIndex;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 /** User-metadata editor and persistence adapter over CPU-visible addresses. */
 public final class AnnotationIndex {
-    private static final long OWNER = 1;
-    private static final long TYPE_OWNER = 3;
-    private static final String USER_KIND = "emuStudio.user/";
+    public static final long OWNER = Long.MIN_VALUE;
+    public static final String USER_KIND = "emuStudio.user/";
     private static final AtomicLong IDS = new AtomicLong();
     private final ProgramIndex index;
+    private final AnnotationEngine engine;
     private final Runnable changed;
-    private volatile View cached;
-    private final ThreadLocal<Lookup> lookups = ThreadLocal.withInitial(Lookup::new);
 
     public AnnotationIndex(ProgramIndex index) {
-        this(index, () -> {});
+        this(index, index.annotationEngine(), () -> {});
     }
 
     AnnotationIndex(ProgramIndex index, Runnable changed) {
+        this(index, index.annotationEngine(), changed);
+    }
+
+    public AnnotationIndex(ProgramIndex index, AnnotationEngine engine, Runnable changed) {
         this.index = Objects.requireNonNull(index);
+        this.engine = Objects.requireNonNull(engine);
         this.changed = Objects.requireNonNull(changed);
     }
 
     public ProgramIndex programIndex() { return index; }
 
     public Entry get(int address) {
-        Lookup lookup = lookup(index.snapshot(), address);
-        return lookup.entry;
-    }
-
-    private Lookup lookup(ProgramIndex.Snapshot snapshot, int address) {
-        Lookup lookup = lookups.get();
-        lookup.view = view(snapshot);
-        lookup.entry = null;
-        lookup.marker = null;
-        snapshot.forEachAnnotationStartingAt(address, lookup);
-        return lookup;
+        Entry result = null;
+        for (Entry entry : entries()) if (entry.address == address) result = entry;
+        return result;
     }
 
     public void put(Entry entry) {
@@ -61,22 +56,14 @@ public final class AnnotationIndex {
 
     /** Updates an existing annotation by identity. */
     public void update(Entry entry) {
-        if (entry.id < 0 || entries().stream().noneMatch(existing -> existing.id == entry.id))
-            throw new IllegalArgumentException("Unknown annotation");
-        edit(List.of(entry), false);
+        if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
+        edit(List.of(entry), false, true);
     }
 
     public void remove(Entry entry) {
         if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
-        index.editContent((base, update) -> {
-            removeEntry(update, entry.id);
-            return true;
-        });
+        engine.remove(OWNER, entry.id);
         changed.run();
-    }
-
-    private static void removeEntry(ProgramIndex.ContentUpdate update, long id) {
-        update.removeAnnotation(OWNER, id).removeAnnotation(OWNER, id + 1).removeAnnotation(TYPE_OWNER, id);
     }
 
     private static void validateKind(String kind) {
@@ -90,73 +77,93 @@ public final class AnnotationIndex {
     }
 
     private void edit(List<Entry> entries, boolean clear) {
-        // Replay a logical editor operation against fresh content, never a derived analysis result.
-        index.editContent((base, update) -> {
-            stage(update, base, entries, clear);
-            return true;
-        });
+        edit(entries, clear, false);
+    }
+
+    private void edit(List<Entry> entries, boolean clear, boolean requireExisting) {
+        for (Entry entry : entries) {
+            validateKind(entry.kind);
+            validateRange(index.snapshot().layout(), entry);
+        }
+        while (true) {
+            long revision = engine.revision();
+            List<AnnotationEngine.Entry> values = clear ? new ArrayList<>() : userEntries();
+            for (Entry entry : entries) {
+                if (requireExisting && values.stream().noneMatch(existing -> existing.entryId == entry.id)) {
+                    if (engine.revision() != revision) break;
+                    throw new IllegalArgumentException("Unknown annotation");
+                }
+                long id = entry.id;
+                if (id < 0) {
+                    id = IDS.getAndAdd(2);
+                    for (AnnotationEngine.Entry existing : values)
+                        if (existing.start == entry.address) id = existing.entryId;
+                }
+                final long entryId = id;
+                values.removeIf(existing -> existing.entryId == entryId);
+                values.add(new AnnotationEngine.Entry(OWNER, id, entry.address, entry.end,
+                        USER_KIND + entry.kind, entry.label, null));
+            }
+            if (engine.compareAndReplaceOwner(revision, OWNER, values)) break;
+        }
         changed.run();
     }
 
     /** Disk-loaded metadata commits only against the root from before the I/O. */
     ProgramIndex.CommitResult installProperties(Properties properties, ProgramIndex.Snapshot base) throws IOException {
-        List<Entry> entries = importedEntries(properties);
-        try (ProgramIndex.ContentUpdate update = index.updateContent(base)) {
-            stage(update, base, entries, false);
-            return update.commit();
-        }
+        return installProperties(properties, base, engine.revision());
     }
 
-    private void stage(ProgramIndex.ContentUpdate update, ProgramIndex.Snapshot base,
-                       List<Entry> entries, boolean clear) {
-        if (clear) update.removeAnnotations(OWNER).removeAnnotations(TYPE_OWNER);
+    ProgramIndex.CommitResult installProperties(Properties properties, ProgramIndex.Snapshot base,
+                                                  long expectedRevision) throws IOException {
+        List<Entry> entries = importedEntries(properties);
+        if (!index.snapshot().sameRevisions(base)) return ProgramIndex.CommitResult.STALE;
+        List<AnnotationEngine.Entry> values = userEntries();
         for (Entry entry : entries) {
-            validateKind(entry.kind);
-            validateRange(base.layout(), entry);
-            ProgramIndex.Annotation old = lookup(base, entry.address).marker;
-            long id = entry.id >= 0 ? entry.id : old == null ? IDS.getAndAdd(2) : old.entryId();
-            ProgramIndex.Range range = new ProgramIndex.Range(entry.address, entry.end);
-            String kind = USER_KIND + entry.kind;
-            update.putAnnotation(OWNER, id, range, kind, entry.label);
-            update.removeAnnotation(OWNER, id + 1);
-            if (!entry.label.isEmpty())
-                update.putAnnotation(OWNER, id + 1, range, ProgramIndex.Kinds.LABEL, entry.label);
-            // CODE/DATA are separate typed annotations so flow consumers need no editor knowledge.
-            update.removeAnnotation(TYPE_OWNER, id);
-            if (!entry.kind.equals("UNKNOWN"))
-                update.putAnnotation(TYPE_OWNER, id, range,
-                        entry.kind.equals("CODE") ? ProgramIndex.Kinds.CODE : ProgramIndex.Kinds.DATA, "");
+            values.removeIf(existing -> existing.entryId == entry.id);
+            values.add(new AnnotationEngine.Entry(OWNER, entry.id, entry.address, entry.end,
+                    USER_KIND + entry.kind, entry.label, null));
         }
+        return engine.compareAndReplaceOwner(expectedRevision, OWNER, values)
+                ? ProgramIndex.CommitResult.PUBLISHED : ProgramIndex.CommitResult.STALE;
     }
 
     public void remove(int address) {
-        boolean removed = index.editContent((base, update) -> {
-            ProgramIndex.Annotation old = lookup(base, address).marker;
-            if (old == null) return false;
-            removeEntry(update, old.entryId());
-            return true;
-        });
-        if (removed) changed.run();
+        while (true) {
+            long revision = engine.revision();
+            List<AnnotationEngine.Entry> values = userEntries();
+            AnnotationEngine.Entry old = null;
+            for (AnnotationEngine.Entry entry : values) if (entry.start == address) old = entry;
+            if (old == null) return;
+            values.remove(old);
+            if (engine.compareAndReplaceOwner(revision, OWNER, values)) {
+                changed.run();
+                return;
+            }
+        }
     }
 
     void clear() { edit(List.of(), true); }
 
-    public List<Entry> entries() { return view(index.snapshot()).entries; }
+    public List<Entry> entries() {
+        List<Entry> result = new ArrayList<>();
+        for (AnnotationEngine.Entry entry : userEntries())
+            if (entry.kind.startsWith(USER_KIND)) result.add(new Entry(entry.entryId, entry.start, entry.end,
+                    entry.text, entry.kind.substring(USER_KIND.length())));
+        return List.copyOf(result);
+    }
+
+    private List<AnnotationEngine.Entry> userEntries() {
+        List<AnnotationEngine.Entry> result = new ArrayList<>();
+        for (AnnotationEngine.Entry entry : engine.all()) if (entry.ownerId == OWNER) result.add(entry);
+        return result;
+    }
 
     public List<Entry> search(String text) {
         String needle = text.toLowerCase(Locale.ROOT);
         List<Entry> result = new ArrayList<>();
         for (Entry e : entries())
             if (e.label.toLowerCase(Locale.ROOT).contains(needle)) result.add(e);
-        return result;
-    }
-
-    private View view(ProgramIndex.Snapshot snapshot) {
-        View result = cached;
-        if (result == null || result.revision != snapshot.contentRevision()) {
-            result = new View(snapshot);
-            cached = result;
-        }
         return result;
     }
 
@@ -214,38 +221,6 @@ public final class AnnotationIndex {
             for (long id : imported.keySet()) IDS.accumulateAndGet(id + 2, Math::max);
             return new ArrayList<>(imported.values());
         } catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
-    }
-
-    private static final class Lookup implements Consumer<ProgramIndex.Annotation> {
-        View view;
-        Entry entry;
-        ProgramIndex.Annotation marker;
-
-        @Override public void accept(ProgramIndex.Annotation annotation) {
-            Entry candidate = view.payloads.get(annotation);
-            if (candidate != null) { entry = candidate; marker = annotation; }
-        }
-    }
-
-    /** Derived editor projection only; ProgramIndex remains the authoritative storage. */
-    private static final class View {
-        final long revision;
-        final List<Entry> entries;
-        final IdentityHashMap<ProgramIndex.Annotation, Entry> payloads = new IdentityHashMap<>();
-
-        View(ProgramIndex.Snapshot snapshot) {
-            revision = snapshot.contentRevision();
-            List<Entry> result = new ArrayList<>();
-            snapshot.forEachAnnotation(a -> {
-                if (a.ownerId() != OWNER || !a.kind().startsWith(USER_KIND)) return;
-                String kind = a.kind().substring(USER_KIND.length());
-                Entry entry = new Entry(a.entryId(), a.range().start, a.range().end,
-                        a.text(), kind);
-                result.add(entry);
-                payloads.put(a, entry);
-            });
-            entries = List.copyOf(result);
-        }
     }
 
     public static final class Entry {

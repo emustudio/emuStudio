@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.AnnotationIndex;
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
 import net.emustudio.application.debugger.index.ProgramIndex;
@@ -28,9 +29,9 @@ public class ProgramIndexAdapterBenchmark {
 
         @Setup public void setup() throws IOException {
             data = new BenchmarkData(layout, entries);
-            layoutMetadata = ProgramIndex.create("bench", data.size).snapshot().layout();
+            layoutMetadata = ProgramIndex.create("bench", data.size, new AnnotationEngine()).snapshot().layout();
             baseline = data.baseline(layoutMetadata);
-            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size));
+            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size, new AnnotationEngine()));
             adapter.importProperties(baseline.properties());
             // Build the adapter's immutable projection before timing steady-state point queries.
             adapter.get(data.address[0]);

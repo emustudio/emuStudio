@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +19,7 @@ public class MemoryContextImplTest {
 
     @Before
     public void setUp() {
-        this.memory = new MemoryContextImpl(new Annotations());
+        this.memory = new MemoryContextImpl();
     }
 
     @Test

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.BaselineFlowAnalysis;
 import net.emustudio.application.debugger.FlowAnalysis;
 import net.emustudio.application.debugger.index.ProgramIndex;
@@ -41,7 +42,7 @@ public class ProgramIndexGraphBenchmark {
             for (int i = 0; i < nodes; i++) addresses[i] = layout.equals("sparse") ? i * 100003
                     : layout.equals("clustered") && i % 8 == 0 ? size - 16384 + i / 8 : i;
             decoder = new FixtureDecoder(addresses);
-            index = ProgramIndex.create("graph", size);
+            index = ProgramIndex.create("graph", size, new AnnotationEngine());
             analysis = FlowAnalysis.reachable(decoder, addresses[0], nodes, index).publish();
             snapshot = index.snapshot();
             baseline = new BaselineFlowAnalysis(decoder, addresses[0], nodes, null);
@@ -73,7 +74,7 @@ public class ProgramIndexGraphBenchmark {
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Object indexedFullRebuild(Graphs state) {
-        ProgramIndex index = ProgramIndex.create("graph", state.size);
+        ProgramIndex index = ProgramIndex.create("graph", state.size, new AnnotationEngine());
         return FlowAnalysis.reachable(state.decoder, state.addresses[0], state.nodes, index).publish();
     }
 

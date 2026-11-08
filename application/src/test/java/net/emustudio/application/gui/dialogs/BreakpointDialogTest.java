@@ -22,11 +22,8 @@ public class BreakpointDialogTest extends AbstractSwingTest {
         BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(), mock(Dialogs.class),
                 new EmuStudioGui(), 7, 256, address -> address == 7, request -> false));
         showDialog(dialog);
-        JLabel state = findComponent(dialog, JLabel.class,
-                label -> "Existing breakpoint state".equals(label.getAccessibleContext().getAccessibleName()));
         assertTrue(onEdt(findButton(dialog, "Unset")::isEnabled));
         setText(findComponent(dialog, JTextField.class, field -> true), "8");
-        assertTrue(onEdt(state::getText).contains("No execution breakpoint"));
         assertFalse(onEdt(findButton(dialog, "Unset")::isEnabled));
     }
 

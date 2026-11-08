@@ -15,12 +15,14 @@ import java.util.function.Consumer;
 public final class FlowAnalysis {
     private final ProgramIndex index;
     private final ProgramIndex.Snapshot snapshot;
+    private final long annotationRevision;
     private final Map<Integer, String> listing;
 
     private FlowAnalysis(ProgramIndex index, ProgramIndex.Snapshot snapshot,
-                         Map<Integer, String> listing) {
+                         long annotationRevision, Map<Integer, String> listing) {
         this.index = index;
         this.snapshot = snapshot;
+        this.annotationRevision = annotationRevision;
         this.listing = Map.copyOf(listing);
     }
 
@@ -71,7 +73,7 @@ public final class FlowAnalysis {
     public boolean isCurrent(ProgramIndex currentIndex) {
         if (currentIndex != index) return false;
         ProgramIndex.Snapshot current = index.snapshot();
-        return current.sameRevisions(snapshot)
+        return index.annotationEngine().revision() == annotationRevision && current.sameRevisions(snapshot)
                 && current.flowState() != ProgramIndex.FlowState.STALE
                 && current.flowState() != ProgramIndex.FlowState.NOT_BUILT;
     }
@@ -99,20 +101,23 @@ public final class FlowAnalysis {
             if (consumed) throw new IllegalStateException("Flow result already consumed");
             consumed = true;
             checkCancelled();
-            try (ProgramIndex.ContentUpdate update = builder.index.updateContent(builder.base)) {
-                update.replaceFlow(builder.truncated);
-                for (Decoded decoded : builder.instructions.values())
-                    update.putInstruction(decoded.cells, decoded.kind);
-                for (Edge edge : builder.edges)
-                    update.putEdge(edge.from, edge.to, edge.edgeKind);
-                if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
-                    throw new IllegalStateException("Flow analysis discarded: program metadata or memory changed");
-            }
+            boolean current = builder.index.annotationEngine().ifRevision(builder.annotationRevision, () -> {
+                try (ProgramIndex.ContentUpdate update = builder.index.updateContent(builder.base)) {
+                    update.replaceFlow(builder.truncated);
+                    for (Decoded decoded : builder.instructions.values())
+                        update.putInstruction(decoded.cells, decoded.kind);
+                    for (Edge edge : builder.edges)
+                        update.putEdge(edge.from, edge.to, edge.edgeKind);
+                    if (update.commit() != ProgramIndex.CommitResult.PUBLISHED)
+                        throw new IllegalStateException("Flow analysis discarded: program metadata or memory changed");
+                }
+            });
+            if (!current) throw new IllegalStateException("Flow analysis discarded: annotations changed");
             ProgramIndex.Snapshot published = builder.index.snapshot();
             if (published.contentRevision() != builder.base.contentRevision() + 1
                     || published.memoryRevision() != builder.base.memoryRevision())
                 throw new IllegalStateException("Flow analysis discarded: graph replaced during publication");
-            return new FlowAnalysis(builder.index, published, builder.listing);
+            return new FlowAnalysis(builder.index, published, builder.annotationRevision, builder.listing);
         }
     }
 
@@ -120,11 +125,11 @@ public final class FlowAnalysis {
         final Disassembler disassembler;
         final ProgramIndex index;
         final ProgramIndex.Snapshot base;
+        final long annotationRevision;
         final int size, edgeLimit;
         final Map<Integer, Decoded> instructions = new LinkedHashMap<>();
         final Map<Integer, String> listing = new LinkedHashMap<>();
         final List<Edge> edges = new ArrayList<>();
-        final DataAt data = new DataAt();
         int targetAttempts;
         boolean truncated;
 
@@ -133,15 +138,16 @@ public final class FlowAnalysis {
             this.disassembler = Objects.requireNonNull(disassembler);
             this.index = Objects.requireNonNull(index);
             this.base = Objects.requireNonNull(base);
+            this.annotationRevision = index.annotationEngine().revision();
             this.size = base.layout().addressSpaceSize();
             // Bound even a malformed decoder returning a huge target list. Partial results say TRUNCATED.
             edgeLimit = limit * 8;
         }
 
         Decoded decode(int address) {
-            data.found = false;
-            base.forEachAnnotationCovering(address, data);
-            if (data.found) return null;
+            if (index.annotationEngine().at(address).stream().anyMatch(annotation ->
+                    annotation.kind.equals(AnnotationIndex.USER_KIND + "DATA")
+                            || annotation.kind.equals(ProgramIndex.Kinds.DATA))) return null;
             try {
                 Optional<InstructionFlow> result = disassembler.getFlow(address);
                 if (result.isEmpty()) return null;
@@ -182,13 +188,6 @@ public final class FlowAnalysis {
             edges.add(new Edge(from, to, kind));
         }
 
-    }
-
-    private static final class DataAt implements Consumer<ProgramIndex.Annotation> {
-        boolean found;
-        @Override public void accept(ProgramIndex.Annotation annotation) {
-            found |= annotation.kind().equals(ProgramIndex.Kinds.DATA);
-        }
     }
 
     private static final class Decoded {

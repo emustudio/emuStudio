@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,11 +72,6 @@ public class TimingMemoryStub extends ByteMemoryStub implements CPUContext.Passe
     public void clear() {
         super.clear();
         clearCounters();
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return null;
     }
 
     public void clearCounters() {

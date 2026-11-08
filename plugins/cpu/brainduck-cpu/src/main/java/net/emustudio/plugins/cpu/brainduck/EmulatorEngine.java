@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
@@ -55,7 +54,7 @@ public class EmulatorEngine {
             @Override public void clear() { throw new UnsupportedOperationException("Inspection only"); }
             @Override public Class<Byte> getCellTypeClass() { return Byte.class; }
             @Override public int getSize() { return raw.length; }
-            @Override public MemoryContextAnnotations annotations() { return memory.annotations(); }
+
         };
     }
 

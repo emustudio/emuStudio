@@ -14,15 +14,17 @@ import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 public class StepAction extends AbstractAction {
 
     private final EmulationController emulationController;
+    private final Runnable completed;
 
-    public StepAction(EmulationController emulationController) {
+    public StepAction(EmulationController emulationController, Runnable completed) {
         super("Step", loadIcon(ICON_STEP));
         putValue(SHORT_DESCRIPTION, "Step forward");
         this.emulationController = emulationController;
+        this.completed = completed;
     }
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
-        Optional.ofNullable(emulationController).ifPresent(EmulationController::step);
+        Optional.ofNullable(emulationController).ifPresent(controller -> controller.step(completed));
     }
 }

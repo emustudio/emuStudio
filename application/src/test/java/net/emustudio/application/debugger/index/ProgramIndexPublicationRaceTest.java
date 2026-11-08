@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import org.junit.Test;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ProgramIndexPublicationRaceTest {
         ExecutorService workers = Executors.newFixedThreadPool(2);
         try {
             for (int attempt = 0; attempt < 20; attempt++) {
-                ProgramIndex index = create("same-component-race", 65536);
+                ProgramIndex index = create("same-component-race", 65536, new AnnotationEngine());
                 Snapshot base = index.snapshot();
                 CountDownLatch staged = new CountDownLatch(2), release = new CountDownLatch(1);
                 Future<CommitResult> first = workers.submit(() -> edit(index, base, 1, content, staged, release));
@@ -41,7 +42,7 @@ public class ProgramIndexPublicationRaceTest {
                 assertEquals(1, results.stream().filter(result -> result == CommitResult.STALE).count());
                 Snapshot current = index.snapshot();
                 int[] entries = {0};
-                if (content) current.forEachAnnotation(annotation -> entries[0]++);
+                if (content) current.forEachInstruction(instruction -> entries[0]++);
                 else {
                     current.forEachExecutionBreakpoint(0, breakpoint -> entries[0]++);
                     current.forEachExecutionBreakpoint(1, breakpoint -> entries[0]++);
@@ -59,8 +60,9 @@ public class ProgramIndexPublicationRaceTest {
                                      CountDownLatch staged, CountDownLatch release) throws InterruptedException {
         if (content) {
             try (ContentUpdate update = index.updateContent(base)) {
-                update.putAnnotation(owner, 1, new Range(0, 1), "comment", "first");
-                update.putAnnotation(owner, 2, new Range(1, 2), "comment", "second");
+                update.replaceFlow(false);
+                update.putInstruction(new Range(0, 1), InstructionKind.LINEAR);
+                update.putInstruction(new Range(1, 2), InstructionKind.STOP);
                 staged.countDown();
                 assertTrue(release.await(5, TimeUnit.SECONDS));
                 return update.commit();

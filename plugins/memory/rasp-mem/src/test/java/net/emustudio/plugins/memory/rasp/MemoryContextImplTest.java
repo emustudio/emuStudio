@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp;
 
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.junit.*;
@@ -23,13 +22,10 @@ public class MemoryContextImplTest {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
     private MemoryContextImpl context;
-    private MemoryContextAnnotations annotations;
 
     @Before
     public void setUp() {
-        annotations = createNiceMock(MemoryContextAnnotations.class);
-        replay(annotations);
-        context = new MemoryContextImpl(annotations);
+        context = new MemoryContextImpl();
     }
 
     @After
@@ -37,14 +33,8 @@ public class MemoryContextImplTest {
         context.destroy();
     }
 
-    @Test(expected = NullPointerException.class)
-    public void constructorRejectsNullAnnotations() {
-        new MemoryContextImpl(null);
-    }
-
     @Test
     public void metadataAndDefaults() {
-        assertSame(annotations, context.annotations());
         assertEquals(Integer.class, context.getCellTypeClass());
         assertEquals(0, context.getSize());
         assertEquals(Integer.valueOf(0), context.read(0));

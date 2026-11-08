@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import org.openjdk.jmh.annotations.*;
@@ -27,7 +28,7 @@ public class ProgramIndexPointBenchmark {
 
         @Setup public void setup() {
             data = new BenchmarkData(layout, entries);
-            layoutMetadata = ProgramIndex.create("bench", data.size).snapshot().layout();
+            layoutMetadata = ProgramIndex.create("bench", data.size, new AnnotationEngine()).snapshot().layout();
             baseline = data.baseline(layoutMetadata);
             snapshot = data.index(false).snapshot();
         }

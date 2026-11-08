@@ -4,7 +4,6 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -768,23 +767,6 @@ public class ZxSpectrumBusImplTest {
         bus.initialize(cpu, memory);
 
         assertEquals(65536, bus.getSize());
-        verify(memory);
-    }
-
-    @Test
-    public void testAnnotationsDelegatesToMemory() {
-        ContextZ80 cpu = createNiceMock(ContextZ80.class);
-        expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).anyTimes();
-
-        MemoryContextAnnotations mockAnnotations = createMock(MemoryContextAnnotations.class);
-        MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
-        expect(memory.annotations()).andReturn(mockAnnotations).once();
-        replay(cpu, memory, mockAnnotations);
-
-        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
-        bus.initialize(cpu, memory);
-
-        assertSame(mockAnnotations, bus.annotations());
         verify(memory);
     }
 

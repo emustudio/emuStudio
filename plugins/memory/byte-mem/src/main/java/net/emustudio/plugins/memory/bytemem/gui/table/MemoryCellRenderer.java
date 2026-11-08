@@ -3,7 +3,9 @@
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.DebuggerMemory;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -20,15 +22,17 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final Color selectedForeground;
 
     private final MemoryTableModel tableModel;
-    private final DebuggerMemory debuggerMemory;
+    private final AnnotationEngine annotations;
+    private final ExecutionState executionState;
     private final JList<String> rowHeader;
     private final String[] addresses;
     private int currentPage;
 
     MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight,
-                       DebuggerMemory debuggerMemory) {
+                       AnnotationEngine annotations, ExecutionState executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
-        this.debuggerMemory = debuggerMemory;
+        this.annotations = annotations;
+        this.executionState = executionState;
 
         setOpaque(true);
         setDoubleBuffered(true);
@@ -63,9 +67,9 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
         int address = tableModel.toAddress(row, column);
-        boolean mapped = debuggerMemory != null && tableModel.isMappedAddress(address);
-        String label = mapped ? debuggerMemory.label(address) : "";
-        boolean current = mapped && debuggerMemory.isCurrentInstruction(address);
+        boolean mapped = tableModel.isMappedAddress(address);
+        String label = mapped ? AnnotationLabels.at(annotations, address) : "";
+        boolean current = mapped && executionState != null && executionState.currentInstruction() == address;
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");

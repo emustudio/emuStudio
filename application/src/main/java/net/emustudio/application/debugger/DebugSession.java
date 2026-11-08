@@ -9,7 +9,9 @@ import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -26,12 +28,15 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     public final CPU cpu;
     public final DebugCPU debug;
     public final MemoryContext<?> memory;
+    public final AnnotationEngine annotationEngine;
     public final List<String> watches = new ArrayList<>();
     public final List<Rule> rules = new ArrayList<>();
     private final Path settings;
     private Properties lastSaved;
     private final String metadataNamespace;
     private AnnotationIndex annotations;
+    private SourceAddressMap sourceMappings;
+    private boolean sourceMappingsCleared;
     private final List<Runnable> metadataListeners = new CopyOnWriteArrayList<>();
 
     public void addMetadataListener(Runnable listener) { metadataListeners.add(listener); }
@@ -40,6 +45,12 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private volatile ProgramIndex programIndex;
     // Never acquire the session monitor while holding this lock in a memory notification.
     private final Object indexPublicationLock = new Object();
+    private final Runnable annotationListener = () -> {
+        synchronized (indexPublicationLock) {
+            if (programIndex != null) programIndex.annotationsChanged();
+        }
+        metadataChanged();
+    };
     private final IdentityHashMap<Rule, Long> executionRuleIds = new IdentityHashMap<>();
     private long nextExecutionRuleId;
     private long[] executionRuleKeys = new long[0];
@@ -64,7 +75,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         ProgramIndex.Layout layout = programIndex == null ? null : programIndex.snapshot().layout();
         int size = cpu.getAddressSpaceSize();
         if (layout == null || layout.addressSpaceSize() != size) {
-            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size), size);
+            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size), size, annotationEngine);
             synchronized (indexPublicationLock) {
                 programIndex = replacement;
             }
@@ -79,15 +90,26 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         requirePaused();
         if (mappings.programIndex() != programIndex())
             throw new IllegalStateException("Source mappings belong to another memory image");
+        sourceMappings = mappings;
+        sourceMappingsCleared = false;
         metadataChanged();
     }
 
-    public synchronized void clearSourceMappings() {
-        ProgramIndex index = programIndex();
-        // Memory writes advance the index revision under this lock; holding it keeps the clear from starving.
-        synchronized (indexPublicationLock) {
-            SourceAddressMap.clearPublished(index);
+    /** Checks captured mappings for staleness; uncaptured compiler mappings remain directly accessible. */
+    public synchronized Optional<SourceCodePosition> sourceAt(int address) {
+        if (sourceMappings != null) {
+            if (sourceMappings.programIndex() != programIndex()) return Optional.empty();
+            return sourceMappings.sourceAt(address).map(location -> location.position);
         }
+        if (sourceMappingsCleared) return Optional.empty();
+        return annotationEngine.at(address).stream().filter(entry -> entry.source != null)
+                .min(Comparator.comparingLong(entry -> entry.ownerId)).map(entry -> entry.source);
+    }
+
+    public synchronized void clearSourceMappings() {
+        programIndex();
+        sourceMappings = null;
+        sourceMappingsCleared = true;
         metadataChanged();
     }
 
@@ -100,21 +122,56 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     /** User metadata loads without reading or storing memory cells. */
     public AnnotationIndex annotations() throws IOException {
-        Stamp stamp = liveStamp();
-        synchronized (this) {
-            if (annotations != null) return annotations;
-        }
-        Path path = annotationPath(stamp.base.layout().imageId());
-        Properties loaded = path != null && Files.isRegularFile(path) ? AtomicProperties.load(path) : null;
-        synchronized (this) {
-            requireCurrent(stamp);
-            if (annotations == null) {
-                AnnotationIndex installed = new AnnotationIndex(stamp.index, this::metadataChanged);
-                if (loaded != null && installed.installProperties(loaded, stamp.base) != ProgramIndex.CommitResult.PUBLISHED)
-                    throw new IllegalStateException("Metadata discarded: machine or metadata changed while loading");
-                annotations = installed;
+        while (true) {
+            Stamp stamp = liveStamp();
+            synchronized (this) {
+                if (annotations != null) return annotations;
             }
-            return annotations;
+            long annotationRevision = annotationEngine.revision();
+            Path path = annotationPath(stamp.base.layout().imageId());
+            Properties loaded = path != null && Files.isRegularFile(path) ? AtomicProperties.load(path) : null;
+            synchronized (this) {
+                requirePaused();
+                requireNoMutation();
+                if (programIndex() != stamp.index || generation != stamp.generation)
+                    throw new IllegalStateException("Metadata discarded: machine layout changed while loading");
+                if (annotations != null) return annotations;
+                if (!stamp.matches(programIndex, true) || annotationEngine.revision() != annotationRevision) continue;
+                AnnotationIndex installed = new AnnotationIndex(stamp.index, annotationEngine, this::metadataChanged);
+                if (loaded != null) {
+                    // Live user edits win on ID collisions, including edits made while disk I/O was in flight.
+                    Set<Long> existing = new HashSet<>();
+                    for (AnnotationEngine.Entry entry : annotationEngine.all())
+                        if (entry.ownerId == AnnotationIndex.OWNER) existing.add(entry.entryId);
+                    Properties filtered = new Properties();
+                    filtered.putAll(loaded);
+                    int count;
+                    try { count = Integer.parseInt(loaded.getProperty("entries")); }
+                    catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
+                    if (count < 0 || count > 100000) throw new IOException("Invalid annotation file");
+                    int retained = 0;
+                    for (int i = 0; i < count; i++) {
+                        String source = "entry." + i + ".";
+                        long id;
+                        try { id = Long.parseLong(loaded.getProperty(source + "id")); }
+                        catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
+                        if (existing.contains(id)) continue;
+                        String target = "entry." + retained++ + ".";
+                        for (String field : List.of("address", "end", "id", "label", "kind")) {
+                            String value = loaded.getProperty(source + field);
+                            if (value == null) filtered.remove(target + field);
+                            else filtered.setProperty(target + field, value);
+                        }
+                    }
+                    filtered.setProperty("entries", Integer.toString(retained));
+                    if (installed.installProperties(filtered, stamp.base, annotationRevision) != ProgramIndex.CommitResult.PUBLISHED)
+                        continue;
+                } else if (annotationEngine.revision() != annotationRevision) {
+                    continue;
+                }
+                annotations = installed;
+                return installed;
+            }
         }
     }
 
@@ -175,6 +232,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         generation++;
                         if (value == CPU.RunState.STATE_RUNNING) {
                             pendingHit = null;
+                            if (sourceMappings == null) sourceMappingsCleared = true;
                             synchronizeBreakpoints();
                             invalidateIndex();
                         }
@@ -199,12 +257,18 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             };
 
     public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
+        this(cpu, memory, settings, new AnnotationEngine());
+    }
+
+    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, AnnotationEngine annotationEngine) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
+        this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu.getDebugger().orElse(null);
         this.memory = debug == null ? memory : debug.memory();
         this.settings = settings;
         metadataNamespace = settings == null ? "session:" + UUID.randomUUID() : settings.toAbsolutePath().normalize().toUri().toString();
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) programIndex();
+        annotationEngine.addListener(annotationListener);
         load();
         cpu.addCPUListener(stateListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
@@ -224,21 +288,32 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     /** Invalidates analysis before and after a machine edit, even if the CPU emits no event. */
     public void runMutation(Runnable mutation) {
-        runMachineOperation(mutation);
+        runMachineOperation(mutation, true);
     }
 
     public void runExecution(Runnable execution) {
-        runMachineOperation(execution);
+        runMachineOperation(execution, true);
     }
 
-    private void runMachineOperation(Runnable mutation) {
+    /** Compilers report memory writes through the memory listener while execution is paused. */
+    public void runCompilation(Runnable compilation) {
+        boolean restoreNotifications = memory != null && !memory.areMemoryNotificationsEnabled();
+        if (restoreNotifications) memory.setMemoryNotificationsEnabled(true);
+        try {
+            runMachineOperation(compilation, false);
+        } finally {
+            if (restoreNotifications) memory.setMemoryNotificationsEnabled(false);
+        }
+    }
+
+    private void runMachineOperation(Runnable mutation, boolean invalidateMemory) {
         Objects.requireNonNull(mutation);
         SourceCaptureGuard operation = new SourceCaptureGuard();
         synchronized (this) {
             if (closed) throw new IllegalStateException("Debugger session closed");
             pendingHit = null;
             generation++;
-            invalidateIndex();
+            if (invalidateMemory) invalidateIndex();
             activeMutations++;
             activeSourceCapture = operation;
         }
@@ -248,7 +323,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
             synchronized (this) {
                 activeMutations--;
                 generation++;
-                invalidateIndex();
+                if (invalidateMemory) invalidateIndex();
                 if (memory != null && !closed) programIndex();
                 operation.stamp = new Stamp(programIndex, generation);
                 if (activeMutations == 0) activeSourceCapture = null;
@@ -360,7 +435,9 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         Objects.requireNonNull(guard);
         Stamp stamp = guard.stamp;
         if (stamp == null) throw new IllegalStateException("Compilation mutation has not finished");
-        applyCurrent(stamp, true, "Source mappings discarded: machine or metadata changed after compilation", apply);
+        synchronized (indexPublicationLock) {
+            applyCurrent(stamp, true, "Source mappings discarded: machine or metadata changed after compilation", apply);
+        }
     }
 
     public static final class SourceCaptureGuard {
@@ -373,6 +450,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         // analysis lease, so its publication cannot race a blocked memory-listener callback.
         invalidateIndex();
         synchronized (this) {
+            if (sourceMappings == null) sourceMappingsCleared = true;
             generation++;
         }
     }
@@ -779,6 +857,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                         .error("Could not save debugger settings", e);
             }
         cpu.removeCPUListener(stateListener);
+        annotationEngine.removeListener(annotationListener);
         if (memory != null) memory.removeMemoryListener(memoryListener);
         if (debug != null) debug.removeListener(this);
         attached = false;

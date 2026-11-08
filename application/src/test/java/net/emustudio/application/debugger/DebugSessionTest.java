@@ -8,6 +8,8 @@ import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,6 +34,77 @@ import static org.mockito.Mockito.*;
 
 public class DebugSessionTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    public void compilationWithoutWritesPreservesMemoryRevision() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            long before = session.programIndex().snapshot().memoryRevision();
+
+            session.runCompilation(() -> {});
+
+            assertEquals(before, session.programIndex().snapshot().memoryRevision());
+        }
+    }
+
+    @Test
+    public void compilationWritesInvalidateMemoryRevision() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            long before = session.programIndex().snapshot().memoryRevision();
+
+            session.runCompilation(() -> machine.memoryChanged(1));
+
+            assertTrue(session.programIndex().snapshot().memoryRevision() > before);
+        }
+    }
+
+    @Test
+    public void compilationRestoresDisabledNotificationsAfterFailure() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32, false);
+        when(machine.memory.areMemoryNotificationsEnabled()).thenReturn(false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            IllegalStateException failure = new IllegalStateException("compile failed");
+
+            assertSame(failure, assertThrows(IllegalStateException.class,
+                    () -> session.runCompilation(() -> { throw failure; })));
+
+            org.mockito.InOrder notifications = inOrder(machine.memory);
+            notifications.verify(machine.memory).setMemoryNotificationsEnabled(true);
+            notifications.verify(machine.memory).setMemoryNotificationsEnabled(false);
+        }
+    }
+
+    @Test
+    public void uncapturedSourceMappingIsNotUsedAfterMemoryChanges() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
+            session.annotationEngine.put(new AnnotationEngine.Entry(7, 0, 1, 2, "source", "", position));
+            assertEquals(Optional.of(position), session.sourceAt(1));
+
+            machine.memoryChanged(1);
+
+            assertTrue(session.sourceAt(1).isEmpty());
+            assertNotNull(session.annotationEngine.get(7, 0));
+        }
+    }
+
+    @Test
+    public void executionInvalidatesUncapturedSourceEvenWithoutMemoryNotifications() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32, false);
+        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
+            session.annotationEngine.put(new AnnotationEngine.Entry(7, 0, 1, 2, "source", "", position));
+            assertEquals(Optional.of(position), session.sourceAt(1));
+
+            machine.state(CPU.RunState.STATE_RUNNING);
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+
+            assertTrue(session.sourceAt(1).isEmpty());
+            assertNotNull(session.annotationEngine.get(7, 0));
+        }
+    }
 
     @Test
     public void memorylessPortableCpuUsesIndexedAddressBreakpointsAndResumeSkipping() throws Exception {
@@ -627,6 +700,40 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(otherLayout.cpu, otherLayout.memory, settings)) {
             assertNotEquals(identity, session.programIndex().snapshot().layout().imageId());
             assertTrue(session.annotations().entries().isEmpty());
+        }
+    }
+
+    @Test
+    public void metadataLoadRetriesConcurrentChangesAndPreservesLiveUserEdits() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("concurrent-debug.properties");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3, false);
+        long editedId;
+        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+            editedId = session.annotations().add(new AnnotationIndex.Entry(0, "disk old", "CODE")).id;
+            session.annotations().add(new AnnotationIndex.Entry(1, "disk retained", "DATA"));
+            session.saveAnnotations();
+        }
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3, false);
+        net.emustudio.emulib.runtime.annotations.AnnotationEngine engine = spy(
+                new net.emustudio.emulib.runtime.annotations.AnnotationEngine());
+        AtomicBoolean firstRevision = new AtomicBoolean(true);
+        doAnswer(call -> {
+            long revision = (long) call.callRealMethod();
+            if (firstRevision.getAndSet(false)) {
+                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                        AnnotationIndex.OWNER, editedId, 0, 1, AnnotationIndex.USER_KIND + "CODE", "live edit", null));
+                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                        17, 1, 2, 3, "source", "", null));
+            }
+            return revision;
+        }).when(engine).revision();
+
+        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings, engine)) {
+            AnnotationIndex annotations = session.annotations();
+
+            assertEquals("live edit", annotations.get(0).label);
+            assertEquals("disk retained", annotations.get(1).label);
+            assertNotNull(engine.get(17, 1));
         }
     }
 

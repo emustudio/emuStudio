@@ -1,7 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;

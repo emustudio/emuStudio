@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.application.debugger.InstructionIndex;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -58,7 +59,7 @@ public class ProgramIndexPaginationBenchmark {
                             default: throw new UnsupportedOperationException(method.getName());
                         }
                     });
-            index = ProgramIndex.create("z80-nop", 65536);
+            index = ProgramIndex.create("z80-nop", 65536, new AnnotationEngine());
             if (flow.equals("built")) {
                 try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
                     update.replaceFlow(false);

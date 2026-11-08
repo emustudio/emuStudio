@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamLabel;
@@ -19,10 +18,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     private final Map<Integer, RamLabel> labels = new HashMap<>();
     private final List<RamValue> inputs = new ArrayList<>();
     private final ReadWriteLockSupport rwl = new ReadWriteLockSupport();
-    private final MemoryContextAnnotations annotations;
 
-    protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        this.annotations = Objects.requireNonNull(annotations);
+    protected MemoryContextImpl() {
     }
 
     @Override
@@ -39,11 +36,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     @Override
     public int getSize() {
         return rwl.lockRead(memory::size);
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return annotations;
     }
 
     @Override

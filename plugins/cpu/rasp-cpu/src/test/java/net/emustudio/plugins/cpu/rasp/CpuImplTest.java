@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -33,7 +32,7 @@ public class CpuImplTest {
     @Before
     public void setup() throws Exception {
         contextPool = createNiceMock(ContextPool.class);
-        memory = new MemoryStub(new Annotations());
+        memory = new MemoryStub();
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
 
