@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.rasp.ast;
 
+import net.emustudio.emulib.plugins.compiler.CompileException;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
-import net.emustudio.plugins.compiler.rasp.exceptions.CompileException;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
@@ -17,6 +18,11 @@ public class Program {
     private final List<Instruction> instructions = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
+    private final String fileName;
+
+    public Program(String fileName) {
+        this.fileName = Objects.requireNonNull(fileName);
+    }
 
     public void add(Instruction instruction) {
         this.instructions.add(instruction);
@@ -25,7 +31,7 @@ public class Program {
     public void add(Label label) {
         String labelNorm = ParsingUtils.normalizeId(label.getLabel());
         if (labels.containsKey(labelNorm)) {
-            throw new CompileException(label.line, label.column, "Label is already defined!");
+            throw new CompileException(new SourceCodePosition(label.line, label.column, fileName), "Label is already defined!");
         }
         this.labels.put(labelNorm, label);
     }
@@ -47,7 +53,7 @@ public class Program {
             if (instruction.id != null) {
                 Optional<Label> label = getLabel(instruction.id);
                 if (label.isEmpty()) {
-                    throw new CompileException(instruction.line, instruction.column, "Label is not defined");
+                    throw new CompileException(new SourceCodePosition(instruction.line, instruction.column, fileName), "Label is not defined");
                 }
                 compiled.put(instruction.address + 1, label.get().getAddress());
             }
@@ -79,7 +85,7 @@ public class Program {
     private void check(Instruction instruction) {
         if (nonNegative.contains(instruction.opcode)) {
             if (instruction.operand != null && instruction.operand < 0) {
-                throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
+                throw new CompileException(new SourceCodePosition(instruction.line, instruction.column, fileName), "Register number cannot be negative");
             }
         }
     }

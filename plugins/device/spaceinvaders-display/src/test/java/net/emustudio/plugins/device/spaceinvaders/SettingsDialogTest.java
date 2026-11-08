@@ -34,12 +34,12 @@ public class SettingsDialogTest {
     @Before
     public void setUp() {
         assumeFalse(GraphicsEnvironment.isHeadless());
-        expect(settings.getInt("scale", 2)).andReturn(2).anyTimes();
-        expect(settings.getBoolean("colorOverlay", true)).andReturn(true).anyTimes();
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false).anyTimes();
-        expect(settings.getBoolean("soundEnabled", true)).andReturn(true).anyTimes();
-        expect(settings.getString("soundSamplesDirectory", "examples/space-invaders/sounds"))
-                .andReturn("examples/space-invaders/sounds").anyTimes();
+        expect(settings.getInt("scale")).andReturn(Optional.of(2)).anyTimes();
+        expect(settings.getBoolean("colorOverlay")).andReturn(Optional.of(true)).anyTimes();
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(false)).anyTimes();
+        expect(settings.getBoolean("soundEnabled")).andReturn(Optional.of(true)).anyTimes();
+        expect(settings.getString("soundSamplesDirectory"))
+                .andReturn(Optional.of("examples/space-invaders/sounds")).anyTimes();
         gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andAnswer(JPanel::new).anyTimes();
@@ -83,10 +83,10 @@ public class SettingsDialogTest {
 
     @Test
     public void saveCommitsTypedScaleAndAllSettings() throws Exception {
-        settings.setInt("scale", 3);
-        settings.setBoolean("colorOverlay", false);
-        settings.setBoolean("soundEnabled", false);
-        settings.setString("soundSamplesDirectory", "other/sounds");
+        settings.set("scale", 3);
+        settings.set("colorOverlay", false);
+        settings.set("soundEnabled", false);
+        settings.set("soundSamplesDirectory", "other/sounds");
         SwingUtilities.invokeAndWait(() -> {
             createDialog();
             ((JSpinner.DefaultEditor) spinner().getEditor()).getTextField().setText("3");
@@ -140,7 +140,7 @@ public class SettingsDialogTest {
 
     @Test
     public void persistenceFailureKeepsDialogOpenAndDoesNotApply() throws Exception {
-        settings.setInt("scale", 2);
+        settings.set("scale", 2);
         expectLastCall().andThrow(new CannotUpdateSettingException("Read-only settings"));
         dialogs.showError("Could not save settings. Please see log file for details.", "Save settings");
         SwingUtilities.invokeAndWait(() -> {

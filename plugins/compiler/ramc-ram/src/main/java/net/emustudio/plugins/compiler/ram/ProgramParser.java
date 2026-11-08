@@ -99,15 +99,11 @@ public class ProgramParser extends RAMParserBaseVisitor<Program> {
     public Value parseValue(Token value) {
         switch (value.getType()) {
             case LIT_BINNUMBER:
-                return new Value(parseLitBin(value));
             case LIT_HEXNUMBER_1:
-                return new Value(parseLitHex1(value));
             case LIT_HEXNUMBER_2:
-                return new Value(parseLitHex2(value));
             case LIT_NUMBER:
-                return new Value(parseLitDec(value));
             case LIT_OCTNUMBER:
-                return new Value(parseLitOct(value));
+                return new Value(parseNumber(value));
             case LIT_STRING_1:
             case LIT_STRING_2:
                 return new Value(parseLitString(value), false);

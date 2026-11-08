@@ -8,8 +8,6 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
@@ -21,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.IOException;
 
-@PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU")
+@PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU", description = "BrainDuck CPU emulator")
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
@@ -35,22 +33,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        try {
-            applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register CPU context", e);
-            applicationApi.getDialogs().showError("Could not register CPU context. Please see log file for details", getTitle());
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "BrainDuck CPU emulator";
+        applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
+        memory = applicationApi.getContextPool().get(pluginID, ByteMemoryContext.class);
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));

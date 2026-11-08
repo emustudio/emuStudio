@@ -6,7 +6,7 @@ import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.io.FileType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -85,7 +86,7 @@ public class SchemaPreviewPanel extends JPanel implements Scrollable {
 
             dialogs.chooseFile(
                     "Save schema image", "Save", currentDirectory, true,
-                    new FileExtensionsFilter("PNG image", "png")
+                    List.of(new FileType("PNG image", "png"))
             ).ifPresent(path -> {
                 if (!savingImage.compareAndSet(false, true)) {
                     return;

@@ -18,7 +18,7 @@ public final class NavigateSequenceAction extends AbstractAction {
 
     public NavigateSequenceAction(MemorySearch search, boolean previous) {
         super(previous ? "Find previous" : "Find next",
-                loadIcon(previous ? StandardIcons.ICON_MOVE_UP : StandardIcons.ICON_MOVE_DOWN));
+                loadIcon(previous ? StandardIcons.ICON_MOVE_UP : StandardIcons.ICON_MOVE_DOWN, NavigateSequenceAction.class));
         Objects.requireNonNull(search);
         navigate = previous ? search::previous : search::next;
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(

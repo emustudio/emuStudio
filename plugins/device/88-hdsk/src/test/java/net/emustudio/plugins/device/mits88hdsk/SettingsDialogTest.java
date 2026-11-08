@@ -9,7 +9,6 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.mits88pio.PioBoard;
 import net.emustudio.plugins.device.mits88pio.api.PioContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -52,26 +51,14 @@ public class SettingsDialogTest {
 
     @Before public void setUp() {
         assumeFalse(GraphicsEnvironment.isHeadless());
-        expect(settings.getString(anyString(), anyString())).andAnswer(() ->
-                (String) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
         expect(settings.getString(anyString())).andAnswer(() ->
                 Optional.ofNullable((String) values.get(getCurrentArgument(0)))).anyTimes();
-        expect(settings.getInt(anyString(), anyInt())).andAnswer(() ->
-                (int) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        expect(settings.getBoolean(anyString(), anyBoolean())).andAnswer(() ->
-                (boolean) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        settings.setString(anyString(), anyString());
+        expect(settings.getInt(anyString())).andAnswer(() ->
+                Optional.ofNullable((Integer) values.get(getCurrentArgument(0)))).anyTimes();
+        expect(settings.getBoolean(anyString())).andAnswer(() ->
+                Optional.ofNullable((Boolean) values.get(getCurrentArgument(0)))).anyTimes();
+        settings.set(anyString(), anyObject());
         expectLastCall().andAnswer(() -> put()).anyTimes();
-        settings.setInt(anyString(), anyInt());
-        expectLastCall().andAnswer(() -> put()).anyTimes();
-        settings.setBoolean(anyString(), anyBoolean());
-        expectLastCall().andAnswer(() -> put()).anyTimes();
-        settings.remove(anyString());
-        expectLastCall().andAnswer(() -> {
-            if (persistenceFailure != null) { throw persistenceFailure; }
-            values.remove(getCurrentArgument(0));
-            return null;
-        }).anyTimes();
         replay(settings);
 
         gui = createNiceMock(GUI.class);
@@ -84,7 +71,9 @@ public class SettingsDialogTest {
 
     private Object put() {
         if (persistenceFailure != null) { throw persistenceFailure; }
-        values.put(getCurrentArgument(0), getCurrentArgument(1));
+        Object value = getCurrentArgument(1);
+        if (value == null) { values.remove(getCurrentArgument(0)); }
+        else { values.put(getCurrentArgument(0), value); }
         return null;
     }
 
@@ -110,15 +99,14 @@ public class SettingsDialogTest {
                 PioContext pio = createNiceMock(PioContext.class);
                 expect(pio.getChannelCount()).andReturn(4).anyTimes();
                 pio.attachPeripheral(capture(physical));
-                expect(pool.getContext(0, PioContext.class, 0)).andReturn(pio);
+                expect(pool.get(0, PioContext.class, 0)).andReturn(pio);
                 replay(pio);
             } else {
                 Context8080 cpu = createNiceMock(Context8080.class);
                 MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
-                expect(memory.getCellTypeClass()).andReturn(Byte.class);
                 expect(cpu.attachDevice(eq(0xFD), capture(synthetic))).andReturn(true);
-                expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-                expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+                expect(pool.get(0, Context8080.class)).andReturn(cpu);
+                expect(pool.getMemory(0, Byte.class)).andReturn(memory);
                 replay(cpu, memory);
             }
             replay(pool, api);
@@ -257,9 +245,9 @@ public class SettingsDialogTest {
     @Test public void browseUpdatesImageAndCancelKeepsDraft() throws Exception {
         Path path = temporary.newFile("selected.dsk").toPath();
         expect(dialogs.chooseFile(eq("Open disk image"), eq("Open"), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter[].class))).andReturn(Optional.of(path));
+                anyObject())).andReturn(Optional.of(path));
         expect(dialogs.chooseFile(eq("Open disk image"), eq("Open"), eq(path.getParent()), eq(false),
-                anyObject(FileExtensionsFilter[].class))).andReturn(Optional.empty());
+                anyObject())).andReturn(Optional.empty());
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {
             createDialog(false);
@@ -331,7 +319,7 @@ public class SettingsDialogTest {
     @Test public void settingsCreateMitsImageAndMountItOnSaveWithWriteProtection() throws Exception {
         Path path = temporary.getRoot().toPath().resolve("created-mits.dsk");
         expect(dialogs.chooseFile(eq("Create disk image"), eq("Create"), anyObject(Path.class), eq(true),
-                anyObject(FileExtensionsFilter[].class))).andReturn(Optional.of(path));
+                anyObject())).andReturn(Optional.of(path));
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {
             createLiveDialog(true);
@@ -357,7 +345,7 @@ public class SettingsDialogTest {
     @Test public void settingsCreateSimhImageWithoutMountingBeforeSave() throws Exception {
         Path path = temporary.getRoot().toPath().resolve("created-simh.dsk");
         expect(dialogs.chooseFile(eq("Create disk image"), eq("Create"), anyObject(Path.class), eq(true),
-                anyObject(FileExtensionsFilter[].class))).andReturn(Optional.of(path));
+                anyObject())).andReturn(Optional.of(path));
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {
             createLiveDialog(false);
@@ -377,7 +365,7 @@ public class SettingsDialogTest {
         byte[] bytes = {5, 6, 7};
         Files.write(path, bytes);
         expect(dialogs.chooseFile(eq("Create disk image"), eq("Create"), anyObject(Path.class), eq(true),
-                anyObject(FileExtensionsFilter[].class))).andReturn(Optional.of(path));
+                anyObject())).andReturn(Optional.of(path));
         dialogs.showError(contains("Could not create image"), eq("Create disk image"));
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {

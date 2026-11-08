@@ -10,24 +10,19 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
-import net.emustudio.emulib.runtime.ui.debugger.OpcodeColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.List;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "SSEM CPU"
+        title = "SSEM CPU",
+        description = "Emulator of SSEM machine"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
     private MemoryContext<Byte> memory;
     private Disassembler disassembler;
     private EmulatorEngine engine;
@@ -38,21 +33,14 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         super(pluginID, applicationApi, settings);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        Class<?> cellTypeClass = memory.getCellTypeClass();
-        if (cellTypeClass != Byte.class) {
-            throw new PluginInitializationException(
-                    "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
-            );
-        }
+        memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
         engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
 
-        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
+        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
             automaticEmulation = new AutomaticEmulation(applicationApi.getExecutionState(), engine, memory);
         }
     }
@@ -75,15 +63,16 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
-    public JPanel getStatusPanel() {
-        DebuggerTable debugTable = applicationApi.getDebuggerTable();
-        if (debugTable != null) {
-            debugTable.setDebuggerColumns(Arrays.asList(
-                    new LineColumn(), new MnemoColumn(disassembler),
-                    new OpcodeColumn(disassembler)
-            ));
-        }
+    public List<DebuggerColumn<?>> getDebuggerColumns() {
+        return List.of(
+                DebuggerColumn.text("line", location -> String.format("%04X", location / 4)),
+                DebuggerColumn.mnemo(disassembler),
+                DebuggerColumn.opcode(disassembler)
+        );
+    }
 
+    @Override
+    public JPanel getStatusPanel() {
         if (applicationApi.getGUI() == null) {
             return null;
         }
@@ -121,11 +110,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public Disassembler getDisassembler() {
         return disassembler;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Emulator of SSEM machine";
     }
 
     @Override

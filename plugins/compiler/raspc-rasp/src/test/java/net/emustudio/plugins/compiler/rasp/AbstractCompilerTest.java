@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.rasp;
 
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -33,7 +32,7 @@ public abstract class AbstractCompilerTest {
         memoryStub = new MemoryStub();
 
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, RaspMemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(pool.get(0, RaspMemoryContext.class)).andReturn(memoryStub).anyTimes();
         replay(pool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -42,23 +41,10 @@ public abstract class AbstractCompilerTest {
 
         errorCount = 0;
         compiler = new CompilerRASP(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-
-            }
-
-            @Override
-            public void onMessage(CompilerMessage compilerMessage) {
-                System.out.println(compilerMessage);
-                if (compilerMessage.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
-                    errorCount++;
-                }
-            }
-
-            @Override
-            public void onFinish() {
-
+        compiler.addCompilerListener(message -> {
+            System.out.println(message);
+            if (message.getType() == CompilerMessage.Type.ERROR) {
+                errorCount++;
             }
         });
         compiler.initialize();

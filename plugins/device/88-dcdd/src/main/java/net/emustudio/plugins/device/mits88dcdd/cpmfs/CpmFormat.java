@@ -3,7 +3,6 @@
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
 
 import java.util.*;
@@ -164,7 +163,7 @@ public class CpmFormat {
         if (sectorSkew != null) {
             this.sectorSkewTable = computeSectorSkewTable(sectorSkew, dpb.spt);
         } else if (!sectorSkewTable.isEmpty()) {
-            this.sectorSkewTable = NumberUtils.listToNativeInts(sectorSkewTable);
+            this.sectorSkewTable = sectorSkewTable.stream().mapToInt(Integer::intValue).toArray();
         } else {
             // Default: no interleave (skew = 1)
             this.sectorSkewTable = computeSectorSkewTable(1, dpb.spt);

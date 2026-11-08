@@ -43,140 +43,42 @@ public class PluginSettingsImplTest {
 
     @Test
     public void prefixedKeysDelegateToApplicationSettings() {
-        application.setString("sharedString", "value");
-        application.setBoolean("sharedBoolean", true);
-        application.setInt("sharedInt", 7);
-        application.setLong("sharedLong", 8L);
-        application.setDouble("sharedDouble", 1.25);
-        application.setArray("sharedArray", Arrays.asList("a", "b"));
+        application.set("sharedString", "value");
+        application.set("sharedBoolean", true);
+        application.set("sharedInt", 7);
+        application.set("sharedLong", 8L);
+        application.set("sharedDouble", 1.25);
+        application.set("sharedArray", Arrays.asList("a", "b"));
 
         PluginSettingsImpl settings = createSettings();
 
-        assertTrue(settings.contains(PREFIX + "sharedString"));
         assertEquals(Optional.of("value"), settings.getString(PREFIX + "sharedString"));
-        assertTrue(settings.getBoolean(PREFIX + "sharedBoolean", false));
-        assertEquals(7, settings.getInt(PREFIX + "sharedInt", -1));
-        assertEquals(8L, settings.getLong(PREFIX + "sharedLong", -1L));
-        assertEquals(1.25, settings.getDouble(PREFIX + "sharedDouble", -1), 0.0);
+        assertEquals(Optional.of(true), settings.getBoolean(PREFIX + "sharedBoolean"));
+        assertEquals(Optional.of(7), settings.getInt(PREFIX + "sharedInt"));
+        assertEquals(Optional.of(8L), settings.getLong(PREFIX + "sharedLong"));
+        assertEquals(Optional.of(1.25), settings.getDouble(PREFIX + "sharedDouble"));
         assertEquals(Arrays.asList("a", "b"), settings.getArray(PREFIX + "sharedArray"));
     }
 
     @Test
-    public void prefixedGetStringWithDefaultDelegatesToApplication() {
-        application.setString("appKey", "appValue");
+    public void prefixedNoGuiAndAutoAreReadFromApplication() {
+        application = new AppSettings(Config.inMemory(), true, false);
         PluginSettingsImpl settings = createSettings();
 
-        assertEquals("appValue", settings.getString(PREFIX + "appKey", "fallback"));
+        assertEquals(Optional.of(true), settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI));
+        assertEquals(Optional.of(false), settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO));
     }
 
     @Test
-    public void prefixedGetStringWithDefaultReturnsFallbackWhenMissing() {
+    public void prefixedKeysReturnEmptyWhenMissing() {
         PluginSettingsImpl settings = createSettings();
 
-        assertEquals("fallback", settings.getString(PREFIX + "missingKey", "fallback"));
-    }
-
-    @Test
-    public void prefixedGetBooleanOptionalDelegatesToApplication() {
-        application.setBoolean("flag", true);
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(Optional.of(true), settings.getBoolean(PREFIX + "flag"));
-    }
-
-    @Test
-    public void prefixedGetBooleanOptionalReturnsEmptyWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
+        assertFalse(settings.getString(PREFIX + "missing").isPresent());
         assertFalse(settings.getBoolean(PREFIX + "missing").isPresent());
-    }
-
-    @Test
-    public void prefixedGetIntOptionalDelegatesToApplication() {
-        application.setInt("count", 42);
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(Optional.of(42), settings.getInt(PREFIX + "count"));
-    }
-
-    @Test
-    public void prefixedGetIntOptionalReturnsEmptyWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
         assertFalse(settings.getInt(PREFIX + "missing").isPresent());
-    }
-
-    @Test
-    public void prefixedGetLongOptionalDelegatesToApplication() {
-        application.setLong("bigNum", 999L);
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(Optional.of(999L), settings.getLong(PREFIX + "bigNum"));
-    }
-
-    @Test
-    public void prefixedGetLongOptionalReturnsEmptyWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
         assertFalse(settings.getLong(PREFIX + "missing").isPresent());
-    }
-
-    @Test
-    public void prefixedGetDoubleOptionalDelegatesToApplication() {
-        application.setDouble("ratio", 3.14);
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(Optional.of(3.14), settings.getDouble(PREFIX + "ratio"));
-    }
-
-    @Test
-    public void prefixedGetDoubleOptionalReturnsEmptyWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
         assertFalse(settings.getDouble(PREFIX + "missing").isPresent());
-    }
-
-    @Test
-    public void prefixedGetArrayWithDefaultDelegatesToApplication() {
-        application.setArray("items", Arrays.asList("x", "y"));
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(Arrays.asList("x", "y"), settings.getArray(PREFIX + "items", Collections.singletonList("z")));
-    }
-
-    @Test
-    public void prefixedGetBooleanDefaultReturnsFallbackWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertTrue(settings.getBoolean(PREFIX + "missing", true));
-    }
-
-    @Test
-    public void prefixedGetIntDefaultReturnsFallbackWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(99, settings.getInt(PREFIX + "missing", 99));
-    }
-
-    @Test
-    public void prefixedGetLongDefaultReturnsFallbackWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(123L, settings.getLong(PREFIX + "missing", 123L));
-    }
-
-    @Test
-    public void prefixedGetDoubleDefaultReturnsFallbackWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertEquals(2.71, settings.getDouble(PREFIX + "missing", 2.71), 0.0);
-    }
-
-    @Test
-    public void prefixedContainsReturnsFalseWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.contains(PREFIX + "nonexistent"));
+        assertEquals(Collections.emptyList(), settings.getArray(PREFIX + "missing"));
     }
 
     @Test
@@ -184,8 +86,8 @@ public class PluginSettingsImplTest {
         AtomicInteger saveCalls = new AtomicInteger();
         PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
 
-        settings.setString("local", "value");
-        settings.setSubSettings("nested").setInt("count", 4);
+        settings.set("local", "value");
+        settings.setSubSettings("nested").set("count", 4);
 
         assertEquals(Optional.of("value"), settings.getString("local"));
         assertEquals(3, saveCalls.get());
@@ -194,197 +96,112 @@ public class PluginSettingsImplTest {
     }
 
     @Test
-    public void localContainsReturnsTrueForExistingKey() {
-        PluginSettingsImpl settings = createSettings();
-        settings.setString("exists", "yes");
-
-        assertTrue(settings.contains("exists"));
-    }
-
-    @Test
-    public void localContainsReturnsFalseForMissingKey() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.contains("nope"));
-    }
-
-    @Test
-    public void localRemoveDeletesKeyAndTriggersSave() {
-        AtomicInteger saveCalls = new AtomicInteger();
-        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
-
-        settings.setString("toRemove", "value");
-        assertTrue(settings.contains("toRemove"));
-        saveCalls.set(0);
-
-        settings.remove("toRemove");
-
-        assertFalse(settings.contains("toRemove"));
-        assertEquals(1, saveCalls.get());
-    }
-
-    @Test
-    public void localGetStringWithDefault() {
-        PluginSettingsImpl settings = createSettings();
-        settings.setString("key", "actual");
-
-        assertEquals("actual", settings.getString("key", "fallback"));
-        assertEquals("fallback", settings.getString("missing", "fallback"));
-    }
-
-    @Test
-    public void localGetStringOptionalReturnsEmptyWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.getString("missing").isPresent());
-    }
-
-    @Test
-    public void localSetAndGetBoolean() {
-        AtomicInteger saveCalls = new AtomicInteger();
-        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
-
-        settings.setBoolean("flag", true);
-
-        assertEquals(Optional.of(true), settings.getBoolean("flag"));
-        assertTrue(settings.getBoolean("flag", false));
-        assertEquals(1, saveCalls.get());
-    }
-
-    @Test
-    public void localGetBooleanDefaultWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.getBoolean("missing").isPresent());
-        assertTrue(settings.getBoolean("missing", true));
-        assertFalse(settings.getBoolean("missing", false));
-    }
-
-    @Test
-    public void localSetAndGetInt() {
-        AtomicInteger saveCalls = new AtomicInteger();
-        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
-
-        settings.setInt("count", 42);
-
-        assertEquals(Optional.of(42), settings.getInt("count"));
-        assertEquals(42, settings.getInt("count", -1));
-        assertEquals(1, saveCalls.get());
-    }
-
-    @Test
-    public void localGetIntDefaultWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.getInt("missing").isPresent());
-        assertEquals(99, settings.getInt("missing", 99));
-    }
-
-    @Test
-    public void localSetAndGetLong() {
-        AtomicInteger saveCalls = new AtomicInteger();
-        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
-
-        settings.setLong("bigNum", 100000L);
-
-        assertEquals(Optional.of(100000L), settings.getLong("bigNum"));
-        assertEquals(100000L, settings.getLong("bigNum", -1L));
-        assertEquals(1, saveCalls.get());
-    }
-
-    @Test
-    public void localGetLongDefaultWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.getLong("missing").isPresent());
-        assertEquals(55L, settings.getLong("missing", 55L));
-    }
-
-    @Test
-    public void localSetAndGetDouble() {
-        AtomicInteger saveCalls = new AtomicInteger();
-        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
-
-        settings.setDouble("ratio", 2.718);
-
-        assertEquals(Optional.of(2.718), settings.getDouble("ratio"));
-        assertEquals(2.718, settings.getDouble("ratio", -1.0), 0.0);
-        assertEquals(1, saveCalls.get());
-    }
-
-    @Test
-    public void localGetDoubleDefaultWhenMissing() {
-        PluginSettingsImpl settings = createSettings();
-
-        assertFalse(settings.getDouble("missing").isPresent());
-        assertEquals(9.81, settings.getDouble("missing", 9.81), 0.0);
-    }
-
-    @Test
-    public void localSetAndGetArray() {
+    public void setAndGetAllSupportedTypes() {
         AtomicInteger saveCalls = new AtomicInteger();
         PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
         List<String> items = Arrays.asList("one", "two", "three");
 
-        settings.setArray("list", items);
+        settings.set("name", "emuStudio");
+        settings.set("flag", true);
+        settings.set("count", 42);
+        settings.set("bigNum", 100000L);
+        settings.set("ratio", 2.718);
+        settings.set("list", items);
 
+        assertEquals(Optional.of("emuStudio"), settings.getString("name"));
+        assertEquals(Optional.of(true), settings.getBoolean("flag"));
+        assertEquals(Optional.of(42), settings.getInt("count"));
+        assertEquals(Optional.of(100000L), settings.getLong("bigNum"));
+        assertEquals(Optional.of(2.718), settings.getDouble("ratio"));
         assertEquals(items, settings.getArray("list"));
-        assertEquals(items, settings.getArray("list", Collections.emptyList()));
-        assertEquals(1, saveCalls.get());
+        assertEquals(6, saveCalls.get());
     }
 
     @Test
-    public void localGetArrayDefaultWhenMissing() {
+    public void missingKeysReturnEmpty() {
         PluginSettingsImpl settings = createSettings();
-        List<String> fallback = List.of("default");
 
+        assertFalse(settings.getString("missing").isPresent());
+        assertFalse(settings.getBoolean("missing").isPresent());
+        assertFalse(settings.getInt("missing").isPresent());
+        assertFalse(settings.getLong("missing").isPresent());
+        assertFalse(settings.getDouble("missing").isPresent());
         assertEquals(Collections.emptyList(), settings.getArray("missing"));
-        assertEquals(fallback, settings.getArray("missing", fallback));
+        assertFalse(settings.getSubSettings("missing").isPresent());
+    }
+
+    @Test
+    public void valuesOfDifferentTypeReturnEmpty() {
+        PluginSettingsImpl settings = createSettings();
+        settings.set("text", "value");
+        settings.set("tooBig", Long.MAX_VALUE);
+
+        assertFalse(settings.getBoolean("text").isPresent());
+        assertFalse(settings.getInt("text").isPresent());
+        assertFalse(settings.getDouble("text").isPresent());
+        assertEquals(Collections.emptyList(), settings.getArray("text"));
+        assertFalse(settings.getSubSettings("text").isPresent());
+        assertFalse(settings.getInt("tooBig").isPresent());
+    }
+
+    @Test
+    public void integralNumbersAreConvertedBetweenNumericTypes() {
+        PluginSettingsImpl settings = createSettings();
+        pluginConfig.set("int", 5);
+        pluginConfig.set("long", 6L);
+
+        assertEquals(Optional.of(5L), settings.getLong("int"));
+        assertEquals(Optional.of(6), settings.getInt("long"));
+        assertEquals(Optional.of(5.0), settings.getDouble("int"));
+    }
+
+    @Test
+    public void setNullRemovesKeyAndTriggersSave() {
+        AtomicInteger saveCalls = new AtomicInteger();
+        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
+
+        settings.set("toRemove", "value");
+        assertTrue(settings.getString("toRemove").isPresent());
+        saveCalls.set(0);
+
+        settings.set("toRemove", null);
+
+        assertFalse(settings.getString("toRemove").isPresent());
+        assertEquals(1, saveCalls.get());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void setRejectsUnsupportedValueType() {
+        createSettings().set("key", new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void setRejectsListOfNonStrings() {
+        createSettings().set("key", List.of(1, 2));
     }
 
     @Test
     public void mutatingPrefixedKeysIsRejected() {
         final PluginSettingsImpl settings = createSettings();
 
-        expectIllegalArgument(() -> settings.setString(PREFIX + "key", "value"));
-        expectIllegalArgument(() -> settings.remove(PREFIX + "key"));
+        expectIllegalArgument(() -> settings.set(PREFIX + "key", "value"));
+        expectIllegalArgument(() -> settings.set(PREFIX + "key", null));
         expectIllegalArgument(() -> settings.getSubSettings(PREFIX + "key"));
         expectIllegalArgument(() -> settings.setSubSettings(PREFIX + "key"));
     }
 
     @Test
-    public void setBooleanWithPrefixIsRejected() {
-        final PluginSettingsImpl settings = createSettings();
+    public void subSettingsShareSaveCallbackAndApplication() {
+        application.set("shared", "app");
+        AtomicInteger saveCalls = new AtomicInteger();
+        PluginSettingsImpl settings = createSettings(saveCalls::incrementAndGet);
 
-        expectIllegalArgument(() -> settings.setBoolean(PREFIX + "key", true));
-    }
+        PluginSettings subSettings = settings.setSubSettings("nested");
+        subSettings.set("message", "hello");
 
-    @Test
-    public void setIntWithPrefixIsRejected() {
-        final PluginSettingsImpl settings = createSettings();
-
-        expectIllegalArgument(() -> settings.setInt(PREFIX + "key", 1));
-    }
-
-    @Test
-    public void setLongWithPrefixIsRejected() {
-        final PluginSettingsImpl settings = createSettings();
-
-        expectIllegalArgument(() -> settings.setLong(PREFIX + "key", 1L));
-    }
-
-    @Test
-    public void setDoubleWithPrefixIsRejected() {
-        final PluginSettingsImpl settings = createSettings();
-
-        expectIllegalArgument(() -> settings.setDouble(PREFIX + "key", 1.0));
-    }
-
-    @Test
-    public void setArrayWithPrefixIsRejected() {
-        final PluginSettingsImpl settings = createSettings();
-
-        expectIllegalArgument(() -> settings.setArray(PREFIX + "key", Collections.emptyList()));
+        assertEquals(Optional.of("hello"), settings.getSubSettings("nested").orElseThrow().getString("message"));
+        assertEquals(Optional.of("app"), subSettings.getString(PREFIX + "shared"));
+        assertEquals(2, saveCalls.get());
     }
 
     private void expectIllegalArgument(Runnable runnable) {

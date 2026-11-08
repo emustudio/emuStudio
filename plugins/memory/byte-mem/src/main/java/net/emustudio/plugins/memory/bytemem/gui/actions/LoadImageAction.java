@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
@@ -39,7 +39,7 @@ public class LoadImageAction extends AbstractAction {
 
     public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui,
                            ExecutionState execution) {
-        super("Load image file...", loadIcon(ICON_FILE));
+        super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
@@ -57,11 +57,11 @@ public class LoadImageAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
-                "Load image file", "Load", currentDirectory, false, IMAGE_EXTENSION_FILTER);
+                "Load image file", "Load", currentDirectory, false, IMAGE_FILE_TYPES);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            FileLoader loader = MemoryImageLoader.createLoader(path);
-            Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(loader));
+            FileLoader.Format format = MemoryImageLoader.formatOf(path);
+            Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(format));
             if (bank.isPresent()) {
                 setEnabled(false);
                 execution.update(() -> {

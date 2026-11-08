@@ -2,15 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
@@ -27,9 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "VT100 Terminal")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "VT100 Terminal", description = "VT100-terminal device")
 @SuppressWarnings("unused")
-public class DeviceImpl extends AbstractDevice {
+public class DeviceImpl extends AbstractPlugin implements Device {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final TerminalSettings terminalSettings;
@@ -56,17 +55,7 @@ public class DeviceImpl extends AbstractDevice {
         }
         this.context = new ContextVt100(keyboard);
 
-        try {
-            applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register VT100-terminal context", e);
-            applicationApi.getDialogs().showError("Could not register VT100-terminal. Please see log file for more details.", getTitle());
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "VT100-terminal device";
+        applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
     }
 
     @Override
@@ -74,20 +63,13 @@ public class DeviceImpl extends AbstractDevice {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         try {
-            BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
+            BrainCPUContext cpu = applicationApi.getContextPool().get(pluginID, BrainCPUContext.class);
             cpu.attachDevice(context);
         } catch (ContextNotFoundException e) {
-            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (device.getDataType() != Byte.class) {
-                throw new PluginInitializationException(
-                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
-                );
-            }
-            context.setExternalDevice(device);
+            context.setExternalDevice(applicationApi.getContextPool().getDevice(pluginID, Byte.class));
         }
         context.setDisplay(display);
         terminalSettings.addSizeChangedObserver(display::setSize);

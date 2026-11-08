@@ -7,7 +7,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.io.FileType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
@@ -35,7 +36,7 @@ public class LoadImageAction extends AbstractAction {
     private Path recentOpenPath;
 
     public LoadImageAction(ApplicationApi api, MemoryContext<Byte> context, Runnable repaint) {
-        super("Load image file...", loadIcon(ICON_FILE));
+        super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.api = Objects.requireNonNull(api);
         this.dialogs = Objects.requireNonNull(api.getDialogs());
@@ -52,7 +53,7 @@ public class LoadImageAction extends AbstractAction {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
                 "Load image file", "Load", currentDirectory,
-                false, new FileExtensionsFilter("Memory image", "bssem"));
+                false, List.of(new FileType("Memory image", "bssem")));
 
         imagePath.ifPresent(path -> {
             recentOpenPath = path;

@@ -8,12 +8,9 @@ import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.application.debugger.InstructionIndex;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
-import net.emustudio.emulib.runtime.ui.debugger.CannotSetDebuggerValueException;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,18 +39,20 @@ public class DebugTableModelImplTest {
         model.setCPU(createCpu(0));
 
         assertEquals(3, model.getColumnCount());
-        assertTrue(model.getColumnAt(0) instanceof AddressColumn);
         assertEquals(String.class, model.getColumnClass(0));
         assertEquals("address", model.getColumnName(0));
+        assertEquals("instruction", model.getColumnName(1));
+        assertEquals("opcode", model.getColumnName(2));
     }
 
     @Test
-    public void setDefaultColumnsWithoutCpuLeavesColumnsUntouched() {
+    public void cpuProvidedColumnsReplaceDefaultColumns() {
         DebugTableModelImpl model = new DebugTableModelImpl();
         TestColumn<String> column = new TestColumn<>(String.class, "Label", false);
-        model.setDebuggerColumns(List.of(column));
+        CPU cpu = createCpu(0);
+        when(cpu.getDebuggerColumns()).thenReturn(List.of(column));
 
-        model.setDefaultColumns();
+        model.setCPU(cpu);
 
         assertEquals(1, model.getColumnCount());
         assertEquals(column, model.getColumnAt(0));
@@ -155,10 +154,10 @@ public class DebugTableModelImplTest {
     }
 
     @Test
-    public void setValueAtSwallowsCannotSetDebuggerValueException() throws Exception {
+    public void setValueAtSwallowsIllegalArgumentException() throws Exception {
         DebugTableModelImpl model = new DebugTableModelImpl();
         TestColumn<String> column = new TestColumn<>(String.class, "Mnemonic", true);
-        column.throwOnSet = cannotSetValueException("bad value");
+        column.throwOnSet = new IllegalArgumentException("bad value");
         model.setDebuggerColumns(List.of(column));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
@@ -311,7 +310,7 @@ public class DebugTableModelImplTest {
         DebugTableModelImpl model = new DebugTableModelImpl();
         model.setCPU(cpu);
         model.setMaxRows(21);
-        model.setDebuggerColumns(List.of(new AddressColumn(), new AddressColumn()));
+        model.setDebuggerColumns(List.of(DebuggerColumn.address("%04X"), DebuggerColumn.address("%04X")));
         model.showAddress(0);
         model.showAddress(128);
         int firstCalls = calls.get();
@@ -489,13 +488,6 @@ public class DebugTableModelImplTest {
         field.set(target, value);
     }
 
-    private CannotSetDebuggerValueException cannotSetValueException(String message) throws Exception {
-        Constructor<CannotSetDebuggerValueException> constructor =
-                CannotSetDebuggerValueException.class.getDeclaredConstructor(String.class);
-        constructor.setAccessible(true);
-        return constructor.newInstance(message);
-    }
-
     private static final class LinearDisassembler implements Disassembler {
         @Override
         public DisassembledInstruction disassemble(int memoryPosition) {
@@ -515,7 +507,7 @@ public class DebugTableModelImplTest {
         private final Map<Integer, T> values = new HashMap<>();
         private int lastSetLocation = -1;
         private Object lastSetValue;
-        private CannotSetDebuggerValueException throwOnSet;
+        private IllegalArgumentException throwOnSet;
 
         private TestColumn(Class<T> classType, String title, boolean editable) {
             this.classType = classType;
@@ -543,7 +535,7 @@ public class DebugTableModelImplTest {
         }
 
         @Override
-        public void setValue(int location, Object value) throws CannotSetDebuggerValueException {
+        public void setValue(int location, Object value) {
             lastSetLocation = location;
             lastSetValue = value;
             if (throwOnSet != null) {

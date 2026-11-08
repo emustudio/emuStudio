@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinary;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
@@ -98,7 +98,7 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY), executionState);
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), executionState);
         this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui, executionState);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
@@ -148,7 +148,7 @@ public class MemoryGui extends DialogBase {
         txtValueDec.setText(String.format("%02d", data));
         txtValueHex.setText(String.format("%02X", data));
         txtValueOct.setText(String.format("%02o", data));
-        txtValueBin.setText(formatBinaryString(data, 8));
+        txtValueBin.setText(formatBinary(data, 8));
         boolean mapped = tableModel.isMappedAddress(address);
         String label = mapped ? AnnotationLabels.at(annotations, address) : "";
         txtLabel.setText(label);
@@ -215,7 +215,7 @@ public class MemoryGui extends DialogBase {
         paneMemory.setMinimumSize(new Dimension(768, 300));
         paneMemory.setPreferredSize(new Dimension(768, 390));
 
-        JSplitPane splitPane = gui.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
+        JSplitPane splitPane = gui.splitPane(JSplitPane.VERTICAL_SPLIT, paneMemory, bottomPanel, 1.0);
 
         JPanel content = gui.panel("insets 0, hidemode 3", "[grow]", "[][]6[grow]");
         content.add(toolBar, "growx, wrap");

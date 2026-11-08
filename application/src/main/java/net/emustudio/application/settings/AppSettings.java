@@ -4,6 +4,7 @@ package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -12,7 +13,7 @@ import static net.emustudio.emulib.runtime.settings.PluginSettings.*;
 
 
 @SuppressWarnings("unused")
-public class AppSettings extends BasicSettingsImpl {
+public class AppSettings extends PluginSettingsImpl {
     public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
@@ -31,7 +32,7 @@ public class AppSettings extends BasicSettingsImpl {
     }
 
     public AppSettings(Config config, boolean nogui, boolean auto) {
-        super(config, () -> {});
+        super(config, PluginSettings.UNAVAILABLE, () -> {});
         this.emuStudioAuto = auto;
         this.noGUI = nogui;
     }
@@ -42,25 +43,20 @@ public class AppSettings extends BasicSettingsImpl {
         return new AppSettings(config, nogui, auto);
     }
 
-    @Override
-    public boolean contains(String key) {
-        return KEY_NOGUI.equals(key) || KEY_AUTO.equals(key) || super.contains(key);
-    }
-
     public boolean useSchemaGrid() {
-        return getBoolean(KEY_USE_SCHEMA_GRID, true);
+        return getBoolean(KEY_USE_SCHEMA_GRID).orElse(true);
     }
 
     public void setUseSchemaGrid(boolean useGrid) {
-        setBoolean(KEY_USE_SCHEMA_GRID, useGrid);
+        set(KEY_USE_SCHEMA_GRID, useGrid);
     }
 
     public int getSchemaGridGap() {
-        return getInt(KEY_SCHEMA_GRID_GAP, DEFAULT_GRID_GAP);
+        return getInt(KEY_SCHEMA_GRID_GAP).orElse(DEFAULT_GRID_GAP);
     }
 
     public void setSchemaGridGap(int value) {
-        setInt(KEY_SCHEMA_GRID_GAP, value);
+        set(KEY_SCHEMA_GRID_GAP, value);
     }
 
     public Optional<Theme> getTheme() {

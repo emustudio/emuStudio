@@ -2,11 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -17,8 +18,8 @@ import net.emustudio.plugins.device.audiotapeplayer.gui.TapePlayerGui;
 import javax.swing.*;
 import java.util.List;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Audio Tape Player")
-public class DeviceImpl extends AbstractDevice {
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Audio Tape Player", description = "Audio Tape Player")
+public class DeviceImpl extends AbstractPlugin implements Device {
 
     private final boolean guiSupported;
     private final boolean automaticEmulation;
@@ -33,26 +34,22 @@ public class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         ContextPool contextPool = applicationApi.getContextPool();
 
         // a cassette player needs a device to which it will write at its own pace
-        CPUContext cpu = contextPool.getCPUContext(pluginID);
-        DeviceContext<Byte> lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
-        if (lineIn.getDataType() != Byte.class) {
-            throw new PluginInitializationException("Could not find line-in device");
-        }
+        CPUContext cpu = contextPool.get(pluginID, CPUContext.class);
+        DeviceContext<Byte> lineIn = contextPool.getDevice(pluginID, Byte.class);
         this.cassetteListener = new TapePlaybackImpl(lineIn, cpu::getCPUFrequency);
         cpu.addPassedCyclesListener(this.cassetteListener);
         this.controller = new TapePlaybackController(cassetteListener);
 
-        if (guiSupported && settings.getBoolean(SettingsDialog.SETTINGS_KEY_SHOW_GUI_AT_STARTUP, false)) {
+        if (guiSupported && settings.getBoolean(SettingsDialog.SETTINGS_KEY_SHOW_GUI_AT_STARTUP).orElse(false)) {
             showGUI(null);
         }
     }
@@ -119,11 +116,6 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public boolean isGuiSupported() {
         return guiSupported;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Audio Tape Player";
     }
 
     @Override

@@ -7,12 +7,16 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -65,7 +69,7 @@ public class CpuImplTest {
         replay(memory);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -86,7 +90,7 @@ public class CpuImplTest {
         memory.setMemory(memoryContent);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(anyLong(), eq(MemoryContext.class))).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(anyLong(), eq(Byte.class))).andReturn(memory).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -112,15 +116,11 @@ public class CpuImplTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test(expected = PluginInitializationException.class)
     public void testInitializeWithWrongCellType() throws PluginInitializationException {
-        MemoryContext<Integer> memory = createNiceMock(MemoryContext.class);
-        expect(memory.getCellTypeClass()).andReturn(Integer.class).anyTimes();
-        replay(memory);
-
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class))
+                .andThrow(new ContextNotFoundException("Unexpected memory cell type")).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -210,6 +210,35 @@ public class CpuImplTest {
         try {
             // applicationApi.getGUI() returns null (niceMock)
             assertNull(initialized.getStatusPanel());
+        } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
+    public void testDebuggerColumns() throws PluginInitializationException {
+        CpuImpl initialized = createInitializedCpu();
+        try {
+            List<DebuggerColumn<?>> columns = initialized.getDebuggerColumns();
+            assertEquals(3, columns.size());
+            assertEquals("line", columns.get(0).getTitle());
+            assertEquals("instruction", columns.get(1).getTitle());
+            assertEquals("opcode", columns.get(2).getTitle());
+        } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
+    public void testLineColumnShowsLineNumberInHex() throws PluginInitializationException {
+        CpuImpl initialized = createInitializedCpu();
+        try {
+            DebuggerColumn<?> line = initialized.getDebuggerColumns().get(0);
+            assertEquals(String.class, line.getClassType());
+            assertFalse(line.isEditable());
+            assertEquals("0000", line.getValue(0));
+            assertEquals("0001", line.getValue(4));
+            assertEquals("000A", line.getValue(40));
         } finally {
             initialized.destroy();
         }

@@ -6,7 +6,7 @@ import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ExecutionState;
 import java.util.concurrent.CompletionException;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +17,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ public class LoadImageAction extends AbstractAction {
     private Path recentOpenPath;
 
     public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint, ExecutionState execution) {
-        super("Load image file...", loadIcon(ICON_FILE));
+        super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
@@ -49,7 +50,7 @@ public class LoadImageAction extends AbstractAction {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
                 "Load image file", "Load", currentDirectory,
-                false, new FileExtensionsFilter("Memory image", "bram"));
+                false, List.of(new FileType("Memory image", "bram")));
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             setEnabled(false);

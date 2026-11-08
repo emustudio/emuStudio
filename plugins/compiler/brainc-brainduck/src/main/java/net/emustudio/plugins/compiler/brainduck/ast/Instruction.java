@@ -27,7 +27,7 @@ public class Instruction {
     }
 
     public void generateCode(IntelHEX hex) {
-        hex.add(String.format("%1$02X", instructionCode));
+        hex.add((byte) instructionCode);
     }
 
     @Override

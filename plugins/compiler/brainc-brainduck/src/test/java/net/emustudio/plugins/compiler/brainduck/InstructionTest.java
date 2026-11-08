@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.brainduck;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -76,13 +75,12 @@ public class InstructionTest extends AbstractCompilerTest {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNullProgramDoesNotChangeMemory() throws Exception {
         compile(">>");
 
         ContextPool contextPool = createMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0L, MemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(contextPool.getMemory(0L, Byte.class)).andReturn(memoryStub).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);

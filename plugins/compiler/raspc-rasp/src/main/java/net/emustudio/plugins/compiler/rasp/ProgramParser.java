@@ -134,20 +134,4 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         }
         return program;
     }
-
-    public int parseNumber(Token number) {
-        switch (number.getType()) {
-            case LIT_BINNUMBER:
-                return parseLitBin(number);
-            case LIT_HEXNUMBER_1:
-                return parseLitHex1(number);
-            case LIT_HEXNUMBER_2:
-                return parseLitHex2(number);
-            case LIT_NUMBER:
-                return parseLitDec(number);
-            case LIT_OCTNUMBER:
-                return parseLitOct(number);
-        }
-        throw new IllegalStateException("unexpected number token type: " + number.getType());
-    }
 }

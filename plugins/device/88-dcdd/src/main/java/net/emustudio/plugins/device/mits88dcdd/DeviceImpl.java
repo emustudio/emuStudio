@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -23,10 +24,11 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
-        title = "MITS 88-DCDD"
+        title = DIALOG_TITLE,
+        description = DIALOG_TITLE + " floppy disk controller."
 )
-public class DeviceImpl extends AbstractDevice {
-    private final DiskSettings settings;
+public class DeviceImpl extends AbstractPlugin implements Device {
+    private final DiskSettings diskSettings;
     private final Dialogs dialogs;
     private final boolean guiSupported;
 
@@ -37,21 +39,21 @@ public class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.settings = new DiskSettings(settings);
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.diskSettings = new DiskSettings(settings);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
         this.dialogs = applicationApi.getDialogs();
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        cpuContext = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-        drives = new DriveCollection(cpuContext, settings, dialogs);
+        cpuContext = applicationApi.getContextPool().get(pluginID, Context8080.class);
+        drives = new DriveCollection(cpuContext, diskSettings, dialogs);
 
         StatusPort statusPort = new StatusPort(drives);
         ControlPort controlPort = new ControlPort(drives);
         DataPort dataPort = new DataPort(drives);
         drives.attach(statusPort, controlPort, dataPort);
-        settings.addObserver(() -> {
+        diskSettings.addObserver(() -> {
             try {
                 drives.attach(statusPort, controlPort, dataPort);
                 drives.reset();
@@ -78,18 +80,13 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public String getDescription() {
-        return DIALOG_TITLE + " floppy disk controller.";
-    }
-
-    @Override
     public boolean isAutomationSupported() {
         return true;
     }
 
     @Override
     public void destroy() {
-        settings.clearObservers();
+        diskSettings.clearObservers();
         if (gui != null) {
             gui.dispose();
             gui = null;
@@ -105,7 +102,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (guiSupported) {
-            new SettingsDialog(parent, settings, drives, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
+            new SettingsDialog(parent, diskSettings, drives, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
         }
     }
 

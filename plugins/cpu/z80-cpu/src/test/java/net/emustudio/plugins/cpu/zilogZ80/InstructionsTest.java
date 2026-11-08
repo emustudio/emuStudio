@@ -41,7 +41,7 @@ public class InstructionsTest {
         memory = new TimingMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         contextPool.register(anyLong(), capture(cpuContext), same(Context8080.class));
         expectLastCall().anyTimes();
         replay(contextPool);

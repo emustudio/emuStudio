@@ -9,25 +9,20 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Zilog Z80 CPU"
+        title = "Zilog Z80 CPU",
+        description = "Emulator of Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
     private final ContextZ80Impl context = new ContextZ80Impl();
     private final InitializerZ80 initializer;
 
@@ -39,16 +34,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        try {
-            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
-            applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register Z80 CPU context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
-            );
-        }
-        context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
+        applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+        applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
+        context.setCPUFrequency(settings.getInt("frequency_khz").orElse(ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerZ80(
                 pluginID, applicationApi.getContextPool(), context
         );
@@ -136,11 +124,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
         context.clearDevices();
-    }
-
-    @Override
-    public String getDescription() {
-        return "Emulator of Zilog Z80 CPU";
     }
 
     @Override

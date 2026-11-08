@@ -392,7 +392,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
-            DebuggerColumn column = mock(net.emustudio.emulib.runtime.ui.debugger.AddressColumn.class);
+            DebuggerColumn column = mock(DebuggerColumn.class);
             when(column.getClassType()).thenReturn(String.class);
             when(column.getDefaultWidth()).thenReturn(-1);
             when(original.getColumnCount()).thenReturn(1);
@@ -436,7 +436,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         void publishCompilation(boolean fail, Runnable afterFinish) {
             compilerEvents.onStart();
             if (fail) {
-                compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
+                compilerEvents.onMessage(new CompilerMessage(CompilerMessage.Type.ERROR, "bad source", null));
             } else {
                 java.util.List<MemoryAnnotations.Entry> mappings = new java.util.ArrayList<>();
                 for (int i = 0; i < 3; i++) mappings.add(new MemoryAnnotations.Entry(7, i, i * 2, i * 2 + 1,

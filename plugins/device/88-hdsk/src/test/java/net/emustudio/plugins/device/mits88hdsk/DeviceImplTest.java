@@ -27,23 +27,22 @@ public class DeviceImplTest {
 
     private PluginSettings mutableSettings(Map<String, Object> values) {
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString(anyString(), anyString())).andAnswer(() ->
-                (String) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
         expect(settings.getString(anyString())).andAnswer(() ->
                 Optional.ofNullable((String) values.get(getCurrentArgument(0)))).anyTimes();
-        expect(settings.getInt(anyString(), anyInt())).andAnswer(() ->
-                (int) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        expect(settings.getBoolean(anyString(), anyBoolean())).andAnswer(() ->
-                (boolean) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
+        expect(settings.getInt(anyString())).andAnswer(() ->
+                Optional.ofNullable((Integer) values.get(getCurrentArgument(0)))).anyTimes();
+        expect(settings.getBoolean(anyString())).andAnswer(() ->
+                Optional.ofNullable((Boolean) values.get(getCurrentArgument(0)))).anyTimes();
         replay(settings);
         return settings;
     }
 
     private PluginSettings settings(String mode) {
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString("controllerType", "SIMH")).andReturn(mode);
-        expect(settings.getInt(anyString(), anyInt())).andAnswer(() -> (int) getCurrentArguments()[1]).anyTimes();
+        expect(settings.getString("controllerType")).andReturn(Optional.of(mode)).anyTimes();
         expect(settings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(settings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(settings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(settings);
         return settings;
     }
@@ -58,7 +57,6 @@ public class DeviceImplTest {
     @SuppressWarnings("unchecked")
     private MemoryContext<Byte> memory() {
         MemoryContext<Byte> memory = createStrictMock(MemoryContext.class);
-        expect(memory.getCellTypeClass()).andReturn(Byte.class);
         replay(memory);
         return memory;
     }
@@ -67,8 +65,8 @@ public class DeviceImplTest {
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);
         MemoryContext<Byte> memory = memory();
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory);
         Capture<Context8080.CpuPortDevice> controller = newCapture();
         expect(cpu.attachDevice(eq(0xFD), capture(controller))).andReturn(true);
         cpu.detachDevice(0xFD);
@@ -87,8 +85,8 @@ public class DeviceImplTest {
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);
         MemoryContext<Byte> memory = memory();
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory);
         expect(cpu.attachDevice(eq(0xFD), isA(HdskController.class))).andReturn(true);
         cpu.detachDevice(0xFD);
         replay(pool, cpu);
@@ -101,7 +99,7 @@ public class DeviceImplTest {
     @Test public void mitsModeUsesPioOnlyAndDetachesItsOwnPeripheral() throws Exception {
         ContextPool pool = createStrictMock(ContextPool.class);
         PioBoard pio = new PioBoard(0xA0, 2);
-        expect(pool.getContext(0, PioContext.class, 0)).andReturn(pio);
+        expect(pool.get(0, PioContext.class, 0)).andReturn(pio);
         replay(pool);
         DeviceImpl device = new DeviceImpl(0, application(pool), settings("MITS"));
         device.initialize();
@@ -122,8 +120,8 @@ public class DeviceImplTest {
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);
         MemoryContext<Byte> memory = memory();
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory);
         expect(cpu.attachDevice(eq(0xFD), anyObject())).andReturn(false);
         replay(pool, cpu);
         DeviceImpl device = new DeviceImpl(0, application(pool), settings("SIMH"));
@@ -138,7 +136,7 @@ public class DeviceImplTest {
         PioBoard pio = new PioBoard(0xA0, 2);
         MhdskController existing = new MhdskController(pio);
         pio.attachPeripheral(existing);
-        expect(pool.getContext(0, PioContext.class, 0)).andReturn(pio);
+        expect(pool.get(0, PioContext.class, 0)).andReturn(pio);
         replay(pool);
         DeviceImpl device = new DeviceImpl(0, application(pool), settings("MITS"));
         try { device.initialize(); fail("Connector conflict must fail initialization"); }
@@ -153,7 +151,7 @@ public class DeviceImplTest {
 
     @Test public void mitsRequiresTwoPias() throws Exception {
         ContextPool pool = createStrictMock(ContextPool.class);
-        expect(pool.getContext(0, PioContext.class, 0)).andReturn(new PioBoard(0xA0, 1));
+        expect(pool.get(0, PioContext.class, 0)).andReturn(new PioBoard(0xA0, 1));
         replay(pool);
         DeviceImpl device = new DeviceImpl(0, application(pool), settings("MITS"));
         try { device.initialize(); fail("One PIA cannot connect MHDSK"); }
@@ -172,8 +170,8 @@ public class DeviceImplTest {
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);
         MemoryContext<Byte> memory = memory();
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory);
         Capture<Context8080.CpuPortDevice> captured = newCapture();
         expect(cpu.attachDevice(eq(0xFD), capture(captured))).andReturn(true);
         cpu.detachDevice(0xFD);
@@ -205,7 +203,7 @@ public class DeviceImplTest {
         expect(pio.getChannelCount()).andReturn(4).anyTimes();
         Capture<PioContext.Peripheral> captured = newCapture();
         pio.attachPeripheral(capture(captured));
-        expect(pool.getContext(0, PioContext.class, 0)).andReturn(pio);
+        expect(pool.get(0, PioContext.class, 0)).andReturn(pio);
         replay(pool, pio);
         DeviceImpl device = new DeviceImpl(0, application(pool), mutableSettings(values));
         device.initialize();
@@ -232,8 +230,8 @@ public class DeviceImplTest {
         Map<String, Object> values = new HashMap<>();
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory());
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory());
         Capture<Context8080.CpuPortDevice> captured = newCapture();
         expect(cpu.attachDevice(eq(0xFD), capture(captured))).andReturn(true);
         cpu.detachDevice(0xFD);

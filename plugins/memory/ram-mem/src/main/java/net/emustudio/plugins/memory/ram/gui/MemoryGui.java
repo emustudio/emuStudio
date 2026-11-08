@@ -36,7 +36,7 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         }, execution);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY), execution);
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), execution);
 
         buildContent();
     }

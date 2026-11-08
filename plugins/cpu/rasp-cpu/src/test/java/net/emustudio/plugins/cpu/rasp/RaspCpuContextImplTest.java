@@ -24,8 +24,8 @@ public class RaspCpuContextImplTest {
     }
 
     private RaspCpuContextImpl createAndInit() throws Exception {
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
         replay(contextPool, inputTape, outputTape);
 
         RaspCpuContextImpl context = new RaspCpuContextImpl();
@@ -69,8 +69,8 @@ public class RaspCpuContextImplTest {
         expectLastCall().once();
         replay(inputTape);
 
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
         replay(contextPool, outputTape);
 
         RaspCpuContextImpl context = new RaspCpuContextImpl();
@@ -95,8 +95,8 @@ public class RaspCpuContextImplTest {
         expectLastCall().once();
         replay(outputTape);
 
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
         replay(contextPool, inputTape);
 
         RaspCpuContextImpl context = new RaspCpuContextImpl();
@@ -129,8 +129,8 @@ public class RaspCpuContextImplTest {
         expectLastCall().once();
         replay(inputTape, outputTape);
 
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
         replay(contextPool);
 
         RaspCpuContextImpl context = new RaspCpuContextImpl();

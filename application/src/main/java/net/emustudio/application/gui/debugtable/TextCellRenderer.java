@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -28,7 +26,7 @@ class TextCellRenderer extends DefaultTableCellRenderer {
         boolean current = model.isRowAtCurrentInstruction(table.convertRowIndexToModel(row));
         boolean address = false;
         for (int col = 0; col < model.getColumnCount(); col++) {
-            if (model.getColumnAt(col) instanceof AddressColumn
+            if (DebugTableModel.TITLE_ADDRESS.equals(model.getColumnAt(col).getTitle())
                     && model.getColumnName(col).equals(table.getColumnName(column))) {
                 address = true;
                 break;

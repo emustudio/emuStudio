@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -14,7 +13,6 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
  * It's a proxy between CPU, memory and devices. Mostly due to contention, but also for CPU cycles synchronization
  * (devices are usually not connected to CPU directly).
  */
-@PluginContext
 public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte>, ContextZ80, CPUContext.PassedCyclesListener {
     ModelProfile getProfile();
 

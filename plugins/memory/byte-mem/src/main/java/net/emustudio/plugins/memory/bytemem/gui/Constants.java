@@ -3,11 +3,11 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.io.FileType;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.List;
 
 
 
@@ -15,7 +15,7 @@ public class Constants {
     public final static Color ROM_COLOR = new Color(0xE8, 0x68, 0x50);
     public final static Color BANK_COLOR = new Color(0xFF, 0xE6, 0xBF);
 
-    public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
-            "Memory image", Arrays.stream(FileLoader.Format.values()).flatMap(f -> f.getExtensions().stream()).collect(Collectors.toList())
-    );
+    public final static List<FileType> IMAGE_FILE_TYPES = List.of(new FileType(
+            "Memory image", Arrays.stream(FileLoader.Format.values()).flatMap(f -> f.getExtensions().stream()).toArray(String[]::new)
+    ));
 }

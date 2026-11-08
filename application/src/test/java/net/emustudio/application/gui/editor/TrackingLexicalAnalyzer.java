@@ -4,14 +4,11 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 
-import java.util.Iterator;
-
 final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
     private final net.emustudio.emulib.plugins.compiler.Token[] tokens;
 
     int index;
     int nextCalls;
-    boolean iteratorUsed;
     String lastResetInput;
 
     TrackingLexicalAnalyzer(net.emustudio.emulib.plugins.compiler.Token... tokens) {
@@ -29,18 +26,10 @@ final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
         return index < tokens.length;
     }
 
-
     @Override
     public void reset(char[] array, int offset, int length) {
         lastResetInput = new String(array, offset, length);
         index = 0;
         nextCalls = 0;
-        iteratorUsed = false;
-    }
-
-    @Override
-    public Iterator<net.emustudio.emulib.plugins.compiler.Token> iterator() {
-        iteratorUsed = true;
-        throw new AssertionError("RTokenMaker should consume lexer tokens directly");
     }
 }

@@ -46,7 +46,8 @@ final class RecordingDialog extends DialogBase {
         addAddress(panel, "To:", to);
         mode.addActionListener(event -> updateFields());
         updateFields();
-        start = gui.button("Start", this::start);
+        start = gui.button("Start");
+        start.addActionListener(e -> start());
         panel.add(start, "span, alignx right");
         getRootPane().setDefaultButton(start);
         return panel;

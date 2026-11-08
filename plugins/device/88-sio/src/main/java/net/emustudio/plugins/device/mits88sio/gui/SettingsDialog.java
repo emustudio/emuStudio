@@ -157,7 +157,7 @@ public class SettingsDialog extends DialogBase {
                     .readInteger("Enter port number:", "Add " + nameAdd + " port", 0)
                     .ifPresent(port -> {
                         if (portModelCheck.contains(port)) {
-                            dialogs.showError("Port number is already taken by " + nameCheck + " port");
+                            dialogs.showError("Port number is already taken by " + nameCheck + " port", "Add " + nameAdd + " port");
                         } else {
                             portModelAdd.add(port);
                         }

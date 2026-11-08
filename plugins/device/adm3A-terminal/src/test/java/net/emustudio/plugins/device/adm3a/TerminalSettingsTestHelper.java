@@ -5,6 +5,8 @@ package net.emustudio.plugins.device.adm3a;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 
+import java.util.Optional;
+
 import static org.easymock.EasyMock.*;
 
 /**
@@ -19,10 +21,10 @@ public class TerminalSettingsTestHelper {
      */
     public static TerminalSettings createNoGuiSettings() {
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
-        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).anyTimes();
-        expect(pluginSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(pluginSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(pluginSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).anyTimes();
+        expect(pluginSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(pluginSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -36,13 +38,13 @@ public class TerminalSettingsTestHelper {
      */
     public static TerminalSettings createNoGuiSettings(String inputPath, String outputPath, int inputReadDelayMillis) {
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
-        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).anyTimes();
-        expect(pluginSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(pluginSettings.getString(eq("inputFileName"), anyString())).andReturn(inputPath).anyTimes();
-        expect(pluginSettings.getString(eq("outputFileName"), anyString())).andReturn(outputPath).anyTimes();
-        expect(pluginSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(pluginSettings.getInt(eq("inputReadDelayMillis"), anyInt())).andReturn(inputReadDelayMillis).anyTimes();
-        expect(pluginSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).anyTimes();
+        expect(pluginSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getString("inputFileName")).andReturn(Optional.ofNullable(inputPath)).anyTimes();
+        expect(pluginSettings.getString("outputFileName")).andReturn(Optional.ofNullable(outputPath)).anyTimes();
+        expect(pluginSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getInt("inputReadDelayMillis")).andReturn(Optional.of(inputReadDelayMillis)).anyTimes();
+        expect(pluginSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(pluginSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);

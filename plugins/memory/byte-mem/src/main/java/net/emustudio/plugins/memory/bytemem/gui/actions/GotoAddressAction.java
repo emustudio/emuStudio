@@ -21,7 +21,7 @@ public class GotoAddressAction extends AbstractAction {
     private final Consumer<Integer> setPageFromAddress;
 
     public GotoAddressAction(Dialogs dialogs, ByteMemoryContext context, Consumer<Integer> setPageFromAddress) {
-        super("Go to address...", loadIcon(ICON_FILE));
+        super("Go to address...", loadIcon(ICON_FILE, GotoAddressAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
@@ -36,7 +36,7 @@ public class GotoAddressAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         try {
             dialogs
-                    .readInteger("Enter memory address:", "Go to address")
+                    .readInteger("Enter memory address:", "Go to address", null)
                     .ifPresent(address -> {
                         if (address < 0 || address >= context.getSize()) {
                             dialogs.showError(

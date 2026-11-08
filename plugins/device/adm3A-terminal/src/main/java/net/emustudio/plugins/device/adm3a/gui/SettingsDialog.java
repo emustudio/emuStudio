@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -66,8 +67,14 @@ public class SettingsDialog extends DialogBase {
         cmbFont.setSelectedIndex(settings.getFont().ordinal());
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
-        JButton btnInputBrowse = gui.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
-        JButton btnOutputBrowse = gui.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
+        JButton btnInputBrowse = gui.button("Browse...");
+        btnInputBrowse.addActionListener(e -> dialogs
+                .chooseFile("Select input file", "Select", null, false, List.of())
+                .ifPresent(p -> txtInputFileName.setText(p.toString())));
+        JButton btnOutputBrowse = gui.button("Browse...");
+        btnOutputBrowse.addActionListener(e -> dialogs
+                .chooseFile("Select output file", "Select", null, false, List.of())
+                .ifPresent(p -> txtOutputFileName.setText(p.toString())));
 
         // Redirect I/O section
         JPanel panelRedirectIO = gui.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
@@ -104,7 +111,7 @@ public class SettingsDialog extends DialogBase {
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
         if (txtInputFileName.getText().trim().equals(txtOutputFileName.getText().trim())) {
-            dialogs.showError("Input and output file names cannot point to the same file");
+            dialogs.showError("Input and output file names cannot point to the same file", "ADM-3A Terminal");
             txtInputFileName.grabFocus();
             return;
         }

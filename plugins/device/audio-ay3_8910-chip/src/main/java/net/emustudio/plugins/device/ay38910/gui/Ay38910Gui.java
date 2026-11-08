@@ -30,7 +30,7 @@ import static javax.swing.Action.SHORT_DESCRIPTION;
 import static javax.swing.Action.SMALL_ICON;
 
 public class Ay38910Gui extends DialogBase {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME);
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, Ay38910Gui.class);
     private static final int REFRESH_MS = 33;
 
     private final GUI gui;

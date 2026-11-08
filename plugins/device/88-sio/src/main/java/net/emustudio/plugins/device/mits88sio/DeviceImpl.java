@@ -2,15 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
@@ -22,10 +21,11 @@ import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
-        title = "MITS 88-SIO"
+        title = "MITS 88-SIO",
+        description = "MITS 88-SIO serial board; capable of connecting single device. Supports attaching to multiple CPU ports."
 )
 @SuppressWarnings("unused")
-public class DeviceImpl extends AbstractDevice {
+public class DeviceImpl extends AbstractPlugin implements Device {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final SioUnitSettings sioSettings;
@@ -40,20 +40,8 @@ public class DeviceImpl extends AbstractDevice {
 
         this.sioSettings = new SioUnitSettings(settings);
         this.deviceChannel = new UART.DeviceChannel();
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        try {
-            applicationApi.getContextPool().register(pluginID, deviceChannel, DeviceContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register 88-SIO device context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register 88-SIO device channel. Please see log file for details.", super.getTitle()
-            );
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "MITS 88-SIO serial board; capable of connecting single device. Supports attaching to multiple CPU ports.";
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        applicationApi.getContextPool().register(pluginID, deviceChannel, DeviceContext.class);
     }
 
     @Override
@@ -66,23 +54,16 @@ public class DeviceImpl extends AbstractDevice {
         sioUnit.reset(guiSupported);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
+        Context8080 cpu = applicationApi.getContextPool().get(pluginID, Context8080.class);
         this.sioUnit = new SioUnit(sioSettings, cpu);
         this.uart = sioUnit.getUART();
         deviceChannel.setUART(uart);
 
         // get a device attached to this board
         try {
-            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (device.getDataType() != Byte.class) {
-                throw new PluginInitializationException(
-                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
-                );
-            }
-            uart.setDevice(device);
+            uart.setDevice(applicationApi.getContextPool().getDevice(pluginID, Byte.class));
         } catch (ContextNotFoundException e) {
             LOGGER.warn("No device is connected into the 88-SIO.");
         }

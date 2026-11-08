@@ -6,7 +6,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
+import net.emustudio.emulib.plugins.compiler.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.BaseNodeVisitor;
 
 import java.util.Objects;

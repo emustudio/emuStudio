@@ -33,7 +33,6 @@ public class PerformFindSequenceAction extends AbstractAction {
     private final JTextComponent txtPosition;
     private final JTextComponent txtFindText;
 
-    private final RadixUtils radixUtils = RadixUtils.getInstance();
 
     public PerformFindSequenceAction(Dialogs dialogs, BiConsumer<byte[], Integer> startSearch,
                                      Supplier<Boolean> isCurrentPage,
@@ -60,7 +59,7 @@ public class PerformFindSequenceAction extends AbstractAction {
         try {
             lastError.component = txtPosition;
             lastError.message = ERROR_NUMBER_FORMAT;
-            int from = isCurrentPage.get() ? currentAddress : radixUtils.parseRadix(txtPosition.getText().trim());
+            int from = isCurrentPage.get() ? currentAddress : RadixUtils.parseRadix(txtPosition.getText().trim());
 
             lastError.component = txtFindText;
             lastError.message = "Sequence cannot be empty";
@@ -76,7 +75,7 @@ public class PerformFindSequenceAction extends AbstractAction {
             } else if (selectedFormat == Format.BYTES) {
                 lastError.message = ERROR_NUMBER_FORMAT;
 
-                List<Integer> mapped = Stream.of(text.split(" ")).map(radixUtils::parseRadix).collect(Collectors.toList());
+                List<Integer> mapped = Stream.of(text.split(" ")).map(RadixUtils::parseRadix).collect(Collectors.toList());
                 sequenceToFind = new byte[mapped.size()];
                 for (int i = 0; i < sequenceToFind.length; i++) {
                     sequenceToFind[i] = mapped.get(i).byteValue(); // NOTE: if integer is > than byte, the rest is cut off.

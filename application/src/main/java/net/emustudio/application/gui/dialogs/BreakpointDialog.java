@@ -59,8 +59,10 @@ public class BreakpointDialog extends DialogBase {
         panel.add(txtAddress, "growx, wrap");
 
         JPanel buttons = gui.panel("insets 0, fillx", "[grow][][]", "");
-        unset = gui.button("Unset", () -> submit(Operation.UNSET));
-        JButton set = gui.button("Set", () -> submit(Operation.SET));
+        unset = gui.button("Unset");
+        unset.addActionListener(e -> submit(Operation.UNSET));
+        JButton set = gui.button("Set");
+        set.addActionListener(e -> submit(Operation.SET));
         buttons.add(unset, "skip 1");
         buttons.add(set);
         panel.add(buttons, "span, growx");
@@ -78,7 +80,7 @@ public class BreakpointDialog extends DialogBase {
 
     private void refreshExistingState() {
         try {
-            int address = RadixUtils.getInstance().parseRadix(txtAddress.getText());
+            int address = RadixUtils.parseRadix(txtAddress.getText());
             if (address < 0 || address >= breakpointLimit) throw new NumberFormatException();
             boolean enabled = breakpointSet.test(address);
             unset.setEnabled(enabled);
@@ -94,11 +96,11 @@ public class BreakpointDialog extends DialogBase {
 
     private Integer parseAddress(int limit) {
         try {
-            int address = RadixUtils.getInstance().parseRadix(txtAddress.getText());
+            int address = RadixUtils.parseRadix(txtAddress.getText());
             if (address < 0 || address >= limit) throw new NumberFormatException();
             return address;
         } catch (NumberFormatException e) {
-            dialogs.showError("Invalid address. Enter a value from 0 to " + (limit - 1) + ".");
+            dialogs.showError("Invalid address. Enter a value from 0 to " + (limit - 1) + ".", "Error");
             txtAddress.requestFocusInWindow();
             return null;
         }

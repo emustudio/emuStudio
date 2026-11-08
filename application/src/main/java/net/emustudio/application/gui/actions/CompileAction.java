@@ -83,7 +83,7 @@ public class CompileAction extends AbstractAction {
                         CompilerListener result = new CompilerListener() {
                             @Override public void onStart() { }
                             @Override public void onMessage(CompilerMessage message) {
-                                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) failed.set(true);
+                                if (message.getType() == CompilerMessage.Type.ERROR) failed.set(true);
                             }
                             @Override public void onFinish() { }
                         };

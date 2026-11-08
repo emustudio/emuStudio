@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.runtime.settings.BasicSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,26 +15,26 @@ import static org.junit.Assert.*;
 
 public class SioUnitSettingsTest {
 
-    private BasicSettings basicSettings;
+    private PluginSettings pluginSettings;
 
     @Before
     public void setup() {
-        basicSettings = createNiceMock(BasicSettings.class);
-        expect(basicSettings.getBoolean("clearInputBit8", false)).andReturn(false).anyTimes();
-        expect(basicSettings.getBoolean("clearOutputBit8", false)).andReturn(false).anyTimes();
-        expect(basicSettings.getBoolean("inputToUpperCase", false)).andReturn(false).anyTimes();
-        expect(basicSettings.getString("mapDeleteChar")).andReturn(Optional.empty()).anyTimes();
-        expect(basicSettings.getString("mapBackspaceChar")).andReturn(Optional.empty()).anyTimes();
-        expect(basicSettings.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
-        expect(basicSettings.getInt("inputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
-        expect(basicSettings.getInt("outputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
-        expect(basicSettings.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(basicSettings.getString("dataPorts", "")).andReturn("").anyTimes();
+        pluginSettings = createNiceMock(PluginSettings.class);
+        expect(pluginSettings.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(pluginSettings.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(pluginSettings.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
+        expect(pluginSettings.getString("mapDeleteChar")).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getString("mapBackspaceChar")).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
+        expect(pluginSettings.getInt("inputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
+        expect(pluginSettings.getInt("outputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
+        expect(pluginSettings.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(pluginSettings.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
     }
 
     private SioUnitSettings createSettings() {
-        replay(basicSettings);
-        return new SioUnitSettings(basicSettings);
+        replay(pluginSettings);
+        return new SioUnitSettings(pluginSettings);
     }
 
     @Test
@@ -334,15 +334,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testPortsAreParsedFromSettings() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getString(eq("mapDeleteChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getString(eq("mapBackspaceChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("0x10, 0x14").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("0x11, 0x15").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("0x10, 0x14")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("0x11, 0x15")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);
@@ -366,15 +368,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testSettingsFromConfigWithMapChars() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getString("mapDeleteChar")).andReturn(Optional.of("BACKSPACE")).anyTimes();
         expect(bs.getString("mapBackspaceChar")).andReturn(Optional.of("DELETE")).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(3)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(5)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);
@@ -386,15 +390,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testInvalidInputInterruptVectorInConstructorDefaultsTo7() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getString(eq("mapDeleteChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getString(eq("mapBackspaceChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(99)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);
@@ -403,15 +409,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testInvalidOutputInterruptVectorInConstructorDefaultsTo7() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getString(eq("mapDeleteChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getString(eq("mapBackspaceChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(-1)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);
@@ -420,15 +428,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testNegativeInputInterruptVectorInConstructorDefaultsTo7() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(false)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getString(eq("mapDeleteChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getString(eq("mapBackspaceChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(-5)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(7)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);
@@ -450,7 +460,7 @@ public class SioUnitSettingsTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullBasicSettingsThrows() {
+    public void testNullSettingsThrows() {
         new SioUnitSettings(null);
     }
 
@@ -469,17 +479,17 @@ public class SioUnitSettingsTest {
 
     @Test
     public void testConstructorWithBooleanSettings() {
-        BasicSettings bs = createNiceMock(BasicSettings.class);
-        expect(bs.getBoolean("clearInputBit8", false)).andReturn(true).anyTimes();
-        expect(bs.getBoolean("clearOutputBit8", false)).andReturn(true).anyTimes();
-        expect(bs.getBoolean("inputToUpperCase", false)).andReturn(true).anyTimes();
+        PluginSettings bs = createNiceMock(PluginSettings.class);
+        expect(bs.getBoolean("clearInputBit8")).andReturn(Optional.of(true)).anyTimes();
+        expect(bs.getBoolean("clearOutputBit8")).andReturn(Optional.of(true)).anyTimes();
+        expect(bs.getBoolean("inputToUpperCase")).andReturn(Optional.of(true)).anyTimes();
         expect(bs.getString(eq("mapDeleteChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getString(eq("mapBackspaceChar"))).andReturn(Optional.empty()).anyTimes();
         expect(bs.getBoolean("interruptsSupported")).andReturn(Optional.of(false)).anyTimes();
         expect(bs.getInt("inputInterruptVector")).andReturn(Optional.of(3)).anyTimes();
         expect(bs.getInt("outputInterruptVector")).andReturn(Optional.of(5)).anyTimes();
-        expect(bs.getString("statusPorts", "")).andReturn("").anyTimes();
-        expect(bs.getString("dataPorts", "")).andReturn("").anyTimes();
+        expect(bs.getString("statusPorts")).andReturn(Optional.of("")).anyTimes();
+        expect(bs.getString("dataPorts")).andReturn(Optional.of("")).anyTimes();
         replay(bs);
 
         SioUnitSettings settings = new SioUnitSettings(bs);

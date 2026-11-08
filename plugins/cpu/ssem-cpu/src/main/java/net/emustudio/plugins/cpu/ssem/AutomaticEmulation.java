@@ -68,7 +68,7 @@ class AutomaticEmulation {
                 writer.println("   L L L L L 5 6 7 8 9 0 1 2 I I I 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1");
                 for (int i = 0; i < memorySnapshot.length; i++) {
                     int number = NumberUtils.readInt(memorySnapshot[i], NumberUtils.Strategy.BIG_ENDIAN);
-                    String binary = RadixUtils.formatBinaryString(number, 32, 0, true);
+                    String binary = RadixUtils.formatBinary(number, 32);
                     writer.println(String.format("%02d %s", i, binary.replace("0", "  ").replace("1", "* ")));
                 }
             }

@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -15,16 +15,16 @@ public class PagesPanel extends JPanel {
 
     private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
-    private final GUI gui;
+    private final EmuStudioGui gui;
     private int pageSeekLastValue = 10;
 
-    private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs, GUI gui) {
+    private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = Objects.requireNonNull(gui);
     }
 
-    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs, GUI gui) {
+    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
         PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs, gui);
         pagesPanel.initComponents();
 

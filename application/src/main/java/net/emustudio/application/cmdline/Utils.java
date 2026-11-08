@@ -23,7 +23,6 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,7 @@ public class Utils {
             DebugTableModelImpl debugTableModel,
             GUI gui
     ) throws InvalidPluginException, IOException, PluginInitializationException {
-        ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs, gui);
+        ApplicationApi applicationApi = new ApplicationApiImpl(contextPool, dialogs, gui);
 
         VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, appConfig);
         try {
@@ -93,14 +92,13 @@ public class Utils {
         return splash;
     }
 
-    @SuppressWarnings("unchecked")
     public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, DialogsGui dialogs,
                                       DebugTableModel debugTableModel, ContextPool contextPool, Path inputFile, EmuStudioGui gui)
             throws InterruptedException, InvocationTargetException {
         MemoryContext<?> memoryContext = null;
         try {
-            memoryContext = contextPool.getMemoryContext(EMUSTUDIO_ID, MemoryContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
+            memoryContext = contextPool.get(EMUSTUDIO_ID, MemoryContext.class);
+        } catch (ContextNotFoundException e) {
             LOGGER.warn("No memory context is available", e);
         }
 

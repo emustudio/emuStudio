@@ -5,6 +5,7 @@ package net.emustudio.plugins.cpu.ssem.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
 
@@ -15,7 +16,6 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
@@ -163,7 +163,7 @@ public class CpuPanel extends JPanel {
         }
 
         private String formatBinary(int number, int length) {
-            return formatBinaryString(number, length, 4, true);
+            return RadixUtils.formatBinary(number, length, 4);
         }
     }
 

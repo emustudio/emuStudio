@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd;
 
-import net.emustudio.emulib.runtime.settings.BasicSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.jcip.annotations.Immutable;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class DiskSettings {
     private static final String KEY_INTERRUPT_VECTOR = "interruptVector";
     private static final String KEY_INTERRUPTS_SUPPORTED = "interruptsSupported";
 
-    private final BasicSettings settings;
+    private final PluginSettings settings;
     private final List<SettingsObserver> observers = new CopyOnWriteArrayList<>();
     private final DriveSettings[] driveSettings = new DriveSettings[16];
     private volatile int port1CPU;
@@ -37,21 +37,21 @@ public class DiskSettings {
     private volatile int interruptVector;
     private volatile boolean interruptsSupported;
 
-    public DiskSettings(BasicSettings settings) {
+    public DiskSettings(PluginSettings settings) {
         this.settings = Objects.requireNonNull(settings);
 
-        this.port1CPU = settings.getInt(KEY_PORT1_CPU, DEFAULT_CPU_PORT1);
-        this.port2CPU = settings.getInt(KEY_PORT2_CPU, DEFAULT_CPU_PORT2);
-        this.port3CPU = settings.getInt(KEY_PORT3_CPU, DEFAULT_CPU_PORT3);
-        this.interruptVector = settings.getInt(KEY_INTERRUPT_VECTOR, DEFAULT_INTERRUPT_VECTOR);
-        this.interruptsSupported = settings.getBoolean(KEY_INTERRUPTS_SUPPORTED, DEFAULT_INTERRUPTS_SUPPORTED);
+        this.port1CPU = settings.getInt(KEY_PORT1_CPU).orElse(DEFAULT_CPU_PORT1);
+        this.port2CPU = settings.getInt(KEY_PORT2_CPU).orElse(DEFAULT_CPU_PORT2);
+        this.port3CPU = settings.getInt(KEY_PORT3_CPU).orElse(DEFAULT_CPU_PORT3);
+        this.interruptVector = settings.getInt(KEY_INTERRUPT_VECTOR).orElse(DEFAULT_INTERRUPT_VECTOR);
+        this.interruptsSupported = settings.getBoolean(KEY_INTERRUPTS_SUPPORTED).orElse(DEFAULT_INTERRUPTS_SUPPORTED);
 
         for (int i = 0; i < driveSettings.length; i++) {
             driveSettings[i] = new DriveSettings(
-                    settings.getInt(KEY_SECTOR_SIZE + i, DEFAULT_SECTOR_SIZE),
-                    settings.getInt(KEY_SECTORS_PER_TRACK + i, DEFAULT_SECTORS_PER_TRACK),
-                    settings.getString(KEY_IMAGE + i, null),
-                    settings.getBoolean(KEY_IMAGE_MOUNTED + i, false));
+                    settings.getInt(KEY_SECTOR_SIZE + i).orElse(DEFAULT_SECTOR_SIZE),
+                    settings.getInt(KEY_SECTORS_PER_TRACK + i).orElse(DEFAULT_SECTORS_PER_TRACK),
+                    settings.getString(KEY_IMAGE + i).orElse(null),
+                    settings.getBoolean(KEY_IMAGE_MOUNTED + i).orElse(false));
         }
     }
 
@@ -73,14 +73,10 @@ public class DiskSettings {
         }
 
         this.driveSettings[drive] = driveSettings;
-        settings.setInt(KEY_SECTOR_SIZE + drive, driveSettings.sectorSize);
-        settings.setInt(KEY_SECTORS_PER_TRACK + drive, driveSettings.sectorsPerTrack);
-        if (driveSettings.imagePath == null) {
-            settings.remove(KEY_IMAGE + drive);
-        } else {
-            settings.setString(KEY_IMAGE + drive, driveSettings.imagePath);
-        }
-        settings.setBoolean(KEY_IMAGE_MOUNTED + drive, driveSettings.mounted);
+        settings.set(KEY_SECTOR_SIZE + drive, driveSettings.sectorSize);
+        settings.set(KEY_SECTORS_PER_TRACK + drive, driveSettings.sectorsPerTrack);
+        settings.set(KEY_IMAGE + drive, driveSettings.imagePath);
+        settings.set(KEY_IMAGE_MOUNTED + drive, driveSettings.mounted);
         notifySettingsChanged();
     }
 
@@ -93,7 +89,7 @@ public class DiskSettings {
             throw new IllegalArgumentException("88-DCDD: CPU port 1 allowed range: 0-255");
         }
         this.port1CPU = port1CPU;
-        settings.setInt(KEY_PORT1_CPU, port1CPU);
+        settings.set(KEY_PORT1_CPU, port1CPU);
         notifySettingsChanged();
     }
 
@@ -106,7 +102,7 @@ public class DiskSettings {
             throw new IllegalArgumentException("88-DCDD: CPU port 2 allowed range: 0-255");
         }
         this.port2CPU = port2CPU;
-        settings.setInt(KEY_PORT2_CPU, port2CPU);
+        settings.set(KEY_PORT2_CPU, port2CPU);
         notifySettingsChanged();
     }
 
@@ -119,7 +115,7 @@ public class DiskSettings {
             throw new IllegalArgumentException("88-DCDD: CPU port 3 allowed range: 0-255");
         }
         this.port3CPU = port3CPU;
-        settings.setInt(KEY_PORT3_CPU, port3CPU);
+        settings.set(KEY_PORT3_CPU, port3CPU);
         notifySettingsChanged();
     }
 
@@ -132,7 +128,7 @@ public class DiskSettings {
             throw new IllegalArgumentException("88-DCDD: Interrupt vector must be in range 0-7");
         }
         this.interruptVector = interruptVector;
-        settings.setInt(KEY_INTERRUPT_VECTOR, interruptVector);
+        settings.set(KEY_INTERRUPT_VECTOR, interruptVector);
         notifySettingsChanged();
     }
 
@@ -142,7 +138,7 @@ public class DiskSettings {
 
     public void setInterruptsSupported(boolean value) {
         this.interruptsSupported = value;
-        settings.setBoolean(KEY_INTERRUPTS_SUPPORTED, value);
+        settings.set(KEY_INTERRUPTS_SUPPORTED, value);
         notifySettingsChanged();
     }
 

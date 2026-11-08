@@ -85,7 +85,7 @@ public class MemoryImplTest {
         MemoryImpl mem = createMemory(settings().set("size", "64K").mock());
         try {
             mem.initialize();
-            assertEquals(65536, mem.getSize());
+            assertEquals(65536, context(mem).getSize());
         } finally {
             mem.destroy();
         }
@@ -116,7 +116,7 @@ public class MemoryImplTest {
                 .set("imageName0", "/nonexistent/file.bin").set("imageAddress0", 0).set("imageBank0", 0).mock());
         try {
             mem.initialize();
-            assertEquals(256, mem.getSize());
+            assertEquals(256, context(mem).getSize());
         } finally {
             mem.destroy();
         }
@@ -211,7 +211,7 @@ public class MemoryImplTest {
         MemoryImpl mem = createMemory(settings.mock());
         try {
             mem.initialize();
-            assertEquals(256, mem.getSize());
+            assertEquals(256, context(mem).getSize());
             assertEquals(banks, context(mem).getBanksCount());
             assertEquals(commonBoundary, context(mem).getCommonBoundary());
         } finally {

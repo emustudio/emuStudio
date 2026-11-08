@@ -200,8 +200,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             }
             if (getCPU().isPresent()) {
                 net.emustudio.emulib.plugins.memory.MemoryContext<?> memory = null;
-                try { memory = contextPool.getMemoryContext(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
-                catch (net.emustudio.emulib.runtime.InvalidContextException | net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
+                try { memory = contextPool.get(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
+                catch (net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
                     debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
@@ -212,7 +212,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                     execution = debugger.execution();
 
                 } catch (IOException e) {
-                    throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
+                    throw new PluginInitializationException("Could not load debugger settings", e);
                 }
             } else {
                 execution = new net.emustudio.application.emulation.EmulationController(null,

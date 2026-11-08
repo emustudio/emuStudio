@@ -4,9 +4,7 @@ package net.emustudio.plugins.compiler.brainduck;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -30,13 +28,12 @@ public abstract class AbstractCompilerTest {
     protected MemoryStub<Byte> memoryStub;
     private int errorCount;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(pool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();
         replay(pool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -45,21 +42,10 @@ public abstract class AbstractCompilerTest {
 
         errorCount = 0;
         compiler = new CompilerBrainduck(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-                System.out.println(message);
-                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
-                    errorCount++;
-                }
-            }
-
-            @Override
-            public void onFinish() {
+        compiler.addCompilerListener(message -> {
+            System.out.println(message);
+            if (message.getType() == CompilerMessage.Type.ERROR) {
+                errorCount++;
             }
         });
         compiler.initialize();

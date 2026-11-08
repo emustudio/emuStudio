@@ -9,11 +9,9 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.*;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
 import net.emustudio.plugins.cpu.rasp.gui.RaspStatusPanel;
@@ -23,11 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Random Access Stored Program (RASP)"
+        title = "Random Access Stored Program (RASP)",
+        description = "RASP machine emulator"
 )
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
@@ -40,25 +39,16 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     private RaspDisassembler disassembler;
     private RaspStatusPanel gui;
 
-    private boolean debugTableInitialized = false;
-
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.contextPool = applicationApi.getContextPool();
-        try {
-            contextPool.register(pluginID, context, CPUContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
-            LOGGER.error("Could not register RASP CPU context", ex);
-            applicationApi.getDialogs().showError(
-                    "Could not register RASP CPU context. Please see log file for more details", getTitle()
-            );
-        }
+        contextPool.register(pluginID, context, CPUContext.class);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RaspMemoryContext.class);
+        memory = applicationApi.getContextPool().get(pluginID, RaspMemoryContext.class);
         disassembler = new RaspDisassembler(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
@@ -66,18 +56,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
+    public List<DebuggerColumn<?>> getDebuggerColumns() {
+        return List.of(DebuggerColumn.address("%d"), new LabelDebugColumn(memory), DebuggerColumn.mnemo(disassembler));
+    }
+
+    @Override
     public JPanel getStatusPanel() {
-        if (!debugTableInitialized) {
-            DebuggerTable debugTable = applicationApi.getDebuggerTable();
-            if (debugTable != null) {
-                ArrayList<DebuggerColumn<?>> debugColumns = new ArrayList<>();
-                debugColumns.add(new AddressColumn("%d"));
-                debugColumns.add(new LabelDebugColumn(memory));
-                debugColumns.add(new MnemoColumn(disassembler));
-                debugTable.setDebuggerColumns(debugColumns);
-            }
-            debugTableInitialized = true;
-        }
         if (gui == null) {
             if (applicationApi.getGUI() == null) {
                 return null;
@@ -153,11 +137,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public boolean setInstructionLocation(int location) {
         return engine.setInstructionLocation(location);
-    }
-
-    @Override
-    public String getDescription() {
-        return "RASP machine emulator";
     }
 
     /**

@@ -11,7 +11,6 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
 /**
  * Tape playback.
@@ -97,70 +96,29 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void onHeaderStart() {
+    public void onStandardData(byte[] packet) {
+        int flag = packet[0] & 0xFF;
+        boolean header = flag < 0x80;
+        int pilotCount = header ? HEADER_LEADER_PULSE_COUNT : DATA_LEADER_PULSE_COUNT;
         String eventType = "PILOT";
-        String details = "header, " + HEADER_LEADER_PULSE_COUNT + " pulses";
-        for (int i = 0; i < HEADER_LEADER_PULSE_COUNT; i++) {
+        String details = (header ? "header, " : "data, ") + pilotCount + " pulses";
+        for (int i = 0; i < pilotCount; i++) {
             schedulePulse(LEADER_PULSE_TSTATES, eventType, details);
             eventType = "";
             details = "";
         }
         schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1", "");
         schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2", "");
-    }
-
-    @Override
-    public void onDataStart() {
-        String eventType = "PILOT";
-        String details = "data, " + DATA_LEADER_PULSE_COUNT + " pulses";
-        for (int i = 0; i < DATA_LEADER_PULSE_COUNT; i++) {
-            schedulePulse(LEADER_PULSE_TSTATES, eventType, details);
+        transmitByte(flag, "FLAG", String.format("0x%02X", flag));
+        eventType = "DATA";
+        details = String.format("length=0x%04X", (packet.length - 2) & 0xFFFF);
+        for (int i = 1; i < packet.length - 1; i++) {
+            transmitByte(packet[i] & 0xFF, eventType, details);
             eventType = "";
             details = "";
         }
-        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1", "");
-        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2", "");
-    }
-
-    @Override
-    public void onBlockFlag(int flag) {
-        transmitByte(flag, "FLAG", String.format("0x%02X", flag & 0xFF));
-    }
-
-    @Override
-    public void onProgram(String filename, int dataLength, int autoStart, int programLength) {
-        logProgramDetail("PROGRAM", filename + " (start=" + autoStart + ", length=" + programLength + ")");
-    }
-
-    @Override
-    public void onNumberArray(String filename, int dataLength, char variable) {
-        logProgramDetail("NUMBER ARRAY", filename + " (variable=" + variable + ")");
-    }
-
-    @Override
-    public void onStringArray(String filename, int dataLength, char variable) {
-        logProgramDetail("STRING ARRAY", filename + " (variable=" + variable + ")");
-    }
-
-    @Override
-    public void onMemoryBlock(String filename, int dataLength, int startAddress) {
-        logProgramDetail("MEMORY BLOCK", filename + " (start=" + startAddress + ")");
-    }
-
-    @Override
-    public void onBlockData(byte[] data) {
-        String eventType = "DATA";
-        String details = String.format("length=0x%04X", data.length & 0xFFFF);
-        for (byte d : data) {
-            transmitByte(d & 0xFF, eventType, details);
-            eventType = "";
-            details = "";
-        }
-    }
-
-    @Override
-    public void onBlockChecksum(byte checksum) {
-        transmitByte(checksum & 0xFF, "CHECKSUM", String.format("0x%02X", checksum & 0xFF));
+        int checksum = packet[packet.length - 1] & 0xFF;
+        transmitByte(checksum, "CHECKSUM", String.format("0x%02X", checksum));
         schedulePulse(SYNC3_PULSE_TSTATES, "SYNC3", "");
     }
 
@@ -197,52 +155,8 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void onTurboSpeedData(int pilotPulseLen, int sync1PulseLen, int sync2PulseLen,
-                                 int zeroBitPulseLen, int oneBitPulseLen, int pilotToneCount,
-                                 int usedBitsInLastByte, int pauseAfterMs, byte[] data) {
-        // Pilot tone
-        String eventType = "PILOT";
-        String details = "turbo, " + pilotToneCount + " pulses";
-        for (int i = 0; i < pilotToneCount; i++) {
-            schedulePulse(pilotPulseLen, eventType, details);
-            eventType = "";
-            details = "";
-        }
-
-        // Sync pulses
-        schedulePulse(sync1PulseLen, "SYNC1", "turbo");
-        schedulePulse(sync2PulseLen, "SYNC2", "turbo");
-
-        // Data
-        String dataEvent = "TURBO DATA";
-        String dataDetails = String.format("length=0x%04X", data.length & 0xFFFF);
-        for (int i = 0; i < data.length; i++) {
-            int bits = (i == data.length - 1) ? usedBitsInLastByte : 8;
-            transmitBits(data[i] & 0xFF, zeroBitPulseLen, oneBitPulseLen, bits, dataEvent, dataDetails);
-            dataEvent = "";
-            dataDetails = "";
-        }
-
-        // Pause
-        if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
-        }
-    }
-
-    @Override
-    public void onPureTone(int pulseLength, int pulseCount) {
-        String eventType = "PURE TONE";
-        String details = pulseCount + " pulses, " + pulseLength + " T";
-        for (int i = 0; i < pulseCount; i++) {
-            schedulePulse(pulseLength, eventType, details);
-            eventType = "";
-            details = "";
-        }
-    }
-
-    @Override
-    public void onPulseSequence(int[] pulseLengths) {
-        String eventType = "PULSE SEQ";
+    public void onPulses(int[] pulseLengths) {
+        String eventType = "PULSES";
         String details = pulseLengths.length + " pulses";
         for (int pulseLength : pulseLengths) {
             schedulePulse(pulseLength, eventType, details);
@@ -252,8 +166,7 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void onPureData(int zeroBitPulseLen, int oneBitPulseLen,
-                           int usedBitsInLastByte, int pauseAfterMs, byte[] data) {
+    public void onPureData(int zeroBitPulseLen, int oneBitPulseLen, int usedBitsInLastByte, byte[] data) {
         String eventType = "PURE DATA";
         String details = String.format("length=0x%04X", data.length & 0xFFFF);
         for (int i = 0; i < data.length; i++) {
@@ -262,15 +175,10 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
             eventType = "";
             details = "";
         }
-
-        if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
-        }
     }
 
     @Override
-    public void onDirectRecording(int tstatesPerSample, int pauseAfterMs,
-                                  int usedBitsInLastByte, byte[] samples) {
+    public void onDirectRecording(int tstatesPerSample, int usedBitsInLastByte, byte[] samples) {
         String eventType = "DIRECT REC";
         String details = String.format("length=0x%04X, %d T/sample", samples.length & 0xFFFF, tstatesPerSample);
         for (int i = 0; i < samples.length; i++) {
@@ -284,25 +192,6 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
                 mask >>>= 1;
             }
         }
-
-        if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
-        }
-    }
-
-    @Override
-    public void onCswRecording(int pauseAfterMs, int sampleRate, int compressionType,
-                               long storedPulseCount, byte[] data) {
-        logProgramDetail("CSW REC", String.format(
-                "rate=%d Hz, compression=%d, pulses=%d (not yet fully supported)",
-                sampleRate, compressionType, storedPulseCount));
-    }
-
-    @Override
-    public void onGeneralizedData(int pauseAfterMs, byte[] data) {
-        logProgramDetail("GEN DATA", String.format(
-                "pause=%d ms, length=0x%04X (not yet fully supported)",
-                pauseAfterMs, data.length & 0xFFFF));
     }
 
     @Override
@@ -315,57 +204,14 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void onGroupStart(String name) {
-        logProgramDetail("GROUP", name);
-    }
-
-    @Override
-    public void onGroupEnd() {
-        logProgramDetail("GROUP END", "");
-    }
-
-    @Override
-    public void onStopIfIn48KMode() {
-        logProgramDetail("STOP 48K", "Stop if in 48K mode");
-    }
-
-    @Override
     public void onSetSignalLevel(int level) {
         pulseUp = (level != 0);
         logProgramDetail("SIGNAL", "level=" + level);
     }
 
     @Override
-    public void onTextDescription(String text) {
-        logProgramDetail("TEXT", text);
-    }
-
-    @Override
-    public void onMessage(String message, int displayTimeSeconds) {
-        logProgramDetail("MESSAGE", message + " (" + displayTimeSeconds + "s)");
-    }
-
-    @Override
-    public void onArchiveInfo(java.util.List<String[]> entries) {
-        String details = entries.stream()
-                .map(e -> e[0] + ": " + e[1])
-                .collect(Collectors.joining("; "));
-        logProgramDetail("ARCHIVE", details);
-    }
-
-    @Override
-    public void onHardwareInfo(java.util.List<int[]> entries) {
-        logProgramDetail("HARDWARE", entries.size() + " entries");
-    }
-
-    @Override
-    public void onCustomInfo(String id, byte[] data) {
-        logProgramDetail("CUSTOM", id + " (" + data.length + " bytes)");
-    }
-
-    @Override
-    public void onGlueBlock() {
-        logProgramDetail("GLUE", "");
+    public void onInfo(String type, String details) {
+        logProgramDetail(type, details);
     }
 
     private void logPulse(long tstate, int length, String eventType, String details) {

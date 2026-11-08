@@ -7,7 +7,7 @@ import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -47,10 +47,10 @@ public class CpuImplTest {
         expect(outputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
         expect(storageTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
 
-        expect(contextPool.getMemoryContext(eq(0L), eq(RamMemoryContext.class))).andReturn(memory).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(RamMemoryContext.class))).andReturn(memory).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
 
         replay(contextPool);
 
@@ -323,7 +323,16 @@ public class CpuImplTest {
     }
 
     @Test
-    public void testGetStatusPanelWithDebuggerTable() throws Exception {
+    public void testDebuggerColumns() throws Exception {
+        initCpu();
+        java.util.List<DebuggerColumn<?>> columns = cpu.getDebuggerColumns();
+        assertEquals(2, columns.size());
+        assertEquals("label", columns.get(0).getTitle());
+        assertEquals("instruction", columns.get(1).getTitle());
+    }
+
+    @Test
+    public void testGetStatusPanelWithGui() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
@@ -334,10 +343,7 @@ public class CpuImplTest {
                 .andReturn(new JPanel()).anyTimes();
         expect(gui.label(anyString())).andReturn(new JLabel()).anyTimes();
         replay(gui);
-        DebuggerTable debugTable = createNiceMock(DebuggerTable.class);
-        replay(debugTable);
         expect(applicationApi.getGUI()).andReturn(gui).anyTimes();
-        expect(applicationApi.getDebuggerTable()).andReturn(debugTable).anyTimes();
         replay(applicationApi);
 
         initCpu();

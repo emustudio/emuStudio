@@ -16,7 +16,7 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
@@ -25,7 +25,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -58,8 +57,8 @@ public class VirtualComputerTest {
         clearInvocations(memory);
 
         ContextPoolImpl contextPool = mock(ContextPoolImpl.class);
-        doReturn(memory).when(contextPool).getMemoryContext(0, MemoryContext.class);
-        ApplicationApiImpl api = new ApplicationApiImpl(mock(DebuggerTable.class), contextPool, mock(Dialogs.class), null);
+        doReturn(memory).when(contextPool).get(0, MemoryContext.class);
+        ApplicationApiImpl api = new ApplicationApiImpl(contextPool, mock(Dialogs.class), null);
         ComputerConfig config = mock(ComputerConfig.class);
         when(config.getPath()).thenReturn(computerPath);
         VirtualComputer computer = new VirtualComputer(config, plugins(plugin(1, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu)));
@@ -175,7 +174,7 @@ public class VirtualComputerTest {
     public void memoryOnlyMachineProvidesHostOwnedEditsWithoutADebugger() throws Exception {
         Memory memory = mock(Memory.class);
         ContextPoolImpl contexts = new ContextPoolImpl(0);
-        ApplicationApiImpl api = new ApplicationApiImpl(mock(DebuggerTable.class), contexts, mock(Dialogs.class), null);
+        ApplicationApiImpl api = new ApplicationApiImpl(contexts, mock(Dialogs.class), null);
         VirtualComputer computer = new VirtualComputer(mock(ComputerConfig.class), plugins(
                 plugin(1L, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory)));
         java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
@@ -354,7 +353,7 @@ public class VirtualComputerTest {
         AutoCloseable loader = mock(AutoCloseable.class);
         ComputerConfig config = mock(ComputerConfig.class);
         net.emustudio.emulib.plugins.PluginInitializationException failure =
-                new net.emustudio.emulib.plugins.PluginInitializationException(memory, "bad memory");
+                new net.emustudio.emulib.plugins.PluginInitializationException("bad memory");
         doThrow(failure).when(memory).initialize();
         // Even a broken cleanup must not hide the original initialization failure.
         doThrow(new AssertionError("destroy failed")).when(device).destroy();
@@ -504,7 +503,7 @@ public class VirtualComputerTest {
         @Override public void removeCompilerListener(CompilerListener listener) {}
         @Override public void compile(java.nio.file.Path inputPath, Optional<java.nio.file.Path> outputPath) {}
         @Override public LexicalAnalyzer createLexer() { return null; }
-        @Override public List<FileExtension> getSourceFileExtensions() { return List.of(); }
+        @Override public List<FileType> getSourceFileTypes() { return List.of(); }
         @Override public void reset() {}
         @Override public void initialize() {}
         @Override public void destroy() { destroyedIds.add(pluginId); }
@@ -540,7 +539,6 @@ public class VirtualComputerTest {
         @Override public void destroy() {}
         @Override public void showSettings(JFrame parent) {}
         @Override public boolean isShowSettingsSupported() { return false; }
-        @Override public int getSize() { return 0; }
         @Override public String getTitle() { return "memory"; }
         @Override public String getVersion() { return "memory"; }
         @Override public String getCopyright() { return "memory"; }
@@ -554,7 +552,7 @@ public class VirtualComputerTest {
         @Override public void removeCompilerListener(CompilerListener listener) {}
         @Override public void compile(java.nio.file.Path inputPath, Optional<java.nio.file.Path> outputPath) {}
         @Override public LexicalAnalyzer createLexer() { return null; }
-        @Override public List<FileExtension> getSourceFileExtensions() { return List.of(); }
+        @Override public List<FileType> getSourceFileTypes() { return List.of(); }
         @Override public void reset() {}
         @Override public void initialize() {}
         @Override public void destroy() {}

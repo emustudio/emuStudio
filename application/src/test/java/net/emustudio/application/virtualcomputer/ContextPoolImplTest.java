@@ -3,14 +3,10 @@
 package net.emustudio.application.virtualcomputer;
 
 import net.emustudio.emulib.plugins.Context;
-import net.emustudio.emulib.plugins.annotations.PluginContext;
-import net.emustudio.emulib.plugins.compiler.CompilerContext;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,8 +20,8 @@ public class ContextPoolImplTest {
     private CPUContext cpuContextMockAnother;
     private MemoryContext<Short> shortMemoryContextMock;
     private MemoryContext<Short> shortMemoryContextMockAnother;
-    private CompilerContext compilerContextMock;
-    private CompilerContext compilerContextMockAnother;
+    private OtherContext compilerContextMock;
+    private OtherContext compilerContextMockAnother;
     private DeviceContext<Short> shortDeviceContextMock;
     private DeviceContext<Short> shortDeviceContextMockAnother;
     private ContextPoolImpl contextPool;
@@ -37,8 +33,8 @@ public class ContextPoolImplTest {
         cpuContextMockAnother = mock(CPUContext.class);
         shortMemoryContextMock = mock(MemoryContext.class);
         shortMemoryContextMockAnother = mock(MemoryContext.class);
-        compilerContextMock = mock(CompilerContext.class);
-        compilerContextMockAnother = mock(CompilerContext.class);
+        compilerContextMock = mock(OtherContext.class);
+        compilerContextMockAnother = mock(OtherContext.class);
         shortDeviceContextMock = mock(DeviceContext.class);
         shortDeviceContextMockAnother = mock(DeviceContext.class);
 
@@ -49,35 +45,35 @@ public class ContextPoolImplTest {
     @Test
     public void testRegisterGetUnregisterCPU() throws Exception {
         contextPool.register(0, cpuContextMock, CPUContext.class);
-        assertEquals(cpuContextMock, contextPool.getCPUContext(1));
+        assertEquals(cpuContextMock, contextPool.get(1, CPUContext.class));
         assertTrue(contextPool.unregister(0, CPUContext.class));
-        assertThrows(ContextNotFoundException.class, () -> contextPool.getCPUContext(1));
+        assertThrows(ContextNotFoundException.class, () -> contextPool.get(1, CPUContext.class));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testRegisterGetUnregisterMemory() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, MemoryContext.class));
+        assertEquals(shortMemoryContextMock, contextPool.get(1, MemoryContext.class));
         assertTrue(contextPool.unregister(0, MemoryContext.class));
-        assertThrows(ContextNotFoundException.class, () -> contextPool.getMemoryContext(1, MemoryContext.class));
+        assertThrows(ContextNotFoundException.class, () -> contextPool.get(1, MemoryContext.class));
     }
 
     @Test
     public void testRegisterGetUnregisterCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1));
-        assertTrue(contextPool.unregister(0, CompilerContext.class));
-        assertThrows(ContextNotFoundException.class, () -> contextPool.getCompilerContext(1));
+        contextPool.register(0, compilerContextMock, OtherContext.class);
+        assertEquals(compilerContextMock, contextPool.get(1, OtherContext.class));
+        assertTrue(contextPool.unregister(0, OtherContext.class));
+        assertThrows(ContextNotFoundException.class, () -> contextPool.get(1, OtherContext.class));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testRegisterGetUnregisterDevice() throws Exception {
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
-        assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, DeviceContext.class));
+        assertEquals(shortDeviceContextMock, contextPool.get(1, DeviceContext.class));
         assertTrue(contextPool.unregister(0, DeviceContext.class));
-        assertThrows(ContextNotFoundException.class, () -> contextPool.getDeviceContext(1, DeviceContext.class));
+        assertThrows(ContextNotFoundException.class, () -> contextPool.get(1, DeviceContext.class));
     }
 
 
@@ -88,8 +84,8 @@ public class ContextPoolImplTest {
         contextPool.register(0, cpuContextMock, CPUContext.class);
         contextPool.register(0, cpuContextMockAnother, CPUContext.class);
 
-        assertEquals(cpuContextMock, contextPool.getCPUContext(1, CPUContext.class, 0));
-        assertEquals(cpuContextMockAnother, contextPool.getCPUContext(1, CPUContext.class, 1));
+        assertEquals(cpuContextMock, contextPool.get(1, CPUContext.class, 0));
+        assertEquals(cpuContextMockAnother, contextPool.get(1, CPUContext.class, 1));
     }
 
     @SuppressWarnings("unchecked")
@@ -98,17 +94,17 @@ public class ContextPoolImplTest {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
         contextPool.register(0, shortMemoryContextMockAnother, MemoryContext.class);
 
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, MemoryContext.class, 0));
-        assertEquals(shortMemoryContextMockAnother, contextPool.getMemoryContext(1, MemoryContext.class, 1));
+        assertEquals(shortMemoryContextMock, contextPool.get(1, MemoryContext.class, 0));
+        assertEquals(shortMemoryContextMockAnother, contextPool.get(1, MemoryContext.class, 1));
     }
 
     @Test
     public void testRegisterTwiceDifferentCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
-        contextPool.register(0, compilerContextMockAnother, CompilerContext.class);
+        contextPool.register(0, compilerContextMock, OtherContext.class);
+        contextPool.register(0, compilerContextMockAnother, OtherContext.class);
 
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, CompilerContext.class, 0));
-        assertEquals(compilerContextMockAnother, contextPool.getCompilerContext(1, CompilerContext.class, 1));
+        assertEquals(compilerContextMock, contextPool.get(1, OtherContext.class, 0));
+        assertEquals(compilerContextMockAnother, contextPool.get(1, OtherContext.class, 1));
     }
 
     @SuppressWarnings("unchecked")
@@ -117,55 +113,55 @@ public class ContextPoolImplTest {
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
         contextPool.register(0, shortDeviceContextMockAnother, DeviceContext.class);
 
-        assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, DeviceContext.class, 0));
-        assertEquals(shortDeviceContextMockAnother, contextPool.getDeviceContext(1, DeviceContext.class, 1));
+        assertEquals(shortDeviceContextMock, contextPool.get(1, DeviceContext.class, 0));
+        assertEquals(shortDeviceContextMockAnother, contextPool.get(1, DeviceContext.class, 1));
     }
 
     //
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceSameOwnerCPU() throws Exception {
         contextPool.register(0, cpuContextMock, CPUContext.class);
         contextPool.register(0, cpuContextMock, CPUContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceDifferentOwnerCPU() throws Exception {
         contextPool.register(0, cpuContextMock, CPUContext.class);
         contextPool.register(1, cpuContextMock, CPUContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceSameOwnerMemory() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceDifferentOwnerMemory() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
         contextPool.register(1, shortMemoryContextMock, MemoryContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceSameOwnerCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
+        contextPool.register(0, compilerContextMock, OtherContext.class);
+        contextPool.register(0, compilerContextMock, OtherContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceDifferentOwnerCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
-        contextPool.register(1, compilerContextMock, CompilerContext.class);
+        contextPool.register(0, compilerContextMock, OtherContext.class);
+        contextPool.register(1, compilerContextMock, OtherContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceSameOwnerDevice() throws Exception {
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
     }
 
-    @Test(expected = ContextAlreadyRegisteredException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRegisterTwiceDifferentOwnerDevice() throws Exception {
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
         contextPool.register(1, shortDeviceContextMock, DeviceContext.class);
@@ -187,8 +183,8 @@ public class ContextPoolImplTest {
 
     @Test
     public void testUnregisterNotOwnerCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
-        assertFalse(contextPool.unregister(1, CompilerContext.class));
+        contextPool.register(0, compilerContextMock, OtherContext.class);
+        assertFalse(contextPool.unregister(1, OtherContext.class));
     }
 
     @Test
@@ -201,52 +197,52 @@ public class ContextPoolImplTest {
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetUnconnectedCompiler() throws Exception {
-        contextPool.register(1, compilerContextMock, CompilerContext.class);
-        contextPool.getCompilerContext(1);
+        contextPool.register(1, compilerContextMock, OtherContext.class);
+        contextPool.get(1, OtherContext.class);
     }
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetUnconnectedCPU() throws Exception {
         contextPool.register(1, cpuContextMock, CPUContext.class);
-        contextPool.getCPUContext(1);
+        contextPool.get(1, CPUContext.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetUnconnectedMemory() throws Exception {
         contextPool.register(1, shortMemoryContextMock, MemoryContext.class);
-        contextPool.getMemoryContext(1, MemoryContext.class);
+        contextPool.get(1, MemoryContext.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetUnconnectedDevice() throws Exception {
         contextPool.register(1, shortDeviceContextMock, DeviceContext.class);
-        contextPool.getDeviceContext(1, DeviceContext.class);
+        contextPool.get(1, DeviceContext.class);
     }
 
     //
 
     @Test(expected = ContextNotFoundException.class)
-    public void testCannotGetUnregisteredCPU() throws ContextNotFoundException, InvalidContextException {
-        contextPool.getCPUContext(0);
+    public void testCannotGetUnregisteredCPU() throws ContextNotFoundException {
+        contextPool.get(0, CPUContext.class);
     }
 
     @Test(expected = ContextNotFoundException.class)
-    public void testCannotGetUnregisteredCompiler() throws ContextNotFoundException, InvalidContextException {
-        contextPool.getCompilerContext(0);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test(expected = ContextNotFoundException.class)
-    public void testCannotGetUnregisteredMemory() throws ContextNotFoundException, InvalidContextException {
-        contextPool.getMemoryContext(0, MemoryContext.class);
+    public void testCannotGetUnregisteredCompiler() throws ContextNotFoundException {
+        contextPool.get(0, OtherContext.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
-    public void testCannotGetUnregisteredDevice() throws ContextNotFoundException, InvalidContextException {
-        contextPool.getDeviceContext(0, DeviceContext.class);
+    public void testCannotGetUnregisteredMemory() throws ContextNotFoundException {
+        contextPool.get(0, MemoryContext.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test(expected = ContextNotFoundException.class)
+    public void testCannotGetUnregisteredDevice() throws ContextNotFoundException {
+        contextPool.get(0, DeviceContext.class);
     }
 
     //
@@ -254,40 +250,40 @@ public class ContextPoolImplTest {
     @Test(expected = ContextNotFoundException.class)
     public void testGetWrongIndexCPU() throws Exception {
         contextPool.register(1, cpuContextMock, CPUContext.class);
-        contextPool.getCPUContext(0, CPUContext.class, 1);
+        contextPool.get(0, CPUContext.class, 1);
     }
 
     @Test(expected = ContextNotFoundException.class)
     public void testGetWrongIndexCompiler() throws Exception {
-        contextPool.register(1, compilerContextMock, CompilerContext.class);
-        contextPool.getCompilerContext(0, CompilerContext.class, 1);
+        contextPool.register(1, compilerContextMock, OtherContext.class);
+        contextPool.get(0, OtherContext.class, 1);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testGetWrongIndexMemory() throws Exception {
         contextPool.register(1, shortMemoryContextMock, MemoryContext.class);
-        contextPool.getMemoryContext(0, MemoryContext.class, 1);
+        contextPool.get(0, MemoryContext.class, 1);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testGetWrongIndexDevice() throws Exception {
         contextPool.register(1, shortDeviceContextMock, DeviceContext.class);
-        contextPool.getDeviceContext(0, DeviceContext.class, 1);
+        contextPool.get(0, DeviceContext.class, 1);
     }
 
     //
 
     @Test
     public void testRejectsUnregisteredSubinterface() throws Exception {
-        TestCompilerContext compilerContextMock = niceMock(TestCompilerContext.class);
+        TestOtherContext compilerContextMock = niceMock(TestOtherContext.class);
 
-        contextPool.register(0, compilerContextMock, TestCompilerContext.class);
+        contextPool.register(0, compilerContextMock, TestOtherContext.class);
 
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, TestCompilerContext.class));
+        assertEquals(compilerContextMock, contextPool.get(1, TestOtherContext.class));
         assertThrows(ContextNotFoundException.class,
-                () -> contextPool.getCompilerContext(1, DifferentTestCompilerContext.class));
+                () -> contextPool.get(1, DifferentTestOtherContext.class));
     }
 
     @Test
@@ -296,32 +292,30 @@ public class ContextPoolImplTest {
         SecondContext second = () -> 2;
         contextPool.register(0, first, FirstContext.class);
         assertThrows(ContextNotFoundException.class,
-                () -> contextPool.getContext(emuStudioId, SecondContext.class, -1));
+                () -> contextPool.get(emuStudioId, SecondContext.class, -1));
         contextPool.register(0, second, SecondContext.class);
-        assertEquals(1, contextPool.getContext(emuStudioId, FirstContext.class, -1).value());
-        assertEquals(2, contextPool.getContext(emuStudioId, SecondContext.class, -1).value());
+        assertEquals(1, contextPool.get(emuStudioId, FirstContext.class, -1).value());
+        assertEquals(2, contextPool.get(emuStudioId, SecondContext.class, -1).value());
         assertTrue(contextPool.unregister(0, FirstContext.class));
-        assertEquals(2, contextPool.getContext(emuStudioId, SecondContext.class, -1).value());
+        assertEquals(2, contextPool.get(emuStudioId, SecondContext.class, -1).value());
     }
 
-    @PluginContext
     interface FirstContext extends Context { int value(); }
 
-    @PluginContext
     interface SecondContext extends Context { int value(); }
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredCPU() throws Exception {
         TestCPUContext cpuContextMock = niceMock(TestCPUContext.class);
         contextPool.register(0, cpuContextMock, TestCPUContext.class);
-        contextPool.getCPUContext(1);
+        contextPool.get(1, CPUContext.class);
     }
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredCompiler() throws Exception {
-        TestCompilerContext compilerContextMock = niceMock(TestCompilerContext.class);
-        contextPool.register(0, compilerContextMock, TestCompilerContext.class);
-        contextPool.getCompilerContext(1);
+        TestOtherContext compilerContextMock = niceMock(TestOtherContext.class);
+        contextPool.register(0, compilerContextMock, TestOtherContext.class);
+        contextPool.get(1, OtherContext.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -329,7 +323,7 @@ public class ContextPoolImplTest {
     public void testCannotGetGeneralInterfaceWhenNotRegisteredMemory() throws Exception {
         TestMemoryContext shortMemoryContextMock = niceMock(TestMemoryContext.class);
         contextPool.register(0, shortMemoryContextMock, TestMemoryContext.class);
-        contextPool.getMemoryContext(1, MemoryContext.class);
+        contextPool.get(1, MemoryContext.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -337,7 +331,7 @@ public class ContextPoolImplTest {
     public void testCannotGetGeneralInterfaceWhenNotRegisteredDevice() throws Exception {
         TestDeviceContext shortDeviceContextMock = niceMock(TestDeviceContext.class);
         contextPool.register(0, shortDeviceContextMock, TestDeviceContext.class);
-        contextPool.getDeviceContext(1, DeviceContext.class);
+        contextPool.get(1, DeviceContext.class);
     }
 
     //
@@ -346,59 +340,65 @@ public class ContextPoolImplTest {
     public void testRejectsUnregisteredMemorySpecialization() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
         assertThrows(ContextNotFoundException.class,
-                () -> contextPool.getMemoryContext(1, GenericByteMemoryContext.class));
+                () -> contextPool.get(1, GenericByteMemoryContext.class));
     }
 
-    @Test(expected = InvalidContextException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterWrongInterfaceCPU() throws Exception {
         contextPool.register(1, cpuContextMock, MemoryContext.class);
     }
 
-    @Test(expected = InvalidContextException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterWrongInterfaceMemory() throws Exception {
         contextPool.register(1, shortMemoryContextMock, CPUContext.class);
     }
 
     //
 
-    @Test(expected = InvalidContextException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterWrongInterfaceCompiler() throws Exception {
         contextPool.register(1, compilerContextMock, CPUContext.class);
     }
 
-    @Test(expected = InvalidContextException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterWrongInterfaceDevice() throws Exception {
         contextPool.register(1, shortDeviceContextMock, CPUContext.class);
     }
 
-    @Test(expected = InvalidContextException.class)
+    @Test
     public void testUnannotatedContextInterface() throws Exception {
-        Context unannotatedContext = niceMock(UnannotatedContext.class);
+        UnannotatedContext unannotatedContext = niceMock(UnannotatedContext.class);
         contextPool.register(0, unannotatedContext, UnannotatedContext.class);
+        assertSame(unannotatedContext, contextPool.get(1, UnannotatedContext.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRegisterNonInterface() {
+        contextPool.register(0, new ContextClass(), ContextClass.class);
     }
 
     @Test(expected = NullPointerException.class)
     public void testGetNullCPU() throws Exception {
-        contextPool.getCPUContext(0, null);
+        contextPool.get(0, null);
     }
 
     //
 
     @Test(expected = NullPointerException.class)
     public void testGetNullCompiler() throws Exception {
-        contextPool.getCompilerContext(1, null);
+        contextPool.get(1, null);
     }
 
     //
 
     @Test(expected = NullPointerException.class)
     public void testGetNullMemory() throws Exception {
-        contextPool.getMemoryContext(2, null);
+        contextPool.get(2, null);
     }
 
     @Test(expected = NullPointerException.class)
     public void testGetNullDevice() throws Exception {
-        contextPool.getDeviceContext(3, null);
+        contextPool.get(3, null);
     }
 
     @Test
@@ -417,7 +417,7 @@ public class ContextPoolImplTest {
 
     @Test
     public void testUnregisterDifferentContextCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContext.class);
+        contextPool.register(0, compilerContextMock, OtherContext.class);
         assertFalse(contextPool.unregister(0, CPUContext.class));
     }
 
@@ -431,7 +431,7 @@ public class ContextPoolImplTest {
     public void testGetByEmuStudio() throws Exception {
         contextPool.setComputer(connectedComputer(false));
         contextPool.register(0, cpuContextMock, CPUContext.class);
-        assertEquals(cpuContextMock, contextPool.getCPUContext(emuStudioId));
+        assertEquals(cpuContextMock, contextPool.get(emuStudioId, CPUContext.class));
     }
 
 
@@ -443,34 +443,34 @@ public class ContextPoolImplTest {
         return (pluginID, toPluginID) -> pluginID != toPluginID && connected;
     }
 
-    @PluginContext
-    interface TestCompilerContext extends CompilerContext {
+    interface TestOtherContext extends OtherContext {
         void testCompilerMethod();
     }
 
-    @PluginContext
-    interface DifferentTestCompilerContext extends TestCompilerContext {
+    interface DifferentTestOtherContext extends TestOtherContext {
     }
 
-    @PluginContext
     interface TestCPUContext extends CPUContext {
         void testMethod();
     }
 
-    @PluginContext
     interface TestMemoryContext extends MemoryContext<Short> {
         void testMemoryMethod();
     }
 
-    @PluginContext
     interface TestDeviceContext extends DeviceContext<Short> {
         void testDeviceMethod();
     }
 
-    @PluginContext
     interface GenericByteMemoryContext extends MemoryContext<Byte> {
     }
 
+    interface OtherContext extends Context {
+    }
+
     interface UnannotatedContext extends Context {
+    }
+
+    static class ContextClass implements Context {
     }
 }

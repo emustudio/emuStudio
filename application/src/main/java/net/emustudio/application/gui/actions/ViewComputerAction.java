@@ -6,7 +6,7 @@ import net.emustudio.application.gui.dialogs.ViewComputerDialog;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,9 +19,9 @@ public class ViewComputerAction extends AbstractAction {
     private final VirtualComputer computer;
     private final Dialogs dialogs;
     private final AppSettings appSettings;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
-    public ViewComputerAction(JFrame parent, VirtualComputer computer, Dialogs dialogs, AppSettings appSettings, GUI gui) {
+    public ViewComputerAction(JFrame parent, VirtualComputer computer, Dialogs dialogs, AppSettings appSettings, EmuStudioGui gui) {
         super("View computer...");
 
         this.parent = Objects.requireNonNull(parent);

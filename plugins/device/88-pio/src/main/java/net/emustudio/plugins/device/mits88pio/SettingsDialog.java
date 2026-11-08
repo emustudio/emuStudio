@@ -32,12 +32,12 @@ final class SettingsDialog extends DialogBase {
         this.settings = settings;
         this.dialogs = dialogs;
         this.gui = gui;
-        boardType.setSelectedItem(settings.getString("boardType", "88-4PIO"));
+        boardType.setSelectedItem(settings.getString("boardType").orElse("88-4PIO"));
         selectedBoard = boardType.getSelectedIndex();
-        baseDrafts[selectedBoard] = String.format("0x%02X", settings.getInt("basePort", original() ? 4 : 0xA0));
+        baseDrafts[selectedBoard] = String.format("0x%02X", settings.getInt("basePort").orElse(original() ? 4 : 0xA0));
         basePort.setText(baseDrafts[selectedBoard]);
-        piaCount.setValue(settings.getInt("piaCount", 2));
-        interruptVector.setValue(settings.getInt("interruptVector", 7));
+        piaCount.setValue(settings.getInt("piaCount").orElse(2));
+        interruptVector.setValue(settings.getInt("interruptVector").orElse(7));
         boardType.addActionListener(event -> {
             baseDrafts[selectedBoard] = basePort.getText();
             selectedBoard = boardType.getSelectedIndex();
@@ -151,10 +151,10 @@ final class SettingsDialog extends DialogBase {
             int vector = ((Number) interruptVector.getValue()).intValue();
             if (count < 1 || count > 4) { throw new IllegalArgumentException("Populated PIAs must be between 1 and 4."); }
             if (vector < 0 || vector > 7) { throw new IllegalArgumentException("Interrupt vector must be between 0 and 7."); }
-            settings.setString("boardType", (String) boardType.getSelectedItem());
-            settings.setInt("basePort", base);
-            settings.setInt("piaCount", count);
-            settings.setInt("interruptVector", vector);
+            settings.set("boardType", boardType.getSelectedItem());
+            settings.set("basePort", base);
+            settings.set("piaCount", count);
+            settings.set("interruptVector", vector);
             dispose();
         } catch (IllegalArgumentException | ParseException | CannotUpdateSettingException e) {
             dialogs.showError(e.getMessage(), "Save settings");

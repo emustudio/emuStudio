@@ -16,6 +16,7 @@ import org.junit.Test;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Optional;
 
 import static net.emustudio.plugins.memory.ram.api.RamInstruction.Opcode.*;
@@ -41,10 +42,10 @@ public class CompilerTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testGetSourceFileExtensions() {
-        assertNotNull(compiler.getSourceFileExtensions());
-        assertFalse(compiler.getSourceFileExtensions().isEmpty());
-        assertEquals("ram", compiler.getSourceFileExtensions().get(0).getExtension());
+    public void testGetSourceFileTypes() {
+        assertNotNull(compiler.getSourceFileTypes());
+        assertFalse(compiler.getSourceFileTypes().isEmpty());
+        assertEquals(List.of("ram"), compiler.getSourceFileTypes().get(0).getExtensions());
     }
 
     @Test
@@ -210,7 +211,7 @@ public class CompilerTest extends AbstractCompilerTest {
     @Test
     public void testCompileWithoutSpecifyingOutputDoesNotOverwriteSource() throws Exception {
         ContextPool tmpContextPool = createMock(ContextPool.class);
-        expect(tmpContextPool.getMemoryContext(0L, RamMemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(tmpContextPool.get(0L, RamMemoryContext.class)).andReturn(memoryStub).anyTimes();
         replay(tmpContextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);

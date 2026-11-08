@@ -5,7 +5,6 @@ package net.emustudio.application;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -17,14 +16,12 @@ public class ApplicationApiImplTest {
 
     @Test
     public void gettersAndProgramLocationExposeInjectedState() {
-        DebuggerTable debuggerTable = mock(DebuggerTable.class);
         ContextPool contextPool = mock(ContextPool.class);
         Dialogs dialogs = mock(Dialogs.class);
         GUI gui = mock(GUI.class);
 
-        ApplicationApiImpl api = new ApplicationApiImpl(debuggerTable, contextPool, dialogs, gui);
+        ApplicationApiImpl api = new ApplicationApiImpl(contextPool, dialogs, gui);
 
-        assertSame(debuggerTable, api.getDebuggerTable());
         assertSame(contextPool, api.getContextPool());
         assertSame(dialogs, api.getDialogs());
         assertSame(gui, api.getGUI());
@@ -36,7 +33,6 @@ public class ApplicationApiImplTest {
     @Test
     public void guiMayBeNullInHeadlessMode() {
         ApplicationApiImpl api = new ApplicationApiImpl(
-                mock(DebuggerTable.class),
                 mock(ContextPool.class),
                 mock(Dialogs.class),
                 null

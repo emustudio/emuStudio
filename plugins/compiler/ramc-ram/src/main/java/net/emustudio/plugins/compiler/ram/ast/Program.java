@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram.ast;
 
+import net.emustudio.emulib.plugins.compiler.CompileException;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
-import net.emustudio.plugins.compiler.ram.exceptions.CompileException;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
@@ -24,6 +25,11 @@ public class Program {
     private final List<Instruction> instructions = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
     private final List<Value> inputs = new ArrayList<>();
+    private final String fileName;
+
+    public Program(String fileName) {
+        this.fileName = Objects.requireNonNull(fileName);
+    }
 
     public void add(Instruction instruction) {
         this.instructions.add(instruction);
@@ -32,7 +38,7 @@ public class Program {
     public void add(Label label) {
         String labelNorm = ParsingUtils.normalizeId(label.getLabel());
         if (labels.containsKey(labelNorm)) {
-            throw new CompileException(label.line, label.column, "Label is already defined!");
+            throw new CompileException(new SourceCodePosition(label.line, label.column, fileName), "Label is already defined!");
         }
         this.labels.put(labelNorm, label);
     }
@@ -55,7 +61,10 @@ public class Program {
             if (nonNegative.contains(instruction.getOpcode()) && directions.contains(instruction.getDirection())) {
                 RamValue operand = instruction.getOperand();
                 if (operand != null && operand.getType() == RamValue.Type.NUMBER && operand.getNumberValue() < 0) {
-                    throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
+                    throw new CompileException(
+                            new SourceCodePosition(instruction.line, instruction.column, fileName),
+                            "Register number cannot be negative"
+                    );
                 }
             }
         }

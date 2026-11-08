@@ -22,27 +22,27 @@ public class CreateExprVisitor extends As8080ParserBaseVisitor<Node> {
 
     @Override
     public Node visitExprOct(As8080Parser.ExprOctContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitOct);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprHex1(As8080Parser.ExprHex1Context ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitHex1);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprHex2(As8080Parser.ExprHex2Context ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitHex2);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprDec(As8080Parser.ExprDecContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitDec);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprBin(As8080Parser.ExprBinContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitBin);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override

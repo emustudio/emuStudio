@@ -108,7 +108,10 @@ public class RaspTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
-            int numberValue = RadixUtils.getInstance().parseRadix((String) value);
+            int numberValue = RadixUtils.parseRadix((String) value);
+            if (numberValue < 0) {
+                return;
+            }
             execution.update(() -> memory.write(rowIndex, numberValue))
                     .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(this::fireTableDataChanged));
         } catch (NumberFormatException e) {

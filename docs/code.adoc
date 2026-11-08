@@ -46,11 +46,10 @@ package "emuLib (SDK)" {
         +getContextPool() : ContextPool
         +getDialogs() : Dialogs
         +getGUI() : GUI
-        +getDebuggerTable() : DebuggerTable
     }
     interface ContextPool {
         +register(pluginId, context, type)
-        +getContext(pluginId, type) : Context
+        +get(pluginId, type) : Context
     }
 
     annotation PluginRoot

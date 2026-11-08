@@ -5,7 +5,6 @@ package net.emustudio.plugins.memory.rasp.gui.actions;
 import net.emustudio.plugins.memory.rasp.TestExecutionState;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.MemoryContextImplFactory;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -75,7 +74,7 @@ public class LoadImageActionTest {
     public void testActionPerformedUserCancels() {
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.empty());
         replay(dialogs);
 
@@ -103,7 +102,7 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile.toPath()));
         replay(dialogs);
 
@@ -133,7 +132,7 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(invalidFile.toPath()));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
@@ -154,7 +153,7 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(nonExistent));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
@@ -186,12 +185,12 @@ public class LoadImageActionTest {
         // First call returns imageFile1
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile1.toPath()));
         // Second call - we expect the dialog to receive the recent path (imageFile1's path)
         expect(dialogs.chooseFile(
                 anyString(), anyString(), eq(imageFile1.toPath()), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile2.toPath()));
         replay(dialogs);
 

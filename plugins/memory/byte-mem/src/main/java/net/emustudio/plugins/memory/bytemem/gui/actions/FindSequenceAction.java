@@ -17,7 +17,7 @@ public class FindSequenceAction extends AbstractAction {
     private final Runnable showSearch;
 
     public FindSequenceAction(Runnable showSearch) {
-        super("Find sequence", loadIcon(ICON_FILE));
+        super("Find sequence", loadIcon(ICON_FILE, FindSequenceAction.class));
         this.showSearch = Objects.requireNonNull(showSearch);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));

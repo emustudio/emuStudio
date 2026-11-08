@@ -5,14 +5,11 @@ package net.emustudio.application.gui.framework;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import net.emustudio.application.gui.components.BrowseButton;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +17,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.nio.file.Path;
 import java.util.function.Consumer;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
@@ -36,6 +31,8 @@ public class EmuStudioGui implements GUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
     private static final int ICON_SIZE = 22;
     private static final String CUSTOM_PREFIX = "emuStudio.icon.";
+    public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, 12);
+    public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, 12);
 
     private AppSettings.Theme currentTheme = AppSettings.Theme.INTELLIJ;
 
@@ -198,7 +195,6 @@ public class EmuStudioGui implements GUI {
         return lblLogo;
     }
 
-    @Override
     public JButton toolbarButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
         return new ToolbarButton(action, iconResource, tooltipText, callerClass);
@@ -209,20 +205,17 @@ public class EmuStudioGui implements GUI {
         return new ToolbarButton(action);
     }
 
-    @Override
     public JButton toolbarButton(Action action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
         return new ToolbarButton(action, iconResource, tooltipText, callerClass);
     }
 
-    @Override
     public JToggleButton toolbarToggleButton(Consumer<ActionEvent> action, Consumer<ItemEvent> itemAction,
                                              String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
         return new ToolbarToggleButton(action, itemAction, iconResource, tooltipText, callerClass);
     }
 
-    @Override
     public JToggleButton toolbarToggleButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
         return new ToolbarToggleButton(action, iconResource, tooltipText, callerClass);
@@ -240,18 +233,10 @@ public class EmuStudioGui implements GUI {
         return label;
     }
 
-    @Override
     public JLabel labelTitle(String text) {
         JLabel label = new JLabel(text);
         Font font = label.getFont();
         label.setFont(font.deriveFont(Font.BOLD, font.getSize() + 2));
-        return label;
-    }
-
-    @Override
-    public JLabel labelPadded(String text, int top, int left, int bottom, int right) {
-        JLabel label = new JLabel(text);
-        label.setBorder(BorderFactory.createEmptyBorder(top, left, bottom, right));
         return label;
     }
 
@@ -268,58 +253,13 @@ public class EmuStudioGui implements GUI {
     }
 
     @Override
-    public JButton button(String text, Runnable action) {
-        JButton btn = new JButton(text);
-        btn.addActionListener(e -> action.run());
-        return btn;
-    }
-
-    @Override
-    public JButton button(String iconResource, String text, Runnable action) {
-        Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        JButton btn = new JButton(text, loadIcon(iconResource, callerClass));
-        btn.addActionListener(e -> action.run());
-        return btn;
-    }
-
-    @Override
-    public JButton button(String text, ActionListener action) {
-        JButton btn = new JButton(text);
-        btn.addActionListener(action);
-        return btn;
-    }
-
-    @Override
-    public JButton buttonBrowseDirectories(Dialogs dialogs, String dialogTitle, String approveButtonText,
-                                           Consumer<Path> onApprove) {
-        return new BrowseButton(dialogs, dialogTitle, approveButtonText, onApprove);
-    }
-
-    @Override
-    public JButton buttonBrowseFiles(Dialogs dialogs, String dialogTitle, String approveButtonText,
-                                     boolean appendMissingExtensions, Consumer<Path> onApprove,
-                                     FileExtensionsFilter... filters) {
-        return new BrowseButton(dialogs, dialogTitle, approveButtonText, appendMissingExtensions, onApprove, filters);
-    }
-
-    @Override
-    public JMenuItem menuItem(Action action) {
-        return new JMenuItem(action);
-    }
-
-    @Override
-    public JTextField textField(String text) {
-        return textField(text, 20);
-    }
-
-    @Override
     public JTextField textField(String text, int columns) {
         return new JTextField(text, columns);
     }
 
     @Override
-    public JTextArea textAreaReadOnly(int columns, int rows) {
-        JTextArea textArea = new JTextArea(columns, rows);
+    public JTextArea textAreaReadOnly(int rows, int columns) {
+        JTextArea textArea = new JTextArea(rows, columns);
         textArea.setEditable(false);
         return textArea;
     }
@@ -334,39 +274,12 @@ public class EmuStudioGui implements GUI {
     }
 
     @Override
-    public JToolBar toolBarVertical() {
-        JToolBar toolbar = toolBar();
-        toolbar.setOrientation(JToolBar.VERTICAL);
-        return toolbar;
-    }
-
-    @Override
-    public JSplitPane splitPane() {
-        JSplitPane splitPane = new JSplitPane();
+    public JSplitPane splitPane(int orientation, Component first, Component second, double resizeWeight) {
+        JSplitPane splitPane = new JSplitPane(orientation, true, first, second);
         splitPane.setBorder(null);
         splitPane.setOneTouchExpandable(true);
-        splitPane.setContinuousLayout(true);
+        splitPane.setResizeWeight(resizeWeight);
         return splitPane;
-    }
-
-    @Override
-    public JSplitPane splitPaneLeftToRight(Component left, Component right, Double resizeWeight) {
-        JSplitPane sp = splitPane();
-        sp.setLeftComponent(left);
-        sp.setRightComponent(right);
-        sp.setResizeWeight(resizeWeight);
-        sp.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-        return sp;
-    }
-
-    @Override
-    public JSplitPane splitPaneTopToBottom(Component top, Component bottom, Double resizeWeight) {
-        JSplitPane sp = splitPane();
-        sp.setLeftComponent(top);
-        sp.setRightComponent(bottom);
-        sp.setResizeWeight(resizeWeight);
-        sp.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        return sp;
     }
 
     @Override
@@ -382,21 +295,11 @@ public class EmuStudioGui implements GUI {
     }
 
     @Override
-    public JPanel panelHorizontal() {
-        return new JPanel(new MigLayout("insets dialog, filly", "[]", "[grow]"));
-    }
-
-    @Override
     public void styleTable(JTable table) {
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
         int contentHeight = Math.max(ICON_SIZE, table.getFontMetrics(table.getFont()).getHeight());
         table.setRowHeight(Math.max(table.getRowHeight(), contentHeight + 4));
-    }
-
-    @Override
-    public void styleList(JList<?> list) {
-        list.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
 
     @Override

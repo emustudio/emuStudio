@@ -100,7 +100,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
-                    return RadixUtils.formatDwordHexString(value).toUpperCase();
+                    return RadixUtils.formatHex(value, 8);
                 case COLUMN_DEC_VALUE:
                     return String.valueOf(value);
                 case COLUMN_RAW_VALUE:

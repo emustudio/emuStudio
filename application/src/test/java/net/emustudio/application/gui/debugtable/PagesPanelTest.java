@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -28,7 +28,7 @@ public class PagesPanelTest {
     public void navigationButtonsDelegateToDebugTableModel() {
         DebugTableModel model = mock(DebugTableModel.class);
         Dialogs dialogs = mock(Dialogs.class);
-        GUI gui = mock(GUI.class);
+        EmuStudioGui gui = mock(EmuStudioGui.class);
         stubGui(gui);
 
         PagesPanel panel = PagesPanel.create(model, dialogs, gui);
@@ -49,7 +49,7 @@ public class PagesPanelTest {
     public void seekButtonsUseDialogsAndRememberLastValue() {
         DebugTableModel model = mock(DebugTableModel.class);
         Dialogs dialogs = mock(Dialogs.class);
-        GUI gui = mock(GUI.class);
+        EmuStudioGui gui = mock(EmuStudioGui.class);
         stubGui(gui);
         when(dialogs.readInteger("Please enter number of pages to backward", "Seek", 10)).thenReturn(Optional.of(3));
         when(dialogs.readInteger("Please enter number of pages to forward", "Seek", 3)).thenReturn(Optional.of(5));
@@ -69,7 +69,7 @@ public class PagesPanelTest {
         verify(dialogs).readInteger("Please enter number of pages to backward", "Seek", 5);
     }
 
-    private void stubGui(GUI gui) {
+    private void stubGui(EmuStudioGui gui) {
         doAnswer(invocation -> {
             Consumer<ActionEvent> action = invocation.getArgument(0);
             String icon = invocation.getArgument(1);

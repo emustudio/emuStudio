@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88tap.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.Context;
 
 import java.io.IOException;
@@ -10,7 +9,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /** File-control port published by the Altair paper tape device. */
-@PluginContext
 public interface PaperTapeContext extends Context {
     void attachReader(Path path) throws IOException;
 

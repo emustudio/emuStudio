@@ -3,10 +3,7 @@
 package net.emustudio.plugins.compiler.brainduck;
 
 import net.emustudio.emulib.plugins.compiler.Token;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.TokenSource;
-import org.antlr.v4.runtime.misc.Pair;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -186,58 +183,5 @@ public class LexicalAnalyzerImplTest {
         assertTrue(analyzer.hasNext());
         Token t2 = analyzer.next();
         assertEquals(Token.RESERVED, t2.getType());
-    }
-
-    @Test
-    public void testEmuTokenFactoryCreateSimple() {
-        LexicalAnalyzerImpl.EmuTokenFactory factory = new LexicalAnalyzerImpl.EmuTokenFactory(LexicalAnalyzerImpl.tokenMap);
-        LexicalAnalyzerImpl.EmuToken token = factory.create(BraincLexer.INC, ">");
-        assertNotNull(token);
-        assertEquals(Token.RESERVED, token.getType());
-        assertEquals(">", token.getText());
-    }
-
-    @Test
-    public void testEmuTokenFactoryCreateSimpleEof() {
-        LexicalAnalyzerImpl.EmuTokenFactory factory = new LexicalAnalyzerImpl.EmuTokenFactory(LexicalAnalyzerImpl.tokenMap);
-        LexicalAnalyzerImpl.EmuToken token = factory.create(org.antlr.v4.runtime.Token.EOF, "");
-        assertNotNull(token);
-        assertEquals(Token.EOF, token.getType());
-    }
-
-    @Test
-    public void testEmuTokenFactoryCreateWithTextNotNull() {
-        LexicalAnalyzerImpl.EmuTokenFactory factory = new LexicalAnalyzerImpl.EmuTokenFactory(LexicalAnalyzerImpl.tokenMap);
-        CharStream stream = CharStreams.fromString(">");
-        BraincLexer lexer = new BraincLexer(stream);
-        Pair<TokenSource, CharStream> source = new Pair<>(lexer, stream);
-
-        // Pass explicit text (not null)
-        LexicalAnalyzerImpl.EmuToken token = factory.create(source, BraincLexer.INC, "explicit-text", 0, 0, 0, 1, 0);
-        assertNotNull(token);
-        assertEquals("explicit-text", token.getText());
-    }
-
-    @Test
-    public void testEmuTokenFactoryCreateWithNullTextAndNullSource() {
-        LexicalAnalyzerImpl.EmuTokenFactory factory = new LexicalAnalyzerImpl.EmuTokenFactory(LexicalAnalyzerImpl.tokenMap);
-        Pair<TokenSource, CharStream> source = new Pair<>(null, null);
-
-        // text is null AND source.b is null => text should remain null
-        LexicalAnalyzerImpl.EmuToken token = factory.create(source, BraincLexer.INC, null, 0, 0, 0, 1, 0);
-        assertNotNull(token);
-    }
-
-    @Test
-    public void testEmuTokenConstructorWithTypeAndText() {
-        LexicalAnalyzerImpl.EmuToken token = new LexicalAnalyzerImpl.EmuToken(Token.RESERVED, "test");
-        assertEquals(Token.RESERVED, token.getType());
-        assertEquals("test", token.getText());
-    }
-
-    @Test
-    public void testEmuTokenGetOffsetForSecondConstructor() {
-        LexicalAnalyzerImpl.EmuToken token = new LexicalAnalyzerImpl.EmuToken(Token.RESERVED, "test");
-        assertEquals(0, token.getOffset());
     }
 }

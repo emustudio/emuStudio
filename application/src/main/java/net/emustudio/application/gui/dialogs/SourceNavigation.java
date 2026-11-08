@@ -58,7 +58,7 @@ final class SourceNavigation implements AutoCloseable {
         }
 
         @Override public void onMessage(CompilerMessage message) {
-            if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR)
+            if (message.getType() == CompilerMessage.Type.ERROR)
                 synchronized (SourceNavigation.this) { failed = true; }
         }
 

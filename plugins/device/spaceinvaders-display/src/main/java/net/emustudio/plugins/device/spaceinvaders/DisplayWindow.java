@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.spaceinvaders;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.audio.SamplePlayer;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.recording.RecordingSession;
-import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -18,13 +18,14 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 final class DisplayWindow extends DialogBase {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME);
-    private static final ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD);
-    private static final ImageIcon STOP_ICON = GUI.loadIcon(StandardIcons.ICON_STOP);
-    private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, DisplayWindow.class);
+    private static final ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD, DisplayWindow.class);
+    private static final ImageIcon STOP_ICON = GUI.loadIcon(StandardIcons.ICON_STOP, DisplayWindow.class);
+    private static final FileType MP4_FILE = new FileType("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
     private static final int FRAME_RATE = 60;
     private static final int AUDIO_FRAMES_PER_VIDEO_FRAME = DeviceImpl.SOUND_SAMPLE_RATE / FRAME_RATE;
@@ -120,8 +121,9 @@ final class DisplayWindow extends DialogBase {
     void frameReady() {
         RecordingSession session = recordingSession;
         if (session != null) {
-            if (!session.capture(display.captureFrame(DisplayPanel.WIDTH, DisplayPanel.HEIGHT),
-                    sound.captureAudio(AUDIO_FRAMES_PER_VIDEO_FRAME)) && session.getFailure() != null) {
+            byte[] pcm = sound.captureAudio(AUDIO_FRAMES_PER_VIDEO_FRAME);
+            if (!(session.captureVideo(display.captureFrame(DisplayPanel.WIDTH, DisplayPanel.HEIGHT))
+                    && session.captureAudio(pcm, pcm.length)) && session.getFailure() != null) {
                 SwingUtilities.invokeLater(() -> {
                     if (recordingSession == session) {
                         stopRecording(false);
@@ -154,7 +156,7 @@ final class DisplayWindow extends DialogBase {
         recordingSession = null;
         btnRecord.setToolTipText("Start video recording");
         Optional<Path> target = saveToFile ? dialogs.chooseFile(
-                "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
+                "Save recording", "Save", lastRecordingDirectory, true, List.of(MP4_FILE)
         ) : Optional.empty();
         btnRecord.setEnabled(false);
         btnRecord.setToolTipText("Saving video...");

@@ -17,7 +17,7 @@ public class AsciiModeAction extends AbstractAction {
     private final JToggleButton btnAsciiMode;
 
     public AsciiModeAction(MemoryTableModel tableModel, JToggleButton btnAsciiMode) {
-        super("Toggle ASCII mode", loadIcon(ICON_FILE));
+        super("Toggle ASCII mode", loadIcon(ICON_FILE, AsciiModeAction.class));
         this.tableModel = Objects.requireNonNull(tableModel);
         this.btnAsciiMode = Objects.requireNonNull(btnAsciiMode);
     }

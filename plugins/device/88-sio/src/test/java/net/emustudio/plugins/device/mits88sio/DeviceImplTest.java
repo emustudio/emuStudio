@@ -3,7 +3,6 @@
 package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -19,13 +18,12 @@ import static org.junit.Assert.*;
 public class DeviceImplTest {
     private DeviceImpl device;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setup() throws PluginInitializationException {
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getCPUContext(0, Context8080.class))
+        expect(contextPool.get(0, Context8080.class))
                 .andReturn(createNiceMock(Context8080.class)).anyTimes();
-        expect(contextPool.getDeviceContext(0, DeviceContext.class))
+        expect(contextPool.getDevice(0, Byte.class))
                 .andThrow(new ContextNotFoundException("")).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);

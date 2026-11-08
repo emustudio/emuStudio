@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.abstracttape.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.jcip.annotations.ThreadSafe;
 
@@ -21,7 +20,6 @@ import java.util.Set;
  */
 @SuppressWarnings("unused")
 @ThreadSafe
-@PluginContext
 public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
     /**

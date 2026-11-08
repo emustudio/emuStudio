@@ -16,7 +16,7 @@ import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 public class EmulatorPanel extends JPanel {
     private static final int PERIPHERAL_PANEL_HEIGHT = 200;
 
-    private final GUI gui;
+    private final EmuStudioGui gui;
     private final JPanel statusWindow;
     private final JToolBar toolDebug;
     private final JPanel panelPages;
@@ -75,7 +75,7 @@ public class EmulatorPanel extends JPanel {
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
                          EmulationController emulationController, MemoryContext<?> memoryContext,
-                         Consumer<SourceCodePosition> sourceNavigator, GUI gui) {
+                         Consumer<SourceCodePosition> sourceNavigator, EmuStudioGui gui) {
         this.gui = Objects.requireNonNull(gui);
         this.execution = emulationController;
         Objects.requireNonNull(sourceNavigator);
@@ -223,7 +223,7 @@ public class EmulatorPanel extends JPanel {
 
         JPanel peripheralPanel = gui.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
         JScrollPane paneDevices = gui.scrollPane(lstDevices);
-        gui.styleList(lstDevices);
+        lstDevices.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -240,10 +240,10 @@ public class EmulatorPanel extends JPanel {
         JPanel watches = gui.section("Watches", "insets 0, fill", "[grow]", "[grow]");
         watches.add(inspection != null ? inspection.watchesPanel() : gui.label("Watches need a CPU."), "grow");
         watches.setMinimumSize(new Dimension(280, 170));
-        cpuWatches = gui.splitPaneTopToBottom(statusScroll, watches, 0.55);
+        cpuWatches = gui.splitPane(JSplitPane.VERTICAL_SPLIT, statusScroll, watches, 0.55);
         cpuWatches.setName("debuggerCpuWatches");
         peripheralPanel.setMinimumSize(new Dimension(280, 110));
-        sidebar = gui.splitPaneTopToBottom(cpuWatches, peripheralPanel, 1.0);
+        sidebar = gui.splitPane(JSplitPane.VERTICAL_SPLIT, cpuWatches, peripheralPanel, 1.0);
         sidebar.setName("debuggerSidebar");
         sidebar.setPreferredSize(new Dimension(360, 650));
         sidebar.setMinimumSize(new Dimension(280, 420));
@@ -251,7 +251,7 @@ public class EmulatorPanel extends JPanel {
         JComponent workspace = inspection != null ? inspection : debuggerPanel;
         workspace.setMinimumSize(new Dimension(360, 180));
         workspace.setPreferredSize(new Dimension(680, 650));
-        splitLeftRight = gui.splitPaneLeftToRight(workspace, sidebar, 0.75);
+        splitLeftRight = gui.splitPane(JSplitPane.HORIZONTAL_SPLIT, workspace, sidebar, 0.75);
         splitLeftRight.setContinuousLayout(false);
         splitLeftRight.setName("debuggerColumns");
         splitLeftRight.setDividerLocation(700);

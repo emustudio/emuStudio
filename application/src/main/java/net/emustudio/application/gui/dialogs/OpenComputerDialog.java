@@ -83,8 +83,9 @@ public class OpenComputerDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JSplitPane splitConfig = gui.splitPane();
-        JToolBar toolConfig = gui.toolBarVertical();
+        JSplitPane splitConfig = gui.splitPane(JSplitPane.HORIZONTAL_SPLIT, null, null, 0.3);
+        JToolBar toolConfig = gui.toolBar();
+        toolConfig.setOrientation(SwingConstants.VERTICAL);
         JButton btnAdd = gui.toolbarButton(addNewComputerAction);
         JButton btnDelete = gui.toolbarButton(deleteComputerAction);
         JButton btnEdit = gui.toolbarButton(editComputerAction);
@@ -95,7 +96,7 @@ public class OpenComputerDialog extends DialogBase {
         JScrollPane scrollConfiguration = gui.scrollPane(configurationPanel);
         scrollPreview.setMinimumSize(new Dimension(0, 100));
         scrollConfiguration.setMinimumSize(new Dimension(0, 100));
-        JSplitPane splitPreview = gui.splitPaneTopToBottom(scrollPreview, scrollConfiguration, 0.6);
+        JSplitPane splitPreview = gui.splitPane(JSplitPane.VERTICAL_SPLIT, scrollPreview, scrollConfiguration, 0.6);
         JButton btnClose = new JButton();
         JLabel lblLogo = gui.createLogoJLabel();
 
@@ -109,7 +110,7 @@ public class OpenComputerDialog extends DialogBase {
 
         JScrollPane configScrollPane = gui.scrollPane(lstConfig);
         configScrollPane.setBorder(BorderFactory.createTitledBorder("Virtual computers"));
-        gui.styleList(lstConfig);
+        lstConfig.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
@@ -124,7 +125,6 @@ public class OpenComputerDialog extends DialogBase {
         panelConfig.add(toolConfig, "growy");
         panelConfig.add(configScrollPane, "grow");
 
-        splitConfig.setResizeWeight(0.3);
         splitConfig.setLeftComponent(panelConfig);
         splitConfig.setRightComponent(splitPreview);
 
@@ -153,7 +153,8 @@ public class OpenComputerDialog extends DialogBase {
         headerPanel.add(lblLogo);
         headerPanel.add(textPanel, "grow");
 
-        JButton btnOpen = gui.button("Open computer", openComputerAction);
+        JButton btnOpen = gui.button("Open computer");
+        btnOpen.addActionListener(openComputerAction);
         gui.buttonMakePrimary(btnOpen);
 
         btnClose.setText("Exit");
@@ -253,7 +254,7 @@ public class OpenComputerDialog extends DialogBase {
                 computerConfigs = loadConfigurations();
             } catch (IOException e) {
                 LOGGER.error("Could not load computer configurations", e);
-                dialogs.showError("Could not load computer configurations. Please consult log file for details.");
+                dialogs.showError("Could not load computer configurations. Please consult log file for details.", "Error");
             }
         }
 

@@ -46,8 +46,8 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         currentPage = tableModel.getPage();
         addresses = new String[tableModel.getRowCount()];
         for (int i = 0; i < addresses.length; i++) {
-            addresses[i] = RadixUtils.formatWordHexString(tableModel.getColumnCount() * i
-                    + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage);
+            addresses[i] = RadixUtils.formatHex(tableModel.getColumnCount() * i
+                    + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage, 4);
         }
         rowHeader = new JList<>(addresses);
 

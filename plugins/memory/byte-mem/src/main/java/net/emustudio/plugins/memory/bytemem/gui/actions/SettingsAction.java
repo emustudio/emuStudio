@@ -32,7 +32,7 @@ public class SettingsAction extends AbstractAction {
 
     public SettingsAction(Dialogs dialogs, JDialog parent, MemoryImpl memory, MemoryContextImpl context,
                           MemoryTable table, PluginSettings settings, GUI gui, ExecutionState execution) {
-        super("Erase memory", loadIcon(ICON_FILE));
+        super("Erase memory", loadIcon(ICON_FILE, SettingsAction.class));
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
         this.table = Objects.requireNonNull(table);

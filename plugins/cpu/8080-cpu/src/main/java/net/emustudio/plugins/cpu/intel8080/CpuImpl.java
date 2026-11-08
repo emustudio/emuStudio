@@ -9,24 +9,19 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Intel 8080 CPU"
+        title = "Intel 8080 CPU",
+        description = "Emulator of Intel 8080 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
     private final Context8080Impl context = new Context8080Impl();
     private final InitializerFor8080 initializer;
 
@@ -39,23 +34,11 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        try {
-            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register CPU context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register CPU Context. Please see log file for details.", super.getTitle()
-            );
-        }
-        context.setCPUFrequency(settings.getInt("frequency_khz", Context8080Impl.DEFAULT_FREQUENCY_KHZ));
+        applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+        context.setCPUFrequency(settings.getInt("frequency_khz").orElse(Context8080Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerFor8080(
                 pluginID, applicationApi.getContextPool(), context
         );
-    }
-
-    @Override
-    public String getDescription() {
-        return "Emulator of Intel 8080 CPU";
     }
 
     @Override

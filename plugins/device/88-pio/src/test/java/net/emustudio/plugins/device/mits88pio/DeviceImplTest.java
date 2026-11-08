@@ -3,7 +3,6 @@
 package net.emustudio.plugins.device.mits88pio;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -13,6 +12,9 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88pio.api.PioContext;
 import org.easymock.Capture;
 import org.junit.Test;
+
+import java.util.Optional;
+
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
@@ -20,11 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 
 public class DeviceImplTest {
-    @Test public void originalBoardUsesConnectedContextAnnotationAsDeviceId() throws Exception {
-        assertOriginalIdentity(new AnnotatedByteDevice(), "Annotated byte peripheral");
-    }
-
-    @Test public void originalBoardFallsBackToConnectedContextToString() throws Exception {
+    @Test public void originalBoardUsesConnectedContextToString() throws Exception {
         assertOriginalIdentity(new ByteDevice(), "Byte peripheral");
     }
 
@@ -34,17 +32,18 @@ public class DeviceImplTest {
 
     private void assertOriginalIdentity(DeviceContext<Byte> connected, String name) throws Exception {
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString("boardType", "88-4PIO")).andReturn("88-PIO");
-        expect(settings.getInt("basePort", 4)).andReturn(4);
-        expect(settings.getInt("interruptVector", 7)).andReturn(7);
+        expect(settings.getString("boardType")).andReturn(Optional.of("88-PIO"));
+        expect(settings.getInt("basePort")).andReturn(Optional.of(4));
+        expect(settings.getInt("interruptVector")).andReturn(Optional.of(7));
+        emptyByDefault(settings);
         Context8080 cpu = createNiceMock(Context8080.class);
         expect(cpu.attachDevice(anyInt(), anyObject())).andReturn(true).times(2);
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
         if (connected == null) {
-            expect(pool.getDeviceContext(0, DeviceContext.class)).andThrow(new ContextNotFoundException("No peripheral"));
+            expect(pool.get(0, DeviceContext.class)).andThrow(new ContextNotFoundException("No peripheral"));
         } else {
-            expect(pool.getDeviceContext(0, DeviceContext.class)).andReturn(connected);
+            expect(pool.get(0, DeviceContext.class)).andReturn(connected);
         }
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).anyTimes();
@@ -74,10 +73,6 @@ public class DeviceImplTest {
         assertEquals("Pin peripheral", device.getAttachedDeviceId());
         board.detachPeripheral(peripheral);
         assertEquals("unknown", device.getAttachedDeviceId());
-        peripheral = new AnnotatedPeripheral();
-        board.attachPeripheral(peripheral);
-        assertEquals("Annotated pin peripheral", device.getAttachedDeviceId());
-        board.detachPeripheral(peripheral);
         device.destroy();
         verify(pool);
     }
@@ -89,18 +84,12 @@ public class DeviceImplTest {
         @Override public String toString() { return "Byte peripheral"; }
     }
 
-    @PluginContext(id = "Annotated byte peripheral")
-    private static class AnnotatedByteDevice extends ByteDevice { }
-
     private static class Peripheral implements PioContext.Peripheral {
         @Override public void outputChanged(int channel, int data, int mask) { }
         @Override public void controlOutputChanged(int channel, boolean high) { }
         @Override public void reset() { }
         @Override public String toString() { return "Pin peripheral"; }
     }
-
-    @PluginContext(id = "Annotated pin peripheral")
-    private static class AnnotatedPeripheral extends Peripheral { }
 
     @Test public void statusAndSettingsAreSupportedTogether() {
         ApplicationApi api = createNiceMock(ApplicationApi.class);
@@ -115,11 +104,11 @@ public class DeviceImplTest {
 
     @Test public void noGuiModeNeverRequestsUiServices() {
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString("boardType", "88-4PIO")).andReturn("88-4PIO");
-        expect(settings.getInt("basePort", 0xA0)).andReturn(0xA0);
-        expect(settings.getInt("piaCount", 2)).andReturn(2);
-        expect(settings.getInt("interruptVector", 7)).andReturn(7);
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true);
+        expect(settings.getString("boardType")).andReturn(Optional.of("88-4PIO"));
+        expect(settings.getInt("basePort")).andReturn(Optional.of(0xA0));
+        expect(settings.getInt("piaCount")).andReturn(Optional.of(2));
+        expect(settings.getInt("interruptVector")).andReturn(Optional.of(7));
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true));
         ApplicationApi api = createStrictMock(ApplicationApi.class);
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(api.getContextPool()).andReturn(pool);
@@ -135,9 +124,10 @@ public class DeviceImplTest {
 
     @Test public void originalBoardUsesTwoPortsAndConfiguredRestartVector() throws Exception {
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString("boardType", "88-4PIO")).andReturn("88-PIO");
-        expect(settings.getInt("basePort", 4)).andReturn(4);
-        expect(settings.getInt("interruptVector", 7)).andReturn(3);
+        expect(settings.getString("boardType")).andReturn(Optional.of("88-PIO"));
+        expect(settings.getInt("basePort")).andReturn(Optional.of(4));
+        expect(settings.getInt("interruptVector")).andReturn(Optional.of(3));
+        emptyByDefault(settings);
         Context8080 cpu = createStrictMock(Context8080.class);
         Capture<Context8080.CpuPortDevice> ports = newCapture();
         expect(cpu.attachDevice(eq(4), capture(ports))).andReturn(true);
@@ -146,7 +136,7 @@ public class DeviceImplTest {
         cpu.signalInterrupt(aryEq(new byte[]{(byte) 0xDF}));
         cpu.detachDevice(5); cpu.detachDevice(4);
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).anyTimes();
         replay(settings, cpu, pool, api);
@@ -167,7 +157,7 @@ public class DeviceImplTest {
             expect(cpu.attachDevice(eq(0xA0 + conflict), anyObject())).andReturn(false);
             for (int port = conflict - 1; port >= 0; port--) { cpu.detachDevice(0xA0 + port); }
             ContextPool pool = createNiceMock(ContextPool.class);
-            expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+            expect(pool.get(0, Context8080.class)).andReturn(cpu);
             ApplicationApi api = createNiceMock(ApplicationApi.class);
             expect(api.getContextPool()).andReturn(pool).anyTimes();
             replay(cpu, pool, api);
@@ -186,7 +176,7 @@ public class DeviceImplTest {
         }
         for (int port = 0xA7; port >= 0xA0; port--) { cpu.detachDevice(port); }
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).anyTimes();
         replay(cpu, pool, api);
@@ -195,5 +185,11 @@ public class DeviceImplTest {
         device.destroy();
         device.destroy();
         verify(cpu);
+    }
+
+    private static void emptyByDefault(PluginSettings settings) {
+        expect(settings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(settings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(settings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
     }
 }

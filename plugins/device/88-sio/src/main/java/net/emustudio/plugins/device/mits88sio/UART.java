@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
@@ -85,11 +84,7 @@ public class UART {
 
     public String getDeviceId() {
         DeviceContext<Byte> tmpDevice = device;
-        if (tmpDevice == null) {
-            return "unknown";
-        }
-        PluginContext pluginContext = tmpDevice.getClass().getAnnotation(PluginContext.class);
-        return (pluginContext != null) ? pluginContext.id() : tmpDevice.toString();
+        return (tmpDevice == null) ? "unknown" : tmpDevice.toString();
     }
 
     void reset(boolean guiSupported) {

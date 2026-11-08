@@ -3,9 +3,6 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
-import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
-import net.emustudio.emulib.runtime.ui.debugger.OpcodeColumn;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -18,9 +15,8 @@ import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
-import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_TABLE_GRID;
-
 public class DebugTableImpl extends JTable {
+    private static final Color TABLE_COLOR_TABLE_GRID = new Color(0xd9d9d9);
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
     private final TextCellRenderer textRenderer;
@@ -76,11 +72,11 @@ public class DebugTableImpl extends JTable {
             } else if (debugColumn.getClassType() == Boolean.class) {
                 tableColumn.setMaxWidth(32);
                 tableColumn.setPreferredWidth(32);
-            } else if (debugColumn instanceof AddressColumn) {
+            } else if (DebugTableModel.TITLE_ADDRESS.equals(debugColumn.getTitle())) {
                 tableColumn.setPreferredWidth(80);
-            } else if (debugColumn instanceof MnemoColumn) {
+            } else if (DebugTableModel.TITLE_MNEMO.equals(debugColumn.getTitle())) {
                 tableColumn.setPreferredWidth(220);
-            } else if (debugColumn instanceof OpcodeColumn) {
+            } else if (DebugTableModel.TITLE_OPCODE.equals(debugColumn.getTitle())) {
                 tableColumn.setPreferredWidth(130);
             }
         }

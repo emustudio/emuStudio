@@ -9,6 +9,7 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 final class MdsGui extends DialogBase {
     private static final String TITLE = "MITS 88-MDS minidisk";
@@ -44,8 +45,12 @@ final class MdsGui extends DialogBase {
         content.add(image, "growx, wrap");
         content.add(position, "growx, wrap");
         content.add(status, "growx, wrap");
-        content.add(gui.button("Attach image", this::attach), "split 2, align center");
-        content.add(gui.button("Detach", this::detach));
+        JButton btnAttach = gui.button("Attach image");
+        btnAttach.addActionListener(e -> attach());
+        JButton btnDetach = gui.button("Detach");
+        btnDetach.addActionListener(e -> detach());
+        content.add(btnAttach, "split 2, align center");
+        content.add(btnDetach);
         return content;
     }
 
@@ -71,7 +76,7 @@ final class MdsGui extends DialogBase {
     }
 
     private void attach() {
-        dialogs.chooseFile("Attach minidisk image", "Attach", false).ifPresent(path -> {
+        dialogs.chooseFile("Attach minidisk image", "Attach", null, false, List.of()).ifPresent(path -> {
             try {
                 controller.attach(selectedDrive(), path);
                 refresh();

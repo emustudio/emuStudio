@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
+import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -17,13 +18,17 @@ public class RunnerTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
+    private static int run(String... args) {
+        return AbstractCompiler.runCommandLine("as-ssem", args, SSEMCompiler::new);
+    }
+
     @Test
     public void testCommandLine() throws Exception {
         File sourceFile = folder.newFile();
         Files.write(sourceFile.toPath(), "0 sto 22\n".getBytes(), StandardOpenOption.WRITE);
         File outputFile = folder.newFile();
 
-        Runner.main("--output", outputFile.getPath(), sourceFile.getPath());
+        assertEquals(0, run("--output", outputFile.getPath(), sourceFile.getPath()));
 
         byte[] bytes = Files.readAllBytes(outputFile.toPath());
 
@@ -42,7 +47,7 @@ public class RunnerTest {
         Files.write(sourceFile.toPath(), "0 stp\n".getBytes(), StandardOpenOption.WRITE);
         File outputFile = folder.newFile();
 
-        Runner.main("-o", outputFile.getPath(), sourceFile.getPath());
+        assertEquals(0, run("-o", outputFile.getPath(), sourceFile.getPath()));
 
         byte[] bytes = Files.readAllBytes(outputFile.toPath());
         assertEquals(33 * 4, bytes.length);
@@ -50,37 +55,37 @@ public class RunnerTest {
 
     @Test
     public void testCommandLinePrintHelp() {
-        Runner.main("--help");
+        assertEquals(0, run("--help"));
     }
 
     @Test
     public void testCommandLinePrintHelpShort() {
-        Runner.main("-h");
+        assertEquals(0, run("-h"));
     }
 
     @Test
     public void testCommandLineNonexistantSourceFileDoesNotThrow() {
-        Runner.main("slfjkdf");
+        assertEquals(1, run("slfjkdf"));
     }
 
     @Test
     public void testCommandLinePrintVersion() {
-        Runner.main("--version");
+        assertEquals(0, run("--version"));
     }
 
     @Test
     public void testCommandLinePrintVersionShort() {
-        Runner.main("-v");
+        assertEquals(0, run("-v"));
     }
 
     @Test
     public void testCommandLineNoArguments() {
-        Runner.main();
+        assertEquals(1, run());
     }
 
     @Test
     public void testCommandLineOutputWithoutFileSpecified() {
         // --output is the last argument, no output file follows, no input file either
-        Runner.main("--output");
+        assertEquals(1, run("--output"));
     }
 }

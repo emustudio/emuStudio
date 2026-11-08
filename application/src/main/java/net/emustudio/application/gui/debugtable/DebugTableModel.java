@@ -3,11 +3,15 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.List;
 
-public abstract class DebugTableModel extends AbstractTableModel implements DebuggerTable {
+public abstract class DebugTableModel extends AbstractTableModel {
+    // Titles of columns created by DebuggerColumn.address/mnemo/opcode factories
+    static final String TITLE_ADDRESS = "address";
+    static final String TITLE_MNEMO = "instruction";
+    static final String TITLE_OPCODE = "opcode";
 
     public abstract DebuggerColumn<?> getColumnAt(int index);
 
@@ -33,9 +37,9 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
 
     public abstract void memoryChanged(int from, int to);
 
-    public abstract void setDefaultColumns();
-
     public abstract int guessPreviousInstructionLocation();
 
     public abstract void setMaxRows(int maxRows);
+
+    public abstract void setDebuggerColumns(List<DebuggerColumn<?>> columns);
 }

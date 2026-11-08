@@ -13,8 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
@@ -109,11 +108,11 @@ public class StatusPanel extends JPanel {
     }
 
     private String wordHex(int upper, int lower) {
-        return formatWordHexString(((upper << 8) | lower) & 0xFFFF);
+        return formatHex(((upper << 8) | lower) & 0xFFFF, 4);
     }
 
     private String byteHex(int what) {
-        return formatByteHexString(what);
+        return formatHex(what, 2);
     }
 
     public void updateGUI() {
@@ -167,12 +166,12 @@ public class StatusPanel extends JPanel {
             txtHL2.setText(wordHex(regH2, regL2));
             flagModel2.update(flags2);
 
-            txtSP.setText(formatWordHexString(sp));
-            txtPC.setText(formatWordHexString(pc));
-            txtIX.setText(formatWordHexString(ix));
-            txtIY.setText(formatWordHexString(iy));
-            txtI.setText(formatByteHexString(i));
-            txtR.setText(formatByteHexString(r));
+            txtSP.setText(formatHex(sp, 4));
+            txtPC.setText(formatHex(pc, 4));
+            txtIX.setText(formatHex(ix, 4));
+            txtIY.setText(formatHex(iy, 4));
+            txtI.setText(formatHex(i, 2));
+            txtR.setText(formatHex(r, 2));
 
             lblRunState.setText(state.toString());
             spnFrequency.setEnabled(state != CPU.RunState.STATE_RUNNING);

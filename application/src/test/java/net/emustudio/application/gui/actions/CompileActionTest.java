@@ -83,7 +83,7 @@ public class CompileActionTest {
 
         CompilerListener listener = listenerCaptor.getValue();
         listener.onStart();
-        listener.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_WARNING, "Warn", position));
+        listener.onMessage(new CompilerMessage(CompilerMessage.Type.WARNING, "Warn", position));
         listener.onFinish();
         flushEdt();
 
@@ -162,7 +162,7 @@ public class CompileActionTest {
         when(editor.getCurrentFile()).thenReturn(Optional.of(new File("program.asm")));
         doAnswer(call -> { listeners.add(call.getArgument(0)); return null; }).when(compiler).addCompilerListener(any());
         doAnswer(call -> {
-            CompilerMessage error = new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "invalid");
+            CompilerMessage error = new CompilerMessage(CompilerMessage.Type.ERROR, "invalid", null);
             List.copyOf(listeners).forEach(listener -> listener.onMessage(error));
             return null;
         }).when(compiler).compile(any(), any());

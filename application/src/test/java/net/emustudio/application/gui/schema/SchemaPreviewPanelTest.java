@@ -5,7 +5,6 @@ package net.emustudio.application.gui.schema;
 import net.emustudio.application.gui.schema.elements.CompilerElement;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,7 +50,7 @@ public class SchemaPreviewPanelTest {
             assertTrue(panel.getPreferredSize().width > 0);
             assertTrue(panel.getPreferredSize().height > 0);
 
-            when(dialogs.chooseFile(anyString(), anyString(), any(Path.class), eq(true), any(FileExtensionsFilter.class)))
+            when(dialogs.chooseFile(anyString(), anyString(), any(Path.class), eq(true), anyList()))
                     .thenReturn(Optional.of(output));
 
             panel.saveSchemaImage();

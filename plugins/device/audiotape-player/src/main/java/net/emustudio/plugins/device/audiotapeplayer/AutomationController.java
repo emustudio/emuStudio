@@ -46,7 +46,6 @@ public class AutomationController implements AutoCloseable {
     private final Queue<State> stateNotifications = new ConcurrentLinkedQueue<>();
 
     private AutomationListener listener;
-    private final RadixUtils radixUtils = RadixUtils.getInstance();
     private final TapePlaybackController controller;
 
     public AutomationController(TapePlaybackController controller) {
@@ -152,7 +151,7 @@ public class AutomationController implements AutoCloseable {
                 }
                 break;
             case DELAY:
-                int seconds = radixUtils.parseRadix(event.getParameter());
+                int seconds = RadixUtils.parseRadix(event.getParameter());
                 if (seconds > 0) {
                     preciseSleepNanos(TimeUnit.SECONDS.toNanos(seconds));
                 }

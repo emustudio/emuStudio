@@ -33,7 +33,7 @@ public class TapePlaybackController implements AutoCloseable {
     @GuardedBy("stateLock")
     private CassetteState state = CassetteState.UNLOADED;
     @GuardedBy("stateLock")
-    private FileLoader loader;
+    private FileLoader.Format format;
     @GuardedBy("stateLock")
     private Path path;
     @GuardedBy("stateLock")
@@ -73,12 +73,12 @@ public class TapePlaybackController implements AutoCloseable {
     }
 
     public void load(Path path) {
-        FileLoader.forPath(path).filter(l -> l.getFormat().isTape()).ifPresent(tmpLoader -> {
+        FileLoader.Format.fromPath(path).filter(FileLoader.Format::isTape).ifPresent(tmpFormat -> {
             synchronized (stateLock) {
                 switch (state) {
                     case UNLOADED:
                     case STOPPED:
-                        this.loader = tmpLoader;
+                        this.format = tmpFormat;
                         this.path = path;
                         this.state = CassetteState.STOPPED;
                 }
@@ -91,13 +91,13 @@ public class TapePlaybackController implements AutoCloseable {
     public void play() {
         synchronized (stateLock) {
             if (this.state == CassetteState.STOPPED) {
-                FileLoader tmpLoader = this.loader;
+                FileLoader.Format tmpFormat = this.format;
                 Path tmpPath = this.path;
-                if (tmpLoader != null) {
+                if (tmpFormat != null) {
                     this.state = CassetteState.PLAYING;
                     this.playFuture = playPool.submit(() -> {
                         try {
-                            tmpLoader.load(tmpPath, listener, FileLoader.Options.playback());
+                            FileLoader.load(tmpPath, tmpFormat, listener);
                             synchronized (stateLock) {
                                 this.state = CassetteState.STOPPED;
                                 stateNotifications.add(this.state);
@@ -126,7 +126,7 @@ public class TapePlaybackController implements AutoCloseable {
                 this.state = CassetteState.STOPPED;
             }
             if (unload && this.state == CassetteState.STOPPED) {
-                this.loader = null;
+                this.format = null;
                 this.path = null;
                 this.state = CassetteState.UNLOADED;
             }

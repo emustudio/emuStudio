@@ -5,12 +5,11 @@ package net.emustudio.plugins.device.audiotapeplayer.gui;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ui.ShortenedString;
 import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.audiotapeplayer.AutomationEvent;
 import net.emustudio.plugins.device.audiotapeplayer.AutomationController;
 import net.emustudio.plugins.device.audiotapeplayer.TapePlaybackController;
@@ -41,23 +40,23 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
-    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(StandardIcons.ICON_REFRESH));
-    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(StandardIcons.ICON_LOAD));
-    private final CachedComboBoxModel<ShortenedString<Path>> cmbDirsModel = new CachedComboBoxModel<>();
-    private final JComboBox<ShortenedString<Path>> cmbDirs = new JComboBox<>(cmbDirsModel);
+    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(StandardIcons.ICON_REFRESH, TapePlayerGui.class));
+    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(StandardIcons.ICON_LOAD, TapePlayerGui.class));
+    private final CachedComboBoxModel<Path> cmbDirsModel = new CachedComboBoxModel<>();
+    private final JComboBox<Path> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
     private final JList<String> lstTapes = new JList<>(lstTapesModel);
     private final JScrollPane scrollTapes;
 
-    private final AtomicReference<ShortenedString<Path>> loadedFileName = new AtomicReference<>();
+    private final AtomicReference<Path> loadedFileName = new AtomicReference<>();
 
-    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY));
-    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP));
-    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(StandardIcons.ICON_EJECT));
-    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(StandardIcons.ICON_ADD));
-    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(StandardIcons.ICON_REMOVE));
-    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_UP));
-    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_DOWN));
+    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY, TapePlayerGui.class));
+    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP, TapePlayerGui.class));
+    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(StandardIcons.ICON_EJECT, TapePlayerGui.class));
+    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(StandardIcons.ICON_ADD, TapePlayerGui.class));
+    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(StandardIcons.ICON_REMOVE, TapePlayerGui.class));
+    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_UP, TapePlayerGui.class));
+    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_DOWN, TapePlayerGui.class));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
@@ -98,14 +97,20 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         timelineScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         timelineScrollPane.getViewport().setBackground(Color.WHITE);
 
-        btnBrowse = gui.buttonBrowseDirectories(dialogs, "Select Directory", "Select", p -> {
-            ShortenedString<Path> ps = new ShortenedString<>(p, Path::toString);
-            ps.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth() - 36);
-            cmbDirsModel.add(ps);
-            cmbDirs.setSelectedIndex(0);
-            cmbDirs.setMinimumSize(new Dimension(0, 0));
-        });
-        btnBrowse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE));
+        DefaultListCellRenderer dirRenderer = new DefaultListCellRenderer();
+        cmbDirs.setRenderer((list, value, index, selected, focus) -> dirRenderer.getListCellRendererComponent(list,
+                value == null ? null : GUI.shortenToFit(value.toString(), cmbDirs, cmbDirs.getWidth() - 36),
+                index, selected, focus));
+
+        btnBrowse = gui.button("Browse...");
+        btnBrowse.addActionListener(e -> dialogs
+                .chooseDirectory("Select Directory", "Select", currentDirectory())
+                .ifPresent(p -> {
+                    cmbDirsModel.add(p);
+                    cmbDirs.setSelectedIndex(0);
+                    cmbDirs.setMinimumSize(new Dimension(0, 0));
+                }));
+        btnBrowse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE, TapePlayerGui.class));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
@@ -259,7 +264,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     private void saveAutomationEvents() {
         try {
-            settings.setArray(SettingsDialog.SETTINGS_KEY_EVENTS, AutomationEvent.serializeAll(automationEvents));
+            settings.set(SettingsDialog.SETTINGS_KEY_EVENTS, AutomationEvent.serializeAll(automationEvents));
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save automation events", e);
             dialogs.showError("Could not save automation events.", "Save Events");
@@ -360,29 +365,29 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         }
     }
 
-    @SuppressWarnings("unchecked")
+    private Path currentDirectory() {
+        Path selected = (Path) cmbDirs.getSelectedItem();
+        return selected != null ? selected : Path.of(System.getProperty("user.dir"));
+    }
+
     private void setupListeners() {
         cmbDirs.addActionListener(e -> {
-            ShortenedString<Path> path = (ShortenedString<Path>) cmbDirs.getSelectedItem();
+            Path path = (Path) cmbDirs.getSelectedItem();
             if (path != null) {
-                lstTapesModel.reset(path.getValue());
+                lstTapesModel.reset(path);
             }
         });
         cmbDirs.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                ShortenedString<Path> path = (ShortenedString<Path>) cmbDirs.getSelectedItem();
+                Path path = (Path) cmbDirs.getSelectedItem();
 
                 if (path != null) {
                     // ComboBox has 2 components: text area and drop-down button. We need to eliminate button width.
                     // From observation, the drop-down button width is 36 pixels.
-                    path.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth() - 36);
-                    String dirName = path.getValue().toString();
-                    if (dirName.length() > path.getMaxStringLength()) {
-                        cmbDirs.setToolTipText(dirName);
-                    } else {
-                        cmbDirs.setToolTipText(null);
-                    }
+                    String dirName = path.toString();
+                    boolean shortened = !dirName.equals(GUI.shortenToFit(dirName, cmbDirs, cmbDirs.getWidth() - 36));
+                    cmbDirs.setToolTipText(shortened ? dirName : null);
                     revalidate();
                 }
             }
@@ -391,12 +396,12 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         panelTapeInfo.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                ShortenedString<Path> ps = loadedFileName.get();
-                if (ps != null) {
-                    ps.deriveMaxStringLength(panelTapeInfo);
-                    String shortened = ps.getShortenedString();
-                    if (shortened.length() < ps.getValue().toString().length()) {
-                        txtFileName.setToolTipText(ps.getValue().toString());
+                Path path = loadedFileName.get();
+                if (path != null) {
+                    String name = path.getFileName().toString();
+                    String shortened = GUI.shortenToFit(name, panelTapeInfo, panelTapeInfo.getWidth());
+                    if (!shortened.equals(name)) {
+                        txtFileName.setToolTipText(name);
                     }
                     txtFileName.setText(shortened);
                 }
@@ -431,10 +436,8 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
                 Path path = lstTapesModel.getFilePath(index);
                 controller.load(path);
 
-                ShortenedString<Path> ps = new ShortenedString<>(path, p -> p.getFileName().toString());
-                loadedFileName.set(ps);
-                ps.deriveMaxStringLength(panelTapeInfo);
-                txtFileName.setText(ps.getShortenedString());
+                loadedFileName.set(path);
+                txtFileName.setText(GUI.shortenToFit(path.getFileName().toString(), panelTapeInfo, panelTapeInfo.getWidth()));
                 setPlaybackProgress(0);
             }
         });
@@ -453,7 +456,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         JToolBar toolbarAvailableTapes = gui.toolBar();
         JPanel panelTape = gui.panel("insets 2", "[grow]", "[][grow][]");
         JTabbedPane tabbedPane = new JTabbedPane();
-        JSplitPane splitPane = gui.splitPaneLeftToRight(panelAvailableTapes, tabbedPane, 0.3);
+        JSplitPane splitPane = gui.splitPane(JSplitPane.HORIZONTAL_SPLIT, panelAvailableTapes, tabbedPane, 0.3);
 
         JLabel lblFileNameLabel = gui.label("File name:");
         JLabel lblStatusLabel = gui.label("Status:");
@@ -510,14 +513,17 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbarTape.add(btnEject);
         toolbarTape.addSeparator();
 
-        JButton btnCopyLogs = new JButton(GUI.loadIcon(StandardIcons.ICON_COPY));
+        JButton btnCopyLogs = new JButton(GUI.loadIcon(StandardIcons.ICON_COPY, TapePlayerGui.class));
         btnCopyLogs.setToolTipText("Copy selected rows");
         btnCopyLogs.setFocusPainted(false);
         btnCopyLogs.addActionListener(e -> copySelectedRows());
         toolbarTape.add(btnCopyLogs);
 
-        JButton btnSaveLogs = gui.buttonBrowseFiles(dialogs, "Save event logs", "Save", true, this::saveLogs, new FileExtensionsFilter("Tab-separated values", "tsv"), new FileExtensionsFilter("Text file", "txt"));
-        btnSaveLogs.setIcon(GUI.loadIcon(StandardIcons.ICON_SAVE));
+        JButton btnSaveLogs = gui.button("Browse...");
+        btnSaveLogs.addActionListener(e -> dialogs.chooseFile("Save event logs", "Save", Path.of(System.getProperty("user.dir")), true,
+                        List.of(new FileType("Tab-separated values", "tsv"), new FileType("Text file", "txt")))
+                .ifPresent(this::saveLogs));
+        btnSaveLogs.setIcon(GUI.loadIcon(StandardIcons.ICON_SAVE, TapePlayerGui.class));
         btnSaveLogs.setText("");
         btnSaveLogs.setToolTipText("Save logs");
         btnSaveLogs.setFocusPainted(false);
@@ -597,16 +603,16 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbar.addSeparator();
         toolbar.add(new JPanel(null)); // spacer
 
-        btnAutoPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY));
+        btnAutoPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY, TapePlayerGui.class));
         btnAutoPlay.addActionListener(e -> startAutomation());
         toolbar.add(btnAutoPlay);
 
-        btnAutoStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP));
+        btnAutoStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP, TapePlayerGui.class));
         btnAutoStop.setEnabled(false);
         btnAutoStop.addActionListener(e -> stopAutomation());
         toolbar.add(btnAutoStop);
 
-        btnAutoReset = new JButton("Reset", GUI.loadIcon(StandardIcons.ICON_RESET));
+        btnAutoReset = new JButton("Reset", GUI.loadIcon(StandardIcons.ICON_RESET, TapePlayerGui.class));
         btnAutoReset.addActionListener(e -> resetAutomation());
         toolbar.add(btnAutoReset);
 

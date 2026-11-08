@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88mds;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -14,24 +15,26 @@ import javax.swing.JFrame;
 import java.io.IOException;
 import java.nio.file.Path;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "MITS 88-MDS")
+@PluginRoot(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "MITS 88-MDS",
+        description = "MITS 88-MDS programmed-I/O controller for 35-track Altair minidisks."
+)
 @SuppressWarnings("unused")
-public final class DeviceImpl extends AbstractDevice {
+public final class DeviceImpl extends AbstractPlugin implements Device {
     private final MdsController controller = new MdsController();
-    private final PluginSettings settings;
     private final boolean guiSupported;
     private Context8080 cpu;
     private MdsGui gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        this.settings = settings;
-        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
+        cpu = applicationApi.getContextPool().get(pluginID, Context8080.class);
         attachPort(MdsController.STATUS_PORT, controller.statusPort());
         try {
             attachPort(MdsController.CONTROL_PORT, controller.controlPort());
@@ -46,7 +49,7 @@ public final class DeviceImpl extends AbstractDevice {
 
     private void attachPort(int port, Context8080.CpuPortDevice device) throws PluginInitializationException {
         if (!cpu.attachDevice(port, device)) {
-            throw new PluginInitializationException(this, String.format("88-MDS cannot attach to CPU port %02Xh", port));
+            throw new PluginInitializationException(String.format("88-MDS cannot attach to CPU port %02Xh", port));
         }
     }
 
@@ -57,7 +60,7 @@ public final class DeviceImpl extends AbstractDevice {
                 try {
                     controller.attach(drive, path);
                 } catch (IOException e) {
-                    throw new PluginInitializationException(this, "Could not attach minidisk image " + path, e);
+                    throw new PluginInitializationException("Could not attach minidisk image " + path, e);
                 }
             }
         }
@@ -98,21 +101,7 @@ public final class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings(JFrame parent) {
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
-    @Override
     public boolean isAutomationSupported() {
         return true;
-    }
-
-    @Override
-    public String getDescription() {
-        return "MITS 88-MDS programmed-I/O controller for 35-track Altair minidisks.";
     }
 }

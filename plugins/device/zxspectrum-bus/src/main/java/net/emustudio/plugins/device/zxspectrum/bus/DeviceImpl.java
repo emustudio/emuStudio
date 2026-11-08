@@ -2,26 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
 
 /**
  * ZX Spectrum Bus
@@ -35,39 +30,26 @@ import javax.swing.*;
  * when convenient.
  */
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum Bus")
-public class DeviceImpl extends AbstractDevice {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
+public class DeviceImpl extends AbstractPlugin implements Device {
     private final ZxSpectrumBusImpl bus;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        this.bus = new ZxSpectrumBusImpl(ModelProfile.valueOf(settings.getString("model", ModelProfile.DEFAULT.name())));
+        this.bus = new ZxSpectrumBusImpl(ModelProfile.valueOf(settings.getString("model").orElse(ModelProfile.DEFAULT.name())));
 
-        try {
-            ContextPool contextPool = applicationApi.getContextPool();
-            contextPool.register(pluginID, bus, ZxSpectrumBus.class);
-            contextPool.register(pluginID, bus, MemoryContext.class);
-            contextPool.register(pluginID, bus, DeviceContext.class);
-            contextPool.register(pluginID, bus, ContextZ80.class);
-            contextPool.register(pluginID, bus, CPUContext.class);
-            contextPool.register(pluginID, bus, Context8080.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register zx-spectrum bus context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register zx-spectrum bus. Please see log file for more details", getTitle()
-            );
-        }
+        ContextPool contextPool = applicationApi.getContextPool();
+        contextPool.register(pluginID, bus, ZxSpectrumBus.class);
+        contextPool.register(pluginID, bus, MemoryContext.class);
+        contextPool.register(pluginID, bus, DeviceContext.class);
+        contextPool.register(pluginID, bus, ContextZ80.class);
+        contextPool.register(pluginID, bus, CPUContext.class);
+        contextPool.register(pluginID, bus, Context8080.class);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        Class<?> cellTypeClass = memory.getCellTypeClass();
-        if (cellTypeClass != Byte.class) {
-            throw new PluginInitializationException("Could not find Byte-cell memory");
-        }
-        ContextZ80 cpu = applicationApi.getContextPool().getCPUContext(pluginID, ContextZ80.class);
+        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
+        ContextZ80 cpu = applicationApi.getContextPool().get(pluginID, ContextZ80.class);
         this.bus.initialize(cpu, memory);
     }
 
@@ -77,28 +59,8 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showGUI(JFrame parent) {
-
-    }
-
-    @Override
-    public boolean isGuiSupported() {
-        return false;
-    }
-
-    @Override
     public void destroy() {
         this.bus.destroy();
-    }
-
-    @Override
-    public void showSettings(JFrame jFrame) {
-
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
     }
 
     @Override

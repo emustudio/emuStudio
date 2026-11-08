@@ -32,13 +32,13 @@ public class SettingsDialog extends DialogBase {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = Objects.requireNonNull(gui);
 
-        chkShowGuiAtStartup.setSelected(settings.getBoolean(SETTINGS_KEY_SHOW_GUI_AT_STARTUP, false));
+        chkShowGuiAtStartup.setSelected(settings.getBoolean(SETTINGS_KEY_SHOW_GUI_AT_STARTUP).orElse(false));
         buildContent();
     }
 
     private void saveSettings() {
         try {
-            settings.setBoolean(SETTINGS_KEY_SHOW_GUI_AT_STARTUP, chkShowGuiAtStartup.isSelected());
+            settings.set(SETTINGS_KEY_SHOW_GUI_AT_STARTUP, chkShowGuiAtStartup.isSelected());
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "Save settings");
@@ -47,10 +47,11 @@ public class SettingsDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JButton btnSave = gui.buttonMakePrimary(gui.button("Save", () -> {
+        JButton btnSave = gui.buttonMakePrimary(gui.button("Save"));
+        btnSave.addActionListener(e -> {
             saveSettings();
             dispose();
-        }));
+        });
         getRootPane().setDefaultButton(btnSave);
 
         JPanel content = gui.panel("insets dialog", "[grow]", "[][]");

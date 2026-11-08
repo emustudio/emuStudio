@@ -32,8 +32,8 @@ public class StatusPanelTest {
     public void setUp() throws Exception {
         MemoryStub memory = new MemoryStub();
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.get(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
         ExecutionState execution = createNiceMock(ExecutionState.class);
         expect(execution.subscribe(anyObject())).andAnswer(() -> {

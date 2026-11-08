@@ -35,8 +35,8 @@ public class CpuImplTest {
         Capture<BrainCPUContextImpl> cpuContextCapture = Capture.newInstance();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.get(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
         replay(contextPool);

@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1000,7 +1001,7 @@ public class ZxSpectrumBusImplTest {
         ApplicationApi application = createNiceMock(ApplicationApi.class);
         expect(application.getContextPool()).andStubReturn(pool);
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getString("model", ModelProfile.DEFAULT.name())).andStubReturn(ModelProfile.DEFAULT.name());
+        expect(settings.getString("model")).andStubReturn(Optional.of(ModelProfile.DEFAULT.name()));
         replay(pool, application, settings);
         DeviceImpl device = new DeviceImpl(0L, application, settings);
         verify(pool);

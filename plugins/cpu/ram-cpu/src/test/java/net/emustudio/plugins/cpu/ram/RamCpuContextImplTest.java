@@ -26,9 +26,9 @@ public class RamCpuContextImplTest {
     }
 
     private RamCpuContextImpl createAndInit() throws Exception {
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
         replay(contextPool, storageTape, inputTape, outputTape);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
@@ -69,9 +69,9 @@ public class RamCpuContextImplTest {
 
     @Test(expected = PluginInitializationException.class)
     public void testInitThrowsWhenStorageTapeIsNull() throws Exception {
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(null).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(null).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
         replay(contextPool, storageTape, inputTape, outputTape);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
@@ -80,9 +80,9 @@ public class RamCpuContextImplTest {
 
     @Test(expected = PluginInitializationException.class)
     public void testInitThrowsWhenInputTapeIsNull() throws Exception {
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(null).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(null).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
         replay(contextPool, storageTape, inputTape, outputTape);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
@@ -91,9 +91,9 @@ public class RamCpuContextImplTest {
 
     @Test(expected = PluginInitializationException.class)
     public void testInitThrowsWhenOutputTapeIsNull() throws Exception {
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(null).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(null).anyTimes();
         replay(contextPool, storageTape, inputTape, outputTape);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
@@ -117,9 +117,9 @@ public class RamCpuContextImplTest {
         expectLastCall().once();
         replay(storageTape);
 
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
         replay(contextPool, inputTape, outputTape);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
@@ -161,9 +161,9 @@ public class RamCpuContextImplTest {
         expectLastCall().once();
         replay(storageTape, inputTape, outputTape);
 
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
         replay(contextPool);
 
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);

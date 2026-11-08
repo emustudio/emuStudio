@@ -36,7 +36,7 @@ public class AutoDialog extends DialogBase implements EmulationProgress {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = gui.panelHorizontal();
+        JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));

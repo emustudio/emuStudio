@@ -9,11 +9,8 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RamStatusPanel;
@@ -25,11 +22,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Random Access Machine (RAM)"
+        title = "Random Access Machine (RAM)",
+        description = "Emulator of abstract RAM machine"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
@@ -40,30 +38,17 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     private EmulatorEngine engine;
     private RamMemoryContext memory;
     private RamDisassembler disassembler;
-    private boolean debugTableInitialized = false;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         context = new RamCpuContextImpl(applicationApi.getContextPool());
-        try {
-            applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register RAM CPU context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register RAM CPU Context. Please see log file for details.", super.getTitle()
-            );
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "Emulator of abstract RAM machine";
+        applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RamMemoryContext.class);
+        memory = applicationApi.getContextPool().get(pluginID, RamMemoryContext.class);
         disassembler = new RamDisassembler(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
@@ -71,16 +56,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
+    public List<DebuggerColumn<?>> getDebuggerColumns() {
+        return List.of(new LabelDebugColumn(memory), DebuggerColumn.mnemo(disassembler));
+    }
+
+    @Override
     public JPanel getStatusPanel() {
-        if (!debugTableInitialized) {
-            DebuggerTable debugTable = applicationApi.getDebuggerTable();
-            if (debugTable != null) {
-                debugTable.setDebuggerColumns(Arrays.asList(
-                        new LabelDebugColumn(memory), new MnemoColumn(disassembler)
-                ));
-            }
-            debugTableInitialized = true;
-        }
         if (applicationApi.getGUI() == null) {
             return null;
         }

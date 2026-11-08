@@ -15,6 +15,7 @@ import net.emustudio.emulib.plugins.debugger.ValueView;
 import net.emustudio.emulib.plugins.debugger.ViewRow;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 
@@ -48,7 +49,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private java.util.function.Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebugSession session;
-    private final GUI gui;
+    private final EmuStudioGui gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
     private final Runnable breakpointsChanged;
     private final AnalysisTasks tasks;
@@ -178,7 +179,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             JComponent instructionView,
             Consumer<SourceCodePosition> sourceNavigator,
             Runnable breakpointsChanged,
-            GUI gui, Dialogs dialogs) {
+            EmuStudioGui gui, Dialogs dialogs) {
         this.gui = Objects.requireNonNull(gui);
         this.table = Objects.requireNonNull(table);
         this.tableScroll = Objects.requireNonNull(tableScroll);
@@ -195,7 +196,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         lastInstructionAddress = session.cpu.getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         historicalState = gui.textAreaReadOnly(50, 10);
-        for (JList<?> list : List.of(watches, memoryWatches, annotations)) gui.styleList(list);
+        for (JList<?> list : List.of(watches, memoryWatches, annotations)) list.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         this.session = session;
         if (session.memory != null && instructionModel instanceof DebugTableModelImpl)
             ((DebugTableModelImpl) instructionModel).setInstructionIndex(new InstructionIndex(() -> session.programIndex().snapshot()));
@@ -1024,8 +1025,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (original == null || (original.id >= 0 && !dirty())) return;
             int target, end;
             try {
-                target = net.emustudio.emulib.runtime.helpers.RadixUtils.getInstance().parseRadix(addressField.getText());
-                end = net.emustudio.emulib.runtime.helpers.RadixUtils.getInstance().parseRadix(endField.getText());
+                target = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(addressField.getText());
+                end = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(endField.getText());
                 if (target < 0 || end < target || end >= index.programIndex().snapshot().layout().addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "
@@ -1528,7 +1529,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (recordingControl == null) return;
         recordingControl.setSelected(session.isRecording());
         String action = session.isRecording() ? "Stop recording" : "Record instructions";
-        recordingControl.setIcon(GUI.loadIcon(session.isRecording() ? ICON_STOP : ICON_RECORD));
+        recordingControl.setIcon(EmuStudioGui.loadIcon(session.isRecording() ? ICON_STOP : ICON_RECORD, DebuggerPanel.class));
         recordingControl.setToolTipText(action);
         recordingControl.getAccessibleContext().setAccessibleName(action);
         recordingControl.setEnabled(session.debug != null && !tasks.isBusy() && !recordingChangePending);

@@ -2,18 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.emulib.plugins.compiler.antlr.CharArrayCharStream;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.Pair;
-
-import java.util.Objects;
+import net.emustudio.emulib.plugins.compiler.antlr.AntlrLexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.antlr.CharArrayCharStream;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Lexer.*;
 
-public class LexicalAnalyzerImpl implements LexicalAnalyzer {
+public class LexicalAnalyzerImpl extends AntlrLexicalAnalyzer {
     public static final int[] tokenMap = new int[As8080Lexer.EOL + 1];
 
     static {
@@ -168,12 +163,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     private boolean includePath;
-    private final As8080Lexer lexer;
-
 
     public LexicalAnalyzerImpl(As8080Lexer lexer) {
-        this.lexer = Objects.requireNonNull(lexer);
-        this.lexer.setTokenFactory(new EmuTokenFactory(tokenMap));
+        super(lexer, tokenMap, ";");
     }
 
     @Override
@@ -206,11 +198,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
-    public String[] getLineCommentStartAndEnd() { return new String[]{";", null}; }
-
-    @Override
     public Token next() {
-        Token token = (Token) lexer.nextToken();
+        Token token = super.next();
         if (token.getType() == Token.WHITESPACE) return token;
         if (includePath && token.getType() == Token.LITERAL && token.getText().length() >= 2) {
             includePath = false;
@@ -223,63 +212,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
-    public boolean hasNext() {
-        return !lexer._hitEOF;
-    }
-
-    @Override
     public void reset(char[] array, int offset, int length) {
         includePath = false;
-        lexer.setInputStream(new CharArrayCharStream(array, offset, length));
-    }
-
-    static class EmuToken extends CommonToken implements Token {
-        EmuToken(Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
-            super(source, type, channel, start, stop);
-        }
-
-        EmuToken(int type, String text) {
-            super(type, text);
-        }
-
-        @Override
-        public int getOffset() {
-            return getStartIndex();
-        }
-    }
-
-    static class EmuTokenFactory implements TokenFactory<EmuToken> {
-        private final int[] tokenMap;
-
-        EmuTokenFactory(int[] tokenMap) {
-            this.tokenMap = tokenMap;
-        }
-
-        private int convertType(int antlrType) {
-            if (antlrType == org.antlr.v4.runtime.Token.EOF) {
-                return Token.EOF;
-            }
-            return tokenMap[antlrType];
-        }
-
-        @Override
-        public EmuToken create(
-                Pair<TokenSource, CharStream> source, int type, String text,
-                int channel, int start, int stop, int line, int charPositionInLine) {
-            EmuToken t = new EmuToken(source, convertType(type), channel, start, stop);
-            t.setLine(line);
-            t.setCharPositionInLine(charPositionInLine);
-            if (text != null) {
-                t.setText(text);
-            } else if (source.b != null) {
-                t.setText(source.b.getText(Interval.of(start, stop)));
-            }
-            return t;
-        }
-
-        @Override
-        public EmuToken create(int type, String text) {
-            return new EmuToken(convertType(type), text);
-        }
+        super.reset(array, offset, length);
     }
 }

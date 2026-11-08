@@ -2,28 +2,24 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.memory.AbstractMemory;
+import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.ssem.gui.MemoryGui;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.MEMORY,
-        title = "SSEM memory (Williams–Kilburn Tube)"
+        title = "SSEM memory (Williams–Kilburn Tube)",
+        description = "Main store for SSEM machine"
 )
 @SuppressWarnings("unused")
-public class MemoryImpl extends AbstractMemory {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
-
+public class MemoryImpl extends AbstractPlugin implements Memory {
     private final MemoryContextImpl context;
     private final boolean guiNotSupported;
     private MemoryGui memoryGUI;
@@ -32,24 +28,8 @@ public class MemoryImpl extends AbstractMemory {
         super(pluginID, applicationApi, settings);
 
         this.context = new MemoryContextImpl();
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        try {
-            applicationApi.getContextPool().register(pluginID, context, MemoryContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register SSEM memory context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register SSEM memory. Please see log file for more details.", getTitle()
-            );
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "Main store for SSEM machine";
-    }
-
-    @Override
-    public void destroy() {
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        applicationApi.getContextPool().register(pluginID, context, MemoryContext.class);
     }
 
     @Override
@@ -65,10 +45,5 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return true;
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 }

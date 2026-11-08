@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.jcip.annotations.ThreadSafe;
 
@@ -11,7 +10,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 @ThreadSafe
-@PluginContext
 public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
     @Override

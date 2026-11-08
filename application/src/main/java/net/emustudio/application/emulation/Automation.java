@@ -164,12 +164,12 @@ public class Automation implements Runnable {
             @Override
             public void onMessage(CompilerMessage message) {
 
-                switch (message.getMessageType()) {
-                    case TYPE_ERROR:
+                switch (message.getType()) {
+                    case ERROR:
                         errors.incrementAndGet();
                         LOGGER.error(message.getFormattedMessage());
                         break;
-                    case TYPE_WARNING:
+                    case WARNING:
                         LOGGER.warn(message.getFormattedMessage());
                         break;
                     default:

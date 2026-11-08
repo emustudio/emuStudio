@@ -66,7 +66,7 @@ public class AutomationTest {
 
     @Test
     public void runReportsCompilationFailureAndSkipsCpuExecution() throws Exception {
-        stubCompilation(CompilerMessage.MessageType.TYPE_ERROR, "Broken source");
+        stubCompilation(CompilerMessage.Type.ERROR, "Broken source");
 
         new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 50, null, EmulationProgress.NONE).run();
 
@@ -77,7 +77,7 @@ public class AutomationTest {
 
     @Test
     public void runCompilesResetsAtProgramLocationAndWaitsForStopState() throws Exception {
-        stubCompilation(CompilerMessage.MessageType.TYPE_INFO, "Compiled");
+        stubCompilation(CompilerMessage.Type.INFO, "Compiled");
         stubCpuExecution(CPU.RunState.STATE_STOPPED_NORMAL);
         when(cpu.getInstructionLocation()).thenReturn(0x1234);
         Device device = mock(Device.class);
@@ -95,7 +95,7 @@ public class AutomationTest {
 
     @Test
     public void runAcceptsWarningsAndUsesDefaultReset() throws Exception {
-        stubCompilation(CompilerMessage.MessageType.TYPE_WARNING, "Careful");
+        stubCompilation(CompilerMessage.Type.WARNING, "Careful");
         stubCpuExecution(CPU.RunState.STATE_STOPPED_BREAK);
         when(cpu.getInstructionLocation()).thenReturn(0x0088);
 
@@ -165,7 +165,7 @@ public class AutomationTest {
 
     @Test
     public void runReturnsWhenCpuStopsBeforeWaitBegins() throws Exception {
-        stubCompilation(CompilerMessage.MessageType.TYPE_INFO, "Compiled");
+        stubCompilation(CompilerMessage.Type.INFO, "Compiled");
         stubCpuExecutionImmediately(CPU.RunState.STATE_STOPPED_NORMAL);
         when(cpu.getInstructionLocation()).thenReturn(0x0042);
 
@@ -265,7 +265,7 @@ public class AutomationTest {
         } finally { Files.deleteIfExists(script); }
     }
 
-    private void stubCompilation(CompilerMessage.MessageType messageType, String message) throws Exception {
+    private void stubCompilation(CompilerMessage.Type messageType, String message) throws Exception {
         AtomicReference<CompilerListener> listener = new AtomicReference<>();
         doAnswer(inv -> { listener.set(inv.getArgument(0)); return null; })
                 .when(compiler).addCompilerListener(any());

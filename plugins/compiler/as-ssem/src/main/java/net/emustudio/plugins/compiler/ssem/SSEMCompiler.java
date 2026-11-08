@@ -5,14 +5,13 @@ package net.emustudio.plugins.compiler.ssem;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
@@ -30,15 +29,18 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
-        title = "SSEM Assembler"
+        title = "SSEM Assembler",
+        description = "Assembler of SSEM computer language"
 )
 @SuppressWarnings("unused")
 public class SSEMCompiler extends AbstractCompiler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSEMCompiler.class);
-    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new FileExtension("ssem", "SSEM source file")
+    private static final List<FileType> SOURCE_FILE_TYPES = List.of(
+            new FileType("SSEM source file", "ssem")
     );
     private MemoryContext<Byte> memory;
 
@@ -46,30 +48,19 @@ public class SSEMCompiler extends AbstractCompiler {
         super(pluginID, applicationApi, settings);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                Class<?> cellTypeClass = memory.getCellTypeClass();
-                if (cellTypeClass != Byte.class) {
-                    throw new InvalidContextException(
-                            "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
-                    );
-                }
-            } catch (InvalidContextException | ContextNotFoundException e) {
+                memory = pool.getMemory(pluginID, Byte.class);
+            } catch (ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
         });
     }
 
     @Override
-    public void compile(Path inputPath, Optional<Path> outputPath) {
-        notifyCompileStart();
-        notifyInfo(getTitle() + ", version " + getVersion());
-
-        Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".bssem"));
+    protected void compile(Path inputPath, Path outputPath) throws IOException {
         try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
             Lexer lexer = createLexer(CharStreams.fromReader(reader));
             lexer.addErrorListener(new ParserErrorListener(inputPath.toString()));
@@ -86,25 +77,23 @@ public class SSEMCompiler extends AbstractCompiler {
             ByteBuffer code = codeGenerator.generateCode(program);
 
             if (code.hasRemaining()) {
-                writeToFile(code, finalOutputPath);
+                writeToFile(code, outputPath);
                 writeToMemory(code);
             }
 
             int programLocation = program.getStartLine() * 4;
             applicationApi.setProgramLocation(programLocation);
 
-            notifyInfo(String.format(
+            info(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    finalOutputPath, RadixUtils.formatWordHexString(programLocation)
+                    outputPath, formatHex(programLocation, 4)
             ));
-        } catch (CompileException e) {
-            notifyError(e.position, e.getMessage());
-        } catch (IOException e) {
-            notifyError("Compilation error: " + e);
-            LOGGER.error("Compilation error", e);
-        } finally {
-            notifyCompileFinish();
         }
+    }
+
+    @Override
+    protected String getOutputExtension() {
+        return "bssem";
     }
 
     @Override
@@ -113,13 +102,8 @@ public class SSEMCompiler extends AbstractCompiler {
     }
 
     @Override
-    public List<FileExtension> getSourceFileExtensions() {
-        return SOURCE_FILE_EXTENSIONS;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Assembler of SSEM computer language";
+    public List<FileType> getSourceFileTypes() {
+        return SOURCE_FILE_TYPES;
     }
 
     private SSEMLexer createLexer(CharStream input) {
@@ -152,7 +136,7 @@ public class SSEMCompiler extends AbstractCompiler {
             memory.clear();
             memory.write(0, NumberUtils.nativeBytesToBytes(data));
         } else {
-            notifyWarning("Memory is not available.");
+            warning("Memory is not available.");
         }
     }
 }

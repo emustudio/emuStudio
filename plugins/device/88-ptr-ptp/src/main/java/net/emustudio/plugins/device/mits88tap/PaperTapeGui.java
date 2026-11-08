@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88tap;
 
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
 import java.awt.Component;
@@ -17,12 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PaperTapeGui extends DialogBase {
-    private static final FileExtensionsFilter TAPE_FILTER = new FileExtensionsFilter("Paper tape", "pt", "bin", "hex");
+    private static final FileType TAPE_TYPE = new FileType("Paper tape", "pt", "bin", "hex");
 
     private final PaperTapeUnit tape;
     private final Dialogs dialogs;
@@ -49,13 +48,17 @@ final class PaperTapeGui extends DialogBase {
         this.gui = gui;
         readerStatus = gui.labelBold("No tape loaded");
         punchStatus = gui.labelBold("No output tape");
-        load = gui.button(StandardIcons.ICON_LOAD, "Load", () -> {
+        load = button(StandardIcons.ICON_LOAD, "Load");
+        load.addActionListener(event -> {
             Path selected = tapeList.getSelectedValue();
             if (selected != null) { loadReader(selected); }
         });
-        rewind = gui.button(StandardIcons.ICON_RESET, "Rewind", () -> { tape.rewindReader(); refresh(); });
-        eject = gui.button(StandardIcons.ICON_EJECT, "Eject", () -> { tape.detachReader(); refresh(); });
-        closeOutput = gui.button(StandardIcons.ICON_STOP, "Close output", () -> { tape.detachPunch(); refresh(); });
+        rewind = button(StandardIcons.ICON_RESET, "Rewind");
+        rewind.addActionListener(event -> { tape.rewindReader(); refresh(); });
+        eject = button(StandardIcons.ICON_EJECT, "Eject");
+        eject.addActionListener(event -> { tape.detachReader(); refresh(); });
+        closeOutput = button(StandardIcons.ICON_STOP, "Close output");
+        closeOutput.addActionListener(event -> { tape.detachPunch(); refresh(); });
         tapeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tapeList.addListSelectionListener(event -> load.setEnabled(tapeList.getSelectedValue() != null));
         tapeList.setCellRenderer(new DefaultListCellRenderer() {
@@ -80,8 +83,11 @@ final class PaperTapeGui extends DialogBase {
     protected JComponent initializeComponents() {
         JPanel available = gui.section("Available tapes", "insets 2", "[grow]", "[][grow][]");
         JPanel directories = gui.panel("fillx", "[grow][]", "[]");
-        JButton browse = gui.buttonBrowseDirectories(dialogs, "Select tape directory", "Select", this::selectDirectory);
-        browse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE));
+        JButton browse = gui.button("Browse...");
+        browse.addActionListener(event -> dialogs
+                .chooseDirectory("Select tape directory", "Select", directory)
+                .ifPresent(this::selectDirectory));
+        browse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE, PaperTapeGui.class));
         browse.setText("");
         browse.setToolTipText("Select directory");
         JToolBar directoryToolbar = gui.toolBar();
@@ -90,7 +96,9 @@ final class PaperTapeGui extends DialogBase {
         directories.add(directoryName, "growx");
         directories.add(directoryToolbar);
         JToolBar availableToolbar = gui.toolBar();
-        availableToolbar.add(gui.button(StandardIcons.ICON_REFRESH, "Refresh", this::refreshTapes));
+        JButton refreshTapes = button(StandardIcons.ICON_REFRESH, "Refresh");
+        refreshTapes.addActionListener(event -> refreshTapes());
+        availableToolbar.add(refreshTapes);
         availableToolbar.add(Box.createHorizontalGlue());
         availableToolbar.add(load);
         available.add(directories, "growx, wrap");
@@ -111,7 +119,9 @@ final class PaperTapeGui extends DialogBase {
         punch.add(tapeInfo(punchFile, punchStatus), "growx, wrap");
         punch.add(gui.label("<html>Guest software writes tape through CPU port 13h.<br>Opening an output tape replaces its existing contents."), "growx, wrap");
         JToolBar punchToolbar = gui.toolBar();
-        punchToolbar.add(gui.button(StandardIcons.ICON_SAVE, "Save tape", this::choosePunch));
+        JButton savePunch = button(StandardIcons.ICON_SAVE, "Save tape");
+        savePunch.addActionListener(event -> choosePunch());
+        punchToolbar.add(savePunch);
         punchToolbar.add(Box.createHorizontalGlue());
         punchToolbar.add(closeOutput);
         punch.add(punchToolbar, "growx");
@@ -119,12 +129,18 @@ final class PaperTapeGui extends DialogBase {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Reader", reader);
         tabs.addTab("Punch", punch);
-        JSplitPane split = gui.splitPaneLeftToRight(available, tabs, 0.3);
+        JSplitPane split = gui.splitPane(JSplitPane.HORIZONTAL_SPLIT, available, tabs, 0.3);
         split.setDividerLocation(250);
         JPanel content = gui.panel("insets dialog, fill", "[grow]", "[grow]");
         content.add(split, "push, grow");
         setPreferredSize(new Dimension(800, 400));
         return content;
+    }
+
+    private JButton button(String icon, String text) {
+        JButton button = gui.button(text);
+        button.setIcon(GUI.loadIcon(icon, PaperTapeGui.class));
+        return button;
     }
 
     private JPanel tapeInfo(JTextArea file, JLabel status) {
@@ -153,10 +169,7 @@ final class PaperTapeGui extends DialogBase {
         tapes.clear();
         try (Stream<Path> files = Files.list(directory)) {
             List<Path> paths = files.filter(Files::isRegularFile).filter(Files::isReadable)
-                    .filter(path -> {
-                        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-                        return TAPE_FILTER.getExtensions().stream().anyMatch(extension -> name.endsWith("." + extension));
-                    })
+                    .filter(TAPE_TYPE::matches)
                     .sorted(Comparator.comparing(path -> path.getFileName().toString(), String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
             paths.forEach(tapes::addElement);
@@ -177,9 +190,9 @@ final class PaperTapeGui extends DialogBase {
 
     private void choosePunch() {
         dialogs.chooseFile("Save punch tape", "Save", directory, true, List.of(
-                new FileExtensionsFilter("Paper tape", "pt"),
-                new FileExtensionsFilter("Binary file", "bin"),
-                new FileExtensionsFilter("Intel HEX", "hex"))).ifPresent(path -> {
+                new FileType("Paper tape", "pt"),
+                new FileType("Binary file", "bin"),
+                new FileType("Intel HEX", "hex"))).ifPresent(path -> {
             try {
                 tape.attachPunch(path);
             } catch (IOException e) {

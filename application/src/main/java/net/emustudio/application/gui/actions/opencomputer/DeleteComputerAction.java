@@ -37,14 +37,14 @@ public class DeleteComputerAction extends AbstractAction {
         Optional
                 .ofNullable(lstConfig.getSelectedValue())
                 .ifPresentOrElse(computer -> {
-                    Dialogs.DialogAnswer answer = dialogs.ask("Do you really want to delete selected computer?", "Delete computer");
-                    if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+                    Dialogs.Answer answer = dialogs.ask("Do you really want to delete selected computer?", "Delete computer");
+                    if (answer == Dialogs.Answer.YES) {
                         try {
                             removeConfiguration(computer.getName());
                             update.run();
                         } catch (IOException ex) {
                             LOGGER.error("Could not remove computer configuration", ex);
-                            dialogs.showError("Computer could not be deleted. Please consult log for details.");
+                            dialogs.showError("Computer could not be deleted. Please consult log for details.", "Error");
                         }
                     }
                 }, () -> dialogs.showError("A computer has to be selected!", "Delete computer"));

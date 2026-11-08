@@ -30,7 +30,7 @@ System_Boundary(app, "emuStudio application") {
     Component(virtualComputer, "VirtualComputer", "Java", "Holds the plugins of one machine by type; enforces connections; exposes compiler/CPU/memory/devices; initializes & resets them")
     Component(pluginLoader, "PluginLoader", "Java, URLClassLoader", "Finds each plugin's @PluginRoot main class in its JAR and its declared dependencies")
     Component(contextPool, "ContextPool", "Java", "Registry of plugin contexts; hands out contexts only between connected plugins")
-    Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, debugger table, program location")
+    Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, program location")
 
     Component(emuController, "EmulationController", "Java, command scheduler + machine worker", "Owns lifecycle state, completion, cooperative stopping, timed steps and serialized machine edits")
     Component(automation, "Automation", "Java", "compile → reset → execute → collect result state; logs outcome")
@@ -121,7 +121,7 @@ Subinterfaces and separately declared interfaces must be registered explicitly, 
 their methods are identical; a compatible method shape does not establish Java type identity.
 
 ApplicationApi:: The facade handed to every plugin at construction time. It
-exposes the `ContextPool`, the `Dialogs` and `GUI` services, the `DebuggerTable`
+exposes the `ContextPool`, the `Dialogs` and `GUI` services
 and the current program location — the plugin's whole view of the host.
 
 EmulationController:: Owns lifecycle state and explicit command completion for one

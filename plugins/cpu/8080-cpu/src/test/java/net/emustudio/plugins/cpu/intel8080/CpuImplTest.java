@@ -25,7 +25,7 @@ public class CpuImplTest {
         MemoryContext<Byte> memory = createMock(MemoryContext.class);
         expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
         replay(memory);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
         net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);

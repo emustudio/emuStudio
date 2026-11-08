@@ -75,8 +75,8 @@ public class TabbedEditorTest extends AbstractSwingTest {
     @Test
     public void marksDirtyTabsAndPromptsBeforeClose() {
         Dialogs dialogs = mock(Dialogs.class);
-        when(dialogs.ask("File is not saved yet. Do you want to save it?"))
-                .thenReturn(Dialogs.DialogAnswer.ANSWER_CANCEL, Dialogs.DialogAnswer.ANSWER_NO);
+        when(dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation"))
+                .thenReturn(Dialogs.Answer.CANCEL, Dialogs.Answer.NO);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {
         }));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
@@ -92,7 +92,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(1, onEdt(tabs::getTabCount).intValue());
         assertTrue(onEdt(editor::closeCurrent));
         assertEquals("Untitled", onEdt(() -> tabs.getTitleAt(0)));
-        verify(dialogs, times(2)).ask("File is not saved yet. Do you want to save it?");
+        verify(dialogs, times(2)).ask("File is not saved yet. Do you want to save it?", "Confirmation");
     }
 
     @Test
@@ -125,7 +125,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");
         Dialogs dialogs = mock(Dialogs.class);
-        when(dialogs.ask(anyString())).thenReturn(Dialogs.DialogAnswer.ANSWER_CANCEL, Dialogs.DialogAnswer.ANSWER_YES);
+        when(dialogs.ask(anyString(), eq("Confirmation"))).thenReturn(Dialogs.Answer.CANCEL, Dialogs.Answer.YES);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(first, second), files -> { }));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         REditor firstEditor = editor.editors().get(0);
