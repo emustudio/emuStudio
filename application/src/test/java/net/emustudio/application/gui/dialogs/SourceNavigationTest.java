@@ -183,15 +183,11 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void sourceBookmarksFollowAddresses() throws Exception {
+    public void sourceLinesFollowAddresses() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
-            f.sourceAction("Toggle bookmark");
-            f.sourceLine(1);
-            f.sourceAction("Next bookmark");
-            assertEquals(3, f.line());
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
 
             f.sourceLine(1);
@@ -457,10 +453,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         int line() { return onEdt(() -> editor.currentSourcePosition().orElseThrow().line); }
-
-        void sourceAction(String name) {
-            runOnEdt(() -> pane.getActionMap().get(name).actionPerformed(new java.awt.event.ActionEvent(pane, 0, name)));
-        }
 
         void sourceHistory(String name) {
             runOnEdt(() -> {

@@ -8,8 +8,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -32,5 +35,19 @@ public class AppSettingsTest {
         assertTrue(autoOpt.isPresent());
         assertFalse(noguiOpt.get());
         assertFalse(autoOpt.get());
+    }
+
+    @Test
+    public void removedEditorBookmarksAreDeletedFromSettingsFile() throws IOException {
+        Path file = temporaryFolder.newFile("emuStudio.toml").toPath();
+        Files.writeString(file, "editorBookmarks = \"x=1\"\neditorTabSize = 8\n");
+
+        AppSettings.fromFile(file, false, false);
+
+        try (FileConfig reloaded = FileConfig.of(file)) {
+            reloaded.load();
+            assertFalse(reloaded.contains("editorBookmarks"));
+            assertEquals(Integer.valueOf(8), reloaded.get("editorTabSize"));
+        }
     }
 }

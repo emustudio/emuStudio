@@ -13,11 +13,8 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -213,7 +210,6 @@ public class TabbedEditor implements Editor {
 
     private boolean closeEditor(REditor editor) {
         unsplit();
-        editor.commands().persistBookmarks();
         if (!confirmSave(editor)) {
             return false;
         }
@@ -234,7 +230,6 @@ public class TabbedEditor implements Editor {
 
     public boolean confirmSaveAll() {
         unsplit();
-        editors.forEach(editor -> editor.commands().persistBookmarks());
         for (int i = 0; i < editors.size(); i++) {
             REditor editor = editors.get(i);
             if (editor.isDirty()) {
@@ -484,23 +479,6 @@ public class TabbedEditor implements Editor {
     }
 
     private void observe(REditor editor) {
-        for (int i = 0; i <= 9; i++) {
-            final String number = Integer.toString(i);
-            KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
-            editor.textPane().getInputMap().put(stroke, "workspaceBookmark" + number);
-            editor.textPane().getActionMap().put("workspaceBookmark" + number, new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    for (REditor candidate : editors) {
-                        if (candidate.commands().bookmarks().containsValue(number)) {
-                            activate(candidate);
-                            candidate.commands().jumpNamed(number);
-                            candidate.grabFocus();
-                            break;
-                        }
-                    }
-                }
-            });
-        }
         editor.textPane().addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -571,7 +549,6 @@ public class TabbedEditor implements Editor {
             addCommand(navigate, "Back", () -> navigate(back, forward));
             addCommand(navigate, "Forward", () -> navigate(forward, back));
             addCommand(navigate, "Previous edit", () -> navigate(edits, back));
-            addCommand(navigate, "Bookmarks…", this::showBookmarks);
             menu.addSeparator();
             JMenu refactor = new JMenu("Refactor");
             addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this));
@@ -607,28 +584,6 @@ public class TabbedEditor implements Editor {
             }
         });
         menu.add(item);
-    }
-
-    private void showBookmarks() {
-        List<Location> locations = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (REditor editor : editors) {
-            editor.commands().bookmarks().forEach((line, name) -> {
-                try {
-                    locations.add(new Location(editor, editor.textPane().getLineStartOffset(line)));
-                    labels.add(title(editor) + ":" + (line + 1) + (name.isEmpty() ? "" : " — " + name));
-                } catch (BadLocationException ignored) {
-                }
-            });
-        }
-        if (labels.isEmpty()) return;
-        JList<String> list = new JList<>(labels.toArray(new String[0]));
-        list.setSelectedIndex(0);
-        if (JOptionPane.showConfirmDialog(tabs, new JScrollPane(list), "Bookmarks", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-            Deque<Location> selected = new ArrayDeque<>();
-            selected.push(locations.get(list.getSelectedIndex()));
-            navigate(selected, back);
-        }
     }
 
     void split(boolean sameFile) {
@@ -673,10 +628,8 @@ public class TabbedEditor implements Editor {
         tabs.setComponentAt(splitIndex, editors.get(splitIndex).getView());
         if (secondaryIndex >= 0) tabs.setComponentAt(secondaryIndex, editors.get(secondaryIndex).getView());
         if (splitMirror != null) {
-            splitMirror.commands().persistBookmarks();
             splitMirror.dispose();
             editors.get(splitIndex).commands().selections().installFilter();
-            editors.get(splitIndex).commands().restoreBookmarks();
         }
         splitMirror = null;
         leftSplit = rightSplit = null;

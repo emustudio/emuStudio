@@ -20,6 +20,7 @@ public class AppSettings extends PluginSettingsImpl {
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
     public final static String KEY_THEME = "theme";
 
+    private final static String REMOVED_EDITOR_BOOKMARKS = "editorBookmarks";
     private final static int DEFAULT_GRID_GAP = 20;
 
     public transient final boolean emuStudioAuto;
@@ -35,6 +36,9 @@ public class AppSettings extends PluginSettingsImpl {
         super(config, PluginSettings.UNAVAILABLE, () -> {});
         this.emuStudioAuto = auto;
         this.noGUI = nogui;
+        if (config.contains(REMOVED_EDITOR_BOOKMARKS)) {
+            config.remove(REMOVED_EDITOR_BOOKMARKS);
+        }
     }
 
     public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
