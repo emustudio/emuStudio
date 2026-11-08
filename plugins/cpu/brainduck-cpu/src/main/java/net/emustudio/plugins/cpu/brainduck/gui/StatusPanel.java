@@ -10,6 +10,7 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
@@ -28,7 +29,7 @@ public class StatusPanel extends JPanel {
     private final JTextField txtMemP = readOnlyField("0");
     private final JTextField txtP = readOnlyField("0");
 
-    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui) {
+    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui, Consumer<CPU.CPUListener> observeExecution) {
         this.gui = gui;
         this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
@@ -39,7 +40,7 @@ public class StatusPanel extends JPanel {
         tblMemory.getTableHeader().setReorderingAllowed(false);
         columnsRepainter.setMainColumn(2, tblMemory);
 
-        cpu.addCPUListener(new CPUStatusListener());
+        observeExecution.accept(new CPUStatusListener());
     }
 
     private void initComponents() {
@@ -123,20 +124,24 @@ public class StatusPanel extends JPanel {
         @Override
         public void internalStateChanged() {
             int P = cpu.getP();
+            int instruction = cpu.IP;
+            int loopLevel = cpu.getLoopLevel();
+            String cell;
+            try {
+                cell = String.format("%02X", memory[P] & 0xFF);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                cell = "[unreachable]";
+            }
+            String cellText = cell;
             SwingUtilities.invokeLater(() -> {
                 txtP.setText(String.format("%04X", P));
-                txtIP.setText(String.format("%04X", cpu.IP));
-                lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
-                try {
-                    txtMemP.setText(String.format("%02X", memory[P] & 0xFF));
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    txtMemP.setText("[unreachable]");
-                } finally {
-                    tableModel.setP(P);
-                    columnsRepainter.repaint(tblMemory);
-                    tblMemory.revalidate();
-                    tblMemory.repaint();
-                }
+                txtIP.setText(String.format("%04X", instruction));
+                lblLoopLevel.setText(String.valueOf(loopLevel));
+                txtMemP.setText(cellText);
+                tableModel.setP(P);
+                columnsRepainter.repaint(tblMemory);
+                tblMemory.revalidate();
+                tblMemory.repaint();
             });
         }
     }

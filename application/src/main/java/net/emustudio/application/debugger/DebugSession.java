@@ -25,6 +25,8 @@ import java.util.function.Consumer;
 
 /** Per-computer debug state. UI mutates rules/watches only while paused. */
 public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
+    private final net.emustudio.application.emulation.EmulationController execution;
+    public net.emustudio.application.emulation.EmulationController execution() { return execution; }
     public final CPU cpu;
     public final DebugCPU debug;
     public final MemoryContext<?> memory;
@@ -66,6 +68,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     private boolean closed;
     private int activeMutations;
     private SourceCaptureGuard activeSourceCapture;
+    private SourceCaptureGuard completedSourceCapture;
     private BreakpointHit pendingHit;
 
     /** Application-owned index; no memory cells are read to construct it. */
@@ -230,9 +233,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 @Override
                 public void runStateChanged(CPU.RunState value) {
                     synchronized (DebugSession.this) {
+                        boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
                         state = value;
-                        generation++;
-                        if (value == CPU.RunState.STATE_RUNNING) {
+                        advanceHostGeneration();
+                        if (starting) {
                             pendingHit = null;
                             if (sourceMappings == null) sourceMappingsCleared = true;
                             publishBreakpoints();
@@ -245,7 +249,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 @Override
                 public void internalStateChanged() {
                     synchronized (DebugSession.this) {
-                        generation++;
+                        advanceHostGeneration();
                     }
                     metadataChanged();
                 }
@@ -256,6 +260,13 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     }
 
     public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, AnnotationEngine annotationEngine) throws IOException {
+        this(cpu, memory, settings, annotationEngine, null, List.of(), null);
+    }
+
+    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, AnnotationEngine annotationEngine,
+                        net.emustudio.emulib.plugins.memory.Memory memoryPlugin,
+                        List<net.emustudio.emulib.plugins.device.Device> devices,
+                        net.emustudio.emulib.plugins.compiler.Compiler compiler) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu.getDebugger().orElse(null);
@@ -265,9 +276,10 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) programIndex();
         annotationEngine.addListener(annotationListener);
         load();
-        cpu.addCPUListener(stateListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
         updateProbe();
+        execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler);
+        execution.addCPUListener(stateListener);
     }
 
     public synchronized void requirePaused() {
@@ -321,9 +333,30 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 if (invalidateMemory) invalidateIndex();
                 if (memory != null && !closed) programIndex();
                 operation.stamp = new Stamp(programIndex, generation);
+                completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
+            if (!execution.isBusy()) operation.ready.complete(null);
         }
+    }
+
+    /** Carries a just-finished operation across host notifications, never across unrelated edits. */
+    private void advanceHostGeneration() {
+        SourceCaptureGuard guard = completedSourceCapture;
+        boolean current = guard != null && !guard.ready.isDone() && guard.stamp != null
+                && guard.stamp.generation == generation && guard.stamp.matches(programIndex, true);
+        generation++;
+        if (current) guard.stamp = new Stamp(programIndex, generation);
+    }
+
+    /** Called by the command scheduler after final lifecycle publication. */
+    public void completeSourceCapture() {
+        SourceCaptureGuard guard;
+        synchronized (this) {
+            guard = completedSourceCapture;
+            completedSourceCapture = null;
+        }
+        if (guard != null) guard.ready.complete(null);
     }
 
     synchronized void applyPaused(long expectedGeneration, Runnable apply) {
@@ -423,6 +456,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
         if (activeMutations == 1) return activeSourceCapture;
         SourceCaptureGuard guard = new SourceCaptureGuard();
         guard.stamp = new Stamp(programIndex, generation);
+        guard.ready.complete(null);
         return guard;
     }
 
@@ -437,6 +471,8 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
 
     public static final class SourceCaptureGuard {
         private volatile Stamp stamp;
+        private final java.util.concurrent.CompletableFuture<Void> ready = new java.util.concurrent.CompletableFuture<>();
+        public java.util.concurrent.CompletableFuture<Void> whenReady() { return ready.copy(); }
         private SourceCaptureGuard() { }
     }
 
@@ -813,7 +849,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
     @Override
     public void close() {
         // Probe listeners and execution memory may only be changed at a paused boundary.
-        if (state == CPU.RunState.STATE_RUNNING) cpu.pause();
+        execution.close();
         try { stopRecordingFile(); }
         catch (IOException e) {
             org.slf4j.LoggerFactory.getLogger(DebugSession.class).error("Could not finish instruction recording", e);
@@ -825,7 +861,7 @@ public final class DebugSession implements AutoCloseable, DebugCPU.Listener {
                 org.slf4j.LoggerFactory.getLogger(DebugSession.class)
                         .error("Could not save debugger settings", e);
             }
-        cpu.removeCPUListener(stateListener);
+        execution.removeCPUListener(stateListener);
         annotationEngine.removeListener(annotationListener);
         if (memory != null) memory.removeMemoryListener(memoryListener);
         if (debug != null) debug.removeListener(this);

@@ -2,7 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
+import net.emustudio.plugins.memory.bytemem.TestExecutionState;
+
 import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import java.util.concurrent.CompletableFuture;
 import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
@@ -18,13 +22,18 @@ public class MemoryTableTest {
     private final AnnotationEngine metadata = new AnnotationEngine();
     private final ExecutionState execution = new ExecutionState() {
         public int currentInstruction() { return 3; }
+        public CPU.RunState runState() { return CPU.RunState.STATE_STOPPED_BREAK; }
+        public boolean isBusy() { return false; }
+        public CompletableFuture<Void> mutate(Runnable operation) { return TestExecutionState.create().mutate(operation); }
+        public void addCPUListener(CPU.CPUListener listener) { }
+        public void removeCPUListener(CPU.CPUListener listener) { }
         public void addListener(Runnable listener) { }
         public void removeListener(Runnable listener) { }
     };
 
     @Before
     public void setUp() {
-        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4));
+        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4), TestExecutionState.create());
         metadata.put(new AnnotationEngine.Entry(1, 1, 1, 2, "label", "<start>", null));
         metadata.put(new AnnotationEngine.Entry(1, 2, 2, 3, "emuStudio.user/label", "Label & details", null));
     }

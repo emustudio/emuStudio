@@ -9,27 +9,39 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** In-memory ports with synchronous CPU notifications; no emulator thread is started. */
+/** In-memory CPU ports exercised through the real host execution module. */
 final class DebuggerTestMachine {
     final CPU cpu = mock(CPU.class);
     final DebugCPU debug = mock(DebugCPU.class);
     final MemoryContext<Byte> memory;
-    final List<CPU.CPUListener> cpuListeners = new ArrayList<>();
     final List<MemoryContext.MemoryListener> memoryListeners = new ArrayList<>();
+    private DebugSession session;
+    private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
+    private CountDownLatch entered;
 
     @SuppressWarnings("unchecked")
-    DebuggerTestMachine(byte[][] banks, int commonBoundary) {
+    DebuggerTestMachine(byte[][] banks, int commonBoundary) throws Exception {
         memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(cpu.getAddressSpaceSize()).thenReturn(banks[0].length);
-        doAnswer(call -> { cpuListeners.add(call.getArgument(0)); return null; }).when(cpu).addCPUListener(any());
-        doAnswer(call -> { cpuListeners.remove(call.getArgument(0)); return null; }).when(cpu).removeCPUListener(any());
-        doAnswer(call -> { state(CPU.RunState.STATE_STOPPED_BREAK); return null; }).when(cpu).pause();
+        when(cpu.execute()).thenAnswer(call -> {
+            CountDownLatch wait = new CountDownLatch(1);
+            entered.countDown();
+            try { wait.await(); }
+            catch (InterruptedException stopped) { Thread.currentThread().interrupt(); }
+            return result.get();
+        });
+        when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
         doReturn(memory).when(debug).memory();
         when(debug.processor()).thenReturn("test-processor");
         when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
@@ -47,7 +59,23 @@ final class DebuggerTestMachine {
     }
 
     void state(CPU.RunState state) {
-        List.copyOf(cpuListeners).forEach(listener -> listener.runStateChanged(state));
+        if (state == CPU.RunState.STATE_RUNNING) {
+            result.set(CPU.RunState.STATE_RUNNING);
+            entered = new CountDownLatch(1);
+            session.execution().start().join();
+            try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
+            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
+        } else if (session.execution().runState() == CPU.RunState.STATE_RUNNING) {
+            result.set(state);
+            session.execution().pause().join();
+        } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
+            session.execution().step().join();
+        }
+    }
+
+    DebugSession session(Path settings) throws IOException {
+        session = new DebugSession(cpu, memory, settings);
+        return session;
     }
 
     void memoryChanged(int address) {

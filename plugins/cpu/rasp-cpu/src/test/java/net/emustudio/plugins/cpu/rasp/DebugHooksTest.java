@@ -56,4 +56,36 @@ public class DebugHooksTest {
         assertEquals(0, engine.IP.get());
         assertTrue(engine.debugStopped);
     }
+
+    @Test
+    public void haltResultSurvivesDebuggerStopAfterInstruction() throws Exception {
+        MemoryStub memory = new MemoryStub();
+        memory.write(0, HALT);
+        AbstractTapeContext input = createNiceMock(AbstractTapeContext.class);
+        AbstractTapeContext output = createNiceMock(AbstractTapeContext.class);
+        replay(input, output);
+        EmulatorEngine engine = new EmulatorEngine(memory, input, output);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
+        assertFalse(engine.debugStopped);
+    }
+
+    @Test
+    public void invalidInstructionSurvivesDebuggerStopAfterInstruction() throws Exception {
+        MemoryStub memory = new MemoryStub();
+        memory.write(0, 99);
+        AbstractTapeContext input = createNiceMock(AbstractTapeContext.class);
+        AbstractTapeContext output = createNiceMock(AbstractTapeContext.class);
+        replay(input, output);
+        EmulatorEngine engine = new EmulatorEngine(memory, input, output);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
+        assertFalse(engine.debugStopped);
+    }
 }

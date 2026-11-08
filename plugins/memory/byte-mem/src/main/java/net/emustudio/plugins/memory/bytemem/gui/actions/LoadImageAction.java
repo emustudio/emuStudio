@@ -3,6 +3,8 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.runtime.ExecutionState;
+import java.util.concurrent.CompletionException;
 import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -32,9 +34,11 @@ public class LoadImageAction extends AbstractAction {
     private final JDialog parent;
     private final Runnable repaint;
     private final GUI gui;
+    private final ExecutionState execution;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui) {
+    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui,
+                           ExecutionState execution) {
         super("Load image file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -42,6 +46,7 @@ public class LoadImageAction extends AbstractAction {
         this.parent = Objects.requireNonNull(parent);
         this.repaint = Objects.requireNonNull(repaint);
         this.gui = gui;
+        this.execution = Objects.requireNonNull(execution);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -58,16 +63,18 @@ public class LoadImageAction extends AbstractAction {
             FileLoader loader = MemoryImageLoader.createLoader(path);
             Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(loader));
             if (bank.isPresent()) {
-                GUI.runInBackground(
-                        this,
-                        () -> {
-                            MemoryImageLoader.load(path, context, bank.get());
-                        },
-                        repaint,
-                        cause -> {
-                            dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
-                            LOGGER.error("Could not load image file '{}'", path, cause);
-                        });
+                setEnabled(false);
+                execution.mutate(() -> {
+                    try { MemoryImageLoader.load(path, context, bank.get()); }
+                    catch (Exception failure) { throw new CompletionException(failure); }
+                }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                    if (failure == null) repaint.run();
+                    else {
+                        dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                        LOGGER.error("Could not load image file '{}'", path, failure);
+                    }
+                    setEnabled(true);
+                }));
             }
         });
     }

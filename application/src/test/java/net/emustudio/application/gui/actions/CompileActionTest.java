@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.gui.editor.Editor;
+import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -40,6 +42,17 @@ public class CompileActionTest {
         editor = mock(Editor.class);
         compiler = mock(Compiler.class);
         compilerOutput = new JTextArea();
+        EmulationController execution = mock(EmulationController.class);
+        when(computer.getExecution()).thenReturn(Optional.of(execution));
+        when(execution.compile(any())).thenAnswer(call -> {
+            CompletableFuture<CPU.RunState> result = new CompletableFuture<>();
+            try {
+                ((Runnable) call.getArgument(0)).run();
+                computer.getCPU().ifPresent(CPU::reset);
+                result.complete(CPU.RunState.STATE_STOPPED_BREAK);
+            } catch (RuntimeException failure) { result.completeExceptionally(failure); }
+            return result;
+        });
     }
 
     @Test
@@ -70,6 +83,7 @@ public class CompileActionTest {
         listener.onStart();
         listener.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_WARNING, "Warn", position));
         listener.onFinish();
+        flushEdt();
 
         assertTrue(compilerOutput.getText().contains("Compiling started..."));
         assertTrue(compilerOutput.getText().contains("Warn"));
@@ -175,9 +189,15 @@ public class CompileActionTest {
                 computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
+        flushEdt();
 
         assertTrue(compilerOutput.getText().contains("Could not compile file:"));
         assertTrue(compilerOutput.getText().contains("compile failed"));
+    }
+
+    private static void flushEdt() {
+        try { SwingUtilities.invokeAndWait(() -> {}); }
+        catch (Exception failure) { throw new AssertionError(failure); }
     }
 
 }

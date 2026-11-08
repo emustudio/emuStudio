@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertEquals;
 
 public class CpuImplTest {
     private CpuImpl cpu;
@@ -49,5 +50,15 @@ public class CpuImplTest {
     @Test
     public void testCopyrightIsKnown() {
         assertNotEquals("(unknown)", cpu.getCopyright());
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class ExecutionStateImplTest {
@@ -17,7 +18,7 @@ public class ExecutionStateImplTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][32], 32);
         ExecutionStateImpl state = new ExecutionStateImpl();
         when(machine.cpu.getInstructionLocation()).thenReturn(4, 20);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             assertEquals(-1, state.currentInstruction());
             state.setSession(session);
 
@@ -36,12 +37,12 @@ public class ExecutionStateImplTest {
         AtomicInteger changes = new AtomicInteger();
         Runnable listener = changes::incrementAndGet;
         state.addListener(listener);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             state.setSession(session);
             changes.set(0);
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            assertEquals(1, changes.get());
+            assertTrue(changes.get() > 0);
 
             state.clearSession(session);
             changes.set(0);

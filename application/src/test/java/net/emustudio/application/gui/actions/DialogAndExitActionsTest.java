@@ -18,13 +18,15 @@ import org.mockito.InOrder;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.security.Permission;
 import java.util.Optional;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class DialogAndExitActionsTest extends AbstractSwingTest {
@@ -69,29 +71,29 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
     }
 
     @Test
-    public void exitActionClosesResourcesAndRequestsExitWhenConfirmed() {
+    public void exitActionWaitsForExecutionWithoutBlockingSwing() throws Exception {
         EmulationController controller = mock(EmulationController.class);
         VirtualComputer computer = mock(VirtualComputer.class);
         Runnable dispose = mock(Runnable.class);
-        ExitAction action = new ExitAction(() -> true, controller, computer, dispose);
+        CompletableFuture<Void> stopped = new CompletableFuture<>();
+        CountDownLatch exited = new CountDownLatch(1);
+        when(controller.closeAsync()).thenReturn(stopped);
+        JFrame window = showFrame(onEdt(JFrame::new));
+        ExitAction action = new ExitAction(window, () -> true, controller, computer, dispose, exited::countDown);
 
-        ExitInterceptingSecurityManager securityManager = new ExitInterceptingSecurityManager();
-        SecurityManager previous = System.getSecurityManager();
-        System.setSecurityManager(securityManager);
-        try {
-            try {
-                action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit"));
-            } catch (ExitInterceptedException ignored) {
-            }
-        } finally {
-            System.setSecurityManager(previous);
-        }
+        runOnEdt(() -> action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit")));
 
-        assertEquals(Integer.valueOf(0), securityManager.status);
+        assertFalse(onEdt(action::isEnabled));
+        assertFalse(onEdt(window::isEnabled));
+        verifyNoInteractions(computer, dispose);
+
+        stopped.complete(null);
+
+        assertTrue(exited.await(5, TimeUnit.SECONDS));
         InOrder shutdown = inOrder(controller, dispose, computer);
-        shutdown.verify(controller).close();
-        shutdown.verify(dispose).run();
+        shutdown.verify(controller).closeAsync();
         shutdown.verify(computer).close();
+        shutdown.verify(dispose).run();
     }
 
     @Test
@@ -100,9 +102,31 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         Runnable dispose = mock(Runnable.class);
 
-        new ExitAction(() -> false, controller, computer, dispose).actionPerformed(null);
+        new ExitAction(onEdt(JFrame::new), () -> false, controller, computer, dispose).actionPerformed(null);
 
         verifyNoInteractions(controller, computer, dispose);
+    }
+
+    @Test
+    public void failedCloseRestoresWindowInputWithoutDisposingComputer() throws Exception {
+        EmulationController controller = mock(EmulationController.class);
+        VirtualComputer computer = mock(VirtualComputer.class);
+        Runnable dispose = mock(Runnable.class);
+        Runnable exit = mock(Runnable.class);
+        CompletableFuture<Void> stopped = new CompletableFuture<>();
+        when(controller.closeAsync()).thenReturn(stopped);
+        JFrame window = showFrame(onEdt(JFrame::new));
+        ExitAction action = new ExitAction(window, () -> true, controller, computer, dispose, exit);
+
+        runOnEdt(() -> action.actionPerformed(null));
+        assertFalse(onEdt(window::isEnabled));
+        stopped.completeExceptionally(new IllegalStateException("Could not close execution"));
+
+        JDialog error = waitForWindow(JDialog.class, dialog -> "Exit".equals(dialog.getTitle()));
+        assertTrue(onEdt(window::isEnabled));
+        assertTrue(onEdt(action::isEnabled));
+        runOnEdt(error::dispose);
+        verifyNoInteractions(computer, dispose, exit);
     }
 
     private FutureTask<Void> startAction(Action action) {
@@ -122,25 +146,4 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         return new ComputerConfig(config);
     }
 
-    private static final class ExitInterceptedException extends SecurityException {
-        private static final long serialVersionUID = 1L;
-    }
-
-    private static final class ExitInterceptingSecurityManager extends SecurityManager {
-        private Integer status;
-
-        @Override
-        public void checkPermission(Permission perm) {
-        }
-
-        @Override
-        public void checkPermission(Permission perm, Object context) {
-        }
-
-        @Override
-        public void checkExit(int status) {
-            this.status = status;
-            throw new ExitInterceptedException();
-        }
-    }
 }

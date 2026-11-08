@@ -4,12 +4,14 @@ package net.emustudio.plugins.cpu.zilogZ80.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
@@ -17,6 +19,8 @@ import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
+    private final Consumer<CPU.CPUListener> observeExecution;
+    private final ExecutionState execution;
     private final CpuImpl cpu;
     private final Context8080 context;
     private final FlagsModel flagModel1;
@@ -65,8 +69,10 @@ public class StatusPanel extends JPanel {
     private final JLabel lblFrequency = new JLabel("0.00 kHz");
     private final JSpinner spnFrequency;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, Consumer<CPU.CPUListener> observeExecution, ExecutionState execution) {
         this.gui = gui;
+        this.observeExecution = observeExecution;
+        this.execution = execution;
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
@@ -81,7 +87,7 @@ public class StatusPanel extends JPanel {
     }
 
     private void setupListeners() {
-        cpu.addCPUListener(new CPU.CPUListener() {
+        observeExecution.accept(new CPU.CPUListener() {
 
             @Override
             public void runStateChanged(CPU.RunState state) {
@@ -100,7 +106,10 @@ public class StatusPanel extends JPanel {
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                context.setCPUFrequency(i);
+                execution.mutate(() -> context.setCPUFrequency(i)).exceptionally(failure -> {
+                    SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
+                    return null;
+                });
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }

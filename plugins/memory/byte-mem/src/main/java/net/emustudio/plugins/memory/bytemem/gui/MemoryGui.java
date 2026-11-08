@@ -70,7 +70,7 @@ public class MemoryGui extends DialogBase {
         Objects.requireNonNull(settings);
         Objects.requireNonNull(dialogs);
 
-        this.tableModel = new MemoryTableModel(context);
+        this.tableModel = new MemoryTableModel(context, executionState);
         this.table = new MemoryTable(tableModel, paneMemory, annotations, executionState);
         this.debuggerListener = () -> SwingUtilities.invokeLater(() -> {
             if (listening) {
@@ -82,7 +82,7 @@ public class MemoryGui extends DialogBase {
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
             table.repaint();
-        }, gui);
+        }, gui, executionState);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
         this.findSequencePanel = new FindSequencePanel(dialogs, gui, this::getCurrentAddress, search::start, this::hideFindSequence);
@@ -97,8 +97,8 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
-        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY), executionState);
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui, executionState);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));

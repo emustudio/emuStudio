@@ -147,7 +147,7 @@ public class VirtualComputerTest {
     }
 
     @Test
-    public void resetResetsAllPresentPlugins() {
+    public void resetResetsAllPresentPlugins() throws Exception {
         Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
         CPU cpu = mock(CPU.class);
@@ -159,12 +159,48 @@ public class VirtualComputerTest {
                 plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu),
                 plugin(3L, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)
         ));
-        vc.reset();
+        try {
+            vc.initialize(new ContextPoolImpl(0));
+            vc.reset();
 
-        verify(compiler).reset();
-        verify(memory).reset();
-        verify(cpu).reset();
-        verify(device).reset();
+            verify(compiler).reset();
+            verify(memory).reset();
+            verify(cpu).reset();
+            verify(device).reset();
+        } finally {
+            vc.close();
+        }
+    }
+
+    @Test
+    public void memoryOnlyMachineProvidesHostOwnedEditsWithoutADebugger() throws Exception {
+        Memory memory = mock(Memory.class);
+        ContextPoolImpl contexts = new ContextPoolImpl(0);
+        ApplicationApiImpl api = new ApplicationApiImpl(mock(DebuggerTable.class), contexts, mock(Dialogs.class), null);
+        VirtualComputer computer = new VirtualComputer(mock(ComputerConfig.class), plugins(
+                plugin(1L, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory)));
+        java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
+        apiField.setAccessible(true);
+        apiField.set(computer, api);
+        java.util.concurrent.atomic.AtomicReference<String> thread = new java.util.concurrent.atomic.AtomicReference<>();
+
+        try {
+            computer.initialize(contexts);
+            assertTrue(computer.getCPU().isEmpty());
+            assertTrue(computer.getDebugger().isEmpty());
+            assertFalse(api.getExecutionState().isBusy());
+            api.getExecutionState().mutate(() -> {
+                thread.set(Thread.currentThread().getName());
+                memory.reset();
+            }).get(2, java.util.concurrent.TimeUnit.SECONDS);
+
+            verify(memory).reset();
+            assertEquals("machine-cpu", thread.get());
+            assertEquals(-1, api.getExecutionState().currentInstruction());
+        } finally {
+            computer.close();
+        }
+        assertTrue(api.getExecutionState().isBusy());
     }
 
     @Test

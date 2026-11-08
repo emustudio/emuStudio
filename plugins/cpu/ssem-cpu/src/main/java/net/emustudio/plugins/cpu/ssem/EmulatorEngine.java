@@ -96,7 +96,7 @@ public class EmulatorEngine {
         } finally {
             stop = debugger.end(completed);
         }
-        return stop && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+        return stop && result == CPU.RunState.STATE_RUNNING ? CPU.RunState.STATE_STOPPED_BREAK : result;
     }
 
     private CPU.RunState stepInstruction() {

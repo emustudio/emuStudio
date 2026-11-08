@@ -313,7 +313,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         showInFrame(panel);
 
         ArgumentCaptor<CPU.CPUListener> listenerCaptor = ArgumentCaptor.forClass(CPU.CPUListener.class);
-        verify(cpu).addCPUListener(listenerCaptor.capture());
+        verify(emulationController).addCPUListener(listenerCaptor.capture());
         verify(memoryContext).addMemoryListener(any());
 
         JButton runButton = findButtonByTooltip(panel, "Run emulation");
@@ -391,10 +391,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
         MemoryContext<?> memory = mock(MemoryContext.class);
+        EmulationController execution = mock(EmulationController.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, createDebugTableModel(),
-                mock(Dialogs.class), mock(EmulationController.class), memory, position -> {}, new EmuStudioGui()));
+                mock(Dialogs.class), execution, memory, position -> {}, new EmuStudioGui()));
         showInFrame(panel);
         JSplitPane split = findComponent(panel, JSplitPane.class, item -> "debuggerColumns".equals(item.getName()));
         runOnEdt(() -> {
@@ -405,7 +406,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertEquals(240, onEdt(split::getDividerLocation).intValue());
         runOnEdt(panel::close);
         runOnEdt(panel::close);
-        verify(cpu, times(1)).removeCPUListener(any());
+        verify(execution, times(1)).removeCPUListener(any());
         // Initial registration removes any previous copy, then close removes the final listener.
         verify(memory, times(2)).removeMemoryListener(any());
     }

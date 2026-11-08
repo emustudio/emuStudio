@@ -28,7 +28,7 @@ public class MemoryGui extends DialogBase {
         super(parent, "SSEM Memory (Williams–Kilburn Tube)", false);
         this.gui = gui;
 
-        this.tableModel = new MemoryTableModel(memory);
+        this.tableModel = new MemoryTableModel(memory, api.getExecutionState());
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
 
         this.loadImageAction = new LoadImageAction(api, memory, () -> {
@@ -36,7 +36,7 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         });
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY), api.getExecutionState());
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));
@@ -62,12 +62,12 @@ public class MemoryGui extends DialogBase {
     private class MemoryListenerImpl implements MemoryContext.MemoryListener {
         @Override
         public void memoryContentChanged(int fromLocation, int toLocation) {
-            tableModel.dataChangedAt(fromLocation, toLocation);
+            SwingUtilities.invokeLater(() -> tableModel.dataChangedAt(fromLocation, toLocation));
         }
 
         @Override
         public void memorySizeChanged() {
-            tableModel.fireTableDataChanged();
+            SwingUtilities.invokeLater(tableModel::fireTableDataChanged);
         }
     }
 }

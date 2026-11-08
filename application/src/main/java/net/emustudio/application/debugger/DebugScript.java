@@ -67,29 +67,11 @@ public final class DebugScript {
 
     private static void step(DebugSession session) throws IOException, InterruptedException {
         session.requirePaused();
-        CountDownLatch done = new CountDownLatch(1);
-        CPU.RunState[] result = {null};
-        CPU.CPUListener listener =
-                new CPU.CPUListener() {
-                    @Override
-                    public void runStateChanged(CPU.RunState state) {
-                        if (state != CPU.RunState.STATE_RUNNING) {
-                            result[0] = state;
-                            done.countDown();
-                        }
-                    }
-
-                    @Override
-                    public void internalStateChanged() {}
-                };
-        session.cpu.addCPUListener(listener);
         try {
-            session.cpu.step();
-            if (!done.await(5, TimeUnit.SECONDS)) throw new IOException("CPU step timed out");
-            if (result[0] != CPU.RunState.STATE_STOPPED_BREAK)
-                throw new IOException("CPU stopped: " + result[0]);
-        } finally {
-            session.cpu.removeCPUListener(listener);
+            CPU.RunState result = session.execution().step().get();
+            if (result != CPU.RunState.STATE_STOPPED_BREAK) throw new IOException("CPU stopped: " + result);
+        } catch (ExecutionException failure) {
+            throw new IOException("CPU step failed", failure.getCause());
         }
     }
 }

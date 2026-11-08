@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.ram.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
@@ -22,7 +23,7 @@ public class MemoryGui extends DialogBase {
     private final LoadImageAction loadImageAction;
     private final EraseMemoryAction eraseMemoryAction;
 
-    public MemoryGui(JFrame parent, MemoryContextImpl memory, Dialogs dialogs, GUI gui) {
+    public MemoryGui(JFrame parent, MemoryContextImpl memory, Dialogs dialogs, GUI gui, ExecutionState execution) {
         super(parent, "Program memory", false);
         this.gui = gui;
 
@@ -33,9 +34,9 @@ public class MemoryGui extends DialogBase {
         this.loadImageAction = new LoadImageAction(dialogs, memory, () -> {
             table.revalidate();
             table.repaint();
-        });
+        }, execution);
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY), execution);
 
         buildContent();
     }

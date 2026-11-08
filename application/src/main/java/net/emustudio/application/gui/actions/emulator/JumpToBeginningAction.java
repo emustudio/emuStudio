@@ -26,8 +26,8 @@ public class JumpToBeginningAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCPU().ifPresent(cpu -> {
-            cpu.setInstructionLocation(0);
-            refreshDebugTable.run();
+            computer.getExecution().orElseThrow().mutate(() -> cpu.setInstructionLocation(0))
+                    .thenRun(() -> SwingUtilities.invokeLater(refreshDebugTable));
         });
     }
 }

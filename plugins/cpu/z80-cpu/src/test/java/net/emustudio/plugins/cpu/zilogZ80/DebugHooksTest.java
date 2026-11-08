@@ -237,4 +237,45 @@ public class DebugHooksTest {
         assertEquals(0, engine.PC);
         assertEquals(0, engine.regs[7]);
     }
+
+    @Test
+    public void haltResultSurvivesDebuggerStopAfterInstruction() throws Exception {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory.write(0, (byte) 0x76);
+        EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
+    }
+
+    @Test
+    public void continuousHaltResultSurvivesDebuggerStopAfterInstruction() {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory.write(0, (byte) 0x76);
+        EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
+    }
+
+    @Test
+    public void addressFailureSurvivesDebuggerStopAfterInstruction() {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+            @Override public Byte read(int address) {
+                if (address == 0x100) throw new IndexOutOfBoundsException("Guest read outside memory");
+                return super.read(address);
+            }
+        };
+        memory.write(0, new Byte[] {(byte) 0x3a, 0, 1}, 3);
+        EmulatorEngine engine = new EmulatorEngine(memory, new ContextZ80Impl());
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.run());
+    }
 }

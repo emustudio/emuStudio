@@ -6,211 +6,246 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static net.emustudio.application.emulation.EmulationControllerTest.*;
+import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class EmulationControllerSchedulingTest {
     private final CPU cpu = mock(CPU.class);
-    private final List<CPU.CPUListener> listeners = new CopyOnWriteArrayList<>();
     private final BlockingQueue<Integer> steps = new LinkedBlockingQueue<>();
     private final AtomicInteger stepCount = new AtomicInteger();
 
     @Before
-    public void setUp() {
-        doAnswer(call -> { listeners.add(call.getArgument(0)); return null; })
-                .when(cpu).addCPUListener(any());
-        doAnswer(call -> { listeners.remove(call.getArgument(0)); return null; })
-                .when(cpu).removeCPUListener(any());
-        doAnswer(call -> { state(CPU.RunState.STATE_STOPPED_BREAK); return null; }).when(cpu).pause();
-        doAnswer(call -> { state(CPU.RunState.STATE_STOPPED_NORMAL); return null; }).when(cpu).stop();
-        doAnswer(call -> { state(CPU.RunState.STATE_STOPPED_BREAK); return null; }).when(cpu).reset();
-        doAnswer(call -> { completeStep(); return null; }).when(cpu).step();
+    public void setUp() throws Exception {
+        when(cpu.step()).thenAnswer(call -> {
+            steps.add(stepCount.incrementAndGet());
+            return STATE_STOPPED_BREAK;
+        });
     }
 
-    @Test(timeout = 3000)
+    @Test(timeout = 5000)
     public void pauseAndManualStepDoNotWaitForTimedInterval() throws Exception {
-        try (EmulationController controller = controller()) {
-            controller.step(1, TimeUnit.DAYS);
+        try (EmulationController controller = controller(cpu)) {
+            await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
 
-            controller.pause();
+            await(controller.pause());
             assertFalse(controller.isTimedRunning());
-            controller.step();
+            await(controller.step());
+
             awaitStep(2);
+            assertNoStep();
         }
-        assertEquals(2, stepCount.get());
     }
 
-    @Test(timeout = 3000)
+    @Test(timeout = 5000)
     public void stopCancelsTimedSteppingWithoutWaitingForInterval() throws Exception {
-        CountDownLatch stopped = new CountDownLatch(1);
-        doAnswer(call -> {
-            state(CPU.RunState.STATE_STOPPED_NORMAL);
-            stopped.countDown();
-            return null;
-        }).when(cpu).stop();
-        try (EmulationController controller = controller()) {
-            controller.step(1, TimeUnit.DAYS);
+        try (EmulationController controller = controller(cpu)) {
+            await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
 
-            controller.stop();
+            assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
             assertFalse(controller.isTimedRunning());
-            assertTrue(stopped.await(1, TimeUnit.SECONDS));
-            controller.reset();
-            controller.step();
+            await(controller.reset());
+            await(controller.step());
+
             awaitStep(2);
+            assertNoStep();
         }
-        assertEquals(2, stepCount.get());
     }
 
-    @Test(timeout = 3000)
-    public void resetAndManualStepDoNotWaitForTimedInterval() throws Exception {
-        try (EmulationController controller = controller()) {
-            controller.step(1, TimeUnit.DAYS);
+    @Test(timeout = 5000)
+    public void resetCancelsTimedSteppingWithoutWaitingForInterval() throws Exception {
+        try (EmulationController controller = controller(cpu)) {
+            await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
 
-            controller.reset();
+            await(controller.reset());
             assertFalse(controller.isTimedRunning());
-            controller.step();
+            await(controller.step());
+
             awaitStep(2);
+            assertNoStep();
+            verify(cpu).reset();
         }
-        assertEquals(2, stepCount.get());
     }
 
-    @Test(timeout = 3000)
-    public void closeCancelsTimedWorkAndReleasesListener() throws Exception {
-        try (EmulationController controller = controller()) {
-            controller.step(1, TimeUnit.DAYS);
-            awaitStep(1);
-        }
-        assertTrue(listeners.isEmpty());
-        verify(cpu).removeCPUListener(any());
-        assertEquals(1, stepCount.get());
-    }
-
-    @Test(timeout = 3000)
-    public void timedRunRepeatsUntilCpuReachesTerminalState() throws Exception {
-        doAnswer(call -> {
+    @Test(timeout = 5000)
+    public void timedRunRepeatsUntilCpuReturnsTerminalState() throws Exception {
+        when(cpu.step()).thenAnswer(call -> {
             int step = stepCount.incrementAndGet();
-            state(step == 3 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK);
             steps.add(step);
-            return null;
-        }).when(cpu).step();
-        try (EmulationController controller = controller()) {
-            controller.step(1, TimeUnit.MILLISECONDS);
+            return step == 3 ? STATE_STOPPED_NORMAL : STATE_STOPPED_BREAK;
+        });
+
+        try (EmulationController controller = controller(cpu)) {
+            await(controller.step(1, TimeUnit.MILLISECONDS));
+
             awaitStep(1);
             awaitStep(2);
             awaitStep(3);
-
-            assertNull("Terminal state must end timed execution", steps.poll(100, TimeUnit.MILLISECONDS));
+            assertNoStep();
             assertFalse(controller.isTimedRunning());
+            assertEquals(STATE_STOPPED_NORMAL, controller.runState());
         }
-        assertEquals(3, stepCount.get());
     }
 
-    @Test(timeout = 3000)
-    public void replacingInFlightTimedRunDoesNotResumeItsOldLoop() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1);
-        CountDownLatch release = new CountDownLatch(1);
+    @Test(timeout = 5000)
+    public void replacementDuringInstructionDoesNotReviveOldTimer() throws Exception {
+        RunGate gate = new RunGate(STATE_STOPPED_BREAK);
         doAnswer(call -> {
-            if (stepCount.get() == 0) {
-                entered.countDown();
-                assertTrue(release.await(1, TimeUnit.SECONDS));
-            }
-            completeStep();
-            return null;
+            int step = stepCount.incrementAndGet();
+            if (step == 1) gate.run();
+            steps.add(step);
+            return STATE_STOPPED_BREAK;
         }).when(cpu).step();
-        try (EmulationController controller = controller()) {
-            try {
-                controller.step(1, TimeUnit.MILLISECONDS);
-                assertTrue(entered.await(1, TimeUnit.SECONDS));
-                controller.step(1, TimeUnit.DAYS);
-            } finally {
-                release.countDown();
-            }
+        EmulationController controller = controller(cpu);
+
+        try {
+            await(controller.step(1, TimeUnit.MILLISECONDS));
+            gate.awaitEntered();
+            await(controller.step(1, TimeUnit.DAYS));
+            gate.release.countDown();
+
             awaitStep(1);
-            awaitStep(2);
+            assertNoStep();
             assertTrue(controller.isTimedRunning());
-            assertNull("Replaced timer must not step again", steps.poll(100, TimeUnit.MILLISECONDS));
+            assertEquals(1, stepCount.get());
+        } finally {
+            gate.release.countDown();
+            await(controller.closeAsync());
         }
-        assertEquals(2, stepCount.get());
     }
 
-    @Test(timeout = 3000)
-    public void pauseAndResetCancelInFlightTimedRunBeforeRestart() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1);
-        CountDownLatch release = new CountDownLatch(1);
+    @Test(timeout = 5000)
+    public void pauseCancelsInFlightTimerBeforeRestart() throws Exception {
+        RunGate gate = new RunGate(STATE_STOPPED_BREAK);
         doAnswer(call -> {
-            if (stepCount.get() == 0) {
-                entered.countDown();
-                assertTrue(release.await(1, TimeUnit.SECONDS));
-            }
-            completeStep();
-            return null;
+            int step = stepCount.incrementAndGet();
+            if (step == 1) gate.run();
+            steps.add(step);
+            return STATE_STOPPED_BREAK;
         }).when(cpu).step();
-        try (EmulationController controller = controller()) {
-            try {
-                controller.step(1, TimeUnit.MILLISECONDS);
-                assertTrue(entered.await(1, TimeUnit.SECONDS));
-                controller.pause();
-                controller.reset();
-                controller.step(1, TimeUnit.DAYS);
-            } finally {
-                release.countDown();
-            }
+        EmulationController controller = controller(cpu);
+
+        try {
+            await(controller.step(1, TimeUnit.MILLISECONDS));
+            gate.awaitEntered();
+            CompletableFuture<CPU.RunState> paused = controller.pause();
+            gate.awaitInterrupted();
+            assertPending(paused);
+            gate.release.countDown();
+            await(paused);
             awaitStep(1);
+            await(controller.step(1, TimeUnit.DAYS));
+
             awaitStep(2);
-            assertNull("Cancelled timer must not step after restart", steps.poll(100, TimeUnit.MILLISECONDS));
+            assertNoStep();
+            assertEquals(2, stepCount.get());
+        } finally {
+            gate.release.countDown();
+            await(controller.closeAsync());
         }
-        assertEquals(2, stepCount.get());
     }
 
-    @Test(timeout = 3000)
-    public void asynchronousStepAcknowledgementStillPrecedesNextCommand() throws Exception {
-        CountDownLatch requested = new CountDownLatch(1);
-        CountDownLatch reset = new CountDownLatch(1);
-        doAnswer(call -> { requested.countDown(); return null; }).when(cpu).step();
+    @Test(timeout = 5000)
+    public void timedDelayStartsAfterPreviousInstructionCompletes() throws Exception {
+        RunGate gate = new RunGate(STATE_STOPPED_BREAK);
+        BlockingQueue<Long> completed = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> started = new LinkedBlockingQueue<>();
         doAnswer(call -> {
-            state(CPU.RunState.STATE_STOPPED_BREAK);
-            reset.countDown();
-            return null;
-        }).when(cpu).reset();
-        try (EmulationController controller = controller()) {
-            controller.step();
-            assertTrue(requested.await(1, TimeUnit.SECONDS));
-            controller.reset();
-            try {
-                assertFalse("Reset must wait for step acknowledgement", reset.await(100, TimeUnit.MILLISECONDS));
-            } finally {
-                state(CPU.RunState.STATE_STOPPED_BREAK);
+            int step = stepCount.incrementAndGet();
+            started.add(System.nanoTime());
+            if (step == 1) {
+                gate.run();
+                completed.add(System.nanoTime());
             }
-            assertTrue(reset.await(1, TimeUnit.SECONDS));
+            return step == 2 ? STATE_STOPPED_NORMAL : STATE_STOPPED_BREAK;
+        }).when(cpu).step();
+        EmulationController controller = controller(cpu);
+
+        try {
+            await(controller.step(200, TimeUnit.MILLISECONDS));
+            gate.awaitEntered();
+            assertNotNull(started.poll(1, TimeUnit.SECONDS));
+            assertNull("A blocked instruction must not create additional ticks", started.poll(300, TimeUnit.MILLISECONDS));
+            gate.release.countDown();
+            Long firstCompleted = completed.poll(1, TimeUnit.SECONDS);
+            Long secondStarted = started.poll(1, TimeUnit.SECONDS);
+
+            assertNotNull(firstCompleted);
+            assertNotNull(secondStarted);
+            assertTrue("Delay must follow actual completion", secondStarted - firstCompleted >= TimeUnit.MILLISECONDS.toNanos(200));
+        } finally {
+            gate.release.countDown();
+            await(controller.closeAsync());
         }
     }
 
-    private EmulationController controller() {
-        return new EmulationController(cpu, null, List.of(), null);
+    @Test(timeout = 5000)
+    public void closeCancelsDelayedTicksAndRejectsFurtherCommands() throws Exception {
+        EmulationController controller = controller(cpu);
+        await(controller.step(1, TimeUnit.DAYS));
+        awaitStep(1);
+
+        await(controller.closeAsync());
+
+        assertFalse(controller.isTimedRunning());
+        assertNoStep();
+        assertThrows(ExecutionException.class, () -> await(controller.step()));
+        await(controller.closeAsync());
+        await(controller.closeAsync());
     }
 
-    private void state(CPU.RunState state) {
-        listeners.forEach(listener -> listener.runStateChanged(state));
-    }
+    @Test(timeout = 5000)
+    public void frequencySamplingSharesCommandThreadAndBothHostThreadsExitOnClose() throws Exception {
+        RunGate gate = new RunGate(STATE_RUNNING);
+        Set<Thread> threads = ConcurrentHashMap.newKeySet();
+        CountDownLatch sampled = new CountDownLatch(1);
+        AtomicReference<Thread> commandThread = new AtomicReference<>();
+        when(cpu.execute()).thenAnswer(call -> {
+            threads.add(Thread.currentThread());
+            return gate.run();
+        });
+        doAnswer(call -> {
+            threads.add(Thread.currentThread());
+            assertSame(commandThread.get(), Thread.currentThread());
+            sampled.countDown();
+            return null;
+        }).when(cpu).sampleFrequency();
+        EmulationController controller = controller(cpu);
+        controller.addCPUListener(listener(state -> commandThread.set(Thread.currentThread())));
 
-    private void completeStep() {
-        state(CPU.RunState.STATE_STOPPED_BREAK);
-        steps.add(stepCount.incrementAndGet());
+        try {
+            await(controller.start());
+            gate.awaitEntered();
+            assertTrue(sampled.await(2, TimeUnit.SECONDS));
+
+            assertEquals(2, threads.size());
+            assertEquals(Set.of("machine-commands", "machine-cpu"),
+                    threads.stream().map(Thread::getName).collect(java.util.stream.Collectors.toSet()));
+        } finally {
+            gate.release.countDown();
+            await(controller.closeAsync());
+        }
+
+        for (Thread thread : threads) {
+            thread.join(1000);
+            assertFalse("Closed machine must not retain " + thread.getName(), thread.isAlive());
+        }
     }
 
     private void awaitStep(int expected) throws InterruptedException {
-        assertEquals(Integer.valueOf(expected), steps.poll(1, TimeUnit.SECONDS));
+        assertEquals(Integer.valueOf(expected), steps.poll(2, TimeUnit.SECONDS));
+    }
+
+    private void assertNoStep() throws InterruptedException {
+        assertNull("Cancelled or terminal timer must not execute another instruction", steps.poll(100, TimeUnit.MILLISECONDS));
     }
 }

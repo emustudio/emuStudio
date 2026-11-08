@@ -78,12 +78,11 @@ public class CpuImpl extends AbstractCPU {
         initializer.initialize();
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, applicationApi.getGUI()
+                    this, context, applicationApi.getGUI(), this::observeExecution, applicationApi.getExecutionState()
             );
         }
     }
@@ -103,7 +102,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         try {
             frequencyCalculator.start();
             return engine.run();
@@ -113,25 +112,13 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected void resetInternal(int startPos) {
+    public void reset(int startPos) {
         frequencyCalculator.stop();
         engine.reset(startPos);
     }
 
     @Override
-    public void pause() {
-        super.pause();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    protected RunState stepInternal() throws Exception {
+    public RunState step() throws Exception {
         return engine.step();
     }
 
@@ -144,13 +131,17 @@ public class CpuImpl extends AbstractCPU {
     protected void destroyInternal() {
         context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
-        frequencyCalculator.close();
         context.clearDevices();
     }
 
     @Override
     public String getDescription() {
         return "Emulator of Zilog Z80 CPU";
+    }
+
+    @Override
+    public void sampleFrequency() {
+        frequencyCalculator.sample();
     }
 
     public FrequencyCalculator getFrequencyCalculator() {

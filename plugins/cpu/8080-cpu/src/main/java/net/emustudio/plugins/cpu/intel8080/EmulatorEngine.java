@@ -161,7 +161,11 @@ public class EmulatorEngine {
                     && currentRunState != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             return cycles;
         } finally {
-            if (debugger.end(completed)) currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            if (debugger.end(completed) && completed
+                    && (currentRunState == CPU.RunState.STATE_RUNNING
+                    || currentRunState == CPU.RunState.STATE_STOPPED_BREAK)) {
+                currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            }
         }
     }
 

@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -22,11 +23,13 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class SettingsDialog extends DialogBase {
     private final GUI gui;
+    private final ExecutionState execution;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final MemoryContextImpl context;
@@ -42,9 +45,11 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtCommonBoundary = new JTextField("0x0000");
 
     public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
-                          PluginSettings settings, Dialogs dialogs, GUI gui) {
+                          PluginSettings settings, Dialogs dialogs, GUI gui,
+                          ExecutionState execution) {
         super(parent, "Memory Settings", true);
         this.gui = gui;
+        this.execution = Objects.requireNonNull(execution);
 
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -142,12 +147,7 @@ public class SettingsDialog extends DialogBase {
 
             if (from.isPresent() && to.isPresent()) {
                 RangeTree.Range range = new RangeTree.Range(from.get(), to.get());
-                context.setReadOnly(range);
-
-                tblROM.revalidate();
-                tblROM.repaint();
-                tblMem.revalidate();
-                tblMem.repaint();
+                mutate(() -> context.setReadOnly(range));
             }
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format!", "Add ROM range");
@@ -176,11 +176,7 @@ public class SettingsDialog extends DialogBase {
             }
 
             rangeOpt.ifPresent(range -> {
-                context.setReadWrite(range);
-                tblROM.revalidate();
-                tblROM.repaint();
-                tblMem.revalidate();
-                tblMem.repaint();
+                mutate(() -> context.setReadWrite(range));
             });
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format", "Remove ROM range");
@@ -198,6 +194,16 @@ public class SettingsDialog extends DialogBase {
             dialogs.showError(name + " has to be positive integer !");
             throw e;
         }
+    }
+
+    private void mutate(Runnable operation) {
+        execution.mutate(operation).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+            if (failure != null) dialogs.showError(failure.getMessage(), "Memory settings");
+            tblROM.revalidate();
+            tblROM.repaint();
+            tblMem.revalidate();
+            tblMem.repaint();
+        }));
     }
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
@@ -267,17 +273,18 @@ public class SettingsDialog extends DialogBase {
             dialogs.showError("Image has to be selected", "Load image now");
         } else {
             Path imagePath = Path.of(imagesModel.getFileNameAtRow(index));
-            try {
-
-                memory.loadImage(
-                        imagePath, imagesModel.getImageAddressAtRow(index),
-                        imagesModel.getImageBankAtRow(index)
-                );
-                tblMem.getTableModel().fireTableDataChanged();
-            } catch (Exception e) {
-                dialogs.showError("Could not load image: " + e.getMessage() + ". Please see log file for details.");
-                LOGGER.error("Could not load memory image {}", imagePath, e);
-            }
+            int address = imagesModel.getImageAddressAtRow(index);
+            int bank = imagesModel.getImageBankAtRow(index);
+            execution.mutate(() -> {
+                try { memory.loadImage(imagePath, address, bank); }
+                catch (Exception failure) { throw new CompletionException(failure); }
+            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                if (failure == null) tblMem.getTableModel().fireTableDataChanged();
+                else {
+                    dialogs.showError("Could not load image: " + failure.getMessage() + ". Please see log file for details.");
+                    LOGGER.error("Could not load memory image {}", imagePath, failure);
+                }
+            }));
         }
     }
 }

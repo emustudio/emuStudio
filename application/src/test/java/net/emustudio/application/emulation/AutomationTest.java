@@ -15,14 +15,15 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,13 +38,21 @@ public class AutomationTest {
     private CPU cpu;
     private Dialogs dialogs;
     private Path input;
+    private final List<EmulationController> executions = new ArrayList<>();
 
     @Before
     public void setUp() throws Exception {
         compiler = mock(Compiler.class);
         cpu = mock(CPU.class);
+        when(cpu.execute()).thenReturn(CPU.RunState.STATE_STOPPED_NORMAL);
         dialogs = mock(Dialogs.class);
         input = Files.createTempFile("automation", ".asm");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        for (EmulationController execution : executions) execution.close();
+        Files.deleteIfExists(input);
     }
 
     @Test(expected = AutomationException.class)
@@ -112,11 +121,10 @@ public class AutomationTest {
 
     @Test
     public void interruptedWaitRestoresThreadInterruptFlag() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
+        EmulationControllerTest.RunGate gate = new EmulationControllerTest.RunGate(CPU.RunState.STATE_RUNNING);
         AtomicBoolean interrupted = new AtomicBoolean(false);
 
-        doAnswer(inv -> { inv.<CPU.CPUListener>getArgument(0); return null; }).when(cpu).addCPUListener(any());
-        doAnswer(inv -> { started.countDown(); return null; }).when(cpu).execute();
+        when(cpu.execute()).thenAnswer(inv -> gate.run());
         when(cpu.getInstructionLocation()).thenReturn(0);
 
         Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE);
@@ -125,12 +133,17 @@ public class AutomationTest {
             automation.run();
             interrupted.set(Thread.currentThread().isInterrupted());
         });
-        thread.start();
-        assertTrue(started.await(1, TimeUnit.SECONDS));
-        thread.interrupt();
-        thread.join(1000);
+        try {
+            thread.start();
+            gate.awaitEntered();
+            thread.interrupt();
+            thread.join(1000);
 
-        assertTrue(interrupted.get());
+            assertTrue(interrupted.get());
+        } finally {
+            gate.release.countDown();
+            thread.join(1000);
+        }
     }
 
     @Test
@@ -173,27 +186,15 @@ public class AutomationTest {
         }).when(compiler).compile(eq(input), eq(Optional.empty()));
     }
 
-    private void stubCpuExecution(CPU.RunState stopState) {
-        AtomicReference<CPU.CPUListener> listener = new AtomicReference<>();
-        doAnswer(inv -> { listener.set(inv.getArgument(0)); return null; })
-                .when(cpu).addCPUListener(any());
-        doAnswer(inv -> {
-            listener.get().runStateChanged(stopState);
-            return null;
-        }).when(cpu).execute();
+    private void stubCpuExecution(CPU.RunState stopState) throws Exception {
+        when(cpu.execute()).thenReturn(stopState);
     }
 
-    private void stubCpuExecutionImmediately(CPU.RunState stopState) {
-        AtomicReference<CPU.CPUListener> listener = new AtomicReference<>();
-        doAnswer(inv -> { listener.set(inv.getArgument(0)); return null; })
-                .when(cpu).addCPUListener(any());
-        doAnswer(inv -> {
-            listener.get().runStateChanged(stopState);
-            return null;
-        }).when(cpu).execute();
+    private void stubCpuExecutionImmediately(CPU.RunState stopState) throws Exception {
+        when(cpu.execute()).thenReturn(stopState);
     }
 
-    private static VirtualComputer mockComputer(Compiler compiler, CPU cpu, Memory memory, java.util.List<Device> devices) {
+    private VirtualComputer mockComputer(Compiler compiler, CPU cpu, Memory memory, java.util.List<Device> devices) {
         VirtualComputer c = mock(VirtualComputer.class);
         ComputerConfig config = mock(ComputerConfig.class);
         when(config.getName()).thenReturn("Test computer");
@@ -202,18 +203,25 @@ public class AutomationTest {
         when(c.getCPU()).thenReturn(Optional.ofNullable(cpu));
         when(c.getMemory()).thenReturn(Optional.ofNullable(memory));
         when(c.getDevices()).thenReturn(devices);
+        if (cpu == null) {
+            when(c.getExecution()).thenReturn(Optional.empty());
+        } else {
+            EmulationController execution = new EmulationController(cpu, memory, devices, null);
+            executions.add(execution);
+            when(c.getExecution()).thenReturn(Optional.of(execution));
+        }
         return c;
     }
 
-    private static VirtualComputer mockComputer(Compiler compiler, CPU cpu) {
+    private VirtualComputer mockComputer(Compiler compiler, CPU cpu) {
         return mockComputer(compiler, cpu, null, Collections.emptyList());
     }
 
-    private static VirtualComputer mockComputer(CPU cpu) {
+    private VirtualComputer mockComputer(CPU cpu) {
         return mockComputer(null, cpu, null, Collections.emptyList());
     }
 
-    private static VirtualComputer mockComputer() {
+    private VirtualComputer mockComputer() {
         return mockComputer(null, null, null, Collections.emptyList());
     }
 }

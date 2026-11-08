@@ -48,4 +48,28 @@ public class DebugHooksTest extends AbstractEngineTest {
         assertEquals(0, engine.IP.get());
         assertTrue(engine.debugStopped);
     }
+
+    @Test
+    public void haltResultSurvivesDebuggerStopAfterInstruction() {
+        setProgram(instr(RamInstruction.Opcode.HALT, RamInstruction.Direction.DIRECT));
+        replay(input, storage, output);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
+        assertFalse(engine.debugStopped);
+    }
+
+    @Test
+    public void missingInstructionSurvivesDebuggerStopAfterInstruction() {
+        setProgram();
+        replay(input, storage, output);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
+        assertFalse(engine.debugStopped);
+    }
 }

@@ -62,13 +62,17 @@ public class CpuImpl extends AbstractCPU {
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
         engine = initializer.getEngine();
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
-            statusPanel = new StatusPanel(this, context, applicationApi.getGUI());
+            statusPanel = new StatusPanel(this, context, applicationApi.getGUI(), this::observeExecution, applicationApi.getExecutionState());
         }
+    }
+
+    @Override
+    public void sampleFrequency() {
+        frequencyCalculator.sample();
     }
 
     public FrequencyCalculator getFrequencyCalculator() {
@@ -79,7 +83,6 @@ public class CpuImpl extends AbstractCPU {
     protected void destroyInternal() {
         context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
-        frequencyCalculator.close();
         context.clearDevices();
     }
 
@@ -93,25 +96,13 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void resetInternal(int startPos) {
+    public void reset(int startPos) {
         engine.reset(startPos);
         frequencyCalculator.stop();
     }
 
     @Override
-    public void pause() {
-        super.pause();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    protected RunState stepInternal() throws Exception {
+    public RunState step() throws Exception {
         return engine.step();
     }
 
@@ -121,7 +112,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         try {
             frequencyCalculator.start();
             return engine.run();

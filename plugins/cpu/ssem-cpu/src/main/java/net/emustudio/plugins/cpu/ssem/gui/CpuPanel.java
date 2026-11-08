@@ -11,6 +11,7 @@ import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
@@ -38,13 +39,13 @@ public class CpuPanel extends JPanel {
     private final JTextField txtMLine = readOnlyField("0");
     private final JTextField txtDecMLine = readOnlyField("0");
 
-    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui) {
+    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, Consumer<CPU.CPUListener> observeExecution) {
         this.gui = gui;
         this.engine = Objects.requireNonNull(engine);
         this.memory = Objects.requireNonNull(memory);
 
         initComponents();
-        cpu.addCPUListener(new Updater());
+        observeExecution.accept(new Updater());
         lblSpeed.setText(String.format("%.2f", EmulatorEngine.INSTRUCTIONS_PER_SECOND));
     }
 

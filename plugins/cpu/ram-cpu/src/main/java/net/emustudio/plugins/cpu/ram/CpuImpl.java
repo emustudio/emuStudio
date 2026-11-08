@@ -68,7 +68,6 @@ public class CpuImpl extends AbstractCPU {
         disassembler = new RamDisassembler(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
     }
 
     @Override
@@ -85,7 +84,7 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI());
+        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), this::observeExecution);
     }
 
     @Override
@@ -118,15 +117,15 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void resetInternal(int location) {
+    public void reset(int location) {
         engine.reset(location);
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                RunState tmpRunState = stepInternal();
+                RunState tmpRunState = step();
                 if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                 if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                     return tmpRunState;
@@ -139,11 +138,11 @@ public class CpuImpl extends AbstractCPU {
                 return RunState.STATE_STOPPED_BAD_INSTR;
             }
         }
-        return RunState.STATE_STOPPED_NORMAL;
+        return RunState.STATE_RUNNING;
     }
 
     @Override
-    public RunState stepInternal() throws IOException {
+    public RunState step() throws IOException {
         return engine.step();
     }
 

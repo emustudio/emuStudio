@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class LiveMemoryTest {
-    @Test public void readsCurrentCellsWithoutRetainingThem() {
+    @Test public void readsCurrentCellsWithoutRetainingThem() throws Exception {
         byte[][] cells = {{1, 2, 9}, {3, 4, 99}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, 2);
         LiveMemory live = new LiveMemory(machine.memory, ProgramIndex.create("live", 3, new AnnotationEngine()).snapshot().layout(), () -> {});
@@ -30,7 +30,7 @@ public class LiveMemoryTest {
         assertThrows(IllegalArgumentException.class, () -> live.value(3));
     }
 
-    @Test public void searchesAndNumbersReadLiveMemoryAndReturnOnlyDerivedResults() {
+    @Test public void searchesAndNumbersReadLiveMemoryAndReturnOnlyDerivedResults() throws Exception {
         byte[][] cells = {{0x12, 0x34, 0x12, 0x3f, 0, 'H', 'I', 0, 'O', 'K'}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, cells[0].length);
         LiveMemory live = new LiveMemory(machine.memory,
@@ -62,7 +62,7 @@ public class LiveMemoryTest {
         assertEquals(42, live.value(Integer.MAX_VALUE - 1));
     }
 
-    @Test public void guardsRunAfterReadsAndCancellationAndTypedMemoryAreRejected() {
+    @Test public void guardsRunAfterReadsAndCancellationAndTypedMemoryAreRejected() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1}}, 1);
         ProgramIndex.Layout layout = ProgramIndex.create("live", 1, new AnnotationEngine()).snapshot().layout();
         int[] checks = {0};

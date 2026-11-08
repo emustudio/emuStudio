@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
+import net.emustudio.plugins.memory.bytemem.TestExecutionState;
+
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
@@ -24,7 +26,7 @@ public class MemorySearchTest {
         memory = TestMemoryContextFactory.create(256, 1, 0);
         selectedAddress = new AtomicInteger(-1);
         status = new AtomicReference<>();
-        search = new MemorySearch(new MemoryTableModel(memory), selectedAddress::set, status::set);
+        search = new MemorySearch(new MemoryTableModel(memory, TestExecutionState.create()), selectedAddress::set, status::set);
     }
 
     @Test

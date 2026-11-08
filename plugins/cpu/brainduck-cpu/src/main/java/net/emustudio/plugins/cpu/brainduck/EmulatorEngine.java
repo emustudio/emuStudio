@@ -111,7 +111,7 @@ public class EmulatorEngine {
             return CPU.RunState.STATE_STOPPED_BREAK;
         }
         boolean completed = false;
-        CPU.RunState result;
+        CPU.RunState result = CPU.RunState.STATE_STOPPED_BAD_INSTR;
         recording = true;
         try {
             result = stepInstruction(false); // Grouped operations would hide guest instructions.
@@ -119,9 +119,10 @@ public class EmulatorEngine {
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
             recording = false;
-            debugStopped = debugger.end(completed);
+            debugStopped = debugger.end(completed) && completed
+                    && result == CPU.RunState.STATE_STOPPED_BREAK;
         }
-        return debugStopped && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+        return result;
     }
 
     @SuppressWarnings("empty-statement")

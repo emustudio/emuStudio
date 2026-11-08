@@ -26,7 +26,7 @@ System_Boundary(emustudio, "emuStudio") {
     Container(cli, "CLI Launcher", "Java, picocli", "Parses command-line arguments; lists computers; starts the GUI or headless automation")
     Container(gui, "Desktop Application (GUI)", "Java, Swing, FlatLaf, MigLayout", "Schema editor, source-code editor and emulation debugger")
     Container(runtime, "Virtual Computer Runtime", "Java", "Loads plugin JARs, constructs & initializes plugins, mediates plugin communication via the context pool")
-    Container(engine, "Emulation Engine", "Java", "Drives the CPU (run / step / pause / stop / reset); runs headless automation")
+    Container(engine, "Emulation Engine", "Java, command scheduler + machine worker", "Owns execution state, synchronous CPU work and machine edits for GUI, automation and scripts")
     Container(plugins, "Plugins", "Java JARs (Compiler / CPU / Memory / Device)", "The building blocks of a virtual computer; loaded dynamically at runtime")
     ContainerDb(config, "Configuration & Settings", "TOML files", "Per-virtual-computer configuration, connections and global application settings")
 }
@@ -79,10 +79,17 @@ and consume *contexts*. It also enforces which plugins may talk to each other,
 based on the declared connections.
 
 Emulation Engine::
-Owns the emulation lifecycle. `EmulationController` drives the CPU on a single
-worker thread (start, step, timed-step, pause, stop, reset) and tracks the CPU
-run state; `Automation` performs the unattended *compile → reset → execute →
-report* flow used in headless runs.
+Owns the emulation lifecycle through one `EmulationController` per machine.
+One command scheduler owns run-state transitions, cancellation, timed stepping,
+and frequency sampling; one machine worker invokes synchronous CPU operations,
+compilation, and machine edits. GUI, automation, and scripts use this same
+module. Memory edits also use it in configurations without a CPU.
++
+Stopping is cooperative. Reset and close remain pending until execution actually
+exits, without a timeout or force kill. Resources stay intact and further
+mutations are rejected while the command is pending. GUI commands complete
+asynchronously so Swing stays responsive. `Automation` performs the unattended
+*compile → reset → execute → report* flow through the same controller.
 
 Plugins::
 The interchangeable parts of a virtual computer, shipped as JARs in the

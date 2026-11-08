@@ -10,6 +10,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
@@ -21,11 +22,11 @@ public class RaspStatusPanel extends JPanel {
     private final JTextField txtOutput = readOnlyField("N/A");
     private final JTextField txtR0 = readOnlyField("0");
 
-    public RaspStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output, GUI gui) {
+    public RaspStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output, GUI gui, Consumer<CPU.CPUListener> observeExecution) {
         this.gui = gui;
         initComponents();
 
-        cpu.addCPUListener(new CPU.CPUListener() {
+        observeExecution.accept(new CPU.CPUListener() {
             @Override
             public void runStateChanged(CPU.RunState state) {
                 SwingUtilities.invokeLater(() -> lblStatus.setText(state.toString()));
@@ -34,11 +35,15 @@ public class RaspStatusPanel extends JPanel {
             @Override
             public void internalStateChanged() {
                 int outputPos = Math.max(0, output.getHeadPosition() - 1);
+                int accumulator = cpu.getACC();
+                int instruction = cpu.getInstructionLocation();
+                String nextInput = input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>");
+                String lastOutput = output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>");
                 SwingUtilities.invokeLater(() -> {
-                    txtR0.setText(String.valueOf(cpu.getACC()));
-                    txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
-                    txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
-                    txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
+                    txtR0.setText(String.valueOf(accumulator));
+                    txtIP.setText(String.format("%04d", instruction));
+                    txtInput.setText(nextInput);
+                    txtOutput.setText(lastOutput);
                 });
             }
         });

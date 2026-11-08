@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui.actions;
 
+import net.emustudio.plugins.memory.rasp.TestExecutionState;
+
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
@@ -50,23 +52,23 @@ public class LoadImageActionTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullDialogsThrows() {
-        new LoadImageAction(null, context, () -> {}, i -> {});
+        new LoadImageAction(null, context, () -> {}, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullContextThrows() {
-        new LoadImageAction(dialogs, null, () -> {}, i -> {});
+        new LoadImageAction(dialogs, null, () -> {}, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullRepaintThrows() {
-        new LoadImageAction(dialogs, context, null, i -> {});
+        new LoadImageAction(dialogs, context, null, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullSetProgramLocationThrows() {
         replay(dialogs);
-        new LoadImageAction(dialogs, context, () -> {}, null);
+        new LoadImageAction(dialogs, context, () -> {}, null, TestExecutionState.create());
     }
 
     @Test
@@ -77,7 +79,7 @@ public class LoadImageActionTest {
         )).andReturn(Optional.empty());
         replay(dialogs);
 
-        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {}, i -> {});
+        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {}, i -> {}, TestExecutionState.create());
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
 
         verify(dialogs);
@@ -109,7 +111,7 @@ public class LoadImageActionTest {
         AtomicBoolean repainted = new AtomicBoolean(false);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> repainted.set(true), programLocation::set
+                dialogs, context, () -> repainted.set(true), programLocation::set, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -138,7 +140,7 @@ public class LoadImageActionTest {
         replay(dialogs);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, i -> {}
+                dialogs, context, () -> {}, i -> {}, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -159,7 +161,7 @@ public class LoadImageActionTest {
         replay(dialogs);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, i -> {}
+                dialogs, context, () -> {}, i -> {}, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -195,7 +197,7 @@ public class LoadImageActionTest {
 
         AtomicInteger programLocation = new AtomicInteger(-1);
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, programLocation::set
+                dialogs, context, () -> {}, programLocation::set, TestExecutionState.create()
         );
 
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));

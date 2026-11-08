@@ -847,10 +847,9 @@ public class DebuggerPanelTest {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> session.watches.add("A"))) {
             SwingUtilities.invokeAndWait(() -> {
                 clearInvocations(workspace.machine.debug);
-                for (int i = 0; i < 100; i++)
-                    for (net.emustudio.emulib.plugins.cpu.CPU.CPUListener listener : workspace.machine.cpuListeners)
-                        listener.internalStateChanged();
+                for (int i = 0; i < 100; i++) workspace.session.execution().step().join();
             });
+            SwingUtilities.invokeAndWait(() -> {});
             SwingUtilities.invokeAndWait(() -> {});
             verify(workspace.machine.debug, times(1)).readRegister("A");
         }
@@ -1090,12 +1089,14 @@ public class DebuggerPanelTest {
     @Test
     public void closingPanelDetachesItsListenerWhileSessionRemainsUsable() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0}}, 1, session -> {})) {
-            assertEquals(2, workspace.machine.cpuListeners.size());
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.close();
                 workspace.panel.close();
             });
-            assertEquals(1, workspace.machine.cpuListeners.size());
+            clearInvocations(workspace.machine.debug);
+            workspace.session.execution().step().join();
+            SwingUtilities.invokeAndWait(() -> {});
+            verify(workspace.machine.debug, never()).readRegister(anyString());
             workspace.session.requirePaused();
         }
     }
@@ -1108,6 +1109,7 @@ public class DebuggerPanelTest {
                     when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
                     session.setBreakpoint(1, true);
                 })) {
+            workspace.machine.state(CPU.RunState.STATE_RUNNING);
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.session.beforeInstruction(1));
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -1594,7 +1596,7 @@ public class DebuggerPanelTest {
         when(disassembler.disassemble(anyInt())).thenAnswer(call ->
                 new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
         when(workspace.machine.cpu.getDisassembler()).thenReturn(disassembler);
-        workspace.session = new DebugSession(workspace.machine.cpu, workspace.machine.memory, settings);
+        workspace.session = workspace.machine.session(settings);
         configure.accept(workspace.session);
         CountDownLatch ready = new CountDownLatch(1);
         try {

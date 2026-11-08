@@ -3,8 +3,9 @@
 package net.emustudio.plugins.memory.ram.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.runtime.ExecutionState;
+import java.util.concurrent.CompletionException;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import org.slf4j.Logger;
@@ -27,14 +28,16 @@ public class LoadImageAction extends AbstractAction {
     private final Dialogs dialogs;
     private final MemoryContextImpl context;
     private final Runnable repaint;
+    private final ExecutionState execution;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint) {
+    public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint, ExecutionState execution) {
         super("Load image file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
         this.repaint = Objects.requireNonNull(repaint);
+        this.execution = Objects.requireNonNull(execution);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -49,14 +52,18 @@ public class LoadImageAction extends AbstractAction {
                 false, new FileExtensionsFilter("Memory image", "bram"));
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            GUI.runInBackground(
-                    this,
-                    () -> context.deserialize(path.toString()),
-                    repaint,
-                    cause -> {
-                        dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
-                        LOGGER.error("Could not load image file '{}'", path, cause);
-                    });
+            setEnabled(false);
+            execution.mutate(() -> {
+                try { context.deserialize(path.toString()); }
+                catch (Exception failure) { throw new CompletionException(failure); }
+            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                if (failure == null) repaint.run();
+                else {
+                    dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                    LOGGER.error("Could not load image file '{}'", path, failure);
+                }
+                setEnabled(true);
+            }));
         });
     }
 }

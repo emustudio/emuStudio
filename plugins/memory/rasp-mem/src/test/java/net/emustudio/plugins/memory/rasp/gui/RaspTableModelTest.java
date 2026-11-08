@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
+import net.emustudio.plugins.memory.rasp.TestExecutionState;
+
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.MemoryContextImplFactory;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -20,7 +22,7 @@ public class RaspTableModelTest {
     @Before
     public void setUp() {
         context = MemoryContextImplFactory.create();
-        model = new RaspTableModel(context);
+        model = new RaspTableModel(context, TestExecutionState.create());
     }
 
     @After
@@ -30,7 +32,7 @@ public class RaspTableModelTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorWithNullMemoryThrows() {
-        new RaspTableModel(null);
+        new RaspTableModel(null, TestExecutionState.create());
     }
 
     @Test

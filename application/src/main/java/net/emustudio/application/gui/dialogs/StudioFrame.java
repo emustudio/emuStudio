@@ -74,9 +74,7 @@ public class StudioFrame extends JFrame {
         this.editor.configure(appSettings);
         this.editor.setActiveEditorChanged(this::updateWindowTitle);
 
-        EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
-                cpu, computer.getMemory().orElse(null), computer.getDevices(), computer.getDebugger().orElse(null)
-        )).orElse(null);
+        EmulationController emulationController = computer.getExecution().orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(
                 this, computer, debugTableModel, dialogs, emulationController, memoryContext,
@@ -95,7 +93,7 @@ public class StudioFrame extends JFrame {
         this.closeTabAction = new CloseTabAction(editor, this::updateWindowTitle);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
-        this.exitAction = new ExitAction(this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
+        this.exitAction = new ExitAction(this, this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
 
         this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings, gui);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);

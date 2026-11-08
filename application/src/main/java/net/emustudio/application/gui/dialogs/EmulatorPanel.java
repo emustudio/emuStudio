@@ -66,14 +66,17 @@ public class EmulatorPanel extends JPanel {
     private final MemoryContext.MemoryListener memoryListener;
     private final DebuggerPanel inspection;
     private final CPU cpu;
+    private final EmulationController execution;
     private CPU.CPUListener cpuListener;
     private boolean closed;
+    private boolean commandBusy;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
                          EmulationController emulationController, MemoryContext<?> memoryContext,
                          Consumer<SourceCodePosition> sourceNavigator, GUI gui) {
         this.gui = Objects.requireNonNull(gui);
+        this.execution = emulationController;
         Objects.requireNonNull(sourceNavigator);
         this.memoryContext = memoryContext;
         this.session = computer.getDebugger().orElse(null);
@@ -126,7 +129,7 @@ public class EmulatorPanel extends JPanel {
         this.pauseAction = new PauseAction(emulationController, () -> this.setStateNotRunning(CPU.RunState.STATE_STOPPED_BREAK, false));
         this.runAction = new RunAction(emulationController, debugTable);
         this.runTimedAction = new RunTimedAction(emulationController, dialogs);
-        this.stepAction = new StepAction(emulationController, () -> SwingUtilities.invokeLater(this::stepCompleted));
+        this.stepAction = new StepAction(emulationController, this::stepCompleted);
         this.jumpAction = new JumpAction(computer, dialogs, this::refreshDebugTable);
         this.cpu = computer.getCPU().orElse(null);
         panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
@@ -290,7 +293,10 @@ public class EmulatorPanel extends JPanel {
 
             @Override
             public void internalStateChanged() {
-                runOnEdt(() -> refreshDebugTable());
+                runOnEdt(() -> {
+                    updateExecutionControls();
+                    refreshDebugTable();
+                });
             }
 
             @Override
@@ -303,10 +309,12 @@ public class EmulatorPanel extends JPanel {
                     } else {
                         setStateNotRunning(state, Optional.ofNullable(emulationController).filter(EmulationController::isTimedRunning).isPresent());
                     }
+                    commandBusy = false;
+                    updateExecutionControls();
                 });
             }
             };
-            cpu.addCPUListener(cpuListener);
+            if (execution != null) execution.addCPUListener(cpuListener);
         }
 
         // initial state
@@ -363,7 +371,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
-        if (cpu != null && cpuListener != null) cpu.removeCPUListener(cpuListener);
+        if (execution != null && cpuListener != null) execution.removeCPUListener(cpuListener);
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }
 
@@ -405,6 +413,9 @@ public class EmulatorPanel extends JPanel {
 
 
     private void setStateNotRunning(CPU.RunState state, boolean timedRunning) {
+        resetAction.setEnabled(true);
+        jumpAction.setEnabled(true);
+        breakpointAction.setEnabled(inspection != null && inspection.isBreakpointDialogSupported());
         pauseAction.setEnabled(false);
         stepBackAction.setEnabled(true);
         jumpToBeginningAction.setEnabled(true);
@@ -414,6 +425,7 @@ public class EmulatorPanel extends JPanel {
         listingState.setVisible(false);
         paneDebug.setVisible(true);
         panelPages.setVisible(true);
+        panelPages.setEnabled(true);
         if (inspection != null) inspection.setExecutionRunning(false);
 
         if (state == CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) {
@@ -445,6 +457,10 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setStateRunning() {
+        resetAction.setEnabled(true);
+        jumpAction.setEnabled(false);
+        breakpointAction.setEnabled(false);
+        listingState.setText("Running — pause to inspect instructions.");
         stopAction.setEnabled(true);
         stepBackAction.setEnabled(false);
         runAction.setEnabled(false);
@@ -461,6 +477,37 @@ public class EmulatorPanel extends JPanel {
         if (inspection != null) inspection.setExecutionRunning(true);
 
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
+    }
+
+    private void updateExecutionControls() {
+        if (closed || execution == null) return;
+        boolean busy = execution.isBusy();
+        if (!busy && commandBusy) {
+            if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
+            else setStateNotRunning(runState, execution.isTimedRunning());
+        }
+        commandBusy = busy;
+        if (busy) {
+            resetAction.setEnabled(false);
+            stopAction.setEnabled(false);
+            pauseAction.setEnabled(false);
+            runAction.setEnabled(false);
+            runTimedAction.setEnabled(false);
+            stepAction.setEnabled(false);
+            stepBackAction.setEnabled(false);
+            jumpAction.setEnabled(false);
+            jumpToBeginningAction.setEnabled(false);
+            breakpointAction.setEnabled(false);
+            debugTable.setEnabled(false);
+            debugTable.setVisible(false);
+            paneDebug.setEnabled(false);
+            paneDebug.setVisible(false);
+            panelPages.setEnabled(false);
+            panelPages.setVisible(false);
+            listingState.setText("Waiting for CPU operation to finish.");
+            listingState.setVisible(true);
+            if (inspection != null) inspection.setExecutionRunning(true);
+        }
     }
 
     private static void runOnEdt(Runnable action) {

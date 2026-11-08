@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
@@ -20,16 +21,16 @@ class AutomaticEmulation {
     private final static String SSEM_FILE_NAME = "ssem.out";
 
     private final MemoryContext<Byte> memory;
-    private final CPU cpu;
+    private final ExecutionState execution;
     private final EmulatorEngine engine;
     private final CPU.CPUListener listener;
 
     private volatile boolean waitingForStop = false;
 
-    AutomaticEmulation(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
+    AutomaticEmulation(ExecutionState execution, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
         this.engine = Objects.requireNonNull(engine);
-        this.cpu = Objects.requireNonNull(cpu);
+        this.execution = Objects.requireNonNull(execution);
 
         listener = new CPU.CPUListener() {
             @Override
@@ -48,11 +49,11 @@ class AutomaticEmulation {
             }
         };
 
-        cpu.addCPUListener(listener);
+        execution.addCPUListener(listener);
     }
 
     void destroy() {
-        cpu.removeCPUListener(listener);
+        execution.removeCPUListener(listener);
     }
 
     private void snapshot() {

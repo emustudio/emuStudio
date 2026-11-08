@@ -245,7 +245,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            CPU.RunState state = initialized.call();
+            CPU.RunState state = initialized.execute();
             assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, state);
         } finally {
             initialized.destroy();
@@ -287,57 +287,45 @@ public class CpuImplTest {
     }
 
     @Test
-    public void testStepInternalConvertsRunningToStoppedBreak() throws Exception {
+    public void testStepConvertsRunningToStoppedBreak() throws Exception {
         // LDN returns STATE_RUNNING from engine.step()
-        // stepInternal should convert it to STATE_STOPPED_BREAK
+        // step should convert it to STATE_STOPPED_BREAK
         short[] memContent = new short[32 * 4];
         memContent[4] = 0x00; // line = 0
         memContent[5] = 0x02; // opcode = 010 (LDN)
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            final CPU.RunState[] capturedState = new CPU.RunState[1];
-            initialized.addCPUListener(new CPU.CPUListener() {
-                @Override
-                public void runStateChanged(CPU.RunState state) {
-                    capturedState[0] = state;
-                }
-
-                @Override
-                public void internalStateChanged() {
-                }
-            });
-            initialized.step(); // calls stepInternal -> STATE_RUNNING -> STATE_STOPPED_BREAK
-            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, capturedState[0]);
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, initialized.step());
         } finally {
             initialized.destroy();
         }
     }
 
     @Test
-    public void testStepInternalForwardsSTPState() throws Exception {
+    public void testStepForwardsSTPState() throws Exception {
         // STP returns STATE_STOPPED_NORMAL from engine.step()
-        // stepInternal should forward it as-is
+        // step should forward it as-is
         short[] memContent = new short[32 * 4];
         memContent[4] = 0x00;
         memContent[5] = 0x07; // STP
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            final CPU.RunState[] capturedState = new CPU.RunState[1];
-            initialized.addCPUListener(new CPU.CPUListener() {
-                @Override
-                public void runStateChanged(CPU.RunState state) {
-                    capturedState[0] = state;
-                }
-
-                @Override
-                public void internalStateChanged() {
-                }
-            });
-            initialized.step(); // calls stepInternal -> STATE_STOPPED_NORMAL
-            assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, capturedState[0]);
+            assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, initialized.step());
         } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        CpuImpl initialized = createInitializedCpu();
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
+        } finally {
+            Thread.interrupted();
             initialized.destroy();
         }
     }

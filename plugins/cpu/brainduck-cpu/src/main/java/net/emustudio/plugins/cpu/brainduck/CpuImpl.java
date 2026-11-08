@@ -55,7 +55,6 @@ public class CpuImpl extends AbstractCPU {
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
     }
 
     @Override
@@ -86,23 +85,23 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new StatusPanel(memory, this, applicationApi.getGUI());
+        return new StatusPanel(memory, this, applicationApi.getGUI(), this::observeExecution);
     }
 
     @Override
-    public void resetInternal(int adr) {
+    public void reset(int adr) {
         engine.reset(adr);
         LOGGER.debug("Register P was reset to {}", engine.P);
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         optimize = true;
         memory.setMemoryNotificationsEnabled(false);
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    RunState tmpRunState = stepInternal();
+                    RunState tmpRunState = step();
                     if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
@@ -119,7 +118,7 @@ public class CpuImpl extends AbstractCPU {
             optimize = false;
             memory.setMemoryNotificationsEnabled(true);
         }
-        return RunState.STATE_STOPPED_NORMAL; // cannot be in finally block! it can rewrite breakpoint
+        return RunState.STATE_RUNNING; // Host applies the requested pause or stop after actual exit.
     }
 
     @Override
@@ -128,7 +127,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected RunState stepInternal() throws IOException {
+    public RunState step() throws IOException {
         return engine.step(optimize);
     }
 

@@ -105,7 +105,7 @@ public class CpuImplTest {
         };
         cpu.getDebugger().orElseThrow().addListener(listener);
         try {
-            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         } finally {
             cpu.getDebugger().orElseThrow().removeListener(listener);
         }
@@ -113,7 +113,7 @@ public class CpuImplTest {
 
     private void emulate(byte[] program, byte[] data, byte[] input) {
         setupEmulator(program, data, input);
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class CpuImplTest {
     }
 
     @Test(timeout = 3000)
-    public void testClearCell() {
+    public void testClearCell() throws Exception {
         // [-]
         memory.setProgram(new byte[]{7, 4, 8});
 
@@ -138,7 +138,7 @@ public class CpuImplTest {
 
         assertEquals(1, memory.read(memory.getDataStart()).byteValue());
 
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
 
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, cpu.getInstructionLocation());
@@ -316,7 +316,7 @@ public class CpuImplTest {
     }
 
     @Test(timeout = 3000)
-    public void testSelfPrint() {
+    public void testSelfPrint() throws Exception {
         // +++++[>+++++++++<-],[[>--.++>+<<-]>+.->[<.>-]<<,]
         byte[] program = new byte[]{
                 3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -360,7 +360,7 @@ public class CpuImplTest {
         cpu.step(); // +
         assertEquals(1, memory.read(cpu.getEngine().P).shortValue());
 
-        cpu.call();
+        cpu.execute();
 
         assertTrue(ioDevice.wasInputRead());
 
@@ -378,9 +378,19 @@ public class CpuImplTest {
                 return true;
             }
         });
-        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());
         assertEquals(1, memory.read(cpu.getEngine().P).intValue());
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

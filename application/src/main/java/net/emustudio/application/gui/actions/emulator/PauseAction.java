@@ -28,10 +28,9 @@ public class PauseAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         Optional.ofNullable(emulationController).ifPresent(e -> {
             boolean timedRunning = e.isTimedRunning();
-            e.pause();
-            if (timedRunning) {
-                updateStatus.run();
-            }
+            e.pause().thenRun(() -> {
+                if (timedRunning) SwingUtilities.invokeLater(updateStatus);
+            });
         });
     }
 }

@@ -28,16 +28,16 @@ public class MemoryGui extends DialogBase {
         this.gui = gui;
 
         MemoryContextImpl memory = Objects.requireNonNull(context);
-        RaspTableModel tableModel = new RaspTableModel(memory);
+        RaspTableModel tableModel = new RaspTableModel(memory, api.getExecutionState());
         this.table = new JTable(tableModel);
         this.table.setFont(FONT_MONOSPACED);
 
         this.loadImageAction = new LoadImageAction(api.getDialogs(), context, () -> {
             table.revalidate();
             table.repaint();
-        }, api::setProgramLocation);
+        }, api::setProgramLocation, api.getExecutionState());
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY), api.getExecutionState());
 
         buildContent();
     }

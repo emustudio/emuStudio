@@ -91,4 +91,19 @@ public class DebugHooksTest {
         assertNotEquals(events.get(0).opcodes, events.get(1).opcodes);
         assertEquals(2, events.get(1).sequence);
     }
+
+    @Test
+    public void haltResultSurvivesDebuggerStopAfterInstruction() {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        memory.setMemory(new short[128]);
+        memory.write(1, (byte) 7);
+        EmulatorEngine engine = new EmulatorEngine(memory);
+        engine.reset(-4);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
+        assertEquals(0, engine.CI.get());
+    }
 }

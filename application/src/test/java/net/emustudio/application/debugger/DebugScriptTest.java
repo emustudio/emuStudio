@@ -31,7 +31,6 @@ public class DebugScriptTest {
 
             verify(cpu, never()).step();
             verify(cpu, never()).execute();
-            verify(cpu, never()).pause();
         }
     }
 
@@ -79,19 +78,15 @@ public class DebugScriptTest {
     @Test
     public void runningCpuIsRejectedBeforeOpeningScriptFile() throws Exception {
         CPU cpu = cpuWithoutDebugger();
-        AtomicReference<CPU.CPUListener> listener = new AtomicReference<>();
         doAnswer(call -> {
-            listener.set(call.getArgument(0));
-            return null;
-        }).when(cpu).addCPUListener(any());
-        doAnswer(call -> {
-            listener.get().runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
-            return null;
-        }).when(cpu).pause();
+            try { new java.util.concurrent.CountDownLatch(1).await(); }
+            catch (InterruptedException stopped) { Thread.currentThread().interrupt(); }
+            return CPU.RunState.STATE_RUNNING;
+        }).when(cpu).execute();
         Path missingScript = temporary.getRoot().toPath().resolve("missing.debug");
 
         try (DebugSession session = new DebugSession(cpu, null, null)) {
-            listener.get().runStateChanged(CPU.RunState.STATE_RUNNING);
+            session.execution().start().join();
 
             IllegalStateException failure = assertThrows(IllegalStateException.class,
                     () -> DebugScript.run(session, missingScript));

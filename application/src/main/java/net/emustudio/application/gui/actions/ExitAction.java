@@ -8,8 +8,9 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.Window;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public class ExitAction extends AbstractAction {
@@ -18,15 +19,24 @@ public class ExitAction extends AbstractAction {
     private final EmulationController emulationController;
     private final VirtualComputer computer;
     private final Runnable dispose;
+    private final Runnable exit;
+    private final Window window;
 
-    public ExitAction(Supplier<Boolean> confirmSave, EmulationController emulationController, VirtualComputer computer,
+    public ExitAction(Window window, Supplier<Boolean> confirmSave, EmulationController emulationController, VirtualComputer computer,
                       Runnable dispose) {
+        this(window, confirmSave, emulationController, computer, dispose, () -> System.exit(0));
+    }
+
+    ExitAction(Window window, Supplier<Boolean> confirmSave, EmulationController emulationController, VirtualComputer computer,
+               Runnable dispose, Runnable exit) {
         super("Exit");
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.emulationController = emulationController;
         this.computer = Objects.requireNonNull(computer);
         this.dispose = Objects.requireNonNull(dispose);
+        this.exit = Objects.requireNonNull(exit);
+        this.window = Objects.requireNonNull(window);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_DOWN_MASK));
         putValue(MNEMONIC_KEY, KeyEvent.VK_E);
@@ -34,12 +44,23 @@ public class ExitAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
+        if (!isEnabled()) return;
         if (confirmSave.get()) {
-            Optional.ofNullable(emulationController).ifPresent(EmulationController::close);
-            dispose.run();
-            computer.close();
-
-            System.exit(0);
+            setEnabled(false);
+            window.setEnabled(false);
+            CompletableFuture<Void> stopped = emulationController == null
+                    ? CompletableFuture.completedFuture(null) : emulationController.closeAsync();
+            stopped.thenRunAsync(computer::close).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                if (failure != null) {
+                    setEnabled(true);
+                    window.setEnabled(true);
+                    JOptionPane.showMessageDialog(window, "Could not close virtual computer: " + failure.getMessage(),
+                            "Exit", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                dispose.run();
+                exit.run();
+            }));
         }
     }
 }

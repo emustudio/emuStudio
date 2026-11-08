@@ -51,10 +51,9 @@ public class CpuImpl extends AbstractCPU {
         }
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
-            automaticEmulation = new AutomaticEmulation(this, engine, memory);
+            automaticEmulation = new AutomaticEmulation(applicationApi.getExecutionState(), engine, memory);
         }
     }
 
@@ -66,7 +65,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected RunState stepInternal() {
+    public RunState step() {
         RunState result = engine.step();
         if (result == RunState.STATE_RUNNING) {
             return RunState.STATE_STOPPED_BREAK;
@@ -88,7 +87,7 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new CpuPanel(this, engine, memory, applicationApi.getGUI());
+        return new CpuPanel(engine, memory, applicationApi.getGUI(), this::observeExecution);
     }
 
     @Override
@@ -127,12 +126,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         return engine.run();
     }
 
     @Override
-    protected void resetInternal(int startPos) {
+    public void reset(int startPos) {
         engine.reset(startPos);
     }
 

@@ -4,6 +4,7 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.easymock.Capture;
 import org.junit.After;
@@ -27,7 +28,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testConstructorRegistersCPUListener() {
-        CPU cpu = createMock(CPU.class);
+        ExecutionState cpu = createMock(ExecutionState.class);
         cpu.addCPUListener(isA(CPU.CPUListener.class));
         expectLastCall().once();
         replay(cpu);
@@ -43,7 +44,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testDestroyRemovesListener() {
-        CPU cpu = createMock(CPU.class);
+        ExecutionState cpu = createMock(ExecutionState.class);
         cpu.addCPUListener(isA(CPU.CPUListener.class));
         expectLastCall().once();
         cpu.removeCPUListener(isA(CPU.CPUListener.class));
@@ -62,7 +63,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testSnapshotCreatedOnStateTransitionFromRunningToStopped() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
         cpu.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
@@ -87,7 +88,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testNoSnapshotWithoutRunningFirst() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
         cpu.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
@@ -110,7 +111,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testRunningStateAloneDoesNotCreateSnapshot() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
         cpu.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
@@ -133,7 +134,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testInternalStateChangedDoesNotThrow() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
         cpu.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
@@ -152,7 +153,7 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testSnapshotContainsAccAndCI() throws Exception {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
         cpu.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
@@ -179,7 +180,7 @@ public class AutomaticEmulationTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorRejectsNullCpu() {
+    public void testConstructorRejectsNullExecution() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
@@ -188,7 +189,7 @@ public class AutomaticEmulationTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorRejectsNullEngine() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
@@ -197,7 +198,7 @@ public class AutomaticEmulationTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorRejectsNullMemory() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);

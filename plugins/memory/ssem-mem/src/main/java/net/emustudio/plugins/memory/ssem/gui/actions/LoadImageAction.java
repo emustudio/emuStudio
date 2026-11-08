@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
@@ -56,23 +56,24 @@ public class LoadImageAction extends AbstractAction {
 
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            GUI.runInBackground(
-                    this,
-                    () -> {
-                        try (FileInputStream stream = new FileInputStream(path.toFile())) {
-                            ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
-                            int startLine = code.getInt();
-                            byte[] data = new byte[code.remaining()];
-                            code.get(data);
-                            api.setProgramLocation(startLine * 4);
-                            context.write(0, NumberUtils.nativeBytesToBytes(data));
-                        }
-                    },
-                    repaint,
-                    cause -> {
-                        dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
-                        LOGGER.error("Could not load image file '{}'", path, cause);
-                    });
+            setEnabled(false);
+            api.getExecutionState().mutate(() -> {
+                try (FileInputStream stream = new FileInputStream(path.toFile())) {
+                    ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
+                    int startLine = code.getInt();
+                    byte[] data = new byte[code.remaining()];
+                    code.get(data);
+                    api.setProgramLocation(startLine * 4);
+                    context.write(0, NumberUtils.nativeBytesToBytes(data));
+                } catch (Exception failure) { throw new CompletionException(failure); }
+            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                if (failure == null) repaint.run();
+                else {
+                    dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                    LOGGER.error("Could not load image file '{}'", path, failure);
+                }
+                setEnabled(true);
+            }));
         });
     }
 }

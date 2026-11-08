@@ -31,8 +31,9 @@ public class StepBackAction extends AbstractAction {
         computer.getCPU().ifPresent(cpu -> {
             int pc = cpu.getInstructionLocation();
             if (pc > 0) {
-                cpu.setInstructionLocation(debugTableModel.guessPreviousInstructionLocation());
-                refreshDebugTable.run();
+                int address = debugTableModel.guessPreviousInstructionLocation();
+                computer.getExecution().orElseThrow().mutate(() -> cpu.setInstructionLocation(address))
+                        .thenRun(() -> SwingUtilities.invokeLater(refreshDebugTable));
             }
         });
     }

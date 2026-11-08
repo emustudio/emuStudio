@@ -114,4 +114,36 @@ public class DebugHooksTest {
         assertEquals(1, memory.getRawMemory()[0][engine.P].intValue());
         assertSame(memory, engine.debugger.memory());
     }
+
+    @Test
+    public void haltResultSurvivesDebuggerStopAfterInstruction() {
+        MemoryStub memory = new MemoryStub();
+        memory.setProgram(new byte[] {0});
+        BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
+        replay(context);
+        EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.reset(0);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step(false));
+        assertFalse(engine.debugStopped);
+    }
+
+    @Test
+    public void invalidInstructionSurvivesDebuggerStopAfterInstruction() {
+        MemoryStub memory = new MemoryStub();
+        memory.setProgram(new byte[] {0x7f});
+        BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
+        replay(context);
+        EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.reset(0);
+        engine.debugger.addListener(new DebugCPU.Listener() {
+            @Override public boolean afterInstruction(DebugCPU.Instruction event) { return true; }
+        });
+
+        assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step(false));
+        assertFalse(engine.debugStopped);
+    }
 }

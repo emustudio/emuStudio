@@ -50,6 +50,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
     private boolean destroyed;
     private net.emustudio.application.debugger.DebugSession debugger;
+    private net.emustudio.application.emulation.EmulationController execution;
     private net.emustudio.application.ApplicationApiImpl applicationApi;
 
     public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins) {
@@ -206,12 +207,17 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                     debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
                             applicationApi == null ? new net.emustudio.emulib.runtime.annotations.AnnotationEngine()
-                                    : applicationApi.getAnnotations());
+                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
                     if (getCPU().get().getAddressSpaceSize() > 0) debugger.annotations();
+                    execution = debugger.execution();
                     if (applicationApi != null) applicationApi.getExecutionState().setSession(debugger);
                 } catch (IOException e) {
                     throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
                 }
+            } else {
+                execution = new net.emustudio.application.emulation.EmulationController(null,
+                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null));
+                if (applicationApi != null) applicationApi.getExecutionState().setExecution(execution);
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             closeAfterFailure(this, failure);
@@ -221,12 +227,12 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     public Optional<net.emustudio.application.debugger.DebugSession> getDebugger() { return Optional.ofNullable(debugger); }
 
+    public Optional<net.emustudio.application.emulation.EmulationController> getExecution() {
+        return Optional.ofNullable(execution);
+    }
+
     public void reset() {
-        getCPU().ifPresent(CPU::pause);
-        getCompiler().ifPresent(Compiler::reset);
-        getMemory().ifPresent(Plugin::reset);
-        getDevices().forEach(Device::reset);
-        getCPU().ifPresent(Plugin::reset);
+        getExecution().orElseThrow(() -> new IllegalStateException("Initialize machine before reset")).reset().join();
     }
 
     @Override
@@ -268,6 +274,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             return;
         }
         destroyed = true;
+        if (execution != null) execution.close();
+        if (applicationApi != null && execution != null) applicationApi.getExecutionState().clearExecution(execution);
         if (applicationApi != null && debugger != null) applicationApi.getExecutionState().clearSession(debugger);
         if (debugger != null) {
             try {

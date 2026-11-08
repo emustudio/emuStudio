@@ -5,18 +5,22 @@ package net.emustudio.plugins.cpu.intel8080.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
+    private final Consumer<CPU.CPUListener> observeExecution;
+    private final ExecutionState execution;
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
     private final Context8080 context;
@@ -42,8 +46,10 @@ public class StatusPanel extends JPanel {
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, Consumer<CPU.CPUListener> observeExecution, ExecutionState execution) {
         this.gui = gui;
+        this.observeExecution = observeExecution;
+        this.execution = execution;
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();
@@ -56,7 +62,7 @@ public class StatusPanel extends JPanel {
     }
 
     private void setupListeners() {
-        cpu.addCPUListener(new CPU.CPUListener() {
+        observeExecution.accept(new CPU.CPUListener() {
             @Override
             public void runStateChanged(RunState state) {
                 runState = state;
@@ -74,7 +80,11 @@ public class StatusPanel extends JPanel {
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                StatusPanel.this.context.setCPUFrequency(i);
+                execution.mutate(() -> StatusPanel.this.context.setCPUFrequency(i))
+                        .exceptionally(failure -> {
+                            SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
+                            return null;
+                        });
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }

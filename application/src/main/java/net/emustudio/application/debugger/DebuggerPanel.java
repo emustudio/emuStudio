@@ -119,10 +119,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             new CPU.CPUListener() {
                 @Override
                 public void runStateChanged(CPU.RunState state) {
+                    boolean unavailable = session.execution().isBusy();
                     SwingUtilities.invokeLater(
                             () -> {
                                 if (disposed) return;
-                                if (state == CPU.RunState.STATE_RUNNING) {
+                                setExecutionRunning(state == CPU.RunState.STATE_RUNNING || unavailable);
+                                if (running) {
                                     tasks.cancel();
                                     updateRecordingControls(false);
                                     return;
@@ -144,7 +146,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
                 @Override
                 public void internalStateChanged() {
-                    requestRefresh();
+                    boolean unavailable = session.execution().isBusy();
+                    CPU.RunState state = session.execution().runState();
+                    SwingUtilities.invokeLater(() -> {
+                        if (disposed) return;
+                        setExecutionRunning(state == CPU.RunState.STATE_RUNNING || unavailable);
+                        requestRefresh();
+                    });
                 }
             };
 
@@ -200,7 +208,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(event -> activateView());
         activateView();
-        session.cpu.addCPUListener(stateListener);
+        session.execution().addCPUListener(stateListener);
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
         JPopupMenu selectionMenu = new JPopupMenu();
@@ -335,7 +343,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationResults.setVisible(false);
         annotationFilter.setComponentPopupMenu(null);
         tasks.close();
-        session.cpu.removeCPUListener(stateListener);
+        session.execution().removeCPUListener(stateListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
         instructionModel.removeTableModelListener(instructionRows);
     }
@@ -484,7 +492,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void guard(Operation operation) {
-        if (disposed || tasks.isBusy()) return;
+        if (disposed || tasks.isBusy() || session.execution().isBusy()) return;
         try {
             session.requirePaused();
             operation.run();
@@ -1044,8 +1052,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             line(registerEditor, label("Register", register), register, label("Value", value), value, button(ICON_SAVE, "Write register", () -> {
                 String name = (String) register.getSelectedItem();
                 if (name == null) throw new IllegalStateException("No editable registers exposed by CPU");
-                session.debug.writeRegister(name, Long.decode(value.getText()));
-                refresh();
+                long registerValue = Long.decode(value.getText());
+                session.execution().mutate(() -> session.debug.writeRegister(name, registerValue))
+                        .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                            if (disposed) return;
+                            if (failure != null) showFailure(failure);
+                            else refresh();
+                        }));
             }));
             tools.add(registerEditor, "span, growx, wrap");
         } else {
@@ -1737,7 +1750,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void refresh() {
-        if (disposed) return;
+        if (disposed || running || session.execution().isBusy()) return;
         if (tasks.isBusy()) return;
         try { session.requirePaused(); } catch (IllegalStateException e) { return; }
         if (index != null && index.programIndex() != session.programIndex()) {
