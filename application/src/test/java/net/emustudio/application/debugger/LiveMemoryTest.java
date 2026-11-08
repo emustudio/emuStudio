@@ -18,7 +18,7 @@ public class LiveMemoryTest {
     @Test public void readsCurrentCellsWithoutRetainingThem() throws Exception {
         byte[][] cells = {{1, 2, 9}, {3, 4, 99}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, 2);
-        LiveMemory live = new LiveMemory(machine.memory, ProgramIndex.create("live", 3, new MemoryAnnotations()).snapshot().layout(), () -> {});
+        LiveMemory live = new LiveMemory(machine.memory, ProgramIndex.create(3, new MemoryAnnotations()).snapshot().layout(), () -> {});
         verify(machine.memory, never()).read(anyInt());
         assertEquals(3, live.size());
         assertEquals(1, live.value(0));
@@ -34,7 +34,7 @@ public class LiveMemoryTest {
         byte[][] cells = {{0x12, 0x34, 0x12, 0x3f, 0, 'H', 'I', 0, 'O', 'K'}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, cells[0].length);
         LiveMemory live = new LiveMemory(machine.memory,
-                ProgramIndex.create("live", cells[0].length, new MemoryAnnotations()).snapshot().layout(), () -> {});
+                ProgramIndex.create(cells[0].length, new MemoryAnnotations()).snapshot().layout(), () -> {});
         byte[][] pattern = LiveMemory.pattern("12 3?");
         assertEquals(List.of(0, 2), live.search(pattern[0], pattern[1]));
         assertEquals(0x3412, live.number(0, 2, true));
@@ -56,7 +56,7 @@ public class LiveMemoryTest {
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.peek(Integer.MAX_VALUE - 1)).thenReturn((byte) 42);
         LiveMemory live = new LiveMemory(memory,
-                ProgramIndex.create("large", Integer.MAX_VALUE, new MemoryAnnotations()).snapshot().layout(), () -> {});
+                ProgramIndex.create(Integer.MAX_VALUE, new MemoryAnnotations()).snapshot().layout(), () -> {});
         assertEquals(Integer.MAX_VALUE, live.size());
         verify(memory, never()).read(anyInt());
         assertEquals(42, live.value(Integer.MAX_VALUE - 1));
@@ -64,7 +64,7 @@ public class LiveMemoryTest {
 
     @Test public void guardsRunAfterReadsAndCancellationAndTypedMemoryAreRejected() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1}}, 1);
-        ProgramIndex.Layout layout = ProgramIndex.create("live", 1, new MemoryAnnotations()).snapshot().layout();
+        ProgramIndex.Layout layout = ProgramIndex.create(1, new MemoryAnnotations()).snapshot().layout();
         int[] checks = {0};
         LiveMemory live = new LiveMemory(machine.memory, layout, () -> {
             if (++checks[0] == 2) throw new IllegalStateException("Changed during read");

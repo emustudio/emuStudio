@@ -34,7 +34,7 @@ public class ProgramIndexBreakpointBenchmark {
         }
 
         ProgramIndex create() {
-            ProgramIndex created = ProgramIndex.create("rules", size, new MemoryAnnotations());
+            ProgramIndex created = ProgramIndex.create(size, new MemoryAnnotations());
             try (ProgramIndex.BreakpointUpdate update = created.updateBreakpoints(created.snapshot())) {
                 for (int i = 0; i < rules; i++) update.put(i, address(i), i % 3 != 2);
                 update.commit();

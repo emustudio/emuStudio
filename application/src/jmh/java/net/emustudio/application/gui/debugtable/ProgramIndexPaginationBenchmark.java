@@ -58,7 +58,7 @@ public class ProgramIndexPaginationBenchmark {
                             default: throw new UnsupportedOperationException(method.getName());
                         }
                     });
-            index = ProgramIndex.create("z80-nop", 65536, new MemoryAnnotations());
+            index = ProgramIndex.create(65536, new MemoryAnnotations());
             if (flow.equals("built")) {
                 try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
                     update.replaceFlow(false);

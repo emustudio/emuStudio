@@ -60,7 +60,6 @@ public final class BaselineAnnotationIndex {
     public Properties properties() {
         Properties p = new Properties();
         p.setProperty("version", "3");
-        p.setProperty("image.identity", layout.imageId());
         p.setProperty("entries", Integer.toString(entries.size()));
         int i = 0;
         for (Entry e : entries.values()) {
@@ -84,8 +83,7 @@ public final class BaselineAnnotationIndex {
     }
 
     public void importProperties(Properties p) throws IOException {
-        if (!"3".equals(p.getProperty("version"))
-                || !layout.imageId().equals(p.getProperty("image.identity")))
+        if (!"3".equals(p.getProperty("version")))
             throw new IOException("Annotations belong to another memory image/layout");
         BaselineAnnotationIndex imported = new BaselineAnnotationIndex(layout);
         try {

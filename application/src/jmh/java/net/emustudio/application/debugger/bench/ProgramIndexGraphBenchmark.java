@@ -42,7 +42,7 @@ public class ProgramIndexGraphBenchmark {
             for (int i = 0; i < nodes; i++) addresses[i] = layout.equals("sparse") ? i * 100003
                     : layout.equals("clustered") && i % 8 == 0 ? size - 16384 + i / 8 : i;
             decoder = new FixtureDecoder(addresses);
-            index = ProgramIndex.create("graph", size, new MemoryAnnotations());
+            index = ProgramIndex.create(size, new MemoryAnnotations());
             analysis = FlowAnalysis.reachable(decoder, addresses[0], nodes, index).publish();
             snapshot = index.snapshot();
             baseline = new BaselineFlowAnalysis(decoder, addresses[0], nodes, null);
@@ -74,7 +74,7 @@ public class ProgramIndexGraphBenchmark {
 
     @Benchmark @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Object indexedFullRebuild(Graphs state) {
-        ProgramIndex index = ProgramIndex.create("graph", state.size, new MemoryAnnotations());
+        ProgramIndex index = ProgramIndex.create(state.size, new MemoryAnnotations());
         return FlowAnalysis.reachable(state.decoder, state.addresses[0], state.nodes, index).publish();
     }
 

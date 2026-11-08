@@ -4,7 +4,7 @@ package net.emustudio.application.debugger;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.Properties;
+import java.util.*;
 
 final class AtomicProperties {
     private AtomicProperties() {}
@@ -15,6 +15,18 @@ final class AtomicProperties {
             p.load(reader);
         }
         return p;
+    }
+
+    /** Ascending indices i of present keys prefix + i + suffix. */
+    static List<Integer> indices(Properties properties, String prefix, String suffix) {
+        Set<Integer> result = new TreeSet<>();
+        for (String key : properties.stringPropertyNames()) {
+            if (!key.startsWith(prefix) || !key.endsWith(suffix) || key.length() <= prefix.length() + suffix.length()) continue;
+            String index = key.substring(prefix.length(), key.length() - suffix.length());
+            if (!index.chars().allMatch(c -> c >= '0' && c <= '9') || index.length() > 9) continue;
+            result.add(Integer.parseInt(index));
+        }
+        return new ArrayList<>(result);
     }
 
     static void save(Path path, Properties properties) throws IOException {

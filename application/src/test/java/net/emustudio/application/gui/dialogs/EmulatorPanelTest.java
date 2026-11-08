@@ -161,11 +161,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_CLICKED, 3, 0, x, y, 1, false, MouseEvent.BUTTON1));
             });
             runOnEdt(() -> {});
-            assertTrue(session.rules.isEmpty());
+            assertTrue(session.breakpoints.isEmpty());
             runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
-            assertTrue(session.rules.isEmpty());
+            assertTrue(session.breakpoints.isEmpty());
             verify(model, never()).showAddress(anyInt());
             assertNull(source.get());
             runOnEdt(panel::close);
@@ -215,8 +215,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
-            DebugSession.Rule rule = new DebugSession.Rule("entry", "EXEC", 12, "", 1);
-            session.rules.add(rule);
+            DebugSession.Breakpoint breakpoint = new DebugSession.Breakpoint(12);
+            session.breakpoints.add(breakpoint);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
@@ -228,8 +228,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             JTabbedPane tabs = findComponent(manager, JTabbedPane.class, pane -> true);
             assertEquals(-1, onEdt(() -> tabs.indexOfTab("Breakpoints")).intValue());
-            assertEquals(List.of(rule), session.rules);
-            assertTrue(rule.enabled);
+            assertEquals(List.of(breakpoint), session.breakpoints);
+            assertTrue(breakpoint.enabled);
             runOnEdt(panel::close);
         }
     }

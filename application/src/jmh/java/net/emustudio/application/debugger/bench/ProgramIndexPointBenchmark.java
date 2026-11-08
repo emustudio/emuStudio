@@ -28,7 +28,7 @@ public class ProgramIndexPointBenchmark {
 
         @Setup public void setup() {
             data = new BenchmarkData(layout, entries);
-            layoutMetadata = ProgramIndex.create("bench", data.size, new MemoryAnnotations()).snapshot().layout();
+            layoutMetadata = ProgramIndex.create(data.size, new MemoryAnnotations()).snapshot().layout();
             baseline = data.baseline(layoutMetadata);
             snapshot = data.index(false).snapshot();
         }

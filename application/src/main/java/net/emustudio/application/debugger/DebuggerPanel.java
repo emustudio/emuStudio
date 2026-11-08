@@ -80,10 +80,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JCheckBox foldHistory = new JCheckBox("Fold identical repeats", true);
     private final JCheckBox foldFlow = new JCheckBox("Fold identical repeats", true);
     private final JComboBox<String> historyOrigin = new JComboBox<>(new String[] {"Current recording"});
-    private final RecordingArchive recordings = new RecordingArchive(1_000_000, 64L * 1024 * 1024);
+    private final RecordingArchive recordings = new RecordingArchive();
     private int recordingsCreated;
     private boolean updatingHistoryOrigin;
-    private final JLabel historyRetentionNote = new JLabel();
     private final JPanel inspectionBody = new JPanel(new CardLayout());
     private final JPanel historyBody = new JPanel(new CardLayout());
     private final JLabel historyEmptyTitle = new JLabel(), historyEmptyHint = new JLabel();
@@ -95,10 +94,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JComboBox<String> watchFormat = new JComboBox<>();
     private final JCheckBox showUnchangedValues = new JCheckBox("Show unchanged values");
     private final DefaultListModel<Map.Entry<String, String>> watchRows = new DefaultListModel<>();
-    private final DefaultListModel<Map.Entry<DebugSession.Rule, String>> memoryWatchRows = new DefaultListModel<>();
+    private final DefaultListModel<Map.Entry<Integer, List<String>>> memoryWatchRows = new DefaultListModel<>();
     private final DefaultListModel<AnnotationIndex.Entry> annotationRows = new DefaultListModel<>();
     private final JList<Map.Entry<String, String>> watches = new JList<>(watchRows);
-    private final JList<Map.Entry<DebugSession.Rule, String>> memoryWatches = new JList<>(memoryWatchRows);
+    private final JList<Map.Entry<Integer, List<String>>> memoryWatches = new JList<>(memoryWatchRows);
     private final JList<AnnotationIndex.Entry> annotations = new JList<>(annotationRows);
     private final JTextArea historicalState;
     private final DebugTableImpl table;
@@ -113,6 +112,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private JButton goToFlowInstruction;
     private JToolBar flowAnnotations;
     private final JLabel flowOrigin = new JLabel();
+    private int flowAnalysisLimit = 1000;
     private final List<JButton> inspectionButtons = new ArrayList<>();
     private boolean flowFromPc;
     private AnnotationIndex index;
@@ -286,6 +286,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refresh();
         if (session.memory != null && session.memory.getCellTypeClass() == Byte.class && session.memory.getSize() > 0)
             initializeAnnotations();
+        List<String> loadWarnings = session.takeLoadWarnings();
+        if (!loadWarnings.isEmpty())
+            SwingUtilities.invokeLater(() -> dialogs.showError(String.join("\n", loadWarnings), "Debugger settings"));
     }
 
     private void initializeAnnotations() {
@@ -695,11 +698,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         instructionModel.currentPage();
         lastInstructionAddress = session.cpu.getInstructionLocation();
         showInstructions();
-        if (hit.rule.kind.equals("READ") || hit.rule.kind.equals("WRITE")) {
-            selectInstructionAddress();
-            inspectedAddress = hit.address;
-            notifyAddressSelection(true);
-        } else navigate(hit.address);
+        navigate(hit.address);
         return true;
     }
 
@@ -797,8 +796,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!confirmSaveAnnotations()) return;
             Path path = choose(false, false);
             if (path == null) return;
-            changeAnnotations(() -> index.load(path));
+            int[] skipped = {0};
+            changeAnnotations(() -> skipped[0] = index.load(path));
             annotationForm.load(annotationForm.address);
+            if (skipped[0] > 0)
+                dialogs.showError("Skipped " + skipped[0] + " invalid annotation(s).", "Import annotations");
         }));
         tools.add(inspectionButton("export-annotations", "Export annotations", () -> {
             Path path = choose(true, false);
@@ -903,13 +905,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void changeAnnotations(Operation change) throws Exception {
-        Properties previous = index.properties();
+        List<AnnotationIndex.Entry> previous = index.entries();
         try {
             change.run();
             session.save();
         } catch (Exception failure) {
-            index.clear();
-            index.restore(previous);
+            index.replace(previous);
             throw failure;
         }
         refreshAnnotations(annotationFilter.getText());
@@ -1118,90 +1119,35 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private JPanel memoryWatchPanel() {
         JPanel panel = borderPanel(4);
         memoryWatches.getAccessibleContext().setAccessibleName("Memory access watches");
-        memoryWatches.setCellRenderer(new DetailRenderer<>(entry -> {
-            DebugSession.Rule rule = entry.getKey();
-            return new ListDetail(rule.enabled ? "Enabled" : "Disabled", rule.name,
-                    watchDescription(rule) + " · " + ruleOptions(rule), entry.getValue());
-        }));
+        memoryWatches.setCellRenderer(new DetailRenderer<>(entry -> new ListDetail(String.format("%04X", entry.getKey()),
+                entry.getValue().get(0), entry.getValue().get(1),
+                String.format("%04X ", entry.getKey()) + entry.getValue().get(0) + " · " + entry.getValue().get(1))));
         panel.add(gui.scrollPane(memoryWatches));
         JPanel tools = row();
-        JTextField name = gui.textField("Memory watch", 10), address = gui.textField("0x0000", 7),
-                condition = gui.textField("", 12), hits = gui.textField("1", 3);
-        JCheckBox reads = new JCheckBox("Pause on reads"), writes = new JCheckBox("Pause on writes", true),
-                conditionOnly = new JCheckBox("Pause on condition");
+        JTextField address = gui.textField("0x0000", 7);
         JPanel fields = gui.panel("insets 4, fillx", "[][grow,fill]", "");
-        fields.add(label("Memory watch name", name)); fields.add(name, "wrap");
         fields.add(label("Memory watch address", address)); fields.add(address, "wrap");
-        fields.add(reads); fields.add(writes, "wrap");
-        fields.add(conditionOnly, "span, wrap");
         tools.add(fields, "growx, wrap");
-        JPanel advancedFields = gui.panel("insets 4, fillx", "[][grow,fill]", "");
-        advancedFields.add(label("Memory watch condition", condition)); advancedFields.add(condition, "wrap");
-        advancedFields.add(label("Memory watch stop from hit", hits)); advancedFields.add(hits, "wrap");
-        advancedFields.setVisible(false);
-        JToggleButton advanced = toggleButton(ICON_SETTINGS, "Memory watch options");
-        advanced.addActionListener(event -> { advancedFields.setVisible(advanced.isSelected()); tools.revalidate(); });
-        conditionOnly.addActionListener(event -> {
-            boolean access = !conditionOnly.isSelected();
-            for (JComponent field : List.of(address, reads, writes)) field.setEnabled(access);
-            if (!access) { advanced.setSelected(true); advancedFields.setVisible(true); }
-            tools.revalidate();
-        });
         JButton add = liveButton(ICON_ADD, "Add memory watch", () -> {
-            List<DebugSession.Rule> added = new ArrayList<>();
-            if (conditionOnly.isSelected()) {
-                added.add(new DebugSession.Rule(name.getText(), "CONDITION", -1, condition.getText(), Long.parseLong(hits.getText())));
-            } else {
-                if (!reads.isSelected() && !writes.isSelected()) throw new IllegalArgumentException("Select reads or writes to watch");
-                int at = Integer.decode(address.getText());
-                if (at < 0 || at >= session.cpu.getAddressSpaceSize()) throw new IllegalArgumentException("Address outside CPU");
-                for (String access : List.of("READ", "WRITE")) {
-                    if (access.equals("READ") ? !reads.isSelected() : !writes.isSelected()) continue;
-                    DebugSession.Rule rule = new DebugSession.Rule(name.getText(), access, at,
-                            condition.getText(), Long.parseLong(hits.getText()));
-                    added.add(rule);
-                }
-            }
-            submitUpdate(() -> { session.rules.addAll(added); session.save(); });
+            int at = Integer.decode(address.getText());
+            if (at < 0 || at >= session.cpu.getAddressSpaceSize()) throw new IllegalArgumentException("Address outside CPU");
+            submitUpdate(() -> { if (!session.memoryWatches.contains(at)) session.memoryWatches.add(at); session.save(); });
         });
-        line(tools, add, advanced, liveButton(ICON_BREAKPOINT, "Enable / disable memory watch", () -> {
-            DebugSession.Rule rule = selected(memoryWatches);
-            if (rule == null) return;
-            submitUpdate(() -> { rule.enabled = !rule.enabled; session.save(); });
-        }), liveButton(ICON_RENAME, "Edit memory watch", () -> {
-            DebugSession.Rule rule = selected(memoryWatches);
-            if (rule == null) return;
-            Optional<String> changed = dialogs.readString("Condition", "Edit memory watch", rule.condition);
-            if (changed.isPresent()) submitUpdate(() -> {
-                int index = session.rules.indexOf(rule);
-                if (index < 0) return;
-                DebugSession.Rule replacement = new DebugSession.Rule(rule.name, rule.kind, rule.address,
-                        changed.get(), rule.afterHits);
-                replacement.enabled = rule.enabled;
-                replacement.hits = rule.hits;
-                session.rules.set(index, replacement);
-                session.save();
-            });
-        }), liveButton(ICON_REMOVE, "Remove memory watch", () -> {
-            DebugSession.Rule rule = selected(memoryWatches);
-            if (rule == null) return;
-            submitUpdate(() -> { session.rules.remove(rule); session.save(); });
-        }), liveButton(ICON_RESET, "Reset memory watch hit counts", () -> {
-            List<DebugSession.Rule> reset = Collections.list(memoryWatchRows.elements()).stream()
-                    .map(Map.Entry::getKey).collect(java.util.stream.Collectors.toList());
-            submitUpdate(() -> reset.forEach(rule -> rule.hits = 0));
+        line(tools, add, liveButton(ICON_REMOVE, "Remove memory watch", () -> {
+            Integer at = selected(memoryWatches);
+            if (at == null) return;
+            submitUpdate(() -> { session.memoryWatches.remove(at); session.save(); });
         }));
-        tools.add(advancedFields, "growx, wrap");
         if (session.debug == null) {
-            for (JComponent control : List.of(name, address, reads, writes, conditionOnly, advanced, add)) control.setEnabled(false);
+            for (JComponent control : List.of(address, add)) control.setEnabled(false);
             tools.add(gui.label("Memory access watches unavailable for this CPU."), "wrap");
         }
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         return panel;
     }
 
-    private static <T> T selected(JList<Map.Entry<T, String>> list) {
-        Map.Entry<T, String> entry = list.getSelectedValue();
+    private static <T, V> T selected(JList<Map.Entry<T, V>> list) {
+        Map.Entry<T, V> entry = list.getSelectedValue();
         return entry == null ? null : entry.getKey();
     }
 
@@ -1215,18 +1161,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         breakpointsChanged.run();
         session.save();
         refresh();
-    }
-
-    private static String ruleOptions(DebugSession.Rule rule) {
-        return "hits " + rule.hits + " / " + rule.afterHits
-                + (rule.condition.isBlank() ? "" : " · if " + rule.condition)
-                + (rule.error.isBlank() ? "" : " · Inactive: " + rule.error);
-    }
-
-    private static String watchDescription(DebugSession.Rule rule) {
-        if (rule.kind.equals("CONDITION")) return "Pause on condition";
-        return (rule.kind.equals("READ") ? "Pause on reads" : "Pause on writes")
-                + String.format(" · %04X", rule.address);
     }
 
     private JPanel flowPanel() {
@@ -1306,8 +1240,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         else if (!disposed && foldFlow.isSelected() && !tasks.isBusy()) guard(graph::relayout);
     }
 
+    public void setFlowAnalysisLimit(int limit) {
+        if (limit < 1) throw new IllegalArgumentException("Flow analysis limit must be positive");
+        flowAnalysisLimit = limit;
+    }
+
     private void analyzeFlow(int address, boolean fromPc) {
-        tasks.submit(() -> session.analyzeFlow(address, 256), flow -> {
+        int limit = flowAnalysisLimit;
+        tasks.submit(() -> session.analyzeFlow(address, limit), flow -> {
             viewError = "";
             refreshDiagnostic();
             if (!flow.isCurrent(session.programIndex()))
@@ -1321,8 +1261,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             flowFromPc = fromPc;
             graph.start = address;
             graph.setFlow(flow);
-            flowOrigin.setText(String.format("%04X · %s", address, fromPc ? "PC" : "Selected"));
-            flowOrigin.setToolTipText(String.format("Flow analyzed from %s at %04X", fromPc ? "PC" : "selected instruction", address));
+            String truncated = flow.truncated() ? " · Truncated at " + limit + " instructions" : "";
+            flowOrigin.setText(String.format("%04X · %s", address, fromPc ? "PC" : "Selected") + truncated);
+            flowOrigin.setToolTipText(String.format("Flow analyzed from %s at %04X", fromPc ? "PC" : "selected instruction", address)
+                    + (flow.truncated() ? "; stopped after " + limit + " instructions (flowAnalysisLimit)" : ""));
             flowOrigin.getAccessibleContext().setAccessibleDescription(flowOrigin.getToolTipText());
         }, true);
     }
@@ -1369,9 +1311,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             updateRecordingControls(!running && !tasks.isBusy());
         });
         tools.add(capture, "growx, wrap");
-        historyRetentionNote.getAccessibleContext().setAccessibleName("Retained history limits");
-        historyRetentionNote.setVisible(false);
-        tools.add(historyRetentionNote, "growx, wrap");
         tools.add(foldHistory, "alignx right, wrap");
         foldHistory.addActionListener(event -> { if (!disposed) refreshHistory(); });
         showUnchangedValues.addActionListener(event -> showHistoricalState(history.getSelectedRow()));
@@ -1467,58 +1406,20 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (captured.isEmpty()) return;
         updatingHistoryOrigin = true;
         try {
-            RecordingArchive.Change change = recordings.add(captured);
-            for (int i = 0; i < change.removed; i++) historyOrigin.removeItemAt(1);
+            recordings.add(captured);
             historyOrigin.addItem("Recording " + (++recordingsCreated) + (scope.isEmpty() ? "" : " · " + scope));
             historyOrigin.setSelectedIndex(recordings.size());
-            historyRetentionNote.setText("Older steps or recordings removed to keep retained history within limits.");
-            historyRetentionNote.setVisible(change.removed > 0 || change.truncated);
-        } catch (IOException failure) {
-            showRuntimeFailure(failure);
         } finally { updatingHistoryOrigin = false; }
         refreshHistory();
     }
 
-    /** Completed captures share one count/byte budget; recording files are unaffected. */
+    /** Completed captures are kept until the panel is disposed. */
     static final class RecordingArchive {
-        private final int eventLimit;
-        private final long byteLimit;
         private final List<List<InstructionRecording.Event>> captures = new ArrayList<>();
-        private final List<Long> sizes = new ArrayList<>();
-        private long bytes;
-        private int events;
 
-        RecordingArchive(int eventLimit, long byteLimit) {
-            if (eventLimit < 1 || byteLimit < 1) throw new IllegalArgumentException("Invalid retained history limit");
-            this.eventLimit = eventLimit;
-            this.byteLimit = byteLimit;
-        }
-
-        static final class Change {
-            final int removed;
-            final boolean truncated;
-            Change(int removed, boolean truncated) { this.removed = removed; this.truncated = truncated; }
-        }
-
-        Change add(List<InstructionRecording.Event> captured) throws IOException {
+        void add(List<InstructionRecording.Event> captured) {
             if (captured.isEmpty()) throw new IllegalArgumentException("No recorded steps");
-            long size = 0;
-            for (InstructionRecording.Event event : captured) size += InstructionRecording.sizeOf(event);
-            int first = 0;
-            while (first < captured.size() && (captured.size() - first > eventLimit || size > byteLimit))
-                size -= InstructionRecording.sizeOf(captured.get(first++));
-            List<InstructionRecording.Event> retained = List.copyOf(captured.subList(first, captured.size()));
-            int removed = 0;
-            while (!captures.isEmpty() && (events + retained.size() > eventLimit || bytes + size > byteLimit)) {
-                events -= captures.remove(0).size();
-                bytes -= sizes.remove(0);
-                removed++;
-            }
-            captures.add(retained);
-            sizes.add(size);
-            events += retained.size();
-            bytes += size;
-            return new Change(removed, first > 0);
+            captures.add(List.copyOf(captured));
         }
 
         int size() { return captures.size(); }
@@ -1760,8 +1661,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return descriptions.isEmpty() ? null : String.join(" | ", descriptions);
     }
 
-    private static Color laneFill(int index) {
-        return Color.getHSBColor((index * .19f) % 1f, .55f, .78f);
+    /** Derived from the annotated range only, so an annotation keeps its color across sessions. */
+    private static Color laneFill(AnnotationIndex.Entry annotation) {
+        int hue = Math.floorMod((annotation.address * 31 + annotation.end) * 0x9E3779B9, 360);
+        return Color.getHSBColor(hue / 360f, .55f, .78f);
     }
 
     private Color annotationBackground(int address) {
@@ -1769,15 +1672,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (entries.isEmpty()) return null;
         Color background = graph.getBackground();
         if (background == null) background = table.getBackground();
-        List<AnnotationIndex.Entry> all = index.entries();
         for (AnnotationIndex.Entry entry : entries) {
-            int colorIndex = graph.laneColorIndex(entry.id);
-            if (colorIndex < 0) {
-                for (int i = 0; i < all.size(); i++) {
-                    if (all.get(i).id == entry.id) { colorIndex = i; break; }
-                }
-            }
-            Color lane = laneFill(colorIndex);
+            Color lane = laneFill(entry);
             background = new Color((lane.getRed() * 28 + background.getRed() * 227 + 127) / 255,
                     (lane.getGreen() * 28 + background.getGreen() * 227 + 127) / 255,
                     (lane.getBlue() * 28 + background.getBlue() * 227 + 127) / 255);
@@ -1922,16 +1818,25 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void refreshMemoryWatches() {
-        DebugSession.Rule selectedMemoryWatch = selected(memoryWatches);
-        List<Map.Entry<DebugSession.Rule, String>> memoryWatchText = new ArrayList<>();
-        for (DebugSession.Rule rule : session.rules) {
-            if (rule.kind.equals("EXEC")) continue;
-            memoryWatchText.add(Map.entry(rule, (rule.enabled ? "Enabled " : "Disabled ") + rule.name + " · "
-                    + watchDescription(rule) + " · " + ruleOptions(rule)));
+        Integer selectedMemoryWatch = selected(memoryWatches);
+        List<Map.Entry<Integer, List<String>>> memoryWatchText = new ArrayList<>();
+        Map<Integer, DebugSession.MemoryWatchView> views = new HashMap<>();
+        for (DebugSession.MemoryWatchView view : session.memoryWatchValues()) views.put(view.address, view);
+        for (int address : new LinkedHashSet<>(session.memoryWatches)) {
+            DebugSession.MemoryWatchView view = views.get(address);
+            if (view == null) memoryWatchText.add(Map.entry(address, List.of("Pending", "")));
+            else if (!view.error.isEmpty()) memoryWatchText.add(Map.entry(address, List.of("Unavailable", view.error)));
+            else memoryWatchText.add(Map.entry(address, List.of("= " + view.value,
+                    "last read " + memoryAccess(view.lastReadPc, view.lastReadValue)
+                            + " · last write " + memoryAccess(view.lastWritePc, view.lastWriteValue))));
         }
         updateRows(memoryWatchRows, memoryWatchText);
         if (selectedMemoryWatch != null)
             memoryWatches.setSelectedIndex(rowOf(memoryWatchRows, entry -> entry.getKey().equals(selectedMemoryWatch)));
+    }
+
+    private static String memoryAccess(int pc, String value) {
+        return pc < 0 ? "—" : String.format("@%04X (%s)", pc, value);
     }
 
     private Path choose(boolean save, boolean directory) {
@@ -1979,7 +1884,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (col == breakpointColumn && value instanceof Boolean) {
                 int address = instructionModel.getLocationAt(row);
                 // Finish the edit before breakpoint refreshes. Keep the listing visible so
-                // consecutive clicks toggle the breakpoint; a hit opens live memory.
+                // consecutive clicks toggle the breakpoint.
                 SwingUtilities.invokeLater(() -> {
                     if (!disposed) applyBreakpointRequest(new BreakpointDialog.Request(
                             (Boolean) value ? BreakpointDialog.Operation.SET : BreakpointDialog.Operation.UNSET,
@@ -2248,11 +2153,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             selectLane(lanes.size() - 1);
         }
 
-        private int laneColorIndex(long id) {
-            for (int i = 0; i < lanes.size(); i++) if (lanes.get(i).annotation.id == id) return i;
-            return -1;
-        }
-
         private String laneTitle(AnnotationIndex.Entry annotation) {
             return annotation.label.isBlank() ? String.format("%04X", annotation.address) : annotation.label;
         }
@@ -2330,8 +2230,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         private String nodeDescription(int address) {
             String labels = nodeLabels(address);
+            String unknown = flow.unknown().get(address);
             return (labels.isEmpty() ? "" : labels + " · ") + nodeAddress(address) + " · " + nodeMnemonic(address)
-                    + (branchNodes.contains(address) ? " · Branch" : "");
+                    + (branchNodes.contains(address) ? " · Branch" : "")
+                    + (flow.isData(address) ? " · Data region" : "")
+                    + (unknown == null ? "" : " · Not decoded: " + unknown);
         }
 
         private void setFlow(FlowAnalysis flow, int selection) {
@@ -2358,7 +2261,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 int at = pending.removeFirst();
                 if (!visited.add(at)) continue;
                 ProgramIndex.Instruction instruction = instructions.get(at);
-                if (instruction == null) continue;
+                if (instruction == null) {
+                    if (!flow.unknown().containsKey(at)) visited.remove(at);
+                    continue;
+                }
                 pending.addAll(successors.getOrDefault(at, List.of()));
             }
             Set<Integer> boundaries = new HashSet<>(List.of(start, session.cpu.getInstructionLocation(), selection));
@@ -2372,8 +2278,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 });
             }
             List<List<Integer>> runs = foldFlow.isSelected() ? flow.instructionRuns(visited, boundaries)
-                    : new TreeSet<>(visited).stream().filter(instructions::containsKey)
-                            .map(List::of).collect(java.util.stream.Collectors.toList());
+                    : new TreeSet<>(visited).stream().map(List::of).collect(java.util.stream.Collectors.toList());
             for (List<Integer> run : runs) {
                 int at = run.get(0);
                 ProgramIndex.Instruction instruction = instructions.get(at);
@@ -2381,8 +2286,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
                 nodeMembers.put(at, run);
                 run.forEach(member -> representatives.put(member, at));
-                instructionEnds.put(at, instructions.get(run.get(run.size() - 1)).cells().end);
-                if (instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
+                ProgramIndex.Instruction last = instructions.get(run.get(run.size() - 1));
+                instructionEnds.put(at, last == null ? at + 1 : last.cells().end);
+                if (instruction != null && instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
             }
             if (index != null) {
                 List<AnnotationIndex.Entry> visible = new ArrayList<>();
@@ -2495,7 +2401,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             for (int i = 0; i < lanes.size(); i++) {
                 Rectangle bounds = lanes.get(i).bounds;
-                Color color = laneFill(i);
+                Color color = laneFill(lanes.get(i).annotation);
                 g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 28));
                 g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 14, 14);
             }
@@ -2556,7 +2462,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 g.setColor(selected && selectionBackground != null ? selectionBackground : surface != null ? surface : getBackground());
                 g.fillRoundRect(box.x, box.y, box.width, box.height, 10, 10);
                 g.setColor(selected && selectionForeground != null ? selectionForeground : foreground != null ? foreground : getForeground());
-                g.setStroke(new BasicStroke(branchNodes.contains(entry.getKey()) ? 3.5f : selected ? 2f : 1f));
+                float width = branchNodes.contains(entry.getKey()) ? 3.5f : selected ? 2f : 1f;
+                boolean marked = flow.isData(entry.getKey()) || flow.unknown().containsKey(entry.getKey());
+                g.setStroke(marked ? new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10f, new float[]{6f, 4f}, 0f)
+                        : new BasicStroke(width));
                 g.drawRoundRect(box.x, box.y, box.width, box.height, 10, 10);
                 String labels = nodeLabels(entry.getKey());
                 int addressY = labels.isEmpty() ? 20 : 34;
@@ -2565,7 +2474,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     g.drawString(labels.length() > 28 ? labels.substring(0, 28) : labels, box.x + 8, box.y + 16);
                 }
                 g.setFont(nodeFont);
-                g.drawString(nodeAddress(entry.getKey()) + (pc ? " · PC" : ""), box.x + 8, box.y + addressY);
+                g.drawString(nodeAddress(entry.getKey()) + (pc ? " · PC" : "")
+                        + (flow.isData(entry.getKey()) ? " · DATA" : ""), box.x + 8, box.y + addressY);
                 String text = nodeMnemonic(entry.getKey());
                 g.drawString(
                         text.length() > 28 ? text.substring(0, 28) : text, box.x + 8, box.y + addressY + 20);

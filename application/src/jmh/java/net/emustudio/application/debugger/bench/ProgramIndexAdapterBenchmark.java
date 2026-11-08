@@ -29,9 +29,9 @@ public class ProgramIndexAdapterBenchmark {
 
         @Setup public void setup() throws IOException {
             data = new BenchmarkData(layout, entries);
-            layoutMetadata = ProgramIndex.create("bench", data.size, new MemoryAnnotations()).snapshot().layout();
+            layoutMetadata = ProgramIndex.create(data.size, new MemoryAnnotations()).snapshot().layout();
             baseline = data.baseline(layoutMetadata);
-            adapter = new AnnotationIndex(ProgramIndex.create("bench", data.size, new MemoryAnnotations()));
+            adapter = new AnnotationIndex(ProgramIndex.create(data.size, new MemoryAnnotations()));
             adapter.importProperties(baseline.properties());
             // Build the adapter's immutable projection before timing steady-state point queries.
             adapter.get(data.address[0]);
