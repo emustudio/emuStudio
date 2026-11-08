@@ -105,12 +105,6 @@ execution-time disassembly and opcode bytes, before/after registers, guest memor
 Save and reopen `.emutrace` recordings for offline inspection, or export readable text. History is read-only;
 it does not rewind the machine.
 
-For startup or headless recording, use the same recorder through automation:
-
-```bash
-./emuStudio -cf config/MITSAltair8800.toml auto --no-gui --waitmax 5000 --record-instructions run.emutrace
-```
-
 The 8080 and Z80 plugins support recording through emuLib's optional debugging port. Buffered file output applies
 backpressure and can slow execution. See the [recording guide](https://www.emustudio.net/documentation/user/application/debugger-analysis#instruction-recording).
 

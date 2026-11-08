@@ -35,12 +35,11 @@ public class AutomationCommandTest {
     }
 
     @Test
-    public void parsesHeadlessInstructionRecordingAlongsideDebugScript() throws Exception {
-        AutomationCommand command = parseAutomationCommand("auto", "--no-gui",
-                "--record-instructions", "run.emutrace", "--debug-script", "check.debug");
-        assertEquals(Path.of("run.emutrace"), getField(command, "instructionRecording", Path.class));
-        assertEquals(Path.of("check.debug"), getField(command, "debugScript", Path.class));
-        assertFalse(getField(command, "gui", Boolean.class));
+    public void rejectsRemovedDebuggerOptions() {
+        assertThrows(CommandLine.UnmatchedArgumentException.class,
+                () -> cmdline.parseArgs(Runner.normalizeArgs("auto", "--record-instructions", "run.emutrace")));
+        assertThrows(CommandLine.UnmatchedArgumentException.class,
+                () -> cmdline.parseArgs(Runner.normalizeArgs("auto", "--debug-script", "check.debug")));
     }
 
     @Test
