@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
 import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
@@ -14,7 +13,10 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_TABLE_GRID;
 
@@ -22,6 +24,12 @@ public class DebugTableImpl extends JTable {
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
     private final TextCellRenderer textRenderer;
+    private IntPredicate breakpointRow = row -> false;
+    private IntFunction<String> rowTooltip = row -> null;
+    private IntFunction<Color> rowTooltipBackground = row -> null;
+    private Color tooltipBackground;
+    private IntFunction<String> addressTooltip = row -> null;
+    private IntPredicate addressColumn = column -> false;
 
     public DebugTableImpl(DebugTableModel tableModel) {
         super(Objects.requireNonNull(tableModel));
@@ -38,7 +46,7 @@ public class DebugTableImpl extends JTable {
         setOpaque(true);
 
         setupRenderers();
-        setupBooleanCellEditorAndDefaultWidth();
+        setupColumnWidths();
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -50,14 +58,19 @@ public class DebugTableImpl extends JTable {
         });
     }
 
-    private void setupBooleanCellEditorAndDefaultWidth() {
+    private void setupColumnWidths() {
         int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
-            TableColumn tableColumn = getColumn(tableModel.getColumnName(i));
+            int viewColumn;
+            try {
+                viewColumn = getColumnModel().getColumnIndex(tableModel.getColumnName(i));
+            } catch (IllegalArgumentException missingColumn) {
+                continue;
+            }
+            TableColumn tableColumn = getColumnModel().getColumn(viewColumn);
             DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {
-                tableColumn.setCellEditor(new BooleanCellEditor());
                 tableColumn.setMinWidth(32);
             }
             if (debugColumn.getDefaultWidth() != -1) {
@@ -73,17 +86,6 @@ public class DebugTableImpl extends JTable {
                 tableColumn.setPreferredWidth(130);
             }
         }
-        for (int i = 0; i < getColumnCount(); i++) {
-            if (getColumnClass(i) == BreakpointState.class) {
-                TableColumn column = getColumnModel().getColumn(i);
-                BreakpointCell cell = new BreakpointCell();
-                column.setCellRenderer(cell);
-                column.setCellEditor(cell);
-                column.setMinWidth(36);
-                column.setMaxWidth(36);
-                column.setPreferredWidth(36);
-            }
-        }
     }
 
     public DebugTableModel instructionModel() {
@@ -93,7 +95,65 @@ public class DebugTableImpl extends JTable {
     public void showInstructions(TableModel model) {
         setModel(model);
         setupRenderers();
-        setupBooleanCellEditorAndDefaultWidth();
+        setupColumnWidths();
+    }
+
+    public void setInstructionRowPresentation(IntPredicate breakpointRow, IntFunction<String> rowTooltip) {
+        this.breakpointRow = Objects.requireNonNull(breakpointRow);
+        this.rowTooltip = Objects.requireNonNull(rowTooltip);
+        ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    public void setAddressPresentation(IntPredicate addressColumn, IntFunction<String> addressTooltip) {
+        this.addressColumn = Objects.requireNonNull(addressColumn);
+        this.addressTooltip = Objects.requireNonNull(addressTooltip);
+    }
+
+    public void setRowTooltipBackground(IntFunction<Color> background) {
+        rowTooltipBackground = Objects.requireNonNull(background);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        int row = rowAtPoint(event.getPoint());
+        int column = columnAtPoint(event.getPoint());
+        int modelRow = row < 0 ? -1 : convertRowIndexToModel(row);
+        String tooltip = modelRow < 0 ? null : rowTooltip.apply(modelRow);
+        tooltipBackground = tooltip == null ? null : rowTooltipBackground.apply(modelRow);
+        if (row >= 0 && column >= 0 && addressColumn.test(convertColumnIndexToModel(column))) {
+            String label = addressTooltip.apply(modelRow);
+            if (label != null) {
+                if (tooltip == null || label.contains(tooltip)) return label;
+                if (tooltip.contains(label)) return tooltip;
+                return label + " | " + tooltip;
+            }
+        }
+        return tooltip != null ? tooltip : super.getToolTipText(event);
+    }
+
+    @Override public JToolTip createToolTip() {
+        JToolTip tooltip = super.createToolTip();
+        if (tooltipBackground != null) tooltip.setBackground(tooltipBackground);
+        return tooltip;
+    }
+
+    @Override
+    public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+        Component component = super.prepareRenderer(renderer, row, column);
+        component.setBackground(isCellSelected(row, column) ? getSelectionBackground() : getBackground());
+        if (addressColumn.test(convertColumnIndexToModel(column))
+                && addressTooltip.apply(convertRowIndexToModel(row)) != null) {
+            component.setBackground(isCellSelected(row, column) ? new Color(110, 110, 110) : new Color(210, 210, 210));
+        }
+        int modelRow = convertRowIndexToModel(row);
+        if (tableModel.isRowAtCurrentInstruction(modelRow)) {
+            component.setBackground(new Color(255, 204, 204));
+            component.setForeground(Color.BLACK);
+        }
+        Font font = component.getFont();
+        component.setFont(font.deriveFont(breakpointRow.test(modelRow)
+                ? font.getStyle() | Font.BOLD : font.getStyle() & ~Font.BOLD));
+        return component;
     }
 
     private void setupRenderers() {

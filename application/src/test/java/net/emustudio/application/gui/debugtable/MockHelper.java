@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
+
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import org.mockito.ArgumentCaptor;
 
@@ -23,23 +25,23 @@ class MockHelper {
     final static int INSTR_PER_HALF_PAGE = INSTR_PER_PAGE / 2;
     final static int HALF_PAGE_MAX_BYTES = INSTR_PER_HALF_PAGE * LONGEST_INSTR;
 
-    private static CallFlow callFlow;
+    private static BoundaryDecoder boundaryDecoder;
 
 
-    static CallFlow makeCallFlow(Disassembler disassembler, int... updateLocations) {
-        CallFlow callFlow = new CallFlow(disassembler);
+    static BoundaryDecoder makeBoundaryDecoder(Disassembler disassembler, int... updateLocations) {
+        BoundaryDecoder boundaryDecoder = new BoundaryDecoder(disassembler);
         for (int knownLocation : updateLocations) {
-            callFlow.updateCache(knownLocation);
+            boundaryDecoder.updateCache(knownLocation);
         }
-        return callFlow;
+        return boundaryDecoder;
     }
 
-    static CallFlow makeCallFlow(int... updateLocations) {
-        return makeCallFlow(makeDisassembler(defaultDisassembly()), updateLocations);
+    static BoundaryDecoder makeBoundaryDecoder(int... updateLocations) {
+        return makeBoundaryDecoder(makeDisassembler(defaultDisassembly()), updateLocations);
     }
 
-    static CallFlow makeCallFlowStep(int... updateLocations) {
-        return makeCallFlow(makeDisassembler(defaultStepDisassembly()), updateLocations);
+    static BoundaryDecoder makeBoundaryDecoderStep(int... updateLocations) {
+        return makeBoundaryDecoder(makeDisassembler(defaultStepDisassembly()), updateLocations);
     }
 
     static int[] defaultDisassembly() {
@@ -50,33 +52,33 @@ class MockHelper {
         return new int[] {2, -1, 4, -1, 6, -1, 8, -1, 10, -1};
     }
 
-    static void modify(CallFlow callFlow, int[] nextPositions, int location, int value) {
+    static void modify(BoundaryDecoder boundaryDecoder, int[] nextPositions, int location, int value) {
         nextPositions[location] = value;
-        callFlow.updateCache(location);
+        boundaryDecoder.updateCache(location);
     }
 
-    static CallFlow mockCallFlow(int from, int to, Integer... interval) {
-        return mockCallFlow(from, to, new ArrayList<>(Arrays.asList(interval)));
+    static BoundaryDecoder mockBoundaryDecoder(int from, int to, Integer... interval) {
+        return mockBoundaryDecoder(from, to, new ArrayList<>(Arrays.asList(interval)));
     }
 
-    static CallFlow mockCallFlow(int from, int to, List<Integer> interval) {
-        CallFlow callFlowMock = mock(CallFlow.class);
-        when(callFlowMock.getLongestInstructionSize()).thenReturn(LONGEST_INSTR);
+    static BoundaryDecoder mockBoundaryDecoder(int from, int to, List<Integer> interval) {
+        BoundaryDecoder boundaryDecoderMock = mock(BoundaryDecoder.class);
+        when(boundaryDecoderMock.getLongestInstructionSize()).thenReturn(LONGEST_INSTR);
 
-        when(callFlowMock.getLocations(from, to)).thenReturn(interval);
-        return callFlowMock;
+        when(boundaryDecoderMock.getLocations(from, to)).thenReturn(interval);
+        return boundaryDecoderMock;
     }
 
-    private static CallFlow mockBasicCallFlow(int longestInstrSize) {
-        CallFlow callFlowMock = mock(CallFlow.class);
-        when(callFlowMock.getLongestInstructionSize()).thenReturn(longestInstrSize);
-        return callFlowMock;
+    private static BoundaryDecoder mockBasicBoundaryDecoder(int longestInstrSize) {
+        BoundaryDecoder boundaryDecoderMock = mock(BoundaryDecoder.class);
+        when(boundaryDecoderMock.getLongestInstructionSize()).thenReturn(longestInstrSize);
+        return boundaryDecoderMock;
     }
 
     @SuppressWarnings("unchecked")
     private static void expectTraverse(int from, int to, int instructionSize) {
         ArgumentCaptor<Consumer> lambdaCaptor = ArgumentCaptor.forClass(Consumer.class);
-        when(callFlow.traverseUpTo(eq(from), eq(to), lambdaCaptor.capture())).thenAnswer(invocationOnMock -> {
+        when(boundaryDecoder.traverseUpTo(eq(from), eq(to), lambdaCaptor.capture())).thenAnswer(invocationOnMock -> {
             for (int i = from; i < to + instructionSize; i += instructionSize) {
                 lambdaCaptor.getValue().accept(i);
             }
@@ -104,21 +106,21 @@ class MockHelper {
         int pageMax = currentLocation + halfBytes;
 
         int increment = maxKnownPage > 0 ? -1 : 1;
-        callFlow = mockBasicCallFlow(instructionsSize);
+        boundaryDecoder = mockBasicBoundaryDecoder(instructionsSize);
         List<Integer> currentInstructions = new ArrayList<>();
 
 
         if (maxKnownPage == 0) {
-            when(callFlow.getLocations(pageMin, pageCurr))
+            when(boundaryDecoder.getLocations(pageMin, pageCurr))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
-            when(callFlow.getLocations(pageCurr, pageMax))
+            when(boundaryDecoder.getLocations(pageCurr, pageMax))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
         }
 
         while (maxKnownPage != 0) {
-            when(callFlow.getLocations(pageMin, pageCurr))
+            when(boundaryDecoder.getLocations(pageMin, pageCurr))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
-            when(callFlow.getLocations(pageCurr, pageMax))
+            when(boundaryDecoder.getLocations(pageCurr, pageMax))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
 
             int nextPageMin = pageMax;
@@ -135,14 +137,14 @@ class MockHelper {
                 }
             }
 
-            when(callFlow.getLocations(nextPageMin, nextPageCurr))
+            when(boundaryDecoder.getLocations(nextPageMin, nextPageCurr))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageMin));
             if (nextPageCurr > pageCurr) {
                 expectTraverse(pageCurr, nextPageCurr, instructionsSize);
             } else if (nextPageCurr < pageCurr) {
                 expectTraverse(nextPageCurr, pageCurr, instructionsSize);
             }
-            when(callFlow.getLocations(nextPageCurr, nextPageCurr + instructionsSize * INSTR_PER_HALF_PAGE))
+            when(boundaryDecoder.getLocations(nextPageCurr, nextPageCurr + instructionsSize * INSTR_PER_HALF_PAGE))
                     .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageCurr));
 
             pageMin = nextPageMin;
@@ -153,7 +155,7 @@ class MockHelper {
             currentInstructions.add(pageCurr);
         }
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
         currentInstructions.forEach(location -> {
             asm.rowToLocation(currentLocation, 0);

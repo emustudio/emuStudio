@@ -5,7 +5,6 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.debugger.DebugSession;
-import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -40,7 +39,36 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test
-    public void breakpointMouseAndEnterCycleWithoutRepagingOrOpeningSource() throws Exception {
+    public void unsupportedBreakpointsDisableToolbarAndCannotOpenDialog() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = mock(CPU.class);
+        when(cpu.getTitle()).thenReturn("Unsupported CPU");
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            JFrame parent = showFrame(onEdt(JFrame::new));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
+                    mock(Dialogs.class), mock(EmulationController.class), null, position -> {}, new EmuStudioGui()));
+            showInFrame(panel);
+            assertFalse(onEdt(findButtonByTooltip(panel, "Set breakpoint...")::isEnabled));
+            DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
+            assertFalse(manager.isBreakpointDialogSupported());
+
+            // Fail before entering a modal dialog if the caller's capability guard is removed.
+            when(cpu.getAddressSpaceSize()).thenThrow(new AssertionError("Unsupported dialog must not be constructed"));
+            try {
+                runOnEdt(() -> manager.showBreakpointDialog(parent));
+            } finally {
+                doReturn(256).when(cpu).getAddressSpaceSize();
+            }
+            runOnEdt(panel::close);
+        }
+    }
+
+    @Test
+    public void breakpointMouseAndEnterToggleTwoStatesWithoutRepagingOrOpeningSource() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mock(CPU.class);
         Set<Integer> addresses = new HashSet<>();
@@ -68,18 +96,21 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 int x = cell.x + cell.width / 2, y = cell.y + cell.height / 2;
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_PRESSED, 1, 0, x, y, 1, false, MouseEvent.BUTTON1));
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_RELEASED, 2, 0, x, y, 1, false, MouseEvent.BUTTON1));
+                table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_CLICKED, 3, 0, x, y, 1, false, MouseEvent.BUTTON1));
             });
             runOnEdt(() -> {});
             assertEquals(Set.of(4), addresses);
-            assertEquals(BreakpointState.ON, onEdt(() -> table.getValueAt(1, 0)));
+            assertEquals(Boolean.TRUE, onEdt(() -> table.getValueAt(1, 0)));
             runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
-            assertEquals(BreakpointState.KEEP_INSPECTION, onEdt(() -> table.getValueAt(1, 0)));
-            runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
-                    new java.awt.event.ActionEvent(table, 0, "")));
-            runOnEdt(() -> {});
+            assertEquals(Boolean.FALSE, onEdt(() -> table.getValueAt(1, 0)));
             assertTrue(addresses.isEmpty());
+            runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
+                    new java.awt.event.ActionEvent(table, 0, "")));
+            runOnEdt(() -> {});
+            assertEquals(Boolean.TRUE, onEdt(() -> table.getValueAt(1, 0)));
+            assertEquals(Set.of(4), addresses);
             verify(model, never()).showAddress(anyInt());
             assertNull(source.get());
             runOnEdt(panel::close);
@@ -95,6 +126,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.isBreakpointSupported()).thenReturn(true);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(cpu.getBreakpoints()).thenAnswer(invocation -> Set.copyOf(breakpoints));
+        when(cpu.isBreakpointSet(anyInt())).thenAnswer(invocation -> breakpoints.contains(invocation.getArgument(0)));
         doAnswer(invocation -> breakpoints.add(invocation.getArgument(0))).when(cpu).setBreakpoint(anyInt());
         doAnswer(invocation -> breakpoints.remove(invocation.getArgument(0))).when(cpu).unsetBreakpoint(anyInt());
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
@@ -106,7 +138,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
                     mock(Dialogs.class), mock(EmulationController.class), null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
-            JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint / inspect address...");
+            JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint...");
             assertTrue(onEdt(breakpointButton::isEnabled));
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             runOnEdt(manager::showBreakpoints);
@@ -118,8 +150,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
             assertEquals("Breakpoints", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
             JList<?> rows = findComponent(onEdt(() -> (java.awt.Container) tabs.getSelectedComponent()), JList.class, list -> true);
-            assertEquals("Ordinary execution breakpoint: 002A", onEdt(() -> rows.getModel().getElementAt(0)));
-            assertFalse(onEdt(findButtonByTooltip(manager, "Add breakpoint")::isEnabled));
+            assertEquals("Enabled breakpoint: 002A", onEdt(() -> rows.getModel().getElementAt(0)));
+            assertTrue(onEdt(findButtonByTooltip(manager, "Add breakpoint")::isEnabled));
 
             runOnEdt(() -> rows.setSelectedIndex(0));
             triggerButton(findButtonByTooltip(onEdt(() -> (java.awt.Container) tabs.getSelectedComponent()), "Remove"));
@@ -135,7 +167,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             assertSame(manager, findComponent(panel, DebuggerPanel.class, component -> true));
             assertEquals("Breakpoints", onEdt(() -> tabs.getTitleAt(tabs.getSelectedIndex())));
             assertEquals(1, onEdt(() -> rows.getModel().getSize()).intValue());
-            assertEquals("Ordinary execution breakpoint: 0040", onEdt(() -> rows.getModel().getElementAt(0)));
+            assertEquals("Enabled breakpoint: 0040", onEdt(() -> rows.getModel().getElementAt(0)));
             assertFalse(onEdt(() -> java.util.Arrays.stream(java.awt.Window.getWindows())
                     .anyMatch(window -> window instanceof JDialog && window.isShowing())));
             runOnEdt(panel::close);
@@ -148,11 +180,12 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         CPU cpu = mock(CPU.class);
         DebugCPU debug = mock(DebugCPU.class);
         when(cpu.getTitle()).thenReturn("Portable CPU");
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(cpu.getDebugger()).thenReturn(Optional.of(debug));
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebugSession session = new DebugSession(cpu, null, files.newFolder().toPath().resolve("computer.debugger"))) {
-            DebugSession.Rule rule = new DebugSession.Rule("entry", "EXEC", 12, -1, "", 2);
+            DebugSession.Rule rule = new DebugSession.Rule("entry", "EXEC", 12, "", 1);
             session.rules.add(rule);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -160,7 +193,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     createDebugTableModel(), mock(Dialogs.class), mock(EmulationController.class),
                     null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
-            JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint / inspect address...");
+            JButton breakpointButton = findButtonByTooltip(panel, "Set breakpoint...");
             assertTrue(onEdt(breakpointButton::isEnabled));
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             runOnEdt(manager::showBreakpoints);
@@ -168,7 +201,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             java.awt.Container controls = onEdt(() -> (java.awt.Container) tabs.getSelectedComponent());
             JList<?> rows = findComponent(controls, JList.class, list -> true);
             assertTrue(onEdt(findButtonByTooltip(manager, "Add breakpoint")::isEnabled));
-            assertFalse(onEdt(findButtonByTooltip(manager, "Add ordinary breakpoint")::isEnabled));
             runOnEdt(() -> rows.setSelectedIndex(0));
             triggerButton(findButtonByTooltip(controls, "Enable / disable"));
             assertFalse(rule.enabled);

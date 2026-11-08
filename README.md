@@ -56,6 +56,22 @@ Build the full project:
 ./gradlew build
 ```
 
+Install Eclipse Temurin 11 for the Swing tests. Gradle selects it explicitly because their Cacio toolkit is incompatible
+with IntelliJ's JetBrains Runtime.
+
+Snapshot dependencies resolve from Maven local first. After updating sibling repositories, refresh their snapshots with
+`publishToMavenLocal` in emuLib, cpu-testsuite, Edigen, and edigen-gradle-plugin, in that order. Use JDK 21 for those builds.
+For edigen-gradle-plugin, add `-PedigenPath=../edigen` to use the same generator sources.
+Alternatively, build directly against sibling sources:
+
+```bash
+./gradlew build -PemuLibPath=../emuLib -PcpuTestSuitePath=../cpu-testsuite \
+  --include-build ../edigen --include-build ../edigen-gradle-plugin
+```
+
+Run composite builds with JDK 21 and keep Temurin 11 installed for tests. After upgrading the Edigen plugin, run
+`./gradlew clean` once to remove generated outputs from the previous plugin.
+
 Create a distributable archive:
 
 ```bash

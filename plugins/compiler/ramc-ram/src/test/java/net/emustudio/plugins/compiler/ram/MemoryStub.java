@@ -82,7 +82,7 @@ public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements
     }
 
     @Override
-    public RamMemory getSnapshot() {
-        return null;
+    public List<RamValue> getInputs() {
+        return List.copyOf(inputs);
     }
 }

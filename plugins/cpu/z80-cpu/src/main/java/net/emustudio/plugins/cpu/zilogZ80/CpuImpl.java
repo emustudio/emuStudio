@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.nio.file.Path;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -78,25 +76,15 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = new net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler(
-                initializer.getDisassembler(), initializer.getEngine().debugger.memory(), true);
+        disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, applicationApi.getDialogs(), applicationApi.getGUI()
+                    this, context, applicationApi.getGUI()
             );
-        }
-    }
-
-    public void loadSnapshot(Path path) throws IOException {
-        ZxSpectrumSnapshot snapshot = ZxSpectrumSnapshotLoader.load(path);
-        reset(snapshot.programCounter);
-        engine.loadSnapshot(snapshot);
-        if (statusPanel != null) {
-            statusPanel.updateGUI();
         }
     }
 

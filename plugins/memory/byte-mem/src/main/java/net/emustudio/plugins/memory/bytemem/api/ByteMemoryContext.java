@@ -75,6 +75,9 @@ public interface ByteMemoryContext extends MemoryContext<Byte> {
      */
     int getCommonBoundary();
 
+    /** Reads a physical bank without changing the selected mapping. */
+    Byte readBank(int address, int bank);
+
     /**
      * Returns raw memory represented by Java array.
      * <p>

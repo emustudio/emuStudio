@@ -32,7 +32,7 @@ System_Boundary(app, "emuStudio application") {
     Component(contextPool, "ContextPool", "Java", "Registry of plugin contexts; hands out contexts only between connected plugins")
     Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, debugger table, program location")
 
-    Component(emuController, "EmulationController", "Java, single-thread executor", "run / step / timed-step / pause / stop / reset; tracks CPU RunState")
+    Component(emuController, "EmulationController", "Java, single scheduled worker", "run / step / timed-step / pause / stop / reset; tracks CPU RunState")
     Component(automation, "Automation", "Java", "compile → reset → execute → collect result state; logs outcome")
 
     Component(guiMain, "EmuStudioGui (main window)", "Swing, FlatLaf", "Main window, toolbars, look & feel; implements emuLib GUI service")
@@ -120,10 +120,12 @@ ApplicationApi:: The facade handed to every plugin at construction time. It
 exposes the `ContextPool`, the `Dialogs` and `GUI` services, the `DebuggerTable`
 and the current program location — the plugin's whole view of the host.
 
-EmulationController:: Serializes all CPU control onto a single worker thread and
+EmulationController:: Serializes all CPU control onto a single scheduled worker and
 mirrors the CPU's `RunState`. It offers start, single-step, timed-step, pause,
-stop and reset, coordinating each transition with the CPU via a latch. Used by
-the interactive debugger.
+stop and reset, retaining CPU event acknowledgements. Timed stepping schedules the
+next step without sleeping on the worker. Pause, stop, reset and close cancel timed
+work; close also releases the controller's CPU listener. Used by the interactive
+debugger.
 
 GUI (EmuStudioGui, Schema editor, Source editor, Debugger, Dialogs):: The Swing
 front end. The main window hosts the three work areas and provides the emuLib

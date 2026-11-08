@@ -158,7 +158,7 @@ public class DebugHooksTest {
         if (record) {
             assertEquals(1, events.size());
             assertEquals(0x200, events.get(0).address);
-            assertEquals(0, events.get(0).bank);
+
             assertEquals("3E 42", events.get(0).opcodes.trim());
             assertEquals(Long.valueOf(0), events.get(0).before.get("PC"));
         }
@@ -177,6 +177,7 @@ public class DebugHooksTest {
         EmulatorEngine engine;
         int guestReads;
         ContendedMemory() { super(NumberUtils.Strategy.LITTLE_ENDIAN); }
+        @Override public Byte peek(int at) { return super.read(at); }
         @Override public Byte read(int at) {
             guestReads++;
             if (engine != null) engine.addExecutedCyclesPerTimeSlice(2);
@@ -187,7 +188,6 @@ public class DebugHooksTest {
             for (int i = 0; i < count; i++) values[i] = read(at + i);
             return values;
         }
-        @Override public Byte readBank(int at, int bank) { return super.read(at); }
     }
 
     private static List<DebugCPU.Instruction> collect(EmulatorEngine engine) {
@@ -209,7 +209,7 @@ public class DebugHooksTest {
         engine.debugger.addListener(
                 new DebugCPU.Listener() {
                     @Override
-                    public boolean beforeInstruction(int pc, int bank) {
+                    public boolean beforeInstruction(int pc) {
                         return true;
                     }
                 });

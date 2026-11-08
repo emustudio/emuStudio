@@ -15,6 +15,28 @@ import static org.mockito.Mockito.*;
 
 public class TextCellRendererTest {
     @Test
+    public void currentRowAndBreakpointRemainDistinctWithSelection() {
+        DebugTableModel model = mock(DebugTableModel.class);
+        when(model.getRowCount()).thenReturn(2);
+        when(model.getColumnCount()).thenReturn(1);
+        when(model.getColumnName(0)).thenReturn("address");
+        doReturn(String.class).when(model).getColumnClass(0);
+        doReturn(new AddressColumn()).when(model).getColumnAt(0);
+        when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
+        DebugTableImpl table = new DebugTableImpl(model);
+        table.setInstructionRowPresentation(row -> row == 1, row -> null);
+        table.setRowSelectionInterval(0, 0);
+
+        Component current = table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0);
+        assertEquals(new Color(255, 204, 204), current.getBackground());
+        assertFalse(current.getFont().isBold());
+        Component breakpoint = table.prepareRenderer(table.getCellRenderer(1, 0), 1, 0);
+        assertEquals(table.getBackground(), breakpoint.getBackground());
+        assertTrue(breakpoint.getFont().isBold());
+        assertFalse(table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0).getFont().isBold());
+    }
+
+    @Test
     public void selectionFocusAndPcMarkerRemainIndependentInLightAndDark() {
         for (Color background : new Color[] {Color.WHITE, new Color(60, 63, 65)}) {
             DebugTableModel model = mock(DebugTableModel.class);
@@ -80,7 +102,7 @@ public class TextCellRendererTest {
             renderer.getTableCellRendererComponent(table, "nop", false, false, 0, 0);
             assertEquals(Font.MONOSPACED, renderer.getFont().getFamily());
             assertEquals(16.5f, renderer.getFont().getSize2D(), 0);
-            assertEquals(Font.BOLD | Font.ITALIC, renderer.getFont().getStyle());
+            assertEquals(Font.ITALIC, renderer.getFont().getStyle());
             renderer.getTableCellRendererComponent(table, "hlt", false, false, 1, 0);
             assertEquals(Font.MONOSPACED, renderer.getFont().getFamily());
             assertEquals(16.5f, renderer.getFont().getSize2D(), 0);

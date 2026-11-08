@@ -52,4 +52,19 @@ public class FlowMetadataTest {
         assertFalse(flow(0xfd, 0xe9).fallThrough);
         assertEquals(InstructionFlow.Kind.RETURN, flow(0xed, 0x4d).kind);
     }
+
+    @Test
+    public void decoderReadsUpdatedRelativeOperandsAndDisassembly() throws Exception {
+        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory.write(0, (byte) 0x18);
+        memory.write(1, (byte) 0x02);
+        Disassembler live = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, true);
+        assertEquals(java.util.List.of(4), live.getFlow(0).orElseThrow().targets);
+        String mnemonic = live.disassemble(0).mnemo;
+
+        memory.write(1, (byte) 0xfe);
+
+        assertEquals(java.util.List.of(0), live.getFlow(0).orElseThrow().targets);
+        assertNotEquals(mnemonic, live.disassemble(0).mnemo);
+    }
 }

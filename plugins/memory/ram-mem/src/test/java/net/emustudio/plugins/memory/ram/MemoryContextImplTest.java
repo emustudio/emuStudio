@@ -29,6 +29,17 @@ public class MemoryContextImplTest {
     }
 
     @Test
+    public void sizeReflectsLoadedCellsAcrossSparseLoadAndClear() {
+        assertEquals(0, memory.getSize());
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
+        memory.write(Integer.MAX_VALUE - 1, instruction);
+        assertEquals(1, memory.getSize());
+        assertEquals(instruction, memory.read(Integer.MAX_VALUE - 1));
+        memory.clear();
+        assertEquals(0, memory.getSize());
+    }
+
+    @Test
     public void testNotifyMemoryChangesOnWrite() {
         AtomicInteger memoryChanges = new AtomicInteger();
         AtomicInteger memorySizeChanges = new AtomicInteger();

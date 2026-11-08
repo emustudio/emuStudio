@@ -50,7 +50,6 @@ public class OpenComputerDialog extends DialogBase {
     private final SaveSchemaAction saveSchemaAction;
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
-    private final JCheckBox showConfiguration = new JCheckBox("Show plugin configuration");
     private JPanel configurationPanel;
 
     public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer, EmuStudioGui gui) {
@@ -120,14 +119,6 @@ public class OpenComputerDialog extends DialogBase {
         for (Component component : toolConfig.getComponents()) {
             if (component instanceof AbstractButton) component.setFocusable(true);
         }
-        showConfiguration.addActionListener(event -> {
-            for (Component component : configurationPanel.getComponents())
-                if (component instanceof JComponent
-                        && Boolean.TRUE.equals(((JComponent) component).getClientProperty("configurationDetails")))
-                    component.setVisible(showConfiguration.isSelected());
-            configurationPanel.revalidate();
-            configurationPanel.repaint();
-        });
 
         JPanel panelConfig = gui.panel("insets 0, fill", "[][grow]", "[grow]");
         panelConfig.add(toolConfig, "growy");
@@ -202,12 +193,6 @@ public class OpenComputerDialog extends DialogBase {
         Optional.ofNullable(lstConfig.getSelectedValue()).ifPresentOrElse(computer -> {
             Schema schema = new Schema(computer, appSettings);
             preview.setSchema(schema);
-            configurationPanel.add(gui.labelBold(computer.getName()), "growx");
-            computer.getCPU().ifPresent(plugin -> addComponentSummary("CPU", plugin));
-            computer.getMemory().ifPresent(plugin -> addComponentSummary("Memory", plugin));
-            computer.getCompiler().ifPresent(plugin -> addComponentSummary("Compiler", plugin));
-            configurationPanel.add(gui.label("Peripheral devices: " + computer.getDevices().size()), "growx");
-            configurationPanel.add(showConfiguration, "growx, gaptop 5");
             computer.getCPU().ifPresent(plugin -> addPluginConfiguration("CPU", plugin));
             computer.getMemory().ifPresent(plugin -> addPluginConfiguration("Memory", plugin));
             computer.getCompiler().ifPresent(plugin -> addPluginConfiguration("Compiler", plugin));
@@ -217,10 +202,6 @@ public class OpenComputerDialog extends DialogBase {
         preview.repaint();
         configurationPanel.revalidate();
         configurationPanel.repaint();
-    }
-
-    private void addComponentSummary(String type, PluginConfig plugin) {
-        configurationPanel.add(gui.label(type + ": " + plugin.getPluginName()), "growx");
     }
 
     private void addPluginConfiguration(String title, PluginConfig plugin) {
@@ -242,10 +223,6 @@ public class OpenComputerDialog extends DialogBase {
 
         JLabel header = new JLabel(title);
         header.setFont(header.getFont().deriveFont(Font.BOLD));
-        for (JComponent component : new JComponent[]{header, table}) {
-            component.putClientProperty("configurationDetails", true);
-            component.setVisible(showConfiguration.isSelected());
-        }
         configurationPanel.add(header, "gaptop 5");
         configurationPanel.add(table, "growx");
     }

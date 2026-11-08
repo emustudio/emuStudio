@@ -29,6 +29,28 @@ public class TabbedEditorTest extends AbstractSwingTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
+    public void updatesTitleWhileTabHeaderIsAbsent() throws Exception {
+        Path file = source("header.asm", "NOP");
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), files -> { }));
+        JTabbedPane tabs = (JTabbedPane) editor.getView();
+
+        runOnEdt(() -> {
+            Component header = tabs.getTabComponentAt(0);
+            tabs.setTabComponentAt(0, null);
+            try {
+                assertTrue(editor.saveFile());
+                assertEquals("header.asm", tabs.getTitleAt(0));
+            } finally {
+                tabs.setTabComponentAt(0, header);
+            }
+            editor.activeEditor().textPane().append("\nHLT");
+        });
+
+        assertEquals("header.asm*", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("header.asm*", findLabel((Container) onEdt(() -> tabs.getTabComponentAt(0)), "header.asm*").getText());
+    }
+
+    @Test
     public void opensFilesInTabsAndRoutesToSelectedTab() throws Exception {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");
@@ -256,7 +278,6 @@ public class TabbedEditorTest extends AbstractSwingTest {
     public void splitFocusAndDebuggerFollowingKeepTheSearchTargetOnTheActivePane() throws Exception {
         Path file = source("panes.asm", "nop\ninr a\nhlt\n");
         TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
-        InlineSearchBar search = onEdt(editor::searchBar);
         runOnEdt(() -> editor.split(true));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         JSplitPane split = onEdt(() -> (JSplitPane) tabs.getSelectedComponent());
@@ -268,7 +289,9 @@ public class TabbedEditorTest extends AbstractSwingTest {
                     listener.focusGained(new FocusEvent(right, FocusEvent.FOCUS_GAINED));
         });
         findLabel((Container) split.getRightComponent(), "Right — panes.asm — Active");
-        findLabel(search, "Right pane: panes.asm");
+        InlineSearchBar search = onEdt(editor::searchBar);
+        runOnEdt(() -> { search.find.setText("inr"); search.next(true); });
+        assertEquals("inr", onEdt(right::getSelectedText));
         List<SourceCodePosition> notifications = new ArrayList<>();
         runOnEdt(() -> {
             editor.setSourcePositionChanged(notifications::add);
@@ -277,27 +300,21 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertSame(split, onEdt(tabs::getSelectedComponent));
         assertEquals(2, onEdt(() -> right.getLineOfOffset(right.getCaretPosition())).intValue());
         assertTrue(notifications.isEmpty());
-        findLabel(search, "Right pane: panes.asm");
         runOnEdt(editor::unsplit);
-        findLabel(search, "File: panes.asm");
     }
 
     @Test
-    public void aFullWidthTabOutsideAnExistingSplitIsNotReportedAsItsRightPane() throws Exception {
+    public void switchingTabsPreservesExistingSplit() throws Exception {
         Path splitFile = source("split.asm", "nop\n"), otherFile = source("other.asm", "hlt\n");
         TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
                 List.of(splitFile, otherFile), paths -> {}));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
-        InlineSearchBar search = onEdt(editor::searchBar);
         runOnEdt(() -> { tabs.setSelectedIndex(0); editor.split(true); });
         Component split = onEdt(tabs::getSelectedComponent);
-        findLabel(search, "Left pane: split.asm");
         runOnEdt(() -> tabs.setSelectedIndex(1));
-        findLabel(search, "File: other.asm");
         assertEquals(otherFile, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
         runOnEdt(() -> tabs.setSelectedIndex(0));
         assertSame(split, onEdt(tabs::getSelectedComponent));
-        findLabel(search, "Left pane: split.asm");
     }
 
     private Path source(String name, String text) throws Exception {

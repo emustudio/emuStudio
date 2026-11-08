@@ -4,7 +4,6 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.debugger.DebuggerPanel;
-import net.emustudio.application.debugger.BreakpointState;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -30,6 +29,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
+    private static final int PERIPHERAL_PANEL_HEIGHT = 200;
 
     private final GUI gui;
     private final JPanel statusWindow;
@@ -82,7 +82,6 @@ public class EmulatorPanel extends JPanel {
         this.listingState.setHorizontalAlignment(SwingConstants.CENTER);
         this.debugTable = new DebugTableImpl(debugTableModel);
         this.debugTable.getAccessibleContext().setAccessibleName("Instruction listing");
-        this.debugTable.setToolTipText("Select to inspect; double-click or press Enter to open mapped source.");
         this.toolDebug = gui.toolBar();
         this.toolDebug.putClientProperty("FlatLaf.style", "focusableButtons: true");
 
@@ -158,15 +157,16 @@ public class EmulatorPanel extends JPanel {
                     && !isBreakpointCellSelected()
                     && runState != CPU.RunState.STATE_RUNNING && debugTable.getSelectedRow() >= 0) {
                 int location = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(debugTable.getSelectedRow()));
-                if (location >= 0) inspection.followAddress(location, memoryContext == null ? 0 : memoryContext.getSelectedBank());
+                if (location >= 0) inspection.followAddress(location);
             }
         });
         debugTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "showSource");
         debugTable.getActionMap().put("showSource", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent event) {
                 if (isBreakpointCellSelected()) {
-                    if (debugTable.editCellAt(debugTable.getSelectedRow(), debugTable.getSelectedColumn()))
-                        ((AbstractButton) debugTable.getEditorComponent()).doClick(0);
+                    int row = debugTable.getSelectedRow(), column = debugTable.getSelectedColumn();
+                    if (row >= 0 && debugTable.isCellEditable(row, column))
+                        debugTable.setValueAt(!Boolean.TRUE.equals(debugTable.getValueAt(row, column)), row, column);
                     return;
                 }
                 if (inspection != null && !inspection.isInstructionView()) {
@@ -247,6 +247,7 @@ public class EmulatorPanel extends JPanel {
         workspace.setMinimumSize(new Dimension(360, 180));
         workspace.setPreferredSize(new Dimension(680, 650));
         splitLeftRight = gui.splitPaneLeftToRight(workspace, sidebar, 0.75);
+        splitLeftRight.setContinuousLayout(false);
         splitLeftRight.setName("debuggerColumns");
         splitLeftRight.setDividerLocation(700);
         splitLeftRight.addComponentListener(new ComponentAdapter() {
@@ -256,10 +257,7 @@ public class EmulatorPanel extends JPanel {
         });
 
         setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[][grow]"));
-        JPanel header = gui.panel("insets 0, fillx, hidemode 3", "[][grow]", "[]");
-        header.add(toolDebug);
-        if (inspection != null) header.add(inspection.navigationToolbar(), "growx");
-        JScrollPane headerScroll = gui.scrollPane(header);
+        JScrollPane headerScroll = gui.scrollPane(toolDebug);
         headerScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         headerScroll.setMinimumSize(new Dimension(0, 0));
         add(headerScroll, "growx, hmin pref, wrap");
@@ -315,8 +313,7 @@ public class EmulatorPanel extends JPanel {
     }
 
     private boolean isBreakpointCellSelected() {
-        int column = debugTable.getSelectedColumn();
-        return column >= 0 && debugTable.getColumnClass(column) == BreakpointState.class;
+        return inspection != null && inspection.isBreakpointCellSelected();
     }
 
     public Optional<DebuggerPanel> getDebuggerPanel() {
@@ -327,10 +324,10 @@ public class EmulatorPanel extends JPanel {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
         if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {
             splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
-            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - 140));
+            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT));
             JScrollPane status = (JScrollPane) cpuWatches.getTopComponent();
             int preferredStatusHeight = status.getViewport().getView().getPreferredSize().height + 12;
-            int available = Math.max(140, splitLeftRight.getHeight() - 140 - 170);
+            int available = Math.max(140, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT - 170);
             cpuWatches.setDividerLocation(Math.min(Math.max(220, preferredStatusHeight), available));
             dividersInitialized = true;
         }
@@ -375,18 +372,20 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setupDebugToolbar() {
-        toolDebug.add(gui.toolbarButton(runAction));
-        toolDebug.add(gui.toolbarButton(pauseAction));
+        toolDebug.add(gui.toolbarButton(resetAction));
+        toolDebug.addSeparator();
+        toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
+        toolDebug.add(gui.toolbarButton(stepBackAction));
         toolDebug.add(gui.toolbarButton(stopAction));
+        toolDebug.add(gui.toolbarButton(pauseAction));
+        toolDebug.add(gui.toolbarButton(runAction));
         toolDebug.add(gui.toolbarButton(runTimedAction));
         toolDebug.add(gui.toolbarButton(stepAction));
         toolDebug.addSeparator();
-        toolDebug.add(gui.toolbarButton(resetAction));
-        toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
-        toolDebug.add(gui.toolbarButton(stepBackAction));
         toolDebug.add(gui.toolbarButton(jumpAction));
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(breakpointAction));
+        toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(showMemoryAction));
         for (java.awt.Component component : toolDebug.getComponents()) {
             if (component instanceof JButton) {

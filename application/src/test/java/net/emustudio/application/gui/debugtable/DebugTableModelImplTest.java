@@ -3,6 +3,8 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.application.debugger.index.ProgramIndex;
+import net.emustudio.application.debugger.InstructionIndex;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
@@ -306,6 +308,174 @@ public class DebugTableModelImplTest {
         assertEquals(12, model.getLocationAt(2));
     }
 
+    @Test
+    public void repeatedColumnsAndSelectionReuseMaterializedPageWithoutDecodingBoundaries() {
+        AtomicInteger calls = new AtomicInteger();
+        CPU cpu = countedCpu(calls, at -> at + 1, 128, 256);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(cpu);
+        model.setMaxRows(21);
+        model.setDebuggerColumns(List.of(new AddressColumn(), new AddressColumn()));
+        model.showAddress(0);
+        model.showAddress(128);
+        int firstCalls = calls.get();
+        for (int repeat = 0; repeat < 20; repeat++) for (int row = 0; row < 21; row++) {
+            assertNotNull("row " + row, model.getValueAt(row, 0));
+            assertNotNull("row " + row, model.getValueAt(row, 1));
+            assertTrue(model.getLocationAt(row) >= 0);
+            model.isRowAtCurrentInstruction(row);
+        }
+        model.setMaxRows(21); // Width-only resize/selection must retain the same address page.
+        model.getLocationAt(20);
+        assertEquals(firstCalls, calls.get());
+    }
+
+    @Test
+    public void currentIndexedInstructionCoverageSuppliesLengthsWithoutLiveDecode() {
+        ProgramIndex index = ProgramIndex.create("indexed-page", 16);
+        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+            edit.replaceFlow(false);
+            for (int at = 0; at < 16; at += 2)
+                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
+            edit.commit();
+        }
+        AtomicInteger calls = new AtomicInteger();
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(calls, at -> { throw new AssertionError("Unexpected live decode"); }, 4, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        assertEquals(2, model.getLocationAt(0));
+        assertEquals(4, model.getLocationAt(1));
+        assertEquals(6, model.getLocationAt(2));
+        assertEquals(0, calls.get());
+
+        model.memoryChanged(2, 2); // A table-only cache reset retains the same authoritative view.
+        assertEquals(2, model.getLocationAt(0));
+        assertEquals(4, model.getLocationAt(1));
+        assertEquals(6, model.getLocationAt(2));
+        assertEquals(0, calls.get());
+    }
+
+    @Test
+    public void cpuAddressesBeyondSmallerMemoryIndexRetainDecoderFallback() {
+        ProgramIndex index = ProgramIndex.create("partial-memory", 8);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(new AtomicInteger(), at -> at + 1, 12, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.showAddress(0);
+        model.showAddress(12);
+        assertEquals(12, model.getLocationAt(1));
+        assertEquals(13, model.getLocationAt(2));
+    }
+
+    @Test
+    public void revisionChangeInvalidatesOperandCellAndFallbackWithoutUiNotification() {
+        ProgramIndex index = ProgramIndex.create("operand-edit", 16);
+        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+            edit.replaceFlow(false);
+            edit.putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
+            for (int at = 2; at < 16; at++)
+                edit.putInstruction(new ProgramIndex.Range(at, at + 1), ProgramIndex.InstructionKind.LINEAR);
+            edit.commit();
+        }
+        AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(calls, at -> at == 0 ? length.get() : at + 1, 0, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        assertEquals(2, model.getLocationAt(1));
+        int firstCalls = calls.get();
+        length.set(3); // Encoding changed in cell1 of instruction [0,2), not at its start.
+        index.memoryChanged(); // UI memory notifications are disabled; root revision is the signal.
+        assertEquals(3, model.getLocationAt(1));
+        assertTrue(calls.get() > firstCalls);
+    }
+
+    @Test
+    public void previousInstructionRefreshesRevisionBeforeAnyTableCellIsRead() {
+        ProgramIndex index = ProgramIndex.create("previous-after-edit", 16);
+        AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(calls, at -> at == 0 ? length.get() : at == 2 ? 4 : at + 1, 4, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.showAddress(0);
+        model.currentPage();
+        assertEquals(2, model.guessPreviousInstructionLocation());
+        int previousCalls = calls.get();
+        length.set(3);
+        index.memoryChanged();
+        assertEquals(3, model.guessPreviousInstructionLocation());
+        assertTrue(calls.get() > previousCalls);
+    }
+
+    @Test
+    public void instructionViewChangesLengthsAtTheSamePcAfterPublication() {
+        ProgramIndex index = ProgramIndex.create("instruction-page", 16);
+        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+            edit.replaceFlow(false);
+            for (int at = 0; at < 16; at += 2)
+                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
+            edit.commit();
+        }
+        AtomicInteger calls = new AtomicInteger();
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(calls, at -> { throw new AssertionError("Unexpected live decode"); }, 0, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        assertEquals(2, model.getLocationAt(1));
+        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
+            edit.replaceFlow(false);
+            edit.putInstruction(new ProgramIndex.Range(0, 3), ProgramIndex.InstructionKind.LINEAR);
+            edit.putInstruction(new ProgramIndex.Range(3, 6), ProgramIndex.InstructionKind.LINEAR);
+            edit.putInstruction(new ProgramIndex.Range(6, 8), ProgramIndex.InstructionKind.LINEAR);
+            for (int at = 8; at < 16; at += 2)
+                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
+            edit.commit();
+        }
+        assertEquals(3, model.getLocationAt(1));
+        model.showAddress(8);
+        assertEquals(8, model.getLocationAt(1));
+        assertEquals(10, model.getLocationAt(2));
+        model.showAddress(12);
+        assertEquals(14, model.getLocationAt(2));
+        assertEquals(0, calls.get());
+    }
+
+    @Test
+    public void breakpointOnlyPublicationKeepsMaterializedInstructionPage() {
+        ProgramIndex index = ProgramIndex.create("breakpoint-page", 16);
+        AtomicInteger calls = new AtomicInteger();
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(countedCpu(calls, at -> at + 1, 4, 16));
+        model.setMaxRows(3);
+        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        assertEquals(4, model.getLocationAt(1));
+        int initialCalls = calls.get();
+        try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
+            edit.put(1, 4, true);
+            edit.commit();
+        }
+        assertEquals(4, model.getLocationAt(1));
+        assertEquals(initialCalls, calls.get());
+    }
+
+    private CPU countedCpu(AtomicInteger calls, java.util.function.IntUnaryOperator next, int pc, int size) {
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> {
+            calls.incrementAndGet();
+            int at = call.getArgument(0);
+            if (at < 0 || at >= size) throw new IndexOutOfBoundsException();
+            return next.applyAsInt(at);
+        });
+        CPU cpu = mock(CPU.class);
+        when(cpu.getDisassembler()).thenReturn(disassembler);
+        when(cpu.getInstructionLocation()).thenReturn(pc);
+        when(cpu.getAddressSpaceSize()).thenReturn(size);
+        return cpu;
+    }
+
     private CPU createCpu(boolean breakpointSupported, int instructionLocation) {
         Disassembler disassembler = new LinearDisassembler();
         CPU cpu = mock(CPU.class);
@@ -318,6 +488,8 @@ public class DebugTableModelImplTest {
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
+        if (fieldName.equals("ida") && ((PaginatingDisassembler) value).getInstructionsPerPage() == 0)
+            when(((PaginatingDisassembler) value).getInstructionsPerPage()).thenReturn(PaginatingDisassembler.INSTR_PER_PAGE);
         Field field = DebugTableModelImpl.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);

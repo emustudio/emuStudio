@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.ram.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.*;
@@ -26,11 +25,13 @@ public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
     void setInputs(List<RamValue> inputs);
 
-    RamMemory getSnapshot();
+    /** Immutable list of the program's configured input values. */
+    List<RamValue> getInputs();
 
-    static void serialize(Path filename, RamMemory memory) throws IOException {
+    static void serialize(Path filename, Collection<? extends RamLabel> programLabels,
+                          Map<Integer, RamInstruction> programMemory, List<? extends RamValue> inputs) throws IOException {
         Map<Integer, String> labels = new HashMap<>();
-        for (RamLabel label : memory.labels) {
+        for (RamLabel label : programLabels) {
             labels.put(label.getAddress(), label.getLabel());
         }
 
@@ -38,23 +39,9 @@ public interface RamMemoryContext extends MemoryContext<RamInstruction> {
         OutputStream buffer = new BufferedOutputStream(file);
         try (ObjectOutput output = new ObjectOutputStream(buffer)) {
             output.writeObject(labels);
-            output.writeObject(memory.inputs);
-            output.writeObject(memory.programMemory);
+            output.writeObject(inputs);
+            output.writeObject(programMemory);
         }
     }
 
-    @Immutable
-    class RamMemory {
-        public final List<RamLabel> labels;
-        public final Map<Integer, RamInstruction> programMemory;
-        public final List<RamValue> inputs;
-
-        public RamMemory(Collection<? extends RamLabel> labels,
-                         Map<Integer, RamInstruction> programMemory,
-                         List<? extends RamValue> inputs) {
-            this.labels = List.copyOf(labels);
-            this.programMemory = Map.copyOf(programMemory);
-            this.inputs = List.copyOf(inputs);
-        }
-    }
 }

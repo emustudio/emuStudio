@@ -6,7 +6,6 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -51,8 +50,7 @@ public class CpuImpl extends AbstractCPU {
                     "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
             );
         }
-        Decoder decoder = new DecoderImpl(memory);
-        disassembler = new DisassemblerImpl(memory, decoder);
+        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, this::isBreakpointSet);
         engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
 

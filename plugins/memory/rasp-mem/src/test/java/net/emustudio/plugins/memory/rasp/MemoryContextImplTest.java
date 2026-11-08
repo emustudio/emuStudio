@@ -11,6 +11,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,6 +53,16 @@ public class MemoryContextImplTest {
     }
 
     @Test
+    public void sizeReflectsLoadedExtentAcrossSparseLoadAndClear() {
+        assertEquals(0, context.getSize());
+        context.write(Integer.MAX_VALUE - 1, 42);
+        assertEquals(Integer.MAX_VALUE - 1, context.getSize());
+        assertEquals(Integer.valueOf(42), context.read(Integer.MAX_VALUE - 1));
+        context.clear();
+        assertEquals(0, context.getSize());
+    }
+
+    @Test
     public void readWriteAndBulkAccess() {
         context.write(0, 100);
         context.write(1, 200);
@@ -80,24 +91,24 @@ public class MemoryContextImplTest {
         assertEquals(Integer.valueOf(0), context.read(0));
         assertEquals(Integer.valueOf(0), context.read(10));
         assertFalse(context.getLabel(0).isPresent());
-        assertTrue(context.getSnapshot().inputs.isEmpty());
+        assertTrue(context.getInputs().isEmpty());
     }
 
     @Test
-    public void labelsInputsAndSnapshotsAreCopied() {
+    public void labelsAreReplacedAndConfiguredInputsAreIsolated() {
         context.write(0, 100);
         context.setLabels(List.of(label(0, "FIRST")));
         context.setInputs(List.of(1, 2));
-        RaspMemoryContext.RaspMemory snapshot = context.getSnapshot();
+        List<Integer> inputs = context.getInputs();
         context.write(0, 999);
         context.setLabels(List.of(label(1, "SECOND")));
         context.setInputs(List.of(3, 4, 5));
-        assertEquals(Integer.valueOf(100), snapshot.programMemory.get(0));
-        assertEquals("FIRST", snapshot.labels.get(0).getLabel());
-        assertEquals(List.of(1, 2), snapshot.inputs);
+        assertEquals(Integer.valueOf(999), context.read(0));
+        assertEquals(List.of(1, 2), inputs);
+        assertThrows(UnsupportedOperationException.class, () -> inputs.add(9));
         assertFalse(context.getLabel(0).isPresent());
         assertEquals("SECOND", context.getLabel(1).get().getLabel());
-        assertEquals(List.of(3, 4, 5), context.getSnapshot().inputs);
+        assertEquals(List.of(3, 4, 5), context.getInputs());
     }
 
     @Test
@@ -105,15 +116,9 @@ public class MemoryContextImplTest {
         context.write(100, 888);
         context.setLabels(List.of(label(100, "OLD")));
         context.setInputs(List.of(9));
-        MemoryContextImpl source = newContext();
-        source.write(0, 1);
-        source.write(1, 15);
-        source.write(2, 100);
-        source.setLabels(List.of(label(0, "START"), label(2, "DATA")));
-        source.setInputs(List.of(42, 43));
         File file = tmp.newFile("memory.rasp");
-        RaspMemoryContext.serialize(file.toPath(), 99, source.getSnapshot());
-        source.destroy();
+        RaspMemoryContext.serialize(file.toPath(), 99,
+                List.of(label(0, "START"), label(2, "DATA")), Map.of(0, 1, 1, 15, 2, 100), List.of(42, 43));
         AtomicInteger programLocation = new AtomicInteger(-1);
         context.deserialize(file.getAbsolutePath(), programLocation::set);
         assertEquals(99, programLocation.get());
@@ -122,7 +127,7 @@ public class MemoryContextImplTest {
         assertEquals("DATA", context.getLabel(2).get().getLabel());
         assertFalse(context.getLabel(100).isPresent());
         assertEquals(Integer.valueOf(0), context.read(100));
-        assertEquals(List.of(42, 43), context.getSnapshot().inputs);
+        assertEquals(List.of(42, 43), context.getInputs());
     }
 
     @Test(expected = FileNotFoundException.class)
@@ -144,12 +149,6 @@ public class MemoryContextImplTest {
         assertEquals(Optional.of("HALT"), context.disassembleMnemo(18));
         assertEquals(Optional.empty(), context.disassembleMnemo(0));
         assertEquals(Optional.empty(), context.disassembleMnemo(100));
-    }
-
-    private MemoryContextImpl newContext() {
-        MemoryContextAnnotations a = createNiceMock(MemoryContextAnnotations.class);
-        replay(a);
-        return new MemoryContextImpl(a);
     }
 
     private static RaspLabel label(int address, String name) {

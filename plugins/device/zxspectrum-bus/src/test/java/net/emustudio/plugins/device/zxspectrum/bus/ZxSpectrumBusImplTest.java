@@ -998,6 +998,7 @@ public class ZxSpectrumBusImplTest {
         }).anyTimes();
 
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.peek(anyInt())).andAnswer(() -> env.memoryValues.getOrDefault(((Integer) getCurrentArguments()[0]) & 0xFFFF, (byte) 0xFF)).anyTimes();
         expect(memory.read(anyInt())).andAnswer(() -> {
             int address = ((Integer) getCurrentArguments()[0]) & 0xFFFF;
             Byte value = env.memoryValues.get(address);
@@ -1051,6 +1052,7 @@ public class ZxSpectrumBusImplTest {
         }).anyTimes();
 
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+        expect(memory.peek(anyInt())).andAnswer(() -> env.memoryValues.getOrDefault(((Integer) getCurrentArguments()[0]) & 0xFFFF, (byte) 0xFF)).anyTimes();
         expect(memory.read(anyInt())).andAnswer(() -> {
             int address = ((Integer) getCurrentArguments()[0]) & 0xFFFF;
             Byte value = env.memoryValues.get(address);

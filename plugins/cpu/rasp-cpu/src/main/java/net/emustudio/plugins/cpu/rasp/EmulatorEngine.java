@@ -58,7 +58,7 @@ public class EmulatorEngine {
         IP.set(location);
         int position = 0;
         inputTape.clear();
-        for (int input : memory.getSnapshot().inputs) {
+        for (int input : memory.getInputs()) {
             inputTape.setSymbolAt(position++, new TapeSymbol(input));
         }
         outputTape.clear();
@@ -239,14 +239,13 @@ public class EmulatorEngine {
 
     private int readWord(int address) {
         int value = memory.read(address);
-        if (debugger.isActive()) debugger.access(address, memory.getBank(address), value, false);
+        if (debugger.isActive()) debugger.access(address, value, false);
         return value;
     }
 
     private void writeWord(int address, int value) {
-        int bank = debugger.isActive() ? memory.getBank(address) : 0;
         memory.write(address, value);
-        if (debugger.isActive()) debugger.access(address, bank, value, true);
+        if (debugger.isActive()) debugger.access(address, value, true);
     }
 
     @FunctionalInterface

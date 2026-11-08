@@ -138,6 +138,7 @@ public class MemoryImplTest {
     public void loadImageLoadsBytesAndMissingFileThrows() throws Exception {
         MemoryImpl mem = createMemory(settings().mock());
         Path image = image("direct.bin", (byte) 0x12, (byte) 0x34);
+        Files.writeString(image.resolveSibling("direct.bin.meta"), "invalid sidecar");
         try {
             mem.initialize();
             mem.loadImage(image, 0, 0);

@@ -42,7 +42,7 @@ public class DebugHooksTest extends AbstractEngineTest {
     @Test public void refusedInstructionDoesNotAdvanceTypedProgramCounter() {
         setProgram(instr(RamInstruction.Opcode.HALT, RamInstruction.Direction.DIRECT));
         engine.debugger.addListener(new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address, int bank) { return true; }
+            @Override public boolean beforeInstruction(int address) { return true; }
         });
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(0, engine.IP.get());

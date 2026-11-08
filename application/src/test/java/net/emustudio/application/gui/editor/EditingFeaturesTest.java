@@ -246,7 +246,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         assertEquals("\t  x\ny", TextEdits.tabs("      x\ny", 4));
     }
     @Test public void selectionSearchReplaceNeverTouchesOutsideScope() {
-        REditor editor = editor("one one one"); InlineSearchBar bar = onEdt(() -> new InlineSearchBar(() -> editor, () -> { }));
+        REditor editor = editor("one one one"); InlineSearchBar bar = onEdt(() -> new InlineSearchBar(() -> editor));
         runOnEdt(() -> { editor.textPane().select(4, 7); bar.selection.doClick(); bar.find.setText("one"); bar.replace.setText("two"); bar.replaceAll(); });
         assertEquals("one two one", onEdt(editor.textPane()::getText));
         runOnEdt(() -> bar.find.setText("two"));
@@ -372,13 +372,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         edits.put(a, List.of(new EditorSearch.Match(0, 3, "one", "two"))); edits.put(b, List.of(new EditorSearch.Match(0, 3, "one", "two")));
         assertThrows(java.io.IOException.class, () -> SearchWorkspace.apply(edits));
         assertEquals("one", Files.readString(first)); assertEquals("external", Files.readString(second));
-    }
-    @Test public void folderSearchFiltersFilesAndUsesUnsavedBuffer() throws Exception {
-        Path root = files.getRoot().toPath(), file = Files.writeString(files.newFile("code.asm").toPath(), "disk");
-        Files.writeString(files.newFile("skip.txt").toPath(), "skip");
-        REditor editor = editor(""); runOnEdt(() -> { editor.openFile(file); editor.textPane().setText("unsaved"); });
-        List<SearchWorkspace.Snapshot> snapshots = SearchWorkspace.folder(root, "*.asm", "", onEdt(() -> SearchWorkspace.open(List.of(editor))));
-        assertEquals(1, snapshots.size()); assertEquals("unsaved", snapshots.get(0).text);
     }
     @Test public void renameUsesSemanticScopesAndLeavesCommentsAndShadowedNamesAlone() throws Exception {
         String source = "name name name comment";

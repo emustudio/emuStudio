@@ -1,346 +1,516 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
-SPDX-License-Identifier: GPL-3.0-or-later */
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.compiler.SourceToken;
 import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.Annotations;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class SourceAddressMapTest {
-    @Rule public TemporaryFolder files = new TemporaryFolder();
+    @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
-    public void sourceChangedAfterInputCaptureCannotBeBlessedByCompileFinish() throws Exception {
-        String rootText = "include \"defs.asm\"\nnop\n";
-        String includedText = "VALUE equ 42\n";
-        Path root = source("main.asm", rootText);
-        Path included = source("defs.asm", includedText);
-        Compiler compiler = compiler(Map.of(rootText, List.of(include(rootText, "defs.asm")), includedText, List.of(definition(includedText, "VALUE"))));
-        Map<Path, String> inputs = SourceAddressMap.captureInputs(compiler, root);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, root, 4, 2, 0);
+    public void exactMappingUsesCpuVisibleAddresses() throws Exception {
+        Path source = source("program.asm", "NOP\nHALT\n");
+        SourceCodeAnnotation banked = annotation(source, 1, 0);
+        SourceCodeAnnotation common = annotation(source, 2, 0);
+        MemoryContext<Byte> memory = memory(8, 2, 4, 1, Map.of(1, Set.of(banked), 6, Set.of(common)));
 
-        Files.writeString(root, "nop\ninclude \"defs.asm\"\n"); // Old line 2 now names another source construct.
-        assertThrows(IOException.class, () -> SourceAddressMap.capture(compiler, memory, null, inputs));
-        Files.writeString(root, rootText);
-        Files.writeString(included, "VALUE equ 99\n"); // Constants affect emitted code without their own address map.
-        assertThrows(IOException.class, () -> SourceAddressMap.capture(compiler, memory, null, inputs));
-    }
+        SourceAddressMap map = capture(compiler(), memory,
+                Map.of(source, "NOP\nHALT\n"));
 
-    @Test
-    public void includeClosureIsImmutableCycleSafeAndRetainsUnmappedDeclarations() throws Exception {
-        String rootText = "include \"a.asm\"\nentry: nop\n";
-        String aText = "include \"b.asm\"\nVALUE equ 42\n";
-        String bText = "include \"a.asm\"\nOTHER equ 7\n";
-        Path root = source("main.asm", rootText);
-        Path a = source("a.asm", aText);
-        Path b = source("b.asm", bText);
-        Compiler compiler = compiler(Map.of(
-                rootText, List.of(include(rootText, "a.asm"), definition(rootText, "entry:")),
-                aText, List.of(include(aText, "b.asm"), definition(aText, "VALUE")),
-                bText, List.of(include(bText, "a.asm"), definition(bText, "OTHER"))));
-        Map<Path, String> inputs = SourceAddressMap.captureInputs(compiler, root.getParent().resolve("./main.asm"));
-        assertEquals(Map.of(root, rootText, a, aText, b, bText), inputs);
-        assertThrows(UnsupportedOperationException.class, () -> inputs.put(root, "changed"));
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, root, 4, 2, 7);
-
-        SourceAddressMap map = SourceAddressMap.capture(compiler, memory, null, inputs);
-        Map<String, SourceAddressMap.Symbol> symbols = map.symbols().stream()
-                .collect(Collectors.toMap(symbol -> symbol.name, symbol -> symbol));
-        assertEquals(4, symbols.get("entry").location.get().address);
-        assertEquals(a.toString(), symbols.get("VALUE").position.fileName);
-        assertFalse(symbols.get("VALUE").location.isPresent());
-        assertTrue(symbols.get("VALUE").sourceOnly);
-        assertFalse(symbols.get("entry").sourceOnly);
-        assertEquals(b.toString(), symbols.get("OTHER").position.fileName);
-        assertFalse(symbols.get("OTHER").location.isPresent());
-        assertTrue(map.matches(a, aText));
+        SourceAddressMap.Location first = map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow();
+        assertEquals(1, first.address);
+        assertEquals(1, map.sourceAt(1).orElseThrow().position.line);
+        assertEquals(2, map.sourceAt(6).orElseThrow().position.line);
+        assertTrue(map.sourceAt(2).isEmpty());
+        assertTrue(map.sourceAt(1).isPresent());
     }
 
     @Test
-    public void sourceAnnotationsOutsideCapturedInputClosureRejectTheWholeSnapshot() throws Exception {
-        Path root = source("main.asm", "nop\n");
-        Path unknown = source("unseen.asm", "nop\n");
-        Map<Path, String> inputs = SourceAddressMap.captureInputs(null, root);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, root, 4, 1, 0);
-        annotate(memory, unknown, 8, 1, 0);
+    public void pointCompilerMetadataDoesNotInventInstructionCoverage() throws Exception {
+        Path source = source("program.asm", "LD A,1\nDB 2\n");
+        Compiler compiler = compiler("LD A,1\nDB 2\n", List.of(
+                new SourceToken(Token.RESERVED, 0, "LD", null, null, null)));
+        MemoryContext<Byte> memory = memory(8, 1, 8, 0,
+                Map.of(0, Set.of(annotation(source, 1, 0)), 2, Set.of(annotation(source, 2, 0))));
 
-        assertThrows(IOException.class, () -> SourceAddressMap.capture(null, memory, null, inputs));
+        SourceAddressMap map = capture(compiler, memory, Map.of(source, "LD A,1\nDB 2\n"));
+
+        assertTrue(map.sourceAt(0).orElseThrow().instruction);
+        assertTrue(map.sourceAt(1).isEmpty());
+        assertEquals(2, map.sourceAt(2).orElseThrow().position.line);
+        assertFalse(map.sourceAt(2).orElseThrow().instruction);
+        assertTrue(map.sourceAt(3).isEmpty());
     }
 
     @Test
-    public void editorMatchesNormalizeCrLfButCompileInputValidationRetainsExactText() throws Exception {
-        Path source = source("windows.asm", "nop\r\ninr a\r\n");
-        Map<Path, String> inputs = SourceAddressMap.captureInputs(null, source);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 4, 2, 0);
-        SourceAddressMap map = SourceAddressMap.capture(null, memory, null, inputs);
+    public void changedAnnotationInvalidatesPreviouslyCapturedAddress() throws Exception {
+        Path source = source("program.asm", "NOP\n");
+        Map<Integer, Set<SourceCodeAnnotation>> annotations = new HashMap<>();
+        annotations.put(0, Set.of(annotation(source, 1, 0)));
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, annotations);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"));
+        assertTrue(map.sourceAt(0).isPresent());
 
-        assertTrue(map.matches(source, "nop\ninr a\n"));
-        assertFalse(map.matches(source, "nop\ninr b\n"));
-        Files.writeString(source, "nop\ninr a\n");
-        assertThrows(IOException.class, () -> SourceAddressMap.capture(null, memory, null, inputs));
+        // A later compilation can publish new annotation objects for the same positions.
+        annotations.put(0, Set.of(annotation(source, 1, 0)));
+
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
     }
 
     @Test
-    public void capturesCompileBankAndNormalizesCommonMemoryWithoutChangingSelection() throws Exception {
-        Path source = source("main.asm", "nop\nnop\n");
-        DebugMemory memory = new DebugMemory(32, 2, 16);
-        memory.selected = 1;
-        annotate(memory, source, 2, 1, 0);
-        annotate(memory, source, 20, 2, 0);
-        SourceAddressMap map = capture(null, memory, null, source);
+    public void notifiedMemoryChangeInvalidatesCapturedLocations() throws Exception {
+        Path source = source("program.asm", "NOP\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"));
 
-        assertEquals(1, memory.selected);
-        memory.selected = 0;
-        assertEquals(1, map.addressOf(at(source, 1, 0)).get().bank);
-        assertEquals(0, map.addressOf(at(source, 2, 0)).get().bank);
-        assertFalse(map.sourceAt(2, 0).isPresent());
-        assertEquals(2, map.sourceAt(2, 1).get().address);
-        assertEquals(0, map.sourceAt(20, 1).get().bank);
-        assertEquals(0, map.sourceAt(20, 0).get().bank);
-        assertFalse(map.sourceAt(2, -1).isPresent());
-        assertFalse(map.sourceAt(2, 2).isPresent());
-        assertEquals(0, memory.selected);
+        when(memory.getSize()).thenReturn(8);
+        map.programIndex().memoryChanged();
+
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
     }
 
     @Test
-    public void separateIncludePathsWithSameFilenameKeepTheirMappingsAndTextSnapshots() throws Exception {
-        Path first = files.newFolder("first").toPath().resolve("code.asm");
-        Path second = files.newFolder("second").toPath().resolve("code.asm");
-        Files.writeString(first, "nop\n");
-        Files.writeString(second, "inr a\n");
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, first, 2, 1, 0);
-        annotate(memory, second, 4, 1, 0);
-        SourceAddressMap map = capture(null, memory, null, first, second);
+    public void sparseSourceCaptureUsesAddressCapacityInsteadOfLoadedOccupancy() throws Exception {
+        Path source = source("sparse.asm", "HALT\n");
+        int address = Integer.MAX_VALUE - 1;
+        MemoryContext<Byte> memory = memory(Integer.MAX_VALUE, 1, 0, 0,
+                Map.of(address, Set.of(annotation(source, 1, 0))));
+        when(memory.getSize()).thenReturn(0);
 
-        assertEquals(2, map.addressOf(at(first, 1, 0)).get().address);
-        assertEquals(4, map.addressOf(at(second, 1, 0)).get().address);
-        assertTrue(map.matches(first.getParent().resolve("../first/code.asm"), "nop\n"));
-        assertTrue(map.matches(second, "inr a\n"));
-        assertFalse(map.matches(second, "inr b\n"));
-        Files.writeString(second, "inr b\n"); // Saving an edit must not make the old source match.
-        assertFalse(map.matches(second, Files.readString(second)));
-        assertFalse(map.matches(files.getRoot().toPath().resolve("uncompiled.asm"), "nop\n"));
+        ProgramIndex index = ProgramIndex.create("sparse", Integer.MAX_VALUE);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "HALT\n"), index);
+
+        assertEquals(Integer.MAX_VALUE, map.programIndex().snapshot().layout().addressSpaceSize());
+        assertEquals(address, map.sourceAt(address).orElseThrow().address);
+        when(memory.getSize()).thenReturn(1);
+        assertEquals(address, map.sourceAt(address).orElseThrow().address);
+        verify(memory, never()).read(anyInt());
     }
 
     @Test
-    public void multipleAddressesOnOneSourceLineAreNotSilentlyResolved() throws Exception {
-        String text = "entry: nop\nnop\n";
-        Path source = source("ambiguous.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 0, 1, 7);
-        annotate(memory, source, 3, 1, 7);
-        annotate(memory, source, 4, 2, 0);
-        Compiler compiler = compiler(text, definition(text, "entry:"));
-        SourceAddressMap map = capture(compiler, memory, null, source);
+    public void multipleAddressesOnOneSourceLineHaveNoUniqueForwardMapping() throws Exception {
+        Path source = source("program.asm", "DB 1,2\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0,
+                Map.of(0, Set.of(annotation(source, 1, 3)), 1, Set.of(annotation(source, 1, 5))));
 
-        assertFalse(map.addressOf(at(source, 1, 0)).isPresent());
-        assertFalse(map.symbols().get(0).location.isPresent());
-        assertEquals(0, map.sourceAt(0, 0).get().address);
-        assertEquals(3, map.sourceAt(3, 0).get().address);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "DB 1,2\n"));
+
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
+        assertEquals(3, map.sourceAt(0).orElseThrow().position.column);
+        assertEquals(5, map.sourceAt(1).orElseThrow().position.column);
     }
 
     @Test
-    public void removedAndReplacedAnnotationObjectsInvalidateCapturedMappings() throws Exception {
-        String text = "entry: nop\n";
-        Path source = source("stale.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 4, 1, 7);
-        SourceAddressMap map = capture(compiler(text, definition(text, "entry:")), memory, null, source);
-        assertTrue(map.symbols().get(0).location.isPresent());
+    public void multipleAnnotationsAtOneAddressRemainIndexedButNavigationRequiresUniqueSource() throws Exception {
+        Path source = source("program.asm", "NOP\nHALT\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0,
+                Map.of(0, Set.of(annotation(source, 1, 0), annotation(source, 2, 0))));
 
-        memory.annotations.removeAll(7, 4);
-        assertFalse(map.sourceAt(4, 0).isPresent());
-        assertFalse(map.addressOf(at(source, 1, 0)).isPresent());
-        assertFalse(map.symbols().get(0).location.isPresent());
-        annotate(memory, source, 4, 1, 7); // Equal data is a new compiler provenance, not the old mapping.
-        assertFalse(map.addressOf(at(source, 1, 0)).isPresent());
-        assertTrue(capture(null, memory, null, source).addressOf(at(source, 1, 0)).isPresent());
+        SourceAddressMap map = capture(compiler(), memory,
+                Map.of(source, "NOP\nHALT\n"));
+
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertEquals(0, map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow().address);
+        assertEquals(0, map.addressOf(SourceCodePosition.of(2, 0, source.toString())).orElseThrow().address);
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        map.programIndex().snapshot().forEachMappingAt(0, mappings::add);
+        assertEquals(2, mappings.size());
     }
 
     @Test
-    public void symbolsMapSameLineAndStandaloneLabelsButDoNotGuessAcrossDirectives() throws Exception {
-        String text = "same: nop\nstand:\n; comment\n  mvi a, 1\nbeforeOrg:\norg 20\nnop\nVALUE equ 42\nmac macro\nendm\n";
-        Path source = source("symbols.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 0, 1, 6);
-        annotate(memory, source, 1, 4, 2);
-        annotate(memory, source, 20, 7, 0);
-        Compiler compiler = compiler(text,
-                definition(text, "same:"), token(text, "nop", Token.RESERVED),
-                definition(text, "stand:"), token(text, "; comment", Token.COMMENT),
-                token(text, "mvi", Token.RESERVED), definition(text, "beforeOrg:"),
-                token(text, "org", Token.PREPROCESSOR), definition(text, "VALUE"),
-                definition(text, "mac"));
-        SourceAddressMap map = capture(compiler, memory, null, source);
-        Map<String, SourceAddressMap.Symbol> symbols = map.symbols().stream()
-                .collect(Collectors.toMap(symbol -> symbol.name, symbol -> symbol));
+    public void capturedSourceOffsetsUseUtf16AcrossCrLfUnicodeAndTabs() throws Exception {
+        String text = ";😀\r\n\t\"😀\" NOP\r\n";
+        Path source = source("unicode.asm", text);
+        int opcodeOffset = text.indexOf("NOP");
+        Compiler compiler = compiler(text, List.of(
+                new SourceToken(Token.RESERVED, opcodeOffset, "NOP", null, null, null)));
+        // ANTLR compiler column counts code points; the supplementary character occupies one column.
+        MemoryContext<Byte> memory = memory(8, 1, 8, 0,
+                Map.of(0, Set.of(annotation(source, 2, 5))));
 
-        assertEquals(0, symbols.get("same").location.get().address);
-        assertEquals(1, symbols.get("stand").location.get().address);
-        assertEquals(1, map.addressOf(at(source, 2, 0)).get().address);
-        assertFalse(symbols.get("beforeOrg").location.isPresent());
-        assertFalse(symbols.get("beforeOrg").sourceOnly);
-        assertTrue(symbols.get("beforeOrg").toString().contains("address unavailable"));
-        assertFalse(symbols.get("VALUE").location.isPresent());
-        assertFalse(symbols.get("mac").location.isPresent());
-        assertFalse(map.addressOf(at(source, 5, 0)).isPresent());
-        assertTrue(symbols.get("stand").toString().contains("symbols.asm:2"));
-        assertTrue(symbols.get("VALUE").toString().contains("source only"));
-        assertTrue(symbols.get("VALUE").sourceOnly);
+        SourceAddressMap map = capture(compiler, memory, Map.of(source, text));
+
+        assertEquals(6, map.sourceAt(0).orElseThrow().position.column);
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        map.programIndex().snapshot().forEachMappingAt(0, mappings::add);
+        ProgramIndex.SourceSpan span = mappings.get(0).source();
+        assertEquals(source.toUri().toString(), span.fileId);
+        assertEquals(opcodeOffset, span.startOffset);
+        assertEquals(opcodeOffset + 3, span.endOffset);
+        assertTrue(map.diagnostics().isEmpty());
     }
 
     @Test
-    public void operandBytesUseCapturedInstructionStartAndDataMappingsStayExact() throws Exception {
-        String text = "lxi h, 1234h\ndb 00h, 00h\n";
-        Path source = source("operands.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 4, 1, 0);
-        annotate(memory, source, 7, 2, 0);
-        Compiler compiler = compiler(text, token(text, "lxi", Token.RESERVED), token(text, "db", Token.PREPROCESSOR));
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.disassemble(4)).thenReturn(new DisassembledInstruction(4, "lxi h, 1234h", "21 34 12"));
-        when(disassembler.getNextInstructionPosition(4)).thenReturn(7);
-        SourceAddressMap map = capture(compiler, memory, disassembler, source);
+    public void explicitUtf16AndCodePointConventionsResolveDifferentSupplementaryOffsets() throws Exception {
+        String text = "😀AB\n";
+        Path source = source("column-units.asm", text);
+        List<Token> tokens = List.of(new SourceToken(Token.RESERVED, 2, "A", null, null, null),
+                new SourceToken(Token.RESERVED, 3, "B", null, null, null));
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 2))));
+        Compiler utf16 = compiler(text, tokens);
+        when(utf16.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UTF16);
 
-        assertEquals(4, map.sourceAt(5, 0).get().address);
-        assertEquals(4, map.sourceAt(6, 0).get().address);
-        assertEquals(1, map.sourceAt(6, 0).get().position.line);
-        assertEquals(7, map.sourceAt(7, 0).get().address);
-        assertFalse(map.sourceAt(8, 0).isPresent());
-        verify(disassembler, never()).disassemble(5);
-        verify(disassembler, never()).disassemble(6);
-        verify(disassembler, never()).disassemble(7);
-        verify(disassembler, never()).getNextInstructionPosition(5);
-        verify(disassembler, never()).getNextInstructionPosition(6);
+        SourceAddressMap utf16Map = capture(utf16, memory, Map.of(source, text));
+        SourceAddressMap codePointMap = capture(compiler(text, tokens), memory, Map.of(source, text));
+
+        assertEquals(2, utf16Map.sourceAt(0).orElseThrow().position.column);
+        assertEquals(3, codePointMap.sourceAt(0).orElseThrow().position.column);
+        assertTrue(utf16Map.diagnostics().isEmpty());
+        assertTrue(codePointMap.diagnostics().isEmpty());
     }
 
     @Test
-    public void instructionSpanStopsAtNextMappingEvenWhenThatMappingIsAmbiguous() throws Exception {
-        String text = "lxi h, 1234h\nnop\nnop\n";
-        Path source = source("overlap.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 4, 1, 0);
-        annotate(memory, source, 6, 2, 0);
-        annotate(memory, source, 6, 3, 0);
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.disassemble(4)).thenReturn(new DisassembledInstruction(4, "lxi h, 1234h", "21 34 12"));
-        when(disassembler.getNextInstructionPosition(4)).thenReturn(7);
-        SourceAddressMap map = capture(compiler(text, token(text, "lxi", Token.RESERVED)), memory, disassembler, source);
+    public void unknownConventionExcludesBindingsButPreservesSourceOnlySymbolsAndUserMetadata() throws Exception {
+        String text = "value EQU 1\n";
+        Path source = source("unknown-units.asm", text);
+        Compiler compiler = compiler(text, List.of(
+                new SourceToken(Token.SYMBOL_DEFINITION, 0, "value", "value", null, null)));
+        when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UNKNOWN);
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 6))));
+        ProgramIndex index = ProgramIndex.create("unknown-units", 4);
+        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
+            update.putAnnotation(99, 1, new ProgramIndex.Range(2, 3), ProgramIndex.Kinds.LABEL, "user");
+            update.commit();
+        }
 
-        assertEquals(4, map.sourceAt(5, 0).get().address);
-        assertFalse(map.sourceAt(6, 0).isPresent());
-    }
+        SourceAddressMap map = capture(compiler, memory, Map.of(source, text), index);
 
-    @Test
-    public void decodingFailureAndUnsupportedSemanticAnalysisKeepOnlyExactMappings() throws Exception {
-        String text = "nop\n";
-        Path source = source("unknown.asm", text);
-        DebugMemory memory = new DebugMemory(32, 1, 0);
-        annotate(memory, source, 4, 1, 0);
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.disassemble(4)).thenThrow(new InvalidInstructionException());
-        SourceAddressMap map = capture(compiler(text, token(text, "nop", Token.RESERVED)), memory, disassembler, source);
-        assertTrue(map.sourceAt(4, 0).isPresent());
-        assertFalse(map.sourceAt(5, 0).isPresent());
-
-        Compiler unsupported = mock(Compiler.class);
-        LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
-        when(unsupported.createLexer()).thenReturn(lexer);
-        when(lexer.analyze(text)).thenThrow(new UnsupportedOperationException());
-        SourceAddressMap exact = capture(unsupported, memory, disassembler, source);
-        assertTrue(exact.addressOf(at(source, 1, 0)).isPresent());
-        assertTrue(exact.symbols().isEmpty());
-    }
-
-    @Test
-    public void resizedMemoryRejectsTheOldAddressMap() throws Exception {
-        Path source = source("resize.asm", "nop\n");
-        MemoryContext<?> memory = mock(MemoryContext.class);
-        Annotations annotations = new Annotations();
-        annotations.add(4, new SourceCodeAnnotation(7, at(source, 1, 0)));
-        when(memory.annotations()).thenReturn(annotations);
-        when(memory.getSize()).thenReturn(32);
-        when(memory.getBanksCount()).thenReturn(1);
-        SourceAddressMap map = capture(null, memory, null, source);
-        assertTrue(map.sourceAt(4, 0).isPresent());
-        when(memory.getSize()).thenReturn(64);
-        assertFalse(map.sourceAt(4, 0).isPresent());
-        assertFalse(map.addressOf(at(source, 1, 0)).isPresent());
-        assertFalse(SourceAddressMap.empty().sourceAt(4, 0).isPresent());
-    }
-
-    private Path source(String name, String text) throws Exception {
-        Path path = files.getRoot().toPath().resolve(name);
-        Files.writeString(path, text);
-        return path;
-    }
-
-    private SourceCodePosition at(Path file, int line, int column) {
-        return SourceCodePosition.of(line, column, file.toString());
-    }
-
-    private void annotate(DebugMemory memory, Path file, int address, int line, int column) {
-        memory.annotations.add(address, new SourceCodeAnnotation(7, at(file, line, column)));
-    }
-
-    private Compiler compiler(String text, Token... tokens) {
-        return compiler(Map.of(text, List.of(tokens)));
-    }
-
-    private Compiler compiler(Map<String, List<Token>> sources) {
-        Compiler compiler = mock(Compiler.class);
-        when(compiler.createLexer()).thenAnswer(call -> {
-            LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
-            when(lexer.analyze(anyString())).thenAnswer(analysis -> sources.getOrDefault(analysis.getArgument(0), List.of()));
-            return lexer;
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 6, source.toString())).isEmpty());
+        assertEquals(1, map.diagnostics().size());
+        assertTrue(map.diagnostics().get(0).contains("does not declare a source column convention"));
+        assertEquals("value", map.symbols().get(0).name);
+        assertTrue(map.symbols().get(0).sourceOnly);
+        List<ProgramIndex.Annotation> labels = new ArrayList<>();
+        index.snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) labels.add(a);
         });
+        assertEquals(1, labels.size());
+        SourceAddressMap noCompiler = capture(null, memory, Map.of(source, text), index);
+        assertTrue(noCompiler.sourceAt(0).isEmpty());
+        assertTrue(noCompiler.diagnostics().get(0).contains("does not declare"));
+    }
+
+    @Test
+    public void unsupportedCoordinatesAndEofHaveDiagnosticsInsteadOfClampedBindings() throws Exception {
+        String text = "NOP\r\n";
+        Path source = source("invalid.asm", text);
+        MemoryContext<Byte> memory = memory(8, 1, 8, 0, Map.of(
+                0, Set.of(annotation(source, 1, 0)),
+                1, Set.of(annotation(source, 1, 3)),
+                2, Set.of(annotation(source, 2, 0)),
+                3, Set.of(annotation(source, 0, 0)),
+                4, Set.of(annotation(source, 1, Integer.MAX_VALUE))));
+
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, text));
+
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        for (int address = 0; address < 5; address++)
+            map.programIndex().snapshot().forEachMappingAt(address, mappings::add);
+        assertEquals(1, mappings.size());
+        assertEquals(0, mappings.get(0).source().startOffset);
+        assertEquals(1, mappings.get(0).source().endOffset);
+        assertEquals(4, map.diagnostics().size());
+        assertTrue(map.diagnostics().get(0).contains("EOF has no extent"));
+    }
+
+    @Test
+    public void memoryRevisionMakesBindingsHistoricalWithoutErasingProvenance() throws Exception {
+        Path source = source("history.asm", "NOP\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        ProgramIndex index = ProgramIndex.create("image", 4);
+        SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
+        ProgramIndex.Snapshot old = index.snapshot();
+
+        index.memoryChanged();
+
+        assertTrue(map.sourceAt(0).isEmpty());
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        old.forEachMappingAt(0, mappings::add);
+        assertEquals(1, mappings.size());
+        assertEquals(old.memoryRevision(), mappings.get(0).memoryRevision());
+        assertNotEquals(index.snapshot().memoryRevision(), mappings.get(0).memoryRevision());
+    }
+
+    @Test
+    public void refreshingSourceOwnerPreservesOtherOwnersAndRejectsOldSourceRevision() throws Exception {
+        Path source = source("recompile.asm", "NOP\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        ProgramIndex index = ProgramIndex.create("image", 4);
+        try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
+            update.putMapping(99, 1, new ProgramIndex.Range(3, 4),
+                    new ProgramIndex.SourceSpan("other:source", 0, 0, 1));
+            update.putAnnotation(99, 1, new ProgramIndex.Range(2, 3), ProgramIndex.Kinds.LABEL, "user");
+            assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
+        }
+        SourceAddressMap first = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
+        List<ProgramIndex.Mapping> previous = new ArrayList<>();
+        index.snapshot().forEachMappingAt(0, previous::add);
+
+        SourceAddressMap second = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
+
+        assertTrue(first.sourceAt(0).isEmpty());
+        assertTrue(second.sourceAt(0).isPresent());
+        List<ProgramIndex.Mapping> stale = new ArrayList<>();
+        index.snapshot().forEachMappingOverlappingSource(previous.get(0).source(), stale::add);
+        assertTrue(stale.isEmpty());
+        List<ProgramIndex.Mapping> other = new ArrayList<>();
+        index.snapshot().forEachMappingAt(3, other::add);
+        assertEquals(99, other.get(0).ownerId());
+        List<ProgramIndex.Annotation> annotations = new ArrayList<>();
+        index.snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("user")) annotations.add(a);
+        });
+        assertEquals(1, annotations.size());
+    }
+
+    @Test
+    public void sameBasenameInDifferentDirectoriesAndRepeatedSourceSpanStayDistinct() throws Exception {
+        Path left = temporary.newFolder("left").toPath().resolve("same.asm");
+        Path right = temporary.newFolder("right").toPath().resolve("same.asm");
+        Files.writeString(left, "NOP\n");
+        Files.writeString(right, "NOP\n");
+        MemoryContext<Byte> memory = memory(8, 1, 8, 0, Map.of(
+                0, Set.of(annotation(left, 1, 0)), 1, Set.of(annotation(left, 1, 0)),
+                2, Set.of(annotation(right, 1, 0))));
+        SourceAddressMap map = capture(compiler(), memory, Map.of(left, "NOP\n", right, "NOP\n"));
+
+        assertTrue(map.addressOf(SourceCodePosition.of(1, 0, left.toString())).isEmpty());
+        assertEquals(2, map.addressOf(SourceCodePosition.of(1, 0, right.toString())).orElseThrow().address);
+        List<ProgramIndex.Mapping> atLeft = new ArrayList<>();
+        map.programIndex().snapshot().forEachMappingAt(0, atLeft::add);
+        List<ProgramIndex.Mapping> repeated = new ArrayList<>();
+        map.programIndex().snapshot().forEachMappingOverlappingSource(atLeft.get(0).source(), repeated::add);
+        assertEquals(2, repeated.size());
+    }
+
+    @Test
+    public void memoryChangeDuringCaptureRejectsPublication() throws Exception {
+        Path source = source("race.asm", "NOP\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+        ProgramIndex index = ProgramIndex.create("image", 4);
+        when(memory.annotations().getAll(SourceCodeAnnotation.class)).thenAnswer(call -> {
+            index.memoryChanged();
+            return Map.of(0, Set.of(annotation(source, 1, 0)));
+        });
+
+        IOException failure = assertThrows(IOException.class,
+                () -> capture(compiler(), memory, Map.of(source, "NOP\n"), index));
+
+        assertTrue(failure.getMessage().contains("changed during capture"));
+        List<ProgramIndex.Mapping> mappings = new ArrayList<>();
+        for (int address = 0; address < 4; address++)
+            index.snapshot().forEachMappingAt(address, mappings::add);
+        assertTrue(mappings.isEmpty());
+    }
+
+    @Test
+    public void sourceMappingsDoNotRequireByteCells() throws Exception {
+        Path source = source("words.asm", "LOAD 1\n");
+        @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
+        MemoryContextAnnotations annotations = mock(MemoryContextAnnotations.class);
+        SourceCodeAnnotation annotation = annotation(source, 1, 0);
+        when(memory.getSize()).thenReturn(8);
+        when(memory.getCellTypeClass()).thenReturn(Integer.class);
+        when(memory.annotations()).thenReturn(annotations);
+        when(annotations.getAll(SourceCodeAnnotation.class)).thenReturn(Map.of(1, Set.of(annotation)));
+        when(annotations.get(1, SourceCodeAnnotation.class)).thenReturn(Set.of(annotation));
+        ProgramIndex index = ProgramIndex.create("words", 8);
+
+        SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT);
+
+        assertEquals(1, map.sourceAt(1).orElseThrow().address);
+        verify(memory, never()).read(anyInt());
+        verify(memory, never()).read(anyInt());
+    }
+
+    @Test
+    public void staleCompilerInputIsRejectedDuringCapture() throws Exception {
+        Path source = source("program.asm", "HALT\n");
+
+        IOException failure = assertThrows(IOException.class,
+                () -> capture(null, null, Map.of(source, "NOP\n")));
+
+        assertTrue(failure.getMessage().contains("Source changed during compilation"));
+    }
+
+    @Test
+    public void annotationFromUncapturedInputIsRejected() throws Exception {
+        Path source = source("program.asm", "NOP\n");
+        Path included = source("include.asm", "HALT\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0,
+                Map.of(0, Set.of(annotation(included, 1, 0))));
+
+        IOException failure = assertThrows(IOException.class,
+                () -> capture(null, memory, Map.of(source, "NOP\n")));
+
+        assertTrue(failure.getMessage().contains("Source was not captured before compilation"));
+    }
+
+    @Test
+    public void editorLineEndingNormalizationDoesNotHideExternalSourceChanges() throws Exception {
+        Path source = source("program.asm", "NOP\r\nHALT\r\n");
+        SourceAddressMap map = capture(null, null,
+                Map.of(source, "NOP\r\nHALT\r\n"));
+        assertTrue(map.matches(source, "NOP\nHALT\n"));
+        assertTrue(map.inputsUnchanged());
+
+        Files.writeString(source, "HALT\r\n");
+
+        assertFalse(map.inputsUnchanged());
+        assertFalse(map.matches(source, "HALT\n"));
+        assertTrue(map.matches(source, "NOP\nHALT\n"));
+    }
+
+    @Test
+    public void includeCaptureResolvesRelativeFilesAndStopsIncludeCycles() throws Exception {
+        Path root = source("root.asm", "include child.asm\n");
+        Path child = source("child.asm", "include root.asm\n");
+        Compiler compiler = mock(Compiler.class);
+        LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
+        when(compiler.createLexer()).thenReturn(lexer);
+        when(lexer.analyze("include child.asm\n")).thenReturn(List.of(
+                new SourceToken(Token.INCLUDE_PATH, 8, "child.asm", null, null, null, "child.asm")));
+        when(lexer.analyze("include root.asm\n")).thenReturn(List.of(
+                new SourceToken(Token.INCLUDE_PATH, 8, "root.asm", null, null, null, "root.asm")));
+
+        SourceInputs inputs = SourceInputs.capture(compiler, root);
+        SourceAddressMap.capture(compiler, null, inputs, null);
+
+        assertEquals(List.of(root, child), List.copyOf(inputs.files().keySet()));
+        assertEquals("include child.asm\n", inputs.files().get(root).text);
+        assertEquals("include root.asm\n", inputs.files().get(child).text);
+        assertThrows(UnsupportedOperationException.class, () -> inputs.files().remove(root));
+        verify(lexer, times(1)).analyze("include child.asm\n");
+        verify(lexer, times(1)).analyze("include root.asm\n");
+    }
+
+    @Test
+    public void memoryWithoutProgramIndexIsRejected() throws Exception {
+        Path source = source("program.asm", "NOP\n");
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
+
+        assertThrows(IllegalArgumentException.class, () -> SourceAddressMap.capture(compiler(), memory, SourceInputs.of(null, Map.of(source, "NOP\n")), null));
+    }
+
+    @Test
+    public void touchedButIdenticalInputStaysUnchangedUntilContentDiffers() throws Exception {
+        Path source = source("program.asm", "NOP\n");
+        SourceAddressMap map = capture(null, null, Map.of(source, "NOP\n"));
+        FileTime later = FileTime.fromMillis(Files.getLastModifiedTime(source).toMillis() + 10_000);
+
+        Files.setLastModifiedTime(source, later);
+        assertTrue(map.inputsUnchanged());
+
+        Files.writeString(source, "RET\n");
+        Files.setLastModifiedTime(source, FileTime.fromMillis(later.toMillis() + 10_000));
+        assertFalse(map.inputsUnchanged());
+    }
+
+    @Test
+    public void labelOnPreviousLineMapsToInstructionButConstantRemainsSourceOnly() throws Exception {
+        String text = "entry:\nNOP\nvalue EQU 1\n";
+        Path source = source("program.asm", text);
+        Compiler compiler = compiler(text, List.of(
+                new SourceToken(Token.SYMBOL_DEFINITION, 0, "entry:", "entry", null, null),
+                new SourceToken(Token.RESERVED, 7, "NOP", null, null, null),
+                new SourceToken(Token.SYMBOL_DEFINITION, 11, "value", "value", null, null)));
+        MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 2, 0))));
+
+        SourceAddressMap map = capture(compiler, memory, Map.of(source, text));
+
+        assertEquals(0, map.addressOf(SourceCodePosition.of(1, 0, source.toString())).orElseThrow().address);
+        assertEquals(2, map.symbols().size());
+        SourceAddressMap.Symbol entry = map.symbols().get(0);
+        assertEquals("entry", entry.name);
+        assertEquals(0, entry.location.orElseThrow().address);
+        assertFalse(entry.sourceOnly);
+        SourceAddressMap.Symbol constant = map.symbols().get(1);
+        assertEquals("value", constant.name);
+        assertTrue(constant.location.isEmpty());
+        assertTrue(constant.sourceOnly);
+        List<ProgramIndex.Annotation> labels = new ArrayList<>();
+        map.programIndex().snapshot().forEachAnnotation(a -> {
+            if (a.kind().equals(ProgramIndex.Kinds.LABEL) && a.text().equals("entry")) labels.add(a);
+        });
+        assertEquals(1, labels.size());
+        assertEquals(0, labels.get(0).range().start);
+    }
+
+    private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts)
+            throws IOException {
+        ProgramIndex index = memory == null ? null : ProgramIndex.create("test", memory.getSize());
+        return capture(compiler, memory, texts, index);
+    }
+
+    private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts,
+                                            ProgramIndex index) throws IOException {
+        return SourceAddressMap.capture(compiler, memory, SourceInputs.of(compiler, texts), index);
+    }
+
+    private Path source(String name, String text) throws IOException {
+        Path file = temporary.newFile(name).toPath().toAbsolutePath().normalize();
+        Files.writeString(file, text);
+        return file;
+    }
+
+    private static SourceCodeAnnotation annotation(Path file, int line, int column) {
+        return new SourceCodeAnnotation(1, SourceCodePosition.of(line, column, file.toString()));
+    }
+
+    private static Compiler compiler() {
+        Compiler compiler = mock(Compiler.class);
+        when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.CODE_POINT);
         return compiler;
     }
 
-    private SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Disassembler disassembler,
-                                     Path... sources) throws Exception {
-        Map<Path, String> inputs = new LinkedHashMap<>();
-        for (Path source : sources) inputs.putAll(SourceAddressMap.captureInputs(compiler, source));
-        return SourceAddressMap.capture(compiler, memory, disassembler, inputs);
+    private static Compiler compiler(String text, List<Token> tokens) {
+        Compiler compiler = compiler();
+        LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
+        when(compiler.createLexer()).thenReturn(lexer);
+        when(lexer.analyze(text)).thenReturn(tokens);
+        return compiler;
     }
 
-    private Token include(String text, String file) {
-        return new SourceToken(Token.INCLUDE_PATH, text.indexOf('"'), '"' + file + '"', null, "", null, file);
-    }
-
-    private Token definition(String text, String value) {
-        return new SourceToken(Token.SYMBOL_DEFINITION, text.indexOf(value), value,
-                value.endsWith(":") ? value.substring(0, value.length() - 1) : value, "", "");
-    }
-
-    private Token token(String text, String value, int type) {
-        return new SourceToken(type, text.indexOf(value), value, null, null, null);
+    @SuppressWarnings("unchecked")
+    private static MemoryContext<Byte> memory(int size, int bankCount, int common, int selectedBank,
+                                               Map<Integer, Set<SourceCodeAnnotation>> contents) {
+        MemoryContext<Byte> memory = mock(MemoryContext.class);
+        MemoryContextAnnotations annotations = mock(MemoryContextAnnotations.class);
+        when(memory.getSize()).thenReturn(size);
+        when(memory.annotations()).thenReturn(annotations);
+        when(annotations.getAll(SourceCodeAnnotation.class)).thenReturn(contents);
+        when(annotations.get(anyInt(), eq(SourceCodeAnnotation.class))).thenAnswer(
+                call -> contents.getOrDefault(call.getArgument(0), Set.of()));
+        return memory;
     }
 }

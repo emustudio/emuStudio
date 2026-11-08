@@ -16,7 +16,7 @@ public class BreakpointAction extends AbstractAction {
 
     public BreakpointAction(Runnable showDialog) {
         super("Set breakpoint...", loadIcon(ICON_BREAKPOINTS));
-        putValue(SHORT_DESCRIPTION, "Set breakpoint / inspect address...");
+        putValue(SHORT_DESCRIPTION, "Set breakpoint...");
 
         this.showDialog = Objects.requireNonNull(showDialog);
     }

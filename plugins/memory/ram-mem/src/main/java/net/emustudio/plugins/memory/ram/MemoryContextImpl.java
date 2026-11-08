@@ -156,7 +156,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     }
 
     @Override
-    public RamMemory getSnapshot() {
-        return rwl.lockRead(() -> new RamMemory(labels.values(), memory, inputs));
+    public List<RamValue> getInputs() {
+        return rwl.lockRead(() -> List.copyOf(inputs));
     }
 }

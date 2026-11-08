@@ -158,9 +158,20 @@ end
 == Emulation control at the code level
 
 For interactive runs, `EmulationController` funnels every CPU operation through a
-single-threaded executor and synchronizes each state transition with a
-`CountDownLatch`, updating its view of `CPU.RunState` from a `CPUListener`
-callback. Automation instead attaches its own `CPUListener`, calls
+single scheduled worker. Commands still wait for CPU state-event acknowledgements
+with a `CountDownLatch`; the controller does not assume every CPU implementation
+delivers callbacks before its control methods return. CPU callbacks update
+`CPU.RunState` and release the wait; they never issue another CPU command.
+
+Timed stepping uses a fixed delay after each acknowledged step, leaving the worker
+free between steps. Pause, stop, reset, replacement timed runs, and close cancel
+the current timer. A generation check prevents a cancelled step that is already
+in flight from changing its replacement's timer. An in-flight CPU command finishes
+before the next queued command. Debugger mutation invalidation surrounds each
+machine command, rather than the idle interval between timed steps. Closing cancels
+timed work, drains accepted commands, and removes the controller's CPU listener.
+
+Automation instead attaches its own `CPUListener`, calls
 `cpu.execute()` directly and waits for a terminal run state before reporting the
 outcome.
 

@@ -7,6 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition.ColumnUnit;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -43,6 +44,11 @@ import java.util.Optional;
 )
 @SuppressWarnings("unused")
 public class AssemblerZ80 extends AbstractCompiler {
+    @Override
+    public ColumnUnit getSourcePositionColumnUnit() {
+        return ColumnUnit.CODE_POINT;
+    }
+
     private final static Logger LOGGER = LoggerFactory.getLogger(AssemblerZ80.class);
     private final static List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
             new FileExtension("asm", "Assembler source file"),

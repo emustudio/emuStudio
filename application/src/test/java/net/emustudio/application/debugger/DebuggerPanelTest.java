@@ -1,849 +1,922 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
-SPDX-License-Identifier: GPL-3.0-or-later */
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
-import java.awt.BorderLayout;
+import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import java.util.Optional;
+import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
-import org.mockito.ArgumentCaptor;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.*;
+import java.util.function.Consumer;
 
-public class DebuggerPanelTest extends AbstractSwingTest {
-    @org.junit.Rule public org.junit.rules.TemporaryFolder temporary = new org.junit.rules.TemporaryFolder();
-    @Test(timeout = 10000)
-    @SuppressWarnings("unchecked")
-    public void initialCaptureLeavesEdtResponsiveAndRestoresDisabledControls() throws Exception {
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
-        MemoryContext<Byte> memory = mock(MemoryContext.class);
-        when(memory.getCellTypeClass()).thenReturn(Byte.class);
-        when(memory.getSize()).thenReturn(8);
-        when(memory.getBanksCount()).thenReturn(1);
-        CountDownLatch started = new CountDownLatch(1), release = new CountDownLatch(1);
-        AtomicBoolean onEdt = new AtomicBoolean();
-        when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation -> {
-            if (release.getCount() > 0) {
-                onEdt.set(SwingUtilities.isEventDispatchThread());
-                started.countDown();
-                release.await();
-            }
-            return (byte) 0;
-        });
-        try (DebugSession session = new DebugSession(cpu, memory, null)) {
-            DebuggerPanel dialog = null;
-            try {
-                dialog = onEdt(() -> createPanel(session, mock(Dialogs.class)));
-                showInFrame(dialog);
-                runOnEdt(dialog::showMemory);
-                assertTrue(started.await(1, TimeUnit.SECONDS));
-                CountDownLatch edtAvailable = new CountDownLatch(1), restored = new CountDownLatch(1);
-                SwingUtilities.invokeLater(edtAvailable::countDown);
-                assertTrue(edtAvailable.await(1, TimeUnit.SECONDS));
-                assertFalse(onEdt.get());
-                JButton search = findButtonByTooltip(dialog, "Find");
-                JButton unsupported = findButtonByTooltip(dialog, "Add breakpoint");
-                JButton inspect = findButtonByTooltip(dialog.navigationToolbar(), "Back");
-                assertFalse(onEdt(search::isEnabled));
-                assertFalse(onEdt(unsupported::isEnabled));
-                assertFalse(onEdt(inspect::isEnabled));
-                runOnEdt(() -> search.addPropertyChangeListener("enabled", event -> {
-                    if (Boolean.TRUE.equals(event.getNewValue())) restored.countDown();
-                }));
-                release.countDown();
-                assertTrue(restored.await(2, TimeUnit.SECONDS));
-                assertTrue(onEdt(search::isEnabled));
-                assertFalse(onEdt(unsupported::isEnabled));
-                assertTrue(onEdt(inspect::isEnabled));
-                JTable table = findComponent(dialog, JTable.class, ignored -> true);
-                assertEquals(8, onEdt(table::getRowCount).intValue());
-            } finally {
-                release.countDown();
-                if (dialog != null) {
-                    DebuggerPanel closing = dialog;
-                    runOnEdt(closing::close);
-                }
-            }
-        }
-    }
-    @Test(timeout = 10000)
-    public void comparisonBaselineKeepsAnnotationsAndDisplaysCapturedValues() throws Exception {
-        try (Fixture f = new Fixture()) {
-            AnnotationIndex annotations = f.session.annotations();
-            annotations.put(new AnnotationIndex.Entry(0, 2, "counter", "Keep this label", true, "DATA"));
-            triggerButton(findButtonByTooltip(f.panel, "Capture baseline"));
-            awaitReady(f.panel);
-            assertSame(annotations, f.session.annotations());
-            assertEquals("counter", annotations.get(0, 2).label);
-            f.byteValue.set(7);
-            triggerButton(findButtonByTooltip(f.panel, "Compare baseline"));
-            awaitReady(f.panel);
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals("07", onEdt(() -> table.getValueAt(0, 1)));
-            f.byteValue.set(9);
-            assertEquals("07", onEdt(() -> table.getValueAt(0, 1)));
-            assertEquals(4, table.getColumnCount());
-            for (int col = 0; col < table.getColumnCount(); col++)
-                assertFalse(table.getColumnName(col).toLowerCase().contains("decode"));
-            triggerButton(findButtonByTooltip(f.panel, "Live memory"));
-            assertEquals("09", onEdt(() -> table.getValueAt(0, 1)));
-        }
-    }
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-    @Test(timeout = 10000)
-    public void invalidBreakpointKeepsDraftAndRefreshPreservesBreakpointIdentity() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JTextField at = findComponent(f.panel, JTextField.class,
-                    field -> "Address".equals(field.getAccessibleContext().getAccessibleName()));
-            setText(at, "invalid");
-            triggerButton(findButtonByTooltip(f.panel, "Add breakpoint"));
-            assertEquals("invalid", onEdt(at::getText));
-            verify(f.dialogs).showError(anyString(), eq("Debugger"));
-            assertTrue(f.session.rules.isEmpty());
-            setText(at, "0x0003");
-            triggerButton(findButtonByTooltip(f.panel, "Add breakpoint"));
-            assertEquals(1, f.session.rules.size());
-            JList<?> rules = findComponent(f.panel, JList.class,
-                    list -> "Breakpoints".equals(list.getAccessibleContext().getAccessibleName()));
-            assertEquals(0, onEdt(rules::getSelectedIndex).intValue());
-            f.session.rules.get(0).hits = 99;
-            f.refresh();
-            assertEquals(0, onEdt(rules::getSelectedIndex).intValue());
-            assertTrue(onEdt(() -> rules.getSelectedValue().toString()).contains("hits=99"));
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void annotationFilterAndWatchSelectionSurviveRefresh() throws Exception {
-        try (Fixture f = new Fixture()) {
-            AnnotationIndex annotations = f.session.annotations();
-            annotations.put(new AnnotationIndex.Entry(0, 1, "counter", "", false, "DATA"));
-            annotations.put(new AnnotationIndex.Entry(0, 2, "other", "", false, "DATA"));
-            JTextField filter = findComponent(f.panel, JTextField.class,
-                    field -> "Filter".equals(field.getAccessibleContext().getAccessibleName()));
-            setText(filter, "counter");
-            JList<?> rows = findComponent(f.panel, JList.class,
-                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
-            runOnEdt(() -> rows.setSelectedIndex(0));
-            f.session.watches.add("A");
-            f.refresh();
-            JList<?> watches = findComponent(f.panel.watchesPanel(), JList.class, ignored -> true);
-            runOnEdt(() -> watches.setSelectedIndex(0));
-            f.refresh();
-            assertEquals("counter", onEdt(filter::getText));
-            assertEquals(1, onEdt(() -> rows.getModel().getSize()).intValue());
-            assertEquals(0, onEdt(rows::getSelectedIndex).intValue());
-            assertEquals(0, onEdt(watches::getSelectedIndex).intValue());
-        }
-    }
-
-
-    @Test(timeout = 10000)
-    public void selectingAnnotationEditsItsAddress() throws Exception {
-        try (Fixture f = new Fixture()) {
-            AnnotationIndex annotations = f.session.annotations();
-            annotations.put(new AnnotationIndex.Entry(0, 3, "counter", "", false, "DATA"));
-            f.refresh();
-            JList<?> rows = findComponent(f.panel, JList.class,
-                    list -> "Annotations".equals(list.getAccessibleContext().getAccessibleName()));
-            runOnEdt(() -> rows.setSelectedIndex(0));
-            JTextField label = findComponent(f.panel, JTextField.class,
-                    field -> "Label".equals(field.getAccessibleContext().getAccessibleName()));
-            setText(label, "renamed");
-            // Stepping or browsing must not retarget an annotation draft.
-            runOnEdt(() -> f.panel.navigate(0, 0, false));
-            triggerButton(findButtonByTooltip(f.panel, "Save annotation"));
-            assertEquals("renamed", annotations.get(0, 3).label);
-            assertNull(annotations.get(0, 0));
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void automaticPcFollowPreservesSearchAndBankChangeClearsIt() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.byteValue.set(7);
-            f.selectiveValue.set(true);
-            JTextField value = findComponent(f.panel, JTextField.class,
-                    field -> "Search value".equals(field.getAccessibleContext().getAccessibleName()) && field.getColumns() == 12);
-            setText(value, "07");
-            triggerButton(findButtonByTooltip(f.panel, "Find"));
-            awaitReady(f.panel);
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals(1, onEdt(table::getRowCount).intValue());
-            f.stopped();
-            assertEquals(1, onEdt(table::getRowCount).intValue());
-            assertEquals("0003", onEdt(() -> table.getValueAt(0, 0)));
-            doReturn((byte) 9).when(f.session.memory).readBank(3, 1);
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.INSPECT_ONLY, 3, 1, false))));
-            assertEquals(8, onEdt(table::getRowCount).intValue());
-            assertEquals("09", onEdt(() -> table.getValueAt(3, 1)));
-            findLabel(f.panel, "All addresses");
-            assertEquals(0, f.session.memory.getSelectedBank());
-            assertThrows(AssertionError.class, () -> findComponent(f.panel.navigationToolbar(), JComboBox.class,
-                    field -> "Bank".equals(field.getAccessibleContext().getAccessibleName())));
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void currentProgramRebindsAnnotationImageWithoutReplacingComparisonBaseline() throws Exception {
-        java.nio.file.Path settings = temporary.getRoot().toPath().resolve("debugger");
-        try (Fixture f = new Fixture(settings)) {
-            MemoryAnalysis originalImage = f.session.image();
-            AnnotationIndex original = f.session.annotations();
-            original.put(new AnnotationIndex.Entry(0, 2, "old program", "", false, "CODE"));
-            f.byteValue.set(12);
-            triggerButton(findButtonByTooltip(f.panel.navigationToolbar(), "Take snapshot"));
-            awaitReady(f.panel);
-            assertEquals(12, f.session.image().value(0, 0));
-            assertNotSame(original, f.session.annotations());
-            assertTrue(f.session.annotations().entries().isEmpty());
-            assertEquals("old program", original.get(0, 2).label);
-            AnnotationIndex saved = new AnnotationIndex(originalImage);
-            saved.load(settings.resolveSibling("debugger." + originalImage.identity() + ".annotations"));
-            assertEquals("old program", saved.get(0, 2).label);
-            triggerButton(findButtonByTooltip(f.panel, "Compare baseline"));
-            awaitReady(f.panel);
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals(8, onEdt(table::getRowCount).intValue());
-            findLabel(f.panel, "8 changed bytes");
-        }
-    }
-
-    @Test(timeout = 10000)
-    @SuppressWarnings("unchecked")
-    public void interruptedInitialCaptureRecoversAfterPause() throws Exception {
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
-        MemoryContext<Byte> memory = mock(MemoryContext.class);
-        when(memory.getCellTypeClass()).thenReturn(Byte.class);
-        when(memory.getSize()).thenReturn(8);
-        when(memory.getBanksCount()).thenReturn(1);
-        CountDownLatch reading = new CountDownLatch(1), release = new CountDownLatch(1);
-        when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation -> {
-            if (release.getCount() > 0) { reading.countDown(); release.await(); }
-            return (byte) 3;
-        });
-        try (DebugSession session = new DebugSession(cpu, memory, null)) {
-            DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
-            try {
-                assertTrue(reading.await(1, TimeUnit.SECONDS));
-                ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-                verify(cpu, atLeastOnce()).addCPUListener(listeners.capture());
-                runOnEdt(() -> listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING)));
-                release.countDown();
-                runOnEdt(() -> listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK)));
-                awaitReady(panel);
-                runOnEdt(panel::showMemory);
-                JTable table = findComponent(panel, JTable.class, ignored -> true);
-                assertEquals(8, onEdt(table::getRowCount).intValue());
-                assertEquals("03", onEdt(() -> table.getValueAt(0, 1)));
-            } finally {
-                release.countDown();
-                runOnEdt(panel::close);
-            }
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void recordingControlMatchesSessionAcrossRunAndPause() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JToggleButton recording = findComponent(f.panel, JToggleButton.class,
-                    control -> "Record recent instructions".equals(control.getToolTipText()));
-            ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-            verify(f.cpu, atLeastOnce()).addCPUListener(listeners.capture());
-            listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING));
-            runOnEdt(() -> {});
-            assertFalse(onEdt(recording::isEnabled));
-            assertFalse(onEdt(recording::isSelected));
-            assertFalse(f.session.isRecording());
-            f.stopped();
-            assertTrue(onEdt(recording::isEnabled));
-            triggerButton(recording);
-            assertTrue(f.session.isRecording());
-            listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING));
-            runOnEdt(() -> {});
-            assertFalse(onEdt(recording::isEnabled));
-            assertTrue(onEdt(recording::isSelected));
-            f.stopped();
-            assertTrue(onEdt(recording::isEnabled));
-            assertTrue(onEdt(recording::isSelected));
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void wordMemoryRecordingControlsAndHistoryRecoverAfterRunAndPause() throws Exception {
-        CPU cpu = mock(CPU.class);
-        DebugCPU debug = mock(DebugCPU.class);
-        MemoryContext<Integer> memory = mock(MemoryContext.class);
-        doReturn(Integer.class).when(memory).getCellTypeClass();
-        when(memory.getSize()).thenReturn(16);
-        when(memory.getBanksCount()).thenReturn(1);
-        doReturn(memory).when(debug).memory();
-        when(debug.processor()).thenReturn("word CPU");
-        when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("PC", 32)));
-        when(cpu.getDebugger()).thenReturn(Optional.of(debug));
-        when(cpu.getAddressSpaceSize()).thenReturn(16);
-        try (DebugSession session = new DebugSession(cpu, memory, null)) {
-            DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
-            try {
-                JToggleButton recording = findToggleButtonByTooltip(panel, "Record recent instructions");
-                triggerButton(recording);
-                java.nio.file.Path file = temporary.getRoot().toPath().resolve("word.emutrace");
-                session.recordTo(file);
-                ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-                verify(cpu, atLeastOnce()).addCPUListener(listeners.capture());
-                listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_RUNNING));
-                runOnEdt(() -> {});
-                assertFalse(onEdt(recording::isEnabled));
-                session.afterInstruction(historyEvent(1, 0, 42, 4));
-                listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
-                runOnEdt(() -> {});
-                assertTrue(onEdt(recording::isEnabled));
-                assertEquals(1, onEdt(historyTable(panel)::getRowCount).intValue());
-                JButton fileRecording = findButtonByTooltip(panel, "Stop file recording");
-                assertTrue(onEdt(fileRecording::isEnabled));
-                triggerButton(fileRecording);
-                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-                while (session.recordingPath() != null && System.nanoTime() < deadline) Thread.sleep(10);
-                runOnEdt(() -> {});
-                assertNull(session.recordingPath());
-            } finally { runOnEdt(panel::close); }
-        }
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private DebuggerPanel createPanel(DebugSession session, Dialogs dialogs) {
-        EmuStudioGui gui = new EmuStudioGui();
-        DebugTableModel original = mock(DebugTableModel.class);
-        DebuggerColumn column = mock(DebuggerColumn.class);
-        when(column.getClassType()).thenReturn(String.class);
-        when(column.getDefaultWidth()).thenReturn(-1);
-        when(original.getColumnCount()).thenReturn(1);
-        when(original.getColumnName(0)).thenReturn("Instruction");
-        when(original.getColumnClass(0)).thenReturn((Class) String.class);
-        when(original.getColumnAt(0)).thenReturn(column);
-        when(original.getRowCount()).thenReturn(1);
-        when(original.getLocationAt(0)).thenReturn(0);
-        when(original.getValueAt(0, 0)).thenReturn("nop");
-        DebugTableImpl table = new DebugTableImpl(original);
-        JScrollPane scroll = gui.scrollPane(table);
-        JPanel view = new JPanel(new BorderLayout());
-        view.add(scroll);
-        return new DebuggerPanel(session, table, scroll, view, ignored -> {}, () -> {}, gui, dialogs);
-    }
-
-    private void awaitReady(DebuggerPanel panel) throws Exception {
-        JButton find = findButtonByTooltip(panel, "Find");
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-        while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-        assertTrue("Analysis should finish", onEdt(find::isEnabled));
-    }
-
-    @Test(timeout = 10000)
-    public void oneTableRetainsCapturedBytesSelectionAndInstructionAnnotationsAcrossModes() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            javax.swing.table.TableModel bytes = onEdt(table::getModel);
-            f.session.annotations().put(new AnnotationIndex.Entry(0, 0, "entry", "Start here", false, "CODE"));
-            f.byteValue.set(7);
-            triggerButton(findButtonByTooltip(f.panel, "Capture baseline"));
-            awaitReady(f.panel);
-            f.byteValue.set(9);
-            triggerButton(findButtonByTooltip(f.panel, "Compare baseline"));
-            awaitReady(f.panel);
-            runOnEdt(() -> table.setRowSelectionInterval(3, 3));
-            f.byteValue.set(11);
-
-            runOnEdt(f.panel::showInstructions);
-            assertSame(table, findComponent(f.panel, JTable.class, ignored -> true));
-            assertEquals(2, countTables(f.panel)); // Shared instruction/byte table plus independent History table.
-            assertEquals("bp", onEdt(() -> table.getColumnName(0)));
-            assertEquals("Instruction", onEdt(() -> table.getColumnName(1)));
-            assertEquals("nop", onEdt(() -> table.getValueAt(0, 1)));
-            assertEquals("entry", onEdt(() -> table.getValueAt(0, 2)));
-            assertEquals("Start here", onEdt(() -> table.getValueAt(0, 3)));
-            runOnEdt(() -> f.panel.navigate(3, 0, true));
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-
-            runOnEdt(f.panel::showMemory);
-            assertSame(table, findComponent(f.panel, JTable.class, ignored -> true));
-            assertSame(bytes, onEdt(table::getModel));
-            assertEquals(3, onEdt(table::getSelectedRow).intValue());
-            assertEquals("09", onEdt(() -> table.getValueAt(3, 1)));
-            assertEquals(2, countTables(f.panel)); // Shared instruction/byte table plus independent History table.
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void inspectOnlyReadsLiveMemoryAndNeverChangesBreakpoints() throws Exception {
-        java.nio.file.Path settings = temporary.getRoot().toPath().resolve("inspect-only.debugger");
-        try (Fixture f = new Fixture(settings)) {
-            DebugSession.Rule existing = new DebugSession.Rule("Keep", "WRITE", 2, 0, "", 1);
-            f.session.rules.add(existing);
-            f.session.save();
-            byte[] saved = java.nio.file.Files.readAllBytes(settings);
-            f.byteValue.set(7);
-            triggerButton(findButtonByTooltip(f.panel, "Capture baseline"));
-            awaitReady(f.panel);
-            f.byteValue.set(9);
-            triggerButton(findButtonByTooltip(f.panel, "Compare baseline"));
-            awaitReady(f.panel);
-            f.byteValue.set(11);
-            when(f.session.memory.getSize()).thenReturn(16);
-
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.INSPECT_ONLY, 12, 0, false))));
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertFalse(onEdt(f.panel::isInstructionView));
-            assertEquals(16, onEdt(table::getRowCount).intValue());
-            assertEquals(12, onEdt(table::getSelectedRow).intValue());
-            assertEquals("0B", onEdt(() -> table.getValueAt(12, 1)));
-            findLabel(f.panel, "All addresses");
-            assertEquals(List.of(existing), f.session.rules);
-            assertArrayEquals(saved, java.nio.file.Files.readAllBytes(settings));
-            verify(f.cpu, never()).setBreakpoint(anyInt());
-            verify(f.cpu, never()).unsetBreakpoint(anyInt());
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void breakpointButtonCyclesInPlaceAndPortableKeepPolicyPersists() throws Exception {
-        try (Fixture f = new Fixture()) {
-            runOnEdt(f.panel::showInstructions);
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals(BreakpointState.OFF, onEdt(() -> table.getValueAt(0, 0)));
-            for (BreakpointState expected : new BreakpointState[]{BreakpointState.ON, BreakpointState.KEEP_INSPECTION, BreakpointState.OFF}) {
-                runOnEdt(() -> {
-                    assertTrue(table.editCellAt(0, 0));
-                    ((AbstractButton) table.getEditorComponent()).doClick(0);
-                });
-                runOnEdt(() -> {});
-                assertTrue(onEdt(f.panel::isInstructionView));
-                assertEquals(expected, onEdt(() -> table.getValueAt(0, 0)));
-                if (expected == BreakpointState.KEEP_INSPECTION) {
-                    try (DebugSession loaded = new DebugSession(f.cpu, f.session.memory,
-                            temporary.getRoot().toPath().resolve("debugger"))) {
-                        assertEquals(BreakpointState.KEEP_INSPECTION, loaded.breakpointState(0));
+public class DebuggerPanelTest {
+    @Test
+    public void instructionViewAcceptsColumnsRenamedByWrapper() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                javax.swing.table.TableModel base = workspace.table.instructionModel();
+                javax.swing.table.TableModel wrapper = new javax.swing.table.AbstractTableModel() {
+                    @Override public int getRowCount() { return base.getRowCount(); }
+                    @Override public int getColumnCount() { return base.getColumnCount(); }
+                    @Override public String getColumnName(int column) {
+                        return column == 0 ? "renamed" : base.getColumnName(column);
                     }
+                    @Override public Object getValueAt(int row, int column) { return base.getValueAt(row, column); }
+                };
+                workspace.table.showInstructions(wrapper);
+                assertEquals("renamed", workspace.table.getColumnName(0));
+            });
+        }
+    }
+
+    @Test
+    public void newAnnotationUsesDialogInsteadOfInlineEditor() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container annotations = (Container) tabs.getSelectedComponent();
+                assertNull(findComponent(annotations, JButton.class, "Save annotation"));
+                assertFalse(button(annotations, "Edit selected annotation").isEnabled());
+                Timer timer = new Timer(100, event -> {
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (!(window instanceof JDialog) || !window.isShowing()
+                                || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                        ((Timer) event.getSource()).stop();
+                        try {
+                            JLabel label = component((Container) window, JLabel.class, "Label");
+                            ((JTextField) label.getLabelFor()).setText("entry");
+                            JLabel address = component((Container) window, JLabel.class, "Address");
+                            ((JTextField) address.getLabelFor()).setText("0x0001");
+                            JLabel end = component((Container) window, JLabel.class, "End address");
+                            ((JTextField) end.getLabelFor()).setText("0x0001");
+                            assertNull(findComponent((Container) window, JButton.class, "Cancel"));
+                            button((Container) window, "Save annotation").doClick(0);
+                        } catch (Throwable error) {
+                            failure.set(error);
+                            window.dispose();
+                        }
+                    }
+                });
+                timer.start();
+                button(annotations, "Annotate inspected address").doClick(0);
+                timer.stop();
+            });
+            if (failure.get() != null) throw new AssertionError(failure.get());
+            assertEquals("entry", workspace.session.annotations().get(0, 1).label);
+        }
+    }
+
+    @Test
+    public void escapeDiscardsAnnotationDraftWithoutConfirmation() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container annotations = (Container) tabs.getSelectedComponent();
+                Timer timer = new Timer(100, event -> {
+                    for (java.awt.Window window : java.awt.Window.getWindows()) {
+                        if (!(window instanceof JDialog) || !window.isShowing()
+                                || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                        ((Timer) event.getSource()).stop();
+                        try {
+                            JLabel label = component((Container) window, JLabel.class, "Label");
+                            ((JTextField) label.getLabelFor()).setText("discarded");
+                            JRootPane root = ((JDialog) window).getRootPane();
+                            KeyStroke escape = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0);
+                            Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).get(escape);
+                            root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                        } catch (Throwable error) {
+                            failure.set(error);
+                            window.dispose();
+                        }
+                    }
+                });
+                timer.start();
+                button(annotations, "Annotate inspected address").doClick(0);
+                timer.stop();
+                assertTrue(workspace.panel.confirmSaveAnnotations());
+            });
+            if (failure.get() != null) throw new AssertionError(failure.get());
+            assertNull(workspace.session.annotations().get(0, 0));
+        }
+    }
+
+    @Test
+    public void annotationEditorCreatesAndEditsOverlappingRangesIndependently() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8], new byte[8]}, 8, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Annotations"));
+                Container panel = (Container) tabs.getSelectedComponent();
+                editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
+                    annotationField(dialog, "Address").setText("0x0001");
+                    annotationField(dialog, "End address").setText("0x0004");
+                    annotationField(dialog, "Label").setText("first");
+                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
+                });
+                editAnnotationDialog(panel, "New annotation", "Annotate inspected address", dialog -> {
+                    annotationField(dialog, "Address").setText("0x0002");
+                    annotationField(dialog, "End address").setText("0x0005");
+                    annotationField(dialog, "Label").setText("second");
+                    ((JSpinner) component(dialog, JLabel.class, "Bank").getLabelFor()).setValue(1);
+                });
+                @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(panel, JList.class, "Annotations");
+                assertEquals(2, list.getModel().getSize());
+                int firstRow = list.getModel().getElementAt(0).label.equals("first") ? 0 : 1;
+                list.setSelectedIndex(firstRow);
+                editAnnotationDialog(panel, "Edit annotation", "Edit selected annotation", dialog -> {
+                    annotationField(dialog, "End address").setText("0x0006");
+                    annotationField(dialog, "Label").setText("updated");
+                });
+            });
+
+            List<AnnotationIndex.Entry> entries = workspace.session.annotations().entries();
+            assertEquals(2, entries.size());
+            AnnotationIndex.Entry updated = entries.stream().filter(entry -> entry.label.equals("updated")).findFirst().orElseThrow();
+            AnnotationIndex.Entry second = entries.stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
+            assertEquals(1, updated.bank);
+            assertEquals(1, updated.address);
+            assertEquals(7, updated.end);
+            assertEquals(1, second.bank);
+            assertEquals(2, second.address);
+            assertEquals(6, second.end);
+        }
+    }
+
+    private static JTextField annotationField(Container dialog, String name) {
+        return (JTextField) component(dialog, JLabel.class, name).getLabelFor();
+    }
+
+    private static void editAnnotationDialog(Container panel, String title, String buttonName, Consumer<Container> edit) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (java.awt.Window window : java.awt.Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !title.equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try {
+                    edit.accept((Container) window);
+                    button((Container) window, "Save annotation").doClick(0);
+                    if (window.isShowing()) throw new AssertionError("Annotation dialog did not close after save");
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    window.dispose();
                 }
             }
-            assertTrue(f.session.rules.isEmpty());
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-        }
+        });
+        timer.start();
+        try { button(panel, buttonName).doClick(0); }
+        finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation dialog", opened.get());
     }
 
-    @Test(timeout = 10000)
-    public void everyHitReplacesCapturedResultsAndOverridesPreviousHeldInspection() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            f.byteValue.set(7);
-            triggerButton(findButtonByTooltip(f.panel, "Capture baseline"));
-            awaitReady(f.panel);
-            f.byteValue.set(9);
-            triggerButton(findButtonByTooltip(f.panel, "Compare baseline"));
-            awaitReady(f.panel);
-            f.byteValue.set(11);
-            f.session.setBreakpointState(3, BreakpointState.KEEP_INSPECTION);
-            doReturn((byte) 13).when(f.session.memory).readBank(3, 1);
-            f.session.setBreakpointState(4, BreakpointState.ON);
-            runOnEdt(f.panel::showInstructions);
-            assertTrue(f.session.beforeInstruction(3, 1));
-            when(f.cpu.getInstructionLocation()).thenReturn(2);
-            f.stopped();
-            assertFalse(onEdt(f.panel::isInstructionView));
-            assertEquals(3, onEdt(table::getSelectedRow).intValue());
-            assertEquals("0D", onEdt(() -> table.getValueAt(3, 1)));
-            findLabel(f.panel, "All addresses");
-            runOnEdt(f.panel::showInstructions);
-            verify(((DebugTableImpl) table).instructionModel()).currentPage();
-            runOnEdt(f.panel::showMemory);
-            assertEquals(3, onEdt(table::getSelectedRow).intValue());
-            assertEquals("0D", onEdt(() -> table.getValueAt(3, 1)));
-
-            when(f.cpu.getInstructionLocation()).thenReturn(5);
-            f.stopped();
-            assertEquals(3, onEdt(table::getSelectedRow).intValue()); // Held while stepping.
-            assertTrue(f.session.beforeInstruction(4, 0));
-            f.stopped();
-            assertEquals(4, onEdt(table::getSelectedRow).intValue()); // New hit always wins.
-            f.stopped();
-            assertEquals(5, onEdt(table::getSelectedRow).intValue()); // Ordinary BP resumes following PC.
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void resumeBeforeQueuedStopDoesNotInspectStaleHit() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.session.setBreakpointState(3, BreakpointState.ON);
-            runOnEdt(f.panel::showInstructions);
-            ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-            verify(f.cpu, atLeastOnce()).addCPUListener(listeners.capture());
-            runOnEdt(() -> {
-                assertTrue(f.session.beforeInstruction(3, 0));
-                listeners.getAllValues().forEach(l -> l.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
-                listeners.getAllValues().forEach(l -> l.runStateChanged(CPU.RunState.STATE_RUNNING));
+    @Test
+    public void memoryInspectionTabAndControlsAreAbsent() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                assertEquals(-1, tabs.indexOfTab("Memory"));
+                for (String name : List.of("Inspect address", "Find strings", "Show source"))
+                    assertNull(name, findComponent(workspace.panel, AbstractButton.class, name));
+                assertNotNull(workspace.panel.watchesPanel());
+                assertTrue(tabs.indexOfTab("Annotations") >= 0);
             });
-            runOnEdt(() -> {});
-            assertTrue(onEdt(f.panel::isInstructionView));
-            verifyNoInteractions(f.dialogs);
-            listeners.getAllValues().forEach(l -> l.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
-            runOnEdt(() -> {});
-            assertTrue(onEdt(f.panel::isInstructionView));
         }
     }
 
-    @Test(timeout = 10000)
-    public void nativeBreakpointCanInspectImmediatelyAndUnsetWithoutChangingView() throws Exception {
-        try (Fixture f = new Fixture()) {
-            java.util.Set<Integer> breakpoints = new java.util.HashSet<>();
-            when(f.cpu.isBreakpointSupported()).thenReturn(true);
-            when(f.cpu.getBreakpoints()).thenAnswer(call -> java.util.Set.copyOf(breakpoints));
-            when(f.cpu.isBreakpointSet(anyInt())).thenAnswer(call -> breakpoints.contains(call.getArgument(0)));
-            doAnswer(call -> breakpoints.add(call.getArgument(0))).when(f.cpu).setBreakpoint(anyInt());
-            doAnswer(call -> breakpoints.remove(call.getArgument(0))).when(f.cpu).unsetBreakpoint(anyInt());
-            doReturn((byte) 42).when(f.session.memory).readBank(3, 1);
-            runOnEdt(f.panel::showInstructions);
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.SET, 3, 1, true))));
-            assertEquals(java.util.Set.of(3), breakpoints);
-            assertFalse(onEdt(f.panel::isInstructionView));
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals(3, onEdt(table::getSelectedRow).intValue());
-            assertEquals("2A", onEdt(() -> table.getValueAt(3, 1)));
-
-            runOnEdt(f.panel::showInstructions);
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.UNSET, 3, 1, false))));
-            assertTrue(breakpoints.isEmpty());
-            assertTrue(onEdt(f.panel::isInstructionView));
-            assertTrue(f.session.rules.isEmpty());
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void portableSimpleBreakpointsAreIdempotentAndKeepAdvancedRules() throws Exception {
-        try (Fixture f = new Fixture()) {
-            DebugSession.Rule counted = new DebugSession.Rule("Counted", "EXEC", 3, -1, "", 2);
-            f.session.rules.add(counted);
-            BreakpointDialog.Request set = new BreakpointDialog.Request(BreakpointDialog.Operation.SET, 3, 0, false);
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(set)));
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(set)));
-            assertEquals(2, f.session.rules.size());
-            assertTrue(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.UNSET, 3, 0, false))));
-            assertEquals(List.of(counted), f.session.rules);
-            verify(f.cpu, never()).setBreakpoint(anyInt());
-            verify(f.cpu, never()).unsetBreakpoint(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void invalidInspectionCannotPartiallySetBreakpoint() throws Exception {
-        try (Fixture f = new Fixture()) {
-            when(f.cpu.isBreakpointSupported()).thenReturn(true);
-            when(f.cpu.getAddressSpaceSize()).thenReturn(16);
-            assertFalse(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                    BreakpointDialog.Operation.SET, 8, 0, true))));
-            verify(f.dialogs).showError("Address outside memory", "Debugger");
-            verify(f.cpu, never()).setBreakpoint(anyInt());
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void invalidBankCannotPartiallySetBreakpoint() throws Exception {
-        try (Fixture f = new Fixture()) {
-            when(f.cpu.isBreakpointSupported()).thenReturn(true);
-            for (int invalid : new int[]{-1, 2}) {
-                assertFalse(onEdt(() -> f.panel.applyBreakpointRequest(new BreakpointDialog.Request(
-                        BreakpointDialog.Operation.SET, 3, invalid, false))));
-            }
-            verify(f.dialogs, times(2)).showError("Bank outside memory", "Debugger");
-            verify(f.cpu, never()).setBreakpoint(anyInt());
-        }
-    }
-
-    private int countTables(java.awt.Container root) {
-        int count = root instanceof JTable ? 1 : 0;
-        for (java.awt.Component child : root.getComponents())
-            if (child instanceof java.awt.Container) count += countTables((java.awt.Container) child);
-        return count;
-    }
-
-    @Test(timeout = 10000)
-    public void navigationHistoryRestoresExactByteModeAfterFollowingAnInstructionReference() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            runOnEdt(() -> {
-                f.panel.navigate(1, 0, true);
-                f.panel.showBreakpoints();
-                f.panel.navigate(5, 0, true);
+    @Test
+    public void repeatedCpuCallbacksQueueOnePausedRefresh() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> session.watches.add("A"))) {
+            SwingUtilities.invokeAndWait(() -> {
+                clearInvocations(workspace.machine.debug);
+                for (int i = 0; i < 100; i++)
+                    for (net.emustudio.emulib.plugins.cpu.CPU.CPUListener listener : workspace.machine.cpuListeners)
+                        listener.internalStateChanged();
             });
-            assertTrue(onEdt(f.panel::isInstructionView));
-            triggerButton(findButtonByTooltip(f.panel.navigationToolbar(), "Back"));
-            assertFalse(onEdt(f.panel::isInstructionView));
-            assertEquals("Byte", onEdt(() -> table.getColumnName(1)));
-            assertEquals(1, onEdt(table::getSelectedRow).intValue());
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
+            SwingUtilities.invokeAndWait(() -> {});
+            verify(workspace.machine.debug, times(1)).readRegister("A");
         }
     }
 
-    @Test(timeout = 10000)
-    public void optionalStringColumnPreservesReorderedCommentWidthAndFindStringsExposesResults() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JTable table = findComponent(f.panel, JTable.class, ignored -> true);
-            assertEquals(4, onEdt(table::getColumnCount).intValue());
-            runOnEdt(() -> table.moveColumn(3, 0));
-            JCheckBox strings = findComponent(f.panel, JCheckBox.class, box -> "String column".equals(box.getText()));
-            triggerButton(findComponent(f.panel, JToggleButton.class,
-                    button -> "Compare / strings".equals(button.getToolTipText())));
-            triggerButton(strings);
-            assertEquals(5, onEdt(table::getColumnCount).intValue());
-            assertEquals("Comment", onEdt(() -> table.getColumnName(0)));
-            assertTrue(onEdt(() -> table.getColumnModel().getColumn(0).getMaxWidth()) > 360);
-            triggerButton(strings);
-            assertEquals(4, onEdt(table::getColumnCount).intValue());
-            f.byteValue.set(65);
-            triggerButton(findButtonByTooltip(f.panel, "Find strings"));
-            awaitReady(f.panel);
-            assertTrue(onEdt(strings::isSelected));
-            assertEquals(5, onEdt(table::getColumnCount).intValue());
-            assertEquals("AAAAAAAA", onEdt(() -> table.getModel().getValueAt(0, 4)));
+    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    public void browsingAnotherBankChangesInspectionWithoutMovingCpu() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2, 3}, {4, 5, 3}}, 2, session -> {})) {
+            List<String> selections = new ArrayList<>();
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.setAddressSelectionListener((address, bank, visit) ->
+                        selections.add(address + ":" + bank + ":" + visit));
+                workspace.panel.navigate(1, 1);
+
+                assertTrue(workspace.panel.isInstructionView());
+                assertEquals("Instruction listing", workspace.table.getAccessibleContext().getAccessibleName());
+            });
+
+            assertEquals(List.of("1:1:true"), selections);
+            verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
         }
     }
 
-    @Test(timeout = 10000)
-    public void historyEmphasizesChangesAndRevealsUnchangedRegistersOnDemand() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.session.record(1024);
-            f.session.afterInstruction(new DebugCPU.Instruction(1, 0, 0, "inc a", "3C",
-                    java.util.Map.of("PC", 0L, "SP", 5L, "A", 1L),
-                    java.util.Map.of("PC", 1L, "SP", 5L, "A", 2L), List.of(), true));
-            f.refresh();
-            JTable history = historyTable(f.panel);
-            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
-            JTextArea state = findComponent(f.panel, JTextArea.class,
-                    area -> "Recorded instruction state".equals(area.getAccessibleContext().getAccessibleName()));
-            String changes = onEdt(state::getText);
-            assertTrue(changes.contains("Changed registers"));
-            assertTrue(changes.indexOf("A ") < changes.indexOf("PC "));
-            assertFalse(changes.contains("SP "));
-            triggerButton(findComponent(f.panel, JCheckBox.class,
-                    box -> "Show unchanged registers".equals(box.getText())));
-            assertTrue(onEdt(state::getText).contains("SP "));
-            assertEquals(0, onEdt(history::getSelectedRow).intValue());
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
+    @Test
+    public void navigationRejectsAddressesAndBanksOutsideMemory() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(-1, 0));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(2, 0));
+                assertThrows(IllegalArgumentException.class, () -> workspace.panel.navigate(0, 1));
+                assertTrue(workspace.panel.isInstructionView());
+            });
         }
     }
 
-    private JTable historyTable(DebuggerPanel panel) {
-        return findComponent(panel, JTable.class,
-                table -> "Recorded instructions".equals(table.getAccessibleContext().getAccessibleName()));
-    }
+    @Test
+    public void executionDisablesTableAndHidesInstructionListingUntilPaused() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.setExecutionRunning(true);
+                assertFalse(workspace.table.isEnabled());
+                assertFalse(workspace.table.isVisible());
 
-    private JTextField historyField(DebuggerPanel panel, String name) {
-        return findComponent(panel, JTextField.class, field -> name.equals(field.getAccessibleContext().getAccessibleName()));
-    }
-
-    private DebugCPU.Instruction historyEvent(long sequence, int pc, int value, int writeAddress) {
-        return new DebugCPU.Instruction(sequence, pc, 1, "ld a, " + value, "3E " + String.format("%02X", value),
-                java.util.Map.of("PC", (long) pc, "A", 0L),
-                java.util.Map.of("PC", (long) pc + 2, "A", (long) value),
-                List.of(new DebugCPU.Access(writeAddress, 1, value, true)), true);
-    }
-
-    @Test(timeout = 10000)
-    public void historyFiltersKeepSequenceNumbersAndPreviousWriteRevealsEarlierEvent() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.session.record(10);
-            f.session.afterInstruction(historyEvent(10, 0, 1, 3));
-            f.session.afterInstruction(historyEvent(11, 2, 2, 4));
-            f.session.afterInstruction(historyEvent(12, 4, 3, 3));
-            f.refresh();
-            JTable history = historyTable(f.panel);
-            setText(historyField(f.panel, "PC from"), "0x2");
-            setText(historyField(f.panel, "Changed register"), "a");
-            setText(historyField(f.panel, "Memory address"), "3");
-            setText(historyField(f.panel, "Memory bank"), "1");
-            triggerButton(findButtonByTooltip(f.panel, "Apply history filters"));
-            assertEquals(1, onEdt(history::getRowCount).intValue());
-            assertEquals("12", onEdt(() -> history.getValueAt(0, 0)));
-            assertEquals("ld a, 3", onEdt(() -> history.getValueAt(0, 4)));
-            assertEquals("3E 03", onEdt(() -> history.getValueAt(0, 3)));
-            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
-            triggerButton(findButtonByTooltip(f.panel, "Previous recorded write"));
-            assertEquals(2, onEdt(history::getRowCount).intValue());
-            assertEquals("10", onEdt(() -> history.getValueAt(history.getSelectedRow(), 0)));
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
+                workspace.panel.setExecutionRunning(false);
+                workspace.panel.showInstructions();
+                assertTrue(workspace.table.isVisible());
+                assertTrue(workspace.table.isEnabled());
+            });
         }
     }
 
-    @Test(timeout = 10000)
-    public void historyFoldingPreservesRecordedEventsAndCanBeExpanded() throws Exception {
-        try (Fixture f = new Fixture()) {
-            f.session.record(10);
-            for (int i = 1; i <= 3; i++)
-                f.session.afterInstruction(new DebugCPU.Instruction(i, 0, 0, "jp 0", "C3 00 00",
-                        java.util.Map.of("PC", 0L), java.util.Map.of("PC", 0L), List.of(), true));
-            f.refresh();
-            JTable history = historyTable(f.panel);
-            JCheckBox fold = findComponent(f.panel, JCheckBox.class, box -> "Fold identical repeats".equals(box.getText()));
-            triggerButton(fold);
-            assertEquals(1, onEdt(history::getRowCount).intValue());
-            assertEquals("1–3 (3)", onEdt(() -> history.getValueAt(0, 0)));
-            assertEquals(3, f.session.history().size());
-            triggerButton(fold);
-            assertEquals(3, onEdt(history::getRowCount).intValue());
+    @Test
+    public void breakpointListActionsTargetVisibleExecutionRuleAmongMemoryWatches() throws Exception {
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 0, -1, "", 1);
+        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
+                session -> session.rules.addAll(List.of(read, execute, write)))) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
+                assertNull(findComponent(breakpoints, JToggleButton.class, "Advanced breakpoint options"));
+                JList<?> list = component(breakpoints, JList.class, "Breakpoints");
+                assertEquals(1, list.getModel().getSize());
+                list.setSelectedIndex(0);
+                button(breakpoints, "Enable / disable").doClick(0);
+                assertFalse(execute.enabled);
+                assertTrue(read.enabled);
+                assertTrue(write.enabled);
+                assertEquals(0, list.getSelectedIndex());
+
+                button(breakpoints, "Remove").doClick(0);
+                assertEquals(List.of(read, write), workspace.session.rules);
+                assertEquals(0, list.getModel().getSize());
+            });
         }
     }
 
-    @Test(timeout = 10000)
-    public void recentHistoryLimitIsConfigurableAndPreservesVisibleSequence() throws Exception {
-        try (Fixture f = new Fixture()) {
-            JSpinner limit = findComponent(f.panel, JSpinner.class,
-                    spinner -> "Recent limit".equals(spinner.getAccessibleContext().getAccessibleName()));
-            runOnEdt(() -> limit.setValue(2));
-            triggerButton(findToggleButtonByTooltip(f.panel, "Record recent instructions"));
-            for (int i = 1; i <= 3; i++) f.session.afterInstruction(historyEvent(i, 0, i, 3));
-            f.refresh();
-            JTable history = historyTable(f.panel);
-            assertEquals(2, onEdt(history::getRowCount).intValue());
-            assertEquals("2", onEdt(() -> history.getValueAt(0, 0)));
+    @Test
+    public void memoryWatchActionsTargetVisibleWatchAmongExecutionRules() throws Exception {
+        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 0, "", 1);
+        DebugSession.Rule read = new DebugSession.AccessRule("read buffer", "READ", 1, -1, "", 1);
+        DebugSession.Rule write = new DebugSession.AccessRule("write buffer", "WRITE", 2, -1, "", 1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
+                session -> session.rules.addAll(List.of(execute, read, write)))) {
+            SwingUtilities.invokeAndWait(() -> {
+                Container watches = workspace.panel.watchesPanel();
+                JList<?> list = component(watches, JList.class, "Memory access watches");
+                assertEquals(2, list.getModel().getSize());
+                list.setSelectedIndex(1);
+                button(watches, "Enable / disable memory watch").doClick(0);
+                assertFalse(write.enabled);
+                assertTrue(read.enabled);
+                assertTrue(execute.enabled);
+
+                button(watches, "Remove memory watch").doClick(0);
+                assertEquals(List.of(execute, read), workspace.session.rules);
+                assertEquals(1, list.getModel().getSize());
+            });
         }
     }
 
-    @Test(timeout = 10000)
-    public void offlineHistoryPagesUseCapturedProcessorAndValuesWithoutLiveAnnotations() throws Exception {
-        try (Fixture f = new Fixture()) {
-            java.nio.file.Path file = temporary.getRoot().toPath().resolve("offline.emutrace");
-            InstructionRecording.Header header = new InstructionRecording.Header("Z80 capture", List.of(new DebugCPU.Register("A", 8)));
-            java.util.ArrayList<DebugCPU.Instruction> events = new java.util.ArrayList<>();
-            for (int i = 1; i <= 1025; i++) events.add(historyEvent(i, 0x8000, 42, 0x9000));
-            InstructionRecording.write(file, header, events);
-            f.session.annotations().put(new AnnotationIndex.Entry(0, 0, "unrelated-live-label", "", false, "CODE"));
-            f.byteValue.set(99);
-            runOnEdt(() -> f.panel.openRecording(file));
-            awaitReady(f.panel);
-            JTable history = historyTable(f.panel);
-            assertEquals(1024, onEdt(history::getRowCount).intValue());
-            assertEquals("8000", onEdt(() -> history.getValueAt(0, 2)));
-            assertEquals("ld a, 42", onEdt(() -> history.getValueAt(0, 4)));
-            JLabel status = findComponent(f.panel, JLabel.class,
-                    label -> "Recording status".equals(label.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(status::getText).contains("Z80 capture"));
-            triggerButton(findButtonByTooltip(f.panel, "Next page"));
-            awaitReady(f.panel);
-            assertEquals(1, onEdt(history::getRowCount).intValue());
-            assertEquals("1025", onEdt(() -> history.getValueAt(0, 0)));
-            runOnEdt(() -> history.setRowSelectionInterval(0, 0));
-            JTextArea state = findComponent(f.panel, JTextArea.class,
-                    area -> "Recorded instruction state".equals(area.getAccessibleContext().getAccessibleName()));
-            assertTrue(onEdt(state::getText).contains("WRITE bank 1:9000 = 2A"));
-            assertFalse(onEdt(state::getText).contains("unrelated-live-label"));
-            triggerButton(findButtonByTooltip(f.panel, "First page"));
-            awaitReady(f.panel);
-            assertEquals("1", onEdt(() -> history.getValueAt(0, 0)));
-            verify(f.cpu, never()).setInstructionLocation(anyInt());
+    @Test
+    public void executionControlsHaveNoBankSelectorWhileMemoryWatchesKeepTheirBank() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.showBreakpoints();
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                Container breakpoints = (Container) tabs.getComponentAt(tabs.indexOfTab("Breakpoints"));
+                assertNull("Execution breakpoint form must not select a bank",
+                        findComponent(breakpoints, JComboBox.class, null));
+                button(breakpoints, "Add breakpoint").doClick(0);
+                JList<?> rows = component(breakpoints, JList.class, "Breakpoints");
+                assertFalse(rows.getModel().getElementAt(0).toString().contains("bank"));
+
+                Container watches = workspace.panel.watchesPanel();
+                JComboBox<?> bank = component(watches, JComboBox.class, "Memory watch bank");
+                bank.setSelectedIndex(2); // All banks, Bank 0, Bank 1.
+                button(watches, "Add memory watch").doClick(0);
+                DebugSession.AccessRule watch = (DebugSession.AccessRule) workspace.session.rules.stream()
+                        .filter(rule -> rule instanceof DebugSession.AccessRule).findFirst().orElseThrow();
+                assertEquals(1, watch.bank);
+                assertEquals("WRITE", watch.kind);
+            });
         }
     }
 
-    @Test(timeout = 10000)
-    public void offlineHistoryWorksWithoutCpuDebugSupport() throws Exception {
-        java.nio.file.Path file = temporary.getRoot().toPath().resolve("unsupported.emutrace");
-        InstructionRecording.write(file,
-                new InstructionRecording.Header("Recorded Z80", List.of(new DebugCPU.Register("A", 8))),
-                List.of(historyEvent(7, 0x8000, 42, 0x9000)));
-        CPU cpu = mock(CPU.class);
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
-        try (DebugSession session = new DebugSession(cpu, null, null)) {
-            DebuggerPanel panel = onEdt(() -> createPanel(session, mock(Dialogs.class)));
+    @Test
+    public void instructionRowsShowAnnotationsAndBreakpointsWithoutExtraColumns() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                runOnEdt(() -> panel.openRecording(file));
-                JButton open = findButtonByTooltip(panel, "Open recording");
-                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-                while (!onEdt(open::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-                assertTrue(onEdt(open::isEnabled));
-                JTable history = historyTable(panel);
-                assertEquals(1, onEdt(history::getRowCount).intValue());
-                assertEquals("7", onEdt(() -> history.getValueAt(0, 0)));
-                assertFalse(onEdt(findToggleButtonByTooltip(panel, "Record recent instructions")::isEnabled));
-                verify(cpu, never()).setInstructionLocation(anyInt());
-            } finally { runOnEdt(panel::close); }
+                session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
+            } catch (Exception e) { throw new RuntimeException(e); }
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                for (int col = 0; col < workspace.table.getColumnCount(); col++) {
+                    String name = workspace.table.getColumnName(col);
+                    assertFalse(List.of("bp", "Label", "Comment").contains(name));
+                    assertTrue(workspace.table.getColumnModel().getColumn(col).getMinWidth()
+                            >= workspace.table.getColumnModel().getColumn(col).getPreferredWidth());
+                }
+                assertEquals(JTable.AUTO_RESIZE_OFF, workspace.table.getAutoResizeMode());
+                java.awt.Rectangle cell = workspace.table.getCellRect(0, 0, true);
+                java.awt.event.MouseEvent hover = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, cell.x + 1, cell.y + 1, 0, false);
+                assertEquals("start", workspace.table.getToolTipText(hover));
+                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.SET, 0)));
+                JComponent rendered = (JComponent) workspace.table.prepareRenderer(
+                        workspace.table.getCellRenderer(0, 0), 0, 0);
+                assertTrue(rendered.getFont().isBold());
+            });
         }
     }
 
-    private final class Fixture implements AutoCloseable {
-        final CPU cpu = mock(CPU.class);
-        final DebugCPU debug = mock(DebugCPU.class);
-        final AtomicInteger byteValue = new AtomicInteger();
-        final AtomicBoolean selectiveValue = new AtomicBoolean();
-        final DebugSession session;
+    @Test
+    public void instructionTooltipCoversAnnotationRangeAndUsesLaneColors() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
+            try {
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "UNKNOWN"));
+            } catch (Exception e) { throw new RuntimeException(e); }
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                java.awt.Rectangle first = workspace.table.getCellRect(0, 0, true);
+                java.awt.event.MouseEvent hoverFirst = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, first.x + 1, first.y + 1, 0, false);
+                assertEquals("range", workspace.table.getToolTipText(hoverFirst));
+                java.awt.Color lane = java.awt.Color.getHSBColor(0f, .55f, .78f);
+                java.awt.Color base = graph.getBackground();
+                java.awt.Color expected = new java.awt.Color((lane.getRed() * 28 + base.getRed() * 227 + 127) / 255,
+                        (lane.getGreen() * 28 + base.getGreen() * 227 + 127) / 255,
+                        (lane.getBlue() * 28 + base.getBlue() * 227 + 127) / 255);
+                assertEquals(expected, workspace.table.createToolTip().getBackground());
+
+                java.awt.Rectangle second = workspace.table.getCellRect(1, 0, true);
+                java.awt.event.MouseEvent hoverSecond = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
+                assertEquals("range | inner", workspace.table.getToolTipText(hoverSecond));
+                assertNotEquals(expected, workspace.table.createToolTip().getBackground());
+
+                java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
+                java.awt.event.MouseEvent hoverThird = new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, third.x + 1, third.y + 1, 0, false);
+                assertNull(workspace.table.getToolTipText(hoverThird));
+            });
+        }
+    }
+
+    @Test
+    public void setAndUnsetRequestsOnlyEditTheBreakpoint() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.SET, 1)));
+                assertTrue(workspace.session.isBreakpointSet(1));
+                assertFalse(workspace.panel.isInspectionPinned());
+                assertTrue(workspace.panel.isInstructionView());
+                assertEquals(1, workspace.breakpointChanges.get());
+
+                assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.UNSET, 1)));
+                assertFalse(workspace.session.isBreakpointSet(1));
+                assertFalse(workspace.panel.isInspectionPinned());
+                assertEquals(2, workspace.breakpointChanges.get());
+            });
+        }
+    }
+
+    @Test
+    public void invalidBreakpointRequestShowsErrorWithoutChangingRules() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertFalse(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
+                        BreakpointDialog.Operation.SET, 2)));
+                assertTrue(workspace.session.rules.isEmpty());
+                assertEquals(0, workspace.breakpointChanges.get());
+            });
+            verify(workspace.dialogs).showError("Address outside CPU", "Debugger");
+        }
+    }
+
+    @Test
+    public void closingPanelDetachesItsListenerWhileSessionRemainsUsable() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0}}, 1, session -> {})) {
+            assertEquals(2, workspace.machine.cpuListeners.size());
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.close();
+                workspace.panel.close();
+            });
+            assertEquals(1, workspace.machine.cpuListeners.size());
+            workspace.session.requirePaused();
+        }
+    }
+
+    @Test
+    public void breakpointHitsFollowTheNextPcUnlessTheUserManuallyPinsInspection() throws Exception {
+        AtomicInteger pc = new AtomicInteger(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4,
+                session -> {
+                    when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+                    session.setBreakpoint(1, true);
+                })) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertTrue(workspace.session.beforeInstruction(1, 0));
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertTrue(workspace.panel.isInstructionView());
+                assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                assertFalse(workspace.panel.isInspectionPinned());
+            });
+
+            SwingUtilities.invokeAndWait(() -> {
+                pc.set(2);
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals(2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
+                pin.doClick(0);
+                assertTrue(workspace.panel.isInspectionPinned());
+            });
+
+            SwingUtilities.invokeAndWait(() -> {
+                pc.set(3);
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals("Only the user's explicit pin should hold inspection", 2, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                JCheckBoxMenuItem pin = (JCheckBoxMenuItem) workspace.table.getComponentPopupMenu().getComponent(3);
+                pin.doClick(0);
+                assertFalse(workspace.panel.isInspectionPinned());
+            });
+            SwingUtilities.invokeAndWait(() -> workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK));
+            SwingUtilities.invokeAndWait(() -> assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow())));
+        }
+    }
+
+    @Test
+    public void analyzeReferencesStartsAtPcInsteadOfInspectedAddress() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0, 0}}, 5, session -> {
+            when(session.cpu.getInstructionLocation()).thenReturn(3);
+            Disassembler decoder = session.cpu.getDisassembler();
+            when(decoder.getFlow(3)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.JUMP, 4, true, List.of(1))));
+            when(decoder.getFlow(1)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.RETURN, 2, false, List.of())));
+            when(decoder.getFlow(4)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 5, false, List.of())));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(0);
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Analyze from PC").doClick(0);
+            });
+
+            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            ProgramIndex.Snapshot snapshot = workspace.session.programIndex().snapshot();
+            assertNull(snapshot.instructionAt(0));
+            assertNotNull(snapshot.instructionAt(1));
+            assertNull(snapshot.instructionAt(2));
+            assertNotNull(snapshot.instructionAt(3));
+            assertNotNull(snapshot.instructionAt(4));
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                        0, 0, 40, 40, 0, false)).contains("0003"));
+                assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                        0, 0, 40, 130, 0, false)).contains("0001"));
+                button(workspace.panel, "Go to instruction").doClick(0);
+                assertEquals(3, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+            });
+        }
+    }
+
+    @Test
+    public void inspectionCanAnalyzeSelectedInstructionInsteadOfPc() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4, session -> {
+            when(session.cpu.getInstructionLocation()).thenReturn(3);
+            when(session.cpu.getDisassembler().getFlow(1)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(1);
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+            });
+
+            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(1));
+            assertNull(workspace.session.programIndex().snapshot().instructionAt(3));
+        }
+    }
+
+    @Test
+    public void inspectPopupAnalyzesRightClickedInstruction() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
+            when(session.cpu.getDisassembler().getFlow(1)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(0);
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                workspace.table.setSize(workspace.table.getPreferredSize());
+                java.awt.Rectangle row = workspace.table.getCellRect(1, 1, true);
+                workspace.table.dispatchEvent(new java.awt.event.MouseEvent(workspace.table,
+                        java.awt.event.MouseEvent.MOUSE_PRESSED, 0, java.awt.event.InputEvent.BUTTON3_DOWN_MASK,
+                        row.x + 2, row.y + 2, 1, false, java.awt.event.MouseEvent.BUTTON3));
+                assertEquals(1, workspace.table.getSelectedRow());
+                ((JMenuItem) workspace.table.getComponentPopupMenu().getComponent(0)).doClick(0);
+            });
+
+            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(1));
+            assertNull(workspace.session.programIndex().snapshot().instructionAt(0));
+            SwingUtilities.invokeAndWait(() -> {
+                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
+            });
+        }
+    }
+
+    @Test
+    public void goToSourcePopupUsesSelectedInstruction() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {})) {
+            net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations annotations =
+                    mock(net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations.class);
+            net.emustudio.emulib.plugins.compiler.SourceCodePosition position =
+                    mock(net.emustudio.emulib.plugins.compiler.SourceCodePosition.class);
+            when(workspace.machine.memory.annotations()).thenReturn(annotations);
+            when(annotations.get(1, net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation.class))
+                    .thenReturn(java.util.Set.of(new net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation(1, position)));
+
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.navigate(1);
+                ((JMenuItem) workspace.table.getComponentPopupMenu().getComponent(1)).doClick(0);
+            });
+
+            assertSame(position, workspace.sourcePosition.get());
+        }
+    }
+
+    @Test
+    public void reachableFlowDecodesOffEdtAndGraphNavigatesOnDoubleClick() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), shown = new CountDownLatch(1);
+        AtomicBoolean decodedOnEdt = new AtomicBoolean();
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
+        when(disassembler.disassemble(anyInt())).thenAnswer(call ->
+                new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            when(session.cpu.getDisassembler()).thenReturn(disassembler);
+            when(disassembler.getFlow(0)).thenAnswer(call -> {
+                decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
+                entered.countDown();
+                assertTrue("Test should release decoder", release.await(10, TimeUnit.SECONDS));
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.JUMP, 1, true, List.of(1)));
+            });
+            when(disassembler.getFlow(1)).thenReturn(Optional.of(
+                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+        })) {
+            try {
+                workspace.session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "UNKNOWN"));
+                SwingUtilities.invokeAndWait(() -> {
+                    AbstractButton goTo = button(workspace.panel, "Go to instruction");
+                    assertFalse(goTo.isEnabled());
+                    goTo.addPropertyChangeListener("enabled", event -> {
+                        if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                    });
+                    button(workspace.panel, "Analyze from PC").doClick(0);
+                    assertFalse("Analysis should disable inspection before worker starts", workspace.table.isEnabled());
+                });
+                assertTrue("Background decoder should start", entered.await(5, TimeUnit.SECONDS));
+                assertFalse("Decoder must not run on Swing event thread", decodedOnEdt.get());
+                CountDownLatch responsive = new CountDownLatch(1);
+                SwingUtilities.invokeLater(() -> { workspace.session.requirePaused(); responsive.countDown(); });
+                assertTrue("Paused queries on EDT must not wait for live flow decode",
+                        responsive.await(5, TimeUnit.SECONDS));
+                release.countDown();
+                assertTrue("Published instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
+                AnnotationIndex annotationIndex = workspace.session.annotations();
+                SwingUtilities.invokeAndWait(() -> {
+                    assertNull(findComponent(workspace.panel, JList.class, "Static references"));
+                    JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                    JScrollPane graphScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, graph);
+                    assertEquals(30, graphScroll.getVerticalScrollBar().getUnitIncrement());
+                    AtomicInteger symbolReads = new AtomicInteger();
+                    workspace.panel.setSymbols(() -> { symbolReads.incrementAndGet(); return List.of(); });
+                    workspace.panel.setSourceNavigationStatus("Source mapping current", true);
+                    graph.setSize(graph.getPreferredSize());
+                    java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(600, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics2D graphics = image.createGraphics();
+                    try {
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                                System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.paint(graphics);
+                        graph.paint(graphics);
+                        assertEquals("Selection repaints should reuse compiled labels", 1, symbolReads.get());
+                        workspace.panel.setSymbols(() -> { symbolReads.incrementAndGet(); return List.of(); });
+                        graph.paint(graphics);
+                        assertEquals("Changing symbols should refresh graph labels", 2, symbolReads.get());
+                        graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                                System.currentTimeMillis(), 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                        graph.paint(graphics);
+                        assertEquals("Paint after selection should recheck live symbols", 3, symbolReads.get());
+                    } finally { graphics.dispose(); }
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("Branch"));
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 10, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 120, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(graph.getAccessibleContext().getAccessibleDescription().contains("region"));
+                    doubleClickLaneAndCancel(graph, 120, 25, "region");
+                    doubleClickLaneAndCancel(graph, 200, 80, "region");
+                    assertTrue(annotationIndex.entries().stream().anyMatch(entry -> entry.label.equals("region")));
+                    JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 260, 130, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    button(workspace.panel, "Go to instruction").doClick(0);
+                    assertTrue(workspace.panel.isInstructionView());
+                    assertEquals(1, workspace.table.getSelectedRow());
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 260, 130, 2, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(workspace.panel.isInstructionView());
+                    assertEquals(1, workspace.table.getSelectedRow());
+                    assertTrue(workspace.table.isEnabled());
+                    tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
+                    JComboBox<?> zoom = component(workspace.panel, JComboBox.class, "Graph zoom");
+                    JViewport viewport = graphScroll.getViewport();
+                    viewport.setExtentSize(new Dimension(200, 150));
+                    zoom.setSelectedItem("200%");
+                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
+                            System.currentTimeMillis(), 0, 520, 80, 0, false)).contains("start"));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            System.currentTimeMillis(), 0, 520, 260, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    viewport.setViewPosition(new Point(100, 100));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON3_DOWN_MASK, 300, 200, 1, false, java.awt.event.MouseEvent.BUTTON3));
+                    graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.BUTTON3_DOWN_MASK, 280, 170, 0, false, java.awt.event.MouseEvent.NOBUTTON));
+                    assertEquals(new Point(120, 130), viewport.getViewPosition());
+                    assertTrue(button(workspace.panel, "Go to instruction").isEnabled());
+                    graphScroll.dispatchEvent(new java.awt.event.MouseWheelEvent(graphScroll, java.awt.event.MouseEvent.MOUSE_WHEEL,
+                            System.currentTimeMillis(), java.awt.event.InputEvent.CTRL_DOWN_MASK, 50, 50, 0, false,
+                            java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
+                    assertEquals("250%", zoom.getSelectedItem());
+                    zoom.setSelectedItem("100%");
+                    int before = annotationIndex.entries().size();
+                    dragAnnotation(graph, dialog -> {
+                        assertEquals("0x0000", annotationField(dialog, "Address").getText());
+                        assertEquals("0x0001", annotationField(dialog, "End address").getText());
+                        JRootPane root = ((JDialog) dialog).getRootPane();
+                        Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                                .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                        root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                    });
+                    assertEquals(before, annotationIndex.entries().size());
+                    dragAnnotation(graph, dialog -> {
+                        button(dialog, "Save annotation").doClick(0);
+                    });
+                    assertEquals(before + 1, annotationIndex.entries().size());
+                    assertTrue(annotationIndex.entries().stream().anyMatch(entry ->
+                            entry.label.isEmpty() && entry.address == 0 && entry.end == 2));
+                });
+            } finally { release.countDown(); }
+        }
+    }
+
+    private static void dragAnnotation(JPanel graph, Consumer<Container> action) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (Window window : Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !"New annotation".equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try { action.accept((Container) window); }
+                catch (Throwable error) { failure.set(error); }
+                finally { window.dispose(); }
+            }
+        });
+        timer.start();
+        try {
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                    1, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 245, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                    2, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, 470, 180, 0, false, java.awt.event.MouseEvent.NOBUTTON));
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                    3, 0, 470, 180, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        } finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation dialog", opened.get());
+    }
+
+    private static void doubleClickLaneAndCancel(JPanel graph, int x, int y, String expectedLabel) {
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicBoolean opened = new AtomicBoolean();
+        Timer timer = new Timer(100, event -> {
+            for (Window window : Window.getWindows()) {
+                if (!(window instanceof JDialog) || !window.isShowing() || !"Edit annotation".equals(((JDialog) window).getTitle())) continue;
+                ((Timer) event.getSource()).stop();
+                opened.set(true);
+                try {
+                    assertEquals(expectedLabel, annotationField((Container) window, "Label").getText());
+                    JRootPane root = ((JDialog) window).getRootPane();
+                    Object action = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                            .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                    root.getActionMap().get(action).actionPerformed(new java.awt.event.ActionEvent(root, 0, "escape"));
+                } catch (Throwable error) { failure.set(error); }
+                finally { window.dispose(); }
+            }
+        });
+        timer.start();
+        try {
+            graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                    System.currentTimeMillis(), 0, x, y, 2, false, java.awt.event.MouseEvent.BUTTON1));
+        } finally { timer.stop(); }
+        if (failure.get() != null) throw new AssertionError(failure.get());
+        assertTrue("Expected annotation editor", opened.get());
+    }
+
+    @Test
+    public void flowUsesCpuDecoderRegardlessOfInspectionBank() throws Exception {
+        CountDownLatch decoded = new CountDownLatch(1), shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {
+            Disassembler decoder = session.cpu.getDisassembler();
+            when(decoder.getFlow(0)).thenAnswer(call -> {
+                decoded.countDown();
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+            });
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                workspace.panel.navigate(0, 1);
+                button(workspace.panel, "Analyze from PC").doClick(0);
+            });
+            assertTrue("CPU decoder should run", decoded.await(5, TimeUnit.SECONDS));
+            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").doClick(0);
+                assertTrue(workspace.panel.isInstructionView());
+            });
+            assertEquals(0, workspace.machine.memory.getSelectedBank());
+            verify(workspace.dialogs, never()).showError(anyString(), eq("Debugger"));
+        }
+    }
+
+
+    private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
+        Path settings = temporary.newFolder().toPath().resolve("debug.properties");
+        Workspace workspace = new Workspace();
+        workspace.machine = new DebuggerTestMachine(banks, common, false);
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
+        when(disassembler.disassemble(anyInt())).thenAnswer(call ->
+                new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
+        when(workspace.machine.cpu.getDisassembler()).thenReturn(disassembler);
+        workspace.session = new DebugSession(workspace.machine.cpu, workspace.machine.memory, settings);
+        configure.accept(workspace.session);
+        CountDownLatch ready = new CountDownLatch(1);
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                DebugTableModelImpl model = new DebugTableModelImpl();
+                model.setCPU(workspace.machine.cpu);
+                model.setMaxRows(3);
+                workspace.table = new DebugTableImpl(model);
+                JScrollPane scroll = new JScrollPane(workspace.table);
+                JPanel instructions = new JPanel(new BorderLayout());
+                instructions.add(scroll);
+                workspace.panel = new DebuggerPanel(workspace.session, workspace.table, scroll, instructions,
+                        workspace.sourcePosition::set, workspace.breakpointChanges::incrementAndGet,
+                        new EmuStudioGui(), workspace.dialogs);
+                workspace.panel.setInspectionReadyListener(ready::countDown);
+            });
+            assertTrue("Initial annotation loading should finish", ready.await(5, TimeUnit.SECONDS));
+            return workspace;
+        } catch (Exception | AssertionError failure) {
+            workspace.close();
+            throw failure;
+        }
+    }
+
+    private static AbstractButton button(Container root, String name) {
+        return component(root, AbstractButton.class, name);
+    }
+
+    private static <T extends Component> T component(Container root, Class<T> type, String name) {
+        T found = findComponent(root, type, name);
+        if (found == null) throw new AssertionError("Missing " + type.getSimpleName() + ": " + name);
+        return found;
+    }
+
+    private static <T extends Component> T findComponent(Container root, Class<T> type, String name) {
+        for (Component child : root.getComponents()) {
+            String accessible = child instanceof JComponent
+                    ? ((JComponent) child).getAccessibleContext().getAccessibleName() : null;
+            String tooltip = child instanceof JComponent ? ((JComponent) child).getToolTipText() : null;
+            if (type.isInstance(child) && (name == null || name.equals(child.getName()) || name.equals(accessible)
+                    || name.equals(tooltip))) return type.cast(child);
+            if (child instanceof Container) {
+                T nested = findComponent((Container) child, type, name);
+                if (nested != null) return nested;
+            }
+        }
+        return null;
+    }
+
+    private static final class Workspace implements AutoCloseable {
+        DebuggerTestMachine machine;
+        DebugSession session;
+        DebuggerPanel panel;
+        DebugTableImpl table;
         final Dialogs dialogs = mock(Dialogs.class);
-        final DebuggerPanel panel;
+        final AtomicInteger breakpointChanges = new AtomicInteger();
+        final java.util.concurrent.atomic.AtomicReference<net.emustudio.emulib.plugins.compiler.SourceCodePosition> sourcePosition = new java.util.concurrent.atomic.AtomicReference<>();
 
-        Fixture() throws Exception { this(temporary.getRoot().toPath().resolve("debugger")); }
-
-        @SuppressWarnings("unchecked")
-        Fixture(java.nio.file.Path settings) throws Exception {
-            MemoryContext<Byte> memory = mock(MemoryContext.class);
-            when(memory.getCellTypeClass()).thenReturn(Byte.class);
-            when(memory.getSize()).thenReturn(8);
-            when(memory.getBanksCount()).thenReturn(2);
-            when(memory.getCommonBoundary()).thenReturn(8);
-            when(memory.readBank(anyInt(), anyInt())).thenAnswer(invocation ->
-                    (byte) (selectiveValue.get() && (Integer) invocation.getArgument(0) != 3 ? 0 : byteValue.get()));
-            doReturn(memory).when(debug).memory();
-            when(debug.processor()).thenReturn("Test CPU");
-            when(debug.registers()).thenReturn(List.of(new DebugCPU.Register("A", 8)));
-            when(cpu.getDebugger()).thenReturn(Optional.of(debug));
-            when(cpu.getAddressSpaceSize()).thenReturn(8);
-            when(cpu.getTitle()).thenReturn("Test CPU");
-            session = new DebugSession(cpu, memory, settings);
-            panel = onEdt(() -> createPanel(session, dialogs));
-            showInFrame(panel);
-            awaitReady(panel);
-            runOnEdt(panel::showMemory);
-        }
-
-        void refresh() {
-            ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-            verify(cpu, atLeastOnce()).addCPUListener(listeners.capture());
-            listeners.getAllValues().forEach(CPU.CPUListener::internalStateChanged);
-            runOnEdt(() -> {});
-        }
-
-        void stopped() {
-            ArgumentCaptor<CPU.CPUListener> listeners = ArgumentCaptor.forClass(CPU.CPUListener.class);
-            verify(cpu, atLeastOnce()).addCPUListener(listeners.capture());
-            listeners.getAllValues().forEach(listener -> listener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK));
-            runOnEdt(() -> {});
-        }
-
-        public void close() {
-            runOnEdt(panel::close);
-            session.close();
+        @Override public void close() throws Exception {
+            if (panel != null) SwingUtilities.invokeAndWait(panel::close);
+            if (session != null) session.close();
         }
     }
-
 }

@@ -3,47 +3,30 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class FindSequenceAction extends AbstractAction {
     private final static String ICON_FILE = StandardIcons.ICON_FIND;
-    private final Dialogs dialogs;
-    private final MemorySearch search;
-    private final Supplier<Integer> getCurrentAddress;
-    private final JDialog parent;
-    private final GUI gui;
+    private final Runnable showSearch;
 
-    public FindSequenceAction(Dialogs dialogs, MemorySearch search, Supplier<Integer> getCurrentAddress,
-                              JDialog parent, GUI gui) {
-        super("Find sequence...", loadIcon(ICON_FILE));
-
-        this.dialogs = Objects.requireNonNull(dialogs);
-        this.search = Objects.requireNonNull(search);
-        this.getCurrentAddress = Objects.requireNonNull(getCurrentAddress);
-        this.parent = Objects.requireNonNull(parent);
-        this.gui = gui;
+    public FindSequenceAction(Runnable showSearch) {
+        super("Find sequence", loadIcon(ICON_FILE));
+        this.showSearch = Objects.requireNonNull(showSearch);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
-        putValue(SHORT_DESCRIPTION, "Find sequence...");
+        putValue(SHORT_DESCRIPTION, "Find sequence (Ctrl+F)");
         putValue(MNEMONIC_KEY, KeyEvent.VK_F);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        FindSequenceDialog dialog = new FindSequenceDialog(
-                dialogs, parent, getCurrentAddress.get(), search::start, gui
-        );
-        dialog.setVisible(true);
+        showSearch.run();
     }
 }

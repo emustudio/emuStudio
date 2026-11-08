@@ -121,7 +121,7 @@ public class DebugHooksTest {
         engine.debugger.addListener(
                 new DebugCPU.Listener() {
                     @Override
-                    public boolean beforeInstruction(int pc, int bank) {
+                    public boolean beforeInstruction(int pc) {
                         return true;
                     }
                 });

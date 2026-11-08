@@ -39,6 +39,32 @@ import static org.mockito.Mockito.*;
 public class REditorTest extends AbstractSwingTest {
 
     @Test
+    public void measuresTrailingTabsWhenOpeningAndZoomingEditor() {
+        for (String text : List.of("", "\t", "\t\t", ";X\t")) {
+            for (boolean compilerBacked : List.of(false, true)) {
+                Compiler compiler = compilerBacked ? compiler(lexerFor(
+                        token(net.emustudio.emulib.plugins.compiler.Token.COMMENT, 0, text),
+                        token(net.emustudio.emulib.plugins.compiler.Token.EOF, text.length(), "")
+                ), List.of(new FileExtension("asm", "Assembly"))) : null;
+                REditor editor = createEditor(mock(Dialogs.class), compiler);
+                runOnEdt(() -> editor.textPane().setText(text));
+                showInFrame(editor.getView());
+
+                runOnEdt(() -> {
+                    for (float size : new float[]{14, 20}) {
+                        editor.setFontSize(size);
+                        float width = 0;
+                        for (Token t = editor.textPane().getTokenListForLine(0); t.isPaintable(); t = t.getNextToken()) {
+                            width += t.getWidth(editor.textPane(), (x, offset) -> ((int) (x / 64) + 1) * 64, width);
+                        }
+                        assertEquals(text.isEmpty() ? 0 : text.equals("\t\t") ? 128 : 64, width, 0.01f);
+                    }
+                });
+            }
+        }
+    }
+
+    @Test
     public void compilerBackedEditorUsesDirectTokenMakerIntegration() {
         Dialogs dialogs = mock(Dialogs.class);
         REditor editor = createEditor(dialogs, compiler(

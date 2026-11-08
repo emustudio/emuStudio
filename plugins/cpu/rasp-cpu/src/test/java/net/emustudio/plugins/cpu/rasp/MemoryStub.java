@@ -80,13 +80,7 @@ public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMe
     }
 
     @Override
-    public RaspMemory getSnapshot() {
-        Map<Integer, Integer> programMemory = new HashMap<>();
-        for (int i = 0; i < memory.length; i++) {
-            if (memory[i] != null) {
-                programMemory.put(i, memory[i]);
-            }
-        }
-        return new RaspMemory(labels.values(), programMemory, inputs);
+    public List<Integer> getInputs() {
+        return List.copyOf(inputs);
     }
 }

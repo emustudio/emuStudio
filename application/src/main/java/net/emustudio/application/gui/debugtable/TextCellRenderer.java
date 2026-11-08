@@ -35,8 +35,7 @@ class TextCellRenderer extends DefaultTableCellRenderer {
         setIcon(address ? (current ? CURRENT_INSTRUCTION : EMPTY_MARKER) : null);
         setIconTextGap(4);
         Font tableFont = table.getFont();
-        int style = tableFont.getStyle() | (current ? Font.BOLD : Font.PLAIN);
-        setFont(new Font(Font.MONOSPACED, style, tableFont.getSize()).deriveFont(tableFont.getSize2D()));
+        setFont(new Font(Font.MONOSPACED, tableFont.getStyle(), tableFont.getSize()).deriveFont(tableFont.getSize2D()));
         setToolTipText(current ? "Current instruction (PC)" : null);
         getAccessibleContext().setAccessibleDescription(current ? "Current instruction (PC)" : null);
         return this;
