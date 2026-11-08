@@ -86,21 +86,8 @@ public final class AnnotationIndex {
 
     }
 
-    /** Restore saved identities while preserving live edits and all other annotation owners. */
-    void restore(Properties properties) throws IOException {
-        Map<Long, MemoryAnnotations.Entry> saved = new LinkedHashMap<>();
-        for (Entry entry : importedEntries(properties))
-            saved.put(entry.id, new MemoryAnnotations.Entry(OWNER, entry.id, entry.address, entry.end,
-                    USER_KIND + entry.kind, entry.label, null));
-        while (true) {
-            long revision = engine.revision();
-            Map<Long, MemoryAnnotations.Entry> values = new LinkedHashMap<>(saved);
-            for (MemoryAnnotations.Entry entry : userEntries()) values.put(entry.entryId, entry);
-            if (engine.compareAndReplaceOwner(revision, OWNER, values.values())) return;
-        }
-    }
-
-    void clear() { edit(List.of(), true, false); }
+    /** Replaces all user annotations, keeping the given identities. */
+    void replace(List<Entry> entries) { edit(entries, true, false); }
 
     public List<Entry> entries() {
         List<Entry> result = new ArrayList<>();
@@ -124,18 +111,14 @@ public final class AnnotationIndex {
         return result;
     }
 
+    /** Only user annotations are saved; identities are runtime-only. */
     public Properties properties() {
         Properties p = new Properties();
-        p.setProperty("version", "4");
-        p.setProperty("image.identity", index.snapshot().layout().imageId());
-        List<Entry> entries = entries();
-        p.setProperty("entries", Integer.toString(entries.size()));
         int i = 0;
-        for (Entry e : entries) {
+        for (Entry e : entries()) {
             String k = "entry." + (i++) + ".";
             p.setProperty(k + "address", Integer.toString(e.address));
             p.setProperty(k + "end", Integer.toString(e.end));
-            p.setProperty(k + "id", Long.toString(e.id));
             p.setProperty(k + "label", e.label);
             p.setProperty(k + "kind", e.kind);
         }
@@ -143,41 +126,36 @@ public final class AnnotationIndex {
     }
 
     public void save(Path path) throws IOException { AtomicProperties.save(path, properties()); }
-    public void load(Path path) throws IOException { importProperties(AtomicProperties.load(path)); }
+    public int load(Path path) throws IOException { return importProperties(AtomicProperties.load(path)); }
 
-    public void importProperties(Properties p) throws IOException {
-        List<Entry> imported = importedEntries(p);
-        List<Entry> copies = new ArrayList<>();
-        for (Entry entry : imported)
-            copies.add(new Entry(IDS.getAndAdd(2), entry.address, entry.end,
-                    entry.label, entry.kind));
-        edit(copies, false, false);
-    }
-
-    private List<Entry> importedEntries(Properties p) throws IOException {
-        String version = p.getProperty("version");
-        if (!"4".equals(version)
-                || !index.snapshot().layout().imageId().equals(p.getProperty("image.identity")))
-            throw new IOException("Annotations belong to another memory image/layout");
-        Map<Long, Entry> imported = new LinkedHashMap<>();
-        try {
-            int count = Integer.parseInt(p.getProperty("entries"));
-            if (count < 0 || count > 100000) throw new IllegalArgumentException("Too many annotations");
-            for (int i = 0; i < count; i++) {
-                String k = "entry." + i + ".";
-                int address = Integer.parseInt(p.getProperty(k + "address"));
-                long id = Long.parseLong(p.getProperty(k + "id"));
-                if (id < 0 || id >= Long.MAX_VALUE - 1 || (id & 1) != 0) throw new IllegalArgumentException("Invalid annotation id");
-                Entry entry = new Entry(id, address, Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
+    /** Appends saved annotations, skipping exact duplicates. Returns the number of invalid entries skipped. */
+    public int importProperties(Properties p) {
+        ProgramIndex.Layout layout = index.snapshot().layout();
+        Set<List<Object>> known = new HashSet<>();
+        for (Entry entry : entries()) known.add(key(entry));
+        List<Entry> added = new ArrayList<>();
+        int skipped = 0;
+        for (int i : AtomicProperties.indices(p, "entry.", ".address")) {
+            String k = "entry." + i + ".";
+            Entry entry;
+            try {
+                entry = new Entry(IDS.getAndAdd(2), Integer.parseInt(p.getProperty(k + "address")),
+                        Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
-                validateRange(index.snapshot().layout(), entry);
-                if (imported.containsKey(id)) throw new IllegalArgumentException("Duplicate annotation id");
-                imported.put(id, entry);
+                validateRange(layout, entry);
+            } catch (RuntimeException invalid) {
+                skipped++;
+                continue;
             }
-            for (long id : imported.keySet()) IDS.accumulateAndGet(id + 2, Math::max);
-            return new ArrayList<>(imported.values());
-        } catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
+            if (known.add(key(entry))) added.add(entry);
+        }
+        edit(added, false, false);
+        return skipped;
+    }
+
+    private static List<Object> key(Entry entry) {
+        return List.of(entry.address, entry.end, entry.kind, entry.label);
     }
 
     public static final class Entry {

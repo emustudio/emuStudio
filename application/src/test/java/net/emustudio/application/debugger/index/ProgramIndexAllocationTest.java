@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import static net.emustudio.application.debugger.index.ProgramIndex.*;
 import static org.junit.Assert.assertEquals;
 
-/** Allocation contract only; latency and retained-memory measurements belong to JMH. */
+/** Allocation contract only. */
 public class ProgramIndexAllocationTest {
     private static final int WARMUP = 30000;
     private static final int SAMPLES = 10000;
@@ -86,7 +86,7 @@ public class ProgramIndexAllocationTest {
         int cursor;
 
         Workload(int size, int common) {
-            index = ProgramIndex.create("allocation", size, new MemoryAnnotations());
+            index = ProgramIndex.create(size, new MemoryAnnotations());
             int[] starts = {0, 32, 4096, size / 2, common - 2, common, size - 2};
             addresses = new int[starts.length * 2 + 3];
             addresses[starts.length * 2] = 128;

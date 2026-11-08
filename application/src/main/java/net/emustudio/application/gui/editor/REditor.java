@@ -271,7 +271,6 @@ public class REditor implements Editor {
         } else {
             try {
                 textPane.save();
-                commands.persistBookmarks();
                 persistSyntaxStyle();
                 isnew = false;
                 return true;
@@ -297,7 +296,6 @@ public class REditor implements Editor {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
-                commands.persistBookmarks();
                 persistSyntaxStyle();
                 return true;
             } catch (IOException e) {
@@ -408,7 +406,6 @@ public class REditor implements Editor {
             textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
-            commands.restoreBookmarks();
             restoreSyntaxStyle();
             return true;
         } catch (IOException e) {
@@ -424,7 +421,6 @@ public class REditor implements Editor {
         textPane.discardAllEdits();
         textPane.setDirty(false);
         isnew = true;
-        commands.clearBookmarks();
         restoreSyntaxStyle();
     }
 

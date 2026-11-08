@@ -26,16 +26,16 @@ public final class ProgramIndex {
     private final MemoryAnnotations annotationEngine;
     private final AtomicReference<View> root;
 
-    private ProgramIndex(String imageId, int size, MemoryAnnotations annotationEngine) {
+    private ProgramIndex(int size, MemoryAnnotations annotationEngine) {
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
-        layout = new IndexLayout(imageId, size);
+        layout = new IndexLayout(size);
         root = new AtomicReference<>(new View(identity, layout, null, new BreakpointIndex(layout, new Breakpoint[0]),
                 0, 0, 0, FlowState.NOT_BUILT));
     }
 
     /** Creates an empty index, copying and validating its immutable layout. */
-    public static ProgramIndex create(String imageId, int addressSpaceSize, MemoryAnnotations annotationEngine) {
-        return new ProgramIndex(imageId, addressSpaceSize, annotationEngine);
+    public static ProgramIndex create(int addressSpaceSize, MemoryAnnotations annotationEngine) {
+        return new ProgramIndex(addressSpaceSize, annotationEngine);
     }
 
     public MemoryAnnotations annotationEngine() { return annotationEngine; }
@@ -98,7 +98,6 @@ public final class ProgramIndex {
     }
 
     public interface Layout {
-        String imageId();
         int addressSpaceSize();
     }
 
@@ -384,15 +383,11 @@ public final class ProgramIndex {
     }
 
     private static final class IndexLayout implements Layout {
-        final String imageId;
         final int size;
-        IndexLayout(String imageId, int size) {
-            this.imageId = Objects.requireNonNull(imageId, "imageId");
-            if (imageId.isEmpty() || size < 1)
-                throw new IllegalArgumentException("Invalid image identity or memory layout");
+        IndexLayout(int size) {
+            if (size < 1) throw new IllegalArgumentException("Invalid memory layout");
             this.size = size;
         }
-        @Override public String imageId() { return imageId; }
         @Override public int addressSpaceSize() { return size; }
         void checkAddress(int address) {
             if (address < 0 || address >= size) throw new IllegalArgumentException("Address outside memory layout");

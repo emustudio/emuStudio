@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 
 public class ProgramIndexTest {
     @Test public void breakpointBitmapPreservesMultipleDisabledAndConditionalRulesAtCpuVisibleAddresses() {
-        ProgramIndex index = create("rules", 128, new MemoryAnnotations());
+        ProgramIndex index = create(128, new MemoryAnnotations());
         assertFalse(index.snapshot().hasExecutionBreakpoint(0));
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
             edit.put(1, 0, true);
@@ -45,7 +45,7 @@ public class ProgramIndexTest {
     }
 
     @Test public void graphKeepsEdgeKindsSelfLoopsAndKnownUndecodedTargets() {
-        ProgramIndex index = create("flow", 32, new MemoryAnnotations());
+        ProgramIndex index = create(32, new MemoryAnnotations());
         try (ContentUpdate edit = index.updateContent(index.snapshot())) {
             edit.replaceFlow(true)
                     .putInstruction(new Range(0, 3), InstructionKind.CALL)
@@ -75,7 +75,7 @@ public class ProgramIndexTest {
     }
 
     @Test public void memoryChangeRejectsLateContentButPreservesIndependentBreakpointEdit() throws Exception {
-        ProgramIndex index = create("memory-race", 32, new MemoryAnnotations());
+        ProgramIndex index = create(32, new MemoryAnnotations());
         Snapshot base = index.snapshot();
         CountDownLatch staged = new CountDownLatch(1), changed = new CountDownLatch(1);
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -99,7 +99,7 @@ public class ProgramIndexTest {
     }
 
     @Test public void annotationChangesInvalidateFlowAndRejectEarlierEdits() {
-        ProgramIndex index = create("annotations", 8, new MemoryAnnotations());
+        ProgramIndex index = create(8, new MemoryAnnotations());
         try (ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false).putInstruction(new Range(0, 1), InstructionKind.STOP).commit();
         }
@@ -115,7 +115,7 @@ public class ProgramIndexTest {
     }
 
     @Test public void graphAndBreakpointCommitsKeepIndependentChanges() {
-        ProgramIndex index = create("independent", 8, new MemoryAnnotations());
+        ProgramIndex index = create(8, new MemoryAnnotations());
         Snapshot base = index.snapshot();
         ContentUpdate graph = index.updateContent(base);
         BreakpointUpdate breakpoint = index.updateBreakpoints(base);

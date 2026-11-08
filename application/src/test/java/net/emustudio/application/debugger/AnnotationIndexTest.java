@@ -6,7 +6,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
@@ -22,13 +21,13 @@ public class AnnotationIndexTest {
 
     private static ProgramIndex emptyLike(ProgramIndex index) {
         ProgramIndex.Layout layout = index.snapshot().layout();
-        return ProgramIndex.create(layout.imageId(), layout.addressSpaceSize(), new MemoryAnnotations());
+        return ProgramIndex.create(layout.addressSpaceSize(), new MemoryAnnotations());
     }
 
     @Test
     public void replacingCompilerAnnotationsPreservesUserMetadata() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8, new MemoryAnnotations()), engine);
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(8, new MemoryAnnotations()), engine);
         annotations.add(new AnnotationIndex.Entry(1, "user", "CODE"));
         engine.put(new MemoryAnnotations.Entry(10, 1, 1, 2, "source", "old", null));
 
@@ -40,89 +39,120 @@ public class AnnotationIndexTest {
     }
 
     @Test
-    public void restoreRetriesConcurrentEditsWithoutLosingLiveValuesOrOtherOwners() throws Exception {
-        AnnotationIndex saved = new AnnotationIndex(ProgramIndex.create("test", 8, new MemoryAnnotations()));
-        AnnotationIndex.Entry changed = saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
-        AnnotationIndex.Entry retained = saved.add(new AnnotationIndex.Entry(2, "retained", "CODE"));
+    public void importRetriesConcurrentEditsWithoutLosingLiveValuesOrOtherOwners() throws Exception {
+        AnnotationIndex saved = new AnnotationIndex(ProgramIndex.create(8, new MemoryAnnotations()));
+        saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
+        saved.add(new AnnotationIndex.Entry(2, "retained", "CODE"));
         MemoryAnnotations engine = spy(new MemoryAnnotations());
         AtomicBoolean first = new AtomicBoolean(true);
         doAnswer(call -> {
             if (first.getAndSet(false)) {
-                engine.put(new MemoryAnnotations.Entry(AnnotationIndex.OWNER, changed.id, 1, 2,
+                engine.put(new MemoryAnnotations.Entry(AnnotationIndex.OWNER, 1L << 40, 3, 4,
                         AnnotationIndex.USER_KIND + "DATA", "live edit", null));
                 engine.put(new MemoryAnnotations.Entry(42, 1, 0, 1, "custom", "changed", null));
             }
             return call.callRealMethod();
         }).when(engine).compareAndReplaceOwner(anyLong(), eq(AnnotationIndex.OWNER), anyCollection());
-        AnnotationIndex live = new AnnotationIndex(ProgramIndex.create("test", 8, engine));
+        AnnotationIndex live = new AnnotationIndex(ProgramIndex.create(8, engine));
 
-        live.restore(saved.properties());
+        assertEquals(0, live.importProperties(saved.properties()));
 
-        assertEquals(changed.id, live.get(1).id);
-        assertEquals("live edit", live.get(1).label);
-        assertEquals(retained.id, live.get(2).id);
+        assertEquals("saved", live.get(1).label);
         assertEquals("retained", live.get(2).label);
+        assertEquals("live edit", live.get(3).label);
         assertEquals("changed", engine.get(42, 1).text);
     }
 
     @Test
-    public void malformedRestoreDoesNotChangeExistingMetadata() {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+    public void malformedImportEntriesAreSkippedAndCounted() {
+        ProgramIndex image = ProgramIndex.create(2, new MemoryAnnotations());
         AnnotationIndex live = new AnnotationIndex(emptyLike(image));
         live.add(new AnnotationIndex.Entry(0, "keep", "CODE"));
         AnnotationIndex saved = new AnnotationIndex(emptyLike(image));
         saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
         Properties input = saved.properties();
-        input.setProperty("entries", "2");
         input.setProperty("entry.1.address", "invalid");
+        input.setProperty("entry.2.address", "0");
+        input.setProperty("entry.2.end", "1");
+        input.setProperty("entry.2.kind", "SOURCE");
 
-        assertThrows(IOException.class, () -> live.restore(input));
+        assertEquals(2, live.importProperties(input));
 
-        assertEquals(1, live.entries().size());
+        assertEquals(2, live.entries().size());
         assertEquals("keep", live.get(0).label);
-        assertNull(live.get(1));
+        assertEquals("saved", live.get(1).label);
     }
 
     @Test
     public void metadataLoadPreservesCompilerMappingsAndOtherOwners() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(2, new MemoryAnnotations());
         MemoryAnnotations engine = new MemoryAnnotations();
         AnnotationIndex live = new AnnotationIndex(emptyLike(image), engine);
         AnnotationIndex captured = new AnnotationIndex(emptyLike(image));
         captured.add(new AnnotationIndex.Entry(0, "user", "CODE"));
         engine.put(new MemoryAnnotations.Entry(9, 8, 1, 2, "custom:note", "keep", null));
 
-        live.restore(captured.properties());
+        live.importProperties(captured.properties());
 
         assertEquals("user", live.get(0).label);
         assertEquals("keep", engine.get(9, 8).text);
     }
 
     @Test
-    public void importRejectsObsoleteFormatWithoutChangingMetadata() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+    public void importIgnoresLegacyCountAndVersionKeys() {
+        ProgramIndex image = ProgramIndex.create(4, new MemoryAnnotations());
         AnnotationIndex annotations = new AnnotationIndex(emptyLike(image));
-        Properties input = annotations.properties();
+        Properties input = new Properties();
         input.setProperty("version", "1");
-        input.setProperty("entries", "2");
-        for (int i = 0; i < 2; i++) {
-            input.setProperty("entry." + i + ".address", "1");
+        input.setProperty("entries", "1");
+        for (int i : new int[] {0, 7}) {
+            input.setProperty("entry." + i + ".address", Integer.toString(i == 0 ? 1 : 2));
+            input.setProperty("entry." + i + ".end", Integer.toString(i == 0 ? 2 : 3));
             input.setProperty("entry." + i + ".label", "value" + i);
+            input.setProperty("entry." + i + ".kind", "DATA");
         }
-        assertThrows(IOException.class, () -> annotations.importProperties(input));
-        assertTrue(annotations.entries().isEmpty());
+
+        assertEquals(0, annotations.importProperties(input));
+
+        assertEquals("value0", annotations.get(1).label);
+        assertEquals("value7", annotations.get(2).label);
+    }
+
+    @Test
+    public void repeatedImportDoesNotDuplicateAnnotations() {
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(4, new MemoryAnnotations()));
+        annotations.add(new AnnotationIndex.Entry(-1, 1, 3, "buffer", "DATA"));
+        Properties saved = annotations.properties();
+
+        annotations.importProperties(saved);
+        annotations.importProperties(saved);
+
+        assertEquals(1, annotations.entries().size());
+    }
+
+    @Test
+    public void savedAnnotationsContainOnlyRangesLabelsAndKinds() {
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(4, new MemoryAnnotations()));
+        annotations.add(new AnnotationIndex.Entry(-1, 1, 3, "buffer", "DATA"));
+        Properties expected = new Properties();
+        expected.setProperty("entry.0.address", "1");
+        expected.setProperty("entry.0.end", "3");
+        expected.setProperty("entry.0.label", "buffer");
+        expected.setProperty("entry.0.kind", "DATA");
+
+        assertEquals(expected, annotations.properties());
     }
 
     @Test
     public void clearingUserMetadataPreservesCompilerAndOtherOwners() {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(2, new MemoryAnnotations());
         MemoryAnnotations engine = new MemoryAnnotations();
         AnnotationIndex annotations = new AnnotationIndex(emptyLike(image), engine);
         annotations.add(new AnnotationIndex.Entry(0, "user", "DATA"));
         engine.put(new MemoryAnnotations.Entry(2, 1, 0, 1, "label", "compiler", null));
         engine.put(new MemoryAnnotations.Entry(99, 1, 0, 2, "custom:region", "external", null));
 
-        annotations.clear();
+        annotations.replace(List.of());
 
         assertNull(annotations.get(0));
         assertTrue(annotations.entries().isEmpty());
@@ -132,7 +162,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void annotationIsFoundAndRemovedAtItsCpuVisibleAddress() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 2, new MemoryAnnotations()));
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(2, new MemoryAnnotations()));
         annotations.add(new AnnotationIndex.Entry(1, "shared", "DATA"));
 
         AnnotationIndex.Entry shared = annotations.get(1);
@@ -145,7 +175,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void updatingIdentityReplacesOnlyThatAnnotation() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 2, new MemoryAnnotations()));
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(2, new MemoryAnnotations()));
         AnnotationIndex.Entry first = annotations.add(new AnnotationIndex.Entry(0, "first", "CODE"));
         AnnotationIndex.Entry second = annotations.add(new AnnotationIndex.Entry(0, "second", "DATA"));
 
@@ -160,7 +190,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void searchMatchesLabelsWithoutCaseSensitivity() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 3, new MemoryAnnotations()));
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(3, new MemoryAnnotations()));
         annotations.add(new AnnotationIndex.Entry(0, "MainLoop", "CODE"));
         annotations.add(new AnnotationIndex.Entry(1, "MainLoop buffer", "DATA"));
         annotations.add(new AnnotationIndex.Entry(2, "other", "UNKNOWN"));
@@ -174,7 +204,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void savedAnnotationsRestoreEveryUserField() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(2, new MemoryAnnotations());
         AnnotationIndex original = new AnnotationIndex(emptyLike(image));
         original.add(new AnnotationIndex.Entry(1, "Entrée\nsecond line", "CODE"));
         Path file = temporary.newFile("annotations.properties").toPath();
@@ -191,37 +221,8 @@ public class AnnotationIndexTest {
     }
 
     @Test
-    public void importRejectsAnotherImageWithoutReplacingExistingEntries() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 2, new MemoryAnnotations()));
-        annotations.add(new AnnotationIndex.Entry(0, "keep", "CODE"));
-        AnnotationIndex other = new AnnotationIndex(ProgramIndex.create("other", 2, new MemoryAnnotations()));
-
-        assertThrows(IOException.class, () -> annotations.importProperties(other.properties()));
-
-        assertEquals("keep", annotations.get(0).label);
-        assertEquals(1, annotations.entries().size());
-    }
-
-    @Test
-    public void malformedLaterEntryDoesNotImportEarlierValidEntry() {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
-        AnnotationIndex annotations = new AnnotationIndex(emptyLike(image));
-        annotations.add(new AnnotationIndex.Entry(0, "keep", "CODE"));
-        AnnotationIndex imported = new AnnotationIndex(emptyLike(image));
-        imported.add(new AnnotationIndex.Entry(1, "new", "DATA"));
-        Properties properties = imported.properties();
-        properties.setProperty("entries", "2");
-        properties.setProperty("entry.1.address", "invalid");
-
-        assertThrows(IOException.class, () -> annotations.importProperties(properties));
-
-        assertNull(annotations.get(1));
-        assertEquals("keep", annotations.get(0).label);
-    }
-
-    @Test
     public void importKeepsIndependentAnnotationsAtTheSameAddress() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 2, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(2, new MemoryAnnotations());
         AnnotationIndex annotations = new AnnotationIndex(emptyLike(image));
         annotations.add(new AnnotationIndex.Entry(0, "old", "CODE"));
         annotations.add(new AnnotationIndex.Entry(1, "keep", "DATA"));
@@ -238,7 +239,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void invalidKindAndOutOfRangeAddressLeaveIndexEmpty() {
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 1, new MemoryAnnotations()));
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(1, new MemoryAnnotations()));
 
         assertThrows(IllegalArgumentException.class,
                 () -> annotations.add(new AnnotationIndex.Entry(0, "", "FUNCTION")));
@@ -249,14 +250,16 @@ public class AnnotationIndexTest {
 
     @Test
     public void overlappingRangesRemainIndependentAfterSaveAndReload() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 16, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(16, new MemoryAnnotations());
         AnnotationIndex annotations = new AnnotationIndex(image);
-        AnnotationIndex.Entry first = annotations.add(new AnnotationIndex.Entry(-1, 2, 8, "first", "UNKNOWN"));
-        AnnotationIndex.Entry second = annotations.add(new AnnotationIndex.Entry(-1, 2, 5, "second", "UNKNOWN"));
+        annotations.add(new AnnotationIndex.Entry(-1, 2, 8, "first", "UNKNOWN"));
+        annotations.add(new AnnotationIndex.Entry(-1, 2, 5, "second", "UNKNOWN"));
         Properties saved = annotations.properties();
         AnnotationIndex restored = new AnnotationIndex(emptyLike(image));
 
-        restored.restore(saved);
+        restored.importProperties(saved);
+        AnnotationIndex.Entry first = restored.entries().stream().filter(entry -> entry.label.equals("first")).findFirst().orElseThrow();
+        AnnotationIndex.Entry second = restored.entries().stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
         restored.update(new AnnotationIndex.Entry(first.id, 3, 9, "changed", "UNKNOWN"));
         restored.remove(second);
 
@@ -270,7 +273,7 @@ public class AnnotationIndexTest {
     @Test
     public void rangesOutsideAddressSpaceAreRejectedWithoutChanges() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8, new MemoryAnnotations()), engine);
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(8, new MemoryAnnotations()), engine);
 
         assertThrows(IllegalArgumentException.class,
                 () -> annotations.add(new AnnotationIndex.Entry(-1, 3, 9, "outside", "UNKNOWN")));
@@ -281,7 +284,7 @@ public class AnnotationIndexTest {
     @Test
     public void rangesCanCoverAnyContiguousCpuVisibleCells() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create("test", 8, new MemoryAnnotations()), engine);
+        AnnotationIndex annotations = new AnnotationIndex(ProgramIndex.create(8, new MemoryAnnotations()), engine);
 
         AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 3, 5, "shared", "UNKNOWN"));
 
@@ -291,7 +294,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void importingAllocatesIndependentIdentities() throws Exception {
-        ProgramIndex image = ProgramIndex.create("test", 8, new MemoryAnnotations());
+        ProgramIndex image = ProgramIndex.create(8, new MemoryAnnotations());
         AnnotationIndex annotations = new AnnotationIndex(image);
         AnnotationIndex.Entry original = annotations.add(new AnnotationIndex.Entry(-1, 1, 4, "original", "UNKNOWN"));
         Properties imported = annotations.properties();

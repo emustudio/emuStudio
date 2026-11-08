@@ -30,7 +30,7 @@ public class ProgramIndexPublicationRaceTest {
         ExecutorService workers = Executors.newFixedThreadPool(2);
         try {
             for (int attempt = 0; attempt < 20; attempt++) {
-                ProgramIndex index = create("same-component-race", 65536, new MemoryAnnotations());
+                ProgramIndex index = create(65536, new MemoryAnnotations());
                 Snapshot base = index.snapshot();
                 CountDownLatch staged = new CountDownLatch(2), release = new CountDownLatch(1);
                 Future<CommitResult> first = workers.submit(() -> edit(index, base, 1, content, staged, release));

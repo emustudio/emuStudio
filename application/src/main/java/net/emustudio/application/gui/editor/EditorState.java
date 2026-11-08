@@ -3,21 +3,15 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.settings.AppSettings;
-import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
-/** Editor preferences and per-file bookmarks use the existing application settings store. */
+/** Editor preferences use the existing application settings store. */
 final class EditorState {
     private final AppSettings settings;
-    private final Properties bookmarks = new Properties();
     EditorState(AppSettings settings) {
         this.settings = settings;
-        if (settings != null) {
-            try { bookmarks.load(new StringReader(settings.getString("editorBookmarks").orElse(""))); }
-            catch (IOException e) { throw new UncheckedIOException(e); }
-        }
     }
     boolean flag(String name, boolean fallback) { return settings == null ? fallback : settings.getBoolean("editor" + name).orElse(fallback); }
     void setFlag(String name, boolean value) { if (settings != null) settings.set("editor" + name, value); }
@@ -30,14 +24,4 @@ final class EditorState {
     }
     String syntax(Path path) { return text("Syntax" + key(path), SourceFoldParser.COMPILER_STYLE); }
     void syntax(Path path, String style) { setText("Syntax" + key(path), style); }
-    String bookmarks(Path path) { return bookmarks.getProperty(key(path), ""); }
-    void bookmarks(Path path, String value) {
-        bookmarks.setProperty(key(path), value);
-        if (settings != null) {
-            try {
-                StringWriter writer = new StringWriter(); bookmarks.store(writer, null);
-                settings.set("editorBookmarks", writer.toString());
-            } catch (IOException e) { throw new UncheckedIOException(e); }
-        }
-    }
 }

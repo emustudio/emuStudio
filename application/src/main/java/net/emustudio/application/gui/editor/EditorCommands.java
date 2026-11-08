@@ -12,7 +12,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.event.*;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -29,7 +28,6 @@ final class EditorCommands {
     private final Compiler compiler;
     private final MultipleSelection selections;
     private EditorState state = new EditorState(null);
-    private final Map<GutterIconInfo, String> bookmarkNames = new IdentityHashMap<>();
     private final Deque<int[]> selectionHistory = new ArrayDeque<>();
     private final Map<String, Action> actions = new LinkedHashMap<>();
 
@@ -39,21 +37,6 @@ final class EditorCommands {
         this.scroll = scroll;
         this.compiler = compiler;
         selections = new MultipleSelection(pane);
-        scroll.getGutter().setBookmarkIcon(new Icon() {
-            public int getIconWidth() {
-                return 12;
-            }
-
-            public int getIconHeight() {
-                return 14;
-            }
-
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                g.setColor(new Color(0x3578ba));
-                g.fillPolygon(new int[]{x + 2, x + 10, x + 10, x + 6, x + 2}, new int[]{y + 1, y + 1, y + 13, y + 9, y + 13}, 5);
-            }
-        });
-        scroll.getGutter().setBookmarkingEnabled(true);
         add("Duplicate line / selection", KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::duplicate);
         for (String name : List.of("Sort lines", "Reverse lines", "Remove duplicate lines")) {
             add(name, 0, 0, () -> lines(text -> TextEdits.reorder(text, name), true));
@@ -73,17 +56,6 @@ final class EditorCommands {
         add("Expand selection", KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::expand);
         add("Shrink selection", KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::shrink);
         add("Go to line / column", KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK, this::goTo);
-        add("Toggle bookmark", KeyEvent.VK_F2, InputEvent.CTRL_DOWN_MASK, () -> {
-            invoke(RTextAreaEditorKit.rtaToggleBookmarkAction);
-            persistBookmarks();
-        });
-        add("Next bookmark", KeyEvent.VK_F2, 0, () -> invoke(RTextAreaEditorKit.rtaNextBookmarkAction));
-        add("Previous bookmark", KeyEvent.VK_F2, InputEvent.SHIFT_DOWN_MASK, () -> invoke(RTextAreaEditorKit.rtaPrevBookmarkAction));
-        add("Name / number bookmark", 0, 0, this::nameBookmark);
-        for (int i = 0; i <= 9; i++) {
-            final String number = Integer.toString(i);
-            add("Go to bookmark " + number, KeyEvent.VK_0 + i, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK, () -> jumpNamed(number));
-        }
         add("Start recording", 0, 0, RTextArea::beginRecordingMacro);
         add("Stop recording", 0, 0, RTextArea::endRecordingMacro);
         add("Replay recording", KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, pane::playbackLastMacro);
@@ -102,7 +74,6 @@ final class EditorCommands {
         pane.setPaintTabLines(state.flag("IndentGuides", false));
         pane.setLineWrap(state.flag("Wrap", false));
         pane.setCodeFoldingEnabled(state.flag("Folding", true));
-        restoreBookmarks();
         applyColors();
     }
 
@@ -113,7 +84,7 @@ final class EditorCommands {
     List<JMenu> menus() {
         JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Uppercase", "Lowercase", "Invert case", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
         JMenu select = menu("Selection", "Select next occurrence", "Select all occurrences", "Column selection", "Expand selection", "Shrink selection");
-        JMenu navigate = menu("Navigate", "Go to line / column", "Toggle bookmark", "Next bookmark", "Previous bookmark", "Name / number bookmark");
+        JMenu navigate = menu("Navigate", "Go to line / column");
         JMenu macros = menu("Editing macros", "Start recording", "Stop recording", "Replay recording");
         JMenu view = menu("Editor display", "Collapse all", "Expand all", "Indentation settings", "Token colors");
         view.add(syntaxMenu());
@@ -384,82 +355,6 @@ final class EditorCommands {
         } catch (BadLocationException | NumberFormatException e) {
             throw new IllegalArgumentException("Enter a valid line[:column]");
         }
-    }
-
-    void clearBookmarks() {
-        for (GutterIconInfo bookmark : scroll.getGutter().getBookmarks())
-            scroll.getGutter().removeTrackingIcon(bookmark);
-        bookmarkNames.clear();
-    }
-
-    void persistBookmarks() {
-        editor.getCurrentFile().ifPresent(file -> {
-            List<String> values = new ArrayList<>();
-            for (GutterIconInfo mark : scroll.getGutter().getBookmarks()) {
-                try {
-                    values.add(pane.getLineOfOffset(mark.getMarkedOffset()) + ":" + Base64.getEncoder().encodeToString(bookmarkNames.getOrDefault(mark, "").getBytes(StandardCharsets.UTF_8)));
-                } catch (BadLocationException ignored) {
-                }
-            }
-            state.bookmarks(file.toPath(), String.join(";", values));
-        });
-    }
-
-    void restoreBookmarks() {
-        clearBookmarks();
-        editor.getCurrentFile().ifPresent(file -> {
-            for (String value : state.bookmarks(file.toPath()).split(";")) {
-                if (value.isEmpty()) continue;
-                try {
-                    String[] parts = value.split(":", 2);
-                    int line = Integer.parseInt(parts[0]);
-                    if (line >= 0 && line < pane.getLineCount()) {
-                        scroll.getGutter().toggleBookmark(line);
-                        for (GutterIconInfo mark : scroll.getGutter().getBookmarks()) {
-                            if (pane.getLineOfOffset(mark.getMarkedOffset()) == line)
-                                bookmarkNames.put(mark, new String(Base64.getDecoder().decode(parts[1]), StandardCharsets.UTF_8));
-                        }
-                    }
-                } catch (IllegalArgumentException | BadLocationException ignored) {
-                }
-            }
-        });
-    }
-
-    Map<Integer, String> bookmarks() {
-        Map<Integer, String> result = new TreeMap<>();
-        for (GutterIconInfo mark : scroll.getGutter().getBookmarks()) {
-            try {
-                result.put(pane.getLineOfOffset(mark.getMarkedOffset()), bookmarkNames.getOrDefault(mark, ""));
-            } catch (BadLocationException ignored) {
-            }
-        }
-        return result;
-    }
-
-    private void nameBookmark() {
-        String value = JOptionPane.showInputDialog(pane, "Bookmark name or digit (0–9)");
-        if (value == null) return;
-        try {
-            int line = pane.getLineOfOffset(pane.getCaretPosition());
-            if (!bookmarks().containsKey(line)) scroll.getGutter().toggleBookmark(line);
-            for (GutterIconInfo mark : scroll.getGutter().getBookmarks()) {
-                if (value.equals(bookmarkNames.get(mark))) bookmarkNames.remove(mark);
-                if (pane.getLineOfOffset(mark.getMarkedOffset()) == line) bookmarkNames.put(mark, value);
-            }
-            persistBookmarks();
-        } catch (BadLocationException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    void jumpNamed(String name) {
-        bookmarks().entrySet().stream().filter(entry -> entry.getValue().equals(name)).findFirst().ifPresent(entry -> {
-            try {
-                pane.setCaretPosition(pane.getLineStartOffset(entry.getKey()));
-            } catch (BadLocationException ignored) {
-            }
-        });
     }
 
     private void fold(boolean collapsed) {

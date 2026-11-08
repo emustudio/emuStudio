@@ -54,4 +54,18 @@ public class AtomicPropertiesTest {
 
         assertThrows(IOException.class, () -> AtomicProperties.load(missing));
     }
+
+    @Test
+    public void indicesAreScannedWithoutCountKeysOrContiguity() {
+        Properties properties = new Properties();
+        properties.setProperty("entries", "1");
+        properties.setProperty("entry.12.address", "1");
+        properties.setProperty("entry.0.address", "2");
+        properties.setProperty("entry.3.label", "no address");
+        properties.setProperty("entry.x.address", "3");
+        properties.setProperty("entry.-1.address", "4");
+        properties.setProperty("entry..address", "5");
+
+        assertEquals(java.util.List.of(0, 12), AtomicProperties.indices(properties, "entry.", ".address"));
+    }
 }

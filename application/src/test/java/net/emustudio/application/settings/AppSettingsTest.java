@@ -8,8 +8,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -32,5 +35,46 @@ public class AppSettingsTest {
         assertTrue(autoOpt.isPresent());
         assertFalse(noguiOpt.get());
         assertFalse(autoOpt.get());
+    }
+
+    @Test
+    public void removedEditorBookmarksAreDeletedFromSettingsFile() throws IOException {
+        Path file = temporaryFolder.newFile("emuStudio.toml").toPath();
+        Files.writeString(file, "editorBookmarks = \"x=1\"\neditorTabSize = 8\n");
+
+        AppSettings.fromFile(file, false, false);
+
+        try (FileConfig reloaded = FileConfig.of(file)) {
+            reloaded.load();
+            assertFalse(reloaded.contains("editorBookmarks"));
+            assertEquals(Integer.valueOf(8), reloaded.get("editorTabSize"));
+        }
+    }
+
+    @Test
+    public void flowAnalysisLimitDefaultsToOneThousand() throws IOException {
+        FileConfig config = FileConfig.of(temporaryFolder.newFile("emustudio.toml"));
+
+        assertEquals(1000, new AppSettings(config, false, false).getFlowAnalysisLimit());
+    }
+
+    @Test
+    public void flowAnalysisLimitIsConfigurable() throws IOException {
+        FileConfig config = FileConfig.of(temporaryFolder.newFile("emustudio.toml"));
+        config.set(AppSettings.KEY_FLOW_ANALYSIS_LIMIT, 250000);
+
+        assertEquals(250000, new AppSettings(config, false, false).getFlowAnalysisLimit());
+    }
+
+    @Test
+    public void invalidFlowAnalysisLimitUsesDefault() throws IOException {
+        Object[] invalidValues = {0, -5, "many"};
+        for (int i = 0; i < invalidValues.length; i++) {
+            Object invalid = invalidValues[i];
+            FileConfig config = FileConfig.of(temporaryFolder.newFile("invalid" + i + ".toml"));
+            config.set(AppSettings.KEY_FLOW_ANALYSIS_LIMIT, invalid);
+
+            assertEquals(1000, new AppSettings(config, false, false).getFlowAnalysisLimit());
+        }
     }
 }

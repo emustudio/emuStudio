@@ -263,16 +263,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     @Test public void invalidRegexReplacementIsRejectedBeforeEditing() {
         assertThrows(IllegalArgumentException.class, () -> EditorSearch.find("x", "(x)", "$9", true, true, false, false, 0, 1));
     }
-    @Test public void bookmarksAndPreferencesRestoreThroughExistingSettings() throws Exception {
-        Path source = Files.writeString(files.newFile("source.asm").toPath(), "first\nsecond\n");
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
-        REditor first = editor("");
-        runOnEdt(() -> { first.configure(new EditorState(settings)); first.openFile(source); first.textPane().setCaretPosition(6); });
-        command(first, "Toggle bookmark");
-        REditor second = editor("");
-        runOnEdt(() -> { second.configure(new EditorState(settings)); second.openFile(source); });
-        assertTrue(onEdt(() -> second.commands().bookmarks().containsKey(1)));
-    }
     @Test public void foldingUsesUnknownCompilerBlockTokens() {
         LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "anything", null, null, null),
                 new SourceToken(Token.BLOCK_END, 16, "done", null, null, null)));

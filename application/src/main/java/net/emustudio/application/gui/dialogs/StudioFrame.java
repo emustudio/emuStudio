@@ -79,6 +79,7 @@ public class StudioFrame extends JFrame {
                 this, computer, debugTableModel, dialogs, emulationController, memoryContext,
                 this::navigateToSource, gui
         );
+        emulatorPanel.getDebuggerPanel().ifPresent(panel -> panel.setFlowAnalysisLimit(appSettings.getFlowAnalysisLimit()));
         this.editorPanel = new EditorPanel(
                 this, dialogs, editor, computer, this::updateWindowTitle, emulatorPanel::getRunState,
                 gui

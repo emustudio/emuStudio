@@ -74,24 +74,30 @@ public class DebuggerPanelTest {
     @Test
     public void pcFollowWaitsForCancelledAnalysisToExitWithoutLosingTheStoppedLocation() throws Exception {
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), ready = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+        AtomicInteger pc = new AtomicInteger();
+        AtomicBoolean armed = new AtomicBoolean();
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
+            when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+            when(session.cpu.getDisassembler().getFlow(0)).thenAnswer(call -> {
+                if (!armed.get()) return Optional.empty();
+                entered.countDown();
+                boolean interrupted = false;
+                while (true) {
+                    try { release.await(); break; }
+                    catch (InterruptedException cancelled) { interrupted = true; }
+                }
+                if (interrupted) Thread.currentThread().interrupt();
+                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+            });
+        })) {
             try {
-                when(workspace.session.cpu.getDisassembler().getFlow(0)).thenAnswer(call -> {
-                    entered.countDown();
-                    boolean interrupted = false;
-                    while (true) {
-                        try { release.await(); break; }
-                        catch (InterruptedException cancelled) { interrupted = true; }
-                    }
-                    if (interrupted) Thread.currentThread().interrupt();
-                    return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
-                });
+                armed.set(true);
                 SwingUtilities.invokeAndWait(() -> {
                     workspace.panel.setInspectionReadyListener(ready::countDown);
                     button(workspace.panel, "Analyze from PC").doClick(0);
                 });
                 assertTrue(entered.await(2, TimeUnit.SECONDS));
-                when(workspace.session.cpu.getInstructionLocation()).thenReturn(2);
+                pc.set(2);
                 workspace.machine.state(CPU.RunState.STATE_RUNNING);
                 workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
                 SwingUtilities.invokeAndWait(() -> {});
@@ -108,43 +114,23 @@ public class DebuggerPanelTest {
 
 
     @Test
-    public void completedRecordingCountAndByteBudgetsEvictTheOldestCapture() throws Exception {
+    public void completedRecordingsAreRetainedWithoutHiddenBudgets() throws Exception {
         List<InstructionRecording.Event> first = List.of(traceEvent(1, "NOP", "00", true), traceEvent(2, "NOP", "00", true));
         List<InstructionRecording.Event> second = List.of(traceEvent(3, "NOP", "00", true), traceEvent(4, "NOP", "00", true));
-        long eventBytes = InstructionRecording.sizeOf(first.get(0));
-        DebuggerPanel.RecordingArchive countBounded = new DebuggerPanel.RecordingArchive(3, 10000);
-        DebuggerPanel.RecordingArchive byteBounded = new DebuggerPanel.RecordingArchive(100, eventBytes * 3);
-        for (DebuggerPanel.RecordingArchive archive : List.of(countBounded, byteBounded)) {
-            archive.add(first);
+        DebuggerPanel.RecordingArchive archive = new DebuggerPanel.RecordingArchive();
 
-            DebuggerPanel.RecordingArchive.Change change = archive.add(second);
+        archive.add(first);
+        archive.add(second);
 
-            assertEquals(1, change.removed);
-            assertFalse(change.truncated);
-            assertEquals(1, archive.size());
-            assertEquals(second, archive.get(0));
-        }
+        assertEquals(2, archive.size());
+        assertEquals(first, archive.get(0));
+        assertEquals(second, archive.get(1));
     }
 
     @Test
-    public void oversizedCompletedCaptureRetainsItsNewestStepsWithinBothBudgets() throws Exception {
-        List<InstructionRecording.Event> captured = List.of(traceEvent(1, "NOP", "00", true),
-                traceEvent(2, "NOP", "00", true), traceEvent(3, "NOP", "00", true));
-        long eventBytes = InstructionRecording.sizeOf(captured.get(0));
-        DebuggerPanel.RecordingArchive archive = new DebuggerPanel.RecordingArchive(2, eventBytes * 2);
-
-        DebuggerPanel.RecordingArchive.Change change = archive.add(captured);
-
-        assertTrue(change.truncated);
-        assertEquals(0, change.removed);
-        assertEquals(captured.subList(1, 3), archive.get(0));
-    }
-
-    @Test
-    public void liveWatchEditsKeepInvalidTextInactiveAndRestoreSupportedFormatsWhenCorrected() throws Exception {
+    public void watchEditsKeepInvalidTextInactiveAndRestoreSupportedFormatsWhenCorrected() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
             workspace.machine.values.put("A", 65L);
-            workspace.machine.state(CPU.RunState.STATE_RUNNING);
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
                 JTextField expression = component(watches, JTextField.class, "Expression");
@@ -169,7 +155,6 @@ public class DebuggerPanelTest {
                 format.setSelectedItem("Hexadecimal");
                 assertTrue(renderedRowTooltip(values, 0).contains("0x41"));
                 assertEquals(0, values.getSelectedIndex());
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().snapshot().runState());
                 assertNull(findComponent(watches, AbstractButton.class, "Edit register"));
                 verify(workspace.dialogs, never()).showError(anyString(), anyString());
             });
@@ -177,36 +162,15 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void symbolicConditionWatchCanBeAddedWhileRunningWithoutAnAddress() throws Exception {
+    public void memoryWatchPanelOffersOnlyAddressAddAndRemove() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
-            workspace.machine.values.put("A", "ready");
-            workspace.machine.state(CPU.RunState.STATE_RUNNING);
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
-                button(watches, "Pause on condition").doClick(0);
-                assertFalse(component(watches, JTextField.class, "Memory watch address").isEnabled());
-                component(watches, JTextField.class, "Memory watch condition").setText("A == \"ready\"");
-                button(watches, "Add memory watch").doClick(0);
-                drainUpdates(workspace);
-
-                DebugSession.Rule rule = workspace.session.rules.get(0);
-                assertEquals("A == \"ready\"", rule.condition);
-                assertEquals("CONDITION", rule.kind);
-                assertEquals(-1, rule.address);
-                assertTrue(rule.error.isBlank());
-                JList<?> list = component(watches, JList.class, "Memory access watches");
-                list.setSelectedIndex(0);
-                when(workspace.dialogs.readString("Condition", "Edit memory watch", rule.condition))
-                        .thenReturn(Optional.of("A =="));
-                button(watches, "Edit memory watch").doClick(0);
-                drainUpdates(workspace);
-
-                DebugSession.Rule invalid = workspace.session.rules.get(0);
-                assertEquals("A ==", invalid.condition);
-                assertFalse(invalid.isActive());
-                assertFalse(invalid.error.isBlank());
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().snapshot().runState());
-                verify(workspace.dialogs, never()).showError(anyString(), anyString());
+                for (String removed : List.of("Memory watch name", "Memory watch condition", "Memory watch stop from hit"))
+                    assertNull(findComponent(watches, JTextField.class, removed));
+                for (String removed : List.of("Enable / disable memory watch", "Edit memory watch",
+                        "Reset memory watch hit counts", "Memory watch options"))
+                    assertNull(findComponent(watches, AbstractButton.class, removed));
             });
         }
     }
@@ -924,11 +888,13 @@ public class DebuggerPanelTest {
             workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 5, "buffer", "DATA"));
             SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Export annotations", file));
             assertTrue(java.nio.file.Files.isRegularFile(file));
-            workspace.session.annotations().clear();
+            workspace.session.annotations().replace(List.of());
 
+            SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Import annotations", file));
             SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Import annotations", file));
 
             assertEquals("buffer", workspace.session.annotations().get(3).label);
+            assertEquals(1, workspace.session.annotations().entries().size());
         }
     }
 
@@ -1184,45 +1150,49 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void debuggerTabsExcludeBreakpointManagerAndRetainExistingRules() throws Exception {
-        DebugSession.Rule read = new DebugSession.Rule("read buffer", "READ", 0, "", 1);
-        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 1, "", 1);
-        DebugSession.Rule write = new DebugSession.Rule("write buffer", "WRITE", 2, "", 1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
-                session -> session.rules.addAll(List.of(read, execute, write)))) {
+    public void debuggerTabsExcludeBreakpointManagerAndRetainExistingBreakpoints() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
+            session.breakpoints.add(new DebugSession.Breakpoint(1));
+            session.memoryWatches.addAll(List.of(0, 2));
+        })) {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 assertEquals(List.of("Debugger", "Inspection"),
                         java.util.stream.IntStream.range(0, tabs.getTabCount())
                                 .mapToObj(tabs::getTitleAt).collect(java.util.stream.Collectors.toList()));
                 assertNull(findComponent(workspace.panel, JList.class, "Breakpoints"));
-                assertEquals(List.of(read, execute, write), workspace.session.rules);
+                assertEquals(List.of(1), workspace.session.ordinaryBreakpoints());
+                assertEquals(List.of(0, 2), workspace.session.memoryWatches);
             });
         }
     }
 
     @Test
-    public void memoryWatchActionsTargetVisibleWatchAmongExecutionRules() throws Exception {
-        DebugSession.Rule execute = new DebugSession.Rule("loop", "EXEC", 0, "", 1);
-        DebugSession.Rule read = new DebugSession.Rule("read buffer", "READ", 1, "", 1);
-        DebugSession.Rule write = new DebugSession.Rule("write buffer", "WRITE", 2, "", 1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3,
-                session -> session.rules.addAll(List.of(execute, read, write)))) {
+    public void memoryWatchRemoveTargetsSelectedWatchAndShowsLastAccess() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0, 0x3E, 0}}, 3, session -> {
+            session.breakpoints.add(new DebugSession.Breakpoint(2));
+            session.memoryWatches.addAll(List.of(1, 2));
+        })) {
+            workspace.session.update(() -> {}).join();
+            assertFalse(workspace.session.beforeStep());
+            workspace.machine.accessed(1, false);
+            workspace.session.afterStep(true, Optional.empty());
+            workspace.session.refreshWatches().join();
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
                 JList<?> list = component(watches, JList.class, "Memory access watches");
-                assertEquals(2, list.getModel().getSize());
                 list.setSelectedIndex(1);
-                button(watches, "Enable / disable memory watch").doClick(0);
-                drainUpdates(workspace);
-                assertFalse(write.enabled);
-                assertTrue(read.enabled);
-                assertTrue(execute.enabled);
 
                 button(watches, "Remove memory watch").doClick(0);
                 drainUpdates(workspace);
-                assertEquals(List.of(execute, read), workspace.session.rules);
+
+                assertEquals(List.of(1), workspace.session.memoryWatches);
+                assertEquals(List.of(2), workspace.session.ordinaryBreakpoints());
                 assertEquals(1, list.getModel().getSize());
+                String tooltip = renderedRowTooltip(list, 0);
+                assertTrue(tooltip, tooltip.contains("= 62"));
+                assertTrue(tooltip, tooltip.contains("last read @0000 (62)"));
+                assertTrue(tooltip, tooltip.contains("last write \u2014"));
             });
         }
     }
@@ -1240,10 +1210,7 @@ public class DebuggerPanelTest {
                 assertNull(findComponent(watches, JComboBox.class, "Memory watch bank"));
                 button(watches, "Add memory watch").doClick(0);
                 drainUpdates(workspace);
-                DebugSession.Rule watch = workspace.session.rules.stream()
-                        .filter(rule -> rule.kind.equals("READ") || rule.kind.equals("WRITE")).findFirst().orElseThrow();
-                assertEquals(0, watch.address);
-                assertEquals("WRITE", watch.kind);
+                assertEquals(List.of(0), workspace.session.memoryWatches);
             });
         }
     }
@@ -1295,7 +1262,7 @@ public class DebuggerPanelTest {
                 java.awt.event.MouseEvent hoverFirst = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, first.x + 1, first.y + 1, 0, false);
                 assertEquals("range", workspace.table.getToolTipText(hoverFirst));
-                java.awt.Color lane = java.awt.Color.getHSBColor(0f, .55f, .78f);
+                java.awt.Color lane = java.awt.Color.getHSBColor(Math.floorMod((0 * 31 + 2) * 0x9E3779B9, 360) / 360f, .55f, .78f);
                 java.awt.Color base = graph.getBackground();
                 java.awt.Color expected = new java.awt.Color((lane.getRed() * 28 + base.getRed() * 227 + 127) / 255,
                         (lane.getGreen() * 28 + base.getGreen() * 227 + 127) / 255,
@@ -1356,7 +1323,7 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 assertFalse(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 2)));
-                assertTrue(workspace.session.rules.isEmpty());
+                assertTrue(workspace.session.breakpoints.isEmpty());
                 assertEquals(0, workspace.breakpointChanges.get());
             });
             verify(workspace.dialogs).showError("Address outside CPU", "Debugger");

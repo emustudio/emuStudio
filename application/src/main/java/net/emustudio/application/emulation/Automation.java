@@ -40,12 +40,7 @@ public class Automation implements Runnable {
     private final Integer programLocation;
     private final EmulationProgress progress;
     private volatile CPU.RunState resultState;
-    private Path debugScript;
-    private Path instructionRecording;
-    private boolean recordingStarted;
     private boolean successful=true;
-    public void setDebugScript(Path path) { debugScript=path; }
-    public void setInstructionRecording(Path path) { instructionRecording = path; }
     public boolean isSuccessful() { return successful; }
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
@@ -94,10 +89,6 @@ public class Automation implements Runnable {
         try {
             computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
-            if (debugScript != null && computer.getCPU().isEmpty())
-                throw new IllegalStateException("Debug scripts require a CPU");
-            if (instructionRecording != null && computer.getCPU().isEmpty())
-                LOGGER.error("Could not start instruction recording: no CPU available");
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
                 if (programLocation != null) {
@@ -105,41 +96,13 @@ public class Automation implements Runnable {
                 }
                 if (inputFile == null || computer.getCompiler().isEmpty())
                     computer.getExecution().orElseThrow().compile(() -> {}, programLocation).join();
-                if (instructionRecording != null) {
-                    try {
-                        net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
-                        debugger.update(() -> {
-                            try { debugger.recordTo(instructionRecording); }
-                            catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
-                        }).join();
-                        recordingStarted = true;
-                    } catch (Exception failure) {
-                        LOGGER.error("Could not start instruction recording; emulation continues", failure);
-                    }
-                }
-                if (debugScript != null) {
-                    try { net.emustudio.application.debugger.DebugScript.run(computer.getDebugger().orElseThrow(), debugScript); }
-                    catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IllegalStateException(e); }
-                    catch (java.io.IOException e) { throw new IllegalStateException(e); }
-                } else { autoEmulate(cpu); }
+                autoEmulate(cpu);
             });
         } catch (Exception e) {
             successful=false;
             LOGGER.error("Error during automation", e);
             dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
         } finally {
-            if (recordingStarted) {
-                try {
-                    net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
-                    debugger.update(() -> {
-                        try { debugger.stopRecordingFile(); }
-                        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
-                    }).join();
-                } catch (Exception e) {
-                    LOGGER.error("Could not finish instruction recording", e);
-                }
-                recordingStarted = false;
-            }
             progress.dispose();
         }
     }

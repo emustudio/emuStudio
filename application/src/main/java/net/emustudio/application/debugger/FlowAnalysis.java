@@ -19,20 +19,25 @@ public final class FlowAnalysis {
     private final long annotationRevision;
     private final Map<Integer, String> listing;
     private final Map<Integer, String> opcodes;
+    private final Map<Integer, String> unknown;
+    private final Set<Integer> data;
 
-    private FlowAnalysis(ProgramIndex index, ProgramIndex.Snapshot snapshot,
-                         long annotationRevision, Map<Integer, String> listing, Map<Integer, String> opcodes) {
+    private FlowAnalysis(ProgramIndex index, ProgramIndex.Snapshot snapshot, long annotationRevision,
+                         Map<Integer, String> listing, Map<Integer, String> opcodes,
+                         Map<Integer, String> unknown, Set<Integer> data) {
         this.index = index;
         this.snapshot = snapshot;
         this.annotationRevision = annotationRevision;
         this.listing = Map.copyOf(listing);
         this.opcodes = Map.copyOf(opcodes);
+        this.unknown = Map.copyOf(unknown);
+        this.data = Set.copyOf(data);
     }
 
     /**
      * Decode live memory on a worker while the machine is paused. The session adapter must reject
      * a changed machine, memory revision, or disposed session before publishing the staged graph.
-     * The limit bounds attempted undecodable addresses as well as scheduled instructions.
+     * The limit bounds visited addresses, including undecodable ones.
      */
     public static Pending reachable(Disassembler disassembler, int start, int limit,
                                     ProgramIndex index) {
@@ -84,6 +89,12 @@ public final class FlowAnalysis {
     public boolean truncated() { return snapshot.flowState() == ProgramIndex.FlowState.TRUNCATED; }
     public String mnemonic(int address) { return listing.getOrDefault(address, ""); }
 
+    /** Terminal nodes whose instruction could not be decoded, with the reason. Not published to the index. */
+    public Map<Integer, String> unknown() { return unknown; }
+
+    /** Decoded instructions inside a DATA annotation. */
+    public boolean isData(int address) { return data.contains(address); }
+
     /** Consecutive identical linear instructions, split at entry points and caller-supplied boundaries. */
     List<List<Integer>> instructionRuns(Set<Integer> addresses, Set<Integer> boundaries) {
         Map<Integer, ProgramIndex.Instruction> instructions = new HashMap<>();
@@ -101,7 +112,14 @@ public final class FlowAnalysis {
         List<Integer> run = null;
         for (int address : new TreeSet<>(addresses)) {
             ProgramIndex.Instruction next = instructions.get(address);
-            if (next == null) continue;
+            if (next == null) {
+                if (unknown.containsKey(address)) {
+                    runs.add(new ArrayList<>(List.of(address)));
+                    run = null;
+                    previous = null;
+                }
+                continue;
+            }
             ProgramIndex.Instruction before = previous == null ? null : instructions.get(previous);
             List<Edge> in = incoming.getOrDefault(address, List.of());
             List<Edge> out = outgoing.getOrDefault(previous, List.of());
@@ -163,7 +181,8 @@ public final class FlowAnalysis {
             if (published.contentRevision() != builder.base.contentRevision() + 1
                     || published.memoryRevision() != builder.base.memoryRevision())
                 throw new IllegalStateException("Flow analysis discarded: graph replaced during publication");
-            return new FlowAnalysis(builder.index, published, builder.annotationRevision, builder.listing, builder.opcodes);
+            return new FlowAnalysis(builder.index, published, builder.annotationRevision, builder.listing, builder.opcodes,
+                    builder.unknown, builder.data);
         }
     }
 
@@ -172,35 +191,31 @@ public final class FlowAnalysis {
         final ProgramIndex index;
         final ProgramIndex.Snapshot base;
         final long annotationRevision;
-        final int size, edgeLimit;
+        final int size;
         final Map<Integer, Decoded> instructions = new LinkedHashMap<>();
         final Map<Integer, String> listing = new LinkedHashMap<>();
         final Map<Integer, String> opcodes = new LinkedHashMap<>();
+        final Map<Integer, String> unknown = new LinkedHashMap<>();
+        final Set<Integer> data = new HashSet<>();
         final List<Edge> edges = new ArrayList<>();
-        int targetAttempts;
         boolean truncated;
 
         Builder(Disassembler disassembler, int limit, ProgramIndex index, ProgramIndex.Snapshot base) {
-            if (limit < 1 || limit > 100000) throw new IllegalArgumentException("Invalid flow bounds");
+            if (limit < 1) throw new IllegalArgumentException("Invalid flow bounds");
             this.disassembler = Objects.requireNonNull(disassembler);
             this.index = Objects.requireNonNull(index);
             this.base = Objects.requireNonNull(base);
             this.annotationRevision = index.annotationEngine().revision();
             this.size = base.layout().addressSpaceSize();
-            // Bound even a malformed decoder returning a huge target list. Partial results say TRUNCATED.
-            edgeLimit = limit * 8;
         }
 
         Decoded decode(int address) {
-            if (index.annotationEngine().at(address).stream().anyMatch(annotation ->
-                    annotation.kind.equals(AnnotationIndex.USER_KIND + "DATA")
-                            || annotation.kind.equals(ProgramIndex.Kinds.DATA))) return null;
             try {
                 Optional<InstructionFlow> result = disassembler.getFlow(address);
-                if (result.isEmpty()) return null;
+                if (result.isEmpty()) return unknown(address, "No flow information");
                 InstructionFlow flow = result.get();
                 int end = disassembler.getNextInstructionPosition(address);
-                if (end <= address || end > size) return null;
+                if (end <= address || end > size) return unknown(address, "Invalid instruction length");
                 DisassembledInstruction decodedInstruction = disassembler.disassemble(address);
                 String mnemonic = decodedInstruction.mnemo;
                 ProgramIndex.Range cells = new ProgramIndex.Range(address, end);
@@ -209,28 +224,32 @@ public final class FlowAnalysis {
                         ? ProgramIndex.EdgeKind.CALL : ProgramIndex.EdgeKind.BRANCH;
                 for (int target : flow.targets) {
                     checkCancelled();
-                    if (edges.size() == edgeLimit || targetAttempts == edgeLimit) { truncated = true; break; }
-                    targetAttempts++;
                     if (target >= 0 && target < size) {
                         addEdge(address, target, targetKind);
                         destinations.add(target);
                     }
                 }
                 if (flow.fallThrough && flow.next >= 0 && flow.next < size) {
-                    if (edges.size() == edgeLimit) truncated = true;
-                    else {
-                        addEdge(address, flow.next, ProgramIndex.EdgeKind.FALL_THROUGH);
-                        destinations.add(flow.next);
-                    }
+                    addEdge(address, flow.next, ProgramIndex.EdgeKind.FALL_THROUGH);
+                    destinations.add(flow.next);
                 }
                 Decoded decoded = new Decoded(cells, ProgramIndex.InstructionKind.valueOf(flow.kind.name()), destinations);
                 instructions.put(address, decoded);
                 listing.put(address, mnemonic);
                 opcodes.put(address, decodedInstruction.opCode == null ? "" : decodedInstruction.opCode);
+                if (index.annotationEngine().at(address).stream().anyMatch(annotation ->
+                        annotation.kind.equals(AnnotationIndex.USER_KIND + "DATA")
+                                || annotation.kind.equals(ProgramIndex.Kinds.DATA))) data.add(address);
                 return decoded;
-            } catch (InvalidInstructionException | IndexOutOfBoundsException | IllegalArgumentException ignored) {
-                return null;
+            } catch (InvalidInstructionException | IndexOutOfBoundsException | IllegalArgumentException failure) {
+                return unknown(address, Objects.toString(failure.getMessage(), failure.getClass().getSimpleName()));
             }
+        }
+
+        private Decoded unknown(int address, String reason) {
+            unknown.put(address, reason);
+            listing.put(address, "unknown");
+            return null;
         }
 
         private void addEdge(int from, int to, ProgramIndex.EdgeKind kind) {

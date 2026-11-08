@@ -158,19 +158,21 @@ public class FlowAnalysisTest {
     }
 
     @Test
-    public void coveringDataRegionFromAnyOwnerStopsDecodeAtReachableTarget() throws Exception {
+    public void reachableDataRegionFromAnyOwnerIsAnalyzedAndMarked() throws Exception {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "JP 3", InstructionFlow.Kind.JUMP, 1, false, List.of(3));
+        instruction(disassembler, 3, "HALT", InstructionFlow.Kind.STOP, 4, false, List.of());
         ProgramIndex index = index(6);
         index.annotationEngine().put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                 8, 10, 2, 5, ProgramIndex.Kinds.DATA, "table", null));
 
         FlowAnalysis analysis = reachable(disassembler, 0, 10, index);
 
-        assertEquals(List.of(0), addresses(analysis));
+        assertEquals(List.of(0, 3), addresses(analysis));
         assertEquals(3, predecessors(analysis, 3).get(0).to);
         assertFalse(analysis.truncated());
-        verify(disassembler, never()).getFlow(3);
+        assertFalse(analysis.isData(0));
+        assertTrue(analysis.isData(3));
     }
 
     @Test
@@ -184,6 +186,35 @@ public class FlowAnalysisTest {
         assertEquals(List.of(0), addresses(analysis));
         assertTrue(edges(analysis).isEmpty());
         assertEquals(ProgramIndex.InstructionKind.JUMP, index.snapshot().instructionAt(0).kind());
+        assertFalse(analysis.truncated());
+    }
+
+    @Test
+    public void undecodableAddressesAreReportedAsUnknownNodesWithReason() throws Exception {
+        Disassembler disassembler = mock(Disassembler.class);
+        instruction(disassembler, 0, "CALL 8", InstructionFlow.Kind.CALL, 1, true, List.of(8));
+        when(disassembler.getFlow(8)).thenThrow(new IllegalArgumentException("bad opcode"));
+        instruction(disassembler, 1, "HALT", InstructionFlow.Kind.STOP, 2, false, List.of());
+
+        FlowAnalysis analysis = reachable(disassembler, 0, 10, index(16));
+
+        assertEquals(java.util.Map.of(8, "bad opcode"), analysis.unknown());
+    }
+
+    @Test
+    public void manyTargetsAreAllIndexedWithoutHiddenEdgeCap() throws Exception {
+        Disassembler disassembler = mock(Disassembler.class);
+        List<Integer> targets = new java.util.ArrayList<>();
+        for (int target = 1; target < 3000; target++) {
+            targets.add(target);
+            instruction(disassembler, target, "HALT", InstructionFlow.Kind.STOP, target + 1, false, List.of());
+        }
+        instruction(disassembler, 0, "SWITCH", InstructionFlow.Kind.JUMP, 1, false, targets);
+
+        FlowAnalysis analysis = reachable(disassembler, 0, 5000, index(4096));
+
+        assertEquals(2999, edges(analysis).size());
+        assertEquals(3000, addresses(analysis).size());
         assertFalse(analysis.truncated());
     }
 
@@ -214,14 +245,14 @@ public class FlowAnalysisTest {
     }
 
     @Test
-    public void malformedDecoderWithManyInvalidTargetsStillHonorsWorkBound() throws Exception {
+    public void malformedDecoderInvalidTargetsAreIgnoredWithoutTruncation() throws Exception {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "JUMP", InstructionFlow.Kind.JUMP, 1, false,
                 Collections.nCopies(1000, -1));
 
         FlowAnalysis analysis = reachable(disassembler, 0, 1, index(4));
 
-        assertTrue(analysis.truncated());
+        assertFalse(analysis.truncated());
         assertTrue(edges(analysis).isEmpty());
         assertEquals(List.of(0), addresses(analysis));
     }
@@ -231,7 +262,7 @@ public class FlowAnalysisTest {
         Disassembler disassembler = mock(Disassembler.class);
         instruction(disassembler, 0, "CALL 6", InstructionFlow.Kind.CALL, 2, false, List.of(6));
         instruction(disassembler, 6, "JP 0", InstructionFlow.Kind.JUMP, 7, false, List.of(0));
-        ProgramIndex index = ProgramIndex.create("flow", 8, new MemoryAnnotations());
+        ProgramIndex index = ProgramIndex.create(8, new MemoryAnnotations());
 
         FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, index).publish();
 
@@ -324,12 +355,11 @@ public class FlowAnalysisTest {
         assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, -1, 1, index));
         assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 4, 1, index));
         assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 0, index));
-        assertThrows(IllegalArgumentException.class, () -> FlowAnalysis.reachable(disassembler, 0, 100001, index));
 
         verifyNoInteractions(disassembler);
     }
 
-    private static ProgramIndex index(int size) { return ProgramIndex.create("test", size, new MemoryAnnotations()); }
+    private static ProgramIndex index(int size) { return ProgramIndex.create(size, new MemoryAnnotations()); }
 
     private static FlowAnalysis reachable(Disassembler disassembler, int start, int limit, ProgramIndex index) {
         return FlowAnalysis.reachable(disassembler, start, limit, index).publish();

@@ -91,7 +91,7 @@ public class InstructionIndexTest {
 
     @Test
     public void unknownAddressesStayUnknown() {
-        ProgramIndex index = ProgramIndex.create("shared", 16, new MemoryAnnotations());
+        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
         InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View first = instructions.snapshot();
         assertSame(first, instructions.snapshot());
@@ -102,7 +102,7 @@ public class InstructionIndexTest {
     }
 
     private static ProgramIndex bankedIndex() {
-        ProgramIndex index = ProgramIndex.create("banked", 16, new MemoryAnnotations());
+        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             update.replaceFlow(false);
             update.putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
