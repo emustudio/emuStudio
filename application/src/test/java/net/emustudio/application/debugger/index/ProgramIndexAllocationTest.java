@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import static net.emustudio.application.debugger.index.ProgramIndex.*;
 import static org.junit.Assert.assertEquals;
 
-/** Allocation contract only; latency and retained-memory measurements belong to JMH. */
+/** Allocation contract only. */
 public class ProgramIndexAllocationTest {
     private static final int WARMUP = 30000;
     private static final int SAMPLES = 10000;
