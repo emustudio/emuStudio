@@ -14,6 +14,7 @@ import org.junit.Test;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,10 +42,12 @@ public class EmulatorActionsTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(dialogs.readInteger("Memory address:", "Jump to address", 0)).thenReturn(Optional.of(42));
         when(cpu.setInstructionLocation(42)).thenReturn(false);
+        executionFor(computer);
 
         new JumpAction(computer, dialogs, () -> {}).actionPerformed(null);
+        flushEdt();
 
-        verify(dialogs).showError("Invalid memory address (please check memory size)");
+        verify(dialogs).showError("Invalid memory address (please check memory size)", "Jump to address");
     }
 
     @Test
@@ -69,8 +72,10 @@ public class EmulatorActionsTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(dialogs.readInteger("Memory address:", "Jump to address", 0)).thenReturn(Optional.of(7));
         when(cpu.setInstructionLocation(7)).thenReturn(true);
+        executionFor(computer);
 
         new JumpAction(computer, dialogs, refreshCount::incrementAndGet).actionPerformed(null);
+        flushEdt();
 
         verify(cpu).setInstructionLocation(7);
         assertTrue(refreshCount.get() > 0);
@@ -83,7 +88,9 @@ public class EmulatorActionsTest {
         AtomicInteger refreshCount = new AtomicInteger();
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
 
+        executionFor(computer);
         new JumpToBeginningAction(computer, refreshCount::incrementAndGet).actionPerformed(null);
+        flushEdt();
 
         verify(cpu).setInstructionLocation(0);
         assertEquals(1, refreshCount.get());
@@ -98,6 +105,7 @@ public class EmulatorActionsTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(cpu.getInstructionLocation()).thenReturn(10);
         when(debugTableModel.guessPreviousInstructionLocation()).thenReturn(6);
+        executionFor(computer);
 
         new StepBackAction(computer, debugTableModel, refreshCount::incrementAndGet).actionPerformed(null);
 
@@ -132,7 +140,9 @@ public class EmulatorActionsTest {
     public void pauseActionDelegatesToController() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.isTimedRunning()).thenReturn(false);
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
+        when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
 
@@ -143,9 +153,12 @@ public class EmulatorActionsTest {
     public void pauseActionUpdatesStatusWhenTimedRunning() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.isTimedRunning()).thenReturn(true);
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+                CPU.RunState.STATE_STOPPED_BREAK, false, true, 0, Float.NaN));
+        when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
+        flushEdt();
 
         verify(controller).pause();
         assertEquals(1, statusUpdates.get());
@@ -154,6 +167,7 @@ public class EmulatorActionsTest {
     @Test
     public void resetStepStopActionsDelegateToController() {
         EmulationController controller = mock(EmulationController.class);
+        when(controller.step()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new ResetAction(controller).actionPerformed(null);
         Runnable stepCompleted = () -> {};
@@ -161,7 +175,7 @@ public class EmulatorActionsTest {
         new StopAction(controller).actionPerformed(null);
 
         verify(controller).reset();
-        verify(controller).step(stepCompleted);
+        verify(controller).step();
         verify(controller).stop();
     }
 
@@ -270,5 +284,27 @@ public class EmulatorActionsTest {
         new ShowMemoryAction(parent, computer, dialogs).actionPerformed(null);
 
         verify(dialogs).showInfo("Memory GUI is not supported", "Show Memory");
+    }
+
+    private static void executionFor(VirtualComputer computer) {
+        EmulationController execution = mock(EmulationController.class);
+        when(computer.getExecution()).thenReturn(Optional.of(execution));
+        org.mockito.stubbing.Answer<CompletableFuture<Void>> apply = call -> {
+            CompletableFuture<Void> completed = new CompletableFuture<>();
+            try {
+                ((Runnable) call.getArgument(0)).run();
+                completed.complete(null);
+            } catch (RuntimeException failure) {
+                completed.completeExceptionally(failure);
+            }
+            return completed;
+        };
+        when(execution.mutate(any())).thenAnswer(apply);
+        when(execution.update(any())).thenAnswer(apply);
+    }
+
+    private static void flushEdt() {
+        try { SwingUtilities.invokeAndWait(() -> {}); }
+        catch (Exception failure) { throw new AssertionError(failure); }
     }
 }

@@ -4,10 +4,9 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.Constants;
 import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
@@ -41,7 +40,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
@@ -53,7 +51,7 @@ public class REditor implements Editor {
     private final List<DocumentListener> changeListeners = new ArrayList<>();
 
     private final Dialogs dialogs;
-    private final List<FileExtension> fileExtensions;
+    private final List<FileType> fileTypes;
     private final Compiler compiler;
     private final EditorCommands commands;
     private REditor sharedWith;
@@ -142,9 +140,9 @@ public class REditor implements Editor {
         setupSyntaxTheme();
 
         if (compiler != null) {
-            fileExtensions = List.copyOf(compiler.getSourceFileExtensions());
+            fileTypes = List.copyOf(compiler.getSourceFileTypes());
         } else {
-            fileExtensions = Collections.emptyList();
+            fileTypes = Collections.emptyList();
         }
         textPane.setDirty(false);
         commands = new EditorCommands(this, textPane, scrollPane, compiler);
@@ -279,7 +277,7 @@ public class REditor implements Editor {
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", fileSource.get().getPath(), e);
-                dialogs.showError("Cannot save current file. Please see log file for details.");
+                dialogs.showError("Cannot save current file. Please see log file for details.", "Error");
                 return false;
             }
         }
@@ -294,7 +292,7 @@ public class REditor implements Editor {
     @Override
     public boolean saveFileAs() {
         if (sharedWith != null) return sharedWith.saveFileAs();
-        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", getCurrentBaseDirectory(), true, saveFilters());
+        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", getCurrentBaseDirectory(), true, fileTypes);
         if (savedPath.isPresent()) {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
@@ -304,7 +302,7 @@ public class REditor implements Editor {
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
-                dialogs.showError("Cannot save current file. Please see log file for details.");
+                dialogs.showError("Cannot save current file. Please see log file for details.", "Error");
             }
         }
         return false;
@@ -415,7 +413,7 @@ public class REditor implements Editor {
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
-            dialogs.showError("Could not open file: " + fileName + ". Please see log file for details.");
+            dialogs.showError("Could not open file: " + fileName + ". Please see log file for details.", "Error");
             return false;
         }
     }
@@ -494,19 +492,16 @@ public class REditor implements Editor {
                 .orElseGet(() -> Path.of(System.getProperty("user.dir")));
     }
 
-    private List<FileExtensionsFilter> saveFilters() {
-        return fileExtensions.stream().map(FileExtensionsFilter::new).collect(Collectors.toList());
-    }
+    private List<FileType> openFilters() {
+        String[] sourceExtensions = fileTypes.stream()
+                .flatMap(fileType -> fileType.getExtensions().stream())
+                .distinct()
+                .toArray(String[]::new);
 
-    private List<FileExtensionsFilter> openFilters() {
-        List<String> sourceExtensions = fileExtensions.stream()
-                .map(FileExtension::getExtension)
-                .collect(Collectors.toList());
-
-        if (sourceExtensions.isEmpty()) {
+        if (sourceExtensions.length == 0) {
             return Collections.emptyList();
         }
-        return List.of(new FileExtensionsFilter("All source files", sourceExtensions));
+        return List.of(new FileType("All source files", sourceExtensions));
     }
 
     private void setupSyntaxTheme() {

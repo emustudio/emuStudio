@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
+import net.emustudio.plugins.memory.ssem.TestExecutionState;
+
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -104,11 +106,12 @@ public class LoadImageActionTest {
     private static ApplicationApi mockApi(Path chosenPath) {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         expect(dialogs.chooseFile(anyString(), anyString(), anyObject(Path.class),
-                eq(false), anyObject(FileExtensionsFilter.class)))
+                eq(false), anyObject(List.class)))
                 .andReturn(Optional.ofNullable(chosenPath)).anyTimes();
         replay(dialogs);
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getDialogs()).andReturn(dialogs).anyTimes();
+        expect(api.getExecutionState()).andReturn(TestExecutionState.create()).anyTimes();
         expect(api.getProgramLocation()).andReturn(PROGRAM_LOCATION).anyTimes();
         replay(api);
         return api;

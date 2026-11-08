@@ -50,6 +50,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
     private boolean destroyed;
     private net.emustudio.application.debugger.DebugSession debugger;
+    private net.emustudio.application.emulation.EmulationController execution;
     private net.emustudio.application.ApplicationApiImpl applicationApi;
 
     public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins) {
@@ -199,19 +200,25 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             }
             if (getCPU().isPresent()) {
                 net.emustudio.emulib.plugins.memory.MemoryContext<?> memory = null;
-                try { memory = contextPool.getMemoryContext(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
-                catch (net.emustudio.emulib.runtime.InvalidContextException | net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
+                try { memory = contextPool.get(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
+                catch (net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
                     debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.AnnotationEngine()
-                                    : applicationApi.getAnnotations());
-                    if (getCPU().get().getAddressSpaceSize() > 0) debugger.annotations();
-                    if (applicationApi != null) applicationApi.getExecutionState().setSession(debugger);
+                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
+                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
+                            applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+                    execution = debugger.execution();
+
                 } catch (IOException e) {
-                    throw new PluginInitializationException(getCPU().get(), "Could not load debugger settings", e);
+                    throw new PluginInitializationException("Could not load debugger settings", e);
                 }
+            } else {
+                execution = new net.emustudio.application.emulation.EmulationController(null,
+                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null),
+                        applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             closeAfterFailure(this, failure);
@@ -221,12 +228,12 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     public Optional<net.emustudio.application.debugger.DebugSession> getDebugger() { return Optional.ofNullable(debugger); }
 
+    public Optional<net.emustudio.application.emulation.EmulationController> getExecution() {
+        return Optional.ofNullable(execution);
+    }
+
     public void reset() {
-        getCPU().ifPresent(CPU::pause);
-        getCompiler().ifPresent(Compiler::reset);
-        getMemory().ifPresent(Plugin::reset);
-        getDevices().forEach(Device::reset);
-        getCPU().ifPresent(Plugin::reset);
+        getExecution().orElseThrow(() -> new IllegalStateException("Initialize machine before reset")).reset().join();
     }
 
     @Override
@@ -268,7 +275,9 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             return;
         }
         destroyed = true;
-        if (applicationApi != null && debugger != null) applicationApi.getExecutionState().clearSession(debugger);
+        if (execution != null) execution.close();
+
+
         if (debugger != null) {
             try {
                 debugger.close();

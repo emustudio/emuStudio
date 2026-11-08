@@ -4,11 +4,10 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.fife.ui.rsyntaxtextarea.Token;
@@ -45,7 +44,7 @@ public class REditorTest extends AbstractSwingTest {
                 Compiler compiler = compilerBacked ? compiler(lexerFor(
                         token(net.emustudio.emulib.plugins.compiler.Token.COMMENT, 0, text),
                         token(net.emustudio.emulib.plugins.compiler.Token.EOF, text.length(), "")
-                ), List.of(new FileExtension("asm", "Assembly"))) : null;
+                ), List.of(new FileType("Assembly", "asm"))) : null;
                 REditor editor = createEditor(mock(Dialogs.class), compiler);
                 runOnEdt(() -> editor.textPane().setText(text));
                 showInFrame(editor.getView());
@@ -72,7 +71,7 @@ public class REditorTest extends AbstractSwingTest {
                         token(net.emustudio.emulib.plugins.compiler.Token.RESERVED, 0, "MOV"),
                         token(net.emustudio.emulib.plugins.compiler.Token.EOF, 3, "")
                 ),
-                List.of(new FileExtension("asm", "Assembly"))
+                List.of(new FileType("Assembly", "asm"))
         ));
 
         TextEditorPane textPane = textPane(editor);
@@ -94,7 +93,7 @@ public class REditorTest extends AbstractSwingTest {
 
         REditor editor = createEditor(dialogs, compiler(
                 lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
-                List.of(new FileExtension("asm", "Assembly"))
+                List.of(new FileType("Assembly", "asm"))
         ));
 
         runOnEdt(() -> textPane(editor).setText("hello"));
@@ -141,8 +140,8 @@ public class REditorTest extends AbstractSwingTest {
         REditor editor = createEditor(dialogs, compiler(
                 lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
                 List.of(
-                        new FileExtension("asm", "Assembly"),
-                        new FileExtension("inc", "Include")
+                        new FileType("Assembly", "asm"),
+                        new FileType("Include", "inc")
                 )
         ));
         assertTrue(editor.openFile(opened));
@@ -171,8 +170,8 @@ public class REditorTest extends AbstractSwingTest {
         REditor editor = createEditor(dialogs, compiler(
                 lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
                 List.of(
-                        new FileExtension("asm", "Assembly"),
-                        new FileExtension("inc", "Include")
+                        new FileType("Assembly", "asm"),
+                        new FileType("Include", "inc")
                 )
         ));
         assertTrue(editor.openFile(current));
@@ -185,7 +184,7 @@ public class REditorTest extends AbstractSwingTest {
         ArgumentCaptor<List> filters = ArgumentCaptor.forClass(List.class);
         verify(dialogs).chooseFile(eq("Open a file"), eq("Open"), eq(directory), eq(false), filters.capture());
         assertEquals(1, filters.getValue().size());
-        FileExtensionsFilter filter = (FileExtensionsFilter) filters.getValue().get(0);
+        FileType filter = (FileType) filters.getValue().get(0);
         assertEquals("All source files", filter.getDescription());
         assertEquals(List.of("asm", "inc"), filter.getExtensions());
     }
@@ -199,7 +198,7 @@ public class REditorTest extends AbstractSwingTest {
 
         runOnEdt(() -> textPane.setText("dirty"));
         assertFalse(editor.openFile(directory));
-        verify(dialogs).showError("Could not open file: " + directory + ". Please see log file for details.");
+        verify(dialogs).showError("Could not open file: " + directory + ". Please see log file for details.", "Error");
 
         editor.newFile();
         assertEquals("", onEdt(textPane::getText));
@@ -424,8 +423,8 @@ public class REditorTest extends AbstractSwingTest {
         });
     }
 
-    private Compiler compiler(LexicalAnalyzer lexer, List<FileExtension> fileExtensions) {
-        return new CompilerStub(lexer, fileExtensions);
+    private Compiler compiler(LexicalAnalyzer lexer, List<FileType> fileTypes) {
+        return new CompilerStub(lexer, fileTypes);
     }
 
     private LexicalAnalyzer lexerFor(net.emustudio.emulib.plugins.compiler.Token... tokens) {

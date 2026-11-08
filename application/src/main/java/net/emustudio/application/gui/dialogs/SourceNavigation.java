@@ -58,7 +58,7 @@ final class SourceNavigation implements AutoCloseable {
         }
 
         @Override public void onMessage(CompilerMessage message) {
-            if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR)
+            if (message.getType() == CompilerMessage.Type.ERROR)
                 synchronized (SourceNavigation.this) { failed = true; }
         }
 
@@ -87,7 +87,7 @@ final class SourceNavigation implements AutoCloseable {
                 publishCurrent(current, false);
                 return;
             }
-            SwingUtilities.invokeLater(() -> {
+            guard.whenReady().thenRun(() -> SwingUtilities.invokeLater(() -> {
                 synchronized (SourceNavigation.this) {
                     if (closed || failed || current != compilation) return;
                 }
@@ -116,7 +116,7 @@ final class SourceNavigation implements AutoCloseable {
                 debugger.setSymbols(captured::symbols);
                 debugger.setSourceMappingsCurrent(!captured.sourceFiles().isEmpty());
                 editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
-            });
+            }));
         }
     };
 

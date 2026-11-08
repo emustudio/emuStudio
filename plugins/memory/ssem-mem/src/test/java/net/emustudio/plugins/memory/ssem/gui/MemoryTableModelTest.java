@@ -2,11 +2,17 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
+import net.emustudio.plugins.memory.ssem.TestExecutionState;
+
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -15,42 +21,42 @@ public class MemoryTableModelTest {
 
     @Test(expected = NullPointerException.class)
     public void testCreateInstanceWithNullModelThrows() {
-        new MemoryTableModel(null);
+        new MemoryTableModel(null, TestExecutionState.create());
     }
 
     @Test
     public void testGetRowCountReturns32() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertEquals(32, model.getRowCount());
     }
 
     @Test
     public void testGetColumnCountReturns35() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertEquals(35, model.getColumnCount());
     }
 
     @Test
     public void testGetColumnNameForHexColumn() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertEquals("Hex", model.getColumnName(MemoryTableModel.COLUMN_HEX_VALUE));
     }
 
     @Test
     public void testGetColumnNameForDecColumn() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertEquals("Dec", model.getColumnName(MemoryTableModel.COLUMN_DEC_VALUE));
     }
 
     @Test
     public void testGetColumnNameForCharColumn() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertEquals("Char", model.getColumnName(MemoryTableModel.COLUMN_RAW_VALUE));
     }
 
     @Test
     public void testGetColumnNameForLineBitColumns() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         for (int i = 0; i < 5; i++) {
             assertEquals("L", model.getColumnName(i));
         }
@@ -58,7 +64,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testGetColumnNameForInstructionBitColumns() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         for (int i = 13; i <= 15; i++) {
             assertEquals("I", model.getColumnName(i));
         }
@@ -66,7 +72,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testGetColumnNameForOtherBitColumns() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         // Columns 5..12 and 16..31 are not Line and not Instruction
         assertEquals("", model.getColumnName(5));
         assertEquals("", model.getColumnName(10));
@@ -76,7 +82,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testLineBitColumnsIdentifiedViaColumnName() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         // Columns 0-4 should be named "L" (line bits)
         for (int i = 0; i < 5; i++) {
             assertEquals("Column " + i + " should be line bit", "L", model.getColumnName(i));
@@ -87,7 +93,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testInstructionBitColumnsIdentifiedViaColumnName() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         // Column 12 should not be instruction bit
         assertNotEquals("I", model.getColumnName(12));
         // Columns 13-15 should be named "I" (instruction bits)
@@ -100,7 +106,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testEditableAreOnlyValueColumns() {
-        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class), TestExecutionState.create());
 
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_HEX_VALUE));
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_DEC_VALUE));
@@ -114,7 +120,7 @@ public class MemoryTableModelTest {
 
     @Test
     public void testCellNotEditableForNegativeColumn() {
-        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createNiceMock(MemoryContext.class), TestExecutionState.create());
         assertFalse(model.isCellEditable(0, -1));
     }
 
@@ -130,7 +136,7 @@ public class MemoryTableModelTest {
         expectLastCall().once();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("1", 10, 16);
 
         verify(memoryContext);
@@ -149,7 +155,7 @@ public class MemoryTableModelTest {
         expectLastCall().once();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("0", 0, 0);
 
         verify(memoryContext);
@@ -167,7 +173,7 @@ public class MemoryTableModelTest {
         expectLastCall().once();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
 
         verify(memoryContext);
@@ -185,7 +191,7 @@ public class MemoryTableModelTest {
         expectLastCall().once();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_DEC_VALUE);
 
         verify(memoryContext);
@@ -203,7 +209,7 @@ public class MemoryTableModelTest {
         expectLastCall().once();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("ahoj", 10, MemoryTableModel.COLUMN_RAW_VALUE);
 
         verify(memoryContext);
@@ -211,14 +217,14 @@ public class MemoryTableModelTest {
 
     @Test
     public void testSetValueAtInvalidIndexDoesNotThrow() {
-        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class), TestExecutionState.create());
 
         model.setValueAt("10", -1, MemoryTableModel.COLUMN_RAW_VALUE);
     }
 
     @Test
     public void testSetNullValueDoesNotThrow() {
-        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
+        MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class), TestExecutionState.create());
 
         model.setValueAt(null, 0, MemoryTableModel.COLUMN_RAW_VALUE);
     }
@@ -228,7 +234,7 @@ public class MemoryTableModelTest {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         model.setValueAt("1", 0, 35); // column 35 is not editable
 
         verify(memoryContext); // no read/write calls should have been made
@@ -244,7 +250,7 @@ public class MemoryTableModelTest {
         expect(memoryContext.read(10 * 4, 4)).andReturn(row).anyTimes();
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
 
         int value = NumberUtils.readInt(row, NumberUtils.Strategy.REVERSE_BITS);
         assertEquals(Integer.toHexString(value).toUpperCase(), model.getValueAt(10, MemoryTableModel.COLUMN_HEX_VALUE));
@@ -254,7 +260,7 @@ public class MemoryTableModelTest {
     @Test
     public void testGetValueAtDecColumn() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         Object decValue = model.getValueAt(0, MemoryTableModel.COLUMN_DEC_VALUE);
         assertNotNull(decValue);
@@ -267,7 +273,7 @@ public class MemoryTableModelTest {
         // Write a known value to row 0
         memory.write(0, (byte) 0x80); // bit 0 = 1 (MSB)
 
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // Column 0 = bit 7 of byte 0 = MSB = should be 1
         Object bitValue = model.getValueAt(0, 0);
@@ -285,7 +291,7 @@ public class MemoryTableModelTest {
         expect(memoryContext.read(-4, 4)).andThrow(new IndexOutOfBoundsException()).times(2);
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
 
         model.getValueAt(-1, MemoryTableModel.COLUMN_HEX_VALUE);
         model.getValueAt(-1, MemoryTableModel.COLUMN_RAW_VALUE);
@@ -298,14 +304,14 @@ public class MemoryTableModelTest {
         expect(memoryContext.read(-4, 4)).andThrow(new IndexOutOfBoundsException());
         replay(memoryContext);
 
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        MemoryTableModel model = new MemoryTableModel(memoryContext, TestExecutionState.create());
         assertEquals("", model.getValueAt(-1, MemoryTableModel.COLUMN_HEX_VALUE));
     }
 
     @Test
     public void testDataChangedAtFiresTableCellUpdated() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // This should not throw - just exercises the dataChangedAt path
         model.dataChangedAt(0, 3);
@@ -314,7 +320,7 @@ public class MemoryTableModelTest {
     @Test
     public void testDataChangedAtSingleAddress() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // Should not throw
         model.dataChangedAt(4, 4);
@@ -323,7 +329,7 @@ public class MemoryTableModelTest {
     @Test
     public void testSetValueWithInvalidHexDoesNotThrow() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // Invalid hex should be caught and not throw
         model.setValueAt("not_a_number", 0, MemoryTableModel.COLUMN_HEX_VALUE);
@@ -332,7 +338,7 @@ public class MemoryTableModelTest {
     @Test
     public void testSetCharValueShorterThan4Chars() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // Should handle short strings without error
         model.setValueAt("ab", 0, MemoryTableModel.COLUMN_RAW_VALUE);
@@ -341,7 +347,7 @@ public class MemoryTableModelTest {
     @Test
     public void testSetCharValueLongerThan4Chars() {
         MemoryContextImpl memory = new MemoryContextImpl();
-        MemoryTableModel model = new MemoryTableModel(memory);
+        MemoryTableModel model = new MemoryTableModel(memory, TestExecutionState.create());
 
         // Should truncate to 4 chars
         model.setValueAt("abcdefgh", 0, MemoryTableModel.COLUMN_RAW_VALUE);
@@ -353,4 +359,31 @@ public class MemoryTableModelTest {
         assertEquals(33, MemoryTableModel.COLUMN_DEC_VALUE);
         assertEquals(34, MemoryTableModel.COLUMN_RAW_VALUE);
     }
+
+    @Test
+    public void runningBitEditMergesWithMemoryAtTheExecutionBoundary() {
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        AtomicReference<Runnable> pending = new AtomicReference<>();
+        CompletableFuture<Void> applied = new CompletableFuture<>();
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
+            pending.set(getCurrentArgument(0));
+            return applied;
+        });
+        replay(execution);
+        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryTableModel live = new MemoryTableModel(context, execution);
+
+        assertTrue(live.isCellEditable(0, 0));
+        live.setValueAt("1", 0, 0);
+        assertEquals(Byte.valueOf((byte) 0), context.read(0));
+        context.write(0, (byte) 0x40);
+        pending.get().run();
+        applied.complete(null);
+
+        assertEquals(Byte.valueOf((byte) 0xC0), context.read(0));
+        verify(execution);
+    }
+
 }

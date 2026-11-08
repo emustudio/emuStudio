@@ -4,9 +4,7 @@ package net.emustudio.plugins.compiler.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -20,6 +18,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
@@ -32,13 +32,12 @@ public class SSEMCompilerTest {
     private MemoryStub<Byte> memoryStub;
     private int errorCount;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
 
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(pool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();
         replay(pool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
@@ -46,22 +45,9 @@ public class SSEMCompilerTest {
 
         errorCount = 0;
         compiler = new SSEMCompiler(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-
-            }
-
-            @Override
-            public void onMessage(CompilerMessage compilerMessage) {
-                if (compilerMessage.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
-                    errorCount++;
-                }
-            }
-
-            @Override
-            public void onFinish() {
-
+        compiler.addCompilerListener(compilerMessage -> {
+            if (compilerMessage.getType() == CompilerMessage.Type.ERROR) {
+                errorCount++;
             }
         });
         compiler.initialize();
@@ -80,14 +66,22 @@ public class SSEMCompilerTest {
 
     private void assertProgram(int... bytes) {
         Byte[] value = memoryStub.read(0, bytes.length);
+        byte[] expected = new byte[bytes.length];
+        byte[] actual = new byte[value.length];
+        for (int i = 0; i < bytes.length; i++) {
+            expected[i] = (byte) bytes[i];
+        }
+        for (int i = 0; i < value.length; i++) {
+            actual[i] = value[i];
+        }
 
         assertArrayEquals(
                 String.format(
                         "Expected=%x, but was=%x",
-                        NumberUtils.readInt(bytes, NumberUtils.Strategy.BIG_ENDIAN),
+                        NumberUtils.readInt(Arrays.stream(bytes).boxed().toArray(Integer[]::new), NumberUtils.Strategy.BIG_ENDIAN),
                         NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN)
                 ),
-                NumberUtils.nativeIntsToNativeBytes(bytes), NumberUtils.numbersToNativeBytes(value)
+                expected, actual
         );
     }
 
@@ -182,9 +176,9 @@ public class SSEMCompilerTest {
     }
 
     @Test
-    public void testGetSourceFileExtensions() {
-        assertFalse(compiler.getSourceFileExtensions().isEmpty());
-        assertEquals("ssem", compiler.getSourceFileExtensions().get(0).getExtension());
+    public void testGetSourceFileTypes() {
+        assertFalse(compiler.getSourceFileTypes().isEmpty());
+        assertEquals(List.of("ssem"), compiler.getSourceFileTypes().get(0).getExtensions());
     }
 
     @Test
@@ -234,14 +228,6 @@ public class SSEMCompilerTest {
 
         SSEMCompiler noMemCompiler = new SSEMCompiler(0L, noMemApi, PluginSettings.UNAVAILABLE);
         noMemCompiler.initialize();
-        noMemCompiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {}
-            @Override
-            public void onMessage(CompilerMessage compilerMessage) {}
-            @Override
-            public void onFinish() {}
-        });
 
         File sourceFile = folder.newFile();
         Files.write(sourceFile.toPath(), "00 STP\n".getBytes(), StandardOpenOption.WRITE);
@@ -256,31 +242,10 @@ public class SSEMCompilerTest {
         compiler.compile(sourceFile.toPath(), Optional.empty());
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testInitializeWithWrongMemoryCellType() throws Exception {
-        // Memory that returns Integer cell type instead of Byte
-        MemoryContext<Integer> wrongMemory = createNiceMock(MemoryContext.class);
-        expect(wrongMemory.getCellTypeClass()).andReturn(Integer.class).anyTimes();
-        replay(wrongMemory);
-
-        ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(wrongMemory).anyTimes();
-        replay(pool);
-        ApplicationApi appApi = createNiceMock(ApplicationApi.class);
-        expect(appApi.getContextPool()).andReturn(pool).anyTimes();
-        replay(appApi);
-
-        SSEMCompiler wrongCompiler = new SSEMCompiler(0L, appApi, PluginSettings.UNAVAILABLE);
-        // Should not throw - just logs a warning
-        wrongCompiler.initialize();
-    }
-
-    @SuppressWarnings("unchecked")
     @Test
     public void testInitializeWithContextNotFoundException() throws Exception {
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class))
+        expect(pool.getMemory(0, Byte.class))
                 .andThrow(new ContextNotFoundException("Memory not found"))
                 .anyTimes();
         replay(pool);

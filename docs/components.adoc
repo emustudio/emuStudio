@@ -30,9 +30,9 @@ System_Boundary(app, "emuStudio application") {
     Component(virtualComputer, "VirtualComputer", "Java", "Holds the plugins of one machine by type; enforces connections; exposes compiler/CPU/memory/devices; initializes & resets them")
     Component(pluginLoader, "PluginLoader", "Java, URLClassLoader", "Finds each plugin's @PluginRoot main class in its JAR and its declared dependencies")
     Component(contextPool, "ContextPool", "Java", "Registry of plugin contexts; hands out contexts only between connected plugins")
-    Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, debugger table, program location")
+    Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, program location")
 
-    Component(emuController, "EmulationController", "Java, single scheduled worker", "run / step / timed-step / pause / stop / reset; tracks CPU RunState")
+    Component(emuController, "EmulationController", "Java, command scheduler + machine worker", "Owns lifecycle state, completion, cooperative stopping, timed steps and serialized machine edits")
     Component(automation, "Automation", "Java", "compile → reset → execute → collect result state; logs outcome")
 
     Component(guiMain, "EmuStudioGui (main window)", "Swing, FlatLaf", "Main window, toolbars, look & feel; implements emuLib GUI service")
@@ -59,6 +59,7 @@ Rel(virtualComputer, pluginLoader, "Loads plugin main classes with")
 Rel(virtualComputer, configFiles, "Reads plugin list, settings & connections from")
 Rel(pluginLoader, plugins, "Reads JARs & resolves classes")
 Rel(virtualComputer, plugins, "Instantiates (pluginId, ApplicationApi, PluginSettings)")
+Rel(virtualComputer, emuController, "Owns one for the machine, including CPU-less configurations")
 
 Rel(virtualComputer, appApi, "Passes to each plugin")
 Rel(appApi, contextPool, "Exposes")
@@ -71,8 +72,9 @@ Rel(guiMain, schema, "Hosts")
 Rel(guiMain, editor, "Hosts")
 Rel(guiMain, debugger, "Hosts")
 Rel(guiMain, emuController, "Controls emulation via")
-Rel(automation, emuController, "Drives CPU without a controller (direct execute)")
-Rel(emuController, plugins, "cpu.execute()/step()/reset(); memory.reset(); device.reset()")
+Rel(automation, emuController, "Submits compilation and execution; awaits explicit completion")
+Rel(debugger, emuController, "Submits paused edits and script commands")
+Rel(emuController, plugins, "Invokes synchronous CPU, compiler, memory and device work on machine worker")
 
 Rel(configFiles, fs, "TOML read/write")
 Rel(plugins, emulib, "Implement API")
@@ -90,7 +92,8 @@ the main window or hands off to automation.
 AutomationCommand / Automation:: The headless path. `AutomationCommand` is the
 `automation` subcommand; `Automation` performs the unattended sequence — compile
 the input file, reset the CPU (optionally at a start address), execute, wait for
-completion and log the resulting CPU run state.
+completion and log the resulting CPU run state. It uses the machine-owned
+`EmulationController`, as do GUI commands and debug scripts.
 
 ConfigFiles / Settings:: Reads and writes the TOML configuration and settings
 model — `ComputerConfig` (a machine and its `PluginConfig` entries plus
@@ -99,7 +102,8 @@ TOML library.
 
 VirtualComputer:: The heart of Level 3. It groups a machine's plugins by type
 (`COMPILER`, `MEMORY`, `CPU`, `DEVICE`), constructs them, initializes them in a
-fixed order and resets them. It also implements `PluginConnections#isConnected`,
+fixed order and owns their execution controller and disposal. CPU-less machines
+use that controller for memory and compiler mutations too. It also implements `PluginConnections#isConnected`,
 the authority the context pool consults before letting two plugins share a
 context.
 
@@ -117,15 +121,22 @@ Subinterfaces and separately declared interfaces must be registered explicitly, 
 their methods are identical; a compatible method shape does not establish Java type identity.
 
 ApplicationApi:: The facade handed to every plugin at construction time. It
-exposes the `ContextPool`, the `Dialogs` and `GUI` services, the `DebuggerTable`
+exposes the `ContextPool`, the `Dialogs` and `GUI` services
 and the current program location — the plugin's whole view of the host.
 
-EmulationController:: Serializes all CPU control onto a single scheduled worker and
-mirrors the CPU's `RunState`. It offers start, single-step, timed-step, pause,
-stop and reset, retaining CPU event acknowledgements. Timed stepping schedules the
-next step without sleeping on the worker. Pause, stop, reset and close cancel timed
-work; close also releases the controller's CPU listener. Used by the interactive
-debugger.
+EmulationController:: Owns lifecycle state and explicit command completion for one
+machine. Its command scheduler stays available while a separate machine worker
+runs synchronous CPU execution, stepping, resets, compilation, and paused edits.
+CPU plugins and `AbstractCPU` create no execution pools. The scheduler also samples
+CPU frequency, avoiding a separate sampling pool.
++
+Pause, stop, reset, replacement timed runs, and close cancel timed stepping. Each
+next tick follows completion of the previous instruction plus the requested delay;
+generation checks prevent a cancelled sequence from resuming. Stop requests are
+cooperative, with no force kill or deadline. Pending reset or close waits for actual
+execution exit; the host retains resources and rejects further mutations until then.
+GUI callers observe completion asynchronously, while automation and scripts may wait
+off Swing. State listeners observe transitions rather than acknowledging commands.
 
 GUI (EmuStudioGui, Schema editor, Source editor, Debugger, Dialogs):: The Swing
 front end. The main window hosts the three work areas and provides the emuLib
@@ -142,8 +153,8 @@ messages.
 . `initialize()` is called per plugin in the order *compiler → memory → CPU →
   devices*; during initialization plugins publish and look up contexts in the
   `ContextPool`.
-. The GUI (or `Automation`) then drives emulation through
-  `EmulationController` (or a direct `cpu.execute()`), with the context pool
+. The GUI, automation, and debug scripts drive emulation through the same
+  machine-owned `EmulationController`, with the context pool
   enforcing the configured connections throughout.
 
 Continue to xref:code.adoc[Level 4 — Code].

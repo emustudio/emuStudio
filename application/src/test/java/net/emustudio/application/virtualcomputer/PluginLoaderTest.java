@@ -62,7 +62,7 @@ public class PluginLoaderTest {
     @Test
     public void testDoesImplement() throws Exception {
         // test for nested interface
-        assertFalse(doesImplement(CPU.CPUListener.class, Plugin.class));
+        assertFalse(doesImplement(net.emustudio.emulib.runtime.ExecutionState.Subscription.class, Plugin.class));
         assertTrue(doesImplement(loadValidPlugin(), Plugin.class));
     }
 
@@ -73,7 +73,7 @@ public class PluginLoaderTest {
 
     @Test
     public void testLoadablePluginOnNotAPluginClassReturnsFalse() {
-        assertFalse(PluginLoader.isLoadablePlugin(CPU.CPUListener.class));
+        assertFalse(PluginLoader.isLoadablePlugin(net.emustudio.emulib.runtime.ExecutionState.Subscription.class));
     }
 
     @Test

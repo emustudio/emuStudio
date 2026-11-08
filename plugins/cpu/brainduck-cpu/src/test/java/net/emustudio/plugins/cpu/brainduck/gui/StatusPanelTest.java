@@ -2,8 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
+import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -14,42 +16,43 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import javax.swing.*;
+import java.awt.Component;
+import java.awt.Container;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class StatusPanelTest {
-    private MemoryStub memory;
     private CpuImpl cpu;
-    private GUI gui;
+    private StatusPanel panel;
+    private java.util.function.Consumer<ExecutionState.Snapshot> observer;
 
     @Before
     public void setUp() throws Exception {
-        memory = new MemoryStub();
-
+        MemoryStub memory = new MemoryStub();
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
-        contextPool.register(eq(0L), anyObject(), same(BrainCPUContext.class));
-        expectLastCall().once();
+        expect(contextPool.get(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
-
-        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        replay(applicationApi);
-
-        cpu = new CpuImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        expect(execution.subscribe(anyObject())).andAnswer(() -> {
+            observer = getCurrentArgument(0);
+            return () -> {};
+        }).anyTimes();
+        replay(execution);
+        ApplicationApi application = createNiceMock(ApplicationApi.class);
+        expect(application.getExecutionState()).andReturn(execution).anyTimes();
+        expect(application.getContextPool()).andReturn(contextPool).anyTimes();
+        replay(application);
+        cpu = new CpuImpl(0L, application, PluginSettings.UNAVAILABLE);
         cpu.initialize();
-
-        gui = createNiceMock(GUI.class);
-        expect(gui.section(anyString(), anyString(), anyString(), anyString()))
-                .andReturn(new JPanel()).anyTimes();
-        expect(gui.panel(anyString(), anyString(), anyString()))
-                .andReturn(new JPanel()).anyTimes();
-        expect(gui.label(anyString())).andReturn(new JLabel()).anyTimes();
+        GUI gui = createNiceMock(GUI.class);
+        expect(gui.section(anyString(), anyString(), anyString(), anyString())).andAnswer(JPanel::new).anyTimes();
+        expect(gui.panel(anyString(), anyString(), anyString())).andAnswer(JPanel::new).anyTimes();
+        expect(gui.label(anyString())).andAnswer(() -> new JLabel((String) getCurrentArguments()[0])).anyTimes();
         replay(gui);
+        panel = new StatusPanel(memory, cpu, gui, execution);
     }
 
     @After
@@ -58,102 +61,47 @@ public class StatusPanelTest {
     }
 
     @Test
-    public void testStatusPanelCreation() {
-        StatusPanel panel = new StatusPanel(memory, cpu, gui);
-        assertNotNull(panel);
+    public void hostStateChangesReachStatusPanel() throws Exception {
+        publish(CPU.RunState.STATE_RUNNING);
+        SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "running")));
+
+        publish(CPU.RunState.STATE_STOPPED_BREAK);
+        SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "breakpoint")));
     }
 
     @Test
-    public void testStatusPanelIsJPanel() {
-        StatusPanel panel = new StatusPanel(memory, cpu, gui);
-        assertTrue(panel instanceof JPanel);
+    public void hostInternalChangeRefreshesInstructionPosition() throws Exception {
+        cpu.setInstructionLocation(12);
+
+        publish(CPU.RunState.STATE_STOPPED_BREAK);
+
+        SwingUtilities.invokeAndWait(() -> assertTrue(containsText(panel, "000C")));
     }
 
-    @Test(timeout = 5000)
-    public void testCPUListenerNotifiedOnReset() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: halt instruction (0x00) at position 0
-        memory.setProgram(new byte[]{0x00});
+    @Test
+    public void addressFalloutStillRendersUnreachableMemory() throws Exception {
+        cpu.getEngine().P = -1;
 
-        // reset triggers runStateChanged(STATE_STOPPED_BREAK) + internalStateChanged()
-        cpu.reset(0);
+        publish(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
+
+        SwingUtilities.invokeAndWait(() -> {
+            assertTrue(containsText(panel, "stopped (address fallout)"));
+            assertTrue(containsText(panel, "[unreachable]"));
+        });
     }
 
-    @Test(timeout = 5000)
-    public void testCPUListenerNotifiedOnStep() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: > (P++) then halt
-        memory.setProgram(new byte[]{0x01, 0x00});
-
-        cpu.reset(0);
-        // step triggers runStateChanged + internalStateChanged
-        cpu.step();
+    private void publish(CPU.RunState state) {
+        observer.accept(new ExecutionState.Snapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
     }
 
-    @Test(timeout = 5000)
-    public void testCPUListenerNotifiedOnStopNormal() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: halt instruction only
-        memory.setProgram(new byte[]{0x00});
-
-        cpu.reset(0);
-        // stepping halt instruction triggers STATE_STOPPED_NORMAL
-        cpu.step();
-    }
-
-    @Test(timeout = 5000)
-    public void testCPUListenerNotifiedOnExecuteAndStop() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: halt instruction
-        memory.setProgram(new byte[]{0x00});
-
-        cpu.reset(0);
-        // execute will run until halt, triggering STATE_RUNNING then STATE_STOPPED_NORMAL
-        cpu.execute();
-        // Wait briefly for execution to complete
-        try { Thread.sleep(200); } catch (InterruptedException ignored) {}
-    }
-
-    @Test(timeout = 5000)
-    public void testCPUListenerNotifiedOnStepWithBadInstruction() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: > (valid), then invalid 0xFF, then halt
-        memory.setProgram(new byte[]{0x01, (byte) 0xFF, 0x00});
-
-        cpu.reset(0);
-        cpu.step(); // > (P++) - valid step, STATE_STOPPED_BREAK
-        cpu.step(); // 0xFF - invalid instruction triggers STATE_STOPPED_BAD_INSTR
-    }
-
-    @Test(timeout = 5000)
-    public void testCPUListenerInternalStateChangedAfterMultipleSteps() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: >(P++), +(P++), halt
-        memory.setProgram(new byte[]{0x01, 0x03, 0x00});
-
-        cpu.reset(0);
-        cpu.step(); // > (P++)
-        cpu.step(); // + (*P++)
-    }
-
-    @Test(timeout = 5000)
-    public void testCPUListenerHandlesAddressFallout() {
-        new StatusPanel(memory, cpu, gui);
-        // Program: < (P--) followed by halt
-        memory.setProgram(new byte[]{0x02, 0x00});
-
-        cpu.reset(0);
-        // Force P to 0 so that < will push it to -1 triggering ADDR_FALLOUT
-        cpu.getEngine().P = 0;
-        cpu.step(); // < (P--) triggers STATE_STOPPED_ADDR_FALLOUT and [unreachable] in internalStateChanged
-    }
-
-    @Test(timeout = 5000)
-    public void testCPUListenerOnStop() {
-        new StatusPanel(memory, cpu, gui);
-        memory.setProgram(new byte[]{0x00});
-
-        cpu.reset(0);
-        cpu.stop(); // triggers STATE_STOPPED_NORMAL
+    private static boolean containsText(Component component, String text) {
+        if (component instanceof JLabel && text.equals(((JLabel) component).getText())) return true;
+        if (component instanceof JTextField && text.equals(((JTextField) component).getText())) return true;
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                if (containsText(child, text)) return true;
+            }
+        }
+        return false;
     }
 }

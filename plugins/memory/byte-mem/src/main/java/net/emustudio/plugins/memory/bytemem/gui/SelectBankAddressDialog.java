@@ -15,7 +15,6 @@ import java.util.Objects;
 
 public class SelectBankAddressDialog extends DialogBase {
     private final GUI gui;
-    private final RadixUtils ru = RadixUtils.getInstance();
     private final Dialogs dialogs;
     private final boolean selectBank;
     private final boolean selectAddress;
@@ -28,8 +27,8 @@ public class SelectBankAddressDialog extends DialogBase {
     public SelectBankAddressDialog(JDialog parent, boolean selectBank, boolean selectAddress, Dialogs dialogs, GUI gui) {
         super(parent, "Select address", true);
         this.gui = gui;
-        this.txtBank = gui.textField("0");
-        this.txtAddress = gui.textField("0");
+        this.txtBank = gui.textField("0", 20);
+        this.txtAddress = gui.textField("0", 20);
         this.selectBank = selectBank;
         this.selectAddress = selectAddress;
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -93,14 +92,14 @@ public class SelectBankAddressDialog extends DialogBase {
 
     private void clickBtnOK(ActionEvent e) {
         try {
-            this.bank = ru.parseRadix(txtBank.getText().trim());
+            this.bank = parseNonNegative(txtBank.getText().trim());
         } catch (NumberFormatException ex) {
             dialogs.showError("Cannot parse memory bank", "Select address");
             txtBank.grabFocus();
             return;
         }
         try {
-            this.address = ru.parseRadix(txtAddress.getText().trim());
+            this.address = parseNonNegative(txtAddress.getText().trim());
         } catch (NumberFormatException ex) {
             dialogs.showError("Cannot parse memory address", "Select address");
             txtAddress.grabFocus();
@@ -108,5 +107,13 @@ public class SelectBankAddressDialog extends DialogBase {
         }
         okPressed = true;
         dispose();
+    }
+
+    private static int parseNonNegative(String text) {
+        int value = RadixUtils.parseRadix(text);
+        if (value < 0) {
+            throw new NumberFormatException("Negative number: " + text);
+        }
+        return value;
     }
 }

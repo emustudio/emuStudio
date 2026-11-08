@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui.actions;
 
+import net.emustudio.plugins.memory.rasp.TestExecutionState;
+
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.MemoryContextImplFactory;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -50,34 +51,34 @@ public class LoadImageActionTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullDialogsThrows() {
-        new LoadImageAction(null, context, () -> {}, i -> {});
+        new LoadImageAction(null, context, () -> {}, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullContextThrows() {
-        new LoadImageAction(dialogs, null, () -> {}, i -> {});
+        new LoadImageAction(dialogs, null, () -> {}, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullRepaintThrows() {
-        new LoadImageAction(dialogs, context, null, i -> {});
+        new LoadImageAction(dialogs, context, null, i -> {}, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorNullSetProgramLocationThrows() {
         replay(dialogs);
-        new LoadImageAction(dialogs, context, () -> {}, null);
+        new LoadImageAction(dialogs, context, () -> {}, null, TestExecutionState.create());
     }
 
     @Test
     public void testActionPerformedUserCancels() {
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.empty());
         replay(dialogs);
 
-        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {}, i -> {});
+        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {}, i -> {}, TestExecutionState.create());
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
 
         verify(dialogs);
@@ -101,7 +102,7 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile.toPath()));
         replay(dialogs);
 
@@ -109,7 +110,7 @@ public class LoadImageActionTest {
         AtomicBoolean repainted = new AtomicBoolean(false);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> repainted.set(true), programLocation::set
+                dialogs, context, () -> repainted.set(true), programLocation::set, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -131,14 +132,14 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(invalidFile.toPath()));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
         replay(dialogs);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, i -> {}
+                dialogs, context, () -> {}, i -> {}, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -152,14 +153,14 @@ public class LoadImageActionTest {
 
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(nonExistent));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
         replay(dialogs);
 
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, i -> {}
+                dialogs, context, () -> {}, i -> {}, TestExecutionState.create()
         );
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));
         waitForCompletion(action);
@@ -184,18 +185,18 @@ public class LoadImageActionTest {
         // First call returns imageFile1
         expect(dialogs.chooseFile(
                 anyString(), anyString(), anyObject(Path.class), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile1.toPath()));
         // Second call - we expect the dialog to receive the recent path (imageFile1's path)
         expect(dialogs.chooseFile(
                 anyString(), anyString(), eq(imageFile1.toPath()), eq(false),
-                anyObject(FileExtensionsFilter.class)
+                anyObject(List.class)
         )).andReturn(Optional.of(imageFile2.toPath()));
         replay(dialogs);
 
         AtomicInteger programLocation = new AtomicInteger(-1);
         LoadImageAction action = new LoadImageAction(
-                dialogs, context, () -> {}, programLocation::set
+                dialogs, context, () -> {}, programLocation::set, TestExecutionState.create()
         );
 
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "load"));

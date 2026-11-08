@@ -50,7 +50,7 @@ public class TerminalSettings {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
 
-        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
         readSettings();
     }
 
@@ -106,11 +106,11 @@ public class TerminalSettings {
 
     public void write() {
         try {
-            settings.setInt(KEY_INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
-            settings.setString(KEY_OUTPUT_FILE_NAME, outputPath.toString());
-            settings.setString(KEY_INPUT_FILE_NAME, inputPath.toString());
-            settings.setInt(KEY_COLUMNS, columns);
-            settings.setInt(KEY_ROWS, rows);
+            settings.set(KEY_INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
+            settings.set(KEY_OUTPUT_FILE_NAME, outputPath.toString());
+            settings.set(KEY_INPUT_FILE_NAME, inputPath.toString());
+            settings.set(KEY_COLUMNS, columns);
+            settings.set(KEY_ROWS, rows);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "VT100 Terminal");
@@ -118,10 +118,10 @@ public class TerminalSettings {
     }
 
     private void readSettings() {
-        this.inputPath = Path.of(settings.getString(KEY_INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
-        this.outputPath = Path.of(settings.getString(KEY_OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
+        this.inputPath = Path.of(settings.getString(KEY_INPUT_FILE_NAME).orElse(DEFAULT_INPUT_FILE_NAME));
+        this.outputPath = Path.of(settings.getString(KEY_OUTPUT_FILE_NAME).orElse(DEFAULT_OUTPUT_FILE_NAME));
         try {
-            this.inputReadDelayMillis = settings.getInt(KEY_INPUT_READ_DELAY_MILLIS, DEFAULT_INPUT_READ_DELAY_MILLIS);
+            this.inputReadDelayMillis = settings.getInt(KEY_INPUT_READ_DELAY_MILLIS).orElse(DEFAULT_INPUT_READ_DELAY_MILLIS);
         } catch (NumberFormatException e) {
             this.inputReadDelayMillis = DEFAULT_INPUT_READ_DELAY_MILLIS;
             LOGGER.error(
@@ -129,7 +129,7 @@ public class TerminalSettings {
             );
         }
         try {
-            this.columns = settings.getInt(KEY_COLUMNS, DEFAULT_COLUMNS);
+            this.columns = settings.getInt(KEY_COLUMNS).orElse(DEFAULT_COLUMNS);
         } catch (NumberFormatException e) {
             this.columns = DEFAULT_COLUMNS;
             LOGGER.error(
@@ -137,7 +137,7 @@ public class TerminalSettings {
             );
         }
         try {
-            this.rows = settings.getInt(KEY_ROWS, DEFAULT_ROWS);
+            this.rows = settings.getInt(KEY_ROWS).orElse(DEFAULT_ROWS);
         } catch (NumberFormatException e) {
             this.rows = DEFAULT_ROWS;
             LOGGER.error(

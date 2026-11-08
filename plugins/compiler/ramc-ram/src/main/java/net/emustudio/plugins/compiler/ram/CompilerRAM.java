@@ -5,11 +5,11 @@ package net.emustudio.plugins.compiler.ram;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Program;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
@@ -20,6 +20,7 @@ import org.antlr.v4.runtime.TokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,12 +28,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-@PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "RAM Machine Assembler")
+@PluginRoot(
+        type = PLUGIN_TYPE.COMPILER,
+        title = "RAM Machine Assembler",
+        description = "RAM machine assembler"
+)
 @SuppressWarnings("unused")
 public class CompilerRAM extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRAM.class);
-    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new FileExtension("ram", "Random Access Machine source")
+    private static final List<FileType> SOURCE_FILE_TYPES = List.of(
+            new FileType("Random Access Machine source", "ram")
     );
 
     private RamMemoryContext memory;
@@ -42,59 +47,49 @@ public class CompilerRAM extends AbstractCompiler {
     }
 
     @Override
-    public String getDescription() {
-        return "RAM machine assembler";
-    }
-
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, RamMemoryContext.class);
-            } catch (InvalidContextException | ContextNotFoundException e) {
+                memory = pool.get(pluginID, RamMemoryContext.class);
+            } catch (ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
         });
     }
 
     @Override
-    public void compile(Path inputPath, Optional<Path> outputPath) {
-        try {
-            this.notifyCompileStart();
-            notifyInfo(getTitle() + ", version " + getVersion());
+    protected void compile(Path inputPath, Path outputPath) throws IOException {
+        String fileName = inputPath.toString();
+        try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
+            org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            lexer.addErrorListener(new ParserErrorListener(fileName));
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-            Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".bram"));
-            try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
-                org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
-                lexer.addErrorListener(new ParserErrorListener());
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
+            RAMParser parser = createParser(tokens);
+            parser.addErrorListener(new ParserErrorListener(fileName));
 
-                RAMParser parser = createParser(tokens);
-                parser.addErrorListener(new ParserErrorListener());
+            Program program = new Program(fileName);
+            new ProgramParser(program).visit(parser.rStart());
 
-                Program program = new Program();
-                new ProgramParser(program).visit(parser.rStart());
+            program.assignLabels();
+            program.check();
+            program.saveToFile(outputPath);
 
-                program.assignLabels();
-                program.check();
-                program.saveToFile(finalOutputPath);
+            info(String.format("Compile was successful.\n\tOutput: %s", outputPath));
 
-                notifyInfo(String.format("Compile was successful.\n\tOutput: %s", finalOutputPath));
-
-                if (memory != null) {
-                    memory.clear();
-                    program.loadIntoMemory(memory);
-                    notifyInfo("Compiled file was loaded into program memory.");
-                } else {
-                    notifyWarning("Memory is not available");
-                }
+            if (memory != null) {
+                memory.clear();
+                program.loadIntoMemory(memory);
+                info("Compiled file was loaded into program memory.");
+            } else {
+                warning("Memory is not available");
             }
-
-        } catch (Exception e) {
-            LOGGER.trace("Compilation failed", e);
-            notifyError("Compilation failed: " + e.getMessage());
-        } finally {
-            notifyCompileFinish();
         }
+    }
+
+    @Override
+    protected String getOutputExtension() {
+        return "bram";
     }
 
     @Override
@@ -103,8 +98,8 @@ public class CompilerRAM extends AbstractCompiler {
     }
 
     @Override
-    public List<FileExtension> getSourceFileExtensions() {
-        return SOURCE_FILE_EXTENSIONS;
+    public List<FileType> getSourceFileTypes() {
+        return SOURCE_FILE_TYPES;
     }
 
     private RAMLexer createLexer(CharStream input) {

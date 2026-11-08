@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import java.util.stream.Collectors;
 
 public final class AnnotationLabels {
     private AnnotationLabels() { }
 
-    public static String at(AnnotationEngine annotations, int address) {
+    public static String at(MemoryAnnotations annotations, int address) {
         if (annotations == null) return "";
         return annotations.at(address).stream()
                 .filter(entry -> entry.start == address && !entry.text.isEmpty())

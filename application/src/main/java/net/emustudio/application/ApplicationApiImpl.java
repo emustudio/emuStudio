@@ -4,37 +4,29 @@ package net.emustudio.application;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ApplicationApiImpl implements ApplicationApi {
-    private final DebuggerTable debuggerTable;
     private final ContextPool contextPool;
     private final Dialogs dialogs;
     private final GUI gui;
     private final AtomicInteger programLocation = new AtomicInteger();
-    private final AnnotationEngine annotations = new AnnotationEngine();
+    private final MemoryAnnotations annotations = new MemoryAnnotations();
     private final ExecutionStateImpl executionState = new ExecutionStateImpl();
 
     @Override public ExecutionStateImpl getExecutionState() { return executionState; }
 
-    @Override public AnnotationEngine getAnnotations() { return annotations; }
+    @Override public MemoryAnnotations getAnnotations() { return annotations; }
 
-    public ApplicationApiImpl(DebuggerTable debuggerTable, ContextPool contextPool, Dialogs dialogs, GUI gui) {
-        this.debuggerTable = Objects.requireNonNull(debuggerTable);
+    public ApplicationApiImpl(ContextPool contextPool, Dialogs dialogs, GUI gui) {
         this.contextPool = Objects.requireNonNull(contextPool);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = gui;
-    }
-
-    @Override
-    public DebuggerTable getDebuggerTable() {
-        return debuggerTable;
     }
 
     @Override

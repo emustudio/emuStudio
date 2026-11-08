@@ -19,6 +19,10 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class manages the emuStudio automation process. In the process
@@ -90,19 +94,28 @@ public class Automation implements Runnable {
         try {
             computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
-            if ((debugScript != null || instructionRecording != null) && computer.getCPU().isEmpty())
-                throw new IllegalStateException("Debug scripts and recording require a CPU");
+            if (debugScript != null && computer.getCPU().isEmpty())
+                throw new IllegalStateException("Debug scripts require a CPU");
+            if (instructionRecording != null && computer.getCPU().isEmpty())
+                LOGGER.error("Could not start instruction recording: no CPU available");
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
                 if (programLocation != null) {
                     setProgress("Program start location: " + String.format("%04Xh", programLocation), false);
-                    cpu.reset(programLocation);
-                } else {
-                    cpu.reset();
                 }
+                if (inputFile == null || computer.getCompiler().isEmpty())
+                    computer.getExecution().orElseThrow().compile(() -> {}, programLocation).join();
                 if (instructionRecording != null) {
-                    Unchecked.run(() -> computer.getDebugger().orElseThrow().recordTo(instructionRecording));
-                    recordingStarted = true;
+                    try {
+                        net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
+                        debugger.update(() -> {
+                            try { debugger.recordTo(instructionRecording); }
+                            catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+                        }).join();
+                        recordingStarted = true;
+                    } catch (Exception failure) {
+                        LOGGER.error("Could not start instruction recording; emulation continues", failure);
+                    }
                 }
                 if (debugScript != null) {
                     try { net.emustudio.application.debugger.DebugScript.run(computer.getDebugger().orElseThrow(), debugScript); }
@@ -117,12 +130,13 @@ public class Automation implements Runnable {
         } finally {
             if (recordingStarted) {
                 try {
-                    if (resultState == CPU.RunState.STATE_RUNNING) computer.getCPU().orElseThrow().pause();
-                    computer.getDebugger().orElseThrow().stopRecordingFile();
+                    net.emustudio.application.debugger.DebugSession debugger = computer.getDebugger().orElseThrow();
+                    debugger.update(() -> {
+                        try { debugger.stopRecordingFile(); }
+                        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+                    }).join();
                 } catch (Exception e) {
-                    successful = false;
                     LOGGER.error("Could not finish instruction recording", e);
-                    dialogs.showError("Instruction recording is incomplete. Please consult log file for details.", "Emulation automation");
                 }
                 recordingStarted = false;
             }
@@ -150,12 +164,12 @@ public class Automation implements Runnable {
             @Override
             public void onMessage(CompilerMessage message) {
 
-                switch (message.getMessageType()) {
-                    case TYPE_ERROR:
+                switch (message.getType()) {
+                    case ERROR:
                         errors.incrementAndGet();
                         LOGGER.error(message.getFormattedMessage());
                         break;
-                    case TYPE_WARNING:
+                    case WARNING:
                         LOGGER.warn(message.getFormattedMessage());
                         break;
                     default:
@@ -172,7 +186,15 @@ public class Automation implements Runnable {
 
         // Initialize compiler
         compiler.addCompilerListener(reporter);
-        compiler.compile(inputFile.toPath(), Optional.empty());
+        Runnable compilation = () -> {
+            compiler.compile(inputFile.toPath(), Optional.empty());
+            if (errors.get() > 0) throw new IllegalStateException("Compilation failed");
+        };
+        try {
+            computer.getExecution().ifPresentOrElse(execution -> execution.compile(compilation, programLocation).join(), compilation);
+        } finally {
+            compiler.removeCompilerListener(reporter);
+        }
 
         if (errors.get() > 0) {
             throw new AutomationException("Compilation failed. Automation cannot continue.");
@@ -182,8 +204,6 @@ public class Automation implements Runnable {
     private void autoEmulate(CPU cpu) {
         setProgress("Running emulation...", true);
 
-        final Object resultStateLock = new Object();
-
         // Show all devices if GUI is supported
         for (Device device : computer.getDevices()) {
             if (!appSettings.noGUI && device.isGuiSupported()) {
@@ -192,50 +212,28 @@ public class Automation implements Runnable {
         }
 
         resultState = CPU.RunState.STATE_RUNNING;
-        CPU.CPUListener stateListener = new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(CPU.RunState state) {
-                if (state != CPU.RunState.STATE_RUNNING) {
-                    synchronized (resultStateLock) {
-                        resultState = state;
-                        resultStateLock.notify();
-                    }
-                }
-            }
-
-            @Override
-            public void internalStateChanged() {
-            }
-        };
-        cpu.addCPUListener(stateListener);
-        cpu.execute();
-
-        synchronized (resultStateLock) {
-            long deadline = (waitForFinishMillis == DONT_WAIT)
-                    ? Long.MAX_VALUE
-                    : System.currentTimeMillis() + waitForFinishMillis;
-            try {
-                while (resultState == CPU.RunState.STATE_RUNNING) {
-                    long remaining = (waitForFinishMillis == DONT_WAIT)
-                            ? 0
-                            : deadline - System.currentTimeMillis();
-                    if (waitForFinishMillis != DONT_WAIT && remaining <= 0) {
-                        break;
-                    }
-                    resultStateLock.wait(remaining);
-                }
-            } catch (InterruptedException e) {
-                LOGGER.error("Emulation has been interrupted");
-                Thread.currentThread().interrupt();
-            }
+        EmulationController execution = computer.getExecution().orElseThrow();
+        execution.start().join();
+        CompletableFuture<CPU.RunState> completion = execution.runCompletion();
+        try {
+            resultState = waitForFinishMillis == DONT_WAIT ? completion.get()
+                    : completion.get(waitForFinishMillis, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException expected) {
+            // CLI observation duration is independent of cooperative lifecycle completion.
+            resultState = execution.snapshot().runState();
+        } catch (InterruptedException failure) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException failure) {
+            throw new IllegalStateException("CPU execution failed", failure.getCause());
         }
-        cpu.removeCPUListener(stateListener);
 
         switch (resultState) {
             case STATE_STOPPED_ADDR_FALLOUT:
+                successful = false;
                 LOGGER.error("Address fallout");
                 break;
             case STATE_STOPPED_BAD_INSTR:
+                successful = false;
                 LOGGER.error("Unknown instruction");
                 break;
             case STATE_STOPPED_BREAK:
@@ -243,6 +241,9 @@ public class Automation implements Runnable {
                 break;
             case STATE_STOPPED_NORMAL:
                 LOGGER.info("Normal stop");
+                break;
+            case STATE_RUNNING:
+                LOGGER.info("Observation duration elapsed; CPU is still running");
                 break;
             default:
                 LOGGER.error("Invalid state ({})", resultState);

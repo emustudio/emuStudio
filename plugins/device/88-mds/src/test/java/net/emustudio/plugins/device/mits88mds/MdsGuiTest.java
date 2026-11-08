@@ -14,6 +14,7 @@ import java.awt.Container;
 import java.awt.GraphicsEnvironment;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
@@ -34,12 +35,7 @@ public class MdsGuiTest {
         Files.write(image, new byte[(int) MdsDrive.IMAGE_SIZE]);
         gui = createNiceMock(GUI.class);
         expect(gui.panel(anyString(), anyString(), anyString())).andAnswer(JPanel::new).anyTimes();
-        expect(gui.button(anyString(), anyObject(Runnable.class))).andAnswer(() -> {
-            JButton button = new JButton((String) getCurrentArgument(0));
-            Runnable action = getCurrentArgument(1);
-            button.addActionListener(event -> action.run());
-            return button;
-        }).anyTimes();
+        expect(gui.button(anyString())).andAnswer(() -> new JButton((String) getCurrentArgument(0))).anyTimes();
         replay(gui);
     }
 
@@ -56,7 +52,7 @@ public class MdsGuiTest {
 
     @Test
     public void attachAndDetachSelectedDrive() throws Exception {
-        expect(dialogs.chooseFile(anyString(), eq("Attach"), eq(false))).andReturn(Optional.of(image));
+        expect(dialogs.chooseFile(anyString(), eq("Attach"), isNull(), eq(false), eq(List.of()))).andReturn(Optional.of(image));
         replay(dialogs);
 
         SwingUtilities.invokeAndWait(() -> {

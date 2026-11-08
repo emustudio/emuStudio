@@ -42,7 +42,7 @@ public class TerminalSettings {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
 
-        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
         readSettings();
     }
 
@@ -121,13 +121,13 @@ public class TerminalSettings {
 
     public void write() {
         try {
-            settings.setInt(INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
-            settings.setBoolean(HALF_DUPLEX, halfDuplex);
-            settings.setBoolean(ALWAYS_ON_TOP, alwaysOnTop);
-            settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
-            settings.setString(INPUT_FILE_NAME, inputPath.toString());
-            settings.setInt(DEVICE_INDEX, deviceIndex);
-            settings.setString(FONT, font.name);
+            settings.set(INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
+            settings.set(HALF_DUPLEX, halfDuplex);
+            settings.set(ALWAYS_ON_TOP, alwaysOnTop);
+            settings.set(OUTPUT_FILE_NAME, outputPath.toString());
+            settings.set(INPUT_FILE_NAME, inputPath.toString());
+            settings.set(DEVICE_INDEX, deviceIndex);
+            settings.set(FONT, font.name);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "LSI ADM-3A");
@@ -137,20 +137,20 @@ public class TerminalSettings {
     }
 
     private void readSettings() {
-        halfDuplex = settings.getBoolean(HALF_DUPLEX, false);
-        alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP, false);
-        inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
-        outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
-        deviceIndex = settings.getInt(DEVICE_INDEX, 0);
+        halfDuplex = settings.getBoolean(HALF_DUPLEX).orElse(false);
+        alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP).orElse(false);
+        inputPath = Path.of(settings.getString(INPUT_FILE_NAME).orElse(DEFAULT_INPUT_FILE_NAME));
+        outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME).orElse(DEFAULT_OUTPUT_FILE_NAME));
+        deviceIndex = settings.getInt(DEVICE_INDEX).orElse(0);
         try {
-            inputReadDelayMillis = settings.getInt(INPUT_READ_DELAY_MILLIS, 0);
+            inputReadDelayMillis = settings.getInt(INPUT_READ_DELAY_MILLIS).orElse(0);
         } catch (NumberFormatException e) {
             inputReadDelayMillis = 0;
             LOGGER.error(
                     "Could not read '" + INPUT_READ_DELAY_MILLIS + "' setting. Using default value ({})", inputReadDelayMillis, e
             );
         }
-        font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
+        font = TerminalFont.valueOf(settings.getString(FONT).orElse(TerminalFont.ORIGINAL.name).toUpperCase());
 
         if (inputPath.toString().equals(outputPath.toString())) {
             LOGGER.error("ADM-3A settings: Input path is not allowed to be equal to the output path. Setting to default.");

@@ -46,11 +46,10 @@ package "emuLib (SDK)" {
         +getContextPool() : ContextPool
         +getDialogs() : Dialogs
         +getGUI() : GUI
-        +getDebuggerTable() : DebuggerTable
     }
     interface ContextPool {
         +register(pluginId, context, type)
-        +getContext(pluginId, type) : Context
+        +get(pluginId, type) : Context
     }
 
     annotation PluginRoot
@@ -157,22 +156,37 @@ end
 
 == Emulation control at the code level
 
-For interactive runs, `EmulationController` funnels every CPU operation through a
-single scheduled worker. Commands still wait for CPU state-event acknowledgements
-with a `CountDownLatch`; the controller does not assume every CPU implementation
-delivers callbacks before its control methods return. CPU callbacks update
-`CPU.RunState` and release the wait; they never issue another CPU command.
+`VirtualComputer` owns one `EmulationController` shared by GUI commands, automation,
+and debug scripts. The controller owns two executors: a command scheduler and a
+machine worker. The scheduler is the sole owner of lifecycle transitions and remains
+available while the worker invokes synchronous `CPU.execute()`, `CPU.step()`, or
+`CPU.reset(int)`. `AbstractCPU` supplies plugin conveniences and owns no threads.
 
-Timed stepping uses a fixed delay after each acknowledged step, leaving the worker
-free between steps. Pause, stop, reset, replacement timed runs, and close cancel
-the current timer. A generation check prevents a cancelled step that is already
-in flight from changing its replacement's timer. An in-flight CPU command finishes
-before the next queued command. Debugger mutation invalidation surrounds each
-machine command, rather than the idle interval between timed steps. Closing cancels
-timed work, drains accepted commands, and removes the controller's CPU listener.
+Commands return explicit completion futures. Starting acknowledges entry into the
+running state separately from the eventual execution result. The worker reports
+that result only after the CPU call returns; cancelling a future is not proof of
+execution exit. State listeners observe transitions and never release command
+latches or run another CPU operation directly. Natural halt and failure results
+are preserved when they race a pause or stop request.
 
-Automation instead attaches its own `CPUListener`, calls
-`cpu.execute()` directly and waits for a terminal run state before reporting the
-outcome.
+Pause and stop request interruption cooperatively. Reset remains pending until
+the loop exits, then orders memory reset, device resets, and CPU reset on the
+worker. Close likewise waits for actual exit before machine resources are released.
+Neither operation has a timeout or force-kill path. While stopping, resetting, or
+closing, new start, step, reset, and edit requests are rejected rather than queued.
+Swing callers use asynchronous completion; they never wait on the event thread.
+
+Paused register, instruction-location, and memory edits use the same worker through
+`mutate`; the host rejects edits made stale by intervening execution. Compilation
+uses the controller too, including memory changes in CPU-less configurations.
+Debugger generation invalidation surrounds actual machine work. Its locks and
+revision guards still protect concurrent UI reads and analysis publication.
+
+Timed stepping uses a fixed delay after each completed instruction. Pause, stop,
+reset, manual step, replacement timed runs, and close cancel the current timer;
+a generation check prevents cancelled work from resuming its old sequence. The
+existing command scheduler also invokes `CPU.sampleFrequency()`, so
+`FrequencyCalculator` needs no sampling executor. Instruction pacing remains inside
+the CPU worker's `AccurateFrequencyRunner` loop.
 
 xref:index.adoc[← Back to overview] · xref:components.adoc[← Components]

@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -10,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@PluginContext(id = "Byte Memory")
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements ByteMemoryContext {
     final static int DEFAULT_MEM_SIZE = 65536;
 

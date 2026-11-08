@@ -2,23 +2,26 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.memory.AbstractMemory;
+import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryGui;
 
 import javax.swing.*;
 
-@PluginRoot(type = PLUGIN_TYPE.MEMORY, title = "RAM Program Tape")
+@PluginRoot(
+        type = PLUGIN_TYPE.MEMORY,
+        title = "RAM Program Tape",
+        description = "Read-only program tape for abstract RAM machine."
+)
 @SuppressWarnings("unused")
-public class MemoryImpl extends AbstractMemory {
+public class MemoryImpl extends AbstractPlugin implements Memory {
     private final MemoryContextImpl context;
     private final boolean guiNotSupported;
     private MemoryGui gui;
@@ -27,26 +30,17 @@ public class MemoryImpl extends AbstractMemory {
         super(pluginID, applicationApi, settings);
         ContextPool contextPool = applicationApi.getContextPool();
 
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
         context = new MemoryContextImpl();
-        try {
-            contextPool.register(pluginID, context, RamMemoryContext.class);
-            contextPool.register(pluginID, context, MemoryContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            applicationApi.getDialogs().showError("Could not register Program tape context", super.getTitle());
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "Read-only program tape for abstract RAM machine.";
+        contextPool.register(pluginID, context, RamMemoryContext.class);
+        contextPool.register(pluginID, context, MemoryContext.class);
     }
 
     @Override
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryGui(parent, context, applicationApi.getDialogs(), applicationApi.getGUI());
+                gui = new MemoryGui(parent, context, applicationApi.getDialogs(), applicationApi.getGUI(), applicationApi.getExecutionState());
             }
             gui.setVisible(true);
         }
@@ -64,10 +58,5 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return true;
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 }

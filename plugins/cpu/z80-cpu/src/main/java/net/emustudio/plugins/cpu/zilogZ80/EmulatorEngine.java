@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl;
@@ -49,7 +48,7 @@ public class EmulatorEngine {
 
     private final ContextZ80Impl context;
     private MemoryContext<Byte> memory;
-    public final DebugProbe debugger;
+    public final MachineDebugging debugger;
     private boolean debuggerActive;
     private final CPUContext.PassedCyclesListener passiveMemoryCycleListener;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
@@ -87,7 +86,7 @@ public class EmulatorEngine {
     private boolean dispatching = false;
 
     private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
-        MemoryContext<Byte> memory = DebugProbe.inspectionMemory(executionMemory);
+        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
         DecoderImpl decoder = new DecoderImpl(memory);
         return new Disassembler() {
             @Override public DisassembledInstruction disassemble(int at) {
@@ -101,7 +100,7 @@ public class EmulatorEngine {
     }
 
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
-        this.debugger = new DebugProbe("Z80", memory, recordingDisassembler(memory));
+        this.debugger = new MachineDebugging("Z80", memory, recordingDisassembler(memory));
         this.memory = memory;
         MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
         debugger.onActivityChanged(
@@ -308,10 +307,7 @@ public class EmulatorEngine {
     }
 
     private void dispatch() throws Throwable {
-        if (!debuggerActive) {
-            dispatchRaw();
-            return;
-        }
+        debugger.boundary();
         if (!debugger.begin(PC)) {
             currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
             return;
@@ -322,7 +318,11 @@ public class EmulatorEngine {
             completed = currentRunState != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && currentRunState != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            if (debugger.end(completed)) currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            if (debugger.end(completed) && completed
+                    && (currentRunState == CPU.RunState.STATE_RUNNING
+                    || currentRunState == CPU.RunState.STATE_STOPPED_BREAK)) {
+                currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+            }
         }
     }
 

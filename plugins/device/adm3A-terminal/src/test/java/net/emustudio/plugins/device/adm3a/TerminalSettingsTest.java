@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -20,10 +21,10 @@ public class TerminalSettingsTest {
     @Before
     public void setUp() {
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
-        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false).anyTimes();
-        expect(pluginSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(pluginSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(pluginSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(false)).anyTimes();
+        expect(pluginSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(pluginSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -51,10 +52,10 @@ public class TerminalSettingsTest {
     @Test
     public void testGuiNotSupported() {
         PluginSettings noGuiSettings = createNiceMock(PluginSettings.class);
-        expect(noGuiSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).anyTimes();
-        expect(noGuiSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(noGuiSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(noGuiSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(noGuiSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).anyTimes();
+        expect(noGuiSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(noGuiSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(noGuiSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(noGuiSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -188,17 +189,13 @@ public class TerminalSettingsTest {
     @Test
     public void testWriteCallsSettingsSetters() throws Exception {
         PluginSettings writableSettings = createNiceMock(PluginSettings.class);
-        expect(writableSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false).anyTimes();
-        expect(writableSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(writableSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(writableSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(writableSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(false)).anyTimes();
+        expect(writableSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(writableSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(writableSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         // Expect write operations
-        writableSettings.setBoolean(anyString(), anyBoolean());
-        expectLastCall().anyTimes();
-        writableSettings.setInt(anyString(), anyInt());
-        expectLastCall().anyTimes();
-        writableSettings.setString(anyString(), anyString());
-        expectLastCall().anyTimes();
+        writableSettings.set(anyString(), anyObject());
+        expectLastCall().times(7);
         replay(writableSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -213,12 +210,12 @@ public class TerminalSettingsTest {
     @Test
     public void testInputPathEqualsOutputPathResetsToDefaults() {
         PluginSettings samePathSettings = createNiceMock(PluginSettings.class);
-        expect(samePathSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false).anyTimes();
-        expect(samePathSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
-        expect(samePathSettings.getString(eq("inputFileName"), anyString())).andReturn("same.txt").anyTimes();
-        expect(samePathSettings.getString(eq("outputFileName"), anyString())).andReturn("same.txt").anyTimes();
-        expect(samePathSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(samePathSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(samePathSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(false)).anyTimes();
+        expect(samePathSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(samePathSettings.getString("inputFileName")).andReturn(Optional.ofNullable("same.txt")).anyTimes();
+        expect(samePathSettings.getString("outputFileName")).andReturn(Optional.ofNullable("same.txt")).anyTimes();
+        expect(samePathSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(samePathSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(samePathSettings);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);

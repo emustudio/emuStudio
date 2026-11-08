@@ -4,9 +4,9 @@ package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.dialogs.InputDialog;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -17,10 +17,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DialogsGui implements Dialogs {
-    private final RadixUtils radixUtils = RadixUtils.getInstance();
     private final GUI gui;
     private Component parent;
 
@@ -33,18 +33,8 @@ public class DialogsGui implements Dialogs {
     }
 
     @Override
-    public void showError(String message) {
-        showError(message, "Error");
-    }
-
-    @Override
     public void showError(String message, String title) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
-    }
-
-    @Override
-    public void showInfo(String message) {
-        showInfo(message, "Information");
     }
 
     @Override
@@ -53,104 +43,57 @@ public class DialogsGui implements Dialogs {
     }
 
     @Override
-    public Optional<Integer> readInteger(String message) {
-        return readInteger(message, DialogsNoGui.INPUT_MESSAGE);
-    }
-
-    @Override
-    public Optional<Integer> readInteger(String message, String title) {
-        return readInteger(message, title, 0);
-    }
-
-    @Override
-    public Optional<Integer> readInteger(String message, String title, int initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial, gui)
-                .map(radixUtils::parseRadix);
-    }
-
-    @Override
-    public Optional<String> readString(String message) {
-        return readString(message, DialogsNoGui.INPUT_MESSAGE);
-    }
-
-    @Override
-    public Optional<String> readString(String message, String title) {
-        return readString(message, title, "");
+    public Optional<Integer> readInteger(String message, String title, Integer initial) {
+        return readString(message, title, initial == null ? null : String.valueOf(initial))
+                .flatMap(value -> parse(value, v -> RadixUtils.parseRadix(v.trim())));
     }
 
     @Override
     public Optional<String> readString(String message, String title, String initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial, gui);
+        return InputDialog.showInputDialog(parent, message, title, initial == null ? "" : initial, gui);
     }
 
     @Override
-    public Optional<Double> readDouble(String message) {
-        return readDouble(message, DialogsNoGui.INPUT_MESSAGE);
+    public Optional<Double> readDouble(String message, String title, Double initial) {
+        return readString(message, title, initial == null ? null : String.valueOf(initial))
+                .flatMap(value -> parse(value, Double::parseDouble));
     }
 
     @Override
-    public Optional<Double> readDouble(String message, String title) {
-        return readDouble(message, title, 0);
-    }
-
-    @Override
-    public Optional<Double> readDouble(String message, String title, double initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial, gui)
-                .map(Double::parseDouble);
-    }
-
-    @Override
-    public DialogAnswer ask(String message) {
-        return ask(message, "Confirmation");
-    }
-
-    @Override
-    public DialogAnswer ask(String message, String title) {
+    public Answer ask(String message, String title) {
         int answer = JOptionPane.showConfirmDialog(
                 parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION
         );
 
         switch (answer) {
             case JOptionPane.YES_OPTION:
-                return DialogAnswer.ANSWER_YES;
+                return Answer.YES;
             case JOptionPane.NO_OPTION:
-                return DialogAnswer.ANSWER_NO;
+                return Answer.NO;
         }
-        return DialogAnswer.ANSWER_CANCEL;
-    }
-
-    @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
-                                     FileExtensionsFilter... filters) {
-        return chooseFile(title, approveButtonText, Path.of(System.getProperty("user.dir")), appendMissingExtension, filters);
-    }
-
-    @Override
-    public Optional<Path> chooseFile(String title, String approveButtonTest, boolean appendMissingExtension,
-                                     List<FileExtensionsFilter> filters) {
-        return chooseFile(title, approveButtonTest, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new));
+        return Answer.CANCEL;
     }
 
     @Override
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
-                                     boolean appendMissingExtension, FileExtensionsFilter... filters) {
+                                     boolean appendMissingExtension, List<FileType> fileTypes) {
 
         UIManager.put("FileChooser.readOnly", Boolean.TRUE);
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setApproveButtonText(approveButtonText);
-        fileChooser.setCurrentDirectory(baseDirectory.toFile());
+        fileChooser.setCurrentDirectory(baseDirectoryOrCurrent(baseDirectory).toFile());
 
         FileNameExtensionFilter firstFilter = null;
-        for (FileExtensionsFilter filter : filters) {
-            String formattedExtensions = filter.getExtensions().stream()
+        for (FileType fileType : fileTypes) {
+            String formattedExtensions = fileType.getExtensions().stream()
                     .map(e -> "*." + e)
                     .collect(Collectors.joining(", ", " (", ")"));
 
             FileNameExtensionFilter extensionFilter = new FileNameExtensionFilter(
-                    filter.getDescription() + formattedExtensions,
-                    filter.getExtensions().toArray(new String[0])
+                    fileType.getDescription() + formattedExtensions,
+                    fileType.getExtensions().toArray(new String[0])
             );
             if (firstFilter == null) {
                 firstFilter = extensionFilter;
@@ -190,26 +133,13 @@ public class DialogsGui implements Dialogs {
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
-                                     boolean appendMissingExtension, List<FileExtensionsFilter> filters) {
-        return chooseFile(
-                title, approveButtonText, baseDirectory, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new)
-        );
-    }
-
-    @Override
-    public Optional<Path> chooseDirectory(String title, String approveButtonText) {
-        return chooseDirectory(title, approveButtonText, Path.of(System.getProperty("user.dir")));
-    }
-
-    @Override
     public Optional<Path> chooseDirectory(String title, String approveButtonText, Path baseDirectory) {
         UIManager.put("FileChooser.readOnly", Boolean.TRUE);
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setApproveButtonText(approveButtonText);
-        fileChooser.setCurrentDirectory(baseDirectory.toFile());
+        fileChooser.setCurrentDirectory(baseDirectoryOrCurrent(baseDirectory).toFile());
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         int result = fileChooser.showOpenDialog(parent);
@@ -218,5 +148,17 @@ public class DialogsGui implements Dialogs {
             return Optional.ofNullable(fileChooser.getSelectedFile()).map(File::toPath);
         }
         return Optional.empty();
+    }
+
+    private static Path baseDirectoryOrCurrent(Path baseDirectory) {
+        return baseDirectory == null ? Path.of(System.getProperty("user.dir")) : baseDirectory;
+    }
+
+    private static <T> Optional<T> parse(String value, Function<String, T> parser) {
+        try {
+            return Optional.of(parser.apply(value));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 }

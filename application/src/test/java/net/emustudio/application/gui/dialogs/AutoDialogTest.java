@@ -5,7 +5,7 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.application.emulation.EmulationController;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -21,8 +21,8 @@ public class AutoDialogTest extends AbstractSwingTest {
     @Test
     public void setActionUpdatesStatusAndStopButtonStopsCpu() {
         VirtualComputer computer = mock(VirtualComputer.class);
-        CPU cpu = mock(CPU.class);
-        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        EmulationController execution = mock(EmulationController.class);
+        when(computer.getExecution()).thenReturn(Optional.of(execution));
 
         AutoDialog dialog = onEdt(() -> new AutoDialog(computer, new EmuStudioGui()));
 
@@ -37,6 +37,6 @@ public class AutoDialogTest extends AbstractSwingTest {
         assertTrue(onEdt(stopButton::isEnabled));
         triggerButton(stopButton);
 
-        verify(cpu).stop();
+        verify(execution).stop();
     }
 }

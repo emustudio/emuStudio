@@ -62,7 +62,7 @@ public class HexLoaderTest {
 
     @Test
     public void testIsMemoryAddressAware() {
-        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(java.nio.file.Path.of("file.hex"))));
+        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.formatOf(java.nio.file.Path.of("file.hex"))));
     }
 
     @Test

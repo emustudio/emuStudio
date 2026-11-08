@@ -15,7 +15,7 @@ public class RaspCpuContextImpl implements RaspCpuContext {
     private AbstractTapeContext outputTape;
 
     public void init(long pluginID, ContextPool contextPool) throws PluginInitializationException {
-        inputTape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 0);
+        inputTape = contextPool.get(pluginID, AbstractTapeContext.class, 0);
         inputTape.setLeftBounded(true);
         inputTape.setEditable(true);
         inputTape.setHighlightHeadPosition(true);
@@ -23,7 +23,7 @@ public class RaspCpuContextImpl implements RaspCpuContext {
         inputTape.setTitle("Input tape");
         inputTape.setAcceptTypes(TapeSymbol.Type.NUMBER);
 
-        outputTape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 1);
+        outputTape = contextPool.get(pluginID, AbstractTapeContext.class, 1);
         outputTape.setLeftBounded(true);
         outputTape.setEditable(false);
         outputTape.setHighlightHeadPosition(true);

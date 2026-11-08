@@ -23,27 +23,27 @@ public class CreateExprVisitor extends AsZ80ParserBaseVisitor<Node> {
 
     @Override
     public Node visitExprOct(ExprOctContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitOct);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprHex1(ExprHex1Context ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitHex1);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprHex2(ExprHex2Context ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitHex2);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprDec(ExprDecContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitDec);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override
     public Node visitExprBin(ExprBinContext ctx) {
-        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseLitBin);
+        return new ExprNumber(sourceFileName, ctx.num, ParsingUtils::parseNumber);
     }
 
     @Override

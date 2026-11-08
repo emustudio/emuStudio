@@ -32,7 +32,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithValidAddress() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.of(100));
         replay(dialogs);
         ByteMemoryContext context = createNiceMock(ByteMemoryContext.class);
@@ -46,7 +46,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithOutOfBoundsAddress() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.of(70000));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
@@ -63,7 +63,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithNegativeAddress() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.of(-1));
         dialogs.showError(anyString(), anyString());
         expectLastCall().once();
@@ -80,7 +80,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithEmptyInput() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.empty());
         replay(dialogs);
         ByteMemoryContext context = createNiceMock(ByteMemoryContext.class);
@@ -94,7 +94,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithZeroAddress() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.of(0));
         replay(dialogs);
         ByteMemoryContext context = createNiceMock(ByteMemoryContext.class);
@@ -108,7 +108,7 @@ public class GotoAddressActionTest {
     @Test
     public void testActionPerformedWithMaxValidAddress() {
         Dialogs dialogs = createNiceMock(Dialogs.class);
-        expect(dialogs.readInteger("Enter memory address:", "Go to address"))
+        expect(dialogs.readInteger("Enter memory address:", "Go to address", null))
                 .andReturn(Optional.of(65535));
         replay(dialogs);
         ByteMemoryContext context = createNiceMock(ByteMemoryContext.class);

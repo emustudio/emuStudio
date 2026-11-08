@@ -3,15 +3,8 @@
 package net.emustudio.application.virtualcomputer;
 
 import net.emustudio.emulib.plugins.Context;
-import net.emustudio.emulib.plugins.annotations.PluginContext;
-import net.emustudio.emulib.plugins.compiler.CompilerContext;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +25,12 @@ public class ContextPoolImpl implements ContextPool {
     }
 
     @Override
-    public void register(long pluginID, Context context, Class<? extends Context> contextInterface) throws ContextAlreadyRegisteredException, InvalidContextException {
-        verifyPluginContext(contextInterface);
+    public void register(long pluginID, Context context, Class<? extends Context> contextInterface) {
+        verifyContextInterface(contextInterface);
 
         // check if the contextInterface is implemented by the context
         if (!contextInterface.isInstance(context)) {
-            throw new InvalidContextException("Context does not implement context interface");
+            throw new IllegalArgumentException("Context does not implement context interface");
         }
 
         // check if the context is already registered
@@ -45,7 +38,7 @@ public class ContextPoolImpl implements ContextPool {
         if (contextsByInterface != null) {
             // Test if the context instance is already there
             if (contextsByInterface.contains(context)) {
-                throw new ContextAlreadyRegisteredException();
+                throw new IllegalStateException("Context is already registered");
             }
         }
 
@@ -61,8 +54,8 @@ public class ContextPoolImpl implements ContextPool {
     }
 
     @Override
-    public boolean unregister(long pluginID, Class<? extends Context> contextInterface) throws InvalidContextException {
-        verifyPluginContext(contextInterface);
+    public boolean unregister(long pluginID, Class<? extends Context> contextInterface) {
+        verifyContextInterface(contextInterface);
 
         List<Context> contextsByOwner = contextOwners.get(pluginID);
         if (contextsByOwner == null) {
@@ -75,25 +68,27 @@ public class ContextPoolImpl implements ContextPool {
             return false;
         }
 
+        boolean removed = false;
         Iterator<Context> contextIterator = contextsByInterface.iterator();
         while (contextIterator.hasNext()) {
             Context context = contextIterator.next();
             if (contextsByOwner.contains(context)) {
                 contextsByOwner.remove(context);
                 contextIterator.remove();
+                removed = true;
             }
         }
         if (contextsByInterface.isEmpty()) {
             contexts.remove(contextInterface);
         }
-        return true;
+        return removed;
     }
 
     @Override
-    public <T extends Context> T getContext(long pluginID, Class<T> contextInterface, int index)
-            throws InvalidContextException, ContextNotFoundException {
+    public <T extends Context> T get(long pluginID, Class<T> contextInterface, int index)
+            throws ContextNotFoundException {
 
-        verifyPluginContext(contextInterface);
+        verifyContextInterface(contextInterface);
         // find the requested context
         List<Context> contextsByInterface = contexts.get(contextInterface);
         if ((contextsByInterface == null) || contextsByInterface.isEmpty()) {
@@ -118,66 +113,6 @@ public class ContextPoolImpl implements ContextPool {
                 "Plugin " + pluginID + " has either no permission to access context " + contextInterface +
                         " or index is out of bounds"
         );
-    }
-
-    @Override
-    public CPUContext getCPUContext(long pluginID) throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, CPUContext.class, -1);
-    }
-
-    @Override
-    public <T extends CPUContext> T getCPUContext(long pluginID, Class<T> contextInterface)
-            throws InvalidContextException, ContextNotFoundException {
-
-        return getContext(pluginID, contextInterface, -1);
-    }
-
-    @Override
-    public <T extends CPUContext> T getCPUContext(long pluginID, Class<T> contextInterface, int index)
-            throws InvalidContextException, ContextNotFoundException {
-
-        return getContext(pluginID, contextInterface, index);
-    }
-
-    @Override
-    public CompilerContext getCompilerContext(long pluginID) throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, CompilerContext.class, -1);
-    }
-
-    @Override
-    public <T extends CompilerContext> T getCompilerContext(long pluginID, Class<T> contextInterface)
-            throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, -1);
-    }
-
-    @Override
-    public <T extends CompilerContext> T getCompilerContext(long pluginID, Class<T> contextInterface, int index)
-            throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, index);
-    }
-
-    @Override
-    public <CellType, T extends MemoryContext<CellType>> T getMemoryContext(long pluginID, Class<T> contextInterface)
-            throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, -1);
-    }
-
-    @Override
-    public <CellType, T extends MemoryContext<CellType>> T getMemoryContext(long pluginID, Class<T> contextInterface,
-                                                                            int index) throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, index);
-    }
-
-    @Override
-    public <DataType, T extends DeviceContext<DataType>> T getDeviceContext(long pluginID, Class<T> contextInterface)
-            throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, -1);
-    }
-
-    @Override
-    public <DataType, T extends DeviceContext<DataType>> T getDeviceContext(long pluginID, Class<T> contextInterface,
-                                                                            int index) throws InvalidContextException, ContextNotFoundException {
-        return getContext(pluginID, contextInterface, index);
     }
 
     /**
@@ -211,14 +146,11 @@ public class ContextPoolImpl implements ContextPool {
         return Optional.ofNullable(contextOwner);
     }
 
-    private void verifyPluginContext(Class<? extends Context> contextInterface) throws InvalidContextException {
+    private void verifyContextInterface(Class<? extends Context> contextInterface) {
         Objects.requireNonNull(contextInterface);
 
         if (!contextInterface.isInterface()) {
-            throw new InvalidContextException("Given class is not an interface");
-        }
-        if (!contextInterface.isAnnotationPresent(PluginContext.class)) {
-            throw new InvalidContextException("The interface is not annotated with 'PluginContext' annotation: " + contextInterface);
+            throw new IllegalArgumentException("Given class is not an interface");
         }
     }
 }

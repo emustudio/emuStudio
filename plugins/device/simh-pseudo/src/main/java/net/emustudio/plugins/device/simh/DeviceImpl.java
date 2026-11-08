@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.simh;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -13,17 +14,16 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import javax.swing.*;
-
 /**
  * SIMH emulator's pseudo device.
  */
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
-        title = "SIMH pseudo device"
+        title = "SIMH pseudo device",
+        description = "Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH004."
 )
 @SuppressWarnings("unused")
-public class DeviceImpl extends AbstractDevice {
+public class DeviceImpl extends AbstractPlugin implements Device {
     private final PseudoContext context = new PseudoContext();
     private Context8080 cpu;
 
@@ -35,9 +35,9 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         ContextPool contextPool = applicationApi.getContextPool();
 
-        cpu = contextPool.getCPUContext(pluginID, Context8080.class);
-        ByteMemoryContext mem = contextPool.getMemoryContext(pluginID, ByteMemoryContext.class);
-        PaperTapeContext paperTape = contextPool.getContext(pluginID, PaperTapeContext.class, 0);
+        cpu = contextPool.get(pluginID, Context8080.class);
+        ByteMemoryContext mem = contextPool.get(pluginID, ByteMemoryContext.class);
+        PaperTapeContext paperTape = contextPool.get(pluginID, PaperTapeContext.class, 0);
 
         context.setMemory(mem);
         context.setCpu(cpu);
@@ -46,7 +46,7 @@ public class DeviceImpl extends AbstractDevice {
         // attach IO port
         if (!cpu.attachDevice(0xFE, context)) {
             throw new PluginInitializationException(
-                    this, "SIMH device cannot be attached to CPU (maybe there is a hardware conflict?)"
+                    "SIMH device cannot be attached to CPU (maybe there is a hardware conflict?)"
             );
         }
         reset();
@@ -61,37 +61,12 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showGUI(JFrame parent) {
-        applicationApi.getDialogs().showInfo("SIMH-pseudo GUI is not supported");
-    }
-
-    @Override
-    public boolean isGuiSupported() {
-        return false;
-    }
-
-    @Override
     public void reset() {
         context.reset();
-    }
-
-    @Override
-    public String getDescription() {
-        return "Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH004.";
     }
 
     @Override
     public boolean isAutomationSupported() {
         return true;
     }
-
-    @Override
-    public void showSettings(JFrame parent) {
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
 }

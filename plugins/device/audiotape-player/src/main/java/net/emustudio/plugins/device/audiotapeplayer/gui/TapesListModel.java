@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.audiotapeplayer.gui;
 
 import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.ui.ShortenedString;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 public class TapesListModel extends DefaultListModel<String> {
     private final static Logger LOGGER = LoggerFactory.getLogger(TapesListModel.class);
 
-    private List<ShortenedString<Path>> files = Collections.emptyList();
+    private List<Path> files = Collections.emptyList();
     private Path directory;
     private final AtomicReference<Component> componentRef = new AtomicReference<>();
     private int componentWidth;
@@ -37,19 +37,17 @@ public class TapesListModel extends DefaultListModel<String> {
         clear();
         this.files = listPaths(directory);
         Component c = componentRef.get();
-        for (ShortenedString<Path> file : files) {
-            if (c != null) {
-                file.deriveMaxStringLength(c, componentWidth);
-            }
-            addElement(file.getShortenedString());
+        for (Path file : files) {
+            String name = file.getFileName().toString();
+            addElement(c == null ? name : GUI.shortenToFit(name, c, componentWidth));
         }
     }
 
     public Path getFilePath(int index) {
-        return files.get(index).getValue();
+        return files.get(index);
     }
 
-    private static List<ShortenedString<Path>> listPaths(Path directory) {
+    private static List<Path> listPaths(Path directory) {
         if (directory == null) {
             return Collections.emptyList();
         }
@@ -57,7 +55,6 @@ public class TapesListModel extends DefaultListModel<String> {
             return stream
                     .filter(Files::isReadable)
                     .filter(p -> FileLoader.Format.fromPath(p).map(FileLoader.Format::isTape).orElse(false))
-                    .map(p -> new ShortenedString<>(p, pp -> pp.getFileName().toString()))
                     .collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.error("Could not load tape files from directory: {}", directory, e);

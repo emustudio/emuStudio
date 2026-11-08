@@ -25,6 +25,7 @@ public class StepAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
-        Optional.ofNullable(emulationController).ifPresent(controller -> controller.step(completed));
+        Optional.ofNullable(emulationController).ifPresent(controller ->
+                controller.step().thenRun(() -> SwingUtilities.invokeLater(completed)));
     }
 }

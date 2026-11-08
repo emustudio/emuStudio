@@ -21,7 +21,7 @@ public class AnalysisTasksTest {
     public void metadataEditRejectsLateResultButBreakpointEditDoesNot() throws Exception {
         for (boolean metadata : new boolean[] {true, false}) {
             DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-            try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+            try (DebugSession session = machine.session(null)) {
                 Completion completion = new Completion();
                 AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
                 CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
@@ -35,7 +35,7 @@ public class AnalysisTasksTest {
                     assertTrue(entered.await(2, TimeUnit.SECONDS));
                     ProgramIndex index = session.programIndex();
                     if (metadata) {
-                        session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                        session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                                 7, 1, 0, 1, "comment", "changed", null));
                     } else {
                         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
@@ -57,7 +57,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void computesOffEventThreadAndAppliesResultOnEventThread() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
             AtomicBoolean workerOnEventThread = new AtomicBoolean(true);
@@ -88,7 +88,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void operationFailureReportsOriginalCauseAndAllowsAnotherTask() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
             IllegalArgumentException cause = new IllegalArgumentException("bad pattern");
@@ -114,7 +114,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void machineMutationWhileAnalysisRunsDiscardsItsResult() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
             CountDownLatch entered = new CountDownLatch(1);
@@ -144,7 +144,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void cancellingDoesNotReleaseBusyStateBeforeOperationActuallyExits() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             Completion completion = new Completion();
             AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
             CountDownLatch entered = new CountDownLatch(1);
@@ -186,7 +186,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void controlsRequireEventThreadAndPausedSession() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
             try {
                 assertThrows(IllegalStateException.class, () -> tasks.submit(() -> 1, value -> {}));
@@ -206,7 +206,7 @@ public class AnalysisTasksTest {
     @Test(timeout = 15000)
     public void closedWindowRejectsNewAnalysis() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             AnalysisTasks tasks = new AnalysisTasks(session, busy -> {}, failure -> {});
             SwingUtilities.invokeAndWait(() -> {
                 tasks.close();

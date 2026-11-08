@@ -22,7 +22,7 @@ final class SettingsDialog extends DialogBase {
         this.settings = settings;
         this.dialogs = dialogs;
         this.gui = gui;
-        showGuiAtStartup.setSelected(settings.getBoolean(SHOW_GUI_AT_STARTUP, false));
+        showGuiAtStartup.setSelected(settings.getBoolean(SHOW_GUI_AT_STARTUP).orElse(false));
         setResizable(false);
         buildContent();
     }
@@ -37,7 +37,7 @@ final class SettingsDialog extends DialogBase {
         getRootPane().setDefaultButton(save);
         save.addActionListener(event -> {
             try {
-                settings.setBoolean(SHOW_GUI_AT_STARTUP, showGuiAtStartup.isSelected());
+                settings.set(SHOW_GUI_AT_STARTUP, showGuiAtStartup.isSelected());
                 dispose();
             } catch (CannotUpdateSettingException e) {
                 dialogs.showError(e.getMessage(), "Save settings");

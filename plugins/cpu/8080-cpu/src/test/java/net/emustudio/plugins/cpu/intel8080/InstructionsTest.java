@@ -34,12 +34,15 @@ public class InstructionsTest {
         ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class))
+        expect(contextPool.getMemory(0, Byte.class))
                 .andReturn(memoryStub)
                 .anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 

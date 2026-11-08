@@ -9,7 +9,7 @@ import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
@@ -31,7 +31,7 @@ public class EditorPanel extends JPanel {
 
     private final Editor editor;
     private final Dialogs dialogs;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
     private final FindAction findAction;
     private final ReplaceAction replaceAction;
@@ -47,7 +47,7 @@ public class EditorPanel extends JPanel {
     private boolean dividerInitialized;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState, GUI gui) {
+                       Supplier<CPU.RunState> runState, EmuStudioGui gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -80,7 +80,7 @@ public class EditorPanel extends JPanel {
         );
 
         JScrollPane compilerPane = gui.scrollPane(compilerOutput);
-        splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        splitSource = gui.splitPane(JSplitPane.VERTICAL_SPLIT, editor.getView(), compilerPane, 1.0);
         // Resize the syntax editor once on release rather than repainting it throughout the drag.
         splitSource.setContinuousLayout(false);
         splitSource.setOneTouchExpandable(true);
@@ -140,10 +140,10 @@ public class EditorPanel extends JPanel {
             return ((TabbedEditor) editor).confirmSaveAll();
         }
         if (editor.isDirty()) {
-            Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
-            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+            Dialogs.Answer answer = dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation");
+            if (answer == Dialogs.Answer.YES) {
                 return editor.saveFile();
-            } else return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
+            } else return answer != Dialogs.Answer.CANCEL;
         }
         return true;
     }

@@ -4,7 +4,7 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinary;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
@@ -28,9 +28,10 @@ public class MemoryGui extends DialogBase {
 
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
-    private final AnnotationEngine annotations;
+    private final MemoryAnnotations annotations;
     private final ExecutionState executionState;
     private boolean listening;
+    private ExecutionState.Subscription executionSubscription;
     private boolean handlingSearchEscape;
     private final Runnable debuggerListener;
     private final JLabel lblBanksCount = new JLabel("0");
@@ -58,7 +59,7 @@ public class MemoryGui extends DialogBase {
     private final SettingsAction settingsAction;
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui,
-                     AnnotationEngine annotations, ExecutionState executionState) {
+                     MemoryAnnotations annotations, ExecutionState executionState) {
         super(parent, "Byte Operating Memory", false);
         this.gui = gui;
         this.annotations = annotations;
@@ -70,7 +71,7 @@ public class MemoryGui extends DialogBase {
         Objects.requireNonNull(settings);
         Objects.requireNonNull(dialogs);
 
-        this.tableModel = new MemoryTableModel(context);
+        this.tableModel = new MemoryTableModel(context, executionState);
         this.table = new MemoryTable(tableModel, paneMemory, annotations, executionState);
         this.debuggerListener = () -> SwingUtilities.invokeLater(() -> {
             if (listening) {
@@ -82,7 +83,7 @@ public class MemoryGui extends DialogBase {
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
             table.repaint();
-        }, gui);
+        }, gui, executionState);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
         this.findSequencePanel = new FindSequencePanel(dialogs, gui, this::getCurrentAddress, search::start, this::hideFindSequence);
@@ -97,8 +98,8 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY));
-        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), executionState);
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui, executionState);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));
@@ -147,7 +148,7 @@ public class MemoryGui extends DialogBase {
         txtValueDec.setText(String.format("%02d", data));
         txtValueHex.setText(String.format("%02X", data));
         txtValueOct.setText(String.format("%02o", data));
-        txtValueBin.setText(formatBinaryString(data, 8));
+        txtValueBin.setText(formatBinary(data, 8));
         boolean mapped = tableModel.isMappedAddress(address);
         String label = mapped ? AnnotationLabels.at(annotations, address) : "";
         txtLabel.setText(label);
@@ -214,7 +215,7 @@ public class MemoryGui extends DialogBase {
         paneMemory.setMinimumSize(new Dimension(768, 300));
         paneMemory.setPreferredSize(new Dimension(768, 390));
 
-        JSplitPane splitPane = gui.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
+        JSplitPane splitPane = gui.splitPane(JSplitPane.VERTICAL_SPLIT, paneMemory, bottomPanel, 1.0);
 
         JPanel content = gui.panel("insets 0, hidemode 3", "[grow]", "[][]6[grow]");
         content.add(toolBar, "growx, wrap");
@@ -251,14 +252,14 @@ public class MemoryGui extends DialogBase {
     public void setVisible(boolean visible) {
         if (visible && !listening) {
             if (annotations != null) annotations.addListener(debuggerListener);
-            if (executionState != null) executionState.addListener(debuggerListener);
+            if (executionState != null) executionSubscription = executionState.subscribe(snapshot -> debuggerListener.run());
             listening = true;
             table.repaint();
             updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
         } else if (!visible && listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionState != null) executionState.removeListener(debuggerListener);
+            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
         }
         super.setVisible(visible);
     }
@@ -268,7 +269,7 @@ public class MemoryGui extends DialogBase {
         if (listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionState != null) executionState.removeListener(debuggerListener);
+            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
         }
         super.dispose();
     }

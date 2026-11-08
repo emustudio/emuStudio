@@ -6,9 +6,9 @@ import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -50,20 +50,12 @@ public class PaperTapeGuiTest {
         expect(gui.label(anyString())).andAnswer(() -> new JLabel((String) getCurrentArgument(0))).anyTimes();
         expect(gui.labelBold(anyString())).andAnswer(() -> new JLabel((String) getCurrentArgument(0))).anyTimes();
         expect(gui.button(anyString())).andAnswer(() -> new JButton((String) getCurrentArgument(0))).anyTimes();
-        expect(gui.button(anyString(), anyString(), anyObject(Runnable.class))).andAnswer(() -> {
-            JButton button = new JButton((String) getCurrentArgument(1), GUI.loadIcon(getCurrentArgument(0)));
-            Runnable action = getCurrentArgument(2);
-            button.addActionListener(event -> action.run());
-            return button;
-        }).anyTimes();
         expect(gui.toolBar()).andAnswer(JToolBar::new).anyTimes();
         expect(gui.scrollPane(anyObject(Component.class))).andAnswer(() ->
                 new JScrollPane((Component) getCurrentArgument(0))).anyTimes();
-        expect(gui.splitPaneLeftToRight(anyObject(Component.class), anyObject(Component.class), anyDouble()))
-                .andAnswer(() -> new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                        getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        expect(gui.buttonBrowseDirectories(eq(dialogs), anyString(), anyString(), anyObject()))
-                .andReturn(new JButton()).anyTimes();
+        expect(gui.splitPane(anyInt(), anyObject(Component.class), anyObject(Component.class), anyDouble()))
+                .andAnswer(() -> new JSplitPane((int) getCurrentArgument(0),
+                        getCurrentArgument(1), getCurrentArgument(2))).anyTimes();
         replay(gui);
     }
 
@@ -125,7 +117,7 @@ public class PaperTapeGuiTest {
 
     @Test public void punchFileDialogWritesUnchangedBytes() throws Exception {
         Path output = folder.newFile("output.pt").toPath();
-        expect(dialogs.chooseFile(eq("Save punch tape"), eq("Save"), eq(Path.of(System.getProperty("user.dir"))), eq(true), EasyMock.<List<FileExtensionsFilter>>anyObject()))
+        expect(dialogs.chooseFile(eq("Save punch tape"), eq("Save"), eq(Path.of(System.getProperty("user.dir"))), eq(true), EasyMock.<List<FileType>>anyObject()))
                 .andReturn(Optional.of(output));
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {
@@ -165,7 +157,7 @@ public class PaperTapeGuiTest {
         Path output = folder.newFile("output.pt").toPath();
         tape.attachReader(input);
         tape.attachPunch(output);
-        expect(dialogs.chooseFile(anyString(), eq("Save"), eq(Path.of(System.getProperty("user.dir"))), eq(true), EasyMock.<List<FileExtensionsFilter>>anyObject()))
+        expect(dialogs.chooseFile(anyString(), eq("Save"), eq(Path.of(System.getProperty("user.dir"))), eq(true), EasyMock.<List<FileType>>anyObject()))
                 .andReturn(Optional.empty());
         replay(dialogs);
         SwingUtilities.invokeAndWait(() -> {
@@ -199,8 +191,8 @@ public class PaperTapeGuiTest {
 
     @Test public void settingsSavePersistsStartupPreference() throws Exception {
         PluginSettings settings = createMock(PluginSettings.class);
-        expect(settings.getBoolean("showGuiAtStartup", false)).andReturn(false);
-        settings.setBoolean("showGuiAtStartup", true);
+        expect(settings.getBoolean("showGuiAtStartup")).andReturn(Optional.of(false));
+        settings.set("showGuiAtStartup", true);
         replay(settings, dialogs);
         SwingUtilities.invokeAndWait(() -> {
             settingsWindow = new SettingsDialog(null, settings, dialogs, gui);
@@ -213,13 +205,13 @@ public class PaperTapeGuiTest {
 
     @Test public void startupPreferenceShowsGuiAfterPortsAttach() throws Exception {
         PluginSettings settings = createStrictMock(PluginSettings.class);
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false);
-        expect(settings.getBoolean("showGuiAtStartup", false)).andReturn(true);
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(false));
+        expect(settings.getBoolean("showGuiAtStartup")).andReturn(Optional.of(true));
         Context8080 cpu = createNiceMock(Context8080.class);
         expect(cpu.attachDevice(eq(0x12), anyObject())).andReturn(true);
         expect(cpu.attachDevice(eq(0x13), anyObject())).andReturn(true);
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
         ApplicationApi api = createStrictMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).times(2);
         expect(api.getDialogs()).andReturn(dialogs);
@@ -242,7 +234,7 @@ public class PaperTapeGuiTest {
 
     @Test public void settingsEscapeDiscardsDraft() throws Exception {
         PluginSettings settings = createStrictMock(PluginSettings.class);
-        expect(settings.getBoolean("showGuiAtStartup", false)).andReturn(true);
+        expect(settings.getBoolean("showGuiAtStartup")).andReturn(Optional.of(true));
         replay(settings, dialogs);
         SwingUtilities.invokeAndWait(() -> {
             settingsWindow = new SettingsDialog(null, settings, dialogs, gui);
@@ -255,8 +247,8 @@ public class PaperTapeGuiTest {
 
     @Test public void settingsPersistenceFailureKeepsDraftOpen() throws Exception {
         PluginSettings settings = createStrictMock(PluginSettings.class);
-        expect(settings.getBoolean("showGuiAtStartup", false)).andReturn(false);
-        settings.setBoolean("showGuiAtStartup", true);
+        expect(settings.getBoolean("showGuiAtStartup")).andReturn(Optional.of(false));
+        settings.set("showGuiAtStartup", true);
         expectLastCall().andThrow(new CannotUpdateSettingException("Read-only settings"));
         dialogs.showError(eq("Read-only settings"), eq("Save settings"));
         replay(settings, dialogs);

@@ -15,7 +15,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
@@ -31,7 +31,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -230,6 +233,37 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
+    public void workerCompilationPublishesSourcesOnlyAfterHostCommandCompletes() throws Exception {
+        try (Fixture f = new Fixture()) {
+            CountDownLatch callbacksFinished = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            AtomicReference<DebugSession.SourceCaptureGuard> captured = new AtomicReference<>();
+            CompletableFuture<CPU.RunState> compilation = f.session.execution().compile(() ->
+                    f.publishCompilation(false, () -> {
+                        captured.set(f.session.captureSourceGuard());
+                        callbacksFinished.countDown();
+                        try { release.await(); }
+                        catch (InterruptedException interrupted) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException(interrupted);
+                        }
+                    }));
+            try {
+                assertTrue(callbacksFinished.await(2, TimeUnit.SECONDS));
+                runOnEdt(() -> assertFalse(captured.get().whenReady().isDone()));
+                assertFalse(compilation.isDone());
+            } finally { release.countDown(); }
+
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, compilation.get(2, TimeUnit.SECONDS));
+            runOnEdt(() -> {});
+            assertTrue(captured.get().whenReady().isDone());
+            f.sourceLine(2);
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals("second", onEdt(() -> f.table.getValueAt(1, 0)));
+        }
+    }
+
+    @Test(timeout = 10000)
     public void failedCompilationPreservesMappingsWhileDirtyEditsAndRunningCpuBlockNavigation() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -311,7 +345,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final CPU cpu = mock(CPU.class);
         final Compiler compiler = mock(Compiler.class);
         final MemoryContext<Byte> memory;
-        final AnnotationEngine annotations = new AnnotationEngine();
+        final MemoryAnnotations annotations = new MemoryAnnotations();
         final AtomicInteger bank = new AtomicInteger();
         final DebugSession session;
         final TabbedEditor editor;
@@ -334,6 +368,11 @@ public class SourceNavigationTest extends AbstractSwingTest {
             when(memory.read(anyInt())).thenReturn((byte) 0);
             when(cpu.getAddressSpaceSize()).thenReturn(32);
             when(cpu.getTitle()).thenReturn("Source navigation CPU");
+            when(cpu.execute()).thenAnswer(call -> {
+                try { new java.util.concurrent.CountDownLatch(1).await(); }
+                catch (InterruptedException stopped) { Thread.currentThread().interrupt(); }
+                return CPU.RunState.STATE_RUNNING;
+            });
             Disassembler disassembler = mock(Disassembler.class);
             when(disassembler.disassemble(anyInt())).thenAnswer(c -> new DisassembledInstruction(c.getArgument(0), "nop", "00"));
             when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(c -> (Integer) c.getArgument(0) + 2);
@@ -353,7 +392,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
-            DebuggerColumn column = mock(net.emustudio.emulib.runtime.ui.debugger.AddressColumn.class);
+            DebuggerColumn column = mock(DebuggerColumn.class);
             when(column.getClassType()).thenReturn(String.class);
             when(column.getDefaultWidth()).thenReturn(-1);
             when(original.getColumnCount()).thenReturn(1);
@@ -390,25 +429,28 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         void compile(boolean fail, Runnable afterFinish) {
-            runOnEdt(() -> {
-                compilerEvents.onStart();
-                if (fail) {
-                    compilerEvents.onMessage(new CompilerMessage(CompilerMessage.MessageType.TYPE_ERROR, "bad source"));
-                } else {
-                    java.util.List<AnnotationEngine.Entry> mappings = new java.util.ArrayList<>();
-                    for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i, i * 2, i * 2 + 1,
-                            "source", "", SourceCodePosition.of(i + 1,
-                            text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
-                    for (int i = 0; i < 3; i++) mappings.add(new AnnotationEngine.Entry(7, i + 3,
-                            i * 2, i * 2 + 1, "label", List.of("first", "second", "third").get(i), null));
-                    annotations.replaceOwner(7, mappings);
-                }
-                compilerEvents.onFinish();
-                afterFinish.run();
-                bank.set(0);
-            });
+            runOnEdt(() -> publishCompilation(fail, afterFinish));
             runOnEdt(() -> {});
         }
+
+        void publishCompilation(boolean fail, Runnable afterFinish) {
+            compilerEvents.onStart();
+            if (fail) {
+                compilerEvents.onMessage(new CompilerMessage(CompilerMessage.Type.ERROR, "bad source", null));
+            } else {
+                java.util.List<MemoryAnnotations.Entry> mappings = new java.util.ArrayList<>();
+                for (int i = 0; i < 3; i++) mappings.add(new MemoryAnnotations.Entry(7, i, i * 2, i * 2 + 1,
+                        "source", "", SourceCodePosition.of(i + 1,
+                        text.lines().toArray(String[]::new)[i].indexOf(' ') + 1, path.toString())));
+                for (int i = 0; i < 3; i++) mappings.add(new MemoryAnnotations.Entry(7, i + 3,
+                        i * 2, i * 2 + 1, "label", List.of("first", "second", "third").get(i), null));
+                annotations.replaceOwner(7, mappings);
+            }
+            compilerEvents.onFinish();
+            afterFinish.run();
+            bank.set(0);
+        }
+
 
         void sourceLine(int line) {
             runOnEdt(() -> editor.setPosition(SourceCodePosition.of(line, 0, path.toString())));
@@ -433,10 +475,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         void running(boolean value) {
-            ArgumentCaptor<CPU.CPUListener> captor = ArgumentCaptor.forClass(CPU.CPUListener.class);
-            verify(cpu, atLeastOnce()).addCPUListener(captor.capture());
-            runOnEdt(() -> captor.getAllValues().forEach(listener -> listener.runStateChanged(
-                    value ? CPU.RunState.STATE_RUNNING : CPU.RunState.STATE_STOPPED_BREAK)));
+            if (value) session.execution().start().join();
+            else session.execution().pause().join();
             runOnEdt(() -> {});
         }
 

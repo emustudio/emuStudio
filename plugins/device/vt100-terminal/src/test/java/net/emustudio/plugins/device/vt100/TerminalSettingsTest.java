@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -119,9 +120,9 @@ public class TerminalSettingsTest {
     @Test
     public void testGuiNotSupportedWhenNoGui() {
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
-        expect(pluginSettings.getBoolean(eq(PluginSettings.EMUSTUDIO_NO_GUI), anyBoolean())).andReturn(true);
-        expect(pluginSettings.getString(anyString(), anyString())).andStubReturn(TerminalSettings.DEFAULT_INPUT_FILE_NAME);
-        expect(pluginSettings.getInt(anyString(), anyInt())).andStubReturn(0);
+        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true));
+        expect(pluginSettings.getString(anyString())).andStubReturn(Optional.of(TerminalSettings.DEFAULT_INPUT_FILE_NAME));
+        expect(pluginSettings.getInt(anyString())).andStubReturn(Optional.of(0));
         replay(pluginSettings);
 
         TerminalSettings noGuiSettings = new TerminalSettings(pluginSettings, dialogs);

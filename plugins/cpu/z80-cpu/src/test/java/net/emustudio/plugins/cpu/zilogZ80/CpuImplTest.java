@@ -7,7 +7,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
@@ -15,6 +14,7 @@ import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertEquals;
 
 public class CpuImplTest {
     private CpuImpl cpu;
@@ -26,9 +26,12 @@ public class CpuImplTest {
         MemoryContext<Byte> memory = createMock(MemoryContext.class);
         expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
         replay(memory);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -49,5 +52,15 @@ public class CpuImplTest {
     @Test
     public void testCopyrightIsKnown() {
         assertNotEquals("(unknown)", cpu.getCopyright());
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

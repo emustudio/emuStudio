@@ -5,11 +5,9 @@ package net.emustudio.application.gui.debugtable;
 // Benchmark-only baseline from 184f8d5a49fd40d99e553a80496c508e2e699618; class names only changed.
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.*;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 
 import javax.swing.event.TableModelEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,7 +25,8 @@ public class BaselineDebugTableModelImpl extends DebugTableModel {
         inspectedLocation = null;
         BaselineCallFlow callFlow = new BaselineCallFlow(cpu.getDisassembler());
         this.ida = new BaselinePaginatingDisassembler(callFlow, cpu.getAddressSpaceSize());
-        setDefaultColumns();
+        List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns();
+        setDebuggerColumns(cpuColumns.isEmpty() ? DebugTableModelImpl.defaultColumns(cpu.getDisassembler()) : cpuColumns);
     }
 
     public void setMaxRows(int maxRows) {
@@ -166,7 +165,7 @@ public class BaselineDebugTableModelImpl extends DebugTableModel {
         if (column.getClassType().isInstance(value)) {
             try {
                 column.setValue(location, value);
-            } catch (CannotSetDebuggerValueException ignored) {
+            } catch (IllegalArgumentException ignored) {
             }
         }
     }
@@ -196,16 +195,6 @@ public class BaselineDebugTableModelImpl extends DebugTableModel {
             ida.flushCache(from, to + 1);
         }
         fireTableDataChanged();
-    }
-
-    @Override
-    public final void setDefaultColumns() {
-        if (cpu == null) return;
-        
-        Disassembler dis = cpu.getDisassembler();
-        setDebuggerColumns(Arrays.asList(
-                new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
-        ));
     }
 
     @Override

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.framework;
 
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -9,7 +10,6 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 public class NoDialogsGuiTest {
 
@@ -18,79 +18,19 @@ public class NoDialogsGuiTest {
         DialogsNoGui dialogs = new DialogsNoGui();
 
         assertEquals("[Title] Message", DialogsNoGui.formatMessage("Title", "Message"));
-        assertFalse(dialogs.chooseFile("Open", "Open", true).isPresent());
-        assertFalse(dialogs.chooseFile("Open", "Open", true, Collections.emptyList()).isPresent());
-        assertFalse(dialogs.chooseFile("Open", "Open", Path.of("."), true).isPresent());
+        assertFalse(dialogs.chooseFile("Open", "Open", null, true, Collections.emptyList()).isPresent());
         assertFalse(dialogs.chooseFile("Open", "Open", Path.of("."), true, Collections.emptyList()).isPresent());
-        assertFalse(dialogs.chooseDirectory("Dir", "Choose").isPresent());
+        assertFalse(dialogs.chooseDirectory("Dir", "Choose", null).isPresent());
         assertFalse(dialogs.chooseDirectory("Dir", "Choose", Path.of(".")).isPresent());
     }
 
     @Test
-    public void interactiveMethodsThrowInNoGuiMode() {
+    public void interactiveMethodsAreCancelledInNoGuiMode() {
         DialogsNoGui dialogs = new DialogsNoGui();
 
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readInteger("value");
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readString("value");
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readDouble("value");
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.ask("confirm");
-            }
-        });
-
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readInteger("value", "Title", 7);
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readString("value", "Title", "initial");
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.readDouble("value", "Title", 1.5);
-            }
-        });
-        expectRuntimeException(new ThrowingRunnable() {
-            @Override
-            public void run() {
-                dialogs.ask("confirm", "Title");
-            }
-        });
-    }
-
-    private void expectRuntimeException(ThrowingRunnable runnable) {
-        try {
-            runnable.run();
-            fail("Expected RuntimeException");
-        } catch (RuntimeException e) {
-            assertEquals(true, e.getMessage().contains("implemented just for GUI version"));
-        }
-    }
-
-    private interface ThrowingRunnable {
-        void run();
+        assertFalse(dialogs.readInteger("value", "Title", null).isPresent());
+        assertFalse(dialogs.readString("value", "Title", "initial").isPresent());
+        assertFalse(dialogs.readDouble("value", "Title", 1.5).isPresent());
+        assertEquals(Dialogs.Answer.CANCEL, dialogs.ask("confirm", "Title"));
     }
 }

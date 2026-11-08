@@ -5,18 +5,20 @@ package net.emustudio.plugins.cpu.intel8080.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
+    private final ExecutionState execution;
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
     private final Context8080 context;
@@ -42,39 +44,39 @@ public class StatusPanel extends JPanel {
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, ExecutionState execution) {
         this.gui = gui;
+        this.execution = execution;
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();
         this.flagModel = new FlagsModel(engine);
 
         initComponents();
+        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblFlags.setModel(flagModel);
 
         setupListeners();
     }
 
     private void setupListeners() {
-        cpu.addCPUListener(new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(RunState state) {
-                runState = state;
-                updateGUI();
-            }
-
-            @Override
-            public void internalStateChanged() {
-                updateGUI();
-            }
+        PanelUpdater updater = new PanelUpdater();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
+            SwingUtilities.invokeLater(() -> {
+                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
+                spnFrequency.setEnabled(!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING);
+            });
         });
-        cpu.getFrequencyCalculator().addListener(
-                f -> SwingUtilities.invokeLater(() -> lblFrequency.setText(String.format("%.2f kHz", f)))
-        );
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                StatusPanel.this.context.setCPUFrequency(i);
+                execution.mutate(() -> StatusPanel.this.context.setCPUFrequency(i))
+                        .exceptionally(failure -> {
+                            SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
+                            return null;
+                        });
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }
@@ -94,19 +96,19 @@ public class StatusPanel extends JPanel {
         final int flags = engine.flags;
         final RunState state = runState;
         SwingUtilities.invokeLater(() -> {
-            txtRegA.setText(formatByteHexString(regA));
-            txtRegB.setText(formatByteHexString(regB));
-            txtRegC.setText(formatByteHexString(regC));
-            txtRegBC.setText(formatWordHexString((short) regB, (short) regC));
-            txtRegD.setText(formatByteHexString(regD));
-            txtRegE.setText(formatByteHexString(regE));
-            txtRegDE.setText(formatWordHexString((short) regD, (short) regE));
-            txtRegH.setText(formatByteHexString(regH));
-            txtRegL.setText(formatByteHexString(regL));
-            txtRegHL.setText(formatWordHexString((short) regH, (short) regL));
-            txtRegSP.setText(formatWordHexString(sp));
-            txtRegPC.setText(formatWordHexString(pc));
-            txtFlags.setText(formatByteHexString(flags));
+            txtRegA.setText(formatHex(regA, 2));
+            txtRegB.setText(formatHex(regB, 2));
+            txtRegC.setText(formatHex(regC, 2));
+            txtRegBC.setText(formatHex(((regB & 0xFF) << 8) | (regC & 0xFF), 4));
+            txtRegD.setText(formatHex(regD, 2));
+            txtRegE.setText(formatHex(regE, 2));
+            txtRegDE.setText(formatHex(((regD & 0xFF) << 8) | (regE & 0xFF), 4));
+            txtRegH.setText(formatHex(regH, 2));
+            txtRegL.setText(formatHex(regL, 2));
+            txtRegHL.setText(formatHex(((regH & 0xFF) << 8) | (regL & 0xFF), 4));
+            txtRegSP.setText(formatHex(sp, 4));
+            txtRegPC.setText(formatHex(pc, 4));
+            txtFlags.setText(formatHex(flags, 2));
             flagModel.update(flags);
             lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString());
             spnFrequency.setEnabled(state != RunState.STATE_RUNNING);
@@ -187,5 +189,36 @@ public class StatusPanel extends JPanel {
         field.setEditable(false);
         field.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
         return field;
+    }
+
+    private final class PanelUpdater {
+        public void runStateChanged(RunState state) {
+            runState = state;
+            SwingUtilities.invokeLater(() -> lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString()));
+        }
+
+        public void internalStateChanged() {
+            updateGUI();
+        }
+
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }

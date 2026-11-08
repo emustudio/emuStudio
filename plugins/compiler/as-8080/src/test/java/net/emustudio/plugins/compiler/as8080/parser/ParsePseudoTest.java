@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.parser;
 
+import net.emustudio.emulib.plugins.compiler.CompileException;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
@@ -12,7 +13,6 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.InfixOperator;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
-import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import org.junit.Test;
 
 import java.util.List;
@@ -91,7 +91,7 @@ public class ParsePseudoTest {
         }
     }
 
-    @Test(expected = SyntaxErrorException.class)
+    @Test(expected = CompileException.class)
     public void testIfEndifMustBeOnNewLine() {
         parseProgram("if 1\nrrc\nrrc endif");
     }
@@ -158,7 +158,7 @@ public class ParsePseudoTest {
         }
     }
 
-    @Test(expected = SyntaxErrorException.class)
+    @Test(expected = CompileException.class)
     public void testMacroDefEndmMustBeOnNewLine() {
         parseProgram("shrt macro\nrrc\nrrc endm");
     }

@@ -3,10 +3,11 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -14,6 +15,8 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -30,6 +33,7 @@ public class CpuImplTest {
     private AbstractTapeContext storageTape;
     private ContextPool contextPool;
     private ApplicationApi applicationApi;
+    private ExecutionState execution;
     private boolean initialized = false;
 
     @Before
@@ -39,16 +43,22 @@ public class CpuImplTest {
         inputTape = createNiceMock(AbstractTapeContext.class);
         outputTape = createNiceMock(AbstractTapeContext.class);
         storageTape = createNiceMock(AbstractTapeContext.class);
+        expect(inputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(outputTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
+        expect(storageTape.getSymbolAt(anyInt())).andStubReturn(java.util.Optional.empty());
 
-        expect(contextPool.getMemoryContext(eq(0L), eq(RamMemoryContext.class))).andReturn(memory).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
-        expect(contextPool.getDeviceContext(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(RamMemoryContext.class))).andReturn(memory).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(storageTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
+        expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
 
         replay(contextPool);
 
+        execution = createNiceMock(ExecutionState.class);
+        replay(execution);
         applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         replay(applicationApi);
 
         this.cpu = new CpuImpl(0, applicationApi, PluginSettings.UNAVAILABLE);
@@ -220,6 +230,7 @@ public class CpuImplTest {
     public void testGetStatusPanelReturnsPanel() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -312,9 +323,19 @@ public class CpuImplTest {
     }
 
     @Test
-    public void testGetStatusPanelWithDebuggerTable() throws Exception {
+    public void testDebuggerColumns() throws Exception {
+        initCpu();
+        java.util.List<DebuggerColumn<?>> columns = cpu.getDebuggerColumns();
+        assertEquals(2, columns.size());
+        assertEquals("label", columns.get(0).getTitle());
+        assertEquals("instruction", columns.get(1).getTitle());
+    }
+
+    @Test
+    public void testGetStatusPanelWithGui() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -322,10 +343,7 @@ public class CpuImplTest {
                 .andReturn(new JPanel()).anyTimes();
         expect(gui.label(anyString())).andReturn(new JLabel()).anyTimes();
         replay(gui);
-        DebuggerTable debugTable = createNiceMock(DebuggerTable.class);
-        replay(debugTable);
         expect(applicationApi.getGUI()).andReturn(gui).anyTimes();
-        expect(applicationApi.getDebuggerTable()).andReturn(debugTable).anyTimes();
         replay(applicationApi);
 
         initCpu();
@@ -333,22 +351,36 @@ public class CpuImplTest {
         assertNotNull(panel);
     }
     @Test(timeout = 3000)
-    public void recordingStopsContinuousExecutionAfterExactTypedInstruction() throws Exception {
+    public void recordingStopDoesNotOverrideContinuousHaltResult() throws Exception {
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
         expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
         replay(instruction);
         expect(memory.read(0)).andReturn(instruction).anyTimes();
         initCpu();
-        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
-        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
-            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+        java.util.List<StepView> events = new java.util.ArrayList<>();
+        cpu.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
-        });
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
+        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        initCpu();
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

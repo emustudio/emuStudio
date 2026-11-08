@@ -30,7 +30,7 @@ public class RamCpuContextImpl implements RamCpuContext {
                                           boolean editable, int index)
             throws PluginInitializationException {
 
-        AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, index);
+        AbstractTapeContext tape = contextPool.get(pluginID, AbstractTapeContext.class, index);
         if (tape == null) {
             throw new PluginInitializationException("Could not get tape: \"" + title + "\"");
         }

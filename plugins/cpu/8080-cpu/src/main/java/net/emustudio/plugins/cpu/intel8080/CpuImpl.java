@@ -9,24 +9,19 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Intel 8080 CPU"
+        title = "Intel 8080 CPU",
+        description = "Emulator of Intel 8080 CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final Context8080Impl context = new Context8080Impl();
     private final InitializerFor8080 initializer;
 
@@ -39,79 +34,58 @@ public class CpuImpl extends AbstractCPU {
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        try {
-            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register CPU context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register CPU Context. Please see log file for details.", super.getTitle()
-            );
-        }
-        context.setCPUFrequency(settings.getInt("frequency_khz", Context8080Impl.DEFAULT_FREQUENCY_KHZ));
+        applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+        context.setCPUFrequency(settings.getInt("frequency_khz").orElse(Context8080Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerFor8080(
                 pluginID, applicationApi.getContextPool(), context
         );
     }
 
     @Override
-    public String getDescription() {
-        return "Emulator of Intel 8080 CPU";
-    }
-
-    @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
         engine = initializer.getEngine();
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
-            statusPanel = new StatusPanel(this, context, applicationApi.getGUI());
+            statusPanel = new StatusPanel(this, context, applicationApi.getGUI(), applicationApi.getExecutionState());
         }
     }
 
-    public FrequencyCalculator getFrequencyCalculator() {
-        return frequencyCalculator;
+    @Override
+    public float sampleFrequency() {
+        return frequencyCalculator.sample();
     }
 
     @Override
     protected void destroyInternal() {
         context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
-        frequencyCalculator.close();
         context.clearDevices();
     }
 
     @Override
-    public java.util.Optional<net.emustudio.emulib.plugins.cpu.debug.DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     public EmulatorEngine getEngine() {
         return engine;
     }
 
     @Override
-    public void resetInternal(int startPos) {
+    public void reset(int startPos) {
         engine.reset(startPos);
         frequencyCalculator.stop();
     }
 
     @Override
-    public void pause() {
-        super.pause();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    protected RunState stepInternal() throws Exception {
+    public RunState step() throws Exception {
         return engine.step();
     }
 
@@ -121,7 +95,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         try {
             frequencyCalculator.start();
             return engine.run();

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.bench;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.application.debugger.BaselineAnnotationIndex;
 import net.emustudio.application.debugger.index.ProgramIndex;
 
@@ -53,7 +53,7 @@ final class BenchmarkData {
     ProgramIndex index() { return index(true); }
 
     ProgramIndex index(boolean includeMappings) {
-        ProgramIndex index = ProgramIndex.create("bench", size, new AnnotationEngine());
+        ProgramIndex index = ProgramIndex.create("bench", size, new MemoryAnnotations());
         try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
             for (int i = 0; i < count; i++) {
                 update.putAnnotation(1, i, ranges[i], ProgramIndex.Kinds.LABEL, labels[i]);
@@ -65,7 +65,7 @@ final class BenchmarkData {
     }
 
     BaselineAnnotationIndex baseline() {
-        return baseline(ProgramIndex.create("bench", size, new AnnotationEngine()).snapshot().layout());
+        return baseline(ProgramIndex.create("bench", size, new MemoryAnnotations()).snapshot().layout());
     }
 
     BaselineAnnotationIndex baseline(ProgramIndex.Layout layout) {

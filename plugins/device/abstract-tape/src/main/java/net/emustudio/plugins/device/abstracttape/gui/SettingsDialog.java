@@ -33,8 +33,8 @@ public class SettingsDialog extends DialogBase {
 
         setResizable(false);
 
-        chkAlwaysOnTop.setSelected(settings.getBoolean("alwaysOnTop", false));
-        chkShowAtStartup.setSelected(settings.getBoolean("showAtStartup", false));
+        chkAlwaysOnTop.setSelected(settings.getBoolean("alwaysOnTop").orElse(false));
+        chkShowAtStartup.setSelected(settings.getBoolean("showAtStartup").orElse(false));
 
         buildContent();
     }
@@ -51,8 +51,8 @@ public class SettingsDialog extends DialogBase {
         gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(e -> {
             try {
-                settings.setBoolean("alwaysOnTop", chkAlwaysOnTop.isSelected());
-                settings.setBoolean("showAtStartup", chkShowAtStartup.isSelected());
+                settings.set("alwaysOnTop", chkAlwaysOnTop.isSelected());
+                settings.set("showAtStartup", chkShowAtStartup.isSelected());
             } catch (CannotUpdateSettingException ex) {
                 LOGGER.error("Could not save abstract tape settings", ex);
                 dialogs.showError("Could not save abstract tape settings. Please see log file for more details.", "Save settings");

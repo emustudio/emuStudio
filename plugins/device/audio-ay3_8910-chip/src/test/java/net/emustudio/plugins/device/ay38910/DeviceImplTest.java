@@ -8,6 +8,8 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
@@ -22,7 +24,7 @@ public class DeviceImplTest {
     @Test(expected = PluginInitializationException.class)
     public void testInitializeFailsWhenCpuContextIsUnavailable() throws Exception {
         ContextPool contextPool = createMock(ContextPool.class);
-        expect(contextPool.getCPUContext(0, net.emustudio.plugins.cpu.intel8080.api.Context8080.class))
+        expect(contextPool.get(0, net.emustudio.plugins.cpu.intel8080.api.Context8080.class))
                 .andThrow(new net.emustudio.emulib.runtime.ContextNotFoundException("CPU not connected"))
                 .once();
 
@@ -73,7 +75,7 @@ public class DeviceImplTest {
     @Test
     public void testGuiIsDisabledWhenNoGuiSettingIsSet() {
         PluginSettings settings = createMock(PluginSettings.class);
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).once();
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).once();
         replay(settings);
 
         DeviceImpl device = new DeviceImpl(0, createNiceMock(ApplicationApi.class), settings);

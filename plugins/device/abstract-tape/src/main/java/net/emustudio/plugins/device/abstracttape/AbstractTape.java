@@ -2,57 +2,41 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.abstracttape;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.gui.SettingsDialog;
 import net.emustudio.plugins.device.abstracttape.gui.TapeGui;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.Objects;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
-        title = "Abstract tape"
+        title = "Abstract tape",
+        description = "The device represents a tape used by abstract machines"
 )
 @SuppressWarnings("unused")
-public class AbstractTape extends AbstractDevice {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
-
+public class AbstractTape extends AbstractPlugin implements Device {
     private final AbstractTapeContextImpl context;
     private final boolean guiSupported;
     private final boolean automaticEmulation;
 
-    private String guiTitle = super.getTitle();
+    private String guiTitle = Device.super.getTitle();
     private TapeGui gui;
 
     public AbstractTape(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false);
         this.context = new AbstractTapeContextImpl(this::setGUITitle);
 
-        try {
-            applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register Abstract tape context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register abstract tape context. Please see log file for details.", super.getTitle()
-            );
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "The device represents a tape used by abstract machines";
+        applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);
     }
 
     @Override
@@ -62,7 +46,7 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void initialize() {
-        boolean showAtStartup = settings.getBoolean("showAtStartup", false);
+        boolean showAtStartup = settings.getBoolean("showAtStartup").orElse(false);
         if (showAtStartup) {
             showGUI(null);
         }
@@ -72,7 +56,7 @@ public class AbstractTape extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
+                boolean alwaysOnTop = settings.getBoolean("alwaysOnTop").orElse(false);
                 gui = new TapeGui(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs(), applicationApi.getGUI());
             }
             gui.setVisible(true);
@@ -86,7 +70,7 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public String getTitle() {
-        return (guiTitle == null) ? super.getTitle() : guiTitle;
+        return (guiTitle == null) ? Device.super.getTitle() : guiTitle;
     }
 
     public void setGUITitle(String title) {

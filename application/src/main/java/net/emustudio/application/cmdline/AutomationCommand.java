@@ -73,7 +73,7 @@ public class AutomationCommand implements Callable<Integer> {
                     (this.gui ? loadComputerConfigFromGui(appConfig, guiDialogs, gui) : Optional.empty());
 
             if (computerConfigOpt.isEmpty()) {
-                dialogs.showError("Virtual computer must be selected!");
+                dialogs.showError("Virtual computer must be selected!", "Error");
                 LOGGER.error("Virtual computer must be selected!");
                 return 1;
             }
@@ -88,7 +88,7 @@ public class AutomationCommand implements Callable<Integer> {
                     appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
-                        ? null : RadixUtils.getInstance().parseRadix(this.programLocation);
+                        ? null : RadixUtils.parseRadix(this.programLocation);
                 EmulationProgress progress = this.gui ? new AutoDialog(computer, gui) : EmulationProgress.NONE;
 
                 Automation automation = new Automation(
@@ -108,7 +108,7 @@ public class AutomationCommand implements Callable<Integer> {
             return 0;
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation", e);
-            dialogs.showError("Unexpected error during automation. Please see log file for details.");
+            dialogs.showError("Unexpected error during automation. Please see log file for details.", "Error");
             return 1;
         }
     }

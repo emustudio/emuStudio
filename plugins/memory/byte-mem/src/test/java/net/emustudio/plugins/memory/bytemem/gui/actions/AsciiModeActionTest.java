@@ -1,6 +1,8 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
+
+import net.emustudio.plugins.memory.bytemem.TestExecutionState;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
@@ -15,7 +17,7 @@ public class AsciiModeActionTest {
     @Before
     public void setUp() {
         context = TestMemoryContextFactory.create(256, 1, 0);
-        tableModel = new MemoryTableModel(context);
+        tableModel = new MemoryTableModel(context, TestExecutionState.create());
     }
     @Test(expected = NullPointerException.class)
     public void testConstructorNullTableModelThrows() {

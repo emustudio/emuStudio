@@ -2,15 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
@@ -31,9 +30,10 @@ import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFon
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
-        title = "LSI ADM-3A terminal"
+        title = "LSI ADM-3A terminal",
+        description = "Custom implementation of LSI ADM-3A terminal"
 )
-public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
+public class DeviceImpl extends AbstractPlugin implements Device, TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
     public static final int DEFAULT_COLUMNS = 80;
     public static final int DEFAULT_ROWS = 24;
@@ -62,22 +62,14 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         this.context = new ContextAdm3A(terminalSettings::isHalfDuplex);
         this.keyboard.addOnKeyHandler(context::onKeyFromKeyboard);
 
-        try {
-            applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register ADM-3A terminal", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register ADM-3A terminal. Please see log file for more details", getTitle()
-            );
-        }
+        applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         try {
             // get serial I/O board
-            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(
+            DeviceContext<?> device = applicationApi.getContextPool().get(
                     pluginID, DeviceContext.class, terminalSettings.getDeviceIndex()
             );
             if (device.getDataType() != Byte.class) {
@@ -85,7 +77,9 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
                         "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
-            context.setExternalDevice(device);
+            @SuppressWarnings("unchecked")
+            DeviceContext<Byte> byteDevice = (DeviceContext<Byte>) device;
+            context.setExternalDevice(byteDevice);
             context.setDisplay(display);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.", e);
@@ -118,11 +112,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             terminalGUI.clearScreen();
         }
         keyboard.process();
-    }
-
-    @Override
-    public String getDescription() {
-        return "Custom implementation of LSI ADM-3A terminal";
     }
 
     @Override

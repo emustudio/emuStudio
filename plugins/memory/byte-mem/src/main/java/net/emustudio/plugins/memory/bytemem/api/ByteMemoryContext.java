@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
  */
 @SuppressWarnings("unused")
-@PluginContext(id = "Byte memory")
 public interface ByteMemoryContext extends MemoryContext<Byte> {
 
     /**

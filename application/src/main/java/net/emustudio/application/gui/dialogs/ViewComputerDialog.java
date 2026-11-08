@@ -10,7 +10,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class ViewComputerDialog extends DialogBase {
     private final List<Device> devices;
     private final SchemaPreviewPanel panelSchema;
     private final ButtonGroup pluginButtonGroup = new ButtonGroup();
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
     private JComboBox<String> cmbDevice;
     private JLabel lblComputerName;
@@ -43,7 +43,7 @@ public class ViewComputerDialog extends DialogBase {
     private JTextArea txtDescription;
     private JPanel descriptionPanel, metadataPanel;
 
-    public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs, GUI gui) {
+    public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs, EmuStudioGui gui) {
         super(parent, "Computer information preview", true);
         this.computer = Objects.requireNonNull(computer);
         this.devices = computer.getDevices();
@@ -126,7 +126,8 @@ public class ViewComputerDialog extends DialogBase {
         });
 
         // Info tab toolbar
-        JToolBar infoToolbar = gui.toolBarVertical();
+        JToolBar infoToolbar = gui.toolBar();
+        infoToolbar.setOrientation(SwingConstants.VERTICAL);
 
         JToggleButton btnCompiler = gui.toolbarToggleButton(e -> {
             lblCategory.setText("Compiler information");
@@ -204,7 +205,8 @@ public class ViewComputerDialog extends DialogBase {
         infoTab.add(infoPanel, "grow");
 
         // Schema tab
-        JToolBar schemaToolbar = gui.toolBarVertical();
+        JToolBar schemaToolbar = gui.toolBar();
+        schemaToolbar.setOrientation(SwingConstants.VERTICAL);
 
         JButton btnSave = gui.toolbarButton(event -> panelSchema.saveSchemaImage(), ICON_SAVE, "Save schema image");
         btnSave.setFocusable(true);

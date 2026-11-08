@@ -4,7 +4,6 @@ package net.emustudio.application.gui.editor;
 
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.GUI;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
@@ -31,7 +30,7 @@ public final class InlineSearchBar extends JPanel {
     InlineSearchBar(Supplier<REditor> active) {
         this.active = active;
         count.setFont(count.getFont().deriveFont(count.getFont().getSize2D() * 0.85f));
-        GUI gui = new EmuStudioGui();
+        EmuStudioGui gui = new EmuStudioGui();
         setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][200:400:,grow,fill][][][]", "[][][]"));
         find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
         JToolBar navigation = gui.toolBar();
@@ -89,7 +88,7 @@ public final class InlineSearchBar extends JPanel {
         button.getAccessibleContext().setAccessibleName(label);
         return button;
     }
-    private JButton button(GUI gui, JToolBar toolbar, String icon, String tooltip, Runnable runnable) {
+    private JButton button(EmuStudioGui gui, JToolBar toolbar, String icon, String tooltip, Runnable runnable) {
         JButton button = gui.toolbarButton(e -> {
             try { runnable.run(); }
             catch (IllegalArgumentException ex) { count.setText(ex.getMessage()); }

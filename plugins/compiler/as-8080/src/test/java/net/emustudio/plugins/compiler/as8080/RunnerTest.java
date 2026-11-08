@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -18,13 +19,17 @@ public class RunnerTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
+    private static int run(String... args) {
+        return AbstractCompiler.runCommandLine("as-8080", args, Assembler8080::new);
+    }
+
     @Test
     public void testCommandLine() throws Exception {
         File sourceFile = folder.newFile();
         Files.write(sourceFile.toPath(), "mov a,b".getBytes(), StandardOpenOption.WRITE);
         File outputFile = folder.newFile();
 
-        Runner.main("--output", outputFile.getPath(), sourceFile.getPath());
+        assertEquals(0, run("--output", outputFile.getPath(), sourceFile.getPath()));
 
         List<String> lines = Files.readAllLines(outputFile.toPath());
 
@@ -35,17 +40,17 @@ public class RunnerTest {
 
     @Test
     public void testCommandLinePrintHelp() {
-        Runner.main("--help");
+        assertEquals(0, run("--help"));
     }
 
     @Test
     public void testCommandLineNonexistantSourceFileDoesNotThrow() {
-        Runner.main("slfjkdf");
+        assertEquals(1, run("slfjkdf"));
     }
 
     @Test
     public void testCommandLinePrintVersion() {
-        Runner.main("--version");
+        assertEquals(0, run("--version"));
     }
 
 

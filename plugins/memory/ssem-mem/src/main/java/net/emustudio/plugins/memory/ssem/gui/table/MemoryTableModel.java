@@ -3,6 +3,8 @@
 package net.emustudio.plugins.memory.ssem.gui.table;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ExecutionState;
+import javax.swing.SwingUtilities;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import org.slf4j.Logger;
@@ -20,9 +22,11 @@ public class MemoryTableModel extends AbstractTableModel {
     private final static int COLUMN_COUNT = 3 + 32;
 
     private final MemoryContext<Byte> memory;
+    private final ExecutionState execution;
 
-    public MemoryTableModel(MemoryContext<Byte> memory) {
+    public MemoryTableModel(MemoryContext<Byte> memory, ExecutionState execution) {
         this.memory = Objects.requireNonNull(memory);
+        this.execution = Objects.requireNonNull(execution);
     }
 
     /**
@@ -96,7 +100,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
-                    return RadixUtils.formatDwordHexString(value).toUpperCase();
+                    return RadixUtils.formatHex(value, 8);
                 case COLUMN_DEC_VALUE:
                     return String.valueOf(value);
                 case COLUMN_RAW_VALUE:
@@ -115,7 +119,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (isCellEditable(rowIndex, columnIndex)) {
-            try {
+            execution.update(() -> {
                 Byte[] row = memory.read(rowIndex * 4, 4);
                 String str = String.valueOf(aValue);
 
@@ -130,10 +134,10 @@ public class MemoryTableModel extends AbstractTableModel {
                 }
                 memory.write(rowIndex * 4, row);
 
-                fireTableCellUpdated(rowIndex, columnIndex);
-            } catch (Exception e) {
-                LOGGER.debug("[line={}, value={}] Could not set value to memory", rowIndex, aValue, e);
-            }
+            }).whenComplete((ignored, failure) -> {
+                if (failure != null) LOGGER.debug("[line={}, value={}] Could not set value to memory", rowIndex, aValue, failure);
+                SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
+            });
         }
     }
 
@@ -176,7 +180,8 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex >= 0 && columnIndex <= 34;
+        return columnIndex >= 0 && columnIndex <= 34
+                && !execution.snapshot().isBusy();
     }
 
     public void dataChangedAt(int fromAddress, int toAddress) {

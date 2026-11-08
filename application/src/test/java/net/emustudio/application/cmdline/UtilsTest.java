@@ -74,7 +74,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
-        doReturn(memory).when(contextPool).getMemoryContext(Utils.EMUSTUDIO_ID, MemoryContext.class);
+        doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
         try (DebugSession session = new DebugSession(cpu, memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             java.util.concurrent.Callable<Void> start = () -> {

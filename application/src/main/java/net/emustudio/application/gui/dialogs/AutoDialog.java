@@ -4,7 +4,6 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationProgress;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
@@ -37,12 +36,15 @@ public class AutoDialog extends DialogBase implements EmulationProgress {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = gui.panelHorizontal();
+        JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
 
-        btnStop.addActionListener(e -> computer.getCPU().ifPresent(CPU::stop));
+        btnStop.addActionListener(e -> computer.getExecution().ifPresent(execution -> {
+            btnStop.setEnabled(false);
+            execution.stop();
+        }));
         btnStop.setEnabled(false);
 
         panel.add(lblPerforming, "wrap, gapbottom 10");

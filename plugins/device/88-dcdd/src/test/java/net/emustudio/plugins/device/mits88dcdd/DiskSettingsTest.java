@@ -2,12 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd;
 
-import net.emustudio.emulib.runtime.settings.BasicSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.easymock.EasyMock.*;
@@ -18,15 +19,14 @@ public class DiskSettingsTest {
 
     @Before
     public void setUp() {
-        BasicSettings basicSettings = createNiceMock(BasicSettings.class);
-        // NiceMock returns 0 for int, false for boolean, null for String by default
-        // DiskSettings constructor reads default values when settings return defaults
-        expect(basicSettings.getInt(anyString(), anyInt())).andAnswer(() -> (int) getCurrentArguments()[1]).anyTimes();
-        expect(basicSettings.getBoolean(anyString(), anyBoolean())).andAnswer(() -> (boolean) getCurrentArguments()[1]).anyTimes();
-        expect(basicSettings.getString(anyString(), isNull())).andReturn(null).anyTimes();
-        replay(basicSettings);
+        PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
+        // Empty settings make DiskSettings use its defaults
+        expect(pluginSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getBoolean(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        replay(pluginSettings);
 
-        diskSettings = new DiskSettings(basicSettings);
+        diskSettings = new DiskSettings(pluginSettings);
     }
 
     @Test(expected = NullPointerException.class)

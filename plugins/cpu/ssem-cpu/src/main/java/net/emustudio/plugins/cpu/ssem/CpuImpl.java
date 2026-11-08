@@ -7,28 +7,22 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
-import net.emustudio.emulib.runtime.ui.debugger.OpcodeColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.List;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "SSEM CPU"
+        title = "SSEM CPU",
+        description = "Emulator of SSEM machine"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private MemoryContext<Byte> memory;
     private Disassembler disassembler;
     private EmulatorEngine engine;
@@ -39,22 +33,15 @@ public class CpuImpl extends AbstractCPU {
         super(pluginID, applicationApi, settings);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        Class<?> cellTypeClass = memory.getCellTypeClass();
-        if (cellTypeClass != Byte.class) {
-            throw new PluginInitializationException(
-                    "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
-            );
-        }
+        memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
 
-        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
-            automaticEmulation = new AutomaticEmulation(this, engine, memory);
+        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
+            automaticEmulation = new AutomaticEmulation(applicationApi.getExecutionState(), engine, memory);
         }
     }
 
@@ -66,7 +53,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected RunState stepInternal() {
+    public RunState step() {
         RunState result = engine.step();
         if (result == RunState.STATE_RUNNING) {
             return RunState.STATE_STOPPED_BREAK;
@@ -76,19 +63,20 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public JPanel getStatusPanel() {
-        DebuggerTable debugTable = applicationApi.getDebuggerTable();
-        if (debugTable != null) {
-            debugTable.setDebuggerColumns(Arrays.asList(
-                    new LineColumn(), new MnemoColumn(disassembler),
-                    new OpcodeColumn(disassembler)
-            ));
-        }
+    public List<DebuggerColumn<?>> getDebuggerColumns() {
+        return List.of(
+                DebuggerColumn.text("line", location -> String.format("%04X", location / 4)),
+                DebuggerColumn.mnemo(disassembler),
+                DebuggerColumn.opcode(disassembler)
+        );
+    }
 
+    @Override
+    public JPanel getStatusPanel() {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new CpuPanel(this, engine, memory, applicationApi.getGUI());
+        return new CpuPanel(engine, memory, applicationApi.getGUI(), applicationApi.getExecutionState());
     }
 
     @Override
@@ -112,9 +100,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {
@@ -122,17 +113,12 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public String getDescription() {
-        return "Emulator of SSEM machine";
-    }
-
-    @Override
-    public RunState call() {
+    public RunState execute() {
         return engine.run();
     }
 
     @Override
-    protected void resetInternal(int startPos) {
+    public void reset(int startPos) {
         engine.reset(startPos);
     }
 

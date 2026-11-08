@@ -8,39 +8,38 @@ import net.emustudio.plugins.cpu.rasp.CpuImpl;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
+import net.emustudio.emulib.runtime.ExecutionState;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class RaspStatusPanel extends JPanel {
     private final GUI gui;
+    private final CpuImpl cpu;
+    private final AbstractTapeContext input, output;
+    private final ExecutionState execution;
     private final JLabel lblStatus = new JLabel("breakpoint");
     private final JTextField txtIP = readOnlyField("0");
     private final JTextField txtInput = readOnlyField("N/A");
     private final JTextField txtOutput = readOnlyField("N/A");
     private final JTextField txtR0 = readOnlyField("0");
 
-    public RaspStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output, GUI gui) {
+    public RaspStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output, GUI gui, ExecutionState execution) {
         this.gui = gui;
+        this.cpu = cpu;
+        this.input = input;
+        this.output = output;
+        this.execution = execution;
         initComponents();
+        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
 
-        cpu.addCPUListener(new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(CPU.RunState state) {
-                SwingUtilities.invokeLater(() -> lblStatus.setText(state.toString()));
-            }
-
-            @Override
-            public void internalStateChanged() {
-                int outputPos = Math.max(0, output.getHeadPosition() - 1);
-                SwingUtilities.invokeLater(() -> {
-                    txtR0.setText(String.valueOf(cpu.getACC()));
-                    txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
-                    txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
-                    txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
-                });
-            }
+        PanelUpdater updater = new PanelUpdater();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
         });
     }
 
@@ -77,5 +76,45 @@ public class RaspStatusPanel extends JPanel {
         field.setEditable(false);
         field.setFont(FONT_MONOSPACED);
         return field;
+    }
+
+    private final class PanelUpdater {
+        public void runStateChanged(CPU.RunState state) {
+            SwingUtilities.invokeLater(() -> lblStatus.setText(state.toString()));
+        }
+
+        public void internalStateChanged() {
+            int outputPos = Math.max(0, output.getHeadPosition() - 1);
+            int accumulator = cpu.getACC();
+            int instruction = cpu.getInstructionLocation();
+            String nextInput = input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>");
+            String lastOutput = output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>");
+            SwingUtilities.invokeLater(() -> {
+                txtR0.setText(String.valueOf(accumulator));
+                txtIP.setText(String.format("%04d", instruction));
+                txtInput.setText(nextInput);
+                txtOutput.setText(lastOutput);
+            });
+        }
+
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }

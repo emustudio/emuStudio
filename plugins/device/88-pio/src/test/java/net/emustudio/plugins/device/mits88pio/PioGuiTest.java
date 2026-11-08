@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
@@ -37,13 +38,11 @@ public class PioGuiTest {
 
     @Before public void setUp() {
         assumeFalse(GraphicsEnvironment.isHeadless());
-        expect(settings.getString(anyString(), anyString())).andAnswer(() ->
-                (String) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        expect(settings.getInt(anyString(), anyInt())).andAnswer(() ->
-                (int) values.getOrDefault(getCurrentArgument(0), getCurrentArgument(1))).anyTimes();
-        settings.setString(anyString(), anyString());
-        expectLastCall().andAnswer(this::put).anyTimes();
-        settings.setInt(anyString(), anyInt());
+        expect(settings.getString(anyString())).andAnswer(() ->
+                Optional.ofNullable((String) values.get(getCurrentArgument(0)))).anyTimes();
+        expect(settings.getInt(anyString())).andAnswer(() ->
+                Optional.ofNullable((Integer) values.get(getCurrentArgument(0)))).anyTimes();
+        settings.set(anyString(), anyObject());
         expectLastCall().andAnswer(this::put).anyTimes();
         replay(settings);
         gui = createNiceMock(GUI.class);

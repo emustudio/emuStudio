@@ -4,6 +4,8 @@ package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
+import net.emustudio.emulib.runtime.ExecutionState;
+import javax.swing.SwingUtilities;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
@@ -14,20 +16,22 @@ import java.util.Objects;
 public class RaspTableModel extends AbstractTableModel {
 
     private final RaspMemoryContext memory;
+    private final ExecutionState execution;
 
     /**
      * Default constructor.
      *
      * @param memory the memory that will hold the content.
      */
-    public RaspTableModel(RaspMemoryContext memory) {
+    public RaspTableModel(RaspMemoryContext memory, ExecutionState execution) {
         this.memory = Objects.requireNonNull(memory);
+        this.execution = Objects.requireNonNull(execution);
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         //only numeric value (at column 1) is editable
-        return columnIndex == 1;
+        return columnIndex == 1 && !execution.snapshot().isBusy();
     }
 
     /**
@@ -104,8 +108,12 @@ public class RaspTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
-            int numberValue = RadixUtils.getInstance().parseRadix((String) value);
-            memory.write(rowIndex, numberValue);
+            int numberValue = RadixUtils.parseRadix((String) value);
+            if (numberValue < 0) {
+                return;
+            }
+            execution.update(() -> memory.write(rowIndex, numberValue))
+                    .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(this::fireTableDataChanged));
         } catch (NumberFormatException e) {
             //do nothing, invalid value was inserted
         }

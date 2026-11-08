@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -10,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@PluginContext
 public class MemoryStub implements ByteMemoryContext {
     protected Byte[][] memory = new Byte[1][1000];
     private int afterProgram;

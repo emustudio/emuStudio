@@ -4,11 +4,11 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.audio.AudioSink;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.recording.RecordingSession;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import org.slf4j.Logger;
@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -29,15 +30,15 @@ import static javax.swing.Action.SHORT_DESCRIPTION;
 import static javax.swing.Action.SMALL_ICON;
 
 public class DisplayWindow extends DialogBase {
-    private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("keyboard.png");
-    private final static ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME);
-    private final static ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD);
-    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon(StandardIcons.ICON_STOP);
+    private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("keyboard.png", DisplayWindow.class);
+    private final static ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, DisplayWindow.class);
+    private final static ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD, DisplayWindow.class);
+    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon(StandardIcons.ICON_STOP, DisplayWindow.class);
 
     public final static int MARGIN = 30;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayWindow.class);
-    private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
+    private static final FileType MP4_FILE = new FileType("MP4 video", "mp4");
 
     private final DisplayCanvas canvas;
     private final ULA ula;
@@ -205,7 +206,7 @@ public class DisplayWindow extends DialogBase {
         btnRecord.setToolTipText("Start video recording");
 
         Optional<Path> selectedFile = saveToFile ? dialogs.chooseFile(
-                "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
+                "Save recording", "Save", lastRecordingDirectory, true, List.of(MP4_FILE)
         ) : Optional.empty();
 
         // Drain the encoder and mux audio off the EDT so saving cannot freeze the display.

@@ -702,11 +702,11 @@ public class TabbedEditor implements Editor {
         if (!editor.isDirty()) {
             return true;
         }
-        Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
-        if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+        Dialogs.Answer answer = dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation");
+        if (answer == Dialogs.Answer.YES) {
             return saved(editor, REditor::saveFile);
         }
-        return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
+        return answer != Dialogs.Answer.CANCEL;
     }
 
     private void updateTitle(REditor editor) {

@@ -3,7 +3,8 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.Debugging;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -34,13 +35,16 @@ public class CpuImplTest {
         Capture<BrainCPUContextImpl> cpuContextCapture = Capture.newInstance();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.get(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -98,22 +102,24 @@ public class CpuImplTest {
         }
     }
 
-    private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) {
+    private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) throws Exception {
         setupEmulator(program, null, input);
-        DebugCPU.Listener listener = new DebugCPU.Listener() {
-            @Override public boolean beforeInstruction(int address) { return address == breakpoint; }
-        };
-        cpu.getDebugger().orElseThrow().addListener(listener);
+        Debugging.Observer listener = new Debugging.Observer() {
+            @Override public boolean beforeStep() { int address = cpu.getInstructionLocation(); return address == breakpoint; }
+
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+};
+        AutoCloseable observation = cpu.observe(listener, true);
         try {
-            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         } finally {
-            cpu.getDebugger().orElseThrow().removeListener(listener);
+            observation.close();
         }
     }
 
     private void emulate(byte[] program, byte[] data, byte[] input) {
         setupEmulator(program, data, input);
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
     }
 
     @Test
@@ -125,7 +131,7 @@ public class CpuImplTest {
     }
 
     @Test(timeout = 3000)
-    public void testClearCell() {
+    public void testClearCell() throws Exception {
         // [-]
         memory.setProgram(new byte[]{7, 4, 8});
 
@@ -138,7 +144,7 @@ public class CpuImplTest {
 
         assertEquals(1, memory.read(memory.getDataStart()).byteValue());
 
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
 
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, cpu.getInstructionLocation());
@@ -316,7 +322,7 @@ public class CpuImplTest {
     }
 
     @Test(timeout = 3000)
-    public void testSelfPrint() {
+    public void testSelfPrint() throws Exception {
         // +++++[>+++++++++<-],[[>--.++>+<<-]>+.->[<.>-]<<,]
         byte[] program = new byte[]{
                 3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -360,7 +366,7 @@ public class CpuImplTest {
         cpu.step(); // +
         assertEquals(1, memory.read(cpu.getEngine().P).shortValue());
 
-        cpu.call();
+        cpu.execute();
 
         assertTrue(ioDevice.wasInputRead());
 
@@ -371,16 +377,29 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void recordingStopsContinuousExecutionAfterExactGuestInstruction() {
         setupEmulator(new byte[] {3, 3, 0}, null, null);
-        java.util.List<net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction> events = new java.util.ArrayList<>();
-        cpu.getDebugger().orElseThrow().addListener(new net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Listener() {
-            @Override public boolean afterInstruction(net.emustudio.emulib.plugins.cpu.debug.DebugCPU.Instruction event) {
+        java.util.List<StepView> events = new java.util.ArrayList<>();
+        cpu.observe(new Debugging.Observer() {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+                StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
-        });
-        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
+
+            @Override public boolean beforeStep() { return false; }
+}, true);
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());
         assertEquals(1, memory.read(cpu.getEngine().P).intValue());
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

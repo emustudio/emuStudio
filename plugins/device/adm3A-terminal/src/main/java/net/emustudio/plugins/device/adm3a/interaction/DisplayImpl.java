@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import net.emustudio.plugins.device.adm3a.api.Display;
 import org.slf4j.Logger;
@@ -20,10 +19,9 @@ import java.util.Objects;
  * <p>
  * It interprets ASCII control codes (0-31) and printable characters, with CP437 extensions (128-255).
  */
-@PluginContext(id = "LSI ADM-3A Terminal")
 public class DisplayImpl implements Display, Cursor.LineRoller {
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
-    private static final String HERE_IS_CONSTANT = DisplayImpl.class.getAnnotation(PluginContext.class).id();
+    private static final String HERE_IS_CONSTANT = "LSI ADM-3A Terminal";
     private static final char[] EXTENDED_CHARACTERS = (
             "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ"
                     + "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐"

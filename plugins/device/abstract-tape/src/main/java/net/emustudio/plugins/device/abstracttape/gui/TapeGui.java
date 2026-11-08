@@ -64,38 +64,38 @@ public class TapeGui extends DialogBase {
         lstTape.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
 
-        btnAddFirst = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_UP));
-        btnAddLast = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_DOWN));
+        btnAddFirst = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_UP, TapeGui.class));
+        btnAddLast = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_DOWN, TapeGui.class));
         btnRemove = new JButton("Remove symbol");
         btnEdit = new JButton("Edit symbol");
         btnClear = new JButton("Clear tape");
 
         btnAddFirst.addActionListener(e -> dialogs
-                .readString("Symbol value:", "Add symbol (on top)")
+                .readString("Symbol value:", "Add symbol (on top)", null)
                 .map(TapeSymbol::guess)
                 .ifPresent(s -> {
                     try {
                         tapeContext.addFirst(s);
                     } catch (IllegalArgumentException ignored) {
-                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes(), "Add symbol");
                     }
                 }));
 
         btnAddLast.addActionListener(e -> dialogs
-                .readString("Symbol value:", "Add symbol (on bottom)")
+                .readString("Symbol value:", "Add symbol (on bottom)", null)
                 .map(TapeSymbol::guess)
                 .ifPresent(s -> {
                     try {
                         tapeContext.addLast(s);
                     } catch (IllegalArgumentException ignored) {
-                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes(), "Add symbol");
                     }
                 }));
 
         btnEdit.addActionListener(e -> {
             int symbolIndex = lstTape.getSelectedIndex();
             if (symbolIndex == -1) {
-                dialogs.showError("A symbol must be selected");
+                dialogs.showError("A symbol must be selected", "Edit symbol");
             } else {
                 dialogs
                         .readString("Enter symbol value:", "Edit symbol", tapeContext.getSymbolAt(symbolIndex).toString())
@@ -106,7 +106,7 @@ public class TapeGui extends DialogBase {
         btnRemove.addActionListener(e -> {
             int symbolIndex = lstTape.getSelectedIndex();
             if (symbolIndex == -1) {
-                dialogs.showError("A symbol must be selected");
+                dialogs.showError("A symbol must be selected", "Remove symbol");
                 return;
             }
             tapeContext.removeSymbolAt(symbolIndex);

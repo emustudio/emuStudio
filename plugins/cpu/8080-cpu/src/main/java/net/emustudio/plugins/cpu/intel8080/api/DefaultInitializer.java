@@ -4,10 +4,9 @@ package net.emustudio.plugins.cpu.intel8080.api;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
+import net.emustudio.plugins.cpu.intel8080.MachineDebugging;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 
 import java.util.Objects;
 
@@ -22,14 +21,9 @@ public abstract class DefaultInitializer<Engine> {
         this.contextPool = Objects.requireNonNull(contextPool);
     }
 
-    @SuppressWarnings("unchecked")
     public final void initialize() throws PluginInitializationException {
-        MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
-        if (memory.getCellTypeClass() != Byte.class) {
-            throw new InvalidContextException(
-                    "Unexpected memory cell type. Expected Byte but was: " + memory.getCellTypeClass());
-        }
-        disassembler = createDisassembler(DebugProbe.inspectionMemory(memory));
+        MemoryContext<Byte> memory = contextPool.getMemory(pluginId, Byte.class);
+        disassembler = createDisassembler(MachineDebugging.inspectionMemory(memory));
         engine = createEmulatorEngine(memory);
     }
 

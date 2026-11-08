@@ -187,8 +187,8 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void confirmSaveSavesDirtyEditorWhenUserApproves() {
         Dialogs dialogs = mock(Dialogs.class);
-        when(dialogs.ask("File is not saved yet. Do you want to save it?"))
-                .thenReturn(Dialogs.DialogAnswer.ANSWER_YES);
+        when(dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation"))
+                .thenReturn(Dialogs.Answer.YES);
 
         Editor editor = createEditor(true, true);
         EditorPanel panel = createPanel(dialogs, editor);
@@ -204,8 +204,8 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void confirmSaveReturnsFalseWhenUserCancels() {
         Dialogs dialogs = mock(Dialogs.class);
-        when(dialogs.ask("File is not saved yet. Do you want to save it?"))
-                .thenReturn(Dialogs.DialogAnswer.ANSWER_CANCEL);
+        when(dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation"))
+                .thenReturn(Dialogs.Answer.CANCEL);
 
         Editor editor = createEditor(true, true);
         EditorPanel panel = createPanel(dialogs, editor);

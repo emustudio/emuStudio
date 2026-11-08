@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.runtime.ui.debugger.AddressColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -21,7 +21,7 @@ public class TextCellRendererTest {
         when(model.getColumnCount()).thenReturn(1);
         when(model.getColumnName(0)).thenReturn("address");
         doReturn(String.class).when(model).getColumnClass(0);
-        doReturn(new AddressColumn()).when(model).getColumnAt(0);
+        doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
         DebugTableImpl table = new DebugTableImpl(model);
         table.setInstructionRowPresentation(row -> row == 1, row -> null);
@@ -44,7 +44,7 @@ public class TextCellRendererTest {
         when(model.getColumnName(0)).thenReturn("instruction");
         when(model.getValueAt(0, 0)).thenReturn("CALL 1234");
         doReturn(String.class).when(model).getColumnClass(0);
-        doReturn(new AddressColumn()).when(model).getColumnAt(0);
+        doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         DebugTableImpl table = new DebugTableImpl(model);
         table.setInstructionRowPresentation(row -> true, row -> null);
 
@@ -73,7 +73,7 @@ public class TextCellRendererTest {
         for (Color background : new Color[] {Color.WHITE, new Color(60, 63, 65)}) {
             DebugTableModel model = mock(DebugTableModel.class);
             when(model.getColumnCount()).thenReturn(1);
-            doReturn(new AddressColumn()).when(model).getColumnAt(0);
+            doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
             when(model.getColumnName(0)).thenReturn("address");
             when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
             JTable table = new JTable(new Object[][] {{"0000"}, {"0002"}}, new Object[] {"address"});
@@ -111,7 +111,7 @@ public class TextCellRendererTest {
     public void pcMarkerStaysInAddressCellWithWrappedAndReorderedColumns() {
         DebugTableModel model = mock(DebugTableModel.class);
         when(model.getColumnCount()).thenReturn(1);
-        doReturn(new AddressColumn()).when(model).getColumnAt(0);
+        doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         when(model.getColumnName(0)).thenReturn("address");
         when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
         JTable table = new JTable(new Object[][] {{"", "0000", "nop"}}, new Object[] {"bp", "address", "instruction"});

@@ -7,10 +7,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
@@ -22,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.IOException;
 
-@PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU")
+@PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU", description = "BrainDuck CPU emulator")
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -36,26 +33,16 @@ public class CpuImpl extends AbstractCPU {
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        try {
-            applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register CPU context", e);
-            applicationApi.getDialogs().showError("Could not register CPU context. Please see log file for details", getTitle());
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "BrainDuck CPU emulator";
+        applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
+        memory = applicationApi.getContextPool().get(pluginID, ByteMemoryContext.class);
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
@@ -86,23 +73,23 @@ public class CpuImpl extends AbstractCPU {
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new StatusPanel(memory, this, applicationApi.getGUI());
+        return new StatusPanel(memory, this, applicationApi.getGUI(), applicationApi.getExecutionState());
     }
 
     @Override
-    public void resetInternal(int adr) {
+    public void reset(int adr) {
         engine.reset(adr);
         LOGGER.debug("Register P was reset to {}", engine.P);
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         optimize = true;
         memory.setMemoryNotificationsEnabled(false);
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    RunState tmpRunState = stepInternal();
+                    RunState tmpRunState = step();
                     if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
@@ -119,7 +106,7 @@ public class CpuImpl extends AbstractCPU {
             optimize = false;
             memory.setMemoryNotificationsEnabled(true);
         }
-        return RunState.STATE_STOPPED_NORMAL; // cannot be in finally block! it can rewrite breakpoint
+        return RunState.STATE_RUNNING; // Host applies the requested pause or stop after actual exit.
     }
 
     @Override
@@ -128,14 +115,17 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected RunState stepInternal() throws IOException {
+    public RunState step() throws IOException {
         return engine.step(optimize);
     }
 
     @Override
-    public java.util.Optional<DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
     public Disassembler getDisassembler() {

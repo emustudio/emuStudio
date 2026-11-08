@@ -64,7 +64,7 @@ public class TerminalWindow extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        Icon backgroundImage = loadIcon(BACKGROUND_IMAGE);
+        Icon backgroundImage = loadIcon(BACKGROUND_IMAGE, TerminalWindow.class);
         int bgWidth = backgroundImage.getIconWidth();
         int bgHeight = backgroundImage.getIconHeight();
 

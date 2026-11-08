@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.cpu.testsuite.RunnerContext;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.intel8080.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.intel8080.suite.IntegerTestBuilder;
 import org.junit.Test;
@@ -12,6 +11,8 @@ import org.junit.Test;
 import java.util.function.Function;
 
 import static net.emustudio.plugins.cpu.intel8080.EmulatorEngine.*;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class TransferTest extends InstructionsTest {
 
@@ -345,10 +346,12 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testMemoryOverflow() {
+    public void testMemoryOverflowReportsSynchronousStepFailure() {
         cpuRunnerImpl.resetProgram();
         cpuRunnerImpl.reset();
-        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
-        cpuRunnerImpl.step();
+
+        AssertionError failure = assertThrows(AssertionError.class, cpuRunnerImpl::step);
+
+        assertTrue(failure.getCause() instanceof IndexOutOfBoundsException);
     }
 }

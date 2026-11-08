@@ -5,18 +5,17 @@ package net.emustudio.plugins.compiler.as8080;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition.ColumnUnit;
+import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -35,7 +34,8 @@ import java.util.Optional;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
-        title = "Intel 8080 Assembler"
+        title = "Intel 8080 Assembler",
+        description = "Modified and extended clone of original Intel's 8080 assembler."
 )
 @SuppressWarnings("unused")
 public class Assembler8080 extends AbstractCompiler {
@@ -45,9 +45,9 @@ public class Assembler8080 extends AbstractCompiler {
     }
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Assembler8080.class);
-    private final static List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new FileExtension("asm", "Assembler source file"),
-            new FileExtension("inc", "Include file")
+    private final static List<FileType> SOURCE_FILE_TYPES = List.of(
+            new FileType("Assembler source file", "asm"),
+            new FileType("Include file", "inc")
     );
 
     private MemoryContext<Byte> memory;
@@ -56,27 +56,15 @@ public class Assembler8080 extends AbstractCompiler {
         super(pluginID, applicationApi, pluginSettings);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                Class<?> cellTypeClass = memory.getCellTypeClass();
-                if (cellTypeClass != Byte.class) {
-                    throw new InvalidContextException(
-                            "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
-                    );
-                }
-            } catch (InvalidContextException | ContextNotFoundException e) {
+                memory = pool.getMemory(pluginID, Byte.class);
+            } catch (ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
         });
-    }
-
-    @Override
-    public String getDescription() {
-        return "Modified and extended clone of original Intel's 8080 assembler.";
     }
 
     @Override
@@ -85,21 +73,17 @@ public class Assembler8080 extends AbstractCompiler {
     }
 
     @Override
-    public void compile(Path inputPath, Optional<Path> outputPath) {
-        notifyCompileStart();
-        notifyInfo(getTitle() + ", version " + getVersion());
-
-        Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".hex"));
+    protected void compile(Path inputPath, Path outputPath) throws IOException {
+        String fileName = inputPath.toString();
         try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
             org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
-            lexer.addErrorListener(new ParserErrorListener(inputPath.toString()));
+            lexer.addErrorListener(new ParserErrorListener(fileName));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             As8080Parser parser = createParser(tokens);
-            parser.removeErrorListeners();
-            parser.addErrorListener(new ParserErrorListener(inputPath.toString()));
+            parser.addErrorListener(new ParserErrorListener(fileName));
 
-            Program program = new Program(inputPath.toString());
+            Program program = new Program(fileName);
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
@@ -122,45 +106,45 @@ public class Assembler8080 extends AbstractCompiler {
                 visitor.visit(program);
             }
 
-            if (program.env().hasNoErrors()) {
-                hex.generate(finalOutputPath);
-                int programLocation = hex.findProgramLocation();
-                applicationApi.setProgramLocation(programLocation);
-
-                notifyInfo(String.format(
-                        "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                        finalOutputPath, RadixUtils.formatWordHexString(programLocation)
-                ));
-
-                if (memory != null) {
-                    hex.loadIntoMemory(memory, b -> b);
-                    Optional.ofNullable(applicationApi.getAnnotations()).ifPresent(annotations -> {
-                        SourceCodeAnnotationsVisitor sourceMappings = new SourceCodeAnnotationsVisitor(pluginID);
-                        sourceMappings.visit(program);
-                        evaluator.labels().forEach(label -> sourceMappings.addLabel(label.getKey(), label.getValue()));
-                        annotations.replaceOwner(pluginID, sourceMappings.annotations());
-                    });
-                    notifyInfo("Compiled file was loaded into memory.");
-                } else {
-                    notifyWarning("Memory is not available.");
-                }
-            } else {
+            if (!program.env().hasNoErrors()) {
                 for (CompileError error : program.env().getErrors()) {
-                    notifyError(error.position, error.msg);
+                    error(error.position, error.msg);
                 }
+                return;
             }
-        } catch (CompileException e) {
-            notifyError(e.position, e.getMessage());
-        } catch (IOException e) {
-            notifyError("Compilation error: " + e);
-        } finally {
-            notifyCompileFinish();
+
+            hex.generate(outputPath);
+            int programLocation = hex.findProgramLocation();
+            applicationApi.setProgramLocation(programLocation);
+
+            info(String.format(
+                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                    outputPath, RadixUtils.formatHex(programLocation, 4)
+            ));
+
+            if (memory != null) {
+                hex.loadIntoMemory(memory);
+                Optional.ofNullable(applicationApi.getAnnotations()).ifPresent(annotations -> {
+                    SourceCodeAnnotationsVisitor sourceMappings = new SourceCodeAnnotationsVisitor(pluginID);
+                    sourceMappings.visit(program);
+                    evaluator.labels().forEach(label -> sourceMappings.addLabel(label.getKey(), label.getValue()));
+                    annotations.replaceOwner(pluginID, sourceMappings.annotations());
+                });
+                info("Compiled file was loaded into memory.");
+            } else {
+                warning("Memory is not available.");
+            }
         }
     }
 
     @Override
-    public List<FileExtension> getSourceFileExtensions() {
-        return SOURCE_FILE_EXTENSIONS;
+    protected String getOutputExtension() {
+        return "hex";
+    }
+
+    @Override
+    public List<FileType> getSourceFileTypes() {
+        return SOURCE_FILE_TYPES;
     }
 
     private As8080Lexer createLexer(CharStream input) {

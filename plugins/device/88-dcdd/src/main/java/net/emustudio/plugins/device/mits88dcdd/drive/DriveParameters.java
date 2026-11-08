@@ -63,15 +63,15 @@ public final class DriveParameters {
         boolean sr0 = (status & 1) == 0;
         int offset = (status >>> 1) & 0b11111;
 
-        return (sr0 ? "(SR0) " : "      ") + "0x" + RadixUtils.formatByteHexString(offset);
+        return (sr0 ? "(SR0) " : "      ") + "0x" + RadixUtils.formatHex(offset, 2);
     }
 
     @Override
     public String toString() {
         return
-                "T=" + RadixUtils.formatByteHexString(track) +
-                        "; S=" + RadixUtils.formatByteHexString(sector) +
-                        "; O=" + RadixUtils.formatByteHexString(sectorOffset) +
+                "T=" + RadixUtils.formatHex(track, 2) +
+                        "; S=" + RadixUtils.formatHex(sector, 2) +
+                        "; O=" + RadixUtils.formatHex(sectorOffset, 2) +
                         "; port1=[" + port1statusString + "]" +
                         "; port2=[" + port2statusString + "]";
     }

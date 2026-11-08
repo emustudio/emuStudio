@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;

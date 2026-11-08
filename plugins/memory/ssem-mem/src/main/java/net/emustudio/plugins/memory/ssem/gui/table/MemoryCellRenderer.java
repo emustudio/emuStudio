@@ -8,9 +8,9 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED_BOLD;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
+    private final static Font FONT_MONOSPACED_BOLD = FONT_MONOSPACED.deriveFont(Font.BOLD);
     private final static Color COLOR_FORE = Color.BLACK;
     private final static Color COLOR_BACK_LINE = new Color(0xF3, 0xE3, 0xEC);
     private final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;

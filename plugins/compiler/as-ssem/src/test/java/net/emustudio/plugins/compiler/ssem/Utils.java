@@ -3,6 +3,7 @@
 package net.emustudio.plugins.compiler.ssem;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.plugins.compiler.ssem.ast.Instruction;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;

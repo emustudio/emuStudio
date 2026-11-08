@@ -8,6 +8,7 @@ import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
 
     private final Schema schema;
     private final Dialogs dialogs;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
     private final DrawingPanel panel;
     private final AtomicInteger pluginLoadId = new AtomicInteger();
@@ -56,7 +57,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     private final JLabel toolStatus = new JLabel("Select and move components. Choose a toolbar tool to edit the schema.");
     private String pluginHint = "Choose a component tool first";
 
-    public SchemaEditorDialog(JDialog parent, Schema schema, Dialogs dialogs, GUI gui) {
+    public SchemaEditorDialog(JDialog parent, Schema schema, Dialogs dialogs, EmuStudioGui gui) {
         super(parent, "Computer editor [" + schema.getComputerConfig().getName() + "]", true);
 
         this.schema = Objects.requireNonNull(schema);

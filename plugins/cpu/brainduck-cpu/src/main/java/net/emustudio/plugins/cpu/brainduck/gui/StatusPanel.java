@@ -8,13 +8,17 @@ import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
+import net.emustudio.emulib.runtime.ExecutionState;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
+    private final ExecutionState execution;
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
     private final Byte[] memory;
@@ -28,18 +32,24 @@ public class StatusPanel extends JPanel {
     private final JTextField txtMemP = readOnlyField("0");
     private final JTextField txtP = readOnlyField("0");
 
-    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui) {
+    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui, ExecutionState execution) {
         this.gui = gui;
+        this.execution = execution;
         this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
         this.tableModel = new MemoryTableModel(this.memory);
 
         initComponents();
+        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblMemory.setModel(tableModel);
         tblMemory.getTableHeader().setReorderingAllowed(false);
         columnsRepainter.setMainColumn(2, tblMemory);
 
-        cpu.addCPUListener(new CPUStatusListener());
+        CPUStatusListener updater = new CPUStatusListener();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
+        });
     }
 
     private void initComponents() {
@@ -83,11 +93,12 @@ public class StatusPanel extends JPanel {
         add(content, BorderLayout.CENTER);
     }
 
-    private class CPUStatusListener implements CPU.CPUListener {
+    private class CPUStatusListener {
         private volatile long nanoStartTime;
-
-        @Override
+        private CPU.RunState lastRunState;
         public void runStateChanged(CPU.RunState state) {
+            if (state == lastRunState) return;
+            lastRunState = state;
             long tmpNanoTime = 0;
             if (state != CPU.RunState.STATE_RUNNING && nanoStartTime != 0) {
                 tmpNanoTime = System.nanoTime() - nanoStartTime;
@@ -119,24 +130,26 @@ public class StatusPanel extends JPanel {
                 nanoStartTime = System.nanoTime();
             }
         }
-
-        @Override
         public void internalStateChanged() {
             int P = cpu.getP();
+            int instruction = cpu.IP;
+            int loopLevel = cpu.getLoopLevel();
+            String cell;
+            try {
+                cell = String.format("%02X", memory[P] & 0xFF);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                cell = "[unreachable]";
+            }
+            String cellText = cell;
             SwingUtilities.invokeLater(() -> {
                 txtP.setText(String.format("%04X", P));
-                txtIP.setText(String.format("%04X", cpu.IP));
-                lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
-                try {
-                    txtMemP.setText(String.format("%02X", memory[P] & 0xFF));
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    txtMemP.setText("[unreachable]");
-                } finally {
-                    tableModel.setP(P);
-                    columnsRepainter.repaint(tblMemory);
-                    tblMemory.revalidate();
-                    tblMemory.repaint();
-                }
+                txtIP.setText(String.format("%04X", instruction));
+                lblLoopLevel.setText(String.valueOf(loopLevel));
+                txtMemP.setText(cellText);
+                tableModel.setP(P);
+                columnsRepainter.repaint(tblMemory);
+                tblMemory.revalidate();
+                tblMemory.repaint();
             });
         }
     }
@@ -146,5 +159,24 @@ public class StatusPanel extends JPanel {
         field.setEditable(false);
         field.setFont(FONT_MONOSPACED);
         return field;
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }

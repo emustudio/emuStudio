@@ -3,6 +3,8 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.runtime.ExecutionState;
+import java.util.concurrent.CompletionException;
 import net.emustudio.emulib.runtime.io.FileLoader;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -22,7 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
@@ -32,16 +34,19 @@ public class LoadImageAction extends AbstractAction {
     private final JDialog parent;
     private final Runnable repaint;
     private final GUI gui;
+    private final ExecutionState execution;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui) {
-        super("Load image file...", loadIcon(ICON_FILE));
+    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui,
+                           ExecutionState execution) {
+        super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
         this.parent = Objects.requireNonNull(parent);
         this.repaint = Objects.requireNonNull(repaint);
         this.gui = gui;
+        this.execution = Objects.requireNonNull(execution);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -52,22 +57,24 @@ public class LoadImageAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
-                "Load image file", "Load", currentDirectory, false, IMAGE_EXTENSION_FILTER);
+                "Load image file", "Load", currentDirectory, false, IMAGE_FILE_TYPES);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            FileLoader loader = MemoryImageLoader.createLoader(path);
-            Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(loader));
+            FileLoader.Format format = MemoryImageLoader.formatOf(path);
+            Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(format));
             if (bank.isPresent()) {
-                GUI.runInBackground(
-                        this,
-                        () -> {
-                            MemoryImageLoader.load(path, context, bank.get());
-                        },
-                        repaint,
-                        cause -> {
-                            dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
-                            LOGGER.error("Could not load image file '{}'", path, cause);
-                        });
+                setEnabled(false);
+                execution.update(() -> {
+                    try { MemoryImageLoader.load(path, context, bank.get()); }
+                    catch (Exception failure) { throw new CompletionException(failure); }
+                }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                    if (failure == null) repaint.run();
+                    else {
+                        dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                        LOGGER.error("Could not load image file '{}'", path, failure);
+                    }
+                    setEnabled(true);
+                }));
             }
         });
     }

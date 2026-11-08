@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import com.sun.management.ThreadMXBean;
 import org.junit.Assume;
 import org.junit.Test;
@@ -86,7 +86,7 @@ public class ProgramIndexAllocationTest {
         int cursor;
 
         Workload(int size, int common) {
-            index = ProgramIndex.create("allocation", size, new AnnotationEngine());
+            index = ProgramIndex.create("allocation", size, new MemoryAnnotations());
             int[] starts = {0, 32, 4096, size / 2, common - 2, common, size - 2};
             addresses = new int[starts.length * 2 + 3];
             addresses[starts.length * 2] = 128;

@@ -7,7 +7,7 @@ import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -24,10 +24,10 @@ public class EditComputerAction extends AbstractAction {
     private final Runnable update;
     private final JDialog parent;
     private final JList<ComputerConfig> lstConfig;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
     public EditComputerAction(Dialogs dialogs, AppSettings appSettings,
-                              Runnable update, JDialog parent, JList<ComputerConfig> lstConfig, GUI gui) {
+                              Runnable update, JDialog parent, JList<ComputerConfig> lstConfig, EmuStudioGui gui) {
         super("Edit computer...", loadIcon(ICON_COMPUTER));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);

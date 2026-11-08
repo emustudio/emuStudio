@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@PluginContext
 public class DeviceStub implements DeviceContext<Byte> {
     private final List<Byte> output = new CopyOnWriteArrayList<>();
     private final Queue<Byte> input = new ConcurrentLinkedQueue<>();

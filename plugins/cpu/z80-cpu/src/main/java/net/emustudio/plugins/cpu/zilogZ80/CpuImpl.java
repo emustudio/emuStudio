@@ -9,25 +9,20 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
-        title = "Zilog Z80 CPU"
+        title = "Zilog Z80 CPU",
+        description = "Emulator of Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
-
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
     private final ContextZ80Impl context = new ContextZ80Impl();
     private final InitializerZ80 initializer;
 
@@ -39,16 +34,9 @@ public class CpuImpl extends AbstractCPU {
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        try {
-            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
-            applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register Z80 CPU context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
-            );
-        }
-        context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
+        applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+        applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
+        context.setCPUFrequency(settings.getInt("frequency_khz").orElse(ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerZ80(
                 pluginID, applicationApi.getContextPool(), context
         );
@@ -78,20 +66,23 @@ public class CpuImpl extends AbstractCPU {
         initializer.initialize();
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
-        engine.debugger.onRegisterEdited(this::notifyInternalStateChanged);
+        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, applicationApi.getGUI()
+                    this, context, applicationApi.getGUI(), applicationApi.getExecutionState()
             );
         }
     }
 
     @Override
-    public java.util.Optional<net.emustudio.emulib.plugins.cpu.debug.DebugCPU> getDebugger() {
-        return engine == null ? java.util.Optional.empty() : java.util.Optional.of(engine.debugger);
-    }
+    public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+
+    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     public EmulatorEngine getEngine() {
         return engine;
@@ -103,7 +94,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() {
+    public RunState execute() {
         try {
             frequencyCalculator.start();
             return engine.run();
@@ -113,25 +104,13 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    protected void resetInternal(int startPos) {
+    public void reset(int startPos) {
         frequencyCalculator.stop();
         engine.reset(startPos);
     }
 
     @Override
-    public void pause() {
-        super.pause();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        frequencyCalculator.stop();
-    }
-
-    @Override
-    protected RunState stepInternal() throws Exception {
+    public RunState step() throws Exception {
         return engine.step();
     }
 
@@ -144,16 +123,12 @@ public class CpuImpl extends AbstractCPU {
     protected void destroyInternal() {
         context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
-        frequencyCalculator.close();
         context.clearDevices();
     }
 
     @Override
-    public String getDescription() {
-        return "Emulator of Zilog Z80 CPU";
+    public float sampleFrequency() {
+        return frequencyCalculator.sample();
     }
 
-    public FrequencyCalculator getFrequencyCalculator() {
-        return frequencyCalculator;
-    }
 }

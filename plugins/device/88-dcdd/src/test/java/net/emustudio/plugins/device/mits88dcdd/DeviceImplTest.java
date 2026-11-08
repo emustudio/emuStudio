@@ -27,7 +27,7 @@ public class DeviceImplTest {
         replay(cpu);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getCPUContext(0, Context8080.class)).andReturn(cpu).once();
+        expect(contextPool.get(0, Context8080.class)).andReturn(cpu).once();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();

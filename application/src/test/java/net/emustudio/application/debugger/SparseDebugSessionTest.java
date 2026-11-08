@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,7 +23,6 @@ public class SparseDebugSessionTest {
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
         AtomicInteger occupancy = new AtomicInteger();
         AtomicReference<MemoryContext.MemoryListener> listener = new AtomicReference<>();
-        when(cpu.getDebugger()).thenReturn(Optional.empty());
         when(cpu.getAddressSpaceSize()).thenReturn(Integer.MAX_VALUE);
         when(memory.getCellTypeClass()).thenReturn(Integer.class);
         when(memory.getSize()).thenAnswer(call -> occupancy.get());
@@ -35,13 +33,13 @@ public class SparseDebugSessionTest {
             assertEquals(0, memory.getSize());
             assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;
-            session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+            session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                     99, 1, address, Integer.MAX_VALUE, ProgramIndex.Kinds.LABEL, "last cell", null));
             try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
                 update.put(1, address, true);
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
-            session.annotations().put(new AnnotationIndex.Entry(address, "metadata", "CODE"));
+            session.annotations().add(new AnnotationIndex.Entry(address, "metadata", "CODE"));
             assertEquals("metadata", session.annotations().get(address).label);
             assertThrows(IllegalArgumentException.class, session::liveMemory);
 

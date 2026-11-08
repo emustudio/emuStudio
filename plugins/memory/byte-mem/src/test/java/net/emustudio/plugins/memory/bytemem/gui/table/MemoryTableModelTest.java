@@ -2,9 +2,17 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
+import net.emustudio.plugins.memory.bytemem.TestExecutionState;
+
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
+import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import javax.swing.SwingUtilities;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,6 +20,7 @@ import java.util.Optional;
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
+import static org.easymock.EasyMock.*;
 
 public class MemoryTableModelTest {
     private MemoryContextImpl context;
@@ -20,12 +29,12 @@ public class MemoryTableModelTest {
     @Before
     public void setUp() {
         context = TestMemoryContextFactory.create(65536, 2, 32768);
-        model = new MemoryTableModel(context);
+        model = new MemoryTableModel(context, TestExecutionState.create());
     }
 
     @Test(expected = NullPointerException.class)
     public void constructorRejectsNullMemory() {
-        new MemoryTableModel(null);
+        new MemoryTableModel(null, TestExecutionState.create());
     }
 
     @Test
@@ -71,7 +80,7 @@ public class MemoryTableModelTest {
         assertEquals(256, model.toAddress(0, 0));
         assertEquals(277, model.toAddress(1, 5));
         assertEquals(0xAB, model.getRawValueAt(0, 0));
-        assertEquals(0, new MemoryTableModel(TestMemoryContextFactory.create(16, 1, 0)).getRawValueAt(1, 0));
+        assertEquals(0, new MemoryTableModel(TestMemoryContextFactory.create(16, 1, 0), TestExecutionState.create()).getRawValueAt(1, 0));
     }
 
     @Test
@@ -102,5 +111,53 @@ public class MemoryTableModelTest {
         assertThrows(IndexOutOfBoundsException.class, () -> model.setPage(model.getPageCount()));
         assertThrows(IndexOutOfBoundsException.class, () -> model.setCurrentBank(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> model.setCurrentBank(2));
+    }
+
+    @Test
+    public void deferredHostEditKeepsOriginalBankAndAddressAndPublishesOnSwing() throws Exception {
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        AtomicReference<Runnable> edit = new AtomicReference<>();
+        CompletableFuture<Void> completion = new CompletableFuture<>();
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
+            edit.set(getCurrentArgument(0));
+            return completion;
+        });
+        replay(execution);
+        MemoryTableModel deferred = new MemoryTableModel(context, execution);
+        deferred.setCurrentBank(1);
+
+        assertTrue(deferred.isCellEditable(0, 0));
+        deferred.setValueAt("0xAB", 0, 0);
+        deferred.setCurrentBank(0);
+        deferred.setPage(1);
+
+        assertEquals(0, context.readBank(0, 1).byteValue());
+        AtomicBoolean onSwing = new AtomicBoolean();
+        deferred.addTableModelListener(event -> onSwing.set(SwingUtilities.isEventDispatchThread()));
+        edit.get().run();
+        completion.complete(null);
+        SwingUtilities.invokeAndWait(() -> {});
+        assertEquals((byte) 0xAB, context.readBank(0, 1).byteValue());
+        assertEquals(0, context.readBank(0, 0).byteValue());
+        assertEquals(0, context.readBank(256, 1).byteValue());
+        assertTrue(onSwing.get());
+    }
+
+    @Test
+    public void rejectedHostEditLeavesMemoryUntouched() {
+        ExecutionState execution = createNiceMock(ExecutionState.class);
+        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
+                CPU.RunState.STATE_RUNNING, true, false, 0, Float.NaN)).anyTimes();
+        expect(execution.update(anyObject(Runnable.class))).andReturn(CompletableFuture.failedFuture(
+                new IllegalStateException("Machine is closing")));
+        replay(execution);
+        MemoryTableModel rejected = new MemoryTableModel(context, execution);
+
+        rejected.setValueAt("0xAB", 0, 0);
+
+        assertFalse(rejected.isCellEditable(0, 0));
+        assertEquals(0, context.readBank(0, 0).byteValue());
     }
 }

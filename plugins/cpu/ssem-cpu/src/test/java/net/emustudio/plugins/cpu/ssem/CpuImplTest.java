@@ -7,12 +7,16 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -25,6 +29,9 @@ public class CpuImplTest {
         ContextPool contextPool = createNiceMock(ContextPool.class);
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -62,10 +69,13 @@ public class CpuImplTest {
         replay(memory);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -80,10 +90,13 @@ public class CpuImplTest {
         memory.setMemory(memoryContent);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(anyLong(), eq(MemoryContext.class))).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(anyLong(), eq(Byte.class))).andReturn(memory).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -103,18 +116,17 @@ public class CpuImplTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test(expected = PluginInitializationException.class)
     public void testInitializeWithWrongCellType() throws PluginInitializationException {
-        MemoryContext<Integer> memory = createNiceMock(MemoryContext.class);
-        expect(memory.getCellTypeClass()).andReturn(Integer.class).anyTimes();
-        replay(memory);
-
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class))
+                .andThrow(new ContextNotFoundException("Unexpected memory cell type")).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        replay(execution);
+        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -204,6 +216,35 @@ public class CpuImplTest {
     }
 
     @Test
+    public void testDebuggerColumns() throws PluginInitializationException {
+        CpuImpl initialized = createInitializedCpu();
+        try {
+            List<DebuggerColumn<?>> columns = initialized.getDebuggerColumns();
+            assertEquals(3, columns.size());
+            assertEquals("line", columns.get(0).getTitle());
+            assertEquals("instruction", columns.get(1).getTitle());
+            assertEquals("opcode", columns.get(2).getTitle());
+        } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
+    public void testLineColumnShowsLineNumberInHex() throws PluginInitializationException {
+        CpuImpl initialized = createInitializedCpu();
+        try {
+            DebuggerColumn<?> line = initialized.getDebuggerColumns().get(0);
+            assertEquals(String.class, line.getClassType());
+            assertFalse(line.isEditable());
+            assertEquals("0000", line.getValue(0));
+            assertEquals("0001", line.getValue(4));
+            assertEquals("000A", line.getValue(40));
+        } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
     public void testGetEngine() throws PluginInitializationException {
         CpuImpl initialized = createInitializedCpu();
         try {
@@ -245,7 +286,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            CPU.RunState state = initialized.call();
+            CPU.RunState state = initialized.execute();
             assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, state);
         } finally {
             initialized.destroy();
@@ -287,57 +328,45 @@ public class CpuImplTest {
     }
 
     @Test
-    public void testStepInternalConvertsRunningToStoppedBreak() throws Exception {
+    public void testStepConvertsRunningToStoppedBreak() throws Exception {
         // LDN returns STATE_RUNNING from engine.step()
-        // stepInternal should convert it to STATE_STOPPED_BREAK
+        // step should convert it to STATE_STOPPED_BREAK
         short[] memContent = new short[32 * 4];
         memContent[4] = 0x00; // line = 0
         memContent[5] = 0x02; // opcode = 010 (LDN)
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            final CPU.RunState[] capturedState = new CPU.RunState[1];
-            initialized.addCPUListener(new CPU.CPUListener() {
-                @Override
-                public void runStateChanged(CPU.RunState state) {
-                    capturedState[0] = state;
-                }
-
-                @Override
-                public void internalStateChanged() {
-                }
-            });
-            initialized.step(); // calls stepInternal -> STATE_RUNNING -> STATE_STOPPED_BREAK
-            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, capturedState[0]);
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, initialized.step());
         } finally {
             initialized.destroy();
         }
     }
 
     @Test
-    public void testStepInternalForwardsSTPState() throws Exception {
+    public void testStepForwardsSTPState() throws Exception {
         // STP returns STATE_STOPPED_NORMAL from engine.step()
-        // stepInternal should forward it as-is
+        // step should forward it as-is
         short[] memContent = new short[32 * 4];
         memContent[4] = 0x00;
         memContent[5] = 0x07; // STP
         CpuImpl initialized = createInitializedCpuWithMemory(memContent);
         try {
             initialized.reset(0);
-            final CPU.RunState[] capturedState = new CPU.RunState[1];
-            initialized.addCPUListener(new CPU.CPUListener() {
-                @Override
-                public void runStateChanged(CPU.RunState state) {
-                    capturedState[0] = state;
-                }
-
-                @Override
-                public void internalStateChanged() {
-                }
-            });
-            initialized.step(); // calls stepInternal -> STATE_STOPPED_NORMAL
-            assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, capturedState[0]);
+            assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, initialized.step());
         } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test
+    public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
+        CpuImpl initialized = createInitializedCpu();
+        Thread.currentThread().interrupt();
+        try {
+            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
+        } finally {
+            Thread.interrupted();
             initialized.destroy();
         }
     }

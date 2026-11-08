@@ -22,7 +22,7 @@ public class LoadingDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = gui.panelHorizontal();
+        JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblLoading = gui.labelBold("Loading computer, please wait...");
         lblLoading.setIcon(loadIcon(ICON_MOTHERBOARD));

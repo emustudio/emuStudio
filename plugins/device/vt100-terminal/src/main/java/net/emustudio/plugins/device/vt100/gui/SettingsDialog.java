@@ -11,6 +11,7 @@ import net.emustudio.plugins.device.vt100.TerminalSettings;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -64,8 +65,14 @@ public class SettingsDialog extends DialogBase {
         panelSize.add(btnRowsDefault, "wrap");
 
         // Redirect I/O section
-        JButton btnBrowseInputFile = gui.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
-        JButton btnBrowseOutputFile = gui.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
+        JButton btnBrowseInputFile = gui.button("Browse...");
+        btnBrowseInputFile.addActionListener(e -> dialogs
+                .chooseFile("Select input file", "Select", null, false, List.of())
+                .ifPresent(p -> txtInputFile.setText(p.toString())));
+        JButton btnBrowseOutputFile = gui.button("Browse...");
+        btnBrowseOutputFile.addActionListener(e -> dialogs
+                .chooseFile("Select output file", "Select", null, false, List.of())
+                .ifPresent(p -> txtOutputFile.setText(p.toString())));
 
         JPanel panelRedirectIO = gui.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
         panelRedirectIO.add(gui.label("In No GUI mode, input/output will be redirected to files."), "span, h 30!, wrap");
@@ -94,14 +101,14 @@ public class SettingsDialog extends DialogBase {
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
         if (txtInputFile.getText().trim().equals(txtOutputFile.getText().trim())) {
-            dialogs.showError("Input and output file names cannot point to the same file");
+            dialogs.showError("Input and output file names cannot point to the same file", "VT100-terminal settings");
             txtInputFile.grabFocus();
             return;
         }
 
         int rows;
         try {
-            rows = RadixUtils.getInstance().parseRadix(txtRows.getText());
+            rows = RadixUtils.parseRadix(txtRows.getText());
         } catch (NumberFormatException e) {
             dialogs.showError("Could not parse rows (expected integer number)", "VT100-terminal settings");
             txtRows.grabFocus();
@@ -110,7 +117,7 @@ public class SettingsDialog extends DialogBase {
 
         int columns;
         try {
-            columns = RadixUtils.getInstance().parseRadix(txtColumns.getText());
+            columns = RadixUtils.parseRadix(txtColumns.getText());
         } catch (NumberFormatException e) {
             dialogs.showError("Could not parse columns (expected integer number)", "VT100-terminal settings");
             txtColumns.grabFocus();

@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.debug.DebugProbe;
 import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -17,7 +16,7 @@ import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
 
 public class EmulatorEngine {
     public final AtomicInteger IP = new AtomicInteger();
-    public final DebugProbe debugger;
+    public final MachineDebugging debugger;
     boolean debugStopped;
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
@@ -48,10 +47,27 @@ public class EmulatorEngine {
         this.inputTape = Objects.requireNonNull(inputTape);
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
-        debugger = new DebugProbe("RASP", memory, new RaspDisassembler(memory));
-        debugger.register("PC", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
+        debugger = new MachineDebugging("RASP", new RaspDisassembler(memory));
         debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
-        debugger.register("ACC", 32, () -> Integer.toUnsignedLong(memory.read(0)), value -> memory.write(0, (int) value));
+        debugger.symbol("ACC", () -> memory.peek(0), text -> memory.write(0, parseWord(text)));
+        debugger.symbol("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()),
+                text -> inputTape.setSymbolAt(inputTape.getHeadPosition(), TapeSymbol.fromInt(parseWord(text))));
+        debugger.symbol("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)),
+                text -> outputTape.setSymbolAt(Math.max(0, outputTape.getHeadPosition() - 1), TapeSymbol.fromInt(parseWord(text))));
+        debugger.inspect("INPUT_POSITION", inputTape::getHeadPosition);
+        debugger.inspect("OUTPUT_POSITION", outputTape::getHeadPosition);
+        debugger.functions(java.util.Set.of("mem"), (name, args) -> memory.peek(MachineDebugging.location(args)));
+    }
+
+    private static int parseWord(String text) {
+        long value = Long.decode(text.trim());
+        if (value < Integer.MIN_VALUE || value > 0xffffffffL) throw new IllegalArgumentException("Value exceeds a RASP word");
+        return (int) value;
+    }
+
+    private static Object inspect(AbstractTapeContext tape, int at) {
+        TapeSymbol value = tape.getSymbolAt(at).orElse(TapeSymbol.EMPTY);
+        return value.type == TapeSymbol.Type.NUMBER ? value.number : value.string;
     }
 
     protected void reset(int location) {
@@ -66,21 +82,22 @@ public class EmulatorEngine {
 
     public CPU.RunState step() throws IOException {
         debugStopped = false;
-        if (!debugger.isActive()) return stepInstruction();
+        debugger.boundary();
         if (!debugger.begin(IP.get())) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;
         }
         boolean completed = false;
-        CPU.RunState result;
+        CPU.RunState result = CPU.RunState.STATE_STOPPED_BAD_INSTR;
         try {
             result = stepInstruction();
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            debugStopped = debugger.end(completed);
+            debugStopped = debugger.end(completed) && completed
+                    && result == CPU.RunState.STATE_STOPPED_BREAK;
         }
-        return debugStopped && completed ? CPU.RunState.STATE_STOPPED_BREAK : result;
+        return result;
     }
 
     private CPU.RunState stepInstruction() throws IOException {

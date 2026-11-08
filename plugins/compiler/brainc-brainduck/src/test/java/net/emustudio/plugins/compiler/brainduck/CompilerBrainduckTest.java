@@ -2,13 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.brainduck;
 
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,12 +36,12 @@ public class CompilerBrainduckTest {
     }
 
     @Test
-    public void testGetSourceFileExtensions() {
+    public void testGetSourceFileTypes() {
         CompilerBrainduck compiler = new CompilerBrainduck(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
-        List<FileExtension> extensions = compiler.getSourceFileExtensions();
-        assertNotNull(extensions);
-        assertFalse(extensions.isEmpty());
-        assertEquals("b", extensions.get(0).getExtension());
+        List<FileType> types = compiler.getSourceFileTypes();
+        assertNotNull(types);
+        assertFalse(types.isEmpty());
+        assertEquals(List.of("b"), types.get(0).getExtensions());
     }
 
     @Test
@@ -57,20 +56,7 @@ public class CompilerBrainduckTest {
         CompilerBrainduck compiler = new CompilerBrainduck(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
 
         List<CompilerMessage> messages = new ArrayList<>();
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-                messages.add(message);
-            }
-
-            @Override
-            public void onFinish() {
-            }
-        });
+        compiler.addCompilerListener(messages::add);
         compiler.initialize();
 
         File sourceFile = folder.newFile();
@@ -90,38 +76,20 @@ public class CompilerBrainduckTest {
         CompilerBrainduck compiler = new CompilerBrainduck(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
 
         List<CompilerMessage> messages = new ArrayList<>();
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-                messages.add(message);
-            }
-
-            @Override
-            public void onFinish() {
-            }
-        });
+        compiler.addCompilerListener(messages::add);
         compiler.initialize();
 
         compiler.compile(java.nio.file.Path.of("nonexistent-file.b"), Optional.empty());
 
         boolean hasError = messages.stream()
-                .anyMatch(m -> m.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR);
+                .anyMatch(m -> m.getType() == CompilerMessage.Type.ERROR);
         assertTrue("Expected compilation error for nonexistent file", hasError);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testInitializeWithInvalidMemoryCellType() throws Exception {
-        MemoryContext<Short> badMemory = createNiceMock(MemoryContext.class);
-        expect(badMemory.getCellTypeClass()).andReturn((Class) Short.class).anyTimes();
-        replay(badMemory);
-
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(badMemory).anyTimes();
+        expect(pool.getMemory(0, Byte.class)).andThrow(new ContextNotFoundException("Unexpected memory cell type")).anyTimes();
         replay(pool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -136,19 +104,6 @@ public class CompilerBrainduckTest {
     @Test
     public void testCompileWithDefaultOutputPath() throws Exception {
         CompilerBrainduck compiler = new CompilerBrainduck(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-            }
-
-            @Override
-            public void onFinish() {
-            }
-        });
         compiler.initialize();
 
         File sourceFile = folder.newFile("test.b");

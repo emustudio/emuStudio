@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
@@ -18,8 +19,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 @SuppressWarnings("unused")
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum ULA")
-public class DeviceImpl extends AbstractDevice {
+@PluginRoot(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "ZX Spectrum ULA",
+        description = "ULA (Uncommitted Logic Array) handles ZX Spectrum keyboard, video, and beeper I/O."
+)
+public class DeviceImpl extends AbstractPlugin implements Device {
 
     private final boolean guiSupported;
     private boolean guiIOset = false;
@@ -32,12 +37,12 @@ public class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
-        ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
+        ZxSpectrumBus bus = applicationApi.getContextPool().get(pluginID, ZxSpectrumBus.class);
         this.profile = bus.getProfile();
         // Bus exposes CPU frequency in kHz (forwarded from CPUContext); convert to Hz for the Beeper
         // sample-rate conversion math, and consult on every sample so a runtime clock change is
@@ -72,16 +77,6 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings(JFrame jFrame) {
-        // we don't have settings GUI
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
-    @Override
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
@@ -104,11 +99,6 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public boolean isGuiSupported() {
         return guiSupported;
-    }
-
-    @Override
-    public String getDescription() {
-        return "ULA (Uncommitted Logic Array) handles ZX Spectrum keyboard, video, and beeper I/O.";
     }
 
     @Override

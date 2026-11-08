@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.spaceinvaders;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.AbstractDevice;
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.audio.SamplePlayer;
@@ -19,9 +20,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Space Invaders display")
+@PluginRoot(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "Space Invaders display",
+        description = "Space Invaders framebuffer, controls, shift register, sampled sound, and raster interrupts."
+)
 @SuppressWarnings("unused")
-public final class DeviceImpl extends AbstractDevice implements SoundOutput {
+public final class DeviceImpl extends AbstractPlugin implements Device, SoundOutput {
     static final int SOUND_SAMPLE_RATE = 48_000;
     private static final System.Logger LOGGER = System.getLogger(DeviceImpl.class.getName());
     private final SamplePlayer<Sample> sound = new SamplePlayer<>(SOUND_SAMPLE_RATE);
@@ -39,25 +44,24 @@ public final class DeviceImpl extends AbstractDevice implements SoundOutput {
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
         sound.setVolumePercent(25);
         readSettings();
     }
 
     private void readSettings() {
-        scale = settings.getInt("scale", 2);
-        colorOverlay = settings.getBoolean("colorOverlay", true);
-        soundEnabled = settings.getBoolean("soundEnabled", guiSupported);
-        soundSamplesDirectory = Path.of(settings.getString("soundSamplesDirectory", "examples/space-invaders/sounds"));
+        scale = settings.getInt("scale").orElse(2);
+        colorOverlay = settings.getBoolean("colorOverlay").orElse(true);
+        soundEnabled = settings.getBoolean("soundEnabled").orElse(guiSupported);
+        soundSamplesDirectory = Path.of(settings.getString("soundSamplesDirectory").orElse("examples/space-invaders/sounds"));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        if (memory.getCellTypeClass() != Byte.class || memory.getSize() <= 0x3FFF) {
-            throw new PluginInitializationException(this, "Space Invaders requires byte memory through address 3FFFh");
+        cpu = applicationApi.getContextPool().get(pluginID, Context8080.class);
+        memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
+        if (memory.getSize() <= 0x3FFF) {
+            throw new PluginInitializationException("Space Invaders requires byte memory through address 3FFFh");
         }
         for (int port = SpaceInvadersHardware.INPUT_1_PORT; port <= SpaceInvadersHardware.SOUND_2_PORT; port++) {
             if (!cpu.attachDevice(port, hardware)) {
@@ -65,7 +69,7 @@ public final class DeviceImpl extends AbstractDevice implements SoundOutput {
                     cpu.detachDevice(cleanup);
                 }
                 attachedPorts = 0;
-                throw new PluginInitializationException(this,
+                throw new PluginInitializationException(
                         String.format("Space Invaders cannot attach to CPU port %02Xh", port));
             }
             attachedPorts++;
@@ -192,10 +196,5 @@ public final class DeviceImpl extends AbstractDevice implements SoundOutput {
     @Override
     public boolean isAutomationSupported() {
         return true;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Space Invaders framebuffer, controls, shift register, sampled sound, and raster interrupts.";
     }
 }

@@ -76,7 +76,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
             assertNull(submitted.get());
             assertTrue(onEdt(dialog::isDisplayable));
         }
-        verify(dialogs, times(3)).showError("Invalid address. Enter a value from 0 to 255.");
+        verify(dialogs, times(3)).showError("Invalid address. Enter a value from 0 to 255.", "Error");
     }
 
     @Test

@@ -4,10 +4,10 @@ package net.emustudio.plugins.device.mits88dcdd.gui;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.mits88dcdd.DiskSettings;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 import org.slf4j.Logger;
@@ -144,9 +144,8 @@ public class SettingsDialog extends DialogBase {
     }
 
     private int parseInt(JComponent component, String name, Supplier<String> text) {
-        RadixUtils radixUtils = RadixUtils.getInstance();
         try {
-            return radixUtils.parseRadix(text.get());
+            return RadixUtils.parseRadix(text.get());
         } catch (NumberFormatException e) {
             dialogs.showError(name + ": Invalid number format", "Save settings");
             component.grabFocus();
@@ -285,7 +284,7 @@ public class SettingsDialog extends DialogBase {
 
             dialogs.chooseFile(
                     "Open disk image", "Open", currentDirectory, false,
-                    new FileExtensionsFilter("Disk images", "dsk", "bin")
+                    List.of(new FileType("Disk images", "dsk", "bin"))
             ).ifPresent(path -> txtImageFile.setText(path.toString()));
         });
 

@@ -14,12 +14,12 @@ import java.util.Arrays;
 public final class MemoryImageLoader {
     private MemoryImageLoader() { }
 
-    public static FileLoader createLoader(Path path) {
-        return FileLoader.forPath(path).orElseGet(() -> FileLoader.forFormat(FileLoader.Format.BIN));
+    public static FileLoader.Format formatOf(Path path) {
+        return FileLoader.Format.fromPath(path).orElse(FileLoader.Format.BIN);
     }
 
-    public static boolean requiresLoadAddress(FileLoader loader) {
-        return loader.getFormat() == FileLoader.Format.BIN;
+    public static boolean requiresLoadAddress(FileLoader.Format format) {
+        return format == FileLoader.Format.BIN;
     }
 
     public static void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws IOException {
@@ -27,7 +27,7 @@ public final class MemoryImageLoader {
         try {
             memory.selectBank(bank.bank);
             if (bank.address < 0) throw new IllegalArgumentException("Negative load address");
-            createLoader(path).load(path, new FileLoader.Listener() {
+            FileLoader.load(path, formatOf(path), new FileLoader.Listener() {
                 private FileLoader.SpectrumHeader header;
 
                 @Override
@@ -63,7 +63,7 @@ public final class MemoryImageLoader {
                 private void write(int address, byte[] bytes) {
                     memory.write(address, NumberUtils.nativeBytesToBytes(bytes));
                 }
-            }, FileLoader.Options.fileOrder());
+            });
         } catch (IOException e) {
             memory.selectBank(oldBank);
             throw e;

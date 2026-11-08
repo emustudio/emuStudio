@@ -4,19 +4,21 @@ package net.emustudio.plugins.cpu.zilogZ80.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
+    private final ExecutionState execution;
     private final CpuImpl cpu;
     private final Context8080 context;
     private final FlagsModel flagModel1;
@@ -65,8 +67,9 @@ public class StatusPanel extends JPanel {
     private final JLabel lblFrequency = new JLabel("0.00 kHz");
     private final JSpinner spnFrequency;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, ExecutionState execution) {
         this.gui = gui;
+        this.execution = execution;
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
@@ -74,6 +77,7 @@ public class StatusPanel extends JPanel {
         this.spnFrequency = new JSpinner(new SpinnerNumberModel(context.getCPUFrequency(), 1, null, 100));
 
         initComponents();
+        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblFlags1.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
 
@@ -81,26 +85,22 @@ public class StatusPanel extends JPanel {
     }
 
     private void setupListeners() {
-        cpu.addCPUListener(new CPU.CPUListener() {
-
-            @Override
-            public void runStateChanged(CPU.RunState state) {
-                runState = state;
-            }
-
-            @Override
-            public void internalStateChanged() {
-                updateGUI();
-            }
-
+        PanelUpdater updater = new PanelUpdater();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
+            SwingUtilities.invokeLater(() -> {
+                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
+                spnFrequency.setEnabled(!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING);
+            });
         });
-        cpu.getFrequencyCalculator().addListener(
-                f -> SwingUtilities.invokeLater(() -> lblFrequency.setText(String.format("%.2f kHz", f)))
-        );
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                context.setCPUFrequency(i);
+                execution.mutate(() -> context.setCPUFrequency(i)).exceptionally(failure -> {
+                    SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
+                    return null;
+                });
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }
@@ -108,11 +108,11 @@ public class StatusPanel extends JPanel {
     }
 
     private String wordHex(int upper, int lower) {
-        return formatWordHexString(((upper << 8) | lower) & 0xFFFF);
+        return formatHex(((upper << 8) | lower) & 0xFFFF, 4);
     }
 
     private String byteHex(int what) {
-        return formatByteHexString(what);
+        return formatHex(what, 2);
     }
 
     public void updateGUI() {
@@ -166,12 +166,12 @@ public class StatusPanel extends JPanel {
             txtHL2.setText(wordHex(regH2, regL2));
             flagModel2.update(flags2);
 
-            txtSP.setText(formatWordHexString(sp));
-            txtPC.setText(formatWordHexString(pc));
-            txtIX.setText(formatWordHexString(ix));
-            txtIY.setText(formatWordHexString(iy));
-            txtI.setText(formatByteHexString(i));
-            txtR.setText(formatByteHexString(r));
+            txtSP.setText(formatHex(sp, 4));
+            txtPC.setText(formatHex(pc, 4));
+            txtIX.setText(formatHex(ix, 4));
+            txtIY.setText(formatHex(iy, 4));
+            txtI.setText(formatHex(i, 2));
+            txtR.setText(formatHex(r, 2));
 
             lblRunState.setText(state.toString());
             spnFrequency.setEnabled(state != CPU.RunState.STATE_RUNNING);
@@ -274,5 +274,37 @@ public class StatusPanel extends JPanel {
         field.setEditable(false);
         field.setFont(FONT_MONOSPACED);
         return field;
+    }
+
+    private final class PanelUpdater {
+        public void runStateChanged(CPU.RunState state) {
+            runState = state;
+            SwingUtilities.invokeLater(() -> lblRunState.setText(state.toString()));
+        }
+
+        public void internalStateChanged() {
+            updateGUI();
+        }
+
+
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }

@@ -2,15 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
+import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.memory.AbstractMemory;
+import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
@@ -27,10 +26,11 @@ import java.util.Optional;
 
 @PluginRoot(
         type = PLUGIN_TYPE.MEMORY,
-        title = "Byte-cell based operating memory"
+        title = "Byte-cell based operating memory",
+        description = "Operating memory suitable for most of modern CPUs. One memory cell is a byte."
 )
 @SuppressWarnings("unused")
-public class MemoryImpl extends AbstractMemory {
+public class MemoryImpl extends AbstractPlugin implements Memory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
@@ -41,22 +41,10 @@ public class MemoryImpl extends AbstractMemory {
         super(pluginID, applicationApi, settings);
 
         this.context = new MemoryContextImpl();
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        try {
-            ContextPool contextPool = applicationApi.getContextPool();
-            contextPool.register(pluginID, context, ByteMemoryContext.class);
-            contextPool.register(pluginID, context, MemoryContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register memory context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register memory. Please see log file for more details", getTitle()
-            );
-        }
-    }
-
-    @Override
-    public String getDescription() {
-        return "Operating memory suitable for most of modern CPUs. One memory cell is a byte.";
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        ContextPool contextPool = applicationApi.getContextPool();
+        contextPool.register(pluginID, context, ByteMemoryContext.class);
+        contextPool.register(pluginID, context, MemoryContext.class);
     }
 
     @Override
@@ -71,12 +59,12 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public void initialize() throws PluginInitializationException {
         try {
-            int banksCount = settings.getInt("banksCount", 1);
+            int banksCount = settings.getInt("banksCount").orElse(1);
             if (banksCount <= 0) {
                 LOGGER.warn("Banks count <= 0. Resetting to 1");
                 banksCount = 1;
             }
-            int bankCommon = settings.getInt("commonBoundary", 0);
+            int bankCommon = settings.getInt("commonBoundary").orElse(0);
             if (bankCommon < 0) {
                 LOGGER.warn("Common boundary < 0. Resetting to 0");
                 bankCommon = 0;
@@ -89,7 +77,7 @@ public class MemoryImpl extends AbstractMemory {
 
             context.init(memorySize, banksCount, bankCommon);
         } catch (NumberFormatException e) {
-            throw new PluginInitializationException(this, "Could not parse settings: Invalid number format ", e);
+            throw new PluginInitializationException("Could not parse settings: Invalid number format ", e);
         }
 
         loadImages();
@@ -97,14 +85,17 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     private int readMemorySize() {
-        String key = settings.contains("size") ? "size" : "memorySize";
-        if (!settings.contains(key)) return MemoryContextImpl.DEFAULT_MEM_SIZE;
-        try {
-            return settings.getString(key).map(MemoryImpl::parseSizeString)
-                    .orElse(MemoryContextImpl.DEFAULT_MEM_SIZE);
-        } catch (ClassCastException e) {
-            return settings.getInt(key, MemoryContextImpl.DEFAULT_MEM_SIZE);
+        for (String key : List.of("size", "memorySize")) {
+            Optional<String> size = settings.getString(key);
+            if (size.isPresent()) {
+                return parseSizeString(size.get());
+            }
+            Optional<Integer> intSize = settings.getInt(key);
+            if (intSize.isPresent()) {
+                return intSize.get();
+            }
         }
+        return MemoryContextImpl.DEFAULT_MEM_SIZE;
     }
 
     static int parseSizeString(String size) {
@@ -148,7 +139,7 @@ public class MemoryImpl extends AbstractMemory {
                 }
             }
         } catch (NumberFormatException e) {
-            throw new PluginInitializationException(this, "Could not parse ROM range", e);
+            throw new PluginInitializationException("Could not parse ROM range", e);
         }
     }
 
@@ -186,17 +177,17 @@ public class MemoryImpl extends AbstractMemory {
     public void saveCoreSettings(int banksCount, int commonBoundary, List<String> imageFullNames,
                                  List<Integer> imageAddresses, List<Integer> imageBanks) {
 
-        settings.setInt("banksCount", banksCount);
-        settings.setInt("commonBoundary", commonBoundary);
+        settings.set("banksCount", banksCount);
+        settings.set("commonBoundary", commonBoundary);
 
-        for (int i = 0; settings.contains("imageName" + i); i++) {
-            settings.remove("imageName" + i);
-            settings.remove("imageAddress" + i);
+        for (int i = 0; settings.getString("imageName" + i).isPresent(); i++) {
+            settings.set("imageName" + i, null);
+            settings.set("imageAddress" + i, null);
         }
         for (int i = 0; i < imageFullNames.size(); i++) {
-            settings.setString("imageName" + i, imageFullNames.get(i));
-            settings.setInt("imageAddress" + i, imageAddresses.get(i));
-            settings.setInt("imageBank" + i, imageBanks.get(i));
+            settings.set("imageName" + i, imageFullNames.get(i));
+            settings.set("imageAddress" + i, imageAddresses.get(i));
+            settings.set("imageBank" + i, imageBanks.get(i));
         }
     }
 
@@ -206,15 +197,15 @@ public class MemoryImpl extends AbstractMemory {
      * directly from memory context.
      */
     public void saveROMRanges() {
-        for (int i = 0; settings.contains("ROMfrom" + i); i++) {
-            settings.remove("ROMfrom" + i);
-            settings.remove("ROMto" + i);
+        for (int i = 0; settings.getInt("ROMfrom" + i).isPresent(); i++) {
+            settings.set("ROMfrom" + i, null);
+            settings.set("ROMto" + i, null);
         }
 
         int i = 0;
         for (ByteMemoryContext.AddressRange range : context.getReadOnly()) {
-            settings.setInt("ROMfrom" + i, range.getStartAddress());
-            settings.setInt("ROMto" + i, range.getStopAddress());
+            settings.set("ROMfrom" + i, range.getStartAddress());
+            settings.set("ROMto" + i, range.getStopAddress());
             i++;
         }
     }
@@ -233,10 +224,5 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return !guiNotSupported;
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 }

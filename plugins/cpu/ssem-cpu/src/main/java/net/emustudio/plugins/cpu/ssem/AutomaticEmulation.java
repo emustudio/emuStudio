@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
@@ -20,39 +21,26 @@ class AutomaticEmulation {
     private final static String SSEM_FILE_NAME = "ssem.out";
 
     private final MemoryContext<Byte> memory;
-    private final CPU cpu;
     private final EmulatorEngine engine;
-    private final CPU.CPUListener listener;
+    private final ExecutionState.Subscription subscription;
 
     private volatile boolean waitingForStop = false;
 
-    AutomaticEmulation(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
-        this.memory = Objects.requireNonNull(memory);
+    AutomaticEmulation(ExecutionState execution, EmulatorEngine engine, MemoryContext<Byte> memory) {
+        this.memory = MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
         this.engine = Objects.requireNonNull(engine);
-        this.cpu = Objects.requireNonNull(cpu);
-
-        listener = new CPU.CPUListener() {
-            @Override
-            public void runStateChanged(CPU.RunState runState) {
-                if (runState == CPU.RunState.STATE_RUNNING) {
-                    waitingForStop = true;
-                } else if (waitingForStop) { // runState != STATE_RUNNING
-                    waitingForStop = false;
-                    snapshot();
-                }
+        subscription = Objects.requireNonNull(execution).subscribe(state -> {
+            if (state.runState() == CPU.RunState.STATE_RUNNING) {
+                waitingForStop = true;
+            } else if (!state.isBusy() && waitingForStop) {
+                waitingForStop = false;
+                snapshot();
             }
-
-            @Override
-            public void internalStateChanged() {
-
-            }
-        };
-
-        cpu.addCPUListener(listener);
+        });
     }
 
     void destroy() {
-        cpu.removeCPUListener(listener);
+        subscription.close();
     }
 
     private void snapshot() {
@@ -80,7 +68,7 @@ class AutomaticEmulation {
                 writer.println("   L L L L L 5 6 7 8 9 0 1 2 I I I 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1");
                 for (int i = 0; i < memorySnapshot.length; i++) {
                     int number = NumberUtils.readInt(memorySnapshot[i], NumberUtils.Strategy.BIG_ENDIAN);
-                    String binary = RadixUtils.formatBinaryString(number, 32, 0, true);
+                    String binary = RadixUtils.formatBinary(number, 32);
                     writer.println(String.format("%02d %s", i, binary.replace("0", "  ").replace("1", "* ")));
                 }
             }

@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -22,11 +23,13 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class SettingsDialog extends DialogBase {
     private final GUI gui;
+    private final ExecutionState execution;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final MemoryContextImpl context;
@@ -42,9 +45,11 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtCommonBoundary = new JTextField("0x0000");
 
     public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
-                          PluginSettings settings, Dialogs dialogs, GUI gui) {
+                          PluginSettings settings, Dialogs dialogs, GUI gui,
+                          ExecutionState execution) {
         super(parent, "Memory Settings", true);
         this.gui = gui;
+        this.execution = Objects.requireNonNull(execution);
 
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -66,8 +71,8 @@ public class SettingsDialog extends DialogBase {
 
     private void loadSettings(PluginSettings settings) {
         try {
-            txtBanksCount.setText(String.valueOf(settings.getInt("banksCount", 0)));
-            txtCommonBoundary.setText(String.format("0x%04X", settings.getInt("commonBoundary", 0)));
+            txtBanksCount.setText(String.valueOf(settings.getInt("banksCount").orElse(0)));
+            txtCommonBoundary.setText(String.format("0x%04X", settings.getInt("commonBoundary").orElse(0)));
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format while loading settings: ", "Load settings");
         }
@@ -125,7 +130,8 @@ public class SettingsDialog extends DialogBase {
         panelImages.add(scrollImages, "grow");
         panelImages.add(btnPanel, "top");
 
-        JButton btnSave = gui.buttonMakePrimary(gui.button("Save", this::btnSaveActionPerformed));
+        JButton btnSave = gui.buttonMakePrimary(gui.button("Save"));
+        btnSave.addActionListener(this::btnSaveActionPerformed);
 
         JPanel content = gui.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
         content.add(panelBanks, "grow");
@@ -142,12 +148,7 @@ public class SettingsDialog extends DialogBase {
 
             if (from.isPresent() && to.isPresent()) {
                 RangeTree.Range range = new RangeTree.Range(from.get(), to.get());
-                context.setReadOnly(range);
-
-                tblROM.revalidate();
-                tblROM.repaint();
-                tblMem.revalidate();
-                tblMem.repaint();
+                mutate(() -> context.setReadOnly(range));
             }
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format!", "Add ROM range");
@@ -157,14 +158,13 @@ public class SettingsDialog extends DialogBase {
     }
 
     private void btnRemoveRangeActionPerformed(java.awt.event.ActionEvent evt) {
-        RadixUtils radixUtils = RadixUtils.getInstance();
         int i = tblROM.getSelectedRow();
 
         Optional<RangeTree.Range> rangeOpt = Optional.empty();
         try {
             if (i >= 0) {
-                int from = radixUtils.parseRadix((String) romModel.getValueAt(i, 0));
-                int to = radixUtils.parseRadix((String) romModel.getValueAt(i, 1));
+                int from = RadixUtils.parseRadix((String) romModel.getValueAt(i, 0));
+                int to = RadixUtils.parseRadix((String) romModel.getValueAt(i, 1));
                 rangeOpt = Optional.of(new RangeTree.Range(from, to));
             } else {
                 Optional<Integer> from = dialogs.readInteger("Enter FROM address:", "Remove ROM range", 0);
@@ -176,11 +176,7 @@ public class SettingsDialog extends DialogBase {
             }
 
             rangeOpt.ifPresent(range -> {
-                context.setReadWrite(range);
-                tblROM.revalidate();
-                tblROM.repaint();
-                tblMem.revalidate();
-                tblMem.repaint();
+                mutate(() -> context.setReadWrite(range));
             });
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format", "Remove ROM range");
@@ -189,15 +185,25 @@ public class SettingsDialog extends DialogBase {
 
     private int getPositiveIntegerOrThrow(String name, JTextField textField) {
         try {
-            int number = RadixUtils.getInstance().parseRadix(textField.getText());
+            int number = RadixUtils.parseRadix(textField.getText());
             if (number < 0) {
                 throw new NumberFormatException();
             }
             return number;
         } catch (NumberFormatException e) {
-            dialogs.showError(name + " has to be positive integer !");
+            dialogs.showError(name + " has to be positive integer !", "Save settings");
             throw e;
         }
+    }
+
+    private void mutate(Runnable operation) {
+        execution.update(operation).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+            if (failure != null) dialogs.showError(failure.getMessage(), "Memory settings");
+            tblROM.revalidate();
+            tblROM.repaint();
+            tblMem.revalidate();
+            tblMem.repaint();
+        }));
     }
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
@@ -216,13 +222,13 @@ public class SettingsDialog extends DialogBase {
             dialogs.showError("Could not save settings: invalid number format", "Save settings");
         } catch (CannotUpdateSettingException ex) {
             LOGGER.error("Could not save memory settings", ex);
-            dialogs.showError("Could not save settings. Please see log file for more details");
+            dialogs.showError("Could not save settings. Please see log file for more details", "Save settings");
         }
     }
 
     private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {
         dialogs.chooseFile(
-                "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
+                "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false, IMAGE_FILE_TYPES
         ).ifPresent(path -> {
             boolean isHex = path.toString().toLowerCase().endsWith(".hex");
             boolean hasBanks = context.getBanksCount() > 1;
@@ -252,10 +258,10 @@ public class SettingsDialog extends DialogBase {
         if (index == -1) {
             dialogs.showError("Image has to be selected", "Remove image");
         } else {
-            Dialogs.DialogAnswer answer = dialogs.ask(
+            Dialogs.Answer answer = dialogs.ask(
                     "Are you sure to remove selected image from the list?", "Remove image"
             );
-            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+            if (answer == Dialogs.Answer.YES) {
                 imagesModel.removeImageAt(index);
             }
         }
@@ -267,17 +273,18 @@ public class SettingsDialog extends DialogBase {
             dialogs.showError("Image has to be selected", "Load image now");
         } else {
             Path imagePath = Path.of(imagesModel.getFileNameAtRow(index));
-            try {
-
-                memory.loadImage(
-                        imagePath, imagesModel.getImageAddressAtRow(index),
-                        imagesModel.getImageBankAtRow(index)
-                );
-                tblMem.getTableModel().fireTableDataChanged();
-            } catch (Exception e) {
-                dialogs.showError("Could not load image: " + e.getMessage() + ". Please see log file for details.");
-                LOGGER.error("Could not load memory image {}", imagePath, e);
-            }
+            int address = imagesModel.getImageAddressAtRow(index);
+            int bank = imagesModel.getImageBankAtRow(index);
+            execution.update(() -> {
+                try { memory.loadImage(imagePath, address, bank); }
+                catch (Exception failure) { throw new CompletionException(failure); }
+            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                if (failure == null) tblMem.getTableModel().fireTableDataChanged();
+                else {
+                    dialogs.showError("Could not load image: " + failure.getMessage() + ". Please see log file for details.", "Load image now");
+                    LOGGER.error("Could not load memory image {}", imagePath, failure);
+                }
+            }));
         }
     }
 }

@@ -3,8 +3,8 @@
 package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.AbstractSwingTest;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -29,58 +29,58 @@ public class DialogsGuiTest extends AbstractSwingTest {
         dialogs.setParent(showFrame(onEdt(() -> new JFrame("parent"))));
 
         FutureTask<Void> errorTask = startDialogCall(() -> {
-            dialogs.showError("Broken");
+            dialogs.showError("Broken", "Error");
             return null;
         });
         closeDialog(waitForWindow(JDialog.class, dialog -> "Error".equals(dialog.getTitle())));
         errorTask.get(5, TimeUnit.SECONDS);
 
         FutureTask<Void> infoTask = startDialogCall(() -> {
-            dialogs.showInfo("FYI");
+            dialogs.showInfo("FYI", "Information");
             return null;
         });
         closeDialog(waitForWindow(JDialog.class, dialog -> "Information".equals(dialog.getTitle())));
         infoTask.get(5, TimeUnit.SECONDS);
 
-        FutureTask<Dialogs.DialogAnswer> yesTask = startDialogCall(() -> dialogs.ask("Proceed?", "Confirm"));
+        FutureTask<Dialogs.Answer> yesTask = startDialogCall(() -> dialogs.ask("Proceed?", "Confirm"));
         answerOptionPane(waitForWindow(JDialog.class, dialog -> "Confirm".equals(dialog.getTitle())), JOptionPane.YES_OPTION);
-        assertEquals(Dialogs.DialogAnswer.ANSWER_YES, yesTask.get(5, TimeUnit.SECONDS));
+        assertEquals(Dialogs.Answer.YES, yesTask.get(5, TimeUnit.SECONDS));
 
-        FutureTask<Dialogs.DialogAnswer> noTask = startDialogCall(() -> dialogs.ask("Proceed?"));
+        FutureTask<Dialogs.Answer> noTask = startDialogCall(() -> dialogs.ask("Proceed?", "Confirmation"));
         answerOptionPane(waitForWindow(JDialog.class, dialog -> "Confirmation".equals(dialog.getTitle())), JOptionPane.NO_OPTION);
-        assertEquals(Dialogs.DialogAnswer.ANSWER_NO, noTask.get(5, TimeUnit.SECONDS));
+        assertEquals(Dialogs.Answer.NO, noTask.get(5, TimeUnit.SECONDS));
 
-        FutureTask<Dialogs.DialogAnswer> cancelTask = startDialogCall(() -> dialogs.ask("Proceed?", "Cancel"));
+        FutureTask<Dialogs.Answer> cancelTask = startDialogCall(() -> dialogs.ask("Proceed?", "Cancel"));
         answerOptionPane(waitForWindow(JDialog.class, dialog -> "Cancel".equals(dialog.getTitle())), JOptionPane.CANCEL_OPTION);
-        assertEquals(Dialogs.DialogAnswer.ANSWER_CANCEL, cancelTask.get(5, TimeUnit.SECONDS));
+        assertEquals(Dialogs.Answer.CANCEL, cancelTask.get(5, TimeUnit.SECONDS));
     }
 
     @Test
     public void inputAndChooserDialogsReturnParsedValuesAndSelections() throws Exception {
         DialogsGui dialogs = new DialogsGui(new EmuStudioGui());
         Path baseDirectory = temporaryFolder.newFolder("chooser").toPath();
-        FileExtensionsFilter filter = new FileExtensionsFilter("Text", "txt");
+        FileType filter = new FileType("Text", "txt");
 
-        FutureTask<Optional<String>> stringTask = startDialogCall(() -> dialogs.readString("Name?"));
-        JDialog stringDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
+        FutureTask<Optional<String>> stringTask = startDialogCall(() -> dialogs.readString("Name?", "Name", null));
+        JDialog stringDialog = waitForWindow(JDialog.class, dialog -> "Name".equals(dialog.getTitle()));
         setText(findComponent(stringDialog, JTextField.class, field -> true), "emu");
         triggerButton(findButton(stringDialog, "OK"));
         assertEquals(Optional.of("emu"), stringTask.get(5, TimeUnit.SECONDS));
 
-        FutureTask<Optional<Integer>> integerTask = startDialogCall(() -> dialogs.readInteger("Value?"));
-        JDialog integerDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
+        FutureTask<Optional<Integer>> integerTask = startDialogCall(() -> dialogs.readInteger("Value?", "Value", null));
+        JDialog integerDialog = waitForWindow(JDialog.class, dialog -> "Value".equals(dialog.getTitle()));
         setText(findComponent(integerDialog, JTextField.class, field -> true), "0x10");
         triggerButton(findButton(integerDialog, "OK"));
         assertEquals(Optional.of(16), integerTask.get(5, TimeUnit.SECONDS));
 
-        FutureTask<Optional<Double>> doubleTask = startDialogCall(() -> dialogs.readDouble("Rate?"));
-        JDialog doubleDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
+        FutureTask<Optional<Double>> doubleTask = startDialogCall(() -> dialogs.readDouble("Rate?", "Rate", null));
+        JDialog doubleDialog = waitForWindow(JDialog.class, dialog -> "Rate".equals(dialog.getTitle()));
         setText(findComponent(doubleDialog, JTextField.class, field -> true), "12.5");
         triggerButton(findButton(doubleDialog, "OK"));
         assertEquals(12.5, doubleTask.get(5, TimeUnit.SECONDS).orElseThrow(AssertionError::new), 0.0);
 
         FutureTask<Optional<Path>> saveTask = startDialogCall(() ->
-                dialogs.chooseFile("Save file", "Save", baseDirectory, true, filter)
+                dialogs.chooseFile("Save file", "Save", baseDirectory, true, Collections.singletonList(filter))
         );
         approveFileChooser(
                 waitForWindow(JDialog.class, dialog -> "Save file".equals(dialog.getTitle())),
@@ -98,7 +98,7 @@ public class DialogsGuiTest extends AbstractSwingTest {
         assertEquals(Optional.of(baseDirectory.resolve("already.txt")), listTask.get(5, TimeUnit.SECONDS));
 
         FutureTask<Optional<Path>> cancelTask = startDialogCall(() ->
-                dialogs.chooseFile("Open file", "Open", false, Collections.singletonList(filter))
+                dialogs.chooseFile("Open file", "Open", null, false, Collections.singletonList(filter))
         );
         cancelFileChooser(waitForWindow(JDialog.class, dialog -> "Open file".equals(dialog.getTitle())));
         assertFalse(cancelTask.get(5, TimeUnit.SECONDS).isPresent());
@@ -113,7 +113,7 @@ public class DialogsGuiTest extends AbstractSwingTest {
         assertEquals(Optional.of(baseDirectory), directoryTask.get(5, TimeUnit.SECONDS));
 
         FutureTask<Optional<Path>> defaultDirectoryTask = startDialogCall(() ->
-                dialogs.chooseDirectory("Default directory", "Choose")
+                dialogs.chooseDirectory("Default directory", "Choose", null)
         );
         cancelFileChooser(waitForWindow(JDialog.class, dialog -> "Default directory".equals(dialog.getTitle())));
         assertFalse(defaultDirectoryTask.get(5, TimeUnit.SECONDS).isPresent());

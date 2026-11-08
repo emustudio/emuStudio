@@ -35,13 +35,13 @@ final class SettingsDialog extends DialogBase {
         this.gui = gui;
         this.onSave = onSave;
 
-        spnScale.setValue(Math.max(1, settings.getInt("scale", 2)));
-        chkColorOverlay.setSelected(settings.getBoolean("colorOverlay", true));
+        spnScale.setValue(Math.max(1, settings.getInt("scale").orElse(2)));
+        chkColorOverlay.setSelected(settings.getBoolean("colorOverlay").orElse(true));
         chkColorOverlay.setToolTipText("<html>Simulates the arcade screen overlay: red at the top, green at the bottom,"
                 + "<br>and white in the middle. Disable for a black-and-white display.</html>");
-        boolean guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        chkSoundEnabled.setSelected(settings.getBoolean("soundEnabled", guiSupported));
-        txtSamplesDirectory.setText(settings.getString("soundSamplesDirectory", "examples/space-invaders/sounds"));
+        boolean guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        chkSoundEnabled.setSelected(settings.getBoolean("soundEnabled").orElse(guiSupported));
+        txtSamplesDirectory.setText(settings.getString("soundSamplesDirectory").orElse("examples/space-invaders/sounds"));
         buildContent();
     }
 
@@ -107,10 +107,10 @@ final class SettingsDialog extends DialogBase {
             return;
         }
         try {
-            settings.setInt("scale", ((Number) spnScale.getValue()).intValue());
-            settings.setBoolean("colorOverlay", chkColorOverlay.isSelected());
-            settings.setBoolean("soundEnabled", chkSoundEnabled.isSelected());
-            settings.setString("soundSamplesDirectory", directory);
+            settings.set("scale", ((Number) spnScale.getValue()).intValue());
+            settings.set("colorOverlay", chkColorOverlay.isSelected());
+            settings.set("soundEnabled", chkSoundEnabled.isSelected());
+            settings.set("soundSamplesDirectory", directory);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save Space Invaders settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "Save settings");

@@ -4,11 +4,9 @@ package net.emustudio.plugins.compiler.asZ80.e2e;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -31,17 +29,16 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected AssemblerZ80 compiler;
     protected MemoryStub<Byte> memoryStub;
-    protected AnnotationEngine annotations;
+    protected MemoryAnnotations annotations;
     private int errorCount;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        annotations = new AnnotationEngine();
+        annotations = new MemoryAnnotations();
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(contextPool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -51,23 +48,12 @@ public abstract class AbstractCompilerTest {
 
         errorCount = 0;
         compiler = new AssemblerZ80(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        compiler.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
+        compiler.addCompilerListener(message -> {
+            if (message.getType() != CompilerMessage.Type.INFO) {
+                System.out.println(message);
             }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-                if (message.getMessageType() != CompilerMessage.MessageType.TYPE_INFO) {
-                    System.out.println(message);
-                }
-                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
-                    errorCount++;
-                }
-            }
-
-            @Override
-            public void onFinish() {
+            if (message.getType() == CompilerMessage.Type.ERROR) {
+                errorCount++;
             }
         });
         compiler.initialize();

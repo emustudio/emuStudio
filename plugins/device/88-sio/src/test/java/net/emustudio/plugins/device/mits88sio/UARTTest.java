@@ -395,7 +395,7 @@ public class UARTTest {
         UART uart = new UART(context, settings);
         uart.setDevice(device);
 
-        // Without @PluginContext annotation, should return toString of device
+        // Device ID is the device toString()
         assertNotNull(uart.getDeviceId());
     }
 

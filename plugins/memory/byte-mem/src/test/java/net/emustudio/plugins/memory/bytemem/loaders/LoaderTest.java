@@ -33,10 +33,10 @@ public class LoaderTest {
 
     @Test
     public void testMemoryAddressAwareness() {
-        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(Path.of("file.hex"))));
-        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(Path.of("file.tap"))));
-        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(Path.of("file.tzx"))));
-        assertTrue(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.createLoader(Path.of("file.bin"))));
+        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.formatOf(Path.of("file.hex"))));
+        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.formatOf(Path.of("file.tap"))));
+        assertFalse(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.formatOf(Path.of("file.tzx"))));
+        assertTrue(MemoryImageLoader.requiresLoadAddress(MemoryImageLoader.formatOf(Path.of("file.bin"))));
     }
 
     @Test
@@ -48,6 +48,6 @@ public class LoaderTest {
     }
 
     private void assertCreateLoader(String fileName, FileLoader.Format format) {
-        assertEquals(format, MemoryImageLoader.createLoader(Path.of(fileName)).getFormat());
+        assertEquals(format, MemoryImageLoader.formatOf(Path.of(fileName)));
     }
 }

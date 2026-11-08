@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.settings.BasicSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class SioUnitSettings {
     private final static String KEY_INPUT_INTERRUPT_VECTOR = "inputInterruptVector";
     private final static String KEY_OUTPUT_INTERRUPT_VECTOR = "outputInterruptVector";
 
-    private final BasicSettings settings;
+    private final PluginSettings settings;
     private final List<SettingsObserver> observers = new CopyOnWriteArrayList<>();
 
     // for performance
@@ -45,11 +45,11 @@ public class SioUnitSettings {
     private volatile List<Integer> statusPorts;
     private volatile List<Integer> dataPorts;
 
-    public SioUnitSettings(BasicSettings settings) {
+    public SioUnitSettings(PluginSettings settings) {
         this.settings = Objects.requireNonNull(settings);
-        this.isClearInputBit8 = settings.getBoolean(KEY_CLEAR_INPUT_BIT8, false);
-        this.isClearOutputBit8 = settings.getBoolean(KEY_CLEAR_OUTPUT_BIT8, false);
-        this.inputToUpperCase = settings.getBoolean(KEY_INPUT_TO_UPPER_CASE, false);
+        this.isClearInputBit8 = settings.getBoolean(KEY_CLEAR_INPUT_BIT8).orElse(false);
+        this.isClearOutputBit8 = settings.getBoolean(KEY_CLEAR_OUTPUT_BIT8).orElse(false);
+        this.inputToUpperCase = settings.getBoolean(KEY_INPUT_TO_UPPER_CASE).orElse(false);
         this.mapDeleteChar = settings.getString(KEY_MAP_DELETE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
         this.mapBackspaceChar = settings.getString(KEY_MAP_BACKSPACE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
         this.interruptsSupported = settings.getBoolean(KEY_INTERRUPTS_SUPPORTED).orElse(true);
@@ -65,19 +65,18 @@ public class SioUnitSettings {
             this.outputInterruptVector = 7;
         }
 
-        RadixUtils r = RadixUtils.getInstance();
         this.statusPorts = Arrays
-                .stream(settings.getString(KEY_STATUS_PORTS, "").split(","))
+                .stream(settings.getString(KEY_STATUS_PORTS).orElse("").split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(r::parseRadix)
+                .map(RadixUtils::parseRadix)
                 .collect(Collectors.toList());
 
         this.dataPorts = Arrays
-                .stream(settings.getString(KEY_DATA_PORTS, "").split(","))
+                .stream(settings.getString(KEY_DATA_PORTS).orElse("").split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(r::parseRadix)
+                .map(RadixUtils::parseRadix)
                 .collect(Collectors.toList());
     }
 
@@ -95,7 +94,7 @@ public class SioUnitSettings {
 
     public void setClearInputBit8(boolean value) {
         this.isClearInputBit8 = value;
-        settings.setBoolean(KEY_CLEAR_INPUT_BIT8, value);
+        settings.set(KEY_CLEAR_INPUT_BIT8, value);
         notifySettingsChanged();
     }
 
@@ -105,7 +104,7 @@ public class SioUnitSettings {
 
     public void setClearOutputBit8(boolean value) {
         this.isClearOutputBit8 = value;
-        settings.setBoolean(KEY_CLEAR_OUTPUT_BIT8, value);
+        settings.set(KEY_CLEAR_OUTPUT_BIT8, value);
         notifySettingsChanged();
     }
 
@@ -115,7 +114,7 @@ public class SioUnitSettings {
 
     public void setInputToUpperCase(boolean value) {
         this.inputToUpperCase = value;
-        settings.setBoolean(KEY_INPUT_TO_UPPER_CASE, value);
+        settings.set(KEY_INPUT_TO_UPPER_CASE, value);
         notifySettingsChanged();
     }
 
@@ -125,7 +124,7 @@ public class SioUnitSettings {
 
     public void setMapDeleteChar(MAP_CHAR value) {
         this.mapDeleteChar = value;
-        settings.setString(KEY_MAP_DELETE_CHAR, value.name());
+        settings.set(KEY_MAP_DELETE_CHAR, value.name());
         notifySettingsChanged();
     }
 
@@ -135,7 +134,7 @@ public class SioUnitSettings {
 
     public void setMapBackspaceChar(MAP_CHAR value) {
         this.mapBackspaceChar = value;
-        settings.setString(KEY_MAP_BACKSPACE_CHAR, value.name());
+        settings.set(KEY_MAP_BACKSPACE_CHAR, value.name());
         notifySettingsChanged();
     }
 
@@ -145,7 +144,7 @@ public class SioUnitSettings {
 
     public void setStatusPorts(List<Integer> value) {
         this.statusPorts = value;
-        settings.setString(KEY_STATUS_PORTS, value.stream()
+        settings.set(KEY_STATUS_PORTS, value.stream()
                 .map(i -> "0x" + Integer.toHexString(i))
                 .reduce((s, s2) -> s + "," + s2)
                 .orElse(""));
@@ -158,7 +157,7 @@ public class SioUnitSettings {
 
     public void setDataPorts(List<Integer> value) {
         this.dataPorts = value;
-        settings.setString(KEY_DATA_PORTS, value.stream()
+        settings.set(KEY_DATA_PORTS, value.stream()
                 .map(i -> "0x" + Integer.toHexString(i))
                 .reduce((s, s2) -> s + "," + s2)
                 .orElse(""));
@@ -171,7 +170,7 @@ public class SioUnitSettings {
 
     public void setInterruptsSupported(boolean interruptsSupported) {
         this.interruptsSupported = interruptsSupported;
-        settings.setBoolean(KEY_INTERRUPTS_SUPPORTED, interruptsSupported);
+        settings.set(KEY_INTERRUPTS_SUPPORTED, interruptsSupported);
         notifySettingsChanged();
     }
 
@@ -184,7 +183,7 @@ public class SioUnitSettings {
             throw new IllegalArgumentException("Allowed value for interrupt vector is 0-7");
         }
         this.inputInterruptVector = vector;
-        settings.setInt(KEY_INPUT_INTERRUPT_VECTOR, vector);
+        settings.set(KEY_INPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();
     }
 
@@ -197,7 +196,7 @@ public class SioUnitSettings {
             throw new IllegalArgumentException("Allowed value for interrupt vector is 0-7");
         }
         this.outputInterruptVector = vector;
-        settings.setInt(KEY_OUTPUT_INTERRUPT_VECTOR, vector);
+        settings.set(KEY_OUTPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();
     }
 

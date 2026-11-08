@@ -5,18 +5,22 @@ package net.emustudio.plugins.cpu.ssem.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
+
+import net.emustudio.emulib.runtime.ExecutionState;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
+import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
     private final GUI gui;
+    private final ExecutionState execution;
     private final EmulatorEngine engine;
     private final MemoryContext<Byte> memory;
 
@@ -38,13 +42,19 @@ public class CpuPanel extends JPanel {
     private final JTextField txtMLine = readOnlyField("0");
     private final JTextField txtDecMLine = readOnlyField("0");
 
-    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui) {
+    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, ExecutionState execution) {
         this.gui = gui;
+        this.execution = execution;
         this.engine = Objects.requireNonNull(engine);
-        this.memory = Objects.requireNonNull(memory);
+        this.memory = net.emustudio.plugins.cpu.ssem.MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
 
         initComponents();
-        cpu.addCPUListener(new Updater());
+        add(engine.debugger.editor(execution::update), BorderLayout.SOUTH);
+        Updater updater = new Updater();
+        observeSnapshots(snapshot -> {
+            updater.runStateChanged(snapshot.runState());
+            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
+        });
         lblSpeed.setText(String.format("%.2f", EmulatorEngine.INSTRUCTIONS_PER_SECOND));
     }
 
@@ -94,14 +104,10 @@ public class CpuPanel extends JPanel {
         add(content, BorderLayout.CENTER);
     }
 
-    private final class Updater implements CPU.CPUListener {
-
-        @Override
+    private final class Updater {
         public void runStateChanged(CPU.RunState rs) {
             SwingUtilities.invokeLater(() -> lblRunState.setText(rs.toString().toUpperCase()));
         }
-
-        @Override
         public void internalStateChanged() {
             final int acc = engine.Acc.get();
             final int ci = engine.CI.get();
@@ -157,7 +163,7 @@ public class CpuPanel extends JPanel {
         }
 
         private String formatBinary(int number, int length) {
-            return formatBinaryString(number, length, 4, true);
+            return RadixUtils.formatBinary(number, length, 4);
         }
     }
 
@@ -167,5 +173,24 @@ public class CpuPanel extends JPanel {
         field.setFont(FONT_MONOSPACED);
         field.setHorizontalAlignment(JTextField.RIGHT);
         return field;
+    }
+
+    private Consumer<ExecutionState.Snapshot> snapshotListener;
+    private ExecutionState.Subscription subscription;
+
+    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
+        snapshotListener = listener;
+        subscription = execution.subscribe(listener);
+    }
+
+    @Override public void addNotify() {
+        super.addNotify();
+        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+    }
+
+    @Override public void removeNotify() {
+        if (subscription != null) subscription.close();
+        subscription = null;
+        super.removeNotify();
     }
 }

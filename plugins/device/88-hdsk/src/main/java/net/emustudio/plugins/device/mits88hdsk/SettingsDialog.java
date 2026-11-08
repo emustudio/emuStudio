@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88hdsk;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +18,7 @@ import javax.swing.event.DocumentListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
@@ -25,6 +26,7 @@ final class SettingsDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
     private static final ImageIcon ICON_ON = GUI.loadIcon(StandardIcons.ICON_DISK_MOUNTED, SettingsDialog.class);
     private static final ImageIcon ICON_OFF = GUI.loadIcon(StandardIcons.ICON_DISK_EMPTY, SettingsDialog.class);
+    private static final FileType DISK_IMAGES = new FileType("Disk images", "dsk", "bin", "img");
     private final PluginSettings settings;
     private final Dialogs dialogs;
     private final GUI gui;
@@ -52,14 +54,14 @@ final class SettingsDialog extends DialogBase {
         this.gui = gui;
         this.onSave = onSave;
         this.runningMits = runningMits;
-        controllerType.setSelectedItem(settings.getString("controllerType", "SIMH"));
+        controllerType.setSelectedItem(settings.getString("controllerType").orElse("SIMH"));
         displayedMits = isMits();
         for (int i = 0; i < drives.length; i++) {
             DriveSettingsUI drive = new DriveSettingsUI();
             drive.image = settings.getString("image" + i).orElse("");
-            drive.sectorSize = String.valueOf(settings.getInt("sectorSize" + i, HardDisk.DEFAULT_SECTOR_SIZE));
-            drive.sectorsPerTrack = String.valueOf(settings.getInt("sectorsPerTrack" + i, HardDisk.DEFAULT_SECTORS_PER_TRACK));
-            drive.readOnly = settings.getBoolean("readOnly" + i, false);
+            drive.sectorSize = String.valueOf(settings.getInt("sectorSize" + i).orElse(HardDisk.DEFAULT_SECTOR_SIZE));
+            drive.sectorsPerTrack = String.valueOf(settings.getInt("sectorsPerTrack" + i).orElse(HardDisk.DEFAULT_SECTORS_PER_TRACK));
+            drive.readOnly = settings.getBoolean("readOnly" + i).orElse(false);
             if (displayedMits == runningMits) {
                 if (controller != null) {
                     drive.image = controller.imagePath(i).map(Path::toString).orElse("");
@@ -235,8 +237,7 @@ final class SettingsDialog extends DialogBase {
         try {
             Path directory = image.getText().isBlank() ? Path.of(System.getProperty("user.dir"))
                     : Path.of(image.getText().trim()).toAbsolutePath().getParent();
-            dialogs.chooseFile("Open disk image", "Open", directory, false,
-                    new FileExtensionsFilter("Disk images", "dsk", "bin", "img"))
+            dialogs.chooseFile("Open disk image", "Open", directory, false, List.of(DISK_IMAGES))
                     .ifPresent(path -> image.setText(path.toString()));
         } catch (IllegalArgumentException e) {
             dialogs.showError("Invalid image path.", "Open disk image");
@@ -248,8 +249,7 @@ final class SettingsDialog extends DialogBase {
         try {
             Path directory = image.getText().isBlank() ? Path.of(System.getProperty("user.dir"))
                     : Path.of(image.getText().trim()).toAbsolutePath().getParent();
-            dialogs.chooseFile("Create disk image", "Create", directory, true,
-                    new FileExtensionsFilter("Disk images", "dsk", "bin", "img"))
+            dialogs.chooseFile("Create disk image", "Create", directory, true, List.of(DISK_IMAGES))
                     .ifPresent(path -> {
                         try {
                             if (isMits()) { MhdskController.createImage(path); }
@@ -273,8 +273,8 @@ final class SettingsDialog extends DialogBase {
             try {
                 DriveSettingsUI drive = drives[i];
                 if (!displayedMits) {
-                    sizes[i] = RadixUtils.getInstance().parseRadix(drive.sectorSize);
-                    sectors[i] = RadixUtils.getInstance().parseRadix(drive.sectorsPerTrack);
+                    sizes[i] = RadixUtils.parseRadix(drive.sectorSize);
+                    sectors[i] = RadixUtils.parseRadix(drive.sectorsPerTrack);
                     new HardDisk().configure(sizes[i], sectors[i]);
                 }
                 if (!drive.image.isBlank()) {
@@ -300,15 +300,14 @@ final class SettingsDialog extends DialogBase {
         try {
             for (int i = 0; i < driveCount(); i++) {
                 DriveSettingsUI drive = drives[i];
-                if (drive.image.isBlank()) { settings.remove("image" + i); }
-                else { settings.setString("image" + i, drive.image); }
-                if (displayedMits) { settings.setBoolean("readOnly" + i, drive.readOnly); }
+                settings.set("image" + i, drive.image.isBlank() ? null : drive.image);
+                if (displayedMits) { settings.set("readOnly" + i, drive.readOnly); }
                 else {
-                    settings.setInt("sectorSize" + i, sizes[i]);
-                    settings.setInt("sectorsPerTrack" + i, sectors[i]);
+                    settings.set("sectorSize" + i, sizes[i]);
+                    settings.set("sectorsPerTrack" + i, sectors[i]);
                 }
             }
-            settings.setString("controllerType", displayedMits ? "MITS" : "SIMH");
+            settings.set("controllerType", displayedMits ? "MITS" : "SIMH");
             onSave.run();
             if (displayedMits != runningMits) {
                 dialogs.showInfo("Reopen the computer to use the selected controller. "

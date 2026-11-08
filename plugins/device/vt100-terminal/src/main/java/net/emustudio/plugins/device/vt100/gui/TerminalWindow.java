@@ -90,14 +90,13 @@ public class TerminalWindow extends DialogBase {
 
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {
         dialogs
-                .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
+                .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes", "")
                 .ifPresent(asciiCodes -> {
                     StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
 
-                    RadixUtils radixUtils = RadixUtils.getInstance();
                     try {
                         while (tokenizer.hasMoreTokens()) {
-                            int ascii = radixUtils.parseRadix(tokenizer.nextToken());
+                            int ascii = RadixUtils.parseRadix(tokenizer.nextToken());
                             keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
                         }
                     } catch (NumberFormatException ex) {

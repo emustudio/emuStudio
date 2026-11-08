@@ -33,11 +33,13 @@ public class JumpAction extends AbstractAction {
             try {
                 dialogs.readInteger("Memory address:", "Jump to address", 0)
                         .ifPresent(address -> {
-                            if (!cpu.setInstructionLocation(address)) {
-                                dialogs.showError("Invalid memory address (please check memory size)");
-                            } else {
-                                refreshDebugTable.run();
-                            }
+                            computer.getExecution().orElseThrow().update(() -> {
+                                if (!cpu.setInstructionLocation(address))
+                                    throw new IllegalArgumentException("Invalid memory address (please check memory size)");
+                            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+                                if (failure != null) dialogs.showError(failure.getMessage(), "Jump to address");
+                                else refreshDebugTable.run();
+                            }));
                         });
             } catch (NumberFormatException e) {
                 dialogs.showError("Invalid address format", "Jump to address");

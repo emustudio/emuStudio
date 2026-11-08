@@ -9,6 +9,8 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -23,9 +25,9 @@ public class DeviceImplTest {
 
     private void checkUiSupport(boolean noGui) throws Exception {
         PluginSettings settings = createStrictMock(PluginSettings.class);
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(noGui);
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(noGui));
         if (!noGui) {
-            expect(settings.getBoolean("showGuiAtStartup", false)).andReturn(false);
+            expect(settings.getBoolean("showGuiAtStartup")).andReturn(Optional.of(false));
         }
         Context8080 cpu = createStrictMock(Context8080.class);
         expect(cpu.attachDevice(eq(0x12), anyObject())).andReturn(true);
@@ -34,7 +36,7 @@ public class DeviceImplTest {
         cpu.detachDevice(0x13);
         ContextPool pool = createStrictMock(ContextPool.class);
         pool.register(eq(0L), anyObject(PaperTapeContext.class), eq(PaperTapeContext.class));
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
         ApplicationApi api = createStrictMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).times(2);
         replay(settings, cpu, pool, api);

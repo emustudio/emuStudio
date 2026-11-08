@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.Optional;
 
 import static net.emustudio.plugins.device.vt100.TerminalSettings.DEFAULT_COLUMNS;
 import static net.emustudio.plugins.device.vt100.TerminalSettings.DEFAULT_ROWS;
@@ -33,9 +34,9 @@ public class DisplayImplTest {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         replay(dialogs);
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
-        expect(pluginSettings.getBoolean(eq(PluginSettings.EMUSTUDIO_NO_GUI), eq(false))).andReturn(true).anyTimes();
-        expect(pluginSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();
-        expect(pluginSettings.getInt(anyString(), anyInt())).andAnswer(() -> (Integer) getCurrentArguments()[1]).anyTimes();
+        expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).anyTimes();
+        expect(pluginSettings.getString(anyString())).andReturn(Optional.empty()).anyTimes();
+        expect(pluginSettings.getInt(anyString())).andReturn(Optional.empty()).anyTimes();
         replay(pluginSettings);
 
         TerminalSettings settings = new TerminalSettings(pluginSettings, dialogs);

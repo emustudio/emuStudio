@@ -10,6 +10,8 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertThrows;
 
@@ -17,20 +19,20 @@ public class DeviceImplTest {
     @SuppressWarnings("unchecked")
     private DeviceImpl device(Context8080 cpu) throws Exception {
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
-        expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
         expect(memory.getSize()).andReturn(65536).anyTimes();
         replay(memory);
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getCPUContext(0, Context8080.class)).andReturn(cpu);
-        expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memory);
+        expect(pool.get(0, Context8080.class)).andReturn(cpu);
+        expect(pool.getMemory(0, Byte.class)).andReturn(memory);
         replay(pool);
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getContextPool()).andReturn(pool).anyTimes();
         replay(api);
         PluginSettings settings = createNiceMock(PluginSettings.class);
-        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true);
-        expect(settings.getString("soundSamplesDirectory", "examples/space-invaders/sounds"))
-                .andReturn("examples/space-invaders/sounds");
+        expect(settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true));
+        expect(settings.getBoolean(anyString())).andStubReturn(Optional.empty());
+        expect(settings.getInt(anyString())).andStubReturn(Optional.empty());
+        expect(settings.getString(anyString())).andStubReturn(Optional.empty());
         replay(settings);
         return new DeviceImpl(0, api, settings);
     }

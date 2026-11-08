@@ -19,7 +19,6 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -36,7 +35,7 @@ import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
 
-    private final GUI gui;
+    private final EmuStudioGui gui;
     private final Dialogs dialogs;
     private final TabbedEditor editor;
     private final String computerTitle;
@@ -74,9 +73,7 @@ public class StudioFrame extends JFrame {
         this.editor.configure(appSettings);
         this.editor.setActiveEditorChanged(this::updateWindowTitle);
 
-        EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
-                cpu, computer.getMemory().orElse(null), computer.getDevices(), computer.getDebugger().orElse(null)
-        )).orElse(null);
+        EmulationController emulationController = computer.getExecution().orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(
                 this, computer, debugTableModel, dialogs, emulationController, memoryContext,
@@ -95,7 +92,7 @@ public class StudioFrame extends JFrame {
         this.closeTabAction = new CloseTabAction(editor, this::updateWindowTitle);
         this.findNextAction = new FindNextAction(editor, dialogs, editorPanel.getFindAction());
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
-        this.exitAction = new ExitAction(this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
+        this.exitAction = new ExitAction(this, this::confirmSaveBeforeExit, emulationController, computer, this::formWindowClosing);
 
         this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings, gui);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);
@@ -172,40 +169,40 @@ public class StudioFrame extends JFrame {
         JMenu mnuHelp = new JMenu();
 
         mnuFile.setText("File");
-        mnuFile.add(gui.menuItem(editorPanel.getNewFileAction()));
-        mnuFile.add(gui.menuItem(editorPanel.getOpenFileAction()));
+        mnuFile.add(new JMenuItem(editorPanel.getNewFileAction()));
+        mnuFile.add(new JMenuItem(editorPanel.getOpenFileAction()));
         mnuFile.add(closeTabAction);
         mnuFile.addSeparator();
-        mnuFile.add(gui.menuItem(editorPanel.getSaveFileAction()));
+        mnuFile.add(new JMenuItem(editorPanel.getSaveFileAction()));
         mnuFile.add(saveFileAsAction);
         mnuFile.addSeparator();
-        mnuFile.add(gui.menuItem(exitAction));
+        mnuFile.add(new JMenuItem(exitAction));
         mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
-        mnuEdit.add(gui.menuItem(RTextArea.getAction(RTextArea.SELECT_ALL_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
+        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.SELECT_ALL_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(gui.menuItem(editorPanel.getFindAction()));
-        mnuEdit.add(gui.menuItem(editorPanel.getReplaceAction()));
-        mnuEdit.add(gui.menuItem(findNextAction));
-        mnuEdit.add(gui.menuItem(findPreviousAction));
+        mnuEdit.add(new JMenuItem(editorPanel.getFindAction()));
+        mnuEdit.add(new JMenuItem(editorPanel.getReplaceAction()));
+        mnuEdit.add(new JMenuItem(findNextAction));
+        mnuEdit.add(new JMenuItem(findPreviousAction));
         editor.extendEditingMenu(mnuEdit);
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
-        mnuProject.add(gui.menuItem(editorPanel.getCompileAction()));
-        mnuProject.add(gui.menuItem(viewComputerAction));
-        mnuProject.add(gui.menuItem(compilerSettingsAction));
+        mnuProject.add(new JMenuItem(editorPanel.getCompileAction()));
+        mnuProject.add(new JMenuItem(viewComputerAction));
+        mnuProject.add(new JMenuItem(compilerSettingsAction));
         mainMenuBar.add(mnuProject);
 
         mnuHelp.setText("Help");
-        mnuHelp.add(gui.menuItem(aboutAction));
+        mnuHelp.add(new JMenuItem(aboutAction));
         mainMenuBar.add(mnuHelp);
         return mainMenuBar;
     }
@@ -248,7 +245,7 @@ public class StudioFrame extends JFrame {
             editor.setPosition(position);
             editor.grabFocus();
         } catch (InvalidPathException e) {
-            dialogs.showError("Could not open source file: " + position.fileName);
+            dialogs.showError("Could not open source file: " + position.fileName, "Error");
         }
     }
 }

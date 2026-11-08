@@ -7,10 +7,9 @@ import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryD
 import net.emustudio.application.debugger.InstructionIndex;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.*;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 
 import javax.swing.event.TableModelEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,7 +34,8 @@ public class DebugTableModelImpl extends DebugTableModel {
         this.ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
         rowLocations = null;
         indexedView = null;
-        setDefaultColumns();
+        List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns();
+        setDebuggerColumns(cpuColumns.isEmpty() ? defaultColumns(cpu.getDisassembler()) : cpuColumns);
     }
 
     /** Optional logical instruction view; no analysis is performed here. */
@@ -226,7 +226,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         if (column.getClassType().isInstance(value)) {
             try {
                 column.setValue(location, value);
-            } catch (CannotSetDebuggerValueException ignored) {
+            } catch (IllegalArgumentException ignored) {
             }
         }
     }
@@ -261,14 +261,10 @@ public class DebugTableModelImpl extends DebugTableModel {
         fireTableDataChanged();
     }
 
-    @Override
-    public final void setDefaultColumns() {
-        if (cpu == null) return;
-        
-        Disassembler dis = cpu.getDisassembler();
-        setDebuggerColumns(Arrays.asList(
-                new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
-        ));
+    static List<DebuggerColumn<?>> defaultColumns(Disassembler disassembler) {
+        return List.of(
+                DebuggerColumn.address("%04X"), DebuggerColumn.mnemo(disassembler), DebuggerColumn.opcode(disassembler)
+        );
     }
 
     @Override

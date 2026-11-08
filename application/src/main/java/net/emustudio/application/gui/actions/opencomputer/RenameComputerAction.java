@@ -39,7 +39,7 @@ public class RenameComputerAction extends AbstractAction {
         Optional
                 .ofNullable(lstConfig.getSelectedValue())
                 .ifPresentOrElse(computer -> dialogs
-                        .readString("Enter new computer name:", "Rename computer")
+                        .readString("Enter new computer name:", "Rename computer", null)
                         .ifPresent(newName -> {
                             if (newName.trim().isEmpty()) {
                                 dialogs.showError("Computer name must be non-empty", "Rename computer");
@@ -49,7 +49,7 @@ public class RenameComputerAction extends AbstractAction {
                                     update.run();
                                 } catch (CannotUpdateSettingException | IOException ex) {
                                     LOGGER.error("Could not rename computer", ex);
-                                    dialogs.showError("Computer could not be renamed. Please see log file for details.");
+                                    dialogs.showError("Computer could not be renamed. Please see log file for details.", "Error");
                                 }
                             }
                         }), () -> dialogs.showError("A computer has to be selected!", "Rename computer"));

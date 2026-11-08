@@ -4,13 +4,14 @@ package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -57,8 +58,19 @@ public class MemoryImplTest {
     }
 
     @Test
-    public void testGetSizeReturnsNumberOfCells() {
-        assertEquals(MemoryContextImpl.NUMBER_OF_CELLS, memory.getSize());
+    public void testRegisteredContextSizeIsNumberOfCells() {
+        Capture<MemoryContext> context = newCapture();
+        ContextPool contextPool = createMock(ContextPool.class);
+        contextPool.register(eq(0L), capture(context), same(MemoryContext.class));
+        expectLastCall().once();
+        replay(contextPool);
+
+        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        replay(applicationApi);
+
+        new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        assertEquals(MemoryContextImpl.NUMBER_OF_CELLS, context.getValue().getSize());
     }
 
     @Test
@@ -89,8 +101,7 @@ public class MemoryImplTest {
     @Test
     public void testShowSettingsWithGuiNotSupportedDoesNothing() {
         PluginSettings mockSettings = createNiceMock(PluginSettings.class);
-        expect(mockSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).anyTimes();
-        expect(mockSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        expect(mockSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI)).andReturn(Optional.of(true)).anyTimes();
         replay(mockSettings);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
@@ -104,11 +115,11 @@ public class MemoryImplTest {
         mem.showSettings(null); // should not throw or create GUI
     }
 
-    @Test
-    public void testConstructorHandlesInvalidContextException() throws Exception {
+    @Test(expected = IllegalArgumentException.class)
+    public void testConstructorPropagatesInvalidContext() {
         ContextPool contextPool = createMock(ContextPool.class);
         contextPool.register(eq(0L), anyObject(), same(MemoryContext.class));
-        expectLastCall().andThrow(new InvalidContextException("test error"));
+        expectLastCall().andThrow(new IllegalArgumentException("test error"));
         replay(contextPool);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -119,16 +130,14 @@ public class MemoryImplTest {
         expect(applicationApi.getDialogs()).andReturn(dialogs).anyTimes();
         replay(applicationApi);
 
-        // Should not throw - error is caught and logged
-        MemoryImpl mem = new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        assertNotNull(mem);
+        new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
     }
 
-    @Test
-    public void testConstructorHandlesContextAlreadyRegisteredException() throws Exception {
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorPropagatesAlreadyRegisteredContext() {
         ContextPool contextPool = createMock(ContextPool.class);
         contextPool.register(eq(0L), anyObject(), same(MemoryContext.class));
-        expectLastCall().andThrow(new ContextAlreadyRegisteredException());
+        expectLastCall().andThrow(new IllegalStateException("already registered"));
         replay(contextPool);
 
         Dialogs dialogs = createNiceMock(Dialogs.class);
@@ -139,8 +148,6 @@ public class MemoryImplTest {
         expect(applicationApi.getDialogs()).andReturn(dialogs).anyTimes();
         replay(applicationApi);
 
-        // Should not throw - error is caught and logged
-        MemoryImpl mem = new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        assertNotNull(mem);
+        new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
     }
 }

@@ -15,6 +15,8 @@ import static org.junit.Assert.*;
 
 public class TapePlaybackImplTest {
     private static final int TEST_CPU_FREQUENCY_KHZ = 3500;
+    private static final int ROM_ZERO_BIT_TSTATES = 855;
+    private static final int ROM_ONE_BIT_TSTATES = 1710;
 
     private TapePlaybackImpl playback;
     private DeviceContext<Byte> lineIn;
@@ -50,6 +52,13 @@ public class TapePlaybackImplTest {
         }
         playThread.join(5000);
         playback.passedCycles(1);
+    }
+
+    /**
+     * Schedules bytes with ROM timing (two pulses per bit), without pilot and sync pulses.
+     */
+    private void romBytes(byte... data) {
+        playback.onPureData(ROM_ZERO_BIT_TSTATES, ROM_ONE_BIT_TSTATES, 8, data);
     }
 
     private Thread startPlaybackAsync() throws InterruptedException {
@@ -115,7 +124,7 @@ public class TapePlaybackImplTest {
     @Test
     public void testPulseOnlyPlaybackAddsClosingEdgeAtFileEnd() throws InterruptedException {
         playback.onFileStart();
-        playback.onPulseSequence(new int[]{500});
+        playback.onPulses(new int[]{500});
 
         drainPulses(100, 100_000);
 
@@ -169,9 +178,11 @@ public class TapePlaybackImplTest {
     public void testTurboPauseUsesConfiguredCpuFrequency() {
         playback = new TapePlaybackImpl(lineIn, () -> 4000);
         long before = getCurrentTstates();
-        // Single-byte turbo block, no pilot/data pulses worth checking, only the trailing pause.
-        // Pulse counts: 0 pilot pulses + sync1 + sync2 + 8 bits * 2 pulses = 18 schedule entries.
-        playback.onTurboSpeedData(100, 200, 300, 400, 800, 0, 8, 5, new byte[]{0x00});
+        // Single-byte turbo block (as decoded by TapeListener): 0 pilot pulses + sync1 + sync2,
+        // 8 bits * 2 pulses, then the trailing pause.
+        playback.onPulses(new int[]{200, 300});
+        playback.onPureData(400, 800, 8, new byte[]{0x00});
+        playback.onPause(5);
         long after = getCurrentTstates();
         // 0 pilot + 200 + 300 + 8*2*400 (zero bits) + 5 ms * 4000 kHz = 6_900 + 20_000 = 26_900
         assertEquals(before + 200 + 300 + 8 * 2 * 400 + 5 * 4000, after);
@@ -181,7 +192,8 @@ public class TapePlaybackImplTest {
     public void testPureDataPauseUsesConfiguredCpuFrequency() {
         playback = new TapePlaybackImpl(lineIn, () -> 7000);
         long before = getCurrentTstates();
-        playback.onPureData(400, 800, 8, 3, new byte[]{0x00}); // all zeros -> 16 pulses of 400
+        playback.onPureData(400, 800, 8, new byte[]{0x00}); // all zeros -> 16 pulses of 400
+        playback.onPause(3);
         long after = getCurrentTstates();
         assertEquals(before + 8 * 2 * 400 + 3 * 7000, after);
     }
@@ -190,7 +202,8 @@ public class TapePlaybackImplTest {
     public void testDirectRecordingPauseUsesConfiguredCpuFrequency() {
         playback = new TapePlaybackImpl(lineIn, () -> 7000);
         long before = getCurrentTstates();
-        playback.onDirectRecording(2, 4, 8, new byte[]{(byte) 0x00});
+        playback.onDirectRecording(2, 8, new byte[]{(byte) 0x00});
+        playback.onPause(4);
         long after = getCurrentTstates();
         // 8 samples of 2 T-states + 4 ms * 7000 kHz
         assertEquals(before + 8 * 2 + 4 * 7000, after);
@@ -202,7 +215,7 @@ public class TapePlaybackImplTest {
         // a single passedCycles() call. All edges must fire (regression: a previous version only
         // drained one entry per callback, breaking TZX turbo blocks).
         playback.onFileStart();
-        playback.onBlockData(new byte[]{(byte) 0xFF, 0x00, (byte) 0xA5});
+        romBytes((byte) 0xFF, (byte) 0x00, (byte) 0xA5);
 
         Thread playThread = startPlaybackAsync();
         playback.passedCycles(Integer.MAX_VALUE);
@@ -237,7 +250,7 @@ public class TapePlaybackImplTest {
     public void testPulsesContainBothZerosAndOnes() throws InterruptedException {
         // Schedule multiple pulses that alternate 0/1
         playback.onFileStart();
-        playback.onBlockFlag(0x00); // 16 data pulses
+        romBytes((byte) 0x00); // 16 data pulses
 
         drainPulses(100, 100_000);
 
@@ -250,10 +263,10 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnBlockDataSchedulesTwoPulsesPerBit() throws InterruptedException {
+    public void testRomTimedByteSchedulesTwoPulsesPerBit() throws InterruptedException {
         // 1 byte = 8 bits, each bit produces 2 pulses = 16 pulses per byte
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockData(new byte[]{(byte) 0xFF}); // 16 pulses
+        romBytes((byte) 0xFF); // 16 pulses
 
         drainPulses(100, 100_000);
 
@@ -262,45 +275,44 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnBlockChecksumSchedulesPulsesAndSync3() throws InterruptedException {
-        playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockChecksum((byte) 0x00); // 16 pulses (1 byte) + 1 SYNC3 pulse
+    public void testStandardDataUsesRomTiming() {
+        long before = getCurrentTstates();
+        playback.onStandardData(new byte[]{(byte) 0xFF, 0x00}); // data flag (all ones) + checksum (all zeros)
+        long after = getCurrentTstates();
 
-        drainPulses(100, 100_000);
-
-        // 1 (PAUSE) + 16 (checksum byte) + 1 (SYNC3) + EOF closing edge = 19 pulses
-        assertEquals(19, writtenData.size());
+        // data pilot + SYNC1 + SYNC2 + flag + checksum + SYNC3
+        assertEquals(before + 3223 * 2168 + 667 + 735 + 16 * 1710 + 16 * 855 + 954, after);
     }
 
     @Test
-    public void testOnHeaderStartSchedulesCorrectPulseCount() throws InterruptedException {
+    public void testHeaderStandardDataSchedulesCorrectPulseCount() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onHeaderStart(); // 8063 leader + SYNC1 + SYNC2 = 8065 pulses
+        // 8063 leader + SYNC1 + SYNC2 + 2 bytes * 16 + SYNC3 = 8098 pulses
+        playback.onStandardData(new byte[]{0x00, 0x00});
 
-        // Need 8066 pulse-firing calls + ~2334 dead calls (7M / 3000) = ~10400 total
         drainPulses(11000, 3000);
 
-        // 1 (PAUSE) + 8065 (header pilot + syncs) + EOF closing edge = 8067
-        assertEquals(8067, writtenData.size());
+        // 1 (PAUSE) + 8098 + EOF closing edge = 8100
+        assertEquals(8100, writtenData.size());
     }
 
     @Test
-    public void testOnDataStartSchedulesCorrectPulseCount() throws InterruptedException {
+    public void testDataStandardDataSchedulesCorrectPulseCount() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onDataStart(); // 3223 leader + SYNC1 + SYNC2 = 3225 pulses
+        // 3223 leader + SYNC1 + SYNC2 + 5 bytes * 16 + SYNC3 = 3306 pulses
+        playback.onStandardData(new byte[]{(byte) 0xFF, 0x01, 0x02, 0x03, (byte) 0xFF});
 
-        // Need 3226 pulse-firing calls + ~1750 dead calls (7M / 4000) = ~4976 total
         drainPulses(6000, 4000);
 
-        // 1 (PAUSE) + 3225 (data pilot + syncs) + EOF closing edge = 3227
-        assertEquals(3227, writtenData.size());
+        // 1 (PAUSE) + 3306 + EOF closing edge = 3308
+        assertEquals(3308, writtenData.size());
     }
 
     @Test
     public void testOnFileStartResetsState() throws InterruptedException {
         // Schedule some pulses
         playback.onFileStart();
-        playback.onBlockFlag(0x00);
+        romBytes((byte) 0x00);
 
         // Reset by calling onFileStart again
         playback.onFileStart();
@@ -321,7 +333,9 @@ public class TapePlaybackImplTest {
     @Test
     public void testTurboSpeedDataCompletesWhenCyclesJumpPastWholeBlock() throws InterruptedException {
         playback.onFileStart();
-        playback.onTurboSpeedData(100, 200, 300, 400, 800, 2, 8, 1, new byte[]{(byte) 0xA5});
+        playback.onPulses(new int[]{100, 100, 200, 300}); // 2 pilot pulses + sync1 + sync2
+        playback.onPureData(400, 800, 8, new byte[]{(byte) 0xA5});
+        playback.onPause(1);
 
         Thread playThread = startPlaybackAsync();
 
@@ -336,23 +350,8 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnProgramDoesNotThrowWithoutGui() {
-        playback.onProgram("test", 100, 10, 50);
-    }
-
-    @Test
-    public void testOnNumberArrayDoesNotThrowWithoutGui() {
-        playback.onNumberArray("test", 100, 'A');
-    }
-
-    @Test
-    public void testOnStringArrayDoesNotThrowWithoutGui() {
-        playback.onStringArray("test", 100, 'B');
-    }
-
-    @Test
-    public void testOnMemoryBlockDoesNotThrowWithoutGui() {
-        playback.onMemoryBlock("test", 100, 32768);
+    public void testOnInfoDoesNotThrowWithoutGui() {
+        playback.onInfo("PROGRAM", "test (start=10, length=50)");
     }
 
     @Test
@@ -363,7 +362,7 @@ public class TapePlaybackImplTest {
     @Test
     public void testPlaybackReportsProgressPercentage() throws InterruptedException {
         playback.onFileStart();
-        playback.onBlockFlag(0x00);
+        romBytes((byte) 0x00);
 
         Thread playThread = startPlaybackAsync();
 
@@ -382,7 +381,7 @@ public class TapePlaybackImplTest {
     @Test
     public void testUnloadResetsPlaybackProgress() throws InterruptedException {
         playback.onFileStart();
-        playback.onBlockFlag(0x00);
+        romBytes((byte) 0x00);
 
         Thread playThread = startPlaybackAsync();
 
@@ -401,9 +400,9 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnBlockDataWithEmptyArray() throws InterruptedException {
+    public void testRomTimedBytesWithEmptyArray() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockData(new byte[0]); // 0 pulses
+        romBytes(); // 0 pulses
 
         drainPulses(100, 100_000);
 
@@ -415,7 +414,7 @@ public class TapePlaybackImplTest {
     public void testZeroBitPulseCount() throws InterruptedException {
         // 0x00 = all zero bits, each zero bit uses DATA_PULSE_ZERO_TSTATES = 855
         playback.onFileStart();
-        playback.onBlockData(new byte[]{0x00});
+        romBytes((byte) 0x00);
 
         drainPulses(100, 100_000);
 
@@ -426,7 +425,7 @@ public class TapePlaybackImplTest {
     public void testOneBitPulseCount() throws InterruptedException {
         // 0xFF = all one bits, each one bit uses DATA_PULSE_ONE_TSTATES = 1710
         playback.onFileStart();
-        playback.onBlockData(new byte[]{(byte) 0xFF});
+        romBytes((byte) 0xFF);
 
         drainPulses(100, 100_000);
 
@@ -436,33 +435,12 @@ public class TapePlaybackImplTest {
     @Test
     public void testMultipleDataBytes() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockData(new byte[]{0x01, 0x02, 0x03}); // 3 bytes * 16 pulses = 48 pulses
+        romBytes((byte) 0x01, (byte) 0x02, (byte) 0x03); // 3 bytes * 16 pulses = 48 pulses
 
         drainPulses(200, 100_000);
 
         // 1 (PAUSE) + 48 (3 bytes) + EOF closing edge (=1) = 50
         assertEquals(50, writtenData.size());
-    }
-
-    @Test
-    public void testOnBlockFlagSchedulesSixteenPulses() throws InterruptedException {
-        playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockFlag(0x00); // 1 byte = 16 pulses
-
-        drainPulses(100, 100_000);
-
-        // 1 (PAUSE) + 16 (flag byte) + EOF closing edge (=1) = 18
-        assertEquals(18, writtenData.size());
-    }
-
-    @Test
-    public void testOnBlockFlagWithAllOnes() throws InterruptedException {
-        playback.onFileStart(); // 1 PAUSE pulse
-        playback.onBlockFlag(0xFF); // 1 byte = 16 pulses
-
-        drainPulses(100, 100_000);
-
-        assertEquals(18, writtenData.size());
     }
 
     @Test
@@ -484,8 +462,8 @@ public class TapePlaybackImplTest {
         playback.onFileStart(); // first pulse is 0 (pulseUp=false)
         playback.onSetSignalLevel(1); // pulseUp=true
 
-        // Schedule two more pulses via block flag — first should be 1 (high), second 0 (low)
-        playback.onBlockFlag(0x00); // 8 zero bits = 16 pulses
+        // Schedule more pulses — first should be 1 (high), second 0 (low)
+        romBytes((byte) 0x00); // 8 zero bits = 16 pulses
 
         drainPulses(100, 100_000);
         // Pulse at index 0 = PAUSE (value 0, since pulseUp was false at onFileStart)
@@ -496,9 +474,9 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnPureToneSchedulesCorrectPulseCount() throws InterruptedException {
+    public void testPureToneSchedulesCorrectPulseCount() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onPureTone(1000, 5); // 5 pulses of 1000 T-states
+        playback.onPulses(new int[]{1000, 1000, 1000, 1000, 1000}); // 5 pulses of 1000 T-states
 
         drainPulses(100, 100_000);
         // 1 (PAUSE) + 5 (pure tone) + EOF closing edge = 7
@@ -506,9 +484,9 @@ public class TapePlaybackImplTest {
     }
 
     @Test
-    public void testOnPulseSequenceSchedulesCorrectPulseCount() throws InterruptedException {
+    public void testOnPulsesSchedulesCorrectPulseCount() throws InterruptedException {
         playback.onFileStart(); // 1 PAUSE pulse
-        playback.onPulseSequence(new int[]{500, 600, 700}); // 3 pulses
+        playback.onPulses(new int[]{500, 600, 700}); // 3 pulses
 
         drainPulses(100, 100_000);
         // 1 (PAUSE) + 3 (pulse sequence) + EOF closing edge = 5
@@ -530,7 +508,7 @@ public class TapePlaybackImplTest {
         RecordingLineIn spectrumBus = new RecordingLineIn();
         playback = new TapePlaybackImpl(spectrumBus, () -> 1);
         playback.onFileStart();
-        playback.onBlockData(new byte[]{(byte) 0xFF}); // final closing edge drives line high
+        romBytes((byte) 0xFF); // final closing edge drives line high
         long totalTstates = getCurrentTstates();
 
         Thread playThread = startPlaybackAsync();
@@ -551,7 +529,7 @@ public class TapePlaybackImplTest {
     public void testEarLineNotReclearedWhenAlreadyZero() throws InterruptedException {
         // If the closing edge already left the line low, no extra write must be emitted.
         playback.onFileStart();
-        playback.onPulseSequence(new int[]{500}); // pause(0) + pulse(1) + closing(0)
+        playback.onPulses(new int[]{500}); // pause(0) + pulse(1) + closing(0)
         drainPulses(100, 100_000);
 
         assertEquals(3, writtenData.size());

@@ -15,16 +15,16 @@ final class EditorState {
     EditorState(AppSettings settings) {
         this.settings = settings;
         if (settings != null) {
-            try { bookmarks.load(new StringReader(settings.getString("editorBookmarks", ""))); }
+            try { bookmarks.load(new StringReader(settings.getString("editorBookmarks").orElse(""))); }
             catch (IOException e) { throw new UncheckedIOException(e); }
         }
     }
-    boolean flag(String name, boolean fallback) { return settings == null ? fallback : settings.getBoolean("editor" + name, fallback); }
-    void setFlag(String name, boolean value) { if (settings != null) settings.setBoolean("editor" + name, value); }
-    int number(String name, int fallback) { return settings == null ? fallback : settings.getInt("editor" + name, fallback); }
-    void setNumber(String name, int value) { if (settings != null) settings.setInt("editor" + name, value); }
-    String text(String name, String fallback) { return settings == null ? fallback : settings.getString("editor" + name, fallback); }
-    void setText(String name, String value) { if (settings != null) settings.setString("editor" + name, value); }
+    boolean flag(String name, boolean fallback) { return settings == null ? fallback : settings.getBoolean("editor" + name).orElse(fallback); }
+    void setFlag(String name, boolean value) { if (settings != null) settings.set("editor" + name, value); }
+    int number(String name, int fallback) { return settings == null ? fallback : settings.getInt("editor" + name).orElse(fallback); }
+    void setNumber(String name, int value) { if (settings != null) settings.set("editor" + name, value); }
+    String text(String name, String fallback) { return settings == null ? fallback : settings.getString("editor" + name).orElse(fallback); }
+    void setText(String name, String value) { if (settings != null) settings.set("editor" + name, value); }
     private String key(Path path) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(path.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -36,7 +36,7 @@ final class EditorState {
         if (settings != null) {
             try {
                 StringWriter writer = new StringWriter(); bookmarks.store(writer, null);
-                settings.setString("editorBookmarks", writer.toString());
+                settings.set("editorBookmarks", writer.toString());
             } catch (IOException e) { throw new UncheckedIOException(e); }
         }
     }

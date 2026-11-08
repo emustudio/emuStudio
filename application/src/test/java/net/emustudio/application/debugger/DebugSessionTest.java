@@ -7,9 +7,9 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.cpu.debug.DebugCPU;
+import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.annotations.AnnotationEngine;
+import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
@@ -37,13 +37,12 @@ public class DebugSessionTest {
 
     @Test
     public void cpuWithoutExecutionHooksRejectsBreakpointChanges() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        when(machine.cpu.getDebugger()).thenReturn(Optional.empty());
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            IllegalStateException failure = assertThrows(IllegalStateException.class,
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
+        try (DebugSession session = machine.session(null)) {
+            IllegalStateException rejected = assertThrows(IllegalStateException.class,
                     () -> session.setBreakpoint(1, true));
 
-            assertEquals("Breakpoints unavailable for this CPU", failure.getMessage());
+            assertEquals("Breakpoints unavailable for this CPU", rejected.getMessage());
             assertTrue(session.rules.isEmpty());
             assertFalse(session.programIndex().snapshot().hasExecutionBreakpoint(1));
         }
@@ -53,8 +52,8 @@ public class DebugSessionTest {
     public void pauseAtBreakpointAddressDoesNotInventAnExecutionHit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         when(machine.cpu.getInstructionLocation()).thenReturn(1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.setBreakpoint(1, true);
+        try (DebugSession session = machine.session(null)) {
+            session.setBreakpoint(1, true).join();
 
             machine.state(CPU.RunState.STATE_RUNNING);
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -66,7 +65,7 @@ public class DebugSessionTest {
     @Test
     public void compilationWithoutWritesPreservesMemoryRevision() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             long before = session.programIndex().snapshot().memoryRevision();
 
             session.runCompilation(() -> {});
@@ -78,7 +77,7 @@ public class DebugSessionTest {
     @Test
     public void compilationWritesInvalidateMemoryRevision() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             long before = session.programIndex().snapshot().memoryRevision();
 
             session.runCompilation(() -> machine.memoryChanged(1));
@@ -91,7 +90,7 @@ public class DebugSessionTest {
     public void compilationRestoresDisabledNotificationsAfterFailure() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         when(machine.memory.areMemoryNotificationsEnabled()).thenReturn(false);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             IllegalStateException failure = new IllegalStateException("compile failed");
 
             assertSame(failure, assertThrows(IllegalStateException.class,
@@ -106,9 +105,9 @@ public class DebugSessionTest {
     @Test
     public void uncapturedSourceMappingIsNotUsedAfterMemoryChanges() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
-            session.annotationEngine.put(new AnnotationEngine.Entry(7, 0, 1, 2, "source", "", position));
+            session.annotationEngine.put(new MemoryAnnotations.Entry(7, 0, 1, 2, "source", "", position));
             assertEquals(Optional.of(position), session.sourceAt(1));
 
             machine.memoryChanged(1);
@@ -121,9 +120,9 @@ public class DebugSessionTest {
     @Test
     public void executionInvalidatesUncapturedSourceEvenWithoutMemoryNotifications() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
-            session.annotationEngine.put(new AnnotationEngine.Entry(7, 0, 1, 2, "source", "", position));
+            session.annotationEngine.put(new MemoryAnnotations.Entry(7, 0, 1, 2, "source", "", position));
             assertEquals(Optional.of(position), session.sourceAt(1));
 
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -137,24 +136,23 @@ public class DebugSessionTest {
     @Test
     public void memorylessPortableCpuUsesIndexedAddressBreakpointsAndResumeSkipping() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
-        doReturn(null).when(machine.debug).memory();
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null, false)) {
             assertNull(session.memory);
             ProgramIndex index = session.programIndex();
             assertEquals(32, index.snapshot().layout().addressSpaceSize());
-            session.setBreakpoint(7, true);
+            session.setBreakpoint(7, true).join();
             assertTrue(index.snapshot().hasExecutionBreakpoint(7));
             machine.state(CPU.RunState.STATE_RUNNING);
-            assertFalse(session.beforeInstruction(6));
-            assertTrue(session.beforeInstruction(7));
+            assertFalse(machine.beforeStep(6));
+            assertTrue(machine.beforeStep(7));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(7, hit.address);
             machine.state(CPU.RunState.STATE_RUNNING);
-            assertFalse(session.beforeInstruction(7));
-            assertTrue(session.beforeInstruction(7));
+            assertFalse(machine.beforeStep(7));
+            assertTrue(machine.beforeStep(7));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            session.setBreakpoint(7, false);
+            session.setBreakpoint(7, false).join();
             assertFalse(index.snapshot().hasExecutionBreakpoint(7));
             assertThrows(IllegalStateException.class, session::liveMemory);
         }
@@ -164,12 +162,12 @@ public class DebugSessionTest {
     @Test
     public void executionUsesApplicationBreakpointStore() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.setBreakpoint(1, true);
+        try (DebugSession session = machine.session(null)) {
+            session.setBreakpoint(1, true).join();
             machine.state(CPU.RunState.STATE_RUNNING);
             assertTrue(session.programIndex().snapshot().hasExecutionBreakpoint(1));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            session.setBreakpoint(1, false);
+            session.setBreakpoint(1, false).join();
             machine.state(CPU.RunState.STATE_RUNNING);
             assertFalse(session.programIndex().snapshot().hasExecutionBreakpoint(1));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -179,7 +177,7 @@ public class DebugSessionTest {
     @Test
     public void deferredSourceCaptureBelongsToCompletedCompileMutationOnly() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             java.util.concurrent.atomic.AtomicReference<DebugSession.SourceCaptureGuard> guard = new java.util.concurrent.atomic.AtomicReference<>();
             session.runMutation(() -> {
                 guard.set(session.captureSourceGuard());
@@ -197,7 +195,7 @@ public class DebugSessionTest {
     @Test
     public void executionInvalidatesFlowEvenWithoutMemoryNotificationsAndOldSnapshotStaysImmutable() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             ProgramIndex index = session.programIndex();
             try (ProgramIndex.ContentUpdate update = index.updateContent(index.snapshot())) {
                 update.replaceFlow(false).putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
@@ -219,10 +217,10 @@ public class DebugSessionTest {
     @Test
     public void annotationsUseSharedMetadataIndexWithoutReadingMemory() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             ProgramIndex initial = session.programIndex();
             assertSame(initial, session.annotations().programIndex());
-            session.annotations().put(new AnnotationIndex.Entry(1, "user", "DATA"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "user", "DATA"));
             machine.memoryChanged(1);
             assertEquals("user", session.annotations().get(1).label);
             assertSame(initial, session.programIndex());
@@ -236,7 +234,7 @@ public class DebugSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             LiveMemory live = session.liveMemory();
             when(machine.memory.read(0)).thenAnswer(call -> {
                 entered.countDown(); await(release); return (byte) 1;
@@ -265,11 +263,11 @@ public class DebugSessionTest {
         when(decoder.getNextInstructionPosition(0)).thenReturn(1);
         when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
-            session.annotations().put(new AnnotationIndex.Entry(1, "new", "DATA"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "new", "DATA"));
             release.countDown();
             ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
             assertTrue(rejected.getCause() instanceof IllegalStateException);
@@ -287,7 +285,7 @@ public class DebugSessionTest {
         when(decoder.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
                 "VALUE " + cells[1][0], ""));
 
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             assertEquals("VALUE 7", session.analyzeFlow(0, 10).mnemonic(0));
 
             cells[1][0] = 8;
@@ -310,7 +308,7 @@ public class DebugSessionTest {
                 return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
             });
             ExecutorService executor = Executors.newSingleThreadExecutor();
-            DebugSession session = new DebugSession(machine.cpu, machine.memory, null);
+            DebugSession session = machine.session(null);
             boolean disposed = false;
             try {
                 ProgramIndex index = session.programIndex();
@@ -354,7 +352,7 @@ public class DebugSessionTest {
             machine.memoryChanged(0);
             return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
         });
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             IllegalStateException changed = assertThrows(IllegalStateException.class,
                     () -> session.analyzeFlow(0, 10));
             assertTrue(changed.getMessage().contains("changed"));
@@ -377,11 +375,12 @@ public class DebugSessionTest {
     @Test
     public void runningSessionRejectsPausedOperationsAndResumesAfterStop() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             machine.state(CPU.RunState.STATE_RUNNING);
             assertThrows(IllegalStateException.class, session::requirePaused);
             assertThrows(IllegalStateException.class, session::liveMemory);
-            assertThrows(IllegalStateException.class, () -> session.record(2));
+            session.update(() -> session.record(2)).join();
+            assertTrue(session.isRecording());
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             assertEquals(1, session.liveMemory().value(0));
@@ -392,14 +391,14 @@ public class DebugSessionTest {
     @Test
     public void retainedLiveReaderRejectsMemoryMetadataGenerationAndDisposalChanges() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
-        DebugSession session = new DebugSession(machine.cpu, machine.memory, null);
+        DebugSession session = machine.session(null);
         boolean disposed = false;
         try {
             LiveMemory first = session.liveMemory();
             machine.memoryChanged(1);
             assertThrows(IllegalStateException.class, () -> first.value(0));
             LiveMemory second = session.liveMemory();
-            session.annotations().put(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
             assertThrows(IllegalStateException.class, second::requireCurrent);
             LiveMemory third = session.liveMemory();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -415,7 +414,7 @@ public class DebugSessionTest {
     @Test
     public void resumeAndPauseDiscardAnEarlierPausedGeneration() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             long generation = session.pausedGeneration();
             AtomicBoolean applied = new AtomicBoolean();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -430,7 +429,7 @@ public class DebugSessionTest {
     @Test
     public void failedMutationStillInvalidatesAnalysisAndReleasesMutationGuard() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        try (DebugSession session = machine.session(null)) {
             long generation = session.pausedGeneration();
             assertThrows(IllegalArgumentException.class, () -> session.runMutation(() -> {
                 assertThrows(IllegalStateException.class, session::pausedGeneration);
@@ -445,77 +444,83 @@ public class DebugSessionTest {
     @Test
     public void closePausesRunningCpuAndDetachesOwnedListeners() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        DebugSession session = new DebugSession(machine.cpu, machine.memory, null);
-        session.record(2);
+        DebugSession session = machine.session(null);
+        session.update(() -> session.record(2)).join();
         machine.state(CPU.RunState.STATE_RUNNING);
 
         session.close();
 
-        verify(machine.cpu).pause();
-        verify(machine.debug).removeListener(session);
-        assertTrue(machine.cpuListeners.isEmpty());
+        assertTrue(machine.detached.get() > 0);
+        assertTrue(session.execution().closeAsync().isDone());
         assertTrue(machine.memoryListeners.isEmpty());
         assertThrows(IllegalStateException.class, session::requirePaused);
     }
 
     @Test
     public void writeWatchUsesGuestAccessAddressInsteadOfInstructionLocation() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {0, 0}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer", "WRITE", 1, "", 1);
-            session.rules.add(watch);
-            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(0, 5, true)))));
-            assertFalse(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(1, 5, false)))));
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebugSession session = machine.session(null)) {
+            DebugSession.Rule watch = new DebugSession.Rule("buffer", "WRITE", 1, "", 1);
+            session.update(() -> session.rules.add(watch)).join();
 
-            assertTrue(session.afterInstruction(instruction(3, List.of(new DebugCPU.Access(1, 5, true)))));
+            machine.accessed(0, true);
+            assertFalse(session.afterStep(true, Optional.empty()));
+            machine.accessed(1, false);
+            assertFalse(session.afterStep(true, Optional.empty()));
+            machine.accessed(1, true);
+            assertTrue(session.afterStep(true, Optional.empty()));
+
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
             assertSame(watch, hit.rule);
-            assertEquals("Watchpoint: buffer", session.status);
+            assertEquals(1, watch.hits);
         }
     }
 
     @Test
     public void readWatchIgnoresWrites() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.rules.add(new DebugSession.AccessRule("fetch", "READ", 0, "", 1));
-            assertFalse(session.afterInstruction(instruction(1, List.of(new DebugCPU.Access(0, 3, true)))));
-            assertTrue(session.afterInstruction(instruction(2, List.of(new DebugCPU.Access(0, 3, false)))));
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.rules.add(new DebugSession.Rule("fetch", "READ", 0, "", 1))).join();
+
+            machine.accessed(0, true);
+            assertFalse(session.afterStep(true, Optional.empty()));
+            machine.accessed(0, false);
+            assertTrue(session.afterStep(true, Optional.empty()));
         }
     }
 
     @Test
     public void boundedHistoryKeepsNewestInstructionsAndDisablingStopsCapture() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        DebugCPU.Instruction first = instruction(1, List.of());
-        DebugCPU.Instruction second = instruction(2, List.of());
-        DebugCPU.Instruction third = instruction(3, List.of());
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.record(2);
-            session.afterInstruction(first);
-            session.afterInstruction(second);
-            session.afterInstruction(third);
-            assertEquals(List.of(second, third), session.history());
+        StepView first = instruction(1);
+        StepView second = instruction(2);
+        StepView third = instruction(3);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.record(2)).join();
+            capture(session, first);
+            capture(session, second);
+            capture(session, third);
+            assertEquals(List.of(second, third), views(session));
             assertThrows(UnsupportedOperationException.class, () -> session.history().clear());
 
-            session.record(0);
-            session.afterInstruction(instruction(4, List.of()));
+            session.update(() -> session.record(0)).join();
+            capture(session, instruction(4));
             assertFalse(session.isRecording());
-            assertEquals(List.of(second, third), session.history());
-            verify(machine.debug).addListener(session);
-            verify(machine.debug).removeListener(session);
+            assertEquals(List.of(second, third), views(session));
+            verify(machine.debug, atLeastOnce()).observe(eq(session), anyBoolean());
+            assertTrue(machine.detached.get() > 0);
         }
     }
 
     @Test
     public void historyRequiresDebuggerCapabilityAndValidLimit() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        when(machine.cpu.getDebugger()).thenReturn(Optional.empty());
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
+        try (DebugSession session = machine.session(null)) {
             assertThrows(IllegalStateException.class, () -> session.record(1));
             assertThrows(IllegalArgumentException.class, () -> session.record(-1));
-            assertThrows(IllegalStateException.class, session::recordingHeader);
+            assertThrows(IllegalStateException.class,
+                    () -> session.saveHistory(temporary.getRoot().toPath().resolve("unsupported.emutrace"), false));
             assertFalse(session.isRecording());
         }
     }
@@ -523,17 +528,17 @@ public class DebugSessionTest {
     @Test
     public void newRecordingClearsPreviousCaptureAfterLimitValidation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.record(2);
-            session.afterInstruction(instruction(1, List.of()));
-            List<DebugCPU.Instruction> previous = session.history();
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.record(2)).join();
+            capture(session, instruction(1));
+            List<InstructionRecording.Event> previous = session.history();
 
             assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(0, DebugSession.RecordingMode.LAST, 0, 0));
             assertThrows(IllegalArgumentException.class, () -> session.startNewRecording(1_000_001, DebugSession.RecordingMode.LAST, 0, 0));
             assertEquals(previous, session.history());
-            session.startNewRecording(1, DebugSession.RecordingMode.LAST, 0, 0);
-            session.afterInstruction(instruction(2, List.of()));
-            session.afterInstruction(instruction(3, List.of()));
+            session.update(() -> session.startNewRecording(1, DebugSession.RecordingMode.LAST, 0, 0)).join();
+            capture(session, instruction(2));
+            capture(session, instruction(3));
 
             assertEquals(1, previous.size());
             assertEquals(1, session.history().size());
@@ -544,51 +549,51 @@ public class DebugSessionTest {
     @Test
     public void firstInstructionsRemainWhenLaterExecutionExceedsLimit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        DebugCPU.Instruction first = instruction(1, List.of()), second = instruction(2, List.of());
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.startNewRecording(2, DebugSession.RecordingMode.FIRST, 0, 0);
+        StepView first = instruction(1), second = instruction(2);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.startNewRecording(2, DebugSession.RecordingMode.FIRST, 0, 0)).join();
 
-            session.afterInstruction(first);
-            session.afterInstruction(second);
-            session.afterInstruction(instruction(3, List.of()));
+            capture(session, first);
+            capture(session, second);
+            capture(session, instruction(3));
 
-            assertEquals(List.of(first, second), session.history());
+            assertEquals(List.of(first, second), views(session));
             assertTrue(session.isRecording());
-            session.record(0);
-            session.afterInstruction(instruction(4, List.of()));
-            assertEquals(List.of(first, second), session.history());
+            session.update(() -> session.record(0)).join();
+            capture(session, instruction(4));
+            assertEquals(List.of(first, second), views(session));
         }
     }
 
     @Test
     public void addressRangeRetainsAllMatchesIncludingBothBounds() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
-        DebugCPU.Instruction from = addressInstruction(2, 3), through = addressInstruction(3, 5),
+        StepView from = addressInstruction(2, 3), through = addressInstruction(3, 5),
                 latest = addressInstruction(4, 4);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 3, 5);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 3, 5)).join();
 
-            session.afterInstruction(addressInstruction(1, 2));
-            session.afterInstruction(from);
-            session.afterInstruction(through);
-            assertEquals(List.of(from, through), session.history());
-            session.afterInstruction(latest);
-            session.afterInstruction(addressInstruction(5, 6));
+            capture(session, addressInstruction(1, 2));
+            capture(session, from);
+            capture(session, through);
+            assertEquals(List.of(from, through), views(session));
+            capture(session, latest);
+            capture(session, addressInstruction(5, 6));
 
-            assertEquals(List.of(from, through, latest), session.history());
-            session.record(0);
-            session.afterInstruction(addressInstruction(6, 3));
-            assertEquals(List.of(from, through, latest), session.history());
+            assertEquals(List.of(from, through, latest), views(session));
+            session.update(() -> session.record(0)).join();
+            capture(session, addressInstruction(6, 3));
+            assertEquals(List.of(from, through, latest), views(session));
         }
     }
 
     @Test
     public void invalidAddressRangePreservesPreviousCaptureAndActiveMode() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
-        DebugCPU.Instruction first = addressInstruction(1, 0);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.startNewRecording(1, DebugSession.RecordingMode.FIRST, 0, 0);
-            session.afterInstruction(first);
+        StepView first = addressInstruction(1, 0);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.startNewRecording(1, DebugSession.RecordingMode.FIRST, 0, 0)).join();
+            capture(session, first);
 
             assertThrows(IllegalArgumentException.class,
                     () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 5, 3));
@@ -596,31 +601,35 @@ public class DebugSessionTest {
                     () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, -1, 3));
             assertThrows(IllegalArgumentException.class,
                     () -> session.startNewRecording(2, DebugSession.RecordingMode.ADDRESS_RANGE, 0, 8));
-            session.afterInstruction(addressInstruction(2, 1));
+            capture(session, addressInstruction(2, 1));
 
             assertTrue(session.isRecording());
-            assertEquals(List.of(first), session.history());
+            assertEquals(List.of(first), views(session));
         }
     }
 
-    private static DebugCPU.Instruction addressInstruction(long sequence, int address) {
-        return new DebugCPU.Instruction(sequence, address, "NOP", "00", Map.of(), Map.of(), List.of(), true);
+    private static StepView addressInstruction(long sequence, int address) {
+        return new StepView("Step " + sequence, "nop", OptionalInt.of(address), List.of());
     }
 
     @Test
     public void breakpointToggleRetainsDisabledAddress() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.setBreakpoint(2, true);
+        try (DebugSession session = machine.session(null)) {
+            session.setBreakpoint(2, true).join();
             assertTrue(session.isBreakpointSet(2));
 
             session.toggleOrdinaryBreakpoint(2);
+
+            session.update(() -> { }).join();
             assertFalse(session.isBreakpointSet(2));
             assertEquals(List.of(2), session.ordinaryBreakpoints());
 
             session.toggleOrdinaryBreakpoint(2);
+
+            session.update(() -> { }).join();
             assertTrue(session.isBreakpointSet(2));
-            session.setBreakpoint(2, false);
+            session.setBreakpoint(2, false).join();
             assertTrue(session.ordinaryBreakpoints().isEmpty());
         }
     }
@@ -628,25 +637,25 @@ public class DebugSessionTest {
     @Test
     public void portableBreakpointReusesRuleAndControlsProbeAttachment() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.setBreakpoint(1, true);
+        try (DebugSession session = machine.session(null)) {
+            session.setBreakpoint(1, true).join();
             DebugSession.Rule rule = session.rules.get(0);
             rule.enabled = false;
-            session.updateProbe();
+            session.update(session::updateProbe).join();
             assertFalse(session.isBreakpointSet(1));
-            session.setBreakpoint(1, true);
+            session.setBreakpoint(1, true).join();
             assertEquals(1, session.rules.size());
             assertSame(rule, session.rules.get(0));
             assertTrue(session.isBreakpointSet(1));
-            assertTrue(session.beforeInstruction(1));
+            assertTrue(machine.beforeStep(1));
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
             assertSame(session.rules.get(0), hit.rule);
 
-            session.setBreakpoint(1, false);
+            session.setBreakpoint(1, false).join();
             assertTrue(session.rules.isEmpty());
-            verify(machine.debug, times(2)).addListener(session);
-            verify(machine.debug, times(2)).removeListener(session);
+            verify(machine.debug, atLeastOnce()).observe(eq(session), anyBoolean());
+            assertTrue(machine.detached.get() > 0);
         }
     }
 
@@ -654,11 +663,11 @@ public class DebugSessionTest {
     public void instructionHookCreatesInspectionHitAndResumeClearsIt() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         when(machine.cpu.getInstructionLocation()).thenReturn(1);
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, null)) {
-            session.setBreakpoint(1, true);
+        try (DebugSession session = machine.session(null)) {
+            session.setBreakpoint(1, true).join();
             machine.state(CPU.RunState.STATE_RUNNING);
 
-            assertTrue(session.beforeInstruction(1));
+            assertTrue(machine.beforeStep(1));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
 
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
@@ -678,11 +687,12 @@ public class DebugSessionTest {
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             session.watches.add("A + 1");
-            DebugSession.AccessRule watch = new DebugSession.AccessRule("buffer writes", "WRITE", 1, "A > 3", 4);
+            DebugSession.Rule watch = new DebugSession.Rule("buffer writes", "WRITE", 1, "A > 3", 4);
             watch.enabled = false;
             session.rules.add(watch);
-            session.setBreakpoint(2, true);
+            session.setBreakpoint(2, true).join();
             session.toggleOrdinaryBreakpoint(2);
+            session.update(() -> { }).join();
             session.save();
         }
 
@@ -692,8 +702,7 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
             assertEquals(List.of("A + 1"), session.watches);
             assertEquals(2, session.rules.size());
-            assertTrue(session.rules.get(0) instanceof DebugSession.AccessRule);
-            DebugSession.AccessRule watch = (DebugSession.AccessRule) session.rules.get(0);
+            DebugSession.Rule watch = session.rules.get(0);
             assertEquals("buffer writes", watch.name);
             assertEquals("WRITE", watch.kind);
             assertEquals(1, watch.address);
@@ -704,6 +713,7 @@ public class DebugSessionTest {
             assertEquals(List.of(2), session.ordinaryBreakpoints());
             assertFalse(session.isBreakpointSet(2));
             session.toggleOrdinaryBreakpoint(2);
+            session.update(() -> { }).join();
             assertTrue(session.isBreakpointSet(2));
         }
     }
@@ -715,7 +725,7 @@ public class DebugSessionTest {
 
     @Test
     public void settingsForAnotherCpuArePreservedAndDoNotBlockStartup() throws Exception {
-        assertIncompatibleSettingsStartClean("3", "another CPU");
+        assertIncompatibleSettingsStartClean("4", "another CPU");
     }
 
     private void assertIncompatibleSettingsStartClean(String version, String cpuTitle) throws Exception {
@@ -729,7 +739,7 @@ public class DebugSessionTest {
         AtomicProperties.save(settings, original);
         byte[] saved = Files.readAllBytes(settings);
 
-        try (DebugSession session = new DebugSession(machine.cpu, machine.memory, settings)) {
+        try (DebugSession session = machine.session(settings)) {
             assertTrue(session.watches.isEmpty());
             assertTrue(session.rules.isEmpty());
             assertTrue(session.ordinaryBreakpoints().isEmpty());
@@ -754,8 +764,9 @@ public class DebugSessionTest {
         Path settings = temporary.getRoot().toPath().resolve("portable.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
-            session.setBreakpoint(1, true);
+            session.setBreakpoint(1, true).join();
             session.toggleOrdinaryBreakpoint(1);
+            session.update(() -> { }).join();
             session.save();
         }
 
@@ -764,25 +775,27 @@ public class DebugSessionTest {
             assertEquals(List.of(1), session.ordinaryBreakpoints());
             assertFalse(session.isBreakpointSet(1));
             session.toggleOrdinaryBreakpoint(1);
+            session.update(() -> { }).join();
             assertTrue(session.isBreakpointSet(1));
         }
     }
 
     @Test
     public void ruleKindsAndOptionsAreValidated() {
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("read", "READ", 0, "", 1));
+        assertEquals("READ", new DebugSession.Rule("read", "READ", 0, "", 1).kind);
         assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("source", "SOURCE", 0, "", 1));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("conditional", "EXEC", 0, "A == 1", 1));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("hit count", "EXEC", 0, "", 2));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("exec", "EXEC", 0, "", 1));
-        assertThrows(IllegalArgumentException.class, () -> new DebugSession.AccessRule("read", "READ", 0, "", 0));
+        DebugSession.Rule conditional = new DebugSession.Rule("conditional", "EXEC", 0, "A == 1", 2);
+        assertEquals("A == 1", conditional.condition);
+        assertEquals(2, conditional.afterHits);
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("unknown", "UNKNOWN", 0, "", 1));
+        assertThrows(IllegalArgumentException.class, () -> new DebugSession.Rule("read", "READ", 0, "", 0));
     }
 
     @Test
     public void malformedSettingsDoNotApplyEarlierBreakpointEntries() throws Exception {
         Path settings = temporary.newFile("invalid.properties").toPath();
         Properties values = new Properties();
-        values.setProperty("version", "3");
+        values.setProperty("version", "4");
         values.setProperty("cpu", "Test CPU");
         values.setProperty("rules", "2");
         for (int i = 0; i < 2; i++) {
@@ -798,10 +811,172 @@ public class DebugSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
 
         IOException failure = assertThrows(IOException.class,
-                () -> new DebugSession(machine.cpu, machine.memory, settings));
+                () -> machine.session(settings));
 
         assertEquals("Invalid debugger settings", failure.getMessage());
-        assertTrue(machine.cpuListeners.isEmpty());
+        assertTrue(machine.memoryListeners.isEmpty());
+    }
+
+    @Test
+    public void oneComputerSettingsFileKeepsWatchesRulesAndAnnotationsAcrossEverySave() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
+        long annotationId;
+        try (DebugSession session = original.session(settings)) {
+            annotationId = session.annotations().add(new AnnotationIndex.Entry(1, "buffer", "DATA")).id;
+            session.save();
+
+            session.update(() -> {
+                session.watches.add("A + 1");
+                session.watches.add("unknown + 1");
+                session.rules.add(new DebugSession.Rule("execute", "EXEC", 2, "", 1));
+                session.rules.add(new DebugSession.Rule("invalid", "CONDITION", -1, "unknown + 1", 1));
+            }).join();
+            session.save();
+
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("4", saved.getProperty("version"));
+            assertEquals("buffer", saved.getProperty("entry.0.label"));
+            assertEquals("unknown + 1", saved.getProperty("watch.1"));
+            assertEquals("unknown + 1", saved.getProperty("rule.1.condition"));
+        }
+
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3);
+        try (DebugSession session = reopened.session(settings)) {
+            assertEquals(annotationId, session.annotations().get(1).id);
+            assertEquals("buffer", session.annotations().get(1).label);
+            assertEquals(List.of("A + 1", "unknown + 1"), session.watches);
+            assertTrue(session.isBreakpointSet(2));
+            assertFalse(session.rules.get(1).isActive());
+            assertFalse(session.rules.get(1).error.isEmpty());
+            assertTrue(session.watchErrors().containsKey("unknown + 1"));
+            session.annotations().update(new AnnotationIndex.Entry(annotationId, 1, 3, "edited buffer", "DATA"));
+            session.save();
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("edited buffer", saved.getProperty("entry.0.label"));
+            assertEquals("2", saved.getProperty("watches"));
+            assertEquals("2", saved.getProperty("rules"));
+
+            reopened.state(CPU.RunState.STATE_RUNNING);
+            session.update(() -> session.watches.add("A * 2")).get(2, TimeUnit.SECONDS);
+            session.save();
+
+            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().snapshot().runState());
+            assertEquals("3", AtomicProperties.load(settings).getProperty("watches"));
+            verify(reopened.cpu, never()).step();
+            reopened.state(CPU.RunState.STATE_STOPPED_BREAK);
+            MemoryAnnotations.Entry compiler = new MemoryAnnotations.Entry(17, 1, 0, 1, "source", "compiler", null);
+            session.annotationEngine.put(compiler);
+            session.annotations().clear();
+            session.save();
+
+            assertSame(compiler, session.annotationEngine.get(17, 1));
+            assertEquals("0", AtomicProperties.load(settings).getProperty("entries"));
+        }
+
+        DebuggerTestMachine afterClear = new DebuggerTestMachine(new byte[][] {{6, 5, 4}}, 3);
+        try (DebugSession session = afterClear.session(settings)) {
+            assertTrue(session.annotations().entries().isEmpty());
+            assertEquals(List.of("A + 1", "unknown + 1", "A * 2"), session.watches);
+            assertEquals(2, session.rules.size());
+            assertEquals("unknown + 1", session.rules.get(1).condition);
+            assertFalse(session.rules.get(1).isActive());
+        }
+        try (var files = Files.list(settings.getParent())) {
+            assertEquals(List.of(settings), files.collect(java.util.stream.Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void movedComputerSettingsRestoreWatchesAndStableAnnotationIds() throws Exception {
+        Path original = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        long annotationId;
+        try (DebugSession session = machine.session(original)) {
+            annotationId = session.annotations().add(new AnnotationIndex.Entry(1, "relocated", "DATA")).id;
+            session.watches.add("A + 1");
+            session.save();
+        }
+        Path moved = temporary.newFolder("relocated").toPath().resolve("renamed.toml.debugger");
+        Files.move(original, moved);
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
+
+        try (DebugSession session = reopened.session(moved)) {
+            assertEquals(List.of("A + 1"), session.watches);
+            assertEquals(annotationId, session.annotations().get(1).id);
+            assertEquals("relocated", session.annotations().get(1).label);
+        }
+    }
+
+    @Test
+    public void malformedLaterAnnotationDoesNotImportAnySavedAnnotation() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebugSession session = original.session(settings)) {
+            session.annotations().add(new AnnotationIndex.Entry(0, "valid first", "CODE"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "invalid later", "DATA"));
+            session.save();
+        }
+        Properties corrupt = AtomicProperties.load(settings);
+        corrupt.setProperty("entry.1.end", "99");
+        AtomicProperties.save(settings, corrupt);
+        byte[] previous = Files.readAllBytes(settings);
+        MemoryAnnotations engine = new MemoryAnnotations();
+        MemoryAnnotations.Entry compiler = new MemoryAnnotations.Entry(17, 1, 0, 1, "source", "compiler", null);
+        engine.put(compiler);
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+
+        assertThrows(IOException.class, () -> new DebugSession(reopened.cpu, reopened.memory, settings, engine));
+
+        assertEquals(List.of(compiler), engine.all());
+        assertArrayEquals(previous, Files.readAllBytes(settings));
+        assertTrue(reopened.memoryListeners.isEmpty());
+    }
+
+    @Test
+    public void failedCombinedSavePreservesPreviousFileAndRetriesAllSections() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebugSession session = machine.session(settings)) {
+            session.watches.add("A");
+            AnnotationIndex.Entry annotation = session.annotations().add(new AnnotationIndex.Entry(1, "before", "DATA"));
+            session.save();
+            byte[] previous = Files.readAllBytes(settings);
+            session.watches.add("A + 1");
+            session.annotations().update(new AnnotationIndex.Entry(annotation.id, 1, 2, "after", "CODE"));
+            try (org.mockito.MockedStatic<AtomicProperties> disk = mockStatic(AtomicProperties.class)) {
+                disk.when(() -> AtomicProperties.save(eq(settings), any(Properties.class)))
+                        .thenThrow(new IOException("disk full"));
+
+                assertEquals("disk full", assertThrows(IOException.class, session::save).getMessage());
+                assertArrayEquals(previous, Files.readAllBytes(settings));
+            }
+
+            session.save();
+
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("2", saved.getProperty("watches"));
+            assertEquals("after", saved.getProperty("entry.0.label"));
+            assertEquals("CODE", saved.getProperty("entry.0.kind"));
+        }
+    }
+
+    @Test
+    public void sessionWithoutConfigurationPathKeepsEditableMetadataInMemory() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.watches.add("unknown + 1")).join();
+            session.annotations().add(new AnnotationIndex.Entry(0, "temporary", "DATA"));
+
+            session.save();
+
+            assertEquals("temporary", session.annotations().get(0).label);
+            assertEquals(List.of("unknown + 1"), session.watches);
+            assertTrue(session.watchErrors().containsKey("unknown + 1"));
+            try (var files = Files.list(temporary.getRoot().toPath())) {
+                assertEquals(0, files.count());
+            }
+        }
     }
 
     @Test
@@ -811,8 +986,8 @@ public class DebugSessionTest {
         String identity;
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             identity = session.programIndex().snapshot().layout().imageId();
-            session.annotations().put(new AnnotationIndex.Entry(1, "buffer", "DATA"));
-            session.saveAnnotations();
+            session.annotations().add(new AnnotationIndex.Entry(1, "buffer", "DATA"));
+            session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
         try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
@@ -835,18 +1010,18 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             editedId = session.annotations().add(new AnnotationIndex.Entry(0, "disk old", "CODE")).id;
             session.annotations().add(new AnnotationIndex.Entry(1, "disk retained", "DATA"));
-            session.saveAnnotations();
+            session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
-        net.emustudio.emulib.runtime.annotations.AnnotationEngine engine = spy(
-                new net.emustudio.emulib.runtime.annotations.AnnotationEngine());
+        net.emustudio.emulib.runtime.annotations.MemoryAnnotations engine = spy(
+                new net.emustudio.emulib.runtime.annotations.MemoryAnnotations());
         AtomicBoolean firstRevision = new AtomicBoolean(true);
         doAnswer(call -> {
             long revision = (long) call.callRealMethod();
             if (firstRevision.getAndSet(false)) {
-                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                engine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                         AnnotationIndex.OWNER, editedId, 0, 1, AnnotationIndex.USER_KIND + "CODE", "live edit", null));
-                engine.put(new net.emustudio.emulib.runtime.annotations.AnnotationEngine.Entry(
+                engine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                         17, 1, 2, 3, "source", "", null));
             }
             return revision;
@@ -861,7 +1036,15 @@ public class DebugSessionTest {
         }
     }
 
-    private static DebugCPU.Instruction instruction(long sequence, List<DebugCPU.Access> accesses) {
-        return new DebugCPU.Instruction(sequence, 0, "NOP", "00", Map.of(), Map.of(), accesses, true);
+    private static StepView instruction(long sequence) {
+        return addressInstruction(sequence, 0);
+    }
+
+    private static boolean capture(DebugSession session, StepView view) {
+        return session.afterStep(true, Optional.of(view));
+    }
+
+    private static List<StepView> views(DebugSession session) {
+        return session.history().stream().map(event -> event.view).collect(java.util.stream.Collectors.toList());
     }
 }

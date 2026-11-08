@@ -4,6 +4,7 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.easymock.Capture;
 import org.junit.After;
@@ -26,10 +27,9 @@ public class AutomaticEmulationTest {
     }
 
     @Test
-    public void testConstructorRegistersCPUListener() {
-        CPU cpu = createMock(CPU.class);
-        cpu.addCPUListener(isA(CPU.CPUListener.class));
-        expectLastCall().once();
+    public void testConstructorSubscribesToExecution() {
+        ExecutionState cpu = createMock(ExecutionState.class);
+        expect(cpu.subscribe(anyObject())).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -42,12 +42,14 @@ public class AutomaticEmulationTest {
     }
 
     @Test
-    public void testDestroyRemovesListener() {
-        CPU cpu = createMock(CPU.class);
-        cpu.addCPUListener(isA(CPU.CPUListener.class));
+    public void testDestroyClosesSubscription() {
+        ExecutionState cpu = createMock(ExecutionState.class);
+        ExecutionState.Subscription subscription = createMock(ExecutionState.Subscription.class);
+        expect(cpu.subscribe(anyObject())).andReturn(subscription).once();
+        subscription.close();
         expectLastCall().once();
-        cpu.removeCPUListener(isA(CPU.CPUListener.class));
-        expectLastCall().once();
+        replay(subscription);
+
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -57,15 +59,14 @@ public class AutomaticEmulationTest {
         AutomaticEmulation ae = new AutomaticEmulation(cpu, engine, memory);
         ae.destroy();
 
-        verify(cpu);
+        verify(cpu, subscription);
     }
 
     @Test
     public void testSnapshotCreatedOnStateTransitionFromRunningToStopped() {
-        CPU cpu = createNiceMock(CPU.class);
-        Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
-        cpu.addCPUListener(capture(listenerCapture));
-        expectLastCall().once();
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
+        Capture<java.util.function.Consumer<ExecutionState.Snapshot>> listenerCapture = Capture.newInstance();
+        expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -74,11 +75,11 @@ public class AutomaticEmulationTest {
 
         new AutomaticEmulation(cpu, engine, memory);
 
-        CPU.CPUListener listener = listenerCapture.getValue();
+        java.util.function.Consumer<ExecutionState.Snapshot> listener = listenerCapture.getValue();
 
         // Simulate state transition: RUNNING -> STOPPED
-        listener.runStateChanged(CPU.RunState.STATE_RUNNING);
-        listener.runStateChanged(CPU.RunState.STATE_STOPPED_NORMAL);
+        listener.accept(state(CPU.RunState.STATE_RUNNING));
+        listener.accept(state(CPU.RunState.STATE_STOPPED_NORMAL));
 
         File outputFile = new File(OUTPUT_FILE);
         assertTrue("Snapshot file should be created", outputFile.exists());
@@ -87,10 +88,9 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testNoSnapshotWithoutRunningFirst() {
-        CPU cpu = createNiceMock(CPU.class);
-        Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
-        cpu.addCPUListener(capture(listenerCapture));
-        expectLastCall().once();
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
+        Capture<java.util.function.Consumer<ExecutionState.Snapshot>> listenerCapture = Capture.newInstance();
+        expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -99,10 +99,10 @@ public class AutomaticEmulationTest {
 
         new AutomaticEmulation(cpu, engine, memory);
 
-        CPU.CPUListener listener = listenerCapture.getValue();
+        java.util.function.Consumer<ExecutionState.Snapshot> listener = listenerCapture.getValue();
 
         // Just stopping without running first should not create snapshot
-        listener.runStateChanged(CPU.RunState.STATE_STOPPED_NORMAL);
+        listener.accept(state(CPU.RunState.STATE_STOPPED_NORMAL));
 
         File outputFile = new File(OUTPUT_FILE);
         assertFalse("Snapshot should not be created without prior RUNNING state", outputFile.exists());
@@ -110,10 +110,9 @@ public class AutomaticEmulationTest {
 
     @Test
     public void testRunningStateAloneDoesNotCreateSnapshot() {
-        CPU cpu = createNiceMock(CPU.class);
-        Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
-        cpu.addCPUListener(capture(listenerCapture));
-        expectLastCall().once();
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
+        Capture<java.util.function.Consumer<ExecutionState.Snapshot>> listenerCapture = Capture.newInstance();
+        expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -122,21 +121,20 @@ public class AutomaticEmulationTest {
 
         new AutomaticEmulation(cpu, engine, memory);
 
-        CPU.CPUListener listener = listenerCapture.getValue();
+        java.util.function.Consumer<ExecutionState.Snapshot> listener = listenerCapture.getValue();
 
         // Just entering running state should not create snapshot
-        listener.runStateChanged(CPU.RunState.STATE_RUNNING);
+        listener.accept(state(CPU.RunState.STATE_RUNNING));
 
         File outputFile = new File(OUTPUT_FILE);
         assertFalse("Snapshot should not be created while still running", outputFile.exists());
     }
 
     @Test
-    public void testInternalStateChangedDoesNotThrow() {
-        CPU cpu = createNiceMock(CPU.class);
-        Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
-        cpu.addCPUListener(capture(listenerCapture));
-        expectLastCall().once();
+    public void testPausedPublicationDoesNotThrow() {
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
+        Capture<java.util.function.Consumer<ExecutionState.Snapshot>> listenerCapture = Capture.newInstance();
+        expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -145,17 +143,16 @@ public class AutomaticEmulationTest {
 
         new AutomaticEmulation(cpu, engine, memory);
 
-        CPU.CPUListener listener = listenerCapture.getValue();
+        java.util.function.Consumer<ExecutionState.Snapshot> listener = listenerCapture.getValue();
         // Should not throw
-        listener.internalStateChanged();
+        listener.accept(state(CPU.RunState.STATE_STOPPED_BREAK));
     }
 
     @Test
     public void testSnapshotContainsAccAndCI() throws Exception {
-        CPU cpu = createNiceMock(CPU.class);
-        Capture<CPU.CPUListener> listenerCapture = Capture.newInstance();
-        cpu.addCPUListener(capture(listenerCapture));
-        expectLastCall().once();
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
+        Capture<java.util.function.Consumer<ExecutionState.Snapshot>> listenerCapture = Capture.newInstance();
+        expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -166,9 +163,9 @@ public class AutomaticEmulationTest {
 
         new AutomaticEmulation(cpu, engine, memory);
 
-        CPU.CPUListener listener = listenerCapture.getValue();
-        listener.runStateChanged(CPU.RunState.STATE_RUNNING);
-        listener.runStateChanged(CPU.RunState.STATE_STOPPED_NORMAL);
+        java.util.function.Consumer<ExecutionState.Snapshot> listener = listenerCapture.getValue();
+        listener.accept(state(CPU.RunState.STATE_RUNNING));
+        listener.accept(state(CPU.RunState.STATE_STOPPED_NORMAL));
 
         File outputFile = new File(OUTPUT_FILE);
         assertTrue(outputFile.exists());
@@ -179,7 +176,7 @@ public class AutomaticEmulationTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorRejectsNullCpu() {
+    public void testConstructorRejectsNullExecution() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
@@ -188,7 +185,7 @@ public class AutomaticEmulationTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorRejectsNullEngine() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
@@ -197,12 +194,14 @@ public class AutomaticEmulationTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorRejectsNullMemory() {
-        CPU cpu = createNiceMock(CPU.class);
+        ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(cpu, engine, null);
     }
+    private static ExecutionState.Snapshot state(CPU.RunState runState) {
+        return new ExecutionState.Snapshot(runState, false, false, 0, Float.NaN);
+    }
 }
-

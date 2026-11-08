@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 public class RTokenMakerTest {
 
     @Test
-    public void testConsumesLexerViaNextHasNextNotIterator() {
+    public void testConsumesLexerViaNextHasNext() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
                 token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "LABEL"),
                 token(net.emustudio.emulib.plugins.compiler.Token.EOF, 5, "")
@@ -22,7 +22,6 @@ public class RTokenMakerTest {
 
         maker.getTokenList(segment("LABEL"), org.fife.ui.rsyntaxtextarea.Token.NULL, 0);
 
-        assertFalse("Should use next()/hasNext(), not iterator()", lexer.iteratorUsed);
         assertEquals(2, lexer.nextCalls);
     }
 
@@ -320,15 +319,9 @@ public class RTokenMakerTest {
                 return true; // would cause infinite loop if next() exception didn't break
             }
 
-
             @Override
             public void reset(char[] array, int offset, int length) {
                 nextCalls[0] = 0;
-            }
-
-            @Override
-            public Iterator<net.emustudio.emulib.plugins.compiler.Token> iterator() {
-                throw new AssertionError();
             }
         };
 
@@ -357,15 +350,9 @@ public class RTokenMakerTest {
                 return true;
             }
 
-
             @Override
             public void reset(char[] array, int offset, int length) {
                 throw new RuntimeException("Reset failed");
-            }
-
-            @Override
-            public Iterator<net.emustudio.emulib.plugins.compiler.Token> iterator() {
-                throw new AssertionError();
             }
         };
 

@@ -9,10 +9,10 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 public class Constants {
 
     // not waiting for input
-    public static final ImageIcon BLUE_ICON = loadIcon(StandardIcons.ICON_INDICATOR_BLUE);
+    public static final ImageIcon BLUE_ICON = loadIcon(StandardIcons.ICON_INDICATOR_BLUE, Constants.class);
 
     // waiting for input
-    public static final ImageIcon RED_ICON = loadIcon(StandardIcons.ICON_INDICATOR_RED);
+    public static final ImageIcon RED_ICON = loadIcon(StandardIcons.ICON_INDICATOR_RED, Constants.class);
 
-    public static final ImageIcon ASCII_ICON = loadIcon(StandardIcons.ICON_ASCII);
+    public static final ImageIcon ASCII_ICON = loadIcon(StandardIcons.ICON_ASCII, Constants.class);
 }
