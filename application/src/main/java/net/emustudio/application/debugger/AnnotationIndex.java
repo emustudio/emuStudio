@@ -35,16 +35,10 @@ public final class AnnotationIndex {
         return result;
     }
 
-    public void put(Entry entry) {
-        Objects.requireNonNull(entry);
-        validateKind(entry.kind);
-        edit(List.of(entry), false);
-    }
-
     /** Adds an independent annotation even when another starts at the same address. */
     public Entry add(Entry entry) {
         Entry added = new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind);
-        edit(List.of(added), false);
+        edit(List.of(added), false, false);
         return added;
     }
 
@@ -70,10 +64,6 @@ public final class AnnotationIndex {
             throw new IllegalArgumentException("Invalid annotation range");
     }
 
-    private void edit(List<Entry> entries, boolean clear) {
-        edit(entries, clear, false);
-    }
-
     private void edit(List<Entry> entries, boolean clear, boolean requireExisting) {
         for (Entry entry : entries) {
             validateKind(entry.kind);
@@ -87,15 +77,8 @@ public final class AnnotationIndex {
                     if (engine.revision() != revision) break;
                     throw new IllegalArgumentException("Unknown annotation");
                 }
-                long id = entry.id;
-                if (id < 0) {
-                    id = IDS.getAndAdd(2);
-                    for (MemoryAnnotations.Entry existing : values)
-                        if (existing.start == entry.address) id = existing.entryId;
-                }
-                final long entryId = id;
-                values.removeIf(existing -> existing.entryId == entryId);
-                values.add(new MemoryAnnotations.Entry(OWNER, id, entry.address, entry.end,
+                values.removeIf(existing -> existing.entryId == entry.id);
+                values.add(new MemoryAnnotations.Entry(OWNER, entry.id, entry.address, entry.end,
                         USER_KIND + entry.kind, entry.label, null));
             }
             if (engine.compareAndReplaceOwner(revision, OWNER, values)) break;
@@ -103,41 +86,21 @@ public final class AnnotationIndex {
 
     }
 
-    /** Disk-loaded metadata commits only against the root from before the I/O. */
-    ProgramIndex.CommitResult installProperties(Properties properties, ProgramIndex.Snapshot base) throws IOException {
-        return installProperties(properties, base, engine.revision());
-    }
-
-    ProgramIndex.CommitResult installProperties(Properties properties, ProgramIndex.Snapshot base,
-                                                  long expectedRevision) throws IOException {
-        List<Entry> entries = importedEntries(properties);
-        if (!index.snapshot().sameRevisions(base)) return ProgramIndex.CommitResult.STALE;
-        List<MemoryAnnotations.Entry> values = userEntries();
-        for (Entry entry : entries) {
-            values.removeIf(existing -> existing.entryId == entry.id);
-            values.add(new MemoryAnnotations.Entry(OWNER, entry.id, entry.address, entry.end,
+    /** Restore saved identities while preserving live edits and all other annotation owners. */
+    void restore(Properties properties) throws IOException {
+        Map<Long, MemoryAnnotations.Entry> saved = new LinkedHashMap<>();
+        for (Entry entry : importedEntries(properties))
+            saved.put(entry.id, new MemoryAnnotations.Entry(OWNER, entry.id, entry.address, entry.end,
                     USER_KIND + entry.kind, entry.label, null));
-        }
-        return engine.compareAndReplaceOwner(expectedRevision, OWNER, values)
-                ? ProgramIndex.CommitResult.PUBLISHED : ProgramIndex.CommitResult.STALE;
-    }
-
-    public void remove(int address) {
         while (true) {
             long revision = engine.revision();
-            List<MemoryAnnotations.Entry> values = userEntries();
-            MemoryAnnotations.Entry old = null;
-            for (MemoryAnnotations.Entry entry : values) if (entry.start == address) old = entry;
-            if (old == null) return;
-            values.remove(old);
-            if (engine.compareAndReplaceOwner(revision, OWNER, values)) {
-
-                return;
-            }
+            Map<Long, MemoryAnnotations.Entry> values = new LinkedHashMap<>(saved);
+            for (MemoryAnnotations.Entry entry : userEntries()) values.put(entry.entryId, entry);
+            if (engine.compareAndReplaceOwner(revision, OWNER, values.values())) return;
         }
     }
 
-    void clear() { edit(List.of(), true); }
+    void clear() { edit(List.of(), true, false); }
 
     public List<Entry> entries() {
         List<Entry> result = new ArrayList<>();
@@ -163,7 +126,7 @@ public final class AnnotationIndex {
 
     public Properties properties() {
         Properties p = new Properties();
-        p.setProperty("version", "3");
+        p.setProperty("version", "4");
         p.setProperty("image.identity", index.snapshot().layout().imageId());
         List<Entry> entries = entries();
         p.setProperty("entries", Integer.toString(entries.size()));
@@ -188,12 +151,12 @@ public final class AnnotationIndex {
         for (Entry entry : imported)
             copies.add(new Entry(IDS.getAndAdd(2), entry.address, entry.end,
                     entry.label, entry.kind));
-        edit(copies, false);
+        edit(copies, false, false);
     }
 
     private List<Entry> importedEntries(Properties p) throws IOException {
         String version = p.getProperty("version");
-        if (!"3".equals(version)
+        if (!"4".equals(version)
                 || !index.snapshot().layout().imageId().equals(p.getProperty("image.identity")))
             throw new IOException("Annotations belong to another memory image/layout");
         Map<Long, Entry> imported = new LinkedHashMap<>();

@@ -902,13 +902,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void changeAnnotations(Operation change) throws Exception {
-        List<AnnotationIndex.Entry> previous = index.entries();
+        Properties previous = index.properties();
         try {
             change.run();
-            session.saveAnnotations();
+            session.save();
         } catch (Exception failure) {
             index.clear();
-            previous.forEach(index::put);
+            index.restore(previous);
             throw failure;
         }
         refreshAnnotations(annotationFilter.getText());

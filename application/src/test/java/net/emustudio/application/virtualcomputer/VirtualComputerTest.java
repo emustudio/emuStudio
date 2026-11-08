@@ -52,8 +52,8 @@ public class VirtualComputerTest {
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
         try (DebugSession seed = new DebugSession(cpu, memory, debuggerPath)) {
-            seed.annotations().put(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
-            seed.saveAnnotations();
+            seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
+            seed.save();
         }
         clearInvocations(memory);
 

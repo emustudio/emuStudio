@@ -220,7 +220,7 @@ public class DebugSessionTest {
         try (DebugSession session = machine.session(null)) {
             ProgramIndex initial = session.programIndex();
             assertSame(initial, session.annotations().programIndex());
-            session.annotations().put(new AnnotationIndex.Entry(1, "user", "DATA"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "user", "DATA"));
             machine.memoryChanged(1);
             assertEquals("user", session.annotations().get(1).label);
             assertSame(initial, session.programIndex());
@@ -267,7 +267,7 @@ public class DebugSessionTest {
             Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
             await(entered);
             executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
-            session.annotations().put(new AnnotationIndex.Entry(1, "new", "DATA"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "new", "DATA"));
             release.countDown();
             ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
             assertTrue(rejected.getCause() instanceof IllegalStateException);
@@ -398,7 +398,7 @@ public class DebugSessionTest {
             machine.memoryChanged(1);
             assertThrows(IllegalStateException.class, () -> first.value(0));
             LiveMemory second = session.liveMemory();
-            session.annotations().put(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
             assertThrows(IllegalStateException.class, second::requireCurrent);
             LiveMemory third = session.liveMemory();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -725,7 +725,7 @@ public class DebugSessionTest {
 
     @Test
     public void settingsForAnotherCpuArePreservedAndDoNotBlockStartup() throws Exception {
-        assertIncompatibleSettingsStartClean("3", "another CPU");
+        assertIncompatibleSettingsStartClean("4", "another CPU");
     }
 
     private void assertIncompatibleSettingsStartClean(String version, String cpuTitle) throws Exception {
@@ -818,14 +818,176 @@ public class DebugSessionTest {
     }
 
     @Test
+    public void oneComputerSettingsFileKeepsWatchesRulesAndAnnotationsAcrossEverySave() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
+        long annotationId;
+        try (DebugSession session = original.session(settings)) {
+            annotationId = session.annotations().add(new AnnotationIndex.Entry(1, "buffer", "DATA")).id;
+            session.save();
+
+            session.update(() -> {
+                session.watches.add("A + 1");
+                session.watches.add("unknown + 1");
+                session.rules.add(new DebugSession.Rule("execute", "EXEC", 2, "", 1));
+                session.rules.add(new DebugSession.Rule("invalid", "CONDITION", -1, "unknown + 1", 1));
+            }).join();
+            session.save();
+
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("4", saved.getProperty("version"));
+            assertEquals("buffer", saved.getProperty("entry.0.label"));
+            assertEquals("unknown + 1", saved.getProperty("watch.1"));
+            assertEquals("unknown + 1", saved.getProperty("rule.1.condition"));
+        }
+
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3);
+        try (DebugSession session = reopened.session(settings)) {
+            assertEquals(annotationId, session.annotations().get(1).id);
+            assertEquals("buffer", session.annotations().get(1).label);
+            assertEquals(List.of("A + 1", "unknown + 1"), session.watches);
+            assertTrue(session.isBreakpointSet(2));
+            assertFalse(session.rules.get(1).isActive());
+            assertFalse(session.rules.get(1).error.isEmpty());
+            assertTrue(session.watchErrors().containsKey("unknown + 1"));
+            session.annotations().update(new AnnotationIndex.Entry(annotationId, 1, 3, "edited buffer", "DATA"));
+            session.save();
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("edited buffer", saved.getProperty("entry.0.label"));
+            assertEquals("2", saved.getProperty("watches"));
+            assertEquals("2", saved.getProperty("rules"));
+
+            reopened.state(CPU.RunState.STATE_RUNNING);
+            session.update(() -> session.watches.add("A * 2")).get(2, TimeUnit.SECONDS);
+            session.save();
+
+            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().snapshot().runState());
+            assertEquals("3", AtomicProperties.load(settings).getProperty("watches"));
+            verify(reopened.cpu, never()).step();
+            reopened.state(CPU.RunState.STATE_STOPPED_BREAK);
+            MemoryAnnotations.Entry compiler = new MemoryAnnotations.Entry(17, 1, 0, 1, "source", "compiler", null);
+            session.annotationEngine.put(compiler);
+            session.annotations().clear();
+            session.save();
+
+            assertSame(compiler, session.annotationEngine.get(17, 1));
+            assertEquals("0", AtomicProperties.load(settings).getProperty("entries"));
+        }
+
+        DebuggerTestMachine afterClear = new DebuggerTestMachine(new byte[][] {{6, 5, 4}}, 3);
+        try (DebugSession session = afterClear.session(settings)) {
+            assertTrue(session.annotations().entries().isEmpty());
+            assertEquals(List.of("A + 1", "unknown + 1", "A * 2"), session.watches);
+            assertEquals(2, session.rules.size());
+            assertEquals("unknown + 1", session.rules.get(1).condition);
+            assertFalse(session.rules.get(1).isActive());
+        }
+        try (var files = Files.list(settings.getParent())) {
+            assertEquals(List.of(settings), files.collect(java.util.stream.Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void movedComputerSettingsRestoreWatchesAndStableAnnotationIds() throws Exception {
+        Path original = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        long annotationId;
+        try (DebugSession session = machine.session(original)) {
+            annotationId = session.annotations().add(new AnnotationIndex.Entry(1, "relocated", "DATA")).id;
+            session.watches.add("A + 1");
+            session.save();
+        }
+        Path moved = temporary.newFolder("relocated").toPath().resolve("renamed.toml.debugger");
+        Files.move(original, moved);
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
+
+        try (DebugSession session = reopened.session(moved)) {
+            assertEquals(List.of("A + 1"), session.watches);
+            assertEquals(annotationId, session.annotations().get(1).id);
+            assertEquals("relocated", session.annotations().get(1).label);
+        }
+    }
+
+    @Test
+    public void malformedLaterAnnotationDoesNotImportAnySavedAnnotation() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebugSession session = original.session(settings)) {
+            session.annotations().add(new AnnotationIndex.Entry(0, "valid first", "CODE"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "invalid later", "DATA"));
+            session.save();
+        }
+        Properties corrupt = AtomicProperties.load(settings);
+        corrupt.setProperty("entry.1.end", "99");
+        AtomicProperties.save(settings, corrupt);
+        byte[] previous = Files.readAllBytes(settings);
+        MemoryAnnotations engine = new MemoryAnnotations();
+        MemoryAnnotations.Entry compiler = new MemoryAnnotations.Entry(17, 1, 0, 1, "source", "compiler", null);
+        engine.put(compiler);
+        DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+
+        assertThrows(IOException.class, () -> new DebugSession(reopened.cpu, reopened.memory, settings, engine));
+
+        assertEquals(List.of(compiler), engine.all());
+        assertArrayEquals(previous, Files.readAllBytes(settings));
+        assertTrue(reopened.memoryListeners.isEmpty());
+    }
+
+    @Test
+    public void failedCombinedSavePreservesPreviousFileAndRetriesAllSections() throws Exception {
+        Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebugSession session = machine.session(settings)) {
+            session.watches.add("A");
+            AnnotationIndex.Entry annotation = session.annotations().add(new AnnotationIndex.Entry(1, "before", "DATA"));
+            session.save();
+            byte[] previous = Files.readAllBytes(settings);
+            session.watches.add("A + 1");
+            session.annotations().update(new AnnotationIndex.Entry(annotation.id, 1, 2, "after", "CODE"));
+            try (org.mockito.MockedStatic<AtomicProperties> disk = mockStatic(AtomicProperties.class)) {
+                disk.when(() -> AtomicProperties.save(eq(settings), any(Properties.class)))
+                        .thenThrow(new IOException("disk full"));
+
+                assertEquals("disk full", assertThrows(IOException.class, session::save).getMessage());
+                assertArrayEquals(previous, Files.readAllBytes(settings));
+            }
+
+            session.save();
+
+            Properties saved = AtomicProperties.load(settings);
+            assertEquals("2", saved.getProperty("watches"));
+            assertEquals("after", saved.getProperty("entry.0.label"));
+            assertEquals("CODE", saved.getProperty("entry.0.kind"));
+        }
+    }
+
+    @Test
+    public void sessionWithoutConfigurationPathKeepsEditableMetadataInMemory() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
+        try (DebugSession session = machine.session(null)) {
+            session.update(() -> session.watches.add("unknown + 1")).join();
+            session.annotations().add(new AnnotationIndex.Entry(0, "temporary", "DATA"));
+
+            session.save();
+
+            assertEquals("temporary", session.annotations().get(0).label);
+            assertEquals(List.of("unknown + 1"), session.watches);
+            assertTrue(session.watchErrors().containsKey("unknown + 1"));
+            try (var files = Files.list(temporary.getRoot().toPath())) {
+                assertEquals(0, files.count());
+            }
+        }
+    }
+
+    @Test
     public void metadataPersistsForComputerLayoutWithoutDependingOnCellContents() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
         String identity;
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             identity = session.programIndex().snapshot().layout().imageId();
-            session.annotations().put(new AnnotationIndex.Entry(1, "buffer", "DATA"));
-            session.saveAnnotations();
+            session.annotations().add(new AnnotationIndex.Entry(1, "buffer", "DATA"));
+            session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
         try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
@@ -848,7 +1010,7 @@ public class DebugSessionTest {
         try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
             editedId = session.annotations().add(new AnnotationIndex.Entry(0, "disk old", "CODE")).id;
             session.annotations().add(new AnnotationIndex.Entry(1, "disk retained", "DATA"));
-            session.saveAnnotations();
+            session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
         net.emustudio.emulib.runtime.annotations.MemoryAnnotations engine = spy(

@@ -76,10 +76,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return frequencyCalculator.sample();
     }
 
-    public FrequencyCalculator getFrequencyCalculator() {
-        return frequencyCalculator;
-    }
-
     @Override
     protected void destroyInternal() {
         context.removePassedCyclesListener(frequencyCalculator);

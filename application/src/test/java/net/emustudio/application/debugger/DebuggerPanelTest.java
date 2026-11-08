@@ -542,7 +542,7 @@ public class DebuggerPanelTest {
             when(decoder.getFlow(10)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.STOP, 11, false, List.of())));
         })) {
-            workspace.session.annotations().put(new AnnotationIndex.Entry(6, "checkpoint", "CODE"));
+            workspace.session.annotations().add(new AnnotationIndex.Entry(6, "checkpoint", "CODE"));
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.navigate(0);
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
@@ -1252,7 +1252,7 @@ public class DebuggerPanelTest {
     public void instructionRowsShowLabelFirstAndBreakpointsAsBoldText() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
+                session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -1642,7 +1642,7 @@ public class DebuggerPanelTest {
                     new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
         })) {
             try {
-                workspace.session.annotations().put(new AnnotationIndex.Entry(0, "start", "CODE"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
                 workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "UNKNOWN"));
                 SwingUtilities.invokeAndWait(() -> {
                     AbstractButton goTo = button(workspace.panel, "Go to instruction");

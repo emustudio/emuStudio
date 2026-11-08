@@ -16,9 +16,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -38,7 +35,6 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     public final List<Rule> rules = new CopyOnWriteArrayList<>();
     private final Path settings;
     private Properties lastSaved;
-    private final String metadataNamespace;
     private AnnotationIndex annotations;
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
@@ -67,7 +63,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         ProgramIndex.Layout layout = programIndex == null ? null : programIndex.snapshot().layout();
         int size = cpu.getAddressSpaceSize();
         if (layout == null || layout.addressSpaceSize() != size) {
-            ProgramIndex replacement = ProgramIndex.create(metadataIdentity(size), size, annotationEngine);
+            ProgramIndex replacement = ProgramIndex.create(cpu.getTitle() + ":" + size, size, annotationEngine);
             synchronized (indexPublicationLock) {
                 programIndex = replacement;
             }
@@ -111,85 +107,11 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         return new LiveMemory(memory, stamp.base.layout(), () -> requireCurrent(stamp));
     }
 
-    /** User metadata loads without reading or storing memory cells. */
-    public AnnotationIndex annotations() throws IOException {
-        while (true) {
-            Stamp stamp = liveStamp();
-            synchronized (this) {
-                if (annotations != null) return annotations;
-            }
-            long annotationRevision = annotationEngine.revision();
-            Path path = annotationPath(stamp.base.layout().imageId());
-            Properties loaded = path != null && Files.isRegularFile(path) ? AtomicProperties.load(path) : null;
-            synchronized (this) {
-                requirePaused();
-                requireNoMutation();
-                if (programIndex() != stamp.index || generation != stamp.generation)
-                    throw new IllegalStateException("Metadata discarded: machine layout changed while loading");
-                if (annotations != null) return annotations;
-                if (!stamp.matches(programIndex, true) || annotationEngine.revision() != annotationRevision) continue;
-                AnnotationIndex installed = new AnnotationIndex(stamp.index, annotationEngine);
-                if (loaded != null) {
-                    // Live user edits win on ID collisions, including edits made while disk I/O was in flight.
-                    Set<Long> existing = new HashSet<>();
-                    for (MemoryAnnotations.Entry entry : annotationEngine.all())
-                        if (entry.ownerId == AnnotationIndex.OWNER) existing.add(entry.entryId);
-                    Properties filtered = new Properties();
-                    filtered.putAll(loaded);
-                    int count;
-                    try { count = Integer.parseInt(loaded.getProperty("entries")); }
-                    catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
-                    if (count < 0 || count > 100000) throw new IOException("Invalid annotation file");
-                    int retained = 0;
-                    for (int i = 0; i < count; i++) {
-                        String source = "entry." + i + ".";
-                        long id;
-                        try { id = Long.parseLong(loaded.getProperty(source + "id")); }
-                        catch (RuntimeException e) { throw new IOException("Invalid annotation file", e); }
-                        if (existing.contains(id)) continue;
-                        String target = "entry." + retained++ + ".";
-                        for (String field : List.of("address", "end", "id", "label", "kind")) {
-                            String value = loaded.getProperty(source + field);
-                            if (value == null) filtered.remove(target + field);
-                            else filtered.setProperty(target + field, value);
-                        }
-                    }
-                    filtered.setProperty("entries", Integer.toString(retained));
-                    if (installed.installProperties(filtered, stamp.base, annotationRevision) != ProgramIndex.CommitResult.PUBLISHED)
-                        continue;
-                } else if (annotationEngine.revision() != annotationRevision) {
-                    continue;
-                }
-                annotations = installed;
-                return installed;
-            }
-        }
-    }
-
-    private String metadataIdentity(int size) {
-        try {
-            String identity = cpu.getTitle() + ":" + metadataNamespace + ":" + size;
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8));
-            StringBuilder text = new StringBuilder();
-            for (byte value : digest) text.append(String.format("%02x", value & 255));
-            return text.toString();
-        } catch (NoSuchAlgorithmException e) { throw new AssertionError(e); }
-    }
-
-    private Path annotationPath(String identity) {
-        return settings == null ? null : settings.resolveSibling(settings.getFileName() + "." + identity + ".annotations");
-    }
-
-    public void saveAnnotations() throws IOException {
-        AnnotationIndex current = annotations();
-        Path path = annotationPath(current.programIndex().snapshot().layout().imageId());
-        if (path != null) current.save(path);
-    }
-
-    public void clearAnnotations() throws IOException {
-        requirePaused();
-        annotations().clear();
-        saveAnnotations();
+    /** User metadata is restored once at startup; reads need no disk access or paused CPU. */
+    public synchronized AnnotationIndex annotations() {
+        ProgramIndex index = programIndex();
+        if (annotations == null) annotations = new AnnotationIndex(index, annotationEngine);
+        return annotations;
     }
 
     private final Deque<InstructionRecording.Event> history = new ArrayDeque<>();
@@ -257,10 +179,9 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
         this.memory = memory;
         this.settings = settings;
-        metadataNamespace = settings == null ? "session:" + UUID.randomUUID() : settings.toAbsolutePath().normalize().toUri().toString();
-        if (this.memory != null || cpu.getAddressSpaceSize() > 0) programIndex();
-        annotationEngine.addListener(annotationListener);
+        if (this.memory != null || cpu.getAddressSpaceSize() > 0) annotations();
         load();
+        annotationEngine.addListener(annotationListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
         execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler, executionState);
         update(() -> {}).join();
@@ -867,8 +788,8 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     }
 
     public synchronized void save() throws IOException {
-        if (settings == null) throw new IOException("Computer configuration path unavailable");
-        Properties p = new Properties();
+        if (settings == null) return;
+        Properties p = programIndex == null ? new Properties() : annotations().properties();
         p.setProperty("version", "4");
         p.setProperty("cpu", cpu.getTitle());
         p.setProperty("watches", Integer.toString(watches.size()));
@@ -915,6 +836,11 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
                 if (r.address >= cpu.getAddressSpaceSize())
                     throw new IllegalArgumentException("Breakpoint address outside CPU");
                 rules.add(r);
+            }
+            if (programIndex != null && p.containsKey("entries")
+                    && programIndex.snapshot().layout().imageId().equals(p.getProperty("image.identity"))) {
+                annotations().restore(p);
+                programIndex.annotationsChanged();
             }
             lastSaved = p;
         } catch (RuntimeException e) {

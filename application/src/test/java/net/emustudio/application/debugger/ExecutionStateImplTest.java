@@ -9,12 +9,51 @@ import net.emustudio.emulib.runtime.ExecutionState;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ExecutionStateImplTest {
+    @Test
+    public void unchangedSnapshotDoesNotSendDuplicateNotifications() throws Exception {
+        ExecutionStateImpl state = new ExecutionStateImpl();
+        CPU cpu = mock(CPU.class);
+        when(cpu.sampleFrequency()).thenReturn(Float.NaN);
+        AtomicInteger changes = new AtomicInteger();
+        try (EmulationController owner = new EmulationController(cpu, null, List.of(), null, null, state);
+             ExecutionState.Subscription subscription = state.subscribe(value -> changes.incrementAndGet())) {
+            state.publish(owner, snapshot(4));
+
+            state.publish(owner, snapshot(4));
+
+            assertEquals(1, changes.get());
+        }
+    }
+
+    @Test
+    public void pausedEditNotifiesBusyThenIdleOnceEvenWhenPcDoesNotChange() throws Exception {
+        ExecutionStateImpl state = new ExecutionStateImpl();
+        CPU cpu = mock(CPU.class);
+        when(cpu.sampleFrequency()).thenReturn(Float.NaN);
+        List<ExecutionState.Snapshot> changes = new CopyOnWriteArrayList<>();
+        AtomicInteger register = new AtomicInteger();
+        try (EmulationController owner = new EmulationController(cpu, null, List.of(), null, null, state);
+             ExecutionState.Subscription subscription = state.subscribe(changes::add)) {
+            state.mutate(() -> register.set(42)).get(2, TimeUnit.SECONDS);
+
+            assertEquals(42, register.get());
+            assertEquals(2, changes.size());
+            assertTrue(changes.get(0).isBusy());
+            assertFalse(changes.get(1).isBusy());
+            assertEquals(changes.get(0).currentInstruction(), changes.get(1).currentInstruction());
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, changes.get(1).runState());
+        }
+    }
+
     @Test
     public void instructionLocationChangesOnlyWithPublishedSnapshot() throws Exception {
         ExecutionStateImpl state = new ExecutionStateImpl();

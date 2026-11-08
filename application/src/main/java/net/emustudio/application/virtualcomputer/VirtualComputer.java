@@ -209,7 +209,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                             applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
                                     : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
                             applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
-                    if (getCPU().get().getAddressSpaceSize() > 0) debugger.annotations();
                     execution = debugger.execution();
 
                 } catch (IOException e) {
