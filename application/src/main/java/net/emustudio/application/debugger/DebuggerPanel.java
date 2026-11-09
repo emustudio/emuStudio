@@ -1027,8 +1027,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (original == null || (original.id >= 0 && !dirty())) return;
             int target, end;
             try {
-                target = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(addressField.getText());
-                end = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(endField.getText());
+                target = net.emustudio.emulib.Numbers.parseRadix(addressField.getText());
+                end = net.emustudio.emulib.Numbers.parseRadix(endField.getText());
                 if (target < 0 || end < target || end >= session.addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "

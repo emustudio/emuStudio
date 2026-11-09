@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,14 +69,14 @@ public class SioUnitSettings {
                 .stream(settings.getString(KEY_STATUS_PORTS).orElse("").split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(RadixUtils::parseRadix)
+                .map(Numbers::parseRadix)
                 .collect(Collectors.toList());
 
         this.dataPorts = Arrays
                 .stream(settings.getString(KEY_DATA_PORTS).orElse("").split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(RadixUtils::parseRadix)
+                .map(Numbers::parseRadix)
                 .collect(Collectors.toList());
     }
 

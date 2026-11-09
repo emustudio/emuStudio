@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 
 import org.junit.Test;
 import java.util.concurrent.CompletionStage;
@@ -17,7 +17,7 @@ import java.util.*;
 public class DebugHooksTest {
     @Test
     public void runStopsAtApplicationBreakpointBeforeExecutingInstruction() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3e, 0x42, 0x3c}, 3);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         Debugging.Observer listener = new Debugging.Observer() {
@@ -39,7 +39,7 @@ public class DebugHooksTest {
 
     @Test
     public void disabledProbeKeepsOriginalMemoryReference() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         java.lang.reflect.Field field = EmulatorEngine.class.getDeclaredField("memory");
         field.setAccessible(true);
@@ -58,7 +58,7 @@ public class DebugHooksTest {
 
     @Test
     public void realInstructionsReportGuestWritesAndRegisterChanges() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3e, 0x42, 0x32, 0x00, 0x01}, 5);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         List<StepView> events = new ArrayList<>();
@@ -92,7 +92,7 @@ public class DebugHooksTest {
 
     @Test
     public void historyPreservesLoopIterationsAndExecutionTimeCodeAcrossReset() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3c, (byte) 0xc3, 0x00, 0x00}, 4);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         List<StepView> events = collect(engine);
@@ -115,7 +115,7 @@ public class DebugHooksTest {
 
     @Test
     public void interruptRecordsInjectedInstructionInsteadOfOldPcCode() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         List<StepView> events = collect(engine);
@@ -147,7 +147,7 @@ public class DebugHooksTest {
 
     @Test
     public void canStopBeforeInstructionWithoutMutatingRegisters() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         engine.debugger.observe(
@@ -166,7 +166,7 @@ public class DebugHooksTest {
 
     @Test
     public void haltResultSurvivesDebuggerStopAfterInstruction() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x76);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         engine.debugger.observe(new Debugging.Observer() {
@@ -181,7 +181,7 @@ public class DebugHooksTest {
 
     @Test
     public void continuousHaltResultSurvivesDebuggerStopAfterInstruction() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x76);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         engine.debugger.observe(new Debugging.Observer() {
@@ -196,7 +196,7 @@ public class DebugHooksTest {
 
     @Test
     public void addressFailureSurvivesDebuggerStopAfterInstruction() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN) {
             @Override public Byte read(int address) {
                 if (address == 0x100) throw new IndexOutOfBoundsException("Guest read outside memory");
                 return super.read(address);
@@ -217,7 +217,7 @@ public class DebugHooksTest {
 
     @Test
     public void pluginEditorQueuesChangeUntilNextBoundaryWithoutObservation() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         List<Runnable> pending = new ArrayList<>();
@@ -251,7 +251,7 @@ public class DebugHooksTest {
 
     @Test
     public void accessConditionNeedsNoPresentationCaptureOrInspectionReads() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN) {
             @Override public Byte peek(int address) { throw new AssertionError("No inspection requested"); }
         };
         memory.write(0, new Byte[] {0x32, 0x00, 0x01}, 3);
@@ -277,7 +277,7 @@ public class DebugHooksTest {
 
     @Test
     public void captureFailureDisablesCaptureWhileGuestInstructionsContinue() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3c, 0x3c}, 2);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         engine.debugger.register("BROKEN", 8, () -> { throw new IllegalStateException("Cannot format value"); }, value -> {});
@@ -305,7 +305,7 @@ public class DebugHooksTest {
 
     @Test
     public void adjacentNopsShareFoldIdentityWhileAccessLabelsShowTheirAddresses() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0, 0}, 2);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
         List<StepView> events = collect(engine);
@@ -322,7 +322,7 @@ public class DebugHooksTest {
 
     @Test
     public void memoryIncrementShowsBothReadAndWriteAtSameVisibleAddress() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x34);
         memory.write(0x100, (byte) 2);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());

@@ -5,7 +5,7 @@ package net.emustudio.plugins.memory.ssem.gui.actions;
 import net.emustudio.emulib.runtime.ui.StandardIcons;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.io.FileType;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public class LoadImageAction extends AbstractAction {
                     byte[] data = new byte[code.remaining()];
                     code.get(data);
                     api.setProgramLocation(startLine * 4);
-                    context.write(0, NumberUtils.nativeBytesToBytes(data));
+                    context.write(0, Numbers.nativeBytesToBytes(data));
                 } catch (Exception failure) { throw new CompletionException(failure); }
             }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
                 if (failure == null) repaint.run();

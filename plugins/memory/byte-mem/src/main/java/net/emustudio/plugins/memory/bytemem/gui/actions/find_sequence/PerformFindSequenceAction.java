@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public class PerformFindSequenceAction extends AbstractAction {
         try {
             lastError.component = txtPosition;
             lastError.message = ERROR_NUMBER_FORMAT;
-            int from = isCurrentPage.get() ? currentAddress : RadixUtils.parseRadix(txtPosition.getText().trim());
+            int from = isCurrentPage.get() ? currentAddress : Numbers.parseRadix(txtPosition.getText().trim());
 
             lastError.component = txtFindText;
             lastError.message = "Sequence cannot be empty";
@@ -75,7 +75,7 @@ public class PerformFindSequenceAction extends AbstractAction {
             } else if (selectedFormat == Format.BYTES) {
                 lastError.message = ERROR_NUMBER_FORMAT;
 
-                List<Integer> mapped = Stream.of(text.split(" ")).map(RadixUtils::parseRadix).collect(Collectors.toList());
+                List<Integer> mapped = Stream.of(text.split(" ")).map(Numbers::parseRadix).collect(Collectors.toList());
                 sequenceToFind = new byte[mapped.size()];
                 for (int i = 0; i < sequenceToFind.length; i++) {
                     sequenceToFind[i] = mapped.get(i).byteValue(); // NOTE: if integer is > than byte, the rest is cut off.

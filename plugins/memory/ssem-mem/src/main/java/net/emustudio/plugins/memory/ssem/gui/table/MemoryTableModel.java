@@ -5,8 +5,7 @@ package net.emustudio.plugins.memory.ssem.gui.table;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ExecutionState;
 import javax.swing.SwingUtilities;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,11 +95,11 @@ public class MemoryTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
             Byte[] row = memory.read(rowIndex * 4, 4);
-            int value = NumberUtils.readInt(row, NumberUtils.Strategy.REVERSE_BITS);
+            int value = Numbers.readInt(row, Numbers.Strategy.REVERSE_BITS);
 
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
-                    return RadixUtils.formatHex(value, 8);
+                    return Numbers.formatHex(value, 8);
                 case COLUMN_DEC_VALUE:
                     return String.valueOf(value);
                 case COLUMN_RAW_VALUE:
@@ -143,7 +142,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
     private void writeHex(String aValue, Byte[] row) {
         int value = Integer.decode(aValue);
-        NumberUtils.writeInt(value, row, NumberUtils.Strategy.REVERSE_BITS);
+        Numbers.writeInt(value, row, Numbers.Strategy.REVERSE_BITS);
     }
 
     private void writeChar(String aValue, Byte[] row) {
@@ -157,7 +156,7 @@ public class MemoryTableModel extends AbstractTableModel {
                 break;
             }
         }
-        NumberUtils.writeInt(value, row, NumberUtils.Strategy.REVERSE_BITS);
+        Numbers.writeInt(value, row, Numbers.Strategy.REVERSE_BITS);
     }
 
     private void writeBit(String aValue, int columnIndex, Byte[] row) {

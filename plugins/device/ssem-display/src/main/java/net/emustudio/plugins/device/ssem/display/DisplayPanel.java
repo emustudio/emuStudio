@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.ssem.display;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.jcip.annotations.ThreadSafe;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ public class DisplayPanel extends JPanel {
     }
 
     void writeRow(Byte[] value, int row) {
-        int number = NumberUtils.readInt(value, NumberUtils.Strategy.REVERSE_BITS);
+        int number = Numbers.readInt(value, Numbers.Strategy.REVERSE_BITS);
         for (int i = 0; i < CELL_SIZE_BITS; i++) {
             memory[row][i] = (((number >>> i) & 1) == 1);
         }

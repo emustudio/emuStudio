@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+import static net.emustudio.emulib.Numbers.formatHex;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {

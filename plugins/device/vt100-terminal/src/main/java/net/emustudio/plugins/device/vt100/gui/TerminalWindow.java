@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100.gui;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
@@ -96,7 +96,7 @@ public class TerminalWindow extends DialogBase {
 
                     try {
                         while (tokenizer.hasMoreTokens()) {
-                            int ascii = RadixUtils.parseRadix(tokenizer.nextToken());
+                            int ascii = Numbers.parseRadix(tokenizer.nextToken());
                             keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
                         }
                     } catch (NumberFormatException ex) {

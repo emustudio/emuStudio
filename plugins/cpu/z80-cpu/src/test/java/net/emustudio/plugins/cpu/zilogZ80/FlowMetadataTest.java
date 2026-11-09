@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler;
 import net.emustudio.plugins.cpu.zilogZ80.gui.*;
 
@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class FlowMetadataTest {
     private InstructionFlow flow(int... bytes) {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         for (int i = 0; i < bytes.length; i++) memory.write(i, (byte) bytes[i]);
         Disassembler decoder = new DisassemblerImpl(memory, new DecoderImpl(memory));
         return new FlowDisassembler(decoder, memory, true).getFlow(0).orElseThrow();
@@ -55,7 +55,7 @@ public class FlowMetadataTest {
 
     @Test
     public void decoderReadsUpdatedRelativeOperandsAndDisassembly() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x18);
         memory.write(1, (byte) 0x02);
         Disassembler live = new FlowDisassembler(new DisassemblerImpl(memory, new DecoderImpl(memory)), memory, true);

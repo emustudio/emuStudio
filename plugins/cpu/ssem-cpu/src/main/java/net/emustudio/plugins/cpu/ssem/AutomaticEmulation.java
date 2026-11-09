@@ -5,8 +5,7 @@ package net.emustudio.plugins.cpu.ssem;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +66,8 @@ class AutomaticEmulation {
 
                 writer.println("   L L L L L 5 6 7 8 9 0 1 2 I I I 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1");
                 for (int i = 0; i < memorySnapshot.length; i++) {
-                    int number = NumberUtils.readInt(memorySnapshot[i], NumberUtils.Strategy.BIG_ENDIAN);
-                    String binary = RadixUtils.formatBinary(number, 32);
+                    int number = Numbers.readInt(memorySnapshot[i], Numbers.Strategy.BIG_ENDIAN);
+                    String binary = Numbers.formatBinary(number, 32);
                     writer.println(String.format("%02d %s", i, binary.replace("0", "  ").replace("1", "* ")));
                 }
             }

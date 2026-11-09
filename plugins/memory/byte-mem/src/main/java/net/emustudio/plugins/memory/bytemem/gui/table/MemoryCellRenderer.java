@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
@@ -46,7 +46,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         currentPage = tableModel.getPage();
         addresses = new String[tableModel.getRowCount()];
         for (int i = 0; i < addresses.length; i++) {
-            addresses[i] = RadixUtils.formatHex(tableModel.getColumnCount() * i
+            addresses[i] = Numbers.formatHex(tableModel.getColumnCount() * i
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage, 4);
         }
         rowHeader = new JList<>(addresses);

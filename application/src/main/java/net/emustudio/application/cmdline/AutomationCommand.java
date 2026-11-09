@@ -14,7 +14,7 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +81,7 @@ public class AutomationCommand implements Callable<Integer> {
                     appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
-                        ? null : RadixUtils.parseRadix(this.programLocation);
+                        ? null : Numbers.parseRadix(this.programLocation);
                 EmulationProgress progress = this.gui ? new AutoDialog(computer, gui) : EmulationProgress.NONE;
 
                 Automation automation = new Automation(

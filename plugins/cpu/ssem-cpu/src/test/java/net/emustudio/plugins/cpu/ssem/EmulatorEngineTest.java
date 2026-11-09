@@ -5,7 +5,7 @@ package net.emustudio.plugins.cpu.ssem;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ public class EmulatorEngineTest {
 
     @Before
     public void setUp() {
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        memoryStub = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         engine = new EmulatorEngine(memoryStub);
     }
 
@@ -51,7 +51,7 @@ public class EmulatorEngineTest {
 
         engine.reset(0);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
-        assertEquals(8, NumberUtils.readInt(memoryStub.read(31 * 4, 4), memoryStub.getWordReadingStrategy()));
+        assertEquals(8, Numbers.readInt(memoryStub.read(31 * 4, 4), memoryStub.getWordReadingStrategy()));
     }
 
     @Test(timeout = 700)

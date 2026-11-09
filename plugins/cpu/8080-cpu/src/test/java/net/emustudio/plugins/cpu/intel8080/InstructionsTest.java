@@ -8,7 +8,7 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuVerifierImpl;
@@ -31,7 +31,7 @@ public class InstructionsTest {
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws PluginInitializationException {
-        ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memoryStub = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(0, Byte.class))

@@ -9,7 +9,7 @@ import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.rasp.ast.Program;
@@ -80,7 +80,7 @@ public class CompilerRASP extends AbstractCompiler {
 
             info(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputPath, RadixUtils.formatHex(programLocation, 4)
+                    outputPath, Numbers.formatHex(programLocation, 4)
             ));
 
             if (memory != null) {

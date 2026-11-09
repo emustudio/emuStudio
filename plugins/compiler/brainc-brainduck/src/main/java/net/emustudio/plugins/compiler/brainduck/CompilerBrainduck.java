@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+import static net.emustudio.emulib.Numbers.formatHex;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,

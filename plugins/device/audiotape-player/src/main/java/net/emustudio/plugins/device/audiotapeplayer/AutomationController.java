@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -151,7 +151,7 @@ public class AutomationController implements AutoCloseable {
                 }
                 break;
             case DELAY:
-                int seconds = RadixUtils.parseRadix(event.getParameter());
+                int seconds = Numbers.parseRadix(event.getParameter());
                 if (seconds > 0) {
                     preciseSleepNanos(TimeUnit.SECONDS.toNanos(seconds));
                 }

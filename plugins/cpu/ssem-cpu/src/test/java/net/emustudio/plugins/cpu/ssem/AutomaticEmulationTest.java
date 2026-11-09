@@ -5,7 +5,7 @@ package net.emustudio.plugins.cpu.ssem;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.easymock.Capture;
 import org.junit.After;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(anyObject())).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -52,7 +52,7 @@ public class AutomaticEmulationTest {
 
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -69,7 +69,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -93,7 +93,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -115,7 +115,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -137,7 +137,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
 
@@ -155,7 +155,7 @@ public class AutomaticEmulationTest {
         expect(cpu.subscribe(capture(listenerCapture))).andReturn(() -> {}).once();
         replay(cpu);
 
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.Acc.set(42);
@@ -177,7 +177,7 @@ public class AutomaticEmulationTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorRejectsNullExecution() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(null, engine, memory);
@@ -187,7 +187,7 @@ public class AutomaticEmulationTest {
     public void testConstructorRejectsNullEngine() {
         ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         new AutomaticEmulation(cpu, null, memory);
     }
@@ -196,7 +196,7 @@ public class AutomaticEmulationTest {
     public void testConstructorRejectsNullMemory() {
         ExecutionState cpu = createNiceMock(ExecutionState.class);
         replay(cpu);
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[32 * 4]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(cpu, engine, null);

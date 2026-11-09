@@ -10,7 +10,7 @@ import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+import static net.emustudio.emulib.Numbers.formatHex;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -134,7 +134,7 @@ public class SSEMCompiler extends AbstractCompiler {
             byte[] data = new byte[code.remaining()];
             code.get(data);
             memory.clear();
-            memory.write(0, NumberUtils.nativeBytesToBytes(data));
+            memory.write(0, Numbers.nativeBytesToBytes(data));
         } else {
             warning("Memory is not available.");
         }

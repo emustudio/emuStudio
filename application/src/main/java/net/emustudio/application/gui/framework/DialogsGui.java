@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.dialogs.InputDialog;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.io.FileType;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -45,7 +45,7 @@ public class DialogsGui implements Dialogs {
     @Override
     public Optional<Integer> readInteger(String message, String title, Integer initial) {
         return readString(message, title, initial == null ? null : String.valueOf(initial))
-                .flatMap(value -> parse(value, v -> RadixUtils.parseRadix(v.trim())));
+                .flatMap(value -> parse(value, v -> Numbers.parseRadix(v.trim())));
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinary;
+import static net.emustudio.emulib.Numbers.formatBinary;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {

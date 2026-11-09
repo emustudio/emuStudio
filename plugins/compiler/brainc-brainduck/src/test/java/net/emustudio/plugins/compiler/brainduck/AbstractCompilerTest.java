@@ -7,7 +7,7 @@ import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,7 +30,7 @@ public abstract class AbstractCompilerTest {
 
     @Before
     public void setUp() throws Exception {
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memoryStub = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();

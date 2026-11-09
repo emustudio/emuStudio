@@ -7,7 +7,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
@@ -756,7 +756,7 @@ public class ControlTest extends InstructionsTest {
     }
 
     private CountingTestEnvironment newCountingTestEnvironment() throws Exception {
-        TimingMemoryStub memory = new TimingMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        TimingMemoryStub memory = new TimingMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
