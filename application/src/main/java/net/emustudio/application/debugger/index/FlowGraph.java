@@ -15,12 +15,11 @@ import java.util.function.Consumer;
  */
 public final class FlowGraph {
     private static final ProgramIndex.EdgeKind[] KINDS = ProgramIndex.EdgeKind.values();
-    private final AddressTable nodes;
     private final int[] addresses, outgoingOffsets, outgoing;
     private final byte[] outgoingKinds;
     private final ProgramIndex.Instruction[] instructions;
 
-    FlowGraph(ProgramIndex.Layout layout, Map<Integer, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
+    FlowGraph(Map<Integer, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
         Set<Integer> keys = new TreeSet<>(decoded.keySet());
         for (Edge e : edges) {
             if (!decoded.containsKey(e.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
@@ -35,7 +34,6 @@ public final class FlowGraph {
             instructions[i] = decoded.get(key);
             ids.put(key, ++i);
         }
-        nodes = new AddressTable(layout, ids);
         outgoingOffsets = new int[keys.size() + 1];
         for (Edge e : edges) {
             outgoingOffsets[ids.get(e.from)]++;
@@ -55,8 +53,8 @@ public final class FlowGraph {
     }
 
     ProgramIndex.Instruction instructionAt(int address) {
-        int id = nodes.get(address);
-        return id == 0 ? null : instructions[id - 1];
+        int id = Arrays.binarySearch(addresses, address);
+        return id < 0 ? null : instructions[id];
     }
 
     void instructions(Consumer<? super ProgramIndex.Instruction> visitor) {
@@ -64,7 +62,7 @@ public final class FlowGraph {
     }
 
     void successors(int address, ProgramIndex.EdgeVisitor visitor) {
-        int id = nodes.get(address) - 1;
+        int id = Arrays.binarySearch(addresses, address);
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
             int to = outgoing[at];

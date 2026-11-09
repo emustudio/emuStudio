@@ -319,7 +319,7 @@ public final class ProgramIndex {
             requireOpen();
             open = false;
             FlowGraph flow = instructions == null ? base.flow
-                    : new FlowGraph(layout, instructions, edges);
+                    : new FlowGraph(instructions, edges);
             FlowState state;
             if (instructions == null) state = base.flowState;
             else state = truncated ? FlowState.TRUNCATED : FlowState.CURRENT;
