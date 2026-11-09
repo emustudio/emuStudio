@@ -46,11 +46,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
-    }
-
-    @Override
-    public int getInstructionLocation() {
-        return engine.IP;
+        context.setEngine(engine);
     }
 
     @Override
@@ -131,10 +127,8 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return disassembler;
     }
 
-    private float measuredFrequency = Float.NaN;
-
     private void publishState(RunState state) {
-        context.publishState(state, getInstructionLocation(), measuredFrequency);
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
     }
 
     private void internalStateChanged() {

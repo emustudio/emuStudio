@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
@@ -14,6 +15,19 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Context8080Impl extends AbstractCPUContext implements Context8080 {
+
+    final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
+
+    @Override
+    public int getInstructionLocation() {
+        return cpu == null ? -1 : cpu.PC;
+    }
+
+    @Override
+    public float getCpuFrequencyKhz() {
+        return frequencyCalculator.sample();
+    }
+
     void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }

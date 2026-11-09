@@ -88,7 +88,7 @@ public class StatusPanelTest {
     }
 
     private void publish(CPU.RunState state) {
-        context.publish(state, cpu.getInstructionLocation());
+        context.publish(state, cpu.getEngine().IP);
     }
 
     private static boolean containsText(Component component, String text) {

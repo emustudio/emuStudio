@@ -185,13 +185,17 @@ public class StatusPanel extends JPanel {
         }
 
         public void internalStateChanged() {
-            float frequencyKhz = cpuContext.getMeasuredFrequencyKhz();
-            SwingUtilities.invokeLater(() -> {
-                lblFrequency.setText(Float.isNaN(frequencyKhz) ? "N/A" : String.format("%.2f kHz", frequencyKhz));
-            });
+            SwingUtilities.invokeLater(StatusPanel.this::updateFrequency);
             updateGUI();
         }
 
+    }
+
+    private final Timer frequencyRefresh = new Timer(1000, event -> updateFrequency());
+
+    private void updateFrequency() {
+        float frequencyKhz = cpuContext.getCpuFrequencyKhz();
+        lblFrequency.setText(Float.isNaN(frequencyKhz) ? "N/A" : String.format("%.2f kHz", frequencyKhz));
     }
 
     private CPUContext.CPUListener cpuListener;
@@ -206,6 +210,7 @@ public class StatusPanel extends JPanel {
 
     @Override public void addNotify() {
         super.addNotify();
+        frequencyRefresh.start();
         if (!listening) {
             cpuContext.addCPUListener(cpuListener);
             listening = true;
@@ -215,6 +220,7 @@ public class StatusPanel extends JPanel {
     @Override public void removeNotify() {
         if (listening) cpuContext.removeCPUListener(cpuListener);
         listening = false;
+        frequencyRefresh.stop();
         super.removeNotify();
     }
 }

@@ -83,7 +83,7 @@ final class DebuggerTestMachine {
 
     private Supplier<Object> variable(String name) {
         String key = name.toUpperCase(Locale.ROOT);
-        if (key.equals("PC") || key.equals("IP")) return () -> (long) cpu.getInstructionLocation();
+        if (key.equals("PC") || key.equals("IP")) return () -> (long) net.emustudio.application.TestCpu.context(cpu).getInstructionLocation();
         if (!values.containsKey(key)) throw new IllegalArgumentException("Unknown name: " + name);
         return () -> values.get(key);
     }
@@ -114,7 +114,7 @@ final class DebuggerTestMachine {
     void accessed(int address, boolean write) { accessed = address; wrote = write; }
 
     boolean beforeStep(int address) {
-        when(cpu.getInstructionLocation()).thenReturn(address);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(address);
         return session.beforeStep();
     }
 

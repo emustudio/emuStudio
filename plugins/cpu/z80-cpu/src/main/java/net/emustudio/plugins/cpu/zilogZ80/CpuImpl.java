@@ -10,7 +10,6 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -33,8 +32,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     private Disassembler disassembler;
     private EmulatorEngine engine;
 
-    private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
-
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         applicationApi.getContextPool().register(pluginID, context, Context8080.class);
@@ -44,11 +41,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         initializer = new InitializerZ80(
                 pluginID, applicationApi.getContextPool(), context
         );
-    }
-
-    @Override
-    public int getInstructionLocation() {
-        return engine.PC;
     }
 
     @Override
@@ -70,7 +62,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         context.setEngine(engine);
-        context.addPassedCyclesListener(frequencyCalculator);
+        context.addPassedCyclesListener(context.frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
                     this, context, applicationApi.getGUI(), context
@@ -97,15 +89,15 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     private RunState executeInternal() {
         try {
-            frequencyCalculator.start();
+            context.frequencyCalculator.start();
             return engine.run();
         } finally {
-            frequencyCalculator.stop();
+            context.frequencyCalculator.stop();
         }
     }
 
     private void resetInternal(int startPos) {
-        frequencyCalculator.stop();
+        context.frequencyCalculator.stop();
         engine.reset(startPos);
     }
 
@@ -120,22 +112,13 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     @Override
     protected void destroyInternal() {
-        context.removePassedCyclesListener(frequencyCalculator);
-        frequencyCalculator.stop();
+        context.removePassedCyclesListener(context.frequencyCalculator);
+        context.frequencyCalculator.stop();
         context.clearDevices();
     }
 
-    @Override
-    public float sampleFrequency() {
-        measuredFrequency = frequencyCalculator.sample();
-        internalStateChanged();
-        return measuredFrequency;
-    }
-
-    private float measuredFrequency = Float.NaN;
-
     private void publishState(RunState state) {
-        context.publishState(state, getInstructionLocation(), measuredFrequency);
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
     }
 
     private void internalStateChanged() {

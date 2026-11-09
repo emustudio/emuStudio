@@ -95,18 +95,11 @@ public final class EmulationController implements Closeable {
         commands.setRemoveOnCancelPolicy(true);
         commands.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         commands.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-        commands.scheduleWithFixedDelay(() -> {
-            try {
-                if (cpu != null) cpu.sampleFrequency();
-                publish(state);
-            }
-            catch (RuntimeException failure) { LOGGER.warn("Frequency sampling failed", failure); }
-        }, 1, 1, TimeUnit.SECONDS);
         publish(state);
     }
 
     public CPU.RunState getRunState() { return state; }
-    public int getInstructionLocation() { return cpu == null ? -1 : cpu.getInstructionLocation(); }
+    public int getInstructionLocation() { return cpuContext == null ? -1 : cpuContext.getInstructionLocation(); }
     /** Whether an application command or cooperative close is pending or executing. */
     public boolean isBusy() { return busy || closing; }
     /** Whether application-scheduled stepping is active, including the delay between instructions. */
@@ -309,8 +302,6 @@ public final class EmulationController implements Closeable {
         if (active != task) return;
         active = null;
         if (!task.continuous && !task.mutation && debugger != null) debugger.completeManualStep();
-        try { if (cpu != null) cpu.sampleFrequency(); }
-        catch (RuntimeException samplingFailure) { LOGGER.warn("Frequency sampling failed", samplingFailure); }
         if (returned == CPU.RunState.STATE_RUNNING) returned = (pending != null && pending.kind == Stop.STOP) || closing
                 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
         state = returned; busy = pending != null || closing; mutationGeneration++;

@@ -54,6 +54,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         disassembler = new RaspDisassembler(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
+        context.setEngine(engine);
     }
 
     @Override
@@ -122,11 +123,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
-    public int getInstructionLocation() {
-        return engine.IP.get();
-    }
-
-    @Override
     public int getAddressSpaceSize() {
         // Program memory grows with the loaded program; addresses are not bounded by its current size.
         return Integer.MAX_VALUE;
@@ -145,10 +141,8 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return memory.read(0);
     }
 
-    private float measuredFrequency = Float.NaN;
-
     private void publishState(RunState state) {
-        context.publishState(state, getInstructionLocation(), measuredFrequency);
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
     }
 
     private void internalStateChanged() {

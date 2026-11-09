@@ -10,6 +10,18 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import java.util.Objects;
 
 class BrainCPUContextImpl extends AbstractCPUContext implements BrainCPUContext {
+
+    private volatile EmulatorEngine engine;
+
+    void setEngine(EmulatorEngine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public int getInstructionLocation() {
+        return engine == null ? -1 : engine.IP;
+    }
+
     void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }

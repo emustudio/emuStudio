@@ -221,7 +221,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             clearInvocations(f.original);
-            when(f.cpu.getInstructionLocation()).thenReturn(2);
+            when(net.emustudio.application.TestCpu.context(f.cpu).getInstructionLocation()).thenReturn(2);
             f.running(true);
             f.running(false);
             verify(f.original).currentPage();

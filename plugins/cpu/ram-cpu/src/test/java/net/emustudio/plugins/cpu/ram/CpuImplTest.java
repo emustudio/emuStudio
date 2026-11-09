@@ -27,6 +27,7 @@ import static org.junit.Assert.*;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext observedContext;
     private RamMemoryContext memory;
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
@@ -52,6 +53,8 @@ public class CpuImplTest {
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
 
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
         execution = createNiceMock(CPUContext.class);
@@ -108,7 +111,7 @@ public class CpuImplTest {
     public void testSetAndGetInstructionLocation() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(10));
-        assertEquals(10, cpu.getInstructionLocation());
+        assertEquals(10, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -121,14 +124,14 @@ public class CpuImplTest {
     public void testSetInstructionLocationZero() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(0));
-        assertEquals(0, cpu.getInstructionLocation());
+        assertEquals(0, observedContext.getInstructionLocation());
     }
 
     @Test
     public void testResetSetsIP() throws Exception {
         initCpu();
         cpu.reset(5);
-        assertEquals(5, cpu.getInstructionLocation());
+        assertEquals(5, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -367,7 +370,7 @@ public class CpuImplTest {
 }, true);
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
         assertEquals(1, events.size());
-        assertEquals(1, cpu.getInstructionLocation());
+        assertEquals(1, observedContext.getInstructionLocation());
     }
 
     @Test

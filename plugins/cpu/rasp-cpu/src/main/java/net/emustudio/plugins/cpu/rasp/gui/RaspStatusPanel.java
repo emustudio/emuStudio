@@ -80,7 +80,7 @@ public class RaspStatusPanel extends JPanel {
         public void internalStateChanged() {
             int outputPos = Math.max(0, output.getHeadPosition() - 1);
             int accumulator = cpu.getACC();
-            int instruction = cpu.getInstructionLocation();
+            int instruction = cpuContext.getInstructionLocation();
             String nextInput = input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>");
             String lastOutput = output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>");
             SwingUtilities.invokeLater(() -> {

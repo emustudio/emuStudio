@@ -77,7 +77,7 @@ public class DebuggerPanelTest {
         AtomicInteger pc = new AtomicInteger();
         AtomicBoolean armed = new AtomicBoolean();
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
-            when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenAnswer(call -> pc.get());
             when(session.cpu.getDisassembler().getFlow(0)).thenAnswer(call -> {
                 if (!armed.get()) return Optional.empty();
                 entered.countDown();
@@ -495,7 +495,7 @@ public class DebuggerPanelTest {
         AtomicInteger pc = new AtomicInteger(4);
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {new byte[11]}, 11, session -> {
-            when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenAnswer(call -> pc.get());
             Disassembler decoder = session.cpu.getDisassembler();
             for (int at = 0; at < 10; at++) when(decoder.getFlow(at)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.LINEAR, at + 1, true, List.of())));
@@ -1346,7 +1346,7 @@ public class DebuggerPanelTest {
         AtomicInteger pc = new AtomicInteger(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4,
                 session -> {
-                    when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
+                    when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenAnswer(call -> pc.get());
                     session.setBreakpoint(1, true).join();
                 })) {
             workspace.machine.state(CPU.RunState.STATE_RUNNING);
@@ -1383,7 +1383,7 @@ public class DebuggerPanelTest {
     public void analyzeReferencesStartsAtPcInsteadOfInspectedAddress() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0, 0}}, 5, session -> {
-            when(session.cpu.getInstructionLocation()).thenReturn(3);
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenReturn(3);
             Disassembler decoder = session.cpu.getDisassembler();
             when(decoder.getFlow(3)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.JUMP, 4, true, List.of(1))));
@@ -1488,7 +1488,7 @@ public class DebuggerPanelTest {
                     java.awt.Graphics beforeGraphics = before.getGraphics();
                     try { graph.paint(beforeGraphics); } finally { beforeGraphics.dispose(); }
                     workspace.session.runExecution(() -> {});
-                    when(workspace.session.cpu.getInstructionLocation()).thenReturn(1);
+                    when(net.emustudio.application.TestCpu.context(workspace.session.cpu).getInstructionLocation()).thenReturn(1);
                     workspace.panel.stepCompleted();
                     java.awt.image.BufferedImage during = new java.awt.image.BufferedImage(460, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
                     java.awt.Graphics duringGraphics = during.getGraphics();
@@ -1504,7 +1504,7 @@ public class DebuggerPanelTest {
     public void inspectionCanAnalyzeSelectedInstructionInsteadOfPc() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4, session -> {
-            when(session.cpu.getInstructionLocation()).thenReturn(3);
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenReturn(3);
             when(session.cpu.getDisassembler().getFlow(1)).thenReturn(Optional.of(
                     new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
         })) {
@@ -1841,7 +1841,7 @@ public class DebuggerPanelTest {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 DebugTableModelImpl model = new DebugTableModelImpl();
-                model.setCPU(workspace.machine.cpu);
+                model.setCPU(workspace.machine.cpu, net.emustudio.application.TestCpu.context(workspace.machine.cpu));
                 model.setMaxRows(3);
                 workspace.table = new DebugTableImpl(model);
                 JScrollPane scroll = new JScrollPane(workspace.table);

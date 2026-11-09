@@ -63,7 +63,7 @@ public class Utils {
         try {
             computer.initialize(contextPool);
             computer.reset();
-            computer.getCPU().ifPresent(debugTableModel::setCPU);
+            computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, computer.getExecution().orElseThrow().cpuContext()));
             return computer;
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             try {

@@ -56,6 +56,13 @@ public class CpuImplTest {
     }
 
     @Test
+    public void contextReadsLiveInstructionLocationWithoutStatePublication() {
+        cpu.getEngine().PC = 42;
+
+        assertEquals(42, context.getInstructionLocation());
+    }
+
+    @Test
     public void directRegisterEditPublishesInternalCPUStateWithoutChangingRunState() throws Exception {
         java.util.concurrent.atomic.AtomicInteger changes = new java.util.concurrent.atomic.AtomicInteger();
         java.util.List<net.emustudio.emulib.plugins.cpu.CPU.RunState> states = new java.util.ArrayList<>();
@@ -73,7 +80,7 @@ public class CpuImplTest {
         });
 
         assertEquals(8, cpu.getEngine().regs[7]);
-        assertEquals(cpu.getInstructionLocation(), context.getInstructionLocation());
+        assertEquals(cpu.getEngine().PC, context.getInstructionLocation());
         assertEquals(1, changes.get());
         assertEquals(java.util.List.of(), states);
 

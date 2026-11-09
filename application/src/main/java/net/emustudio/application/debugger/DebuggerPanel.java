@@ -206,7 +206,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
         annotationFilter = gui.textField("", 14);
-        lastInstructionAddress = session.cpu.getInstructionLocation();
+        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         historicalState = gui.textAreaReadOnly(50, 10);
         for (JList<?> list : List.of(watches, memoryWatches, annotations)) list.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -709,7 +709,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         DebugSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
         instructionModel.currentPage();
-        lastInstructionAddress = session.cpu.getInstructionLocation();
+        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
         showInstructions();
         navigate(hit.address);
         return true;
@@ -1240,7 +1240,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void analyzeFlow() {
         if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
-        analyzeFlow(session.cpu.getInstructionLocation(), true);
+        analyzeFlow(session.execution().cpuContext().getInstructionLocation(), true);
     }
 
     private void analyzeFlow(int address) {
@@ -2280,7 +2280,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
                 pending.addAll(successors.getOrDefault(at, List.of()));
             }
-            Set<Integer> boundaries = new HashSet<>(List.of(start, session.cpu.getInstructionLocation(), selection));
+            Set<Integer> boundaries = new HashSet<>(List.of(start, session.execution().cpuContext().getInstructionLocation(), selection));
             refreshNodeLabels();
             boundaries.addAll(nodeLabelCache.keySet());
             if (index != null) for (AnnotationIndex.Entry annotation : index.entries()) {
@@ -2467,7 +2467,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (clip != null && !clip.intersects(box)) continue;
                 boolean selected = entry.getKey() == selectedNode;
                 boolean pc = !running && !tasks.isBusy()
-                        && entry.getKey() == session.cpu.getInstructionLocation();
+                        && entry.getKey() == session.execution().cpuContext().getInstructionLocation();
                 Color selectionBackground = UIManager.getColor("List.selectionBackground");
                 Color selectionForeground = UIManager.getColor("List.selectionForeground");
                 Color surface = UIManager.getColor("Table.background");

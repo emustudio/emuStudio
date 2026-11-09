@@ -14,6 +14,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class RamCpuContextImpl extends AbstractCPUContext implements RamCpuContext {
+
+    private volatile EmulatorEngine engine;
+
+    void setEngine(EmulatorEngine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public int getInstructionLocation() {
+        return engine == null ? -1 : engine.IP.get();
+    }
+
     void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }

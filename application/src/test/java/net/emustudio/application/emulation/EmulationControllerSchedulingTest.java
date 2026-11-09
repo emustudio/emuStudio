@@ -205,26 +205,25 @@ public class EmulationControllerSchedulingTest {
     }
 
     @Test(timeout = 5000)
-    public void frequencySamplingSharesCommandThreadAndBothHostThreadsExitOnClose() throws Exception {
+    public void bothHostThreadsExitOnCloseWithoutFrequencyPolling() throws Exception {
         RunGate gate = new RunGate(STATE_RUNNING);
         Set<Thread> threads = ConcurrentHashMap.newKeySet();
-        CountDownLatch sampled = new CountDownLatch(1);
         when(cpu.execute()).thenAnswer(call -> {
             threads.add(Thread.currentThread());
             return gate.run();
         });
-        doAnswer(call -> {
-            threads.add(Thread.currentThread());
-            assertEquals("machine-commands", Thread.currentThread().getName());
-            sampled.countDown();
-            return Float.NaN;
-        }).when(cpu).sampleFrequency();
         EmulationController controller = controller(cpu);
 
         try {
             await(controller.start());
             gate.awaitEntered();
-            assertTrue(sampled.await(2, TimeUnit.SECONDS));
+            CompletableFuture<Void> completed = controller.runCompletion().thenAccept(state -> {
+                assertEquals("machine-commands", Thread.currentThread().getName());
+                threads.add(Thread.currentThread());
+            });
+            gate.release.countDown();
+            await(completed);
+            verify(net.emustudio.application.TestCpu.context(cpu), never()).getCpuFrequencyKhz();
 
             assertEquals(2, threads.size());
             assertEquals(Set.of("machine-commands", "machine-cpu"),

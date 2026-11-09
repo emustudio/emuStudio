@@ -212,7 +212,7 @@ public class Automation implements Runnable {
                 LOGGER.error("Invalid state ({})", resultState);
                 break;
         }
-        LOGGER.info("Instruction location = {}", String.format("0x%04X", cpu.getInstructionLocation()));
+        LOGGER.info("Instruction location = {}", String.format("0x%04X", execution.cpuContext().getInstructionLocation()));
 
         setProgress("Emulation completed", false);
     }

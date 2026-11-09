@@ -43,6 +43,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
+        context.setEngine(engine);
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
             automaticEmulation = new AutomaticEmulation(context, engine, memory);
@@ -80,11 +81,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
             return null;
         }
         return new CpuPanel(engine, memory, applicationApi.getGUI(), context, this::internalStateChanged);
-    }
-
-    @Override
-    public int getInstructionLocation() {
-        return Math.max(0, engine.CI.get() + 4);
     }
 
     @Override
@@ -126,10 +122,8 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return engine;
     }
 
-    private float measuredFrequency = Float.NaN;
-
     private void publishState(RunState state) {
-        context.publishState(state, getInstructionLocation(), measuredFrequency);
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
     }
 
     private void internalStateChanged() {

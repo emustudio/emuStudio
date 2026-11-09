@@ -106,7 +106,7 @@ public class EmulatorActionsTest {
         DebugTableModel debugTableModel = mock(DebugTableModel.class);
         AtomicInteger refreshCount = new AtomicInteger();
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
-        when(cpu.getInstructionLocation()).thenReturn(10);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(10);
         when(debugTableModel.guessPreviousInstructionLocation()).thenReturn(6);
         executionFor(computer);
 
@@ -121,7 +121,8 @@ public class EmulatorActionsTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         DebugTableModel debugTableModel = mock(DebugTableModel.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
-        when(cpu.getInstructionLocation()).thenReturn(0);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0);
+        executionFor(computer);
 
         new StepBackAction(computer, debugTableModel, () -> {}).actionPerformed(null);
 
@@ -290,6 +291,8 @@ public class EmulatorActionsTest {
     private static void executionFor(VirtualComputer computer) {
         EmulationController execution = mock(EmulationController.class);
         when(computer.getExecution()).thenReturn(Optional.of(execution));
+        CPU cpu = computer.getCPU().orElseThrow();
+        when(execution.cpuContext()).thenReturn(net.emustudio.application.TestCpu.context(cpu));
         org.mockito.stubbing.Answer<CompletableFuture<Void>> apply = call -> {
             CompletableFuture<Void> completed = new CompletableFuture<>();
             try {

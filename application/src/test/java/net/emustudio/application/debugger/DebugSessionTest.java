@@ -52,7 +52,7 @@ public class DebugSessionTest {
     @Test
     public void pauseAtBreakpointAddressDoesNotInventAnExecutionHit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        when(machine.cpu.getInstructionLocation()).thenReturn(1);
+        when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(1);
         try (DebugSession session = machine.session(null)) {
             session.setBreakpoint(1, true).join();
 
@@ -676,7 +676,7 @@ public class DebugSessionTest {
     @Test
     public void instructionHookCreatesInspectionHitAndResumeClearsIt() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        when(machine.cpu.getInstructionLocation()).thenReturn(1);
+        when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(1);
         try (DebugSession session = machine.session(null)) {
             session.setBreakpoint(1, true).join();
             machine.state(CPU.RunState.STATE_RUNNING);

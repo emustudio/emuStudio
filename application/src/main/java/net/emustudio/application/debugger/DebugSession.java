@@ -602,7 +602,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
 
     @Override
     public synchronized boolean beforeStep() {
-        int address = cpu.getInstructionLocation();
+        int address = execution.cpuContext().getInstructionLocation();
         stepAddress = address;
         boolean stop = false;
         if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;

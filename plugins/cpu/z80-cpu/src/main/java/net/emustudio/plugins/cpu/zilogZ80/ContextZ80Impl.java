@@ -3,6 +3,7 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
@@ -14,6 +15,19 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ80 {
+
+    final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
+
+    @Override
+    public int getInstructionLocation() {
+        return engine == null ? -1 : engine.PC;
+    }
+
+    @Override
+    public float getCpuFrequencyKhz() {
+        return frequencyCalculator.sample();
+    }
+
     void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }

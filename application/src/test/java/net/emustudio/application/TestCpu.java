@@ -19,14 +19,16 @@ public final class TestCpu {
     public static CPU mockCpu() { return mockCpu(withSettings()); }
     public static CPU mockCpu(MockSettings settings) {
         CPU cpu = mock(CPU.class, settings);
-        contexts.put(cpu, new Context());
+        Context context = spy(new Context());
+        context.publish(CPU.RunState.STATE_STOPPED_BREAK, 0);
+        contexts.put(cpu, context);
         return cpu;
     }
 
     public static CPUContext context(CPU cpu) { return Objects.requireNonNull(contexts.get(cpu)); }
 
     public static void publish(CPU cpu, CPU.RunState state) {
-        ((Context) context(cpu)).publish(state, cpu.getInstructionLocation());
+        ((Context) context(cpu)).publish(state, context(cpu).getInstructionLocation());
     }
 
     private static final class Context extends AbstractCPUContext {

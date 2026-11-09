@@ -29,7 +29,7 @@ public class DebugSessionLifecycleTest {
         Set<Thread> after = commandThreads();
         after.removeAll(before);
         assertTrue("Failed initialization must not create a live command scheduler", after.isEmpty());
-        verify(cpu, never()).sampleFrequency();
+        verify(net.emustudio.application.TestCpu.context(cpu), never()).getCpuFrequencyKhz();
     }
 
     private static Set<Thread> commandThreads() {
