@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
@@ -132,43 +131,42 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     private float measuredFrequency = Float.NaN;
 
-    private void publishState(RunState state, boolean busy) {
-        context.publishState(new CPUSnapshot(
-                state, busy, false, getInstructionLocation(), measuredFrequency));
+    private void publishState(RunState state) {
+        context.publishState(state, getInstructionLocation(), measuredFrequency);
     }
 
     private void internalStateChanged() {
-        publishState(context.snapshot().runState(), context.snapshot().isBusy());
+        publishState(context.getRunState());
     }
 
     @Override
     public RunState execute() {
         RunState result = RunState.STATE_STOPPED_BAD_INSTR;
-        publishState(RunState.STATE_RUNNING, false);
+        publishState(RunState.STATE_RUNNING);
         try {
             result = executeInternal();
             return result;
         } finally {
-            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result, false);
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
         }
     }
 
     @Override
     public RunState step() throws Exception {
         RunState result = RunState.STATE_STOPPED_BAD_INSTR;
-        publishState(RunState.STATE_RUNNING, true);
+        publishState(RunState.STATE_RUNNING);
         try {
             result = stepInternal();
             return result;
         } finally {
-            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result, false);
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
         }
     }
 
     @Override
     public void reset(int startPos) {
         resetInternal(startPos);
-        publishState(RunState.STATE_STOPPED_BREAK, false);
+        publishState(RunState.STATE_STOPPED_BREAK);
     }
 
     @Override

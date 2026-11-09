@@ -69,7 +69,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         int address = tableModel.toAddress(row, column);
         boolean mapped = tableModel.isMappedAddress(address);
         String label = mapped ? AnnotationLabels.at(annotations, address) : "";
-        boolean current = mapped && executionState != null && executionState.snapshot().currentInstruction() == address;
+        boolean current = mapped && executionState != null && executionState.getInstructionLocation() == address;
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");

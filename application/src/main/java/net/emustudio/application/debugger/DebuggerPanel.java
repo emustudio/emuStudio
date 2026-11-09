@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import com.formdev.flatlaf.util.ScaledImageIcon;
@@ -129,28 +128,34 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public void internalStateChanged() { refreshExecutionState(); }
     };
 
-    private void refreshExecutionState() { executionChanged(session.execution().cpuContext().snapshot()); }
+    private void refreshExecutionState() {
+        CPUContext context = session.execution().cpuContext();
+        executionChanged(context.getRunState(), context.getInstructionLocation());
+    }
     private final AtomicBoolean executionRefreshQueued = new AtomicBoolean();
-    private volatile CPUSnapshot pendingExecutionSnapshot;
-    private CPUSnapshot appliedExecutionSnapshot;
+    private volatile CPU.RunState pendingExecutionState;
+    private volatile int pendingInstructionLocation;
+    private CPU.RunState appliedExecutionState;
+    private int appliedInstructionLocation;
     private boolean pendingPcFollow;
     private int pendingPcAddress = -1;
 
-    private void executionChanged(CPUSnapshot snapshot) {
-        pendingExecutionSnapshot = snapshot;
+    private void executionChanged(CPU.RunState state, int instructionLocation) {
+        pendingExecutionState = state;
+        pendingInstructionLocation = instructionLocation;
         if (!executionRefreshQueued.compareAndSet(false, true)) return;
         SwingUtilities.invokeLater(() -> {
             executionRefreshQueued.set(false);
             if (disposed) return;
-            CPUSnapshot next = pendingExecutionSnapshot;
-            CPUSnapshot previous = appliedExecutionSnapshot;
-            appliedExecutionSnapshot = next;
-            if (previous == null || previous.runState() != next.runState()
-                    || previous.currentInstruction() != next.currentInstruction()) {
+            CPU.RunState nextState = pendingExecutionState;
+            int nextLocation = pendingInstructionLocation;
+            if (appliedExecutionState != nextState || appliedInstructionLocation != nextLocation) {
                 pendingPcFollow = true;
-                pendingPcAddress = next.currentInstruction();
+                pendingPcAddress = nextLocation;
             }
-            setExecutionRunning(next.runState() == CPU.RunState.STATE_RUNNING || next.isBusy());
+            appliedExecutionState = nextState;
+            appliedInstructionLocation = nextLocation;
+            setExecutionRunning(nextState == CPU.RunState.STATE_RUNNING);
             refreshDiagnostic();
             refreshWatches();
             refreshMemoryWatches();
@@ -237,7 +242,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.addChangeListener(event -> activateView());
         activateView();
         session.execution().cpuContext().addCPUListener(stateListener);
-        executionChanged(session.execution().snapshot());
+        executionChanged(session.execution().getRunState(), session.execution().getInstructionLocation());
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
         JPopupMenu selectionMenu = new JPopupMenu();
@@ -567,7 +572,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void guard(Operation operation) {
-        if (disposed || tasks.isBusy() || session.execution().snapshot().isBusy()) return;
+        if (disposed || tasks.isBusy() || session.execution().isBusy()) return;
         try {
             session.requirePaused();
             operation.run();
@@ -1775,7 +1780,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refreshDiagnostic();
         refreshWatches();
         refreshMemoryWatches();
-        if (running || session.execution().snapshot().isBusy() || tasks.isBusy()) return;
+        if (running || session.execution().isBusy() || tasks.isBusy()) return;
         try { session.requirePaused(); } catch (IllegalStateException e) { return; }
         if (index != null && index.programIndex() != session.programIndex()) {
             index = null;

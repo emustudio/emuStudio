@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -86,7 +85,9 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         return profile;
     }
 
-    @Override public CPUSnapshot snapshot() { return cpu.snapshot(); }
+    @Override public net.emustudio.emulib.plugins.cpu.CPU.RunState getRunState() { return cpu.getRunState(); }
+    @Override public int getInstructionLocation() { return cpu.getInstructionLocation(); }
+    @Override public float getMeasuredFrequencyKhz() { return cpu.getMeasuredFrequencyKhz(); }
 
     @Override public void addCPUListener(CPUContext.CPUListener listener) {
         if (cpu == null) deferredCPUListeners.add(Objects.requireNonNull(listener));

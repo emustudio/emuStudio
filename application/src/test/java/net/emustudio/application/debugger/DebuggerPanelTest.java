@@ -57,7 +57,7 @@ public class DebuggerPanelTest {
                 JLabel diagnostic = component(workspace.panel, JLabel.class, "Debugger diagnostic");
                 assertTrue(diagnostic.isVisible());
                 assertTrue(diagnostic.getText().contains("disk full"));
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().snapshot().runState());
+                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().getRunState());
                 SwingUtilities.invokeLater(() -> button(activeRecordingDialog(), "Start").doClick(0));
                 workspace.panel.recordingControl().doClick(0);
                 flushUiEvents();
@@ -65,7 +65,7 @@ public class DebuggerPanelTest {
                 assertTrue(workspace.session.isRecording());
                 assertTrue(workspace.session.recordingError().isBlank());
                 assertFalse(diagnostic.isVisible());
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().snapshot().runState());
+                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().getRunState());
                 verify(workspace.dialogs, never()).showError(anyString(), anyString());
             });
         }

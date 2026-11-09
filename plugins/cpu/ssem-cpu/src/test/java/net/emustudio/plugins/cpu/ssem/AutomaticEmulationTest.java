@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
@@ -68,7 +67,7 @@ public class AutomaticEmulationTest {
         Capture<CPUContext.CPUListener> listenerCapture = Capture.newInstance();
         context.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
-        expect(context.snapshot()).andAnswer(() -> currentSnapshot).anyTimes();
+        expect(context.getRunState()).andAnswer(() -> currentState).anyTimes();
         replay(context);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -93,7 +92,7 @@ public class AutomaticEmulationTest {
         Capture<CPUContext.CPUListener> listenerCapture = Capture.newInstance();
         context.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
-        expect(context.snapshot()).andAnswer(() -> currentSnapshot).anyTimes();
+        expect(context.getRunState()).andAnswer(() -> currentState).anyTimes();
         replay(context);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -116,7 +115,7 @@ public class AutomaticEmulationTest {
         Capture<CPUContext.CPUListener> listenerCapture = Capture.newInstance();
         context.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
-        expect(context.snapshot()).andAnswer(() -> currentSnapshot).anyTimes();
+        expect(context.getRunState()).andAnswer(() -> currentState).anyTimes();
         replay(context);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -139,7 +138,7 @@ public class AutomaticEmulationTest {
         Capture<CPUContext.CPUListener> listenerCapture = Capture.newInstance();
         context.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
-        expect(context.snapshot()).andAnswer(() -> currentSnapshot).anyTimes();
+        expect(context.getRunState()).andAnswer(() -> currentState).anyTimes();
         replay(context);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -158,7 +157,7 @@ public class AutomaticEmulationTest {
         Capture<CPUContext.CPUListener> listenerCapture = Capture.newInstance();
         context.addCPUListener(capture(listenerCapture));
         expectLastCall().once();
-        expect(context.snapshot()).andAnswer(() -> currentSnapshot).anyTimes();
+        expect(context.getRunState()).andAnswer(() -> currentState).anyTimes();
         replay(context);
 
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
@@ -205,15 +204,12 @@ public class AutomaticEmulationTest {
         EmulatorEngine engine = new EmulatorEngine(memory);
         new AutomaticEmulation(context, engine, null);
     }
-    private CPUSnapshot currentSnapshot = state(CPU.RunState.STATE_STOPPED_BREAK);
+    private CPU.RunState currentState = CPU.RunState.STATE_STOPPED_BREAK;
 
     private void publish(CPUContext.CPUListener listener, CPU.RunState runState) {
-        currentSnapshot = state(runState);
+        currentState = runState;
         listener.runStateChanged(runState);
         listener.internalStateChanged();
     }
 
-    private static CPUSnapshot state(CPU.RunState runState) {
-        return new CPUSnapshot(runState, false, false, 0, Float.NaN);
-    }
 }

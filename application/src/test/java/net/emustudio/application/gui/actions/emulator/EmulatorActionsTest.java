@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.actions.emulator;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
@@ -144,8 +143,7 @@ public class EmulatorActionsTest {
     public void pauseActionDelegatesToController() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new CPUSnapshot(
-                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
+
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
@@ -157,8 +155,7 @@ public class EmulatorActionsTest {
     public void pauseActionUpdatesStatusWhenTimedRunning() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new CPUSnapshot(
-                CPU.RunState.STATE_STOPPED_BREAK, false, true, 0, Float.NaN));
+        when(controller.isTimedRunning()).thenReturn(true);
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);

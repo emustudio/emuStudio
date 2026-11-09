@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -15,7 +14,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class RamCpuContextImpl extends AbstractCPUContext implements RamCpuContext {
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 
     private final ContextPool contextPool;
     private AbstractTapeContext inputTape;

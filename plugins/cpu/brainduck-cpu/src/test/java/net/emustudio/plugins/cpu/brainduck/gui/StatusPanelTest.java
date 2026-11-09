@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -29,7 +28,7 @@ public class StatusPanelTest {
     private final TestContext context = new TestContext();
     private static final class TestContext extends AbstractCPUContext {
         @Override public boolean isPassedCyclesSupported() { return false; }
-        void publish(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+        void publish(CPU.RunState state, int address) { fireStateChanged(state, address, Float.NaN); }
     }
 
     @Before
@@ -89,7 +88,7 @@ public class StatusPanelTest {
     }
 
     private void publish(CPU.RunState state) {
-        context.publish(new CPUSnapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
+        context.publish(state, cpu.getInstructionLocation());
     }
 
     private static boolean containsText(Component component, String text) {

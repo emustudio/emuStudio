@@ -183,7 +183,7 @@ public class Automation implements Runnable {
                     : completion.get(waitForFinishMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException expected) {
             // CLI observation duration is independent of cooperative lifecycle completion.
-            resultState = execution.snapshot().runState();
+            resultState = execution.getRunState();
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException failure) {

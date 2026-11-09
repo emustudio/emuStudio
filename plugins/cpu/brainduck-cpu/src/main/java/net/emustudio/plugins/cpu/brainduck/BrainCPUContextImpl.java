@@ -4,14 +4,15 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
 import java.util.Objects;
 
 class BrainCPUContextImpl extends AbstractCPUContext implements BrainCPUContext {
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 
     private DeviceContext<Byte> device;
 

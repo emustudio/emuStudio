@@ -73,13 +73,13 @@ public class CpuImplTest {
         });
 
         assertEquals(8, cpu.getEngine().regs[7]);
-        assertEquals(cpu.getInstructionLocation(), context.snapshot().currentInstruction());
+        assertEquals(cpu.getInstructionLocation(), context.getInstructionLocation());
         assertEquals(1, changes.get());
         assertEquals(java.util.List.of(), states);
 
         context.removeCPUListener(listener);
         cpu.setInstructionLocation(12);
-        assertEquals(12, context.snapshot().currentInstruction());
+        assertEquals(12, context.getInstructionLocation());
         assertEquals(1, changes.get());
     }
 

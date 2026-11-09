@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -272,10 +271,9 @@ public class StatusPanel extends JPanel {
         }
 
         public void internalStateChanged() {
-            CPUSnapshot snapshot = cpuContext.snapshot();
+            float frequencyKhz = cpuContext.getMeasuredFrequencyKhz();
             SwingUtilities.invokeLater(() -> {
-                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
-                spnFrequency.setEnabled(!snapshot.isBusy());
+                lblFrequency.setText(Float.isNaN(frequencyKhz) ? "N/A" : String.format("%.2f kHz", frequencyKhz));
             });
             updateGUI();
         }

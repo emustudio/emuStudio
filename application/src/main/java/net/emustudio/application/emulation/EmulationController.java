@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import net.emustudio.application.debugger.DebugSession;
@@ -30,16 +29,9 @@ public final class EmulationController implements Closeable {
         workerThread = Thread.currentThread();
         task.run();
     }, "machine-cpu"));
-    private volatile CPUSnapshot snapshot;
+    private CPU.RunState publishedState;
     private final CPU cpu;
     private final CPUContext cpuContext;
-    private final CPUContext.CPUListener contextListener =
-            new CPUContext.CPUListener() {
-                @Override public void runStateChanged(CPU.RunState state) { }
-                @Override public void internalStateChanged() {
-                    snapshot = snapshotValues();
-                }
-            };
     private final Memory memory;
     private final List<Device> devices;
     private final DebugSession debugger;
@@ -55,7 +47,6 @@ public final class EmulationController implements Closeable {
     private ScheduledFuture<?> tick;
     private long timerGeneration;
     private boolean shutDown;
-    private float frequencyKhz = Float.NaN;
 
     private enum Stop { PAUSE, STOP, RESET }
 
@@ -101,13 +92,12 @@ public final class EmulationController implements Closeable {
         this.debugger = debugger;
         this.compiler = compiler;
 
-        if (cpuContext != null) cpuContext.addCPUListener(contextListener);
         commands.setRemoveOnCancelPolicy(true);
         commands.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         commands.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         commands.scheduleWithFixedDelay(() -> {
             try {
-                if (cpu != null) frequencyKhz = cpu.sampleFrequency();
+                if (cpu != null) cpu.sampleFrequency();
                 publish(state);
             }
             catch (RuntimeException failure) { LOGGER.warn("Frequency sampling failed", failure); }
@@ -115,7 +105,12 @@ public final class EmulationController implements Closeable {
         publish(state);
     }
 
-    public CPUSnapshot snapshot() { return snapshot; }
+    public CPU.RunState getRunState() { return state; }
+    public int getInstructionLocation() { return cpu == null ? -1 : cpu.getInstructionLocation(); }
+    /** Whether an application command or cooperative close is pending or executing. */
+    public boolean isBusy() { return busy || closing; }
+    /** Whether application-scheduled stepping is active, including the delay between instructions. */
+    public boolean isTimedRunning() { return timedRunning; }
     public CPUContext cpuContext() { return cpuContext; }
     public CompletableFuture<CPU.RunState> runCompletion() { return runCompletion.copy(); }
 
@@ -314,7 +309,7 @@ public final class EmulationController implements Closeable {
         if (active != task) return;
         active = null;
         if (!task.continuous && !task.mutation && debugger != null) debugger.completeManualStep();
-        try { if (cpu != null) frequencyKhz = cpu.sampleFrequency(); }
+        try { if (cpu != null) cpu.sampleFrequency(); }
         catch (RuntimeException samplingFailure) { LOGGER.warn("Frequency sampling failed", samplingFailure); }
         if (returned == CPU.RunState.STATE_RUNNING) returned = (pending != null && pending.kind == Stop.STOP) || closing
                 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
@@ -333,16 +328,9 @@ public final class EmulationController implements Closeable {
 
     private void publish(CPU.RunState value, boolean internalStateChanged) {
         state = value;
-        CPUSnapshot next = snapshotValues();
-        CPUSnapshot previous = snapshot;
-        if (!internalStateChanged && next.equals(previous)) return;
+        if (!internalStateChanged && publishedState == value) return;
+        publishedState = value;
         if (debugger != null) debugger.executionChanged(value);
-        snapshot = next;
-    }
-
-    private CPUSnapshot snapshotValues() {
-        return new CPUSnapshot(state, busy || closing, timedRunning,
-                cpu == null ? -1 : cpu.getInstructionLocation(), frequencyKhz);
     }
 
     public CompletableFuture<Void> closeAsync() {
@@ -359,7 +347,6 @@ public final class EmulationController implements Closeable {
     private void finishClose() {
         if (!closing || active != null || pending != null || shutDown) return;
         shutDown = true;
-        if (cpuContext != null) cpuContext.removeCPUListener(contextListener);
         worker.shutdown(); commands.shutdown(); closed.complete(null);
     }
 

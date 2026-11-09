@@ -70,7 +70,7 @@ public class CompileAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState.get() == CPU.RunState.STATE_RUNNING
-                    || computer.getExecution().map(execution -> execution.snapshot().isBusy()).orElse(false)) {
+                    || computer.getExecution().map(execution -> execution.isBusy()).orElse(false)) {
                 dialogs.showError("Emulation must be stopped first.", "Compile");
             } else if (editor.saveFile()) {
                 updateTitle.run();

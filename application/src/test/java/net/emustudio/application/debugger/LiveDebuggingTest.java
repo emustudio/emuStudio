@@ -155,7 +155,7 @@ public class LiveDebuggingTest {
 
             assertEquals(Thread.currentThread().getName(), thread.get());
             assertEquals("7", displayed.get().text);
-            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().snapshot().runState());
+            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
             verify(machine.cpu, times(1)).execute();
             verify(machine.cpu, never()).step();
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);

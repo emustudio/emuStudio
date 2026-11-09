@@ -905,7 +905,7 @@ public class DebugSessionTest {
             session.update(() -> session.watches.add("A * 2")).get(2, TimeUnit.SECONDS);
             session.save();
 
-            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().snapshot().runState());
+            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
             assertEquals("A * 2", AtomicProperties.load(settings).getProperty("watch.2"));
             verify(reopened.cpu, never()).step();
             reopened.state(CPU.RunState.STATE_STOPPED_BREAK);

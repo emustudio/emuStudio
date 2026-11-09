@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import net.emustudio.application.emulation.EmulationController;
@@ -296,7 +295,7 @@ public class EmulatorPanel extends JPanel {
                         if (closed) return;
                         runState = state;
                         if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
-                        else setStateNotRunning(runState, execution.snapshot().isTimedRunning());
+                        else setStateNotRunning(runState, execution.isTimedRunning());
                     });
                 }
                 @Override public void internalStateChanged() {
@@ -309,7 +308,7 @@ public class EmulatorPanel extends JPanel {
                 }
             };
             execution.cpuContext().addCPUListener(executionListener);
-            runState = execution.snapshot().runState();
+            runState = execution.getRunState();
         }
 
         // initial state
@@ -474,11 +473,10 @@ public class EmulatorPanel extends JPanel {
 
     private void updateExecutionControls() {
         if (closed || execution == null) return;
-        CPUSnapshot snapshot = execution.snapshot();
-        boolean busy = snapshot.isBusy();
+        boolean busy = execution.isBusy();
         if (!busy && commandBusy) {
             if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
-            else setStateNotRunning(runState, snapshot.isTimedRunning());
+            else setStateNotRunning(runState, execution.isTimedRunning());
         }
         commandBusy = busy;
         if (busy) {

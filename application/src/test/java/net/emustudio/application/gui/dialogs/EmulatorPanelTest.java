@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 
 import static net.emustudio.application.TestCpu.mockCpu;
@@ -443,10 +442,10 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         final EmulationController controller = mock(EmulationController.class);
         final CPUContext context = mock(CPUContext.class);
         final AtomicReference<CPUContext.CPUListener> listener = new AtomicReference<>();
-        private CPUSnapshot snapshot = snapshot(CPU.RunState.STATE_STOPPED_BREAK);
+        private CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
 
         ExecutionFixture() {
-            when(controller.snapshot()).thenAnswer(call -> snapshot);
+            when(controller.getRunState()).thenAnswer(call -> state);
             when(controller.cpuContext()).thenReturn(context);
             doAnswer(call -> {
                 listener.set(call.getArgument(0));
@@ -455,14 +454,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         }
 
         void publish(CPU.RunState runState) {
-            snapshot = snapshot(runState);
+            state = runState;
             listener.get().runStateChanged(runState);
             listener.get().internalStateChanged();
         }
 
-        private static CPUSnapshot snapshot(CPU.RunState runState) {
-            return new CPUSnapshot(runState, false, false, 0, Float.NaN);
-        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

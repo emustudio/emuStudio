@@ -125,7 +125,7 @@ final class DebuggerTestMachine {
             session.execution().start().join();
             try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
-        } else if (session.execution().snapshot().runState() == CPU.RunState.STATE_RUNNING) {
+        } else if (session.execution().getRunState() == CPU.RunState.STATE_RUNNING) {
             result.set(state);
             session.execution().pause().join();
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {

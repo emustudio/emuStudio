@@ -2,14 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
-import net.emustudio.emulib.plugins.cpu.CPU;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -359,10 +356,6 @@ public class MemoryTableModelTest {
 
     @Test
     public void runningBitEditAppliesImmediatelyToCurrentMemory() {
-        CPUContext execution = createNiceMock(CPUContext.class);
-        expect(execution.snapshot()).andReturn(new CPUSnapshot(
-                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
-        replay(execution);
         MemoryContextImpl context = new MemoryContextImpl();
         context.write(0, (byte) 0x40);
         MemoryTableModel live = new MemoryTableModel(context);
@@ -371,7 +364,6 @@ public class MemoryTableModelTest {
 
         assertTrue(live.isCellEditable(0, 0));
         assertEquals(Byte.valueOf((byte) 0xC0), context.read(0));
-        verify(execution);
     }
 
 }

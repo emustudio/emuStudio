@@ -246,7 +246,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
-            if (!execution.snapshot().isBusy()) operation.ready.complete(null);
+            if (!execution.isBusy()) operation.ready.complete(null);
         }
     }
 

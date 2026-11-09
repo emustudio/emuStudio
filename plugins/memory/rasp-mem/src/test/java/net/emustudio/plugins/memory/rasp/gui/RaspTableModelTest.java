@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.MemoryContextImplFactory;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -12,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import static org.easymock.EasyMock.*;
 
 import static org.junit.Assert.*;
@@ -195,10 +192,6 @@ public class RaspTableModelTest {
 
     @Test
     public void runningMemoryEditAppliesImmediately() {
-        CPUContext execution = createNiceMock(CPUContext.class);
-        expect(execution.snapshot()).andReturn(new CPUSnapshot(
-                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
-        replay(execution);
         context.write(0, 3);
         RaspTableModel live = new RaspTableModel(context);
 
@@ -206,7 +199,6 @@ public class RaspTableModelTest {
 
         assertTrue(live.isCellEditable(0, 1));
         assertEquals(Integer.valueOf(42), context.read(0));
-        verify(execution);
     }
 
 }

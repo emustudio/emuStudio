@@ -192,15 +192,15 @@ public class VirtualComputerTest {
             computer.initialize(contexts);
             assertTrue(computer.getCPU().isEmpty());
             assertTrue(computer.getDebugger().isEmpty());
-            assertFalse(computer.getExecution().orElseThrow().snapshot().isBusy());
+            assertFalse(computer.getExecution().orElseThrow().isBusy());
             memory.reset();
 
             verify(memory).reset();
-            assertEquals(-1, computer.getExecution().orElseThrow().snapshot().currentInstruction());
+            assertEquals(-1, computer.getExecution().orElseThrow().getInstructionLocation());
         } finally {
             computer.close();
         }
-        assertTrue(computer.getExecution().orElseThrow().snapshot().isBusy());
+        assertTrue(computer.getExecution().orElseThrow().isBusy());
     }
 
     @Test

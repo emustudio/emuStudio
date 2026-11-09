@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
@@ -15,7 +14,9 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Context8080Impl extends AbstractCPUContext implements Context8080 {
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 
     public final static int DEFAULT_FREQUENCY_KHZ = 2000;
     private final static Logger LOGGER = LoggerFactory.getLogger(Context8080Impl.class);

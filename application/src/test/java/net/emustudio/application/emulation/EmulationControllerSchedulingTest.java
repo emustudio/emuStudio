@@ -37,7 +37,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.pause());
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -52,7 +52,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.reset());
             await(controller.step());
 
@@ -68,7 +68,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.reset());
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -92,8 +92,8 @@ public class EmulationControllerSchedulingTest {
             awaitStep(2);
             awaitStep(3);
             assertNoStep();
-            assertFalse(controller.snapshot().isTimedRunning());
-            assertEquals(STATE_STOPPED_NORMAL, controller.snapshot().runState());
+            assertFalse(controller.isTimedRunning());
+            assertEquals(STATE_STOPPED_NORMAL, controller.getRunState());
         }
     }
 
@@ -116,7 +116,7 @@ public class EmulationControllerSchedulingTest {
 
             awaitStep(1);
             assertNoStep();
-            assertTrue(controller.snapshot().isTimedRunning());
+            assertTrue(controller.isTimedRunning());
             assertEquals(1, stepCount.get());
         } finally {
             gate.release.countDown();
@@ -197,7 +197,7 @@ public class EmulationControllerSchedulingTest {
 
         await(controller.closeAsync());
 
-        assertFalse(controller.snapshot().isTimedRunning());
+        assertFalse(controller.isTimedRunning());
         assertNoStep();
         assertThrows(ExecutionException.class, () -> await(controller.step()));
         await(controller.closeAsync());

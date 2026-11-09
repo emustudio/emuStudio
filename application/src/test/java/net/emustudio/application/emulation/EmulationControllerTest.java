@@ -34,7 +34,7 @@ public class EmulationControllerTest {
             gate.awaitEntered();
 
             assertFalse(controller.runCompletion().isDone());
-            assertEquals(STATE_RUNNING, controller.snapshot().runState());
+            assertEquals(STATE_RUNNING, controller.getRunState());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -59,13 +59,13 @@ public class EmulationControllerTest {
             gate.awaitInterrupted();
 
             assertPending(paused);
-            assertEquals(STATE_RUNNING, controller.snapshot().runState());
-            assertTrue(controller.snapshot().isBusy());
+            assertEquals(STATE_RUNNING, controller.getRunState());
+            assertTrue(controller.isBusy());
             gate.release.countDown();
 
             assertEquals(STATE_STOPPED_BREAK, await(paused));
             assertFalse(prematureNotification.get());
-            assertFalse(controller.snapshot().isBusy());
+            assertFalse(controller.isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -101,7 +101,7 @@ public class EmulationControllerTest {
 
             assertEquals(STATE_STOPPED_BREAK, await(reset));
             assertEquals(List.of("exit", "memory", "device", "cpu"), order);
-            assertFalse(controller.snapshot().isBusy());
+            assertFalse(controller.isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -224,7 +224,7 @@ public class EmulationControllerTest {
 
             assertSame(failure, assertThrows(ExecutionException.class,
                     () -> await(controller.runCompletion())).getCause());
-            assertEquals(STATE_STOPPED_BAD_INSTR, controller.snapshot().runState());
+            assertEquals(STATE_STOPPED_BAD_INSTR, controller.getRunState());
             assertEquals(STATE_STOPPED_BREAK, await(controller.reset()));
             verify(cpu).reset();
         }
@@ -265,7 +265,7 @@ public class EmulationControllerTest {
             gate.release.countDown();
 
             assertEquals(STATE_STOPPED_BREAK, await(paused));
-            assertFalse(controller.snapshot().isBusy());
+            assertFalse(controller.isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -317,17 +317,17 @@ public class EmulationControllerTest {
 
         try (EmulationController controller = controller(cpu)) {
             assertEquals(STATE_STOPPED_BREAK, await(controller.step()));
-            assertEquals(STATE_STOPPED_BREAK, controller.snapshot().runState());
+            assertEquals(STATE_STOPPED_BREAK, controller.getRunState());
             await(controller.mutate(() -> {
                 editThread.set(Thread.currentThread());
-                busyDuringEdit.set(controller.snapshot().isBusy());
+                busyDuringEdit.set(controller.isBusy());
             }));
 
             assertSame(stepThread.get(), editThread.get());
             assertEquals("machine-cpu", editThread.get().getName());
             assertTrue(busyDuringEdit.get());
-            assertFalse(controller.snapshot().isBusy());
-            assertEquals(0, controller.snapshot().currentInstruction());
+            assertFalse(controller.isBusy());
+            assertEquals(0, controller.getInstructionLocation());
         }
     }
 
@@ -354,8 +354,8 @@ public class EmulationControllerTest {
             CompletableFuture<Void> rejected = controller.mutate(() -> { throw failure; });
 
             assertSame(failure, assertThrows(ExecutionException.class, () -> await(rejected)).getCause());
-            assertEquals(STATE_STOPPED_BREAK, controller.snapshot().runState());
-            assertFalse(controller.snapshot().isBusy());
+            assertEquals(STATE_STOPPED_BREAK, controller.getRunState());
+            assertFalse(controller.isBusy());
             await(controller.mutate(() -> edited.set(true)));
             assertTrue(edited.get());
         }
@@ -376,7 +376,7 @@ public class EmulationControllerTest {
 
             assertEquals(terminal, await(stopped));
             assertEquals(terminal, await(controller.runCompletion()));
-            assertEquals(terminal, controller.snapshot().runState());
+            assertEquals(terminal, controller.getRunState());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());

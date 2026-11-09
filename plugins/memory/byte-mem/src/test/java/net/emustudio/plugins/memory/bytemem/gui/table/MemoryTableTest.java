@@ -2,11 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
@@ -22,9 +20,7 @@ public class MemoryTableTest {
     private final MemoryAnnotations metadata = new MemoryAnnotations();
     private final CPUContext execution = new AbstractCPUContext() {
         @Override public boolean isPassedCyclesSupported() { return false; }
-        public CPUSnapshot snapshot() {
-            return new CPUSnapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, 3, Float.NaN);
-        }
+        @Override public int getInstructionLocation() { return 3; }
     };
 
     @Before

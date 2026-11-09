@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -15,7 +14,9 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import java.util.Optional;
 
 public class RaspCpuContextImpl extends AbstractCPUContext implements RaspCpuContext {
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;

@@ -3,7 +3,6 @@
 package net.emustudio.application;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import java.util.Collections;
@@ -27,11 +26,11 @@ public final class TestCpu {
     public static CPUContext context(CPU cpu) { return Objects.requireNonNull(contexts.get(cpu)); }
 
     public static void publish(CPU cpu, CPU.RunState state) {
-        ((Context) context(cpu)).publish(new CPUSnapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
+        ((Context) context(cpu)).publish(state, cpu.getInstructionLocation());
     }
 
     private static final class Context extends AbstractCPUContext {
         @Override public boolean isPassedCyclesSupported() { return false; }
-        void publish(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+        void publish(CPU.RunState state, int address) { fireStateChanged(state, address, Float.NaN); }
     }
 }

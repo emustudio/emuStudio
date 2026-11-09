@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
@@ -15,7 +14,9 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ80 {
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 
     public final static int DEFAULT_FREQUENCY_KHZ = 4000;
     private final static byte NO_DATA = (byte) 0xFF;

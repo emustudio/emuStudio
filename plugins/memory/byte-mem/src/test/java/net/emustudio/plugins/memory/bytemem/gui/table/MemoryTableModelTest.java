@@ -2,12 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
-import net.emustudio.emulib.plugins.cpu.CPU;
 import javax.swing.SwingUtilities;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
@@ -112,10 +109,6 @@ public class MemoryTableModelTest {
 
     @Test
     public void runningEditWritesSelectedBankImmediatelyOnSwing() throws Exception {
-        CPUContext execution = createNiceMock(CPUContext.class);
-        expect(execution.snapshot()).andReturn(new CPUSnapshot(
-                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
-        replay(execution);
         MemoryTableModel live = new MemoryTableModel(context);
         live.setCurrentBank(1);
         AtomicBoolean onSwing = new AtomicBoolean();
@@ -127,7 +120,6 @@ public class MemoryTableModelTest {
         assertEquals((byte) 0xAB, context.readBank(0, 1).byteValue());
         assertEquals(0, context.readBank(0, 0).byteValue());
         assertTrue(onSwing.get());
-        verify(execution);
     }
 
 }

@@ -3,9 +3,10 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 
 final class CpuContextImpl extends AbstractCPUContext {
     @Override public boolean isPassedCyclesSupported() { return false; }
-    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
 }
