@@ -35,7 +35,6 @@ public class EmulatorPanel extends JPanel {
     private final JToolBar toolDebug;
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
-    private final JLabel listingState;
 
     private final JList<String> lstDevices = new JList<>();
     private final JSplitPane splitLeftRight;
@@ -82,8 +81,6 @@ public class EmulatorPanel extends JPanel {
         this.session = computer.getDebugger().orElse(null);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.statusWindow = gui.section("CPU status / registers", "insets 0, fill", "[grow]", "[grow]");
-        this.listingState = gui.label("Running — pause to inspect instructions.");
-        this.listingState.setHorizontalAlignment(SwingConstants.CENTER);
         this.debugTable = new DebugTableImpl(debugTableModel);
         this.debugTable.getAccessibleContext().setAccessibleName("Instruction listing");
         this.toolDebug = gui.toolBar();
@@ -134,14 +131,7 @@ public class EmulatorPanel extends JPanel {
         this.cpu = computer.getCPU().orElse(null);
         panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
         JPanel debuggerPanel = gui.panel("insets 0, fill", "[grow]", "[grow][]");
-        JPanel listing = new JPanel();
-        listing.setLayout(new OverlayLayout(listing));
-        listingState.setAlignmentX(0.5f);
-        listingState.setAlignmentY(0.5f);
-        listingState.setVisible(false);
-        listing.add(listingState);
-        listing.add(paneDebug);
-        debuggerPanel.add(listing, "grow, wrap, hmin 0");
+        debuggerPanel.add(paneDebug, "grow, wrap, hmin 0");
         debuggerPanel.add(panelPages, "growx");
 
         this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
@@ -414,7 +404,6 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setEnabled(true);
         debugTable.setEnabled(true);
         debugTable.setVisible(true);
-        listingState.setVisible(false);
         paneDebug.setVisible(true);
         panelPages.setVisible(true);
         panelPages.setEnabled(true);
@@ -452,7 +441,6 @@ public class EmulatorPanel extends JPanel {
         resetAction.setEnabled(true);
         jumpAction.setEnabled(session != null && session.debug != null);
         breakpointAction.setEnabled(inspection != null && inspection.isBreakpointDialogSupported());
-        listingState.setText("Running — pause to inspect instructions.");
         stopAction.setEnabled(true);
         stepBackAction.setEnabled(false);
         runAction.setEnabled(false);
@@ -463,7 +451,6 @@ public class EmulatorPanel extends JPanel {
         debugTable.setEnabled(false);
         debugTable.setVisible(false);
         paneDebug.setVisible(false);
-        listingState.setVisible(true);
         paneDebug.setEnabled(false);
         panelPages.setVisible(false);
         if (inspection != null) inspection.setExecutionRunning(true);
@@ -496,8 +483,6 @@ public class EmulatorPanel extends JPanel {
             paneDebug.setVisible(false);
             panelPages.setEnabled(false);
             panelPages.setVisible(false);
-            listingState.setText("Waiting for CPU operation to finish.");
-            listingState.setVisible(true);
             if (inspection != null) inspection.setExecutionRunning(true);
         }
     }
