@@ -9,6 +9,7 @@ import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
+import net.emustudio.application.gui.dialogs.RecordingDialog;
 import net.emustudio.emulib.plugins.cpu.*;
 import net.emustudio.emulib.plugins.debugger.NavLink;
 import net.emustudio.emulib.plugins.debugger.ValueView;
