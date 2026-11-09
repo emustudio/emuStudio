@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static net.emustudio.emulib.NumberUtils.bin2bcd;
+import static net.emustudio.emulib.Numbers.bin2bcd;
 
 public class GetClockZSDOS implements Command {
     public final static GetClockZSDOS INS = new GetClockZSDOS();

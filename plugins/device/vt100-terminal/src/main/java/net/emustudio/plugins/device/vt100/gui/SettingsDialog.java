@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100.gui;
 
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
@@ -108,7 +108,7 @@ public class SettingsDialog extends DialogBase {
 
         int rows;
         try {
-            rows = RadixUtils.parseRadix(txtRows.getText());
+            rows = Numbers.parseRadix(txtRows.getText());
         } catch (NumberFormatException e) {
             dialogs.showError("Could not parse rows (expected integer number)", "VT100-terminal settings");
             txtRows.grabFocus();
@@ -117,7 +117,7 @@ public class SettingsDialog extends DialogBase {
 
         int columns;
         try {
-            columns = RadixUtils.parseRadix(txtColumns.getText());
+            columns = Numbers.parseRadix(txtColumns.getText());
         } catch (NumberFormatException e) {
             dialogs.showError("Could not parse columns (expected integer number)", "VT100-terminal settings");
             txtColumns.grabFocus();

@@ -2,6 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.actions.emulator;
 
+
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -37,7 +40,7 @@ public class EmulatorActionsTest {
     @Test
     public void jumpActionShowsErrorOnInvalidAddress() {
         Dialogs dialogs = mock(Dialogs.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(dialogs.readInteger("Memory address:", "Jump to address", 0)).thenReturn(Optional.of(42));
@@ -53,7 +56,7 @@ public class EmulatorActionsTest {
     @Test
     public void jumpActionShowsErrorOnBadNumberFormat() {
         Dialogs dialogs = mock(Dialogs.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(dialogs.readInteger("Memory address:", "Jump to address", 0)).thenThrow(new NumberFormatException("bad"));
@@ -66,7 +69,7 @@ public class EmulatorActionsTest {
     @Test
     public void jumpActionJumpsSuccessfully() {
         Dialogs dialogs = mock(Dialogs.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         AtomicInteger refreshCount = new AtomicInteger();
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
@@ -83,7 +86,7 @@ public class EmulatorActionsTest {
 
     @Test
     public void jumpToBeginningSetsProgramCounterToZero() {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         AtomicInteger refreshCount = new AtomicInteger();
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
@@ -98,12 +101,12 @@ public class EmulatorActionsTest {
 
     @Test
     public void stepBackUsesDebugTableToGuessPreviousLocation() {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         DebugTableModel debugTableModel = mock(DebugTableModel.class);
         AtomicInteger refreshCount = new AtomicInteger();
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
-        when(cpu.getInstructionLocation()).thenReturn(10);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(10);
         when(debugTableModel.guessPreviousInstructionLocation()).thenReturn(6);
         executionFor(computer);
 
@@ -114,11 +117,12 @@ public class EmulatorActionsTest {
 
     @Test
     public void stepBackDoesNothingAtLocationZero() {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         VirtualComputer computer = mock(VirtualComputer.class);
         DebugTableModel debugTableModel = mock(DebugTableModel.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
-        when(cpu.getInstructionLocation()).thenReturn(0);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0);
+        executionFor(computer);
 
         new StepBackAction(computer, debugTableModel, () -> {}).actionPerformed(null);
 
@@ -140,8 +144,7 @@ public class EmulatorActionsTest {
     public void pauseActionDelegatesToController() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.application.ExecutionState.Snapshot(
-                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
+
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
@@ -153,8 +156,7 @@ public class EmulatorActionsTest {
     public void pauseActionUpdatesStatusWhenTimedRunning() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.application.ExecutionState.Snapshot(
-                CPU.RunState.STATE_STOPPED_BREAK, false, true, 0, Float.NaN));
+        when(controller.isTimedRunning()).thenReturn(true);
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
         new PauseAction(controller, statusUpdates::incrementAndGet).actionPerformed(null);
@@ -289,6 +291,8 @@ public class EmulatorActionsTest {
     private static void executionFor(VirtualComputer computer) {
         EmulationController execution = mock(EmulationController.class);
         when(computer.getExecution()).thenReturn(Optional.of(execution));
+        CPU cpu = computer.getCPU().orElseThrow();
+        when(execution.cpuContext()).thenReturn(net.emustudio.application.TestCpu.context(cpu));
         org.mockito.stubbing.Answer<CompletableFuture<Void>> apply = call -> {
             CompletableFuture<Void> completed = new CompletableFuture<>();
             try {
@@ -300,7 +304,6 @@ public class EmulatorActionsTest {
             return completed;
         };
         when(execution.mutate(any())).thenAnswer(apply);
-        when(execution.update(any())).thenAnswer(apply);
     }
 
     private static void flushEdt() {

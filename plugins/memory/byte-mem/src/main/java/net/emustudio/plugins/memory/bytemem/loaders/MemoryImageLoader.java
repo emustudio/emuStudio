@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.loaders;
 
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.io.FileLoader;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -61,7 +61,7 @@ public final class MemoryImageLoader {
                 }
 
                 private void write(int address, byte[] bytes) {
-                    memory.write(address, NumberUtils.nativeBytesToBytes(bytes));
+                    memory.write(address, Numbers.nativeBytesToBytes(bytes));
                 }
             });
         } catch (IOException e) {

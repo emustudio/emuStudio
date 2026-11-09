@@ -28,7 +28,7 @@ public class MemoryGui extends DialogBase {
         super(parent, "SSEM Memory (Williams–Kilburn Tube)", false);
         this.gui = gui;
 
-        this.tableModel = new MemoryTableModel(memory, api.getExecutionState());
+        this.tableModel = new MemoryTableModel(memory);
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
 
         this.loadImageAction = new LoadImageAction(api, memory, () -> {
@@ -36,7 +36,7 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         });
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), api.getExecutionState());
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class));
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));

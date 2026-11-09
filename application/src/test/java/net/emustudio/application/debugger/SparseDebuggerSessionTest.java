@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 public class SparseDebuggerSessionTest {
     @Test public void blankWordMemoryCanLoadAndClearWithoutReplacingItsSparseAddressDomain() throws Exception {
-        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        CPU cpu = mockCpu(withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
         when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), anyBoolean()))
                 .thenReturn(() -> {});
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
@@ -29,7 +29,7 @@ public class SparseDebuggerSessionTest {
         when(memory.getSize()).thenAnswer(call -> occupancy.get());
         doAnswer(call -> { listener.set(call.getArgument(0)); return null; }).when(memory).addMemoryListener(any());
 
-        try (DebuggerSession session = new DebuggerSession(cpu, memory, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
             assertEquals(0, memory.getSize());
             assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;

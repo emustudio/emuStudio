@@ -3,7 +3,6 @@
 package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-import net.emustudio.emulib.application.ExecutionState;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -16,20 +15,20 @@ import java.util.Objects;
 public class EraseMemoryAction extends AbstractAction {
     private final AbstractTableModel tableModel;
     private final MemoryContext<?> context;
-    private final ExecutionState execution;
 
-    public EraseMemoryAction(AbstractTableModel tableModel, MemoryContext<?> context, Icon icon, ExecutionState execution) {
+    public EraseMemoryAction(AbstractTableModel tableModel, MemoryContext<?> context, Icon icon) {
         super("Erase memory", icon);
         this.tableModel = Objects.requireNonNull(tableModel);
         this.context = Objects.requireNonNull(context);
-        this.execution = Objects.requireNonNull(execution);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        execution.update(context::clear).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+        try {
+            context.clear();
             tableModel.fireTableDataChanged();
-            if (failure != null) JOptionPane.showMessageDialog(null, failure.getMessage(), "Erase memory", JOptionPane.ERROR_MESSAGE);
-        }));
+        } catch (RuntimeException failure) {
+            JOptionPane.showMessageDialog(null, failure.getMessage(), "Erase memory", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

@@ -42,7 +42,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             long.class, ApplicationApi.class, PluginSettings.class
     };
 
-
     private final ComputerConfig computerConfig;
     private final AutoCloseable pluginClassLoader;
 
@@ -204,20 +203,19 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 catch (net.emustudio.emulib.application.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
-                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(), memory,
+                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(),
+                            contextPool.get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
                             applicationApi == null ? new net.emustudio.emulib.application.annotations.MemoryAnnotations()
-                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
-                            applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
                     execution = debugger.execution();
 
                 } catch (IOException e) {
                     throw new PluginInitializationException("Could not load debugger settings", e);
                 }
             } else {
-                execution = new net.emustudio.application.emulation.EmulationController(null,
-                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null),
-                        applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+                execution = new net.emustudio.application.emulation.EmulationController(null, null,
+                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null));
 
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
@@ -276,7 +274,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
         destroyed = true;
         if (execution != null) execution.close();
-
 
         if (debugger != null) {
             try {

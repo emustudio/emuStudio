@@ -2,25 +2,22 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem.gui;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-import net.emustudio.emulib.NumberUtils;
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
-
-import net.emustudio.emulib.application.ExecutionState;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import static net.emustudio.emulib.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
     private final GUI gui;
-    private final ExecutionState execution;
     private final EmulatorEngine engine;
     private final MemoryContext<Byte> memory;
 
@@ -42,19 +39,15 @@ public class CpuPanel extends JPanel {
     private final JTextField txtMLine = readOnlyField("0");
     private final JTextField txtDecMLine = readOnlyField("0");
 
-    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, ExecutionState execution) {
+    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, CPUContext execution, Runnable stateChanged) {
         this.gui = gui;
-        this.execution = execution;
+        this.cpuContext = execution;
         this.engine = Objects.requireNonNull(engine);
         this.memory = net.emustudio.plugins.cpu.ssem.MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
 
         initComponents();
-        add(engine.debugger.editor(execution::update), BorderLayout.SOUTH);
-        Updater updater = new Updater();
-        observeSnapshots(snapshot -> {
-            updater.runStateChanged(snapshot.runState());
-            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
-        });
+        add(engine.debugger.editor(stateChanged), BorderLayout.SOUTH);
+        observeCPU(new Updater());
         lblSpeed.setText(String.format("%.2f", EmulatorEngine.INSTRUCTIONS_PER_SECOND));
     }
 
@@ -104,7 +97,7 @@ public class CpuPanel extends JPanel {
         add(content, BorderLayout.CENTER);
     }
 
-    private final class Updater {
+    private final class Updater implements CPUContext.CPUListener {
         public void runStateChanged(CPU.RunState rs) {
             SwingUtilities.invokeLater(() -> lblRunState.setText(rs.toString().toUpperCase()));
         }
@@ -121,18 +114,18 @@ public class CpuPanel extends JPanel {
 
             try {
                 Byte[] mCI = memory.read(ci, 4);
-                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                byte line = (byte) Numbers.reverseBits(mCI[0] & 0b11111000, 8);
                 Byte[] mLine = memory.read(line * 4, 4);
 
-                memoryValues[0] = String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[0] = String.format("%08x", Numbers.readInt(mCI, Numbers.Strategy.REVERSE_BITS));
                 memoryValues[1] = String.format("%02x", line);
-                memoryValues[2] = String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
-                memoryValues[3] = String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[2] = String.format("%08x", Numbers.readInt(mLine, Numbers.Strategy.REVERSE_BITS));
+                memoryValues[3] = String.format("%d", Numbers.readInt(mCI, Numbers.Strategy.REVERSE_BITS));
                 memoryValues[4] = String.format("%d", line);
-                memoryValues[5] = String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
-                memoryValues[6] = formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN));
+                memoryValues[5] = String.format("%d", Numbers.readInt(mLine, Numbers.Strategy.REVERSE_BITS));
+                memoryValues[6] = formatBinary(Numbers.readInt(mCI, Numbers.Strategy.BIG_ENDIAN));
                 memoryValues[7] = formatBinary(line, 8);
-                memoryValues[8] = formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN));
+                memoryValues[8] = formatBinary(Numbers.readInt(mLine, Numbers.Strategy.BIG_ENDIAN));
             } catch (IndexOutOfBoundsException e) {
                 for (int i = 0; i < memoryValues.length; i++) {
                     memoryValues[i] = "?";
@@ -163,7 +156,7 @@ public class CpuPanel extends JPanel {
         }
 
         private String formatBinary(int number, int length) {
-            return RadixUtils.formatBinary(number, length, 4);
+            return Numbers.formatBinary(number, length, 4);
         }
     }
 
@@ -175,22 +168,27 @@ public class CpuPanel extends JPanel {
         return field;
     }
 
-    private Consumer<ExecutionState.Snapshot> snapshotListener;
-    private ExecutionState.Subscription subscription;
+    private CPUContext.CPUListener cpuListener;
+    private boolean listening;
+    private final CPUContext cpuContext;
 
-    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
-        snapshotListener = listener;
-        subscription = execution.subscribe(listener);
+    private void observeCPU(CPUContext.CPUListener listener) {
+        cpuListener = listener;
+        cpuContext.addCPUListener(listener);
+        listening = true;
     }
 
     @Override public void addNotify() {
         super.addNotify();
-        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+        if (!listening) {
+            cpuContext.addCPUListener(cpuListener);
+            listening = true;
+        }
     }
 
     @Override public void removeNotify() {
-        if (subscription != null) subscription.close();
-        subscription = null;
+        if (listening) cpuContext.removeCPUListener(cpuListener);
+        listening = false;
         super.removeNotify();
     }
 }

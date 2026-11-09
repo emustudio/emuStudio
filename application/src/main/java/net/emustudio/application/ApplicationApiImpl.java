@@ -17,10 +17,6 @@ public class ApplicationApiImpl implements ApplicationApi {
     private final GUI gui;
     private final AtomicInteger programLocation = new AtomicInteger();
     private final MemoryAnnotations annotations = new MemoryAnnotations();
-    private final ExecutionStateImpl executionState = new ExecutionStateImpl();
-
-    @Override public ExecutionStateImpl getExecutionState() { return executionState; }
-
     @Override public MemoryAnnotations getAnnotations() { return annotations; }
 
     public ApplicationApiImpl(ContextPool contextPool, Dialogs dialogs, GUI gui) {

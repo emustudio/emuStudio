@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
 import net.emustudio.emulib.plugin.PluginInitializationException;
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
@@ -145,7 +145,7 @@ public class SettingsDialog extends DialogBase {
 
     private int parseInt(JComponent component, String name, Supplier<String> text) {
         try {
-            return RadixUtils.parseRadix(text.get());
+            return Numbers.parseRadix(text.get());
         } catch (NumberFormatException e) {
             dialogs.showError(name + ": Invalid number format", "Save settings");
             component.grabFocus();

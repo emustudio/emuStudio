@@ -6,7 +6,7 @@ import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Test;
 import java.util.*;
 import static org.junit.Assert.*;
@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class DebugHooksTest {
     @Test
     public void runChecksApplicationBreakpointAtNextInstructionAddress() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3);
         memory.write(5, (byte) 3);
@@ -33,7 +33,7 @@ public class DebugHooksTest {
     }
 
     @Test public void recordsActualFetchAddressAndRegistersDuringRun() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP skips the following instruction when ACC is negative.
         memory.write(9, (byte) 7); // STP at byte address 8.
@@ -62,7 +62,7 @@ public class DebugHooksTest {
     }
 
     @Test public void stopBeforeInstructionLeavesCiAndAccumulatorUntouched() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
@@ -76,7 +76,7 @@ public class DebugHooksTest {
         assertEquals(0, engine.Acc.get());
     }
     @Test public void repeatedAddressUsesCurrentCodeAfterMutationAndReset() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP.
         EmulatorEngine engine = new EmulatorEngine(memory);
@@ -102,7 +102,7 @@ public class DebugHooksTest {
 
     @Test
     public void haltResultSurvivesDebuggerStopAfterInstruction() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 7);
         EmulatorEngine engine = new EmulatorEngine(memory);

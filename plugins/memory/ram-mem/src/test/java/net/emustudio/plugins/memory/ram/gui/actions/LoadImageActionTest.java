@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.plugins.memory.ram.TestExecutionState;
-
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import net.emustudio.plugins.memory.ram.TestRamMemoryContextFactory;
@@ -27,22 +25,22 @@ public class LoadImageActionTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullDialogsThrows() {
-        new LoadImageAction(null, context, () -> {}, TestExecutionState.create());
+        new LoadImageAction(null, context, () -> {});
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullContextThrows() {
-        new LoadImageAction(dialogs, null, () -> {}, TestExecutionState.create());
+        new LoadImageAction(dialogs, null, () -> {});
     }
 
     @Test(expected = NullPointerException.class)
     public void testNullRepaintThrows() {
-        new LoadImageAction(dialogs, context, null, TestExecutionState.create());
+        new LoadImageAction(dialogs, context, null);
     }
 
     @Test
     public void testConstructor() {
-        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {}, TestExecutionState.create());
+        LoadImageAction action = new LoadImageAction(dialogs, context, () -> {});
         assertNotNull(action);
     }
 }

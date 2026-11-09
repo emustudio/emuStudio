@@ -3,6 +3,8 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.FrequencyCalculator;
+
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -13,6 +15,23 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ80 {
+
+    final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
+
+    @Override
+    public int getInstructionLocation() {
+        return engine == null ? -1 : engine.PC;
+    }
+
+    @Override
+    public float getCpuFrequencyKhz() {
+        return frequencyCalculator.sample();
+    }
+
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
+
     public final static int DEFAULT_FREQUENCY_KHZ = 4000;
     private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);

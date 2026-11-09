@@ -3,8 +3,6 @@
 package net.emustudio.plugins.memory.rasp.gui.actions;
 
 import net.emustudio.emulib.ui.StandardIcons;
-import net.emustudio.emulib.application.ExecutionState;
-import java.util.concurrent.CompletionException;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
@@ -24,7 +22,6 @@ import java.util.function.Consumer;
 
 import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
-
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
     private final static String ICON_FILE = StandardIcons.ICON_OPEN_FILE;
@@ -32,18 +29,15 @@ public class LoadImageAction extends AbstractAction {
     private final MemoryContextImpl context;
     private final Consumer<Integer> setProgramLocation;
     private final Runnable repaint;
-    private final ExecutionState execution;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint, Consumer<Integer> setProgramLocation,
-                           ExecutionState execution) {
+    public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint, Consumer<Integer> setProgramLocation) {
         super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
         this.repaint = Objects.requireNonNull(repaint);
         this.setProgramLocation = Objects.requireNonNull(setProgramLocation);
-        this.execution = Objects.requireNonNull(execution);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -59,17 +53,15 @@ public class LoadImageAction extends AbstractAction {
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             setEnabled(false);
-            execution.update(() -> {
-                try { context.deserialize(path.toString(), setProgramLocation); }
-                catch (Exception failure) { throw new CompletionException(failure); }
-            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                if (failure == null) repaint.run();
-                else {
-                    dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
-                    LOGGER.error("Could not load image file '{}'", path, failure);
-                }
+            try {
+                context.deserialize(path.toString(), setProgramLocation);
+                repaint.run();
+            } catch (Exception failure) {
+                dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                LOGGER.error("Could not load image file '{}'", path, failure);
+            } finally {
                 setEnabled(true);
-            }));
+            }
         });
     }
 }

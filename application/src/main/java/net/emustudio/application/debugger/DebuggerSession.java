@@ -26,6 +26,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final net.emustudio.application.emulation.EmulationController execution;
     public net.emustudio.application.emulation.EmulationController execution() { return execution; }
     public final CPU cpu;
+    private final net.emustudio.emulib.plugin.cpu.CPUContext cpuContext;
     public final Debugging debug;
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
@@ -155,10 +156,10 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
                 }
             };
-    /** Host calls once per changed execution snapshot, before notifying views. */
+    /** Host reports execution transitions and completed machine work. */
     public synchronized void executionChanged(CPU.RunState value, long machineRevision) {
         boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
-        int address = cpu.getInstructionLocation();
+        int address = cpuContext.getInstructionLocation();
         if (state != value || executionAddress != address || executionRevision != machineRevision) advanceHostGeneration();
         executionAddress = address;
         executionRevision = machineRevision;
@@ -171,20 +172,20 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
-        this(cpu, memory, settings, new MemoryAnnotations());
+    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
+        this(cpu, cpuContext, memory, settings, new MemoryAnnotations());
     }
 
-    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
-        this(cpu, memory, settings, annotationEngine, null, List.of(), null, new net.emustudio.application.ExecutionStateImpl());
+    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+        this(cpu, cpuContext, memory, settings, annotationEngine, null, List.of(), null);
     }
 
-    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
+    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
                         net.emustudio.emulib.plugin.memory.Memory memoryPlugin,
                         List<net.emustudio.emulib.plugin.device.Device> devices,
-                        net.emustudio.emulib.plugin.compiler.Compiler compiler,
-                        net.emustudio.application.ExecutionStateImpl executionState) throws IOException {
+                        net.emustudio.emulib.plugin.compiler.Compiler compiler) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
+        this.cpuContext = Objects.requireNonNull(cpuContext);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
         this.memory = memory;
@@ -193,7 +194,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         load();
         annotationEngine.addListener(annotationListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
-        execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler, executionState);
+        execution = new net.emustudio.application.emulation.EmulationController(cpu, cpuContext, memoryPlugin, devices, this, compiler);
         update(() -> {}).join();
     }
 
@@ -258,7 +259,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
-            if (!execution.snapshot().isBusy()) operation.ready.complete(null);
+            if (!execution.isBusy()) operation.ready.complete(null);
         }
     }
 
@@ -430,13 +431,10 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             throw new IllegalStateException("Analysis discarded: machine mutation in progress");
     }
 
-    /** Serializes debugger edits without pausing or invalidating program provenance. */
+    /** Applies debugger settings immediately without pausing execution. */
     public CompletableFuture<Void> update(Runnable change) {
-        if (execution.isWorkerThread()) {
-            try { applyUpdate(change); return CompletableFuture.completedFuture(null); }
-            catch (Throwable failure) { return CompletableFuture.failedFuture(failure); }
-        }
-        return execution.update(() -> applyUpdate(change), false);
+        try { applyUpdate(change); return CompletableFuture.completedFuture(null); }
+        catch (RuntimeException failure) { return CompletableFuture.failedFuture(failure); }
     }
 
     private synchronized void applyUpdate(Runnable change) {
@@ -612,7 +610,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     @Override
     public synchronized boolean beforeStep() {
-        int address = cpu.getInstructionLocation();
+        int address = execution.cpuContext().getInstructionLocation();
         stepAddress = address;
         boolean stop = false;
         if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;

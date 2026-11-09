@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.ApplicationApi;
-import net.emustudio.emulib.application.ContextNotFoundException;
 import net.emustudio.emulib.application.ContextPool;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.After;
@@ -29,9 +30,8 @@ public class CpuImplTest {
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 

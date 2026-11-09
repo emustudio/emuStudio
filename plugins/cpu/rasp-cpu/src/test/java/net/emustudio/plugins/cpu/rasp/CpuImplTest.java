@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.application.ApplicationApi;
-import net.emustudio.emulib.application.ExecutionState;
 import net.emustudio.emulib.application.ContextPool;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.GUI;
@@ -25,12 +25,13 @@ import static org.junit.Assert.*;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext observedContext;
     private MemoryStub memory;
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
     private ContextPool contextPool;
     private ApplicationApi applicationApi;
-    private ExecutionState execution;
+    private CPUContext execution;
     private boolean initialized = false;
 
     @Before
@@ -45,13 +46,14 @@ public class CpuImplTest {
         expect(contextPool.get(eq(0L), eq(RaspMemoryContext.class))).andReturn(memory).anyTimes();
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(0))).andReturn(inputTape).anyTimes();
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(outputTape).anyTimes();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
-        execution = createNiceMock(ExecutionState.class);
+        execution = createNiceMock(CPUContext.class);
         replay(execution);
         applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         replay(applicationApi);
 
         this.cpu = new CpuImpl(0, applicationApi, PluginSettings.UNAVAILABLE);
@@ -101,7 +103,7 @@ public class CpuImplTest {
     public void testSetAndGetInstructionLocation() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(10));
-        assertEquals(10, cpu.getInstructionLocation());
+        assertEquals(10, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -114,14 +116,14 @@ public class CpuImplTest {
     public void testSetInstructionLocationZero() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(0));
-        assertEquals(0, cpu.getInstructionLocation());
+        assertEquals(0, observedContext.getInstructionLocation());
     }
 
     @Test
     public void testResetSetsIP() throws Exception {
         initCpu();
         cpu.reset(5);
-        assertEquals(5, cpu.getInstructionLocation());
+        assertEquals(5, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -178,7 +180,6 @@ public class CpuImplTest {
     public void testGetStatusPanelReturnsPanel() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -198,7 +199,6 @@ public class CpuImplTest {
     public void testGetStatusPanelReturnsSamePanel() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -245,7 +245,6 @@ public class CpuImplTest {
     public void testGetStatusPanelWithGui() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -287,7 +286,7 @@ public class CpuImplTest {
 }, true);
         assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
-        assertEquals(0, cpu.getInstructionLocation());
+        assertEquals(0, observedContext.getInstructionLocation());
     }
 
     @Test

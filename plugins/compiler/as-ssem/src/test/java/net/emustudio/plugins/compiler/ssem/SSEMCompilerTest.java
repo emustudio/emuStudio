@@ -8,7 +8,7 @@ import net.emustudio.emulib.plugin.compiler.CompilerMessage;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.ContextNotFoundException;
 import net.emustudio.emulib.application.ContextPool;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +34,7 @@ public class SSEMCompilerTest {
 
     @Before
     public void setUp() throws Exception {
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        memoryStub = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();
@@ -78,8 +78,8 @@ public class SSEMCompilerTest {
         assertArrayEquals(
                 String.format(
                         "Expected=%x, but was=%x",
-                        NumberUtils.readInt(Arrays.stream(bytes).boxed().toArray(Integer[]::new), NumberUtils.Strategy.BIG_ENDIAN),
-                        NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN)
+                        Numbers.readInt(Arrays.stream(bytes).boxed().toArray(Integer[]::new), Numbers.Strategy.BIG_ENDIAN),
+                        Numbers.readInt(value, Numbers.Strategy.BIG_ENDIAN)
                 ),
                 expected, actual
         );

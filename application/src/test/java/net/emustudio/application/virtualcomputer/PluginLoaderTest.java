@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.Plugin;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
 import net.emustudio.emulib.plugin.cpu.CPU;
@@ -62,7 +64,7 @@ public class PluginLoaderTest {
     @Test
     public void testDoesImplement() throws Exception {
         // test for nested interface
-        assertFalse(doesImplement(net.emustudio.emulib.application.ExecutionState.Subscription.class, Plugin.class));
+        assertFalse(doesImplement(CPUContext.CPUListener.class, Plugin.class));
         assertTrue(doesImplement(loadValidPlugin(), Plugin.class));
     }
 
@@ -73,7 +75,7 @@ public class PluginLoaderTest {
 
     @Test
     public void testLoadablePluginOnNotAPluginClassReturnsFalse() {
-        assertFalse(PluginLoader.isLoadablePlugin(net.emustudio.emulib.application.ExecutionState.Subscription.class));
+        assertFalse(PluginLoader.isLoadablePlugin(CPUContext.CPUListener.class));
     }
 
     @Test

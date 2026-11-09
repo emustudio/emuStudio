@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88hdsk;
 
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
@@ -273,8 +273,8 @@ final class SettingsDialog extends DialogBase {
             try {
                 DriveSettingsUI drive = drives[i];
                 if (!displayedMits) {
-                    sizes[i] = RadixUtils.parseRadix(drive.sectorSize);
-                    sectors[i] = RadixUtils.parseRadix(drive.sectorsPerTrack);
+                    sizes[i] = Numbers.parseRadix(drive.sectorSize);
+                    sectors[i] = Numbers.parseRadix(drive.sectorsPerTrack);
                     new HardDisk().configure(sizes[i], sectors[i]);
                 }
                 if (!drive.image.isBlank()) {

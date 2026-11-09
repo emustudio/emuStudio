@@ -2,13 +2,14 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.junit.Test;
-import java.util.concurrent.CompletionStage;
 import java.util.*;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -85,7 +86,6 @@ public class DebugHooksTest extends AbstractEngineTest {
         assertFalse(engine.debugStopped);
     }
 
-
     @Test
     public void symbolConditionsAndCapturePreserveStringStorage() throws Exception {
         java.util.concurrent.atomic.AtomicReference<TapeSymbol> r0 = new java.util.concurrent.atomic.AtomicReference<>(TapeSymbol.EMPTY);
@@ -114,7 +114,6 @@ public class DebugHooksTest extends AbstractEngineTest {
         verify(storage);
     }
 
-
     @Test
     public void symbolEditorPreservesQuotedNumericStringType() throws Exception {
         java.util.concurrent.atomic.AtomicReference<TapeSymbol> r0 = new java.util.concurrent.atomic.AtomicReference<>(TapeSymbol.EMPTY);
@@ -122,11 +121,9 @@ public class DebugHooksTest extends AbstractEngineTest {
         storage.setSymbolAt(eq(0), anyObject(TapeSymbol.class));
         expectLastCall().andAnswer(() -> { r0.set(getCurrentArgument(1)); return null; }).once();
         replay(input, storage, output);
-        java.util.function.Function<Runnable, CompletionStage<Void>> update = change -> {
-            change.run();
-            return java.util.concurrent.CompletableFuture.completedFuture(null);
-        };
-        javax.swing.JPanel editor = engine.debugger.editor(update);
+        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
+        org.easymock.EasyMock.replay(context);
+        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
 
         javax.swing.SwingUtilities.invokeAndWait(() -> {
             ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("R0");

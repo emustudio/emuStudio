@@ -185,7 +185,7 @@ revision guards still protect concurrent UI reads and analysis publication.
 Timed stepping uses a fixed delay after each completed instruction. Pause, stop,
 reset, manual step, replacement timed runs, and close cancel the current timer;
 a generation check prevents cancelled work from resuming its old sequence. The
-existing command scheduler also invokes `CPU.sampleFrequency()`, so
+CPU context exposes measured frequency through `getCpuFrequencyKhz()`, so
 `FrequencyCalculator` needs no sampling executor. Instruction pacing remains inside
 the CPU worker's `AccurateFrequencyRunner` loop.
 

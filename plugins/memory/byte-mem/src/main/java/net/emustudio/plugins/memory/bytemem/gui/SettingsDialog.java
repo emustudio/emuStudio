@@ -2,8 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.RadixUtils;
-import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.application.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
@@ -23,13 +22,11 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletionException;
 
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class SettingsDialog extends DialogBase {
     private final GUI gui;
-    private final ExecutionState execution;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final MemoryContextImpl context;
@@ -45,11 +42,9 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtCommonBoundary = new JTextField("0x0000");
 
     public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
-                          PluginSettings settings, Dialogs dialogs, GUI gui,
-                          ExecutionState execution) {
+                          PluginSettings settings, Dialogs dialogs, GUI gui) {
         super(parent, "Memory Settings", true);
         this.gui = gui;
-        this.execution = Objects.requireNonNull(execution);
 
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -163,8 +158,8 @@ public class SettingsDialog extends DialogBase {
         Optional<RangeTree.Range> rangeOpt = Optional.empty();
         try {
             if (i >= 0) {
-                int from = RadixUtils.parseRadix((String) romModel.getValueAt(i, 0));
-                int to = RadixUtils.parseRadix((String) romModel.getValueAt(i, 1));
+                int from = Numbers.parseRadix((String) romModel.getValueAt(i, 0));
+                int to = Numbers.parseRadix((String) romModel.getValueAt(i, 1));
                 rangeOpt = Optional.of(new RangeTree.Range(from, to));
             } else {
                 Optional<Integer> from = dialogs.readInteger("Enter FROM address:", "Remove ROM range", 0);
@@ -185,7 +180,7 @@ public class SettingsDialog extends DialogBase {
 
     private int getPositiveIntegerOrThrow(String name, JTextField textField) {
         try {
-            int number = RadixUtils.parseRadix(textField.getText());
+            int number = Numbers.parseRadix(textField.getText());
             if (number < 0) {
                 throw new NumberFormatException();
             }
@@ -197,13 +192,14 @@ public class SettingsDialog extends DialogBase {
     }
 
     private void mutate(Runnable operation) {
-        execution.update(operation).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-            if (failure != null) dialogs.showError(failure.getMessage(), "Memory settings");
+        try { operation.run(); }
+        catch (RuntimeException failure) { dialogs.showError(failure.getMessage(), "Memory settings"); }
+        finally {
             tblROM.revalidate();
             tblROM.repaint();
             tblMem.revalidate();
             tblMem.repaint();
-        }));
+        }
     }
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
@@ -275,16 +271,13 @@ public class SettingsDialog extends DialogBase {
             Path imagePath = Path.of(imagesModel.getFileNameAtRow(index));
             int address = imagesModel.getImageAddressAtRow(index);
             int bank = imagesModel.getImageBankAtRow(index);
-            execution.update(() -> {
-                try { memory.loadImage(imagePath, address, bank); }
-                catch (Exception failure) { throw new CompletionException(failure); }
-            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                if (failure == null) tblMem.getTableModel().fireTableDataChanged();
-                else {
-                    dialogs.showError("Could not load image: " + failure.getMessage() + ". Please see log file for details.", "Load image now");
-                    LOGGER.error("Could not load memory image {}", imagePath, failure);
-                }
-            }));
+            try {
+                memory.loadImage(imagePath, address, bank);
+                tblMem.getTableModel().fireTableDataChanged();
+            } catch (Exception failure) {
+                dialogs.showError("Could not load image: " + failure.getMessage() + ". Please see log file for details.", "Load image now");
+                LOGGER.error("Could not load memory image {}", imagePath, failure);
+            }
         }
     }
 }

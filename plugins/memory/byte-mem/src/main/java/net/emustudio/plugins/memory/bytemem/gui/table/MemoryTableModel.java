@@ -3,8 +3,6 @@
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
-import net.emustudio.emulib.application.ExecutionState;
-import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +18,12 @@ public class MemoryTableModel extends AbstractTableModel {
     private static final int COLUMN_COUNT = 16;
 
     private final MemoryContextImpl memory;
-    private final ExecutionState execution;
     private int currentPage = 0;
     private int currentBank = 0;
     private volatile boolean asciiMode;
 
-    public MemoryTableModel(MemoryContextImpl memory, ExecutionState execution) {
+    public MemoryTableModel(MemoryContextImpl memory) {
         this.memory = Objects.requireNonNull(memory);
-        this.execution = Objects.requireNonNull(execution);
     }
 
     @Override
@@ -85,10 +81,8 @@ public class MemoryTableModel extends AbstractTableModel {
         int bank = currentBank;
         try {
             byte data = (byte) (Integer.decode(String.valueOf(value)) & 0xFF);
-            execution.update(() -> memory.writeBank(address, data, bank)).whenComplete((ignored, failure) -> {
-                if (failure != null) LOGGER.warn("Memory edit rejected", failure);
-                SwingUtilities.invokeLater(this::fireTableDataChanged);
-            });
+            memory.writeBank(address, data, bank);
+            fireTableDataChanged();
         } catch (NumberFormatException e) {
             LOGGER.error("Could not set memory cell at address 0x{} to value {}", Integer.toHexString(address), value, e);
         }
@@ -96,7 +90,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !execution.snapshot().isBusy();
+        return true;
     }
 
     public Optional<Integer> findSequence(byte[] sequence, int from) {

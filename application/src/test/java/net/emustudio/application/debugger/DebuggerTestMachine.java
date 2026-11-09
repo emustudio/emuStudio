@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.ExpressionParser;
@@ -45,7 +47,7 @@ final class DebuggerTestMachine {
 
     @SuppressWarnings("unchecked")
     DebuggerTestMachine(byte[][] banks, int commonBoundary, boolean debugging) throws Exception {
-        cpu = debugging ? mock(CPU.class, withSettings().extraInterfaces(Debugging.class)) : mock(CPU.class);
+        cpu = debugging ? mockCpu( withSettings().extraInterfaces(Debugging.class)) : mockCpu();
         debug = debugging ? (Debugging) cpu : null;
         memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
@@ -53,7 +55,6 @@ final class DebuggerTestMachine {
         when(cpu.execute()).thenAnswer(call -> {
             entered.countDown();
             while (!Thread.currentThread().isInterrupted()) {
-                session.execution().processUpdates();
                 Thread.onSpinWait();
             }
             return result.get();
@@ -82,7 +83,7 @@ final class DebuggerTestMachine {
 
     private Supplier<Object> variable(String name) {
         String key = name.toUpperCase(Locale.ROOT);
-        if (key.equals("PC") || key.equals("IP")) return () -> (long) cpu.getInstructionLocation();
+        if (key.equals("PC") || key.equals("IP")) return () -> (long) net.emustudio.application.TestCpu.context(cpu).getInstructionLocation();
         if (!values.containsKey(key)) throw new IllegalArgumentException("Unknown name: " + name);
         return () -> values.get(key);
     }
@@ -113,7 +114,7 @@ final class DebuggerTestMachine {
     void accessed(int address, boolean write) { accessed = address; wrote = write; }
 
     boolean beforeStep(int address) {
-        when(cpu.getInstructionLocation()).thenReturn(address);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(address);
         return session.beforeStep();
     }
 
@@ -124,18 +125,19 @@ final class DebuggerTestMachine {
             session.execution().start().join();
             try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
-        } else if (session.execution().snapshot().runState() == CPU.RunState.STATE_RUNNING) {
+        } else if (session.execution().getRunState() == CPU.RunState.STATE_RUNNING) {
             result.set(state);
             session.execution().pause().join();
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
             session.execution().step().join();
         }
+        net.emustudio.application.TestCpu.publish(cpu, state);
     }
 
     DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
 
     DebuggerSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebuggerSession(cpu, withMemory ? memory : null, settings);
+        session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
         return session;
     }
 

@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.ui.StandardIcons;
-import net.emustudio.emulib.application.ExecutionState;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
@@ -20,7 +21,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
-import static net.emustudio.emulib.RadixUtils.formatBinary;
+import static net.emustudio.emulib.Numbers.formatBinary;
 import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
@@ -29,9 +30,13 @@ public class MemoryGui extends DialogBase {
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
     private final MemoryAnnotations annotations;
-    private final ExecutionState executionState;
+    private final CPUContext cpuContext;
     private boolean listening;
-    private ExecutionState.Subscription executionSubscription;
+    private final CPUContext.CPUListener executionListener =
+            new CPUContext.CPUListener() {
+                @Override public void runStateChanged(net.emustudio.emulib.plugin.cpu.CPU.RunState state) { }
+                @Override public void internalStateChanged() { debuggerListener.run(); }
+            };
     private boolean handlingSearchEscape;
     private final Runnable debuggerListener;
     private final JLabel lblBanksCount = new JLabel("0");
@@ -59,11 +64,11 @@ public class MemoryGui extends DialogBase {
     private final SettingsAction settingsAction;
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui,
-                     MemoryAnnotations annotations, ExecutionState executionState) {
+                     MemoryAnnotations annotations, CPUContext cpuContext) {
         super(parent, "Byte Operating Memory", false);
         this.gui = gui;
         this.annotations = annotations;
-        this.executionState = executionState;
+        this.cpuContext = cpuContext;
         this.lblPageCount = gui.labelBold("0");
 
         Objects.requireNonNull(context);
@@ -71,8 +76,8 @@ public class MemoryGui extends DialogBase {
         Objects.requireNonNull(settings);
         Objects.requireNonNull(dialogs);
 
-        this.tableModel = new MemoryTableModel(context, executionState);
-        this.table = new MemoryTable(tableModel, paneMemory, annotations, executionState);
+        this.tableModel = new MemoryTableModel(context);
+        this.table = new MemoryTable(tableModel, paneMemory, annotations, cpuContext);
         this.debuggerListener = () -> SwingUtilities.invokeLater(() -> {
             if (listening) {
                 table.repaint();
@@ -83,7 +88,7 @@ public class MemoryGui extends DialogBase {
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
             table.repaint();
-        }, gui, executionState);
+        }, gui);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         MemorySearch search = new MemorySearch(tableModel, this::setPageFromAddress, lblSearchStatus::setText);
         this.findSequencePanel = new FindSequencePanel(dialogs, gui, this::getCurrentAddress, search::start, this::hideFindSequence);
@@ -98,8 +103,8 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), executionState);
-        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui, executionState);
+                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class));
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));
@@ -252,14 +257,14 @@ public class MemoryGui extends DialogBase {
     public void setVisible(boolean visible) {
         if (visible && !listening) {
             if (annotations != null) annotations.addListener(debuggerListener);
-            if (executionState != null) executionSubscription = executionState.subscribe(snapshot -> debuggerListener.run());
+            if (cpuContext != null) cpuContext.addCPUListener(executionListener);
             listening = true;
             table.repaint();
             updateMemVal(table.getSelectedRow(), table.getSelectedColumn());
         } else if (!visible && listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
+            if (cpuContext != null) cpuContext.removeCPUListener(executionListener);
         }
         super.setVisible(visible);
     }
@@ -269,7 +274,7 @@ public class MemoryGui extends DialogBase {
         if (listening) {
             listening = false;
             if (annotations != null) annotations.removeListener(debuggerListener);
-            if (executionSubscription != null) { executionSubscription.close(); executionSubscription = null; }
+            if (cpuContext != null) cpuContext.removeCPUListener(executionListener);
         }
         super.dispose();
     }

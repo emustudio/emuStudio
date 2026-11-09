@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.CPU.RunState;
-import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.plugin.cpu.Disassembler;
 import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
@@ -307,7 +307,6 @@ public class EmulatorEngine {
     }
 
     private void dispatch() throws Throwable {
-        debugger.boundary();
         if (!debugger.begin(PC)) {
             currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
             return;

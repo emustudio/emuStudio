@@ -2,23 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import net.emustudio.emulib.application.ExecutionState;
-
 import javax.swing.*;
 import java.awt.*;
-import java.util.function.Consumer;
 
 import static net.emustudio.emulib.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
-    private final ExecutionState execution;
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
     private final Byte[] memory;
@@ -32,9 +30,9 @@ public class StatusPanel extends JPanel {
     private final JTextField txtMemP = readOnlyField("0");
     private final JTextField txtP = readOnlyField("0");
 
-    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui, ExecutionState execution) {
+    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui, CPUContext execution) {
         this.gui = gui;
-        this.execution = execution;
+        this.cpuContext = execution;
         this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
         this.tableModel = new MemoryTableModel(this.memory);
@@ -45,11 +43,7 @@ public class StatusPanel extends JPanel {
         tblMemory.getTableHeader().setReorderingAllowed(false);
         columnsRepainter.setMainColumn(2, tblMemory);
 
-        CPUStatusListener updater = new CPUStatusListener();
-        observeSnapshots(snapshot -> {
-            updater.runStateChanged(snapshot.runState());
-            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
-        });
+        observeCPU(new CPUStatusListener());
     }
 
     private void initComponents() {
@@ -93,7 +87,7 @@ public class StatusPanel extends JPanel {
         add(content, BorderLayout.CENTER);
     }
 
-    private class CPUStatusListener {
+    private class CPUStatusListener implements CPUContext.CPUListener {
         private volatile long nanoStartTime;
         private CPU.RunState lastRunState;
         public void runStateChanged(CPU.RunState state) {
@@ -161,22 +155,27 @@ public class StatusPanel extends JPanel {
         return field;
     }
 
-    private Consumer<ExecutionState.Snapshot> snapshotListener;
-    private ExecutionState.Subscription subscription;
+    private CPUContext.CPUListener cpuListener;
+    private boolean listening;
+    private final CPUContext cpuContext;
 
-    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
-        snapshotListener = listener;
-        subscription = execution.subscribe(listener);
+    private void observeCPU(CPUContext.CPUListener listener) {
+        cpuListener = listener;
+        cpuContext.addCPUListener(listener);
+        listening = true;
     }
 
     @Override public void addNotify() {
         super.addNotify();
-        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+        if (!listening) {
+            cpuContext.addCPUListener(cpuListener);
+            listening = true;
+        }
     }
 
     @Override public void removeNotify() {
-        if (subscription != null) subscription.close();
-        subscription = null;
+        if (listening) cpuContext.removeCPUListener(cpuListener);
+        listening = false;
         super.removeNotify();
     }
 }

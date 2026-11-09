@@ -502,9 +502,9 @@ public class SourceAddressMapTest {
     }
 
     private static DebuggerSession session(int size, MemoryAnnotations annotations) throws IOException {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = net.emustudio.application.TestCpu.mockCpu();
         when(cpu.getAddressSpaceSize()).thenReturn(size);
-        DebuggerSession session = new DebuggerSession(cpu, null, null, annotations);
+        DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null, annotations);
         SESSIONS.add(session);
         return session;
     }

@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.cmdline;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.DebuggerPanel;
@@ -60,7 +62,7 @@ public class UtilsTest extends AbstractSwingTest {
     private void assertMainWindowStarts(boolean fromEdt) throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig config = mock(ComputerConfig.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         ContextPool contextPool = mock(ContextPool.class);
         DialogsGui dialogs = mock(DialogsGui.class);
@@ -75,7 +77,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
-        try (DebuggerSession session = new DebuggerSession(cpu, memory, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             java.util.concurrent.Callable<Void> start = () -> {
                 Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), dialogs,

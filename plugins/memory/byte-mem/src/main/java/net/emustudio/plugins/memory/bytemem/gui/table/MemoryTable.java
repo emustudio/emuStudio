@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import javax.swing.*;
@@ -11,11 +11,10 @@ import java.util.Objects;
 
 import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 
-
 public class MemoryTable extends JTable {
     private final MemoryTableModel tableModel;
 
-    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, MemoryAnnotations annotations, ExecutionState executionState) {
+    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm, MemoryAnnotations annotations, CPUContext executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         setModel(this.tableModel);

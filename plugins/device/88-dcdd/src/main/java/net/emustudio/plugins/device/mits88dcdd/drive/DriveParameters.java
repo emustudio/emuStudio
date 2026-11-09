@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.drive;
 
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.jcip.annotations.Immutable;
 
 import java.nio.file.Path;
@@ -63,15 +63,15 @@ public final class DriveParameters {
         boolean sr0 = (status & 1) == 0;
         int offset = (status >>> 1) & 0b11111;
 
-        return (sr0 ? "(SR0) " : "      ") + "0x" + RadixUtils.formatHex(offset, 2);
+        return (sr0 ? "(SR0) " : "      ") + "0x" + Numbers.formatHex(offset, 2);
     }
 
     @Override
     public String toString() {
         return
-                "T=" + RadixUtils.formatHex(track, 2) +
-                        "; S=" + RadixUtils.formatHex(sector, 2) +
-                        "; O=" + RadixUtils.formatHex(sectorOffset, 2) +
+                "T=" + Numbers.formatHex(track, 2) +
+                        "; S=" + Numbers.formatHex(sector, 2) +
+                        "; O=" + Numbers.formatHex(sectorOffset, 2) +
                         "; port1=[" + port1statusString + "]" +
                         "; port2=[" + port2statusString + "]";
     }

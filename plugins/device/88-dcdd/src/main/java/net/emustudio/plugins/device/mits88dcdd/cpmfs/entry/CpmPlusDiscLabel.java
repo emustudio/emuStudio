@@ -86,16 +86,16 @@ public class CpmPlusDiscLabel implements CpmEntry {
 
     private static DateStamp readDateStamp(ByteBuffer entry) {
         int days = (entry.get() & 0xFF) | ((entry.get() & 0xFF) << 8);
-        int hour = net.emustudio.emulib.NumberUtils.bcd2bin(entry.get() & 0xFF);
-        int minute = net.emustudio.emulib.NumberUtils.bcd2bin(entry.get() & 0xFF);
+        int hour = net.emustudio.emulib.Numbers.bcd2bin(entry.get() & 0xFF);
+        int minute = net.emustudio.emulib.Numbers.bcd2bin(entry.get() & 0xFF);
         return new DateStamp(days, hour, minute);
     }
 
     private static void writeDateStamp(ByteBuffer entry, DateStamp stamp) {
         entry.put((byte) (stamp.days & 0xFF));
         entry.put((byte) (stamp.days >>> 8));
-        entry.put((byte) net.emustudio.emulib.NumberUtils.bin2bcd(stamp.hour & 0xFF));
-        entry.put((byte) net.emustudio.emulib.NumberUtils.bin2bcd(stamp.minute & 0xFF));
+        entry.put((byte) net.emustudio.emulib.Numbers.bin2bcd(stamp.hour & 0xFF));
+        entry.put((byte) net.emustudio.emulib.Numbers.bin2bcd(stamp.minute & 0xFF));
     }
 
     public ByteBuffer toEntry() {

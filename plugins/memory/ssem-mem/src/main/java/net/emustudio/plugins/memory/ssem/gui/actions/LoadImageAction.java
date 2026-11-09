@@ -5,7 +5,7 @@ package net.emustudio.plugins.memory.ssem.gui.actions;
 import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.ApplicationApi;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.io.FileType;
 import org.slf4j.Logger;
@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletionException;
 
 import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
@@ -58,23 +57,22 @@ public class LoadImageAction extends AbstractAction {
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             setEnabled(false);
-            api.getExecutionState().update(() -> {
+            try {
                 try (FileInputStream stream = new FileInputStream(path.toFile())) {
                     ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
                     int startLine = code.getInt();
                     byte[] data = new byte[code.remaining()];
                     code.get(data);
                     api.setProgramLocation(startLine * 4);
-                    context.write(0, NumberUtils.nativeBytesToBytes(data));
-                } catch (Exception failure) { throw new CompletionException(failure); }
-            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                if (failure == null) repaint.run();
-                else {
-                    dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
-                    LOGGER.error("Could not load image file '{}'", path, failure);
+                    context.write(0, Numbers.nativeBytesToBytes(data));
                 }
+                repaint.run();
+            } catch (Exception failure) {
+                dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                LOGGER.error("Could not load image file '{}'", path, failure);
+            } finally {
                 setEnabled(true);
-            }));
+            }
         });
     }
 }

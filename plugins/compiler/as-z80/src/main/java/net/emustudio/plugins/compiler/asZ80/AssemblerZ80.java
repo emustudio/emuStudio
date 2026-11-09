@@ -11,7 +11,7 @@ import net.emustudio.emulib.plugin.compiler.antlr.ParserErrorListener;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.ContextNotFoundException;
-import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.io.IntelHEX;
 import net.emustudio.emulib.application.settings.PluginSettings;
@@ -124,7 +124,7 @@ public class AssemblerZ80 extends AbstractCompiler {
 
             info(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputPath, RadixUtils.formatHex(programLocation, 4)
+                    outputPath, Numbers.formatHex(programLocation, 4)
             ));
 
             if (memory != null) {

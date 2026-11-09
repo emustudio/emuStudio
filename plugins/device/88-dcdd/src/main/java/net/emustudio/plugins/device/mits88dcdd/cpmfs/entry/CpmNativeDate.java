@@ -8,8 +8,8 @@ import net.jcip.annotations.Immutable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import static net.emustudio.emulib.NumberUtils.bcd2bin;
-import static net.emustudio.emulib.NumberUtils.bin2bcd;
+import static net.emustudio.emulib.Numbers.bcd2bin;
+import static net.emustudio.emulib.Numbers.bin2bcd;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DateFormat.NATIVE;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DateFormat.NATIVE2;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;

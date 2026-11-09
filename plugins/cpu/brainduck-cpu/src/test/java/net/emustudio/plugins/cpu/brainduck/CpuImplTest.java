@@ -2,10 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
-import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.ContextPool;
 import net.emustudio.emulib.application.settings.PluginSettings;
@@ -23,6 +24,7 @@ import static org.junit.Assert.*;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext observedContext;
     private MemoryStub memory;
     private DeviceStub ioDevice;
 
@@ -39,12 +41,13 @@ public class CpuImplTest {
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -88,7 +91,7 @@ public class CpuImplTest {
         memory.setProgram(new byte[]{0});
         cpu.reset();
         assertTrue(cpu.setInstructionLocation(5));
-        assertEquals(5, cpu.getInstructionLocation());
+        assertEquals(5, observedContext.getInstructionLocation());
     }
 
     private void setupEmulator(byte[] program, byte[] data, byte[] input) {
@@ -105,7 +108,7 @@ public class CpuImplTest {
     private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) throws Exception {
         setupEmulator(program, null, input);
         Debugging.Observer listener = new Debugging.Observer() {
-            @Override public boolean beforeStep() { int address = cpu.getInstructionLocation(); return address == breakpoint; }
+            @Override public boolean beforeStep() { int address = observedContext.getInstructionLocation(); return address == breakpoint; }
 
             @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
 };
@@ -147,7 +150,7 @@ public class CpuImplTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
 
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
-        assertEquals(4, cpu.getInstructionLocation());
+        assertEquals(4, observedContext.getInstructionLocation());
     }
 
     @Test(timeout = 3000)
@@ -309,7 +312,7 @@ public class CpuImplTest {
         byte[] program = new byte[]{3, 7, 7, 4, 8, 3, 7, 4, 8, 8};
 
         emulate(program, null, null);
-        assertEquals(11, cpu.getInstructionLocation());
+        assertEquals(11, observedContext.getInstructionLocation());
     }
 
     @Test(timeout = 3000)
@@ -334,7 +337,7 @@ public class CpuImplTest {
 
         emulateWithBreakpoint(program, input, 19);
 
-        assertEquals(19, cpu.getInstructionLocation());
+        assertEquals(19, observedContext.getInstructionLocation());
         assertEquals(45, memory.read(cpu.getEngine().P + 1).shortValue());
 
         cpu.step(); // ,
@@ -359,9 +362,8 @@ public class CpuImplTest {
         cpu.step(); // >
         assertEquals(memory.getDataStart() + 2, cpu.getEngine().P);
         assertEquals(0, memory.read(cpu.getEngine().P).shortValue());
-        assertEquals(29, cpu.getInstructionLocation());
-        assertEquals(3, memory.read(cpu.getInstructionLocation()).shortValue());
-
+        assertEquals(29, observedContext.getInstructionLocation());
+        assertEquals(3, memory.read(observedContext.getInstructionLocation()).shortValue());
 
         cpu.step(); // +
         assertEquals(1, memory.read(cpu.getEngine().P).shortValue());
@@ -389,7 +391,7 @@ public class CpuImplTest {
 }, true);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
-        assertEquals(1, cpu.getInstructionLocation());
+        assertEquals(1, observedContext.getInstructionLocation());
         assertEquals(1, memory.read(cpu.getEngine().P).intValue());
     }
 
