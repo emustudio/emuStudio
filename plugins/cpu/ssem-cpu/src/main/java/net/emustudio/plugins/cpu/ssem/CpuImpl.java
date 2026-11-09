@@ -38,7 +38,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         memory = applicationApi.getContextPool().getMemory(pluginID, Byte.class);
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory);
-        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
             automaticEmulation = new AutomaticEmulation(applicationApi.getExecutionState(), engine, memory);
@@ -101,6 +100,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     @Override
     public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public void onBoundary(Runnable callback) { engine.debugger.onBoundary(callback); }
 
     @Override
     public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }

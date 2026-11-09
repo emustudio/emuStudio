@@ -52,7 +52,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         disassembler = new RaspDisassembler(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
-        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
@@ -112,6 +111,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     @Override
     public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public void onBoundary(Runnable callback) { engine.debugger.onBoundary(callback); }
 
     @Override
     public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }

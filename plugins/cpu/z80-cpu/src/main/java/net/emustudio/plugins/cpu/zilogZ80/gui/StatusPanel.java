@@ -91,13 +91,13 @@ public class StatusPanel extends JPanel {
             if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
             SwingUtilities.invokeLater(() -> {
                 lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
-                spnFrequency.setEnabled(!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING);
+                spnFrequency.setEnabled(!snapshot.isBusy());
             });
         });
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                execution.mutate(() -> context.setCPUFrequency(i)).exceptionally(failure -> {
+                execution.update(() -> context.setCPUFrequency(i)).exceptionally(failure -> {
                     SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
                     return null;
                 });

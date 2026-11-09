@@ -19,6 +19,43 @@ import static org.mockito.Mockito.*;
 
 public class EmulationControllerTest {
     @Test(timeout = 5000)
+    public void liveEditsRunOnCpuWorkerWithoutDebuggingObserverAndRecoverFromFailure() throws Exception {
+        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
+        net.emustudio.emulib.plugins.debugger.Debugging debugging =
+                (net.emustudio.emulib.plugins.debugger.Debugging) cpu;
+        AtomicReference<Runnable> boundary = new AtomicReference<>();
+        AtomicReference<Thread> cpuThread = new AtomicReference<>();
+        AtomicReference<Thread> editThread = new AtomicReference<>();
+        CountDownLatch entered = new CountDownLatch(1);
+        doAnswer(call -> { boundary.set(call.getArgument(0)); return null; }).when(debugging).onBoundary(any());
+        when(cpu.execute()).thenAnswer(call -> {
+            cpuThread.set(Thread.currentThread());
+            entered.countDown();
+            while (!Thread.currentThread().isInterrupted()) {
+                boundary.get().run();
+                Thread.onSpinWait();
+            }
+            return STATE_RUNNING;
+        });
+
+        try (EmulationController controller = controller(cpu)) {
+            await(controller.start());
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            IllegalArgumentException failure = new IllegalArgumentException("invalid live edit");
+
+            CompletableFuture<Void> rejected = controller.executionState().update(() -> { throw failure; });
+            assertSame(failure, assertThrows(ExecutionException.class, () -> await(rejected)).getCause());
+            await(controller.executionState().update(() -> editThread.set(Thread.currentThread())));
+
+            assertSame(cpuThread.get(), editThread.get());
+            assertEquals(STATE_RUNNING, controller.snapshot().runState());
+            assertFalse(controller.runCompletion().isDone());
+            verify(debugging, never()).observe(any(), anyBoolean());
+            assertThrows(IllegalStateException.class, () -> boundary.get().run());
+        }
+    }
+
+    @Test(timeout = 5000)
     public void startAcknowledgesRunningBeforeExecutionExits() throws Exception {
         CPU cpu = mock(CPU.class);
         RunGate gate = new RunGate(STATE_STOPPED_NORMAL);

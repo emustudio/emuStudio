@@ -33,6 +33,7 @@ final class DebuggerTestMachine {
     final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
     final AtomicInteger detached = new AtomicInteger();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
+    private Runnable boundary = () -> { };
     private DebugSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
@@ -53,13 +54,14 @@ final class DebuggerTestMachine {
         when(cpu.execute()).thenAnswer(call -> {
             entered.countDown();
             while (!Thread.currentThread().isInterrupted()) {
-                session.execution().processUpdates();
+                boundary.run();
                 Thread.onSpinWait();
             }
             return result.get();
         });
         when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
         if (debug != null) {
+            doAnswer(call -> { boundary = call.getArgument(0); return null; }).when(debug).onBoundary(any());
             when(debug.compile(anyString())).thenAnswer(call -> ExpressionParser.parse(
                     call.getArgument(0), this::variable, this::function));
             when(debug.observe(any(), anyBoolean())).thenAnswer(call -> {

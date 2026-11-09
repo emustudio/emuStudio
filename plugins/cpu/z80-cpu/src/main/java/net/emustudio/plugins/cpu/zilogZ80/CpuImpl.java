@@ -66,7 +66,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         initializer.initialize();
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
-        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setEngine(engine);
         context.addPassedCyclesListener(frequencyCalculator);
         if (applicationApi.getGUI() != null) {
@@ -78,6 +77,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     @Override
     public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public void onBoundary(Runnable callback) { engine.debugger.onBoundary(callback); }
 
     @Override
     public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }

@@ -15,8 +15,6 @@ public final class TestExecutionState implements ExecutionState {
         return new Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, -1, Float.NaN);
     }
     @Override public Subscription subscribe(Consumer<Snapshot> listener) { return () -> { }; }
-    @Override public void processUpdates() { }
-    @Override public CompletableFuture<Void> mutate(Runnable mutation) { return update(mutation); }
     @Override public CompletableFuture<Void> update(Runnable mutation) {
         CompletableFuture<Void> completed = new CompletableFuture<>();
         try { mutation.run(); completed.complete(null); }

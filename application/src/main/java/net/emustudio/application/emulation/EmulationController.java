@@ -110,6 +110,8 @@ public final class EmulationController implements Closeable {
         this.debugger = debugger;
         this.compiler = compiler;
         this.executionState = Objects.requireNonNull(executionState);
+        if (cpu instanceof net.emustudio.emulib.plugins.debugger.Debugging)
+            ((net.emustudio.emulib.plugins.debugger.Debugging) cpu).onBoundary(this::processUpdates);
         executionState.bind(this);
         commands.setRemoveOnCancelPolicy(true);
         commands.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
@@ -278,7 +280,7 @@ public final class EmulationController implements Closeable {
     }
 
     /** Called only by the CPU worker, before a guest step and once more on execution exit. */
-    public void processUpdates() {
+    private void processUpdates() {
         processUpdates(null);
     }
 

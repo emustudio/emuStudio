@@ -187,7 +187,7 @@ public class VirtualComputerTest {
             assertTrue(computer.getCPU().isEmpty());
             assertTrue(computer.getDebugger().isEmpty());
             assertFalse(api.getExecutionState().snapshot().isBusy());
-            api.getExecutionState().mutate(() -> {
+            api.getExecutionState().update(() -> {
                 thread.set(Thread.currentThread().getName());
                 memory.reset();
             }).get(2, java.util.concurrent.TimeUnit.SECONDS);

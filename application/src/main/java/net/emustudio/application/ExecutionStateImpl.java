@@ -25,21 +25,10 @@ public final class ExecutionStateImpl implements ExecutionState {
         return () -> listeners.remove(listener);
     }
 
-    @Override public CompletableFuture<Void> mutate(Runnable mutation) {
-        EmulationController current = execution;
-        return current == null ? CompletableFuture.failedFuture(new IllegalStateException("No active machine"))
-                : current.mutate(mutation);
-    }
-
     @Override public CompletableFuture<Void> update(Runnable change) {
         EmulationController current = execution;
         return current == null ? CompletableFuture.failedFuture(new IllegalStateException("No active machine"))
                 : current.update(change);
-    }
-
-    @Override public void processUpdates() {
-        EmulationController current = execution;
-        if (current != null) current.processUpdates();
     }
 
     public synchronized void bind(EmulationController execution) { this.execution = Objects.requireNonNull(execution); }

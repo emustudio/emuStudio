@@ -43,7 +43,7 @@ public class ExecutionStateImplTest {
         AtomicInteger register = new AtomicInteger();
         try (EmulationController owner = new EmulationController(cpu, null, List.of(), null, null, state);
              ExecutionState.Subscription subscription = state.subscribe(changes::add)) {
-            state.mutate(() -> register.set(42)).get(2, TimeUnit.SECONDS);
+            state.update(() -> register.set(42)).get(2, TimeUnit.SECONDS);
 
             assertEquals(42, register.get());
             assertEquals(2, changes.size());

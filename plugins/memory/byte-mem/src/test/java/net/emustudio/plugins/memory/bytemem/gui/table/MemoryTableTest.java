@@ -25,9 +25,7 @@ public class MemoryTableTest {
             return new Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, 3, Float.NaN);
         }
         public Subscription subscribe(java.util.function.Consumer<Snapshot> listener) { return () -> { }; }
-        public CompletableFuture<Void> mutate(Runnable operation) { return TestExecutionState.create().mutate(operation); }
         public CompletableFuture<Void> update(Runnable operation) { return TestExecutionState.create().update(operation); }
-        public void processUpdates() { }
     };
 
     @Before
