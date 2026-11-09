@@ -2,18 +2,17 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.io.*;
 import java.nio.file.*;
@@ -23,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Host debugging policy; plugins interpret machine state at the execution seam. */
-public final class DebugSession implements AutoCloseable, Debugging.Observer {
+public final class DebuggerSession implements AutoCloseable, Debugging.Observer {
     private final net.emustudio.application.emulation.EmulationController execution;
     public net.emustudio.application.emulation.EmulationController execution() { return execution; }
     public final CPU cpu;
@@ -31,7 +30,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
     public final List<String> watches = new CopyOnWriteArrayList<>();
-    public final List<Breakpoint> breakpoints = new CopyOnWriteArrayList<>();
+    public final Set<Integer> breakpoints = new java.util.concurrent.ConcurrentSkipListSet<>();
     public final List<Integer> memoryWatches = new CopyOnWriteArrayList<>();
     private final List<String> loadWarnings = new ArrayList<>();
     private final Path settings;
@@ -39,16 +38,13 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private AnnotationIndex annotations;
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
-    private volatile ProgramIndex programIndex;
-    // Never acquire the session monitor while holding this lock in a memory notification.
-    private final Object indexPublicationLock = new Object();
-    private final Runnable annotationListener = () -> {
-        synchronized (indexPublicationLock) {
-            if (programIndex != null) programIndex.annotationsChanged();
-        }
-
-    };
-    private Breakpoint[] evaluationBreakpoints = new Breakpoint[0];
+    private int addressSpaceSize;
+    // Memory notifications advance the revision before waiting for the session monitor.
+    private final Object programLock = new Object();
+    private final java.util.concurrent.atomic.AtomicLong memoryRevision = new java.util.concurrent.atomic.AtomicLong();
+    private volatile FlowAnalysis flow;
+    private long flowRevision;
+    private final Runnable annotationListener = () -> { synchronized (programLock) { flow = null; } };
     private final Map<Integer, MemoryWatchTracker> memoryWatchTrackers = new LinkedHashMap<>();
     private volatile List<MemoryWatchView> memoryWatchSnapshot = List.of();
     private int stepAddress = -1;
@@ -59,25 +55,36 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private SourceCaptureGuard completedSourceCapture;
     private BreakpointHit pendingHit;
 
-    /** Application-owned index; no memory cells are read to construct it. */
-    public synchronized ProgramIndex programIndex() {
+    /** CPU-visible cells; querying the layout never reads memory. */
+    public synchronized int addressSpaceSize() {
         if (closed) throw new IllegalStateException("Debugger session closed");
-        ProgramIndex.Layout layout = programIndex == null ? null : programIndex.snapshot().layout();
         int size = cpu.getAddressSpaceSize();
-        if (layout == null || layout.addressSpaceSize() != size) {
-            ProgramIndex replacement = ProgramIndex.create(size, annotationEngine);
-            synchronized (indexPublicationLock) {
-                programIndex = replacement;
-            }
+        if (size < 1) throw new IllegalStateException("Memory unavailable");
+        if (addressSpaceSize != size) {
+            addressSpaceSize = size;
             annotations = null;
+            invalidateProgram();
             generation++;
         }
-        return programIndex;
+        return size;
+    }
+
+    public long memoryRevision() { return memoryRevision.get(); }
+    synchronized boolean isCurrentMemory(int size, long revision) {
+        return !closed && cpu.getAddressSpaceSize() == size && memoryRevision() == revision;
+    }
+    public long programRevision() { return memoryRevision.get() + annotationEngine.revision(); }
+
+    /** Current immutable analysis, or null when its program has changed. */
+    public synchronized FlowAnalysis flowAnalysis() {
+        if (closed) return null;
+        addressSpaceSize();
+        synchronized (programLock) { return flowRevision == programRevision() ? flow : null; }
     }
 
     public synchronized void setSourceMappings(SourceAddressMap mappings) {
         requirePaused();
-        if (mappings.programIndex() != programIndex())
+        if (mappings.session() != this)
             throw new IllegalStateException("Source mappings belong to another memory image");
         sourceMappings = mappings;
         sourceMappingsCleared = false;
@@ -87,7 +94,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     /** Checks captured mappings for staleness; uncaptured compiler mappings remain directly accessible. */
     public synchronized Optional<SourceCodePosition> sourceAt(int address) {
         if (sourceMappings != null) {
-            if (sourceMappings.programIndex() != programIndex()) return Optional.empty();
+            if (sourceMappings.session() != this) return Optional.empty();
             return sourceMappings.sourceAt(address).map(location -> location.position);
         }
         if (sourceMappingsCleared) return Optional.empty();
@@ -96,7 +103,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     }
 
     public synchronized void clearSourceMappings() {
-        programIndex();
+        addressSpaceSize();
         sourceMappings = null;
         sourceMappingsCleared = true;
 
@@ -106,13 +113,13 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     public LiveMemory liveMemory() {
         if (memory == null) throw new IllegalStateException("Memory unavailable");
         Stamp stamp = liveStamp();
-        return new LiveMemory(memory, stamp.base.layout(), () -> requireCurrent(stamp));
+        return new LiveMemory(memory, stamp.size, () -> requireCurrent(stamp));
     }
 
     /** User metadata is restored once at startup; reads need no disk access or paused CPU. */
     public synchronized AnnotationIndex annotations() {
-        ProgramIndex index = programIndex();
-        if (annotations == null) annotations = new AnnotationIndex(index, annotationEngine);
+        int size = addressSpaceSize();
+        if (annotations == null) annotations = new AnnotationIndex(size, annotationEngine);
         return annotations;
     }
 
@@ -131,6 +138,8 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private Path recordingPath;
     private String recordingError = "";
     private int stoppedAddress = -1;
+    private int executionAddress = -1;
+    private long executionRevision;
     public volatile String status = "";
     private volatile CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
     private final MemoryContext.MemoryListener memoryListener =
@@ -147,31 +156,33 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
                 }
             };
     /** Host calls once per changed execution snapshot, before notifying views. */
-    public synchronized void executionChanged(CPU.RunState value) {
+    public synchronized void executionChanged(CPU.RunState value, long machineRevision) {
         boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
+        int address = cpu.getInstructionLocation();
+        if (state != value || executionAddress != address || executionRevision != machineRevision) advanceHostGeneration();
+        executionAddress = address;
+        executionRevision = machineRevision;
         state = value;
-        advanceHostGeneration();
         if (starting) {
             clearWatchChanges();
             pendingHit = null;
             if (sourceMappings == null) sourceMappingsCleared = true;
-            publishBreakpoints();
-            invalidateIndex();
+            invalidateProgram();
         }
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
+    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
         this(cpu, memory, settings, new MemoryAnnotations());
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
         this(cpu, memory, settings, annotationEngine, null, List.of(), null, new net.emustudio.application.ExecutionStateImpl());
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
-                        net.emustudio.emulib.plugins.memory.Memory memoryPlugin,
-                        List<net.emustudio.emulib.plugins.device.Device> devices,
-                        net.emustudio.emulib.plugins.compiler.Compiler compiler,
+    public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
+                        net.emustudio.emulib.plugin.memory.Memory memoryPlugin,
+                        List<net.emustudio.emulib.plugin.device.Device> devices,
+                        net.emustudio.emulib.plugin.compiler.Compiler compiler,
                         net.emustudio.application.ExecutionStateImpl executionState) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
@@ -231,7 +242,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
             if (closed) throw new IllegalStateException("Debugger session closed");
             pendingHit = null;
             generation++;
-            if (invalidateMemory) invalidateIndex();
+            if (invalidateMemory) invalidateProgram();
             activeMutations++;
             activeSourceCapture = operation;
         }
@@ -241,9 +252,9 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
             synchronized (this) {
                 activeMutations--;
                 generation++;
-                if (invalidateMemory) invalidateIndex();
-                if (memory != null && !closed) programIndex();
-                operation.stamp = new Stamp(programIndex, generation);
+                if (invalidateMemory) invalidateProgram();
+                if (memory != null && !closed) addressSpaceSize();
+                operation.stamp = new Stamp(this);
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
@@ -255,9 +266,9 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private void advanceHostGeneration() {
         SourceCaptureGuard guard = completedSourceCapture;
         boolean current = guard != null && !guard.ready.isDone() && guard.stamp != null
-                && guard.stamp.generation == generation && guard.stamp.matches(programIndex, true);
+                && guard.stamp.generation == generation && guard.stamp.matches(this);
         generation++;
-        if (current) guard.stamp = new Stamp(programIndex, generation);
+        if (current) guard.stamp = new Stamp(this);
     }
 
     /** Called by the command scheduler after final lifecycle publication. */
@@ -281,57 +292,67 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private synchronized Stamp liveStamp() {
         requirePaused();
         requireNoMutation();
-        programIndex();
-        return new Stamp(programIndex, generation);
+        addressSpaceSize();
+        return new Stamp(this);
     }
 
-    /** Paused stamp for analyses that may run without a program index. */
+    /** Captures operation provenance, excluding independent breakpoint edits. */
     synchronized Stamp pausedStamp() {
-        return new Stamp(programIndex, pausedGeneration());
+        pausedGeneration();
+        if (cpu.getAddressSpaceSize() > 0) addressSpaceSize();
+        return new Stamp(this);
     }
 
-    /** Machine generation and index revisions observed together; later work is valid only while both hold. */
     static final class Stamp {
-        final ProgramIndex index;
-        final ProgramIndex.Snapshot base;
-        final long generation;
+        final DebuggerSession session;
+        final int size;
+        final long generation, memoryRevision, annotationRevision;
 
-        private Stamp(ProgramIndex index, long generation) {
-            this.index = index;
-            this.base = index == null ? null : index.snapshot();
-            this.generation = generation;
+        private Stamp(DebuggerSession session) {
+            this.session = session;
+            size = session.addressSpaceSize;
+            generation = session.generation;
+            memoryRevision = session.memoryRevision();
+            annotationRevision = session.annotationEngine.revision();
         }
 
-        private boolean matches(ProgramIndex current, boolean content) {
-            if (current != index) return false;
-            if (index == null) return true;
-            ProgramIndex.Snapshot now = index.snapshot();
-            return content ? now.sameRevisions(base) : now.memoryRevision() == base.memoryRevision();
+        private boolean matches(DebuggerSession current) {
+            return current == session && current.cpu.getAddressSpaceSize() == size
+                    && current.memoryRevision() == memoryRevision
+                    && current.annotationEngine.revision() == annotationRevision;
         }
     }
 
-    /** Runs apply only while the stamped generation and index revisions (content optionally) are current. */
-    synchronized void applyCurrent(Stamp stamp, boolean content, String message, Runnable apply) {
+    synchronized void applyCurrent(Stamp stamp, String message, Runnable apply) {
         applyPaused(stamp.generation, () -> {
-            if (!stamp.matches(programIndex, content)) throw new IllegalStateException(message);
-            apply.run();
+            synchronized (programLock) {
+                if (!stamp.matches(this)) throw new IllegalStateException(message);
+                apply.run();
+            }
         });
     }
 
     private void requireCurrent(Stamp stamp) {
         if (Thread.currentThread().isInterrupted()) throw new CancellationException();
-        applyCurrent(stamp, true, "Analysis discarded: memory, source or metadata changed", () -> {});
+        applyCurrent(stamp, "Analysis discarded: memory, source or metadata changed", () -> {});
     }
 
-    /** Use the CPU's wired decoder off the UI thread; publish only while its paused root is current. */
+    /** Use the CPU's wired decoder off the UI thread; publish only while its paused program revision is current. */
     public FlowAnalysis analyzeFlow(int start, int limit) {
         Stamp stamp = liveStamp();
         Runnable validate = () -> requireCurrent(stamp);
         Disassembler decoder = guardedDecoder(cpu.getDisassembler(), validate);
-        FlowAnalysis.Pending pending = FlowAnalysis.reachable(decoder, start, limit, stamp.index, stamp.base);
+        FlowAnalysis result = FlowAnalysis.reachable(decoder, start, limit, stamp.size, annotationEngine);
         synchronized (this) {
-            validate.run();
-            return pending.publish();
+            synchronized (programLock) {
+                boolean published = annotationEngine.ifRevision(stamp.annotationRevision, () ->
+                        applyCurrent(stamp, "Flow analysis discarded: program changed", () -> {
+                            flow = result;
+                            flowRevision = programRevision();
+                        }));
+                if (!published) throw new IllegalStateException("Flow analysis discarded: annotations changed");
+                return result;
+            }
         }
     }
 
@@ -366,7 +387,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         if (activeMutations > 1) throw new IllegalStateException("Concurrent machine mutations prevent source capture");
         if (activeMutations == 1) return activeSourceCapture;
         SourceCaptureGuard guard = new SourceCaptureGuard();
-        guard.stamp = new Stamp(programIndex, generation);
+        guard.stamp = new Stamp(this);
         guard.ready.complete(null);
         return guard;
     }
@@ -375,8 +396,8 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         Objects.requireNonNull(guard);
         Stamp stamp = guard.stamp;
         if (stamp == null) throw new IllegalStateException("Compilation mutation has not finished");
-        synchronized (indexPublicationLock) {
-            applyCurrent(stamp, true, "Source mappings discarded: machine or metadata changed after compilation", apply);
+        synchronized (programLock) {
+            applyCurrent(stamp, "Source mappings discarded: machine or metadata changed after compilation", apply);
         }
     }
 
@@ -388,18 +409,19 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     }
 
     private void invalidateAnalysis() {
-        // Writers notify after changing cells. Advance the index before waiting for a paused
+        // Writers notify after changing cells. Advance the revision before waiting for a paused
         // analysis lease, so its publication cannot race a blocked memory-listener callback.
-        invalidateIndex();
+        invalidateProgram();
         synchronized (this) {
             if (sourceMappings == null) sourceMappingsCleared = true;
             generation++;
         }
     }
 
-    private void invalidateIndex() {
-        synchronized (indexPublicationLock) {
-            if (programIndex != null) programIndex.memoryChanged();
+    private void invalidateProgram() {
+        synchronized (programLock) {
+            memoryRevision.incrementAndGet();
+            flow = null;
         }
     }
 
@@ -512,9 +534,8 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     public synchronized void updateProbe() {
         observationDirty = false;
         syncMemoryWatches();
-        publishBreakpoints();
         boolean needed = recording != null || historyLimit > 0 || !memoryWatchTrackers.isEmpty()
-                || breakpoints.stream().anyMatch(breakpoint -> breakpoint.enabled);
+                || !breakpoints.isEmpty();
         boolean capture = recording != null || historyLimit > 0;
         if (debug == null) return;
         if (observation != null && (!needed || capture != captureAttached)) detachObservation();
@@ -545,21 +566,6 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
 
     private void trimHistory() {
         while (historyLimit > 0 && history.size() > historyLimit) history.removeFirst();
-    }
-
-    /** Replays logical editor state only at a supported paused edit/start boundary. */
-    private void publishBreakpoints() {
-        if (programIndex == null && memory == null && cpu.getAddressSpaceSize() <= 0) return;
-        ProgramIndex index = programIndex();
-        index.editBreakpoints((base, update) -> {
-            update.clear();
-            for (Breakpoint breakpoint : breakpoints) {
-                if (breakpoint.enabled && breakpoint.address < base.layout().addressSpaceSize())
-                    update.add(breakpoint.address);
-            }
-            return true;
-        });
-        evaluationBreakpoints = breakpoints.toArray(new Breakpoint[0]);
     }
 
     private synchronized Debugging.Expression expression(String source) {
@@ -647,12 +653,9 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     }
 
     private boolean checkBreakpoints(int address) {
-        for (Breakpoint breakpoint : evaluationBreakpoints) {
-            if (!breakpoint.enabled || breakpoint.address != address) continue;
-            pendingHit = new BreakpointHit(address);
-            return true;
-        }
-        return false;
+        if (!breakpoints.contains(address)) return false;
+        pendingHit = new BreakpointHit(address);
+        return true;
     }
 
     @Override
@@ -672,44 +675,25 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         if (current != null) {
             try { current.abort(); }
             catch (IOException failure) {
-                org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn("Could not close failed recording", failure);
+                org.slf4j.LoggerFactory.getLogger(DebuggerSession.class).warn("Could not close failed recording", failure);
             }
         }
-        org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn(message);
+        org.slf4j.LoggerFactory.getLogger(DebuggerSession.class).warn(message);
     }
 
-    public boolean isBreakpointSet(int address) {
-        return breakpoints.stream().anyMatch(breakpoint -> breakpoint.address == address && breakpoint.enabled);
-    }
+    public boolean isBreakpointSet(int address) { return breakpoints.contains(address); }
 
     public CompletableFuture<Void> setBreakpoint(int address, boolean enabled) {
         if (address < 0 || address >= cpu.getAddressSpaceSize())
             throw new IllegalArgumentException("Address outside CPU");
         if (debug == null) throw new IllegalStateException("Breakpoints unavailable for this CPU");
         return update(() -> {
-            if (!enabled) breakpoints.removeIf(breakpoint -> breakpoint.address == address);
-            else {
-                Breakpoint breakpoint = breakpoints.stream().filter(candidate -> candidate.address == address).findFirst()
-                        .orElseGet(() -> {
-                            Breakpoint added = new Breakpoint(address);
-                            breakpoints.add(added);
-                            return added;
-                        });
-                breakpoint.enabled = true;
-            }
+            if (enabled) breakpoints.add(address);
+            else breakpoints.remove(address);
         });
     }
 
-    List<Integer> ordinaryBreakpoints() {
-        Set<Integer> addresses = new TreeSet<>();
-        for (Breakpoint breakpoint : breakpoints) addresses.add(breakpoint.address);
-        return new ArrayList<>(addresses);
-    }
-
-    void toggleOrdinaryBreakpoint(int address) {
-        update(() -> breakpoints.stream().filter(breakpoint -> breakpoint.address == address)
-                .findFirst().ifPresent(breakpoint -> breakpoint.enabled = !breakpoint.enabled));
-    }
+    List<Integer> ordinaryBreakpoints() { return List.copyOf(breakpoints); }
 
     /** Passive monitors; they record the last access but never stop execution. */
     public CompletableFuture<Void> addMemoryWatch(int address) {
@@ -746,13 +730,11 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
 
     public synchronized void save() throws IOException {
         if (settings == null) return;
-        Properties p = programIndex == null ? new Properties() : annotations().properties();
+        Properties p = addressSpaceSize == 0 ? new Properties() : annotations().properties();
         for (int i = 0; i < watches.size(); i++) p.setProperty("watch." + i, watches.get(i));
-        for (int i = 0; i < breakpoints.size(); i++) {
-            Breakpoint breakpoint = breakpoints.get(i);
-            p.setProperty("breakpoint." + i + ".address", Integer.toString(breakpoint.address));
-            p.setProperty("breakpoint." + i + ".enabled", Boolean.toString(breakpoint.enabled));
-        }
+        int breakpointIndex = 0;
+        for (int address : breakpoints)
+            p.setProperty("breakpoint." + breakpointIndex++ + ".address", Integer.toString(address));
         for (int i = 0; i < memoryWatches.size(); i++) p.setProperty("memoryWatch." + i, Integer.toString(memoryWatches.get(i)));
         if (!p.equals(lastSaved)) {
             AtomicProperties.save(settings, p);
@@ -770,7 +752,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
             loadWarning("Debugger settings file " + settings + " was unreadable and has been deleted.");
             return;
         }
-        int skipped = 0, droppedConditions = 0;
+        int skipped = 0;
         for (int i : AtomicProperties.indices(p, "watch.", "")) {
             String watch = p.getProperty("watch." + i);
             if (watch.isBlank()) skipped++;
@@ -778,46 +760,22 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         }
         for (int i : AtomicProperties.indices(p, "breakpoint.", ".address")) {
             String k = "breakpoint." + i + ".";
-            if (!addLoadedBreakpoint(p.getProperty(k + "address"), p.getProperty(k + "enabled", "true"))) skipped++;
+            if (!addLoadedBreakpoint(p.getProperty(k + "address"))) skipped++;
         }
         for (int i : AtomicProperties.indices(p, "memoryWatch.", "")) {
             if (!addLoadedMemoryWatch(p.getProperty("memoryWatch." + i))) skipped++;
         }
-        // Earlier versions stored breakpoints and memory watches as generic rules.
-        for (int i : AtomicProperties.indices(p, "rule.", ".kind")) {
-            String k = "rule." + i + ".";
-            String kind = p.getProperty(k + "kind");
-            String condition = p.getProperty(k + "condition", "");
-            boolean valid;
-            if ("CONDITION".equals(kind)) {
-                droppedConditions++;
-                continue;
-            } else if ("EXEC".equals(kind)) {
-                valid = addLoadedBreakpoint(p.getProperty(k + "address"), p.getProperty(k + "enabled", "true"));
-            } else if ("READ".equals(kind) || "WRITE".equals(kind)) {
-                valid = addLoadedMemoryWatch(p.getProperty(k + "address"));
-            } else valid = false;
-            if (!valid) skipped++;
-            else if (!condition.isBlank()) droppedConditions++;
-        }
-        if (programIndex != null) {
+        if (addressSpaceSize != 0) {
             skipped += annotations().importProperties(p);
-            programIndex.annotationsChanged();
         }
         if (skipped > 0) loadWarning("Skipped " + skipped + " invalid debugger setting(s) in " + settings + ".");
-        if (droppedConditions > 0)
-            loadWarning("Removed " + droppedConditions + " unsupported breakpoint condition(s) from " + settings + ".");
     }
 
-    private boolean addLoadedBreakpoint(String address, String enabled) {
+    private boolean addLoadedBreakpoint(String address) {
         try {
             int at = Integer.parseInt(address);
             if (at < 0 || at >= cpu.getAddressSpaceSize()) return false;
-            if (!"true".equals(enabled) && !"false".equals(enabled)) return false;
-            if (breakpoints.stream().anyMatch(breakpoint -> breakpoint.address == at)) return true;
-            Breakpoint breakpoint = new Breakpoint(at);
-            breakpoint.enabled = Boolean.parseBoolean(enabled);
-            breakpoints.add(breakpoint);
+            breakpoints.add(at);
             return true;
         } catch (NumberFormatException invalid) {
             return false;
@@ -837,7 +795,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
 
     private void loadWarning(String message) {
         loadWarnings.add(message);
-        org.slf4j.LoggerFactory.getLogger(DebugSession.class).warn(message);
+        org.slf4j.LoggerFactory.getLogger(DebuggerSession.class).warn(message);
     }
 
     @Override
@@ -846,13 +804,13 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         execution.close();
         try { stopRecordingFile(); }
         catch (IOException e) {
-            org.slf4j.LoggerFactory.getLogger(DebugSession.class).error("Could not finish instruction recording", e);
+            org.slf4j.LoggerFactory.getLogger(DebuggerSession.class).error("Could not finish instruction recording", e);
         }
         if (settings != null)
             try {
                 save();
             } catch (IOException e) {
-                org.slf4j.LoggerFactory.getLogger(DebugSession.class)
+                org.slf4j.LoggerFactory.getLogger(DebuggerSession.class)
                         .error("Could not save debugger settings", e);
             }
 
@@ -861,18 +819,9 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         detachObservation();
         synchronized (this) {
             closed = true;
+            invalidateProgram();
             pendingHit = null;
             generation++;
-        }
-    }
-
-    public static final class Breakpoint {
-        public final int address;
-        public volatile boolean enabled = true;
-
-        public Breakpoint(int address) {
-            if (address < 0) throw new IllegalArgumentException("Invalid breakpoint");
-            this.address = address;
         }
     }
 

@@ -3,8 +3,8 @@
 package net.emustudio.application;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;

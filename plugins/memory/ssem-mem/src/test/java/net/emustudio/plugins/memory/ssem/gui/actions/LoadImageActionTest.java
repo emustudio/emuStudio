@@ -4,9 +4,9 @@ package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.plugins.memory.ssem.TestExecutionState;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Rule;
 import org.junit.Test;

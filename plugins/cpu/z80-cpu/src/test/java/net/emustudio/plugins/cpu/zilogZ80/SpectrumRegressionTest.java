@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 import net.emustudio.plugins.cpu.zilogZ80.suite.TimingMemoryStub;
 import org.junit.Before;
 import org.junit.Test;

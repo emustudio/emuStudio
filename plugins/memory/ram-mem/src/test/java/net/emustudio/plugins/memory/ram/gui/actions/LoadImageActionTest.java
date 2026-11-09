@@ -4,7 +4,7 @@ package net.emustudio.plugins.memory.ram.gui.actions;
 
 import net.emustudio.plugins.memory.ram.TestExecutionState;
 
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import net.emustudio.plugins.memory.ram.TestRamMemoryContextFactory;
 import org.junit.Before;

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.emulib.plugins.Plugin;
+import net.emustudio.emulib.plugin.Plugin;
 
 /**
  * This exception is thrown when a plugin could not be loaded.

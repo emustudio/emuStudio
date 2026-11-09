@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.parser;
 
-import net.emustudio.emulib.plugins.compiler.CompileException;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.CompileException;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;

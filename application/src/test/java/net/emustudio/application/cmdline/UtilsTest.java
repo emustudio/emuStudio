@@ -3,7 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -14,9 +14,9 @@ import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ContextPool;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -75,7 +75,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
-        try (DebugSession session = new DebugSession(cpu, memory, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             java.util.concurrent.Callable<Void> start = () -> {
                 Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), dialogs,

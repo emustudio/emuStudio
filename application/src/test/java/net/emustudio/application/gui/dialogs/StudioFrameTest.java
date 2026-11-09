@@ -2,19 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,7 +92,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         CPU sessionCpu = mock(CPU.class);
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
         when(memoryContext.getSize()).thenReturn(256);
-        DebugSession session = new DebugSession(sessionCpu, memoryContext, null, annotations);
+        DebuggerSession session = new DebuggerSession(sessionCpu, memoryContext, null, annotations);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
@@ -133,7 +133,7 @@ public class StudioFrameTest extends AbstractSwingTest {
     @Test
     public void enteringEmulatorSelectsDebuggerTab() throws Exception {
         CPU cpu = mock(CPU.class);
-        try (DebugSession session = new DebugSession(cpu, null, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, null, null)) {
             StudioFrame frame = createFrame(null, session);
             showFrame(frame);
             JTabbedPane workspace = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
@@ -153,7 +153,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         }
     }
 
-    private StudioFrame createFrame(Path fileName, DebugSession session) {
+    private StudioFrame createFrame(Path fileName, DebuggerSession session) {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
 

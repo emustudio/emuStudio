@@ -4,12 +4,12 @@ package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuVerifierImpl;
 import org.junit.After;
@@ -40,7 +40,7 @@ public class InstructionsTest {
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();

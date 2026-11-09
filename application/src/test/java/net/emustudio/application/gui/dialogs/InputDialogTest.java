@@ -46,7 +46,7 @@ public class InputDialogTest extends AbstractSwingTest {
 
     private InputDialog createDialog(Component parent) throws Exception {
         Constructor<InputDialog> constructor = InputDialog.class.getDeclaredConstructor(
-                Component.class, String.class, String.class, Object.class, net.emustudio.emulib.runtime.ui.GUI.class
+                Component.class, String.class, String.class, Object.class, net.emustudio.emulib.application.ui.GUI.class
         );
         constructor.setAccessible(true);
 

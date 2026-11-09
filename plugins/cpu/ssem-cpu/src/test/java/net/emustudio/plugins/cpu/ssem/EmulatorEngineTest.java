@@ -4,8 +4,8 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 

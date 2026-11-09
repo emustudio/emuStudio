@@ -1,6 +1,6 @@
 package net.emustudio.plugins.device.zxspectrum.ula.audio;
 
-import net.emustudio.emulib.runtime.audio.AudioSink;
+import net.emustudio.emulib.audio.AudioSink;
 
 import java.util.Arrays;
 

@@ -2,9 +2,9 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
 import org.junit.Test;
 import java.util.*;
 import static org.easymock.EasyMock.*;
@@ -162,7 +162,7 @@ public class DebugHooksTest {
         assertFalse(engine.debugStopped);
     }
 
-    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+    private static String encoding(net.emustudio.emulib.plugin.debugger.StepView event) {
         return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
     }
 

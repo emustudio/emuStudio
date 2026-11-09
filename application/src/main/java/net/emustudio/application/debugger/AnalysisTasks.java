@@ -8,7 +8,7 @@ import javax.swing.SwingUtilities;
 
 /** One background analysis at a time, with results confined to the same paused CPU generation. */
 final class AnalysisTasks implements AutoCloseable {
-    private final DebugSession session;
+    private final DebuggerSession session;
     private final Consumer<Boolean> busy;
     private final Consumer<Throwable> failure;
     private final ExecutorService executor =
@@ -21,7 +21,7 @@ final class AnalysisTasks implements AutoCloseable {
     private FutureTask<?> active;
     private boolean closed;
 
-    AnalysisTasks(DebugSession session, Consumer<Boolean> busy, Consumer<Throwable> failure) {
+    AnalysisTasks(DebuggerSession session, Consumer<Boolean> busy, Consumer<Throwable> failure) {
         this.session = session;
         this.busy = busy;
         this.failure = failure;
@@ -32,15 +32,11 @@ final class AnalysisTasks implements AutoCloseable {
     }
 
     <T> void submit(Callable<T> operation, Consumer<T> apply) {
-        submit(operation, apply, false);
-    }
-
-    <T> void submit(Callable<T> operation, Consumer<T> apply, boolean publishesContent) {
         requireEdt();
         if (closed) throw new IllegalStateException("Analysis window closed");
         if (active != null) throw new IllegalStateException("Analysis already in progress");
-        if (session.memory != null || session.cpu.getAddressSpaceSize() > 0) session.programIndex();
-        DebugSession.Stamp stamp = session.pausedStamp();
+        if (session.memory != null || session.cpu.getAddressSpaceSize() > 0) session.addressSpaceSize();
+        DebuggerSession.Stamp stamp = session.pausedStamp();
         FutureTask<T> task =
                 new FutureTask<T>(operation) {
                     @Override
@@ -49,7 +45,7 @@ final class AnalysisTasks implements AutoCloseable {
                             super.run();
                         } finally {
                             // Future cancellation does not establish that the operation has exited.
-                            SwingUtilities.invokeLater(() -> complete(this, stamp, !publishesContent, apply));
+                            SwingUtilities.invokeLater(() -> complete(this, stamp, apply));
                         }
                     }
                 };
@@ -58,11 +54,11 @@ final class AnalysisTasks implements AutoCloseable {
         executor.execute(task);
     }
 
-    private <T> void complete(FutureTask<T> task, DebugSession.Stamp stamp, boolean content, Consumer<T> apply) {
+    private <T> void complete(FutureTask<T> task, DebuggerSession.Stamp stamp, Consumer<T> apply) {
         if (closed || active != task) return;
         active = null;
         try {
-            session.applyCurrent(stamp, content, "Analysis discarded: memory, source or metadata changed",
+            session.applyCurrent(stamp, "Analysis discarded: memory, source or metadata changed",
                     () -> apply.accept(result(task)));
         } catch (CancellationException e) {
             failure.accept(new IllegalStateException("Analysis cancelled", e));

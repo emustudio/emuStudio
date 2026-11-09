@@ -2,12 +2,11 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,8 +19,8 @@ import java.util.*;
 public final class SourceAddressMap {
     private final MemoryContext<?> memory;
     private final MemoryAnnotations annotations;
-    private final ProgramIndex index;
-    private final ProgramIndex.Layout layout;
+    private final DebuggerSession session;
+    private final int addressSpaceSize;
     private final long revision;
     private final long memoryRevision;
     private final Map<Path, Source> sources = new LinkedHashMap<>();
@@ -29,40 +28,40 @@ public final class SourceAddressMap {
     private final SourceCodePosition.ColumnUnit columnUnit;
     private volatile Projection cachedProjection;
 
-    private SourceAddressMap(MemoryContext<?> memory, ProgramIndex index, ProgramIndex.Snapshot base,
+    private SourceAddressMap(MemoryContext<?> memory, DebuggerSession session,
                              MemoryAnnotations annotations, SourceCodePosition.ColumnUnit columnUnit) {
         this.memory = memory;
-        this.index = index;
+        this.session = session;
         this.annotations = annotations;
         this.columnUnit = columnUnit;
-        layout = base == null ? null : base.layout();
-        revision = base == null ? 0 : Math.incrementExact(base.contentRevision());
-        memoryRevision = base == null ? 0 : base.memoryRevision();
+        addressSpaceSize = session == null ? 0 : session.addressSpaceSize();
+        memoryRevision = session == null ? 0 : session.memoryRevision();
+        revision = annotations == null ? 0 : annotations.revision();
     }
 
     public static SourceAddressMap empty() {
-        return new SourceAddressMap(null, null, null, null, SourceCodePosition.ColumnUnit.UNKNOWN);
+        return new SourceAddressMap(null, null, null, SourceCodePosition.ColumnUnit.UNKNOWN);
     }
 
-    public ProgramIndex programIndex() { return index; }
+    public DebuggerSession session() { return session; }
 
     /** Unsupported compiler positions are excluded from bindings, with their reason retained here. */
     public List<String> diagnostics() { return List.copyOf(diagnostics); }
 
     public static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, SourceInputs inputs,
-                                           ProgramIndex index, MemoryAnnotations annotations) throws IOException {
+                                           DebuggerSession session, MemoryAnnotations annotations) throws IOException {
         SourceCodePosition.ColumnUnit unit = compiler == null ? null : compiler.getSourcePositionColumnUnit();
-        return capture(memory, inputs, index, unit == null ? SourceCodePosition.ColumnUnit.UNKNOWN : unit, annotations);
+        return capture(memory, inputs, session, unit == null ? SourceCodePosition.ColumnUnit.UNKNOWN : unit, annotations);
     }
 
     /** Capture source inputs, then validate the current compiler mappings. */
-    static SourceAddressMap capture(MemoryContext<?> memory, SourceInputs inputs, ProgramIndex index,
+    static SourceAddressMap capture(MemoryContext<?> memory, SourceInputs inputs, DebuggerSession session,
                                     SourceCodePosition.ColumnUnit columnUnit, MemoryAnnotations annotations) throws IOException {
         Objects.requireNonNull(columnUnit);
-        if (memory != null && index == null)
-            throw new IllegalArgumentException("Source capture with memory requires its program index");
-        ProgramIndex.Snapshot base = index == null ? null : index.snapshot();
-        SourceAddressMap result = new SourceAddressMap(memory, index, base, annotations, columnUnit);
+        if (memory != null && session == null)
+            throw new IllegalArgumentException("Source capture with memory requires its debugger session");
+        long programRevision = session == null ? 0 : session.programRevision();
+        SourceAddressMap result = new SourceAddressMap(memory, session, annotations, columnUnit);
         long annotationRevision = annotations == null ? 0 : annotations.revision();
         for (SourceText input : inputs.files().values()) {
             // Stamp before reading, so a write racing this check always changes the stamp.
@@ -72,7 +71,7 @@ public final class SourceAddressMap {
             result.sources.put(input.path, new Source(input, stamp));
         }
         result.cachedProjection = result.project(true);
-        if (index != null && (!index.snapshot().sameRevisions(base)
+        if (session != null && (session.programRevision() != programRevision
                 || annotations != null && annotations.revision() != annotationRevision))
             throw new IOException("Source mappings discarded: memory or metadata changed during capture");
         return result;
@@ -80,7 +79,7 @@ public final class SourceAddressMap {
 
     private Projection project(boolean strict) throws IOException {
         Projection projection = new Projection(annotations == null ? 0 : annotations.revision());
-        if (annotations == null || layout == null) {
+        if (annotations == null || session == null) {
             collectSymbols(projection);
             return projection;
         }
@@ -107,7 +106,7 @@ public final class SourceAddressMap {
             Source source = sources.get(SourceInputs.normalize(Path.of(position.fileName)));
             if (source == null) continue;
             int offset = source.text.compilerOffset(position, columnUnit);
-            if (address < 0 || address >= layout.addressSpaceSize() || offset < 0) {
+            if (address < 0 || address >= addressSpaceSize || offset < 0) {
                 if (strict) diagnostics.add("Unsupported source mapping " + position + " at cell " + address
                         + ": address or source coordinate is outside captured content (EOF has no extent)");
                 continue;
@@ -137,31 +136,31 @@ public final class SourceAddressMap {
         if (source == null || source.text.editorOffset(position) < 0 || !sameLayout() || !inputsUnchanged()) return Optional.empty();
         for (int attempt = 0; attempt < 3; attempt++) {
             long revision = annotations.revision();
-            ProgramIndex.Snapshot snapshot = index.snapshot();
+            long currentMemoryRevision = session.memoryRevision();
             Projection projection = currentProjection();
-            Entry entry = unique(source, position.line, snapshot, projection);
+            Entry entry = unique(source, position.line, currentMemoryRevision, projection);
             if (entry == null) for (Declaration declaration : projection.declarations)
                 if (SourceInputs.normalize(Path.of(declaration.position.fileName)).equals(SourceInputs.normalize(Path.of(position.fileName)))
-                        && declaration.position.line == position.line && live(declaration.entry, snapshot)) {
+                        && declaration.position.line == position.line && live(declaration.entry, currentMemoryRevision)) {
                     entry = declaration.entry;
                     break;
                 }
-            if (snapshot.memoryRevision() != index.snapshot().memoryRevision()) return Optional.empty();
+            if (currentMemoryRevision != session.memoryRevision()) return Optional.empty();
             if (annotations.revision() == revision) return entry == null ? Optional.empty() : Optional.of(entry.location);
         }
         return Optional.empty();
     }
 
     public Optional<Location> sourceAt(int address) {
-        if (!sameLayout() || !inputsUnchanged() || address < 0 || address >= layout.addressSpaceSize())
+        if (!sameLayout() || !inputsUnchanged() || address < 0 || address >= addressSpaceSize)
             return Optional.empty();
         for (int attempt = 0; attempt < 3; attempt++) {
             long revision = annotations.revision();
-            ProgramIndex.Snapshot snapshot = index.snapshot();
+            long currentMemoryRevision = session.memoryRevision();
             List<Entry> matches = new ArrayList<>();
             for (Entry entry : currentProjection().entries)
-                if (entry.location.address == address && live(entry, snapshot)) matches.add(entry);
-            if (snapshot.memoryRevision() != index.snapshot().memoryRevision()) return Optional.empty();
+                if (entry.location.address == address && live(entry, currentMemoryRevision)) matches.add(entry);
+            if (currentMemoryRevision != session.memoryRevision()) return Optional.empty();
             if (annotations.revision() == revision)
                 return matches.size() == 1 ? Optional.of(matches.get(0).location) : Optional.empty();
         }
@@ -172,13 +171,13 @@ public final class SourceAddressMap {
         for (int attempt = 0; attempt < 3; attempt++) {
             long revision = annotations == null ? 0 : annotations.revision();
             List<Symbol> result = new ArrayList<>();
-            ProgramIndex.Snapshot snapshot = index == null || !inputsUnchanged() ? null : index.snapshot();
+            long currentMemoryRevision = session == null || !inputsUnchanged() ? -1 : session.memoryRevision();
             for (Declaration declaration : currentProjection().declarations) {
                 Entry entry = declaration.entry;
                 result.add(new Symbol(declaration.name, declaration.position,
-                        live(entry, snapshot) ? Optional.of(entry.location) : Optional.empty(), declaration.sourceOnly));
+                        live(entry, currentMemoryRevision) ? Optional.of(entry.location) : Optional.empty(), declaration.sourceOnly));
             }
-            if (snapshot != null && snapshot.memoryRevision() != index.snapshot().memoryRevision()) continue;
+            if (currentMemoryRevision >= 0 && currentMemoryRevision != session.memoryRevision()) continue;
             if (annotations == null || annotations.revision() == revision) return List.copyOf(result);
         }
         return List.of();
@@ -231,21 +230,21 @@ public final class SourceAddressMap {
     }
 
     private boolean sameLayout() {
-        return memory != null && annotations != null && index.snapshot().layout() == layout;
+        return memory != null && annotations != null && session != null && session.isCurrentMemory(addressSpaceSize, memoryRevision);
     }
 
-    private Entry unique(Source source, int line, ProgramIndex.Snapshot snapshot, Projection projection) {
-        ProgramIndex.SourceSpan span = source.text.lineSpan(line, revision);
+    private Entry unique(Source source, int line, long currentMemoryRevision, Projection projection) {
+        SourceText.SourceSpan span = source.text.lineSpan(line, revision);
         List<Entry> matches = new ArrayList<>();
-        if (span != null && snapshot != null) for (Entry entry : projection.entries)
+        if (span != null && currentMemoryRevision >= 0) for (Entry entry : projection.entries)
             if (entry.span.fileId.equals(span.fileId) && entry.span.sourceRevision == span.sourceRevision
                     && entry.span.startOffset < span.endOffset && span.startOffset < entry.span.endOffset
-                    && live(entry, snapshot)) matches.add(entry);
+                    && live(entry, currentMemoryRevision)) matches.add(entry);
         return matches.size() == 1 ? matches.get(0) : null;
     }
 
-    private boolean live(Entry entry, ProgramIndex.Snapshot snapshot) {
-        return entry != null && snapshot != null && sameLayout() && memoryRevision == snapshot.memoryRevision()
+    private boolean live(Entry entry, long currentMemoryRevision) {
+        return entry != null && currentMemoryRevision >= 0 && sameLayout() && memoryRevision == currentMemoryRevision
                 && annotations.get(entry.annotation.ownerId, entry.annotation.entryId) == entry.annotation;
     }
 
@@ -286,9 +285,9 @@ public final class SourceAddressMap {
         final Location location;
         final MemoryAnnotations.Entry annotation;
         final Source source;
-        final ProgramIndex.SourceSpan span;
+        final SourceText.SourceSpan span;
 
-        Entry(long id, int address, MemoryAnnotations.Entry annotation, Source source, ProgramIndex.SourceSpan span) {
+        Entry(long id, int address, MemoryAnnotations.Entry annotation, Source source, SourceText.SourceSpan span) {
             this.id = id;
             location = new Location(address, source.text.position(span.startOffset),
                     source.text.instructionAt(span.startOffset));

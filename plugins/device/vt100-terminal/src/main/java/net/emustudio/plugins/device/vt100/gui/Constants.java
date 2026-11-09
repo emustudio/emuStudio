@@ -1,10 +1,10 @@
 package net.emustudio.plugins.device.vt100.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.ui.StandardIcons;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class Constants {
 

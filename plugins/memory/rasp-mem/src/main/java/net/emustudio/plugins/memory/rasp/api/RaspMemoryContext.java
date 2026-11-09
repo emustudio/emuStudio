@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.api;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.memory.rasp.gui.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 

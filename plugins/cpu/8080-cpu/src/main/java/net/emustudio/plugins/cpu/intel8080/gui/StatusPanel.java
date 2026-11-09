@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.CPU.RunState;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU.RunState;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+import static net.emustudio.emulib.RadixUtils.formatHex;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;

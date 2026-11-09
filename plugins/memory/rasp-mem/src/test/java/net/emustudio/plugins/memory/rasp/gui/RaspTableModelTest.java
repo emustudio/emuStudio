@@ -12,8 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import static org.easymock.EasyMock.*;

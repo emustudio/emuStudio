@@ -10,8 +10,8 @@ import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.emulib.plugins.Context;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
+import net.emustudio.emulib.plugin.Context;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ContextNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 

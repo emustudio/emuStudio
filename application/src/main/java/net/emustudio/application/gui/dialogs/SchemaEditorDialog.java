@@ -5,12 +5,12 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.settings.CannotUpdateSettingException;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
 public class SchemaEditorDialog extends DialogBase implements KeyListener {

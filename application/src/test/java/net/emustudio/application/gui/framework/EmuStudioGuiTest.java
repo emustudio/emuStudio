@@ -7,7 +7,7 @@ import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.ui.StandardIcons;
 import net.miginfocom.swing.MigLayout;
 import org.junit.After;
 import org.junit.Test;
@@ -21,11 +21,11 @@ import java.awt.image.MultiResolutionImage;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_GRID;
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_OPEN_FILE;
+import static net.emustudio.emulib.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_GRID;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_OPEN_FILE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.FONT_COMMON;
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertSame;
 

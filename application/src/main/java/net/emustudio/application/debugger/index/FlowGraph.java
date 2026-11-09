@@ -14,19 +14,55 @@ import java.util.function.Consumer;
  * sequential boundaries for the disassembly adapter. Neither representation invokes a decoder.
  */
 public final class FlowGraph {
-    private static final ProgramIndex.EdgeKind[] KINDS = ProgramIndex.EdgeKind.values();
+    public enum InstructionKind { LINEAR, JUMP, CALL, RETURN, STOP }
+    public enum EdgeKind { FALL_THROUGH, BRANCH, CALL }
+
+    public static final class Instruction {
+        private final Range cells;
+        private final InstructionKind kind;
+        public Instruction(Range cells, InstructionKind kind) {
+            this.cells = java.util.Objects.requireNonNull(cells);
+            this.kind = java.util.Objects.requireNonNull(kind);
+        }
+        public Range cells() { return cells; }
+        public InstructionKind kind() { return kind; }
+    }
+
+    @FunctionalInterface
+    public interface EdgeVisitor {
+        void accept(int fromAddress, int toAddress, EdgeKind kind);
+    }
+
+    /** Nonempty half-open range of CPU-visible cells. Addresses are CPU-visible cells. */
+    public static final class Range {
+        public final int start, end;
+        public Range(int start, int end) {
+            if (start < 0 || end <= start)
+                throw new IllegalArgumentException("Invalid range");
+            this.start = start;
+            this.end = end;
+        }
+        @Override public boolean equals(Object other) {
+            if (!(other instanceof Range)) return false;
+            Range r = (Range) other;
+            return start == r.start && end == r.end;
+        }
+        @Override public int hashCode() { return 31 * start + end; }
+    }
+
+    private static final FlowGraph.EdgeKind[] KINDS = FlowGraph.EdgeKind.values();
     private final int[] addresses, outgoingOffsets, outgoing;
     private final byte[] outgoingKinds;
-    private final ProgramIndex.Instruction[] instructions;
+    private final FlowGraph.Instruction[] instructions;
 
-    FlowGraph(Map<Integer, ProgramIndex.Instruction> decoded, Set<Edge> edges) {
+    public FlowGraph(Map<Integer, FlowGraph.Instruction> decoded, Set<Edge> edges) {
         Set<Integer> keys = new TreeSet<>(decoded.keySet());
         for (Edge e : edges) {
             if (!decoded.containsKey(e.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
             keys.add(e.to);
         }
         addresses = new int[keys.size()];
-        instructions = new ProgramIndex.Instruction[keys.size()];
+        instructions = new FlowGraph.Instruction[keys.size()];
         Map<Integer, Integer> ids = new TreeMap<>();
         int i = 0;
         for (int key : keys) {
@@ -52,16 +88,16 @@ public final class FlowGraph {
         }
     }
 
-    ProgramIndex.Instruction instructionAt(int address) {
+    public FlowGraph.Instruction instructionAt(int address) {
         int id = Arrays.binarySearch(addresses, address);
         return id < 0 ? null : instructions[id];
     }
 
-    void instructions(Consumer<? super ProgramIndex.Instruction> visitor) {
-        for (ProgramIndex.Instruction instruction : instructions) if (instruction != null) visitor.accept(instruction);
+    public void instructions(Consumer<? super FlowGraph.Instruction> visitor) {
+        for (FlowGraph.Instruction instruction : instructions) if (instruction != null) visitor.accept(instruction);
     }
 
-    void successors(int address, ProgramIndex.EdgeVisitor visitor) {
+    public void successors(int address, FlowGraph.EdgeVisitor visitor) {
         int id = Arrays.binarySearch(addresses, address);
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
@@ -70,10 +106,10 @@ public final class FlowGraph {
         }
     }
 
-    static final class Edge implements Comparable<Edge> {
+    public static final class Edge implements Comparable<Edge> {
         final int from, to;
-        final ProgramIndex.EdgeKind kind;
-        Edge(int from, int to, ProgramIndex.EdgeKind kind) { this.from = from; this.to = to; this.kind = kind; }
+        final FlowGraph.EdgeKind kind;
+        public Edge(int from, int to, FlowGraph.EdgeKind kind) { this.from = from; this.to = to; this.kind = kind; }
         @Override public int compareTo(Edge other) {
             int comparison = Integer.compare(from, other.from);
             if (comparison == 0) comparison = Integer.compare(to, other.to);
@@ -84,7 +120,7 @@ public final class FlowGraph {
     /**
      * Writer-confined sequential instruction geometry. Addresses are cells; missing lookups
      * return -1. Append is amortized constant time; arbitrary insertion shifts primitive arrays.
-     * This mutable discovery storage is never retained by an immutable ProgramIndex snapshot.
+     * This mutable discovery storage is never retained by an immutable flow graph.
      */
     public static final class Boundaries {
         private int[] starts = new int[32], ends = new int[32];

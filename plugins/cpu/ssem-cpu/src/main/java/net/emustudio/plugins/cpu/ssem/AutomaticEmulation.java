@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.RadixUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

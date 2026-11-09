@@ -7,7 +7,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final static Font FONT_MONOSPACED_BOLD = FONT_MONOSPACED.deriveFont(Font.BOLD);

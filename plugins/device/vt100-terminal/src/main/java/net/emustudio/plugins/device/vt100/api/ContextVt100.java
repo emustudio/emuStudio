@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100.api;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Objects;

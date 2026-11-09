@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.debugger.DebugSession;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.application.debugger.DebuggerSession;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.Frame;
@@ -14,7 +14,7 @@ import java.awt.Frame;
 public final class RecordingDialog extends DialogBase {
     private final GUI gui;
     private final Dialogs dialogs;
-    private final DebugSession session;
+    private final DebuggerSession session;
     private final Runnable started;
     private final JComboBox<String> mode = new JComboBox<>(new String[] {
             "Keep first N instructions", "Keep last N instructions", "Custom Range", "Unlimited"});
@@ -23,7 +23,7 @@ public final class RecordingDialog extends DialogBase {
     private final JTextField from = new JTextField("0x0", 10);
     private final JTextField to = new JTextField(10);
 
-    public RecordingDialog(Frame owner, GUI gui, Dialogs dialogs, DebugSession session, Runnable started) {
+    public RecordingDialog(Frame owner, GUI gui, Dialogs dialogs, DebuggerSession session, Runnable started) {
         super(owner, "Record instructions", true);
         this.gui = gui;
         this.dialogs = dialogs;
@@ -71,7 +71,7 @@ public final class RecordingDialog extends DialogBase {
 
     private void start() {
         try {
-            DebugSession.RecordingMode selected = DebugSession.RecordingMode.values()[mode.getSelectedIndex()];
+            DebuggerSession.RecordingMode selected = DebuggerSession.RecordingMode.values()[mode.getSelectedIndex()];
             int limit = count.isEnabled() ? Integer.parseInt(count.getText().strip()) : 0;
             int first = from.isEnabled() ? address(from) : 0;
             int last = to.isEnabled() ? address(to) : 0;

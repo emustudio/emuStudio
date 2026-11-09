@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.io.FileType;
+import net.emustudio.emulib.io.FileLoader;
+import net.emustudio.emulib.io.FileType;
 
 import java.awt.*;
 import java.util.Arrays;

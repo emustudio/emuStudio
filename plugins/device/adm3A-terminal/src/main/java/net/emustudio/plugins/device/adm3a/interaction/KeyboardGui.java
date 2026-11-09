@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 
 import java.awt.event.ContainerEvent;

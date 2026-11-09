@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.ExecutionState;
 import java.util.concurrent.CompletionException;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.io.FileType;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 
 public class LoadImageAction extends AbstractAction {

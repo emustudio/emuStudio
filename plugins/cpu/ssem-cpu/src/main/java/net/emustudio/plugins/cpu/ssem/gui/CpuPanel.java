@@ -2,21 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
 
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.application.ExecutionState;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
     private final GUI gui;

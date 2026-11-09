@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class CpuImplTest {
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
@@ -57,7 +57,7 @@ public class CpuImplTest {
     public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

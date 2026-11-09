@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer.gui;
 
-import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.io.FileLoader;
+import net.emustudio.emulib.application.ui.GUI;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

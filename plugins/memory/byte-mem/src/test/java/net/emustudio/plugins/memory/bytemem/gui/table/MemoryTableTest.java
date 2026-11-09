@@ -4,10 +4,10 @@ package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.plugins.memory.bytemem.TestExecutionState;
 
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import java.util.concurrent.CompletableFuture;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
 import org.junit.Test;

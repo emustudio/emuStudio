@@ -5,10 +5,10 @@ package net.emustudio.application.gui.actions.emulator;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -140,7 +140,7 @@ public class EmulatorActionsTest {
     public void pauseActionDelegatesToController() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.application.ExecutionState.Snapshot(
                 CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 
@@ -153,7 +153,7 @@ public class EmulatorActionsTest {
     public void pauseActionUpdatesStatusWhenTimedRunning() {
         EmulationController controller = mock(EmulationController.class);
         AtomicInteger statusUpdates = new AtomicInteger();
-        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+        when(controller.snapshot()).thenReturn(new net.emustudio.emulib.application.ExecutionState.Snapshot(
                 CPU.RunState.STATE_STOPPED_BREAK, false, true, 0, Float.NaN));
         when(controller.pause()).thenReturn(CompletableFuture.completedFuture(CPU.RunState.STATE_STOPPED_BREAK));
 

@@ -5,9 +5,9 @@ package net.emustudio.plugins.cpu.intel8080;
 import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.NumberUtils;
 
 import org.junit.Test;
 import java.util.concurrent.CompletionStage;
@@ -27,7 +27,7 @@ public class DebugHooksTest {
 };
         AutoCloseable observation = engine.debugger.observe(listener, true);
 
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, engine.run());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_BREAK, engine.run());
 
         assertEquals(2, engine.PC);
         assertEquals(0x42, engine.regs[7]);
@@ -176,7 +176,7 @@ public class DebugHooksTest {
             @Override public boolean beforeStep() { return false; }
 }, true);
 
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
     }
 
     @Test
@@ -191,7 +191,7 @@ public class DebugHooksTest {
             @Override public boolean beforeStep() { return false; }
 }, true);
 
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
     }
 
     @Test
@@ -211,7 +211,7 @@ public class DebugHooksTest {
             @Override public boolean beforeStep() { return false; }
 }, true);
 
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.run());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.run());
     }
 
 
@@ -337,12 +337,12 @@ public class DebugHooksTest {
         assertEquals(3, memory.read(0x100).intValue());
     }
 
-    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+    private static String encoding(net.emustudio.emulib.plugin.debugger.StepView event) {
         return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
     }
 
-    private static Long state(net.emustudio.emulib.plugins.debugger.StepView event, String name, boolean before) {
-        net.emustudio.emulib.plugins.debugger.ViewRow row = event.rows.stream()
+    private static Long state(net.emustudio.emulib.plugin.debugger.StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugin.debugger.ViewRow row = event.rows.stream()
                 .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
         return Long.valueOf(before ? row.before : row.after);
     }

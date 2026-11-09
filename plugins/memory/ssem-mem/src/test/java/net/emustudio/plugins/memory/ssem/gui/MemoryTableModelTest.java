@@ -4,13 +4,13 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.plugins.memory.ssem.TestExecutionState;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.NumberUtils;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 

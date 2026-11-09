@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
 import org.junit.Test;
 
 import java.util.Optional;
@@ -24,8 +24,8 @@ public class LiveDebuggingTest {
         String text = "x".repeat(65536);
         StepView view = new StepView(text, "wide", OptionalInt.of(0), List.of(
                 new ViewRow("State", "Value", text, text, false, List.of(), List.of())));
-        try (DebugSession session = machine.session(null)) {
-            session.update(() -> session.startNewRecording(1000, DebugSession.RecordingMode.FIRST, 0, 0)).join();
+        try (DebuggerSession session = machine.session(null)) {
+            session.update(() -> session.startNewRecording(1000, DebuggerSession.RecordingMode.FIRST, 0, 0)).join();
 
             for (int i = 0; i < 1001; i++) session.afterStep(true, Optional.of(view));
 
@@ -39,7 +39,7 @@ public class LiveDebuggingTest {
     @Test
     public void watchesAreNotEvaluatedWhileRunning() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("A")).join();
             assertEquals("0", session.watchValues().get("A").text);
             verify(machine.debug, never()).observe(any(), anyBoolean());
@@ -57,7 +57,7 @@ public class LiveDebuggingTest {
     @Test
     public void pausedWatchShowsValueFromCompletedFastStep() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("A")).join();
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.beforeStep();
@@ -76,7 +76,7 @@ public class LiveDebuggingTest {
     @Test
     public void newExecutionClearsPriorWatchChangeIndication() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("A")).join();
             session.update(() -> machine.values.put("A", 7L)).join();
             assertTrue(session.watchValues().get("A").changed);
@@ -91,7 +91,7 @@ public class LiveDebuggingTest {
     @Test
     public void unrelatedUpdatesDoNotReactivateFailedWatch() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("1 / A")).join();
             assertTrue(session.watchErrors().containsKey("1 / A"));
 
@@ -106,7 +106,7 @@ public class LiveDebuggingTest {
     @Test
     public void watchChangeIndicatorSurvivesRefreshAndUnrelatedRuleEdits() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("A")).join();
             assertFalse(session.watchValues().get("A").changed);
 
@@ -123,7 +123,7 @@ public class LiveDebuggingTest {
     public void manualStepExecutesPastBreakpointAfterBoundaryEdit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         java.util.concurrent.atomic.AtomicInteger executed = new java.util.concurrent.atomic.AtomicInteger();
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.setBreakpoint(0, true).join();
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.runMutation(() -> machine.values.put("A", 9L));
@@ -141,7 +141,7 @@ public class LiveDebuggingTest {
     @Test
     public void liveChangesUseCpuWorkerWithoutPauseOrRestart() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             machine.state(CPU.RunState.STATE_RUNNING);
             AtomicReference<String> thread = new AtomicReference<>();
 
@@ -165,7 +165,7 @@ public class LiveDebuggingTest {
     @Test
     public void correctionReplacesInvalidWatchAndClearsItsDiagnostic() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("unknown")).join();
             session.afterStep(true, Optional.empty());
             assertTrue(session.watchErrors().containsKey("unknown"));
@@ -181,7 +181,7 @@ public class LiveDebuggingTest {
     @Test
     public void machineEditClearsBreakpointContinuationAllowance() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
-        try (DebugSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null)) {
             session.setBreakpoint(0, true).join();
             assertTrue(machine.beforeStep(0));
             assertFalse(machine.beforeStep(0));

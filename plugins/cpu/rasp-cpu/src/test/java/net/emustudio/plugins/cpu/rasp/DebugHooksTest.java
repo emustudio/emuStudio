@@ -2,9 +2,9 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import org.junit.Test;
 import java.util.concurrent.CompletionStage;
@@ -136,12 +136,12 @@ public class DebugHooksTest {
         assertTrue(engine.debugger.compile("ACC == -1").test());
     }
 
-    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+    private static String encoding(net.emustudio.emulib.plugin.debugger.StepView event) {
         return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
     }
 
-    private static Long state(net.emustudio.emulib.plugins.debugger.StepView event, String name, boolean before) {
-        net.emustudio.emulib.plugins.debugger.ViewRow row = event.rows.stream()
+    private static Long state(net.emustudio.emulib.plugin.debugger.StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugin.debugger.ViewRow row = event.rows.stream()
                 .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
         return Long.valueOf(before ? row.before : row.after);
     }

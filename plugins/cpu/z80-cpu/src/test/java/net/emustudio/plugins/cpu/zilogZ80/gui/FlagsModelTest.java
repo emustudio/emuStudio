@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80.gui;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.cpu.zilogZ80.ContextZ80Impl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 import org.junit.Before;

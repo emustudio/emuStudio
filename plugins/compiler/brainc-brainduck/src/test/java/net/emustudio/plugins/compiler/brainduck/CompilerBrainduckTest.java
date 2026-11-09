@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.brainduck;
 
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

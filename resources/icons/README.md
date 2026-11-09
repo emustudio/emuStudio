@@ -3,7 +3,7 @@
 SVG sources grouped by function. Each source has generated **22×22** `.png` and
 **44×44** `@2x.png` siblings. `GUI.loadIcon` combines both sizes.
 
-Application and shared plugin icons live in emuLib `/net/emustudio/emulib/runtime/ui/icons/` and are
+Application and shared plugin icons live in emuLib `/net/emustudio/emulib/ui/icons/` and are
 referenced via `StandardIcons`. A plugin keeps an icon in its own `gui/` package only if no other module uses it.
 
 Categories: `text`, `emulation`, `inspection`, `pagination`, `virtual-computer`,

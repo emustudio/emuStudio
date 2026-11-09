@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram.ast;
 
-import net.emustudio.emulib.plugins.compiler.CompileException;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils;
+import net.emustudio.emulib.plugin.compiler.CompileException;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.antlr.ParsingUtils;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;

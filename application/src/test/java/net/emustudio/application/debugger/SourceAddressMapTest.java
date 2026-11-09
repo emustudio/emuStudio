@@ -2,14 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.compiler.SourceToken;
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import org.junit.After;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceToken;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -160,7 +161,7 @@ public class SourceAddressMapTest {
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"));
 
         when(memory.getSize()).thenReturn(8);
-        map.programIndex().memoryChanged();
+        map.session().runMutation(() -> {});
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
@@ -174,10 +175,10 @@ public class SourceAddressMapTest {
                 Map.of(address, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(0);
 
-        ProgramIndex index = ProgramIndex.create(Integer.MAX_VALUE, new MemoryAnnotations());
+        DebuggerSession index = session(Integer.MAX_VALUE, ENGINES.get(memory));
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "HALT\n"), index);
 
-        assertEquals(Integer.MAX_VALUE, map.programIndex().snapshot().layout().addressSpaceSize());
+        assertEquals(Integer.MAX_VALUE, map.session().addressSpaceSize());
         assertEquals(address, map.sourceAt(address).orElseThrow().address);
         when(memory.getSize()).thenReturn(1);
         assertEquals(address, map.sourceAt(address).orElseThrow().address);
@@ -256,7 +257,7 @@ public class SourceAddressMapTest {
                 new SourceToken(Token.SYMBOL_DEFINITION, 0, "value", "value", null, null)));
         when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.UNKNOWN);
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 6))));
-        ProgramIndex index = ProgramIndex.create(4, new MemoryAnnotations());
+        DebuggerSession index = session(4, ENGINES.get(memory));
         ENGINES.get(memory).put(new MemoryAnnotations.Entry(99, 1, 2, 3, "label", "user", null));
 
         SourceAddressMap map = capture(compiler, memory, Map.of(source, text), index);
@@ -296,10 +297,10 @@ public class SourceAddressMapTest {
     public void memoryRevisionMakesBindingsHistoricalWithoutErasingProvenance() throws Exception {
         Path source = source("history.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create(4, new MemoryAnnotations());
+        DebuggerSession index = session(4, ENGINES.get(memory));
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
 
-        index.memoryChanged();
+        index.runMutation(() -> {});
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
@@ -310,7 +311,7 @@ public class SourceAddressMapTest {
     public void refreshingSourceOwnerPreservesOtherOwnersAndRejectsOldSourceRevision() throws Exception {
         Path source = source("recompile.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create(4, new MemoryAnnotations());
+        DebuggerSession index = session(4, ENGINES.get(memory));
         ENGINES.get(memory).put(new MemoryAnnotations.Entry(99, 1, 2, 3, "label", "user", null));
         SourceAddressMap first = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
         replaceSources(ENGINES.get(memory), Map.of(0, Set.of(annotation(source, 1, 0))));
@@ -342,11 +343,11 @@ public class SourceAddressMapTest {
     public void memoryChangeDuringCaptureRejectsPublication() throws Exception {
         Path source = source("race.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
-        ProgramIndex index = ProgramIndex.create(4, new MemoryAnnotations());
+        DebuggerSession index = session(4, ENGINES.get(memory));
         MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         doAnswer(call -> {
-            index.memoryChanged();
+            index.runMutation(() -> {});
             return call.callRealMethod();
         }).when(engine).all();
 
@@ -365,7 +366,7 @@ public class SourceAddressMapTest {
         replaceSources(annotations, Map.of(1, Set.of(annotation(source, 1, 0))));
         when(memory.getSize()).thenReturn(8);
         when(memory.getCellTypeClass()).thenReturn(Integer.class);
-        ProgramIndex index = ProgramIndex.create(8, new MemoryAnnotations());
+        DebuggerSession index = session(8, annotations);
 
         SourceAddressMap map = SourceAddressMap.capture(memory, SourceInputs.of(null, Map.of(source, "LOAD 1\n")), index, SourceCodePosition.ColumnUnit.CODE_POINT, annotations);
 
@@ -436,7 +437,7 @@ public class SourceAddressMapTest {
     }
 
     @Test
-    public void memoryWithoutProgramIndexIsRejected() throws Exception {
+    public void memoryWithoutDebuggerSessionIsRejected() throws Exception {
         Path source = source("program.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));
 
@@ -479,18 +480,33 @@ public class SourceAddressMapTest {
         assertEquals("value", constant.name);
         assertTrue(constant.location.isEmpty());
         assertTrue(constant.sourceOnly);
-        assertTrue(ENGINES.get(memory).all().stream().noneMatch(label -> label.kind.equals(ProgramIndex.Kinds.LABEL)));
+        assertTrue(ENGINES.get(memory).all().stream().noneMatch(label -> label.kind.equals("label")));
     }
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts)
             throws IOException {
-        ProgramIndex index = memory == null ? null : ProgramIndex.create(memory.getSize(), new MemoryAnnotations());
+        DebuggerSession index = memory == null ? null : session(memory.getSize(), ENGINES.get(memory));
         return capture(compiler, memory, texts, index);
     }
 
     private static SourceAddressMap capture(Compiler compiler, MemoryContext<?> memory, Map<Path, String> texts,
-                                            ProgramIndex index) throws IOException {
+                                            DebuggerSession index) throws IOException {
         return SourceAddressMap.capture(compiler, memory, SourceInputs.of(compiler, texts), index, ENGINES.get(memory));
+    }
+
+    private static final List<DebuggerSession> SESSIONS = new ArrayList<>();
+
+    @After public void closeSessions() {
+        for (DebuggerSession session : SESSIONS) session.close();
+        SESSIONS.clear();
+    }
+
+    private static DebuggerSession session(int size, MemoryAnnotations annotations) throws IOException {
+        CPU cpu = mock(CPU.class);
+        when(cpu.getAddressSpaceSize()).thenReturn(size);
+        DebuggerSession session = new DebuggerSession(cpu, null, null, annotations);
+        SESSIONS.add(session);
+        return session;
     }
 
     private Path source(String name, String text) throws IOException {

@@ -2,16 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88hdsk;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.nio.file.Path;
 import java.text.ParseException;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 
 final class HdskGui extends DialogBase {
     private static final ImageIcon ICON_ON = GUI.loadIcon(StandardIcons.ICON_INDICATOR_GREEN, HdskGui.class);

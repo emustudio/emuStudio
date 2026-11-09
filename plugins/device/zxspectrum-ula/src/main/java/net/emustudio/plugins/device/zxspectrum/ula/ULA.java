@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
-import net.emustudio.emulib.runtime.audio.AudioSink;
-import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
+import net.emustudio.emulib.audio.AudioSink;
+import net.emustudio.emulib.ReadWriteLockSupport;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;

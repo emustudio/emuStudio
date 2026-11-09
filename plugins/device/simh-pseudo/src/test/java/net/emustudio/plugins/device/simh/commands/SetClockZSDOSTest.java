@@ -5,7 +5,7 @@ package net.emustudio.plugins.device.simh.commands;
 import org.junit.Before;
 import org.junit.Test;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.bin2bcd;
+import static net.emustudio.emulib.NumberUtils.bin2bcd;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 

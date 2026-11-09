@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus.api;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 
 /**

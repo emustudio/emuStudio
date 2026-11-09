@@ -3,7 +3,7 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.Generator;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.plugins.cpu.intel8080.suite.IntegerTestBuilder;
 import org.junit.Test;
 

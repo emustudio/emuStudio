@@ -4,12 +4,12 @@ package net.emustudio.plugins.compiler.asZ80.e2e;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.compiler.asZ80.AssemblerZ80;
 import org.junit.Before;
 import org.junit.Rule;

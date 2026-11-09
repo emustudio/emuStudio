@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80;
 
-import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugin.compiler.AbstractCompiler;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

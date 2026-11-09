@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static java.awt.FlowLayout.LEFT;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
