@@ -33,7 +33,7 @@ final class DebuggerTestMachine {
     final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
     final AtomicInteger detached = new AtomicInteger();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
-    private DebugSession session;
+    private DebuggerSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
     private int accessed = -1;
@@ -132,10 +132,10 @@ final class DebuggerTestMachine {
         }
     }
 
-    DebugSession session(Path settings) throws IOException { return session(settings, true); }
+    DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
 
-    DebugSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebugSession(cpu, withMemory ? memory : null, settings);
+    DebuggerSession session(Path settings, boolean withMemory) throws IOException {
+        session = new DebuggerSession(cpu, withMemory ? memory : null, settings);
         return session;
     }
 

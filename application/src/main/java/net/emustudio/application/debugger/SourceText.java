@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
@@ -13,10 +12,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 /** One immutable compiler input. Offsets are Java String (UTF-16) indices, lines are 1-based. */
 final class SourceText {
+    /** Exact document revision and nonempty half-open UTF-16 offset span. */
+    public static final class SourceSpan {
+        public final String fileId;
+        public final long sourceRevision;
+        public final int startOffset, endOffset;
+        public SourceSpan(String fileId, long sourceRevision, int startOffset, int endOffset) {
+            this.fileId = Objects.requireNonNull(fileId, "fileId");
+            if (fileId.isEmpty() || sourceRevision < 0 || startOffset < 0 || endOffset <= startOffset)
+                throw new IllegalArgumentException("Invalid source identity, revision, or span");
+            this.sourceRevision = sourceRevision;
+            this.startOffset = startOffset;
+            this.endOffset = endOffset;
+        }
+        @Override public boolean equals(Object other) {
+            if (!(other instanceof SourceSpan)) return false;
+            SourceSpan s = (SourceSpan) other;
+            return sourceRevision == s.sourceRevision && startOffset == s.startOffset
+                    && endOffset == s.endOffset && fileId.equals(s.fileId);
+        }
+        @Override public int hashCode() {
+            int h = 31 * fileId.hashCode() + Long.hashCode(sourceRevision);
+            return 31 * (31 * h + startOffset) + endOffset;
+        }
+    }
+
+
     final Path path;
     final String text;
     final String fileId;
@@ -86,15 +112,15 @@ final class SourceText {
         return text.offsetByCodePoints(start, position.column);
     }
 
-    ProgramIndex.SourceSpan lineSpan(int line, long revision) {
+    SourceText.SourceSpan lineSpan(int line, long revision) {
         if (line < 1 || line > starts.length || starts[line - 1] == lineEnd(line)) return null;
-        return new ProgramIndex.SourceSpan(fileId, revision, starts[line - 1], lineEnd(line));
+        return new SourceText.SourceSpan(fileId, revision, starts[line - 1], lineEnd(line));
     }
 
-    ProgramIndex.SourceSpan span(int offset, long revision) {
+    SourceText.SourceSpan span(int offset, long revision) {
         Token token = tokenAt(offset);
         int end = token == null ? offset + 1 : offset + token.getText().length();
-        return new ProgramIndex.SourceSpan(fileId, revision, offset, end);
+        return new SourceText.SourceSpan(fileId, revision, offset, end);
     }
 
     SourceCodePosition position(int offset) {

@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 
 import java.io.IOException;
@@ -15,19 +14,16 @@ public final class AnnotationIndex {
     public static final long OWNER = Long.MIN_VALUE;
     public static final String USER_KIND = "emuStudio.user/";
     private static final AtomicLong IDS = new AtomicLong();
-    private final ProgramIndex index;
+    private final int addressSpaceSize;
     private final MemoryAnnotations engine;
 
-    public AnnotationIndex(ProgramIndex index) {
-        this(index, index.annotationEngine());
-    }
-
-    public AnnotationIndex(ProgramIndex index, MemoryAnnotations engine) {
-        this.index = Objects.requireNonNull(index);
+    public AnnotationIndex(int addressSpaceSize, MemoryAnnotations engine) {
+        if (addressSpaceSize < 1) throw new IllegalArgumentException("Invalid memory layout");
+        this.addressSpaceSize = addressSpaceSize;
         this.engine = Objects.requireNonNull(engine);
     }
 
-    public ProgramIndex programIndex() { return index; }
+    public int addressSpaceSize() { return addressSpaceSize; }
 
     public Entry get(int address) {
         Entry result = null;
@@ -59,15 +55,15 @@ public final class AnnotationIndex {
             throw new IllegalArgumentException("Invalid annotation kind");
     }
 
-    private static void validateRange(ProgramIndex.Layout layout, Entry entry) {
-        if (entry.address < 0 || entry.end <= entry.address || entry.end > layout.addressSpaceSize())
+    private static void validateRange(int size, Entry entry) {
+        if (entry.address < 0 || entry.end <= entry.address || entry.end > size)
             throw new IllegalArgumentException("Invalid annotation range");
     }
 
     private void edit(List<Entry> entries, boolean clear, boolean requireExisting) {
         for (Entry entry : entries) {
             validateKind(entry.kind);
-            validateRange(index.snapshot().layout(), entry);
+            validateRange(addressSpaceSize, entry);
         }
         while (true) {
             long revision = engine.revision();
@@ -130,7 +126,7 @@ public final class AnnotationIndex {
 
     /** Appends saved annotations, skipping exact duplicates. Returns the number of invalid entries skipped. */
     public int importProperties(Properties p) {
-        ProgramIndex.Layout layout = index.snapshot().layout();
+        int size = addressSpaceSize;
         Set<List<Object>> known = new HashSet<>();
         for (Entry entry : entries()) known.add(key(entry));
         List<Entry> added = new ArrayList<>();
@@ -143,7 +139,7 @@ public final class AnnotationIndex {
                         Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
                         p.getProperty(k + "kind", "UNKNOWN"));
                 validateKind(entry.kind);
-                validateRange(layout, entry);
+                validateRange(size, entry);
             } catch (RuntimeException invalid) {
                 skipped++;
                 continue;

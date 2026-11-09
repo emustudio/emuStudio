@@ -49,7 +49,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private final Map<Long, PluginMeta> pluginsById = new HashMap<>();
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
     private boolean destroyed;
-    private net.emustudio.application.debugger.DebugSession debugger;
+    private net.emustudio.application.debugger.DebuggerSession debugger;
     private net.emustudio.application.emulation.EmulationController execution;
     private net.emustudio.application.ApplicationApiImpl applicationApi;
 
@@ -204,7 +204,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 catch (net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
-                    debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(), memory,
+                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
                             applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
                                     : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
@@ -226,7 +226,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
     }
 
-    public Optional<net.emustudio.application.debugger.DebugSession> getDebugger() { return Optional.ofNullable(debugger); }
+    public Optional<net.emustudio.application.debugger.DebuggerSession> getDebugger() { return Optional.ofNullable(debugger); }
 
     public Optional<net.emustudio.application.emulation.EmulationController> getExecution() {
         return Optional.ofNullable(execution);

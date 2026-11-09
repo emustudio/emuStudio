@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
@@ -76,9 +76,10 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(2);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
-            net.emustudio.application.debugger.index.ProgramIndex previous = f.session.programIndex();
+            long previous = f.session.memoryRevision();
             when(f.cpu.getAddressSpaceSize()).thenReturn(64);
-            assertNotSame(previous, f.session.programIndex());
+            assertEquals(64, f.session.addressSpaceSize());
+            assertTrue(f.session.memoryRevision() > previous);
 
             f.sourceLine(3);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
@@ -233,7 +234,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         try (Fixture f = new Fixture()) {
             CountDownLatch callbacksFinished = new CountDownLatch(1);
             CountDownLatch release = new CountDownLatch(1);
-            AtomicReference<DebugSession.SourceCaptureGuard> captured = new AtomicReference<>();
+            AtomicReference<DebuggerSession.SourceCaptureGuard> captured = new AtomicReference<>();
             CompletableFuture<CPU.RunState> compilation = f.session.execution().compile(() ->
                     f.publishCompilation(false, () -> {
                         captured.set(f.session.captureSourceGuard());
@@ -343,7 +344,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final MemoryContext<Byte> memory;
         final MemoryAnnotations annotations = new MemoryAnnotations();
         final AtomicInteger bank = new AtomicInteger();
-        final DebugSession session;
+        final DebuggerSession session;
         final TabbedEditor editor;
         final DebuggerPanel debugger;
         final JTable table;
@@ -384,7 +385,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 if (opcode >= 0 && opcode < end) tokens.add(new SourceToken(Token.RESERVED, opcode, "nop", null, null, null));
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
-            session = new DebugSession(cpu, memory, null, annotations);
+            session = new DebuggerSession(cpu, memory, null, annotations);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);

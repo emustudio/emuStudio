@@ -10,7 +10,7 @@ import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.debugger.AnnotationIndex;
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -50,7 +50,7 @@ public class VirtualComputerTest {
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebugSession seed = new DebugSession(cpu, memory, debuggerPath)) {
+        try (DebuggerSession seed = new DebuggerSession(cpu, memory, debuggerPath)) {
             seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
             seed.save();
         }

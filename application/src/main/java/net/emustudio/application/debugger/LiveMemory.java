@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 import java.nio.charset.StandardCharsets;
@@ -12,12 +11,12 @@ import java.util.concurrent.CancellationException;
 /** CPU-visible live byte reads. No memory cells are retained; stale operations fail. */
 public final class LiveMemory {
     private final MemoryContext<?> memory;
-    private final ProgramIndex.Layout layout;
+    private final int size;
     private final Runnable checkCurrent;
 
-    LiveMemory(MemoryContext<?> memory, ProgramIndex.Layout layout, Runnable checkCurrent) {
+    LiveMemory(MemoryContext<?> memory, int size, Runnable checkCurrent) {
         this.memory = Objects.requireNonNull(memory);
-        this.layout = Objects.requireNonNull(layout);
+        this.size = size;
         this.checkCurrent = Objects.requireNonNull(checkCurrent);
         if (memory.getCellTypeClass() != Byte.class) throw new IllegalArgumentException("Byte memory required");
     }
@@ -27,7 +26,7 @@ public final class LiveMemory {
         checkCurrent.run();
     }
 
-    public int size() { return layout.addressSpaceSize(); }
+    public int size() { return size; }
     public int value(int at) {
         if (at < 0 || at >= size()) throw new IllegalArgumentException("Address outside memory");
         requireCurrent();

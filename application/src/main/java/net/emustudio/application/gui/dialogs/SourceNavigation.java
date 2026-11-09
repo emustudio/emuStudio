@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.debugger.SourceAddressMap;
 import net.emustudio.application.debugger.SourceInputs;
@@ -20,7 +20,7 @@ import java.util.Optional;
 /** Coordinates view selections; execution state and source editing histories remain their owners'. */
 final class SourceNavigation implements AutoCloseable {
     private final Compiler compiler;
-    private final DebugSession session;
+    private final DebuggerSession session;
     private final TabbedEditor editor;
     private final DebuggerPanel debugger;
     private volatile SourceAddressMap mappings = SourceAddressMap.empty();
@@ -80,7 +80,7 @@ final class SourceNavigation implements AutoCloseable {
                 sourceInputs = inputs;
             }
             // Publish after CompileAction's reset/mutation finishes.
-            final DebugSession.SourceCaptureGuard guard;
+            final DebuggerSession.SourceCaptureGuard guard;
             try {
                 guard = session.captureSourceGuard();
             } catch (RuntimeException e) {
@@ -97,7 +97,7 @@ final class SourceNavigation implements AutoCloseable {
                     session.applySourceCapture(guard, () -> {
                         try {
                             result[0] = SourceAddressMap.capture(compiler, session.memory, sourceInputs,
-                                    session.memory == null ? null : session.programIndex(), session.annotationEngine);
+                                    session.memory == null ? null : session, session.annotationEngine);
                         } catch (java.io.IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -120,7 +120,7 @@ final class SourceNavigation implements AutoCloseable {
         }
     };
 
-    SourceNavigation(Compiler compiler, DebugSession session, TabbedEditor editor, DebuggerPanel debugger) {
+    SourceNavigation(Compiler compiler, DebuggerSession session, TabbedEditor editor, DebuggerPanel debugger) {
         this.compiler = compiler;
         this.session = session;
         this.editor = editor;
@@ -147,7 +147,7 @@ final class SourceNavigation implements AutoCloseable {
             debugger.setSourceMappingsCurrent(false);
             return Optional.empty();
         }
-        if (session.memory != null && snapshot.programIndex() != session.programIndex()) {
+        if (session.memory != null && snapshot.session() != session) {
             debugger.setSourceMappingsCurrent(false);
             return Optional.empty();
         }

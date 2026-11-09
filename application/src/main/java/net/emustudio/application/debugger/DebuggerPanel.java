@@ -3,7 +3,7 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
 import com.formdev.flatlaf.util.ScaledImageIcon;
-import net.emustudio.application.debugger.index.ProgramIndex;
+import net.emustudio.application.debugger.index.FlowGraph;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -49,7 +49,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private Runnable inspectionReadyListener = () -> {};
     private java.util.function.Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
-    private final DebugSession session;
+    private final DebuggerSession session;
     private final EmuStudioGui gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
     private final Runnable breakpointsChanged;
@@ -174,7 +174,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public DebuggerPanel(
-            DebugSession session,
+            DebuggerSession session,
             DebugTableImpl table,
             JScrollPane tableScroll,
             JComponent instructionView,
@@ -200,7 +200,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         for (JList<?> list : List.of(watches, memoryWatches, annotations)) list.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         this.session = session;
         if (session.memory != null && instructionModel instanceof DebugTableModelImpl)
-            ((DebugTableModelImpl) instructionModel).setInstructionIndex(new InstructionIndex(() -> session.programIndex().snapshot()));
+            ((DebugTableModelImpl) instructionModel).setDebuggerSession(session);
         this.sourceNavigator = sourceNavigator;
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         tasks = new AnalysisTasks(session, this::setBusy, this::showRuntimeFailure);
@@ -294,7 +294,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void initializeAnnotations() {
         if (session.memory == null || session.memory.getCellTypeClass() != Byte.class || session.memory.getSize() == 0) return;
-        guard(() -> tasks.submit(session::annotations, this::showAnnotations, true));
+        guard(() -> tasks.submit(session::annotations, this::showAnnotations));
     }
 
     public JComponent watchesPanel() {
@@ -694,7 +694,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private boolean inspectBreakpointHit() {
         if (!byteMemory || index == null || tasks.isBusy()) return false;
-        DebugSession.BreakpointHit hit = session.takeBreakpointHit();
+        DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
         instructionModel.currentPage();
         lastInstructionAddress = session.cpu.getInstructionLocation();
@@ -1029,10 +1029,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             try {
                 target = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(addressField.getText());
                 end = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(endField.getText());
-                if (target < 0 || end < target || end >= index.programIndex().snapshot().layout().addressSpaceSize()) throw new NumberFormatException();
+                if (target < 0 || end < target || end >= session.addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "
-                        + (index.programIndex().snapshot().layout().addressSpaceSize() - 1) + ".");
+                        + (session.addressSpaceSize() - 1) + ".");
             }
             address = target;
             AnnotationIndex.Entry draft = new AnnotationIndex.Entry(original.id, address, end + 1, labelField.getText(), kinds.get(kind.getSelectedIndex()));
@@ -1251,7 +1251,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tasks.submit(() -> session.analyzeFlow(address, limit), flow -> {
             viewError = "";
             refreshDiagnostic();
-            if (!flow.isCurrent(session.programIndex()))
+            if (!flow.isCurrent(session))
                 throw new IllegalStateException("Flow analysis discarded: program changed");
             browsingRecording = false;
             ((CardLayout) inspectionBody.getLayout()).show(inspectionBody, "flow");
@@ -1267,7 +1267,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             flowOrigin.setToolTipText(String.format("Flow analyzed from %s at %04X", fromPc ? "PC" : "selected instruction", address)
                     + (flow.truncated() ? "; stopped after " + limit + " instructions (flowAnalysisLimit)" : ""));
             flowOrigin.getAccessibleContext().setAccessibleDescription(flowOrigin.getToolTipText());
-        }, true);
+        });
     }
 
     /** Shrink flexible fields before resorting to horizontal toolbar scrolling. */
@@ -1377,11 +1377,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void toggleRecentRecording() {
         if (session.isRecording()) {
-            DebugSession.RecordingMode mode = session.recordingMode();
-            String scope = mode == DebugSession.RecordingMode.ADDRESS_RANGE
+            DebuggerSession.RecordingMode mode = session.recordingMode();
+            String scope = mode == DebuggerSession.RecordingMode.ADDRESS_RANGE
                     ? String.format("From 0x%04X to 0x%04X", session.recordingFrom(), session.recordingThrough())
-                    : mode == DebugSession.RecordingMode.UNLIMITED ? ""
-                    : (mode == DebugSession.RecordingMode.FIRST ? "First " : "Last ")
+                    : mode == DebuggerSession.RecordingMode.UNLIMITED ? ""
+                    : (mode == DebuggerSession.RecordingMode.FIRST ? "First " : "Last ")
                             + session.recordingLimit() + " instructions";
             recordingChangePending = true;
             session.update(() -> session.record(0)).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
@@ -1644,8 +1644,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private List<AnnotationIndex.Entry> annotationsCovering(int address) {
         if (index == null) return List.of();
-        ProgramIndex.Layout layout = index.programIndex().snapshot().layout();
-        if (address < 0 || address >= layout.addressSpaceSize())
+        int size = session.addressSpaceSize();
+        if (address < 0 || address >= size)
             return List.of();
         List<AnnotationIndex.Entry> result = new ArrayList<>();
         for (AnnotationIndex.Entry entry : index.entries())
@@ -1686,7 +1686,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!sourceMappingsCurrent || address < 0) return "";
         return session.annotationEngine.at(address).stream()
                 .filter(entry -> entry.start == address)
-                .filter(entry -> entry.kind.equals(ProgramIndex.Kinds.LABEL))
+                .filter(entry -> entry.kind.equals("label"))
                 .map(entry -> entry.text.trim()).filter(label -> !label.isEmpty()).distinct()
                 .collect(java.util.stream.Collectors.joining(", "));
     }
@@ -1770,7 +1770,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refreshMemoryWatches();
         if (running || session.execution().snapshot().isBusy() || tasks.isBusy()) return;
         try { session.requirePaused(); } catch (IllegalStateException e) { return; }
-        if (index != null && index.programIndex() != session.programIndex()) {
+        if (index != null && index != session.annotations()) {
             index = null;
             initializeAnnotations();
             return;
@@ -1821,10 +1821,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void refreshMemoryWatches() {
         Integer selectedMemoryWatch = selected(memoryWatches);
         List<Map.Entry<Integer, List<String>>> memoryWatchText = new ArrayList<>();
-        Map<Integer, DebugSession.MemoryWatchView> views = new HashMap<>();
-        for (DebugSession.MemoryWatchView view : session.memoryWatchValues()) views.put(view.address, view);
+        Map<Integer, DebuggerSession.MemoryWatchView> views = new HashMap<>();
+        for (DebuggerSession.MemoryWatchView view : session.memoryWatchValues()) views.put(view.address, view);
         for (int address : new LinkedHashSet<>(session.memoryWatches)) {
-            DebugSession.MemoryWatchView view = views.get(address);
+            DebuggerSession.MemoryWatchView view = views.get(address);
             if (view == null) memoryWatchText.add(Map.entry(address, List.of("Pending", "")));
             else if (!view.error.isEmpty()) memoryWatchText.add(Map.entry(address, List.of("Unavailable", view.error)));
             else memoryWatchText.add(Map.entry(address, List.of("= " + view.value,
@@ -1917,7 +1917,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         final Map<Integer, Integer> instructionEnds = new HashMap<>();
         final Set<Integer> branchNodes = new HashSet<>();
         private Map<Integer, String> nodeLabelCache;
-        private ProgramIndex labelIndex;
+        private DebuggerSession labelSession;
         private long labelContentRevision, labelMemoryRevision;
         private List<FlowAnalysis.Edge> selectedEdges = List.of();
         private final List<AnnotationLane> lanes = new ArrayList<>();
@@ -2190,7 +2190,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             });
         }
 
-        boolean current() { return flow != null && flow.isCurrent(session.programIndex()); }
+        boolean current() { return flow != null && flow.isCurrent(session); }
 
         void requireCurrent() {
             if (!current()) throw new IllegalStateException("Flow analysis is stale. Analyze again.");
@@ -2250,7 +2250,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             lanes.clear();
             selectedLane = -1;
             selectedNode = selection;
-            Map<Integer, ProgramIndex.Instruction> instructions = new HashMap<>();
+            Map<Integer, FlowGraph.Instruction> instructions = new HashMap<>();
             flow.forEachInstruction(instruction -> instructions.put(instruction.cells().start, instruction));
             Map<Integer, List<Integer>> successors = new HashMap<>();
             flow.forEachEdge((from, to, kind) ->
@@ -2261,7 +2261,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             while (!pending.isEmpty()) {
                 int at = pending.removeFirst();
                 if (!visited.add(at)) continue;
-                ProgramIndex.Instruction instruction = instructions.get(at);
+                FlowGraph.Instruction instruction = instructions.get(at);
                 if (instruction == null) {
                     if (!flow.unknown().containsKey(at)) visited.remove(at);
                     continue;
@@ -2282,14 +2282,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                     : new TreeSet<>(visited).stream().map(List::of).collect(java.util.stream.Collectors.toList());
             for (List<Integer> run : runs) {
                 int at = run.get(0);
-                ProgramIndex.Instruction instruction = instructions.get(at);
+                FlowGraph.Instruction instruction = instructions.get(at);
                 int i = boxes.size();
                 boxes.put(at, new Rectangle(30, 25 + i * 90, 210, 60));
                 nodeMembers.put(at, run);
                 run.forEach(member -> representatives.put(member, at));
-                ProgramIndex.Instruction last = instructions.get(run.get(run.size() - 1));
+                FlowGraph.Instruction last = instructions.get(run.get(run.size() - 1));
                 instructionEnds.put(at, last == null ? at + 1 : last.cells().end);
-                if (instruction != null && instruction.kind() == ProgramIndex.InstructionKind.JUMP) branchNodes.add(at);
+                if (instruction != null && instruction.kind() == FlowGraph.InstructionKind.JUMP) branchNodes.add(at);
             }
             if (index != null) {
                 List<AnnotationIndex.Entry> visible = new ArrayList<>();
@@ -2328,11 +2328,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private void invalidateLabels() { nodeLabelCache = null; }
 
         private void refreshNodeLabels() {
-            ProgramIndex currentIndex = index == null ? null : index.programIndex();
-            ProgramIndex.Snapshot snapshot = currentIndex == null ? null : currentIndex.snapshot();
-            long content = snapshot == null ? -1 : snapshot.contentRevision();
-            long memory = snapshot == null ? -1 : snapshot.memoryRevision();
-            if (nodeLabelCache != null && labelIndex == currentIndex
+            DebuggerSession currentSession = index == null ? null : session;
+            long revision = session.programRevision();
+            long content = revision;
+            long memory = session.memoryRevision();
+            if (nodeLabelCache != null && labelSession == currentSession
                     && labelContentRevision == content && labelMemoryRevision == memory) return;
             Map<Integer, LinkedHashSet<String>> annotations = new HashMap<>(), symbols = new HashMap<>();
             if (index != null) for (AnnotationIndex.Entry entry : index.entries()) {
@@ -2352,7 +2352,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         : source.isEmpty() || source.equals(annotation) ? annotation : annotation + ", " + source);
             }
             nodeLabelCache = labels;
-            labelIndex = currentIndex;
+            labelSession = currentSession;
             labelContentRevision = content;
             labelMemoryRevision = memory;
         }
@@ -2367,7 +2367,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (flow != null) flow.forEachEdge((from, to, kind) -> {
                 Integer source = representatives.get(from), target = representatives.get(to);
                 if (source == null || target == null) return;
-                if (source.equals(target) && from != to && kind == ProgramIndex.EdgeKind.FALL_THROUGH) return;
+                if (source.equals(target) && from != to && kind == FlowGraph.EdgeKind.FALL_THROUGH) return;
                 if (source == selectedNode || target == selectedNode)
                     edges.add(new FlowAnalysis.Edge(source, target, kind));
             });

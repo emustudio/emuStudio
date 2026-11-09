@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class DebugSessionLifecycleTest {
+public class DebuggerSessionLifecycleTest {
     @Test
     public void failedMemoryListenerRegistrationDoesNotStartAnOrphanScheduler() {
         CPU cpu = mock(CPU.class);
@@ -22,7 +22,7 @@ public class DebugSessionLifecycleTest {
         doThrow(failure).when(memory).addMemoryListener(any());
         Set<Thread> before = commandThreads();
 
-        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebugSession(cpu, memory, null)));
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebuggerSession(cpu, memory, null)));
 
         Set<Thread> after = commandThreads();
         after.removeAll(before);

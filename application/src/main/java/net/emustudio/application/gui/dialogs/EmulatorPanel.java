@@ -63,7 +63,7 @@ public class EmulatorPanel extends JPanel {
     private final ShowDeviceGuiAction showDeviceGuiAction;
 
     private final MemoryContext<?> memoryContext;
-    private final net.emustudio.application.debugger.DebugSession session;
+    private final net.emustudio.application.debugger.DebuggerSession session;
     private final MemoryContext.MemoryListener memoryListener;
     private final DebuggerPanel inspection;
     private final CPU cpu;
