@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveListener;
@@ -12,7 +12,7 @@ import net.emustudio.plugins.device.mits88dcdd.drive.DriveParameters;
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class DiskGui extends DialogBase {

@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.ay38910;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.Test;
 
 import java.util.Optional;
@@ -25,7 +25,7 @@ public class DeviceImplTest {
     public void testInitializeFailsWhenCpuContextIsUnavailable() throws Exception {
         ContextPool contextPool = createMock(ContextPool.class);
         expect(contextPool.get(0, net.emustudio.plugins.cpu.intel8080.api.Context8080.class))
-                .andThrow(new net.emustudio.emulib.runtime.ContextNotFoundException("CPU not connected"))
+                .andThrow(new net.emustudio.emulib.application.ContextNotFoundException("CPU not connected"))
                 .once();
 
         ApplicationApi applicationApi = createMock(ApplicationApi.class);

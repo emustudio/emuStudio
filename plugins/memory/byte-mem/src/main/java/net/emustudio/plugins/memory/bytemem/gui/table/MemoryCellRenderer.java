@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
 import javax.swing.*;
@@ -13,7 +13,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.BANK_COLOR;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.ROM_COLOR;
 
@@ -23,13 +23,13 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
 
     private final MemoryTableModel tableModel;
     private final MemoryAnnotations annotations;
-    private final ExecutionState executionState;
+    private final CPUContext executionState;
     private final JList<String> rowHeader;
     private final String[] addresses;
     private int currentPage;
 
     MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight,
-                       MemoryAnnotations annotations, ExecutionState executionState) {
+                       MemoryAnnotations annotations, CPUContext executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
         this.annotations = annotations;
         this.executionState = executionState;
@@ -46,7 +46,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         currentPage = tableModel.getPage();
         addresses = new String[tableModel.getRowCount()];
         for (int i = 0; i < addresses.length; i++) {
-            addresses[i] = RadixUtils.formatHex(tableModel.getColumnCount() * i
+            addresses[i] = Numbers.formatHex(tableModel.getColumnCount() * i
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage, 4);
         }
         rowHeader = new JList<>(addresses);
@@ -69,7 +69,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         int address = tableModel.toAddress(row, column);
         boolean mapped = tableModel.isMappedAddress(address);
         String label = mapped ? AnnotationLabels.at(annotations, address) : "";
-        boolean current = mapped && executionState != null && executionState.snapshot().currentInstruction() == address;
+        boolean current = mapped && executionState != null && executionState.getInstructionLocation() == address;
         StringBuilder tooltip = new StringBuilder("<html>");
         if (current) tooltip.append("Current instruction<br>");
         if (!label.isEmpty()) tooltip.append("Label: ").append(escape(label)).append("<br>");

@@ -5,7 +5,7 @@ package net.emustudio.application;
 
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadFontResource;
+import static net.emustudio.emulib.application.ui.GUI.loadFontResource;
 
 public class Constants {
 

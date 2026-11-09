@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -15,8 +15,8 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -27,13 +27,14 @@ import static org.junit.Assert.*;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext observedContext;
     private RamMemoryContext memory;
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
     private AbstractTapeContext storageTape;
     private ContextPool contextPool;
     private ApplicationApi applicationApi;
-    private ExecutionState execution;
+    private CPUContext execution;
     private boolean initialized = false;
 
     @Before
@@ -52,13 +53,14 @@ public class CpuImplTest {
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(1))).andReturn(inputTape).anyTimes();
         expect(contextPool.get(eq(0L), eq(AbstractTapeContext.class), eq(2))).andReturn(outputTape).anyTimes();
 
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
-        execution = createNiceMock(ExecutionState.class);
+        execution = createNiceMock(CPUContext.class);
         replay(execution);
         applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         replay(applicationApi);
 
         this.cpu = new CpuImpl(0, applicationApi, PluginSettings.UNAVAILABLE);
@@ -109,7 +111,7 @@ public class CpuImplTest {
     public void testSetAndGetInstructionLocation() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(10));
-        assertEquals(10, cpu.getInstructionLocation());
+        assertEquals(10, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -122,14 +124,14 @@ public class CpuImplTest {
     public void testSetInstructionLocationZero() throws Exception {
         initCpu();
         assertTrue(cpu.setInstructionLocation(0));
-        assertEquals(0, cpu.getInstructionLocation());
+        assertEquals(0, observedContext.getInstructionLocation());
     }
 
     @Test
     public void testResetSetsIP() throws Exception {
         initCpu();
         cpu.reset(5);
-        assertEquals(5, cpu.getInstructionLocation());
+        assertEquals(5, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -230,7 +232,6 @@ public class CpuImplTest {
     public void testGetStatusPanelReturnsPanel() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -335,7 +336,6 @@ public class CpuImplTest {
     public void testGetStatusPanelWithGui() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -360,7 +360,7 @@ public class CpuImplTest {
         initCpu();
         java.util.List<StepView> events = new java.util.ArrayList<>();
         cpu.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
@@ -368,9 +368,9 @@ public class CpuImplTest {
 
             @Override public boolean beforeStep() { return false; }
 }, Debugging.Capture.FULL);
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
         assertEquals(1, events.size());
-        assertEquals(1, cpu.getInstructionLocation());
+        assertEquals(1, observedContext.getInstructionLocation());
     }
 
     @Test
@@ -378,7 +378,7 @@ public class CpuImplTest {
         initCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

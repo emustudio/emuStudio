@@ -4,13 +4,13 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationProgress;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_MOTHERBOARD;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 /**

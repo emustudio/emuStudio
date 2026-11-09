@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.bin2bcd;
+import static net.emustudio.emulib.Numbers.bin2bcd;
 
 public class GetClockCPM3 implements Command {
     public static final GetClockCPM3 INS = new GetClockCPM3();

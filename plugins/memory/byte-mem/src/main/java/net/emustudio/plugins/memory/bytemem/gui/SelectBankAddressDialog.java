@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -110,7 +110,7 @@ public class SelectBankAddressDialog extends DialogBase {
     }
 
     private static int parseNonNegative(String text) {
-        int value = RadixUtils.parseRadix(text);
+        int value = Numbers.parseRadix(text);
         if (value < 0) {
             throw new NumberFormatException("Negative number: " + text);
         }

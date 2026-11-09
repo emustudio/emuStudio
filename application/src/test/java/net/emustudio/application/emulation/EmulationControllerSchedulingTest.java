@@ -2,22 +2,23 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import static net.emustudio.application.TestCpu.mockCpu;
+
+import net.emustudio.emulib.plugin.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.application.emulation.EmulationControllerTest.*;
-import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
+import static net.emustudio.emulib.plugin.cpu.CPU.RunState.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class EmulationControllerSchedulingTest {
-    private final CPU cpu = mock(CPU.class);
+    private final CPU cpu = mockCpu();
     private final BlockingQueue<Integer> steps = new LinkedBlockingQueue<>();
     private final AtomicInteger stepCount = new AtomicInteger();
 
@@ -36,7 +37,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.pause());
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -49,9 +50,12 @@ public class EmulationControllerSchedulingTest {
         try (EmulationController controller = controller(cpu)) {
             await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            while (controller.isBusy() && System.nanoTime() < deadline) Thread.sleep(1);
+            assertFalse(controller.isBusy());
 
             assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.reset());
             await(controller.step());
 
@@ -67,7 +71,7 @@ public class EmulationControllerSchedulingTest {
             awaitStep(1);
 
             await(controller.reset());
-            assertFalse(controller.snapshot().isTimedRunning());
+            assertFalse(controller.isTimedRunning());
             await(controller.step());
 
             awaitStep(2);
@@ -91,8 +95,8 @@ public class EmulationControllerSchedulingTest {
             awaitStep(2);
             awaitStep(3);
             assertNoStep();
-            assertFalse(controller.snapshot().isTimedRunning());
-            assertEquals(STATE_STOPPED_NORMAL, controller.snapshot().runState());
+            assertFalse(controller.isTimedRunning());
+            assertEquals(STATE_STOPPED_NORMAL, controller.getRunState());
         }
     }
 
@@ -115,7 +119,7 @@ public class EmulationControllerSchedulingTest {
 
             awaitStep(1);
             assertNoStep();
-            assertTrue(controller.snapshot().isTimedRunning());
+            assertTrue(controller.isTimedRunning());
             assertEquals(1, stepCount.get());
         } finally {
             gate.release.countDown();
@@ -196,7 +200,7 @@ public class EmulationControllerSchedulingTest {
 
         await(controller.closeAsync());
 
-        assertFalse(controller.snapshot().isTimedRunning());
+        assertFalse(controller.isTimedRunning());
         assertNoStep();
         assertThrows(ExecutionException.class, () -> await(controller.step()));
         await(controller.closeAsync());
@@ -204,28 +208,25 @@ public class EmulationControllerSchedulingTest {
     }
 
     @Test(timeout = 5000)
-    public void frequencySamplingSharesCommandThreadAndBothHostThreadsExitOnClose() throws Exception {
+    public void bothHostThreadsExitOnCloseWithoutFrequencyPolling() throws Exception {
         RunGate gate = new RunGate(STATE_RUNNING);
         Set<Thread> threads = ConcurrentHashMap.newKeySet();
-        CountDownLatch sampled = new CountDownLatch(1);
-        AtomicReference<Thread> commandThread = new AtomicReference<>();
         when(cpu.execute()).thenAnswer(call -> {
             threads.add(Thread.currentThread());
             return gate.run();
         });
-        doAnswer(call -> {
-            threads.add(Thread.currentThread());
-            assertSame(commandThread.get(), Thread.currentThread());
-            sampled.countDown();
-            return null;
-        }).when(cpu).sampleFrequency();
         EmulationController controller = controller(cpu);
-        controller.executionState().subscribe(listener(state -> commandThread.set(Thread.currentThread())));
 
         try {
             await(controller.start());
             gate.awaitEntered();
-            assertTrue(sampled.await(2, TimeUnit.SECONDS));
+            CompletableFuture<Void> completed = controller.runCompletion().thenAccept(state -> {
+                assertEquals("machine-commands", Thread.currentThread().getName());
+                threads.add(Thread.currentThread());
+            });
+            gate.release.countDown();
+            await(completed);
+            verify(net.emustudio.application.TestCpu.context(cpu), never()).getCpuFrequencyKhz();
 
             assertEquals(2, threads.size());
             assertEquals(Set.of("machine-commands", "machine-cpu"),

@@ -2,12 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import static net.emustudio.application.TestCpu.mockCpu;
+
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.application.debugger.DebuggerSession;
 import org.junit.After;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -33,12 +36,15 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 public class DebugTableModelImplTest {
+    private static void setCPU(DebugTableModelImpl model, CPU cpu) {
+        model.setCPU(cpu, net.emustudio.application.TestCpu.context(cpu));
+    }
 
     @Test
     public void defaultColumnsContainOnlyCpuPresentation() throws Exception {
         DebugTableModelImpl model = new DebugTableModelImpl();
 
-        model.setCPU(createCpu(0));
+        setCPU(model, createCpu(0));
 
         assertEquals(3, model.getColumnCount());
         assertEquals(String.class, model.getColumnClass(0));
@@ -54,7 +60,7 @@ public class DebugTableModelImplTest {
         CPU cpu = createCpu(0);
         when(cpu.getDebuggerColumns(any(Decoder.class))).thenReturn(List.of(column));
 
-        model.setCPU(cpu);
+        setCPU(model, cpu);
 
         assertEquals(1, model.getColumnCount());
         assertEquals(column, model.getColumnAt(0));
@@ -122,6 +128,7 @@ public class DebugTableModelImplTest {
         when(ida.rowToLocation(12, 0)).thenReturn(-1);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
+        setField(model, "cpuContext", net.emustudio.application.TestCpu.context(cpu));
 
         assertEquals(Boolean.FALSE, model.getValueAt(0, 0));
         assertNull(model.getValueAt(0, 1));
@@ -140,6 +147,7 @@ public class DebugTableModelImplTest {
         when(ida.rowToLocation(7, 2)).thenReturn(-1);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
+        setField(model, "cpuContext", net.emustudio.application.TestCpu.context(cpu));
 
         assertEquals("nop", model.getValueAt(1, 0));
 
@@ -167,6 +175,7 @@ public class DebugTableModelImplTest {
         when(ida.rowToLocation(9, 0)).thenReturn(40);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
+        setField(model, "cpuContext", net.emustudio.application.TestCpu.context(cpu));
 
         model.setValueAt("bad", 0, 0);
 
@@ -179,7 +188,7 @@ public class DebugTableModelImplTest {
         DebugTableModelImpl model = new DebugTableModelImpl();
         CPU cpu = createCpu(0);
         when(cpu.getAddressSpaceSize()).thenReturn(1);
-        model.setCPU(cpu);
+        setCPU(model, cpu);
 
         model.setDebuggerColumns(List.of(new TestColumn<>(Boolean.class, "Breakpoint", true)));
 
@@ -190,7 +199,7 @@ public class DebugTableModelImplTest {
     @Test
     public void debuggerHonorsCpuAddressSpaceBound() throws Exception {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(255));
+        setCPU(model, createCpu(255));
 
         assertNotNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2, 0));
         assertNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2 + 1, 0));
@@ -216,6 +225,7 @@ public class DebugTableModelImplTest {
         when(ida.getCurrentInstructionRow()).thenReturn(4);
         setField(model, "ida", ida);
         setField(model, "cpu", cpu);
+        setField(model, "cpuContext", net.emustudio.application.TestCpu.context(cpu));
 
         assertFalse(model.isCellEditable(1, 0));
         assertFalse(model.isCellEditable(2, 1));
@@ -232,7 +242,7 @@ public class DebugTableModelImplTest {
     public void browsingAndPagingLeaveCpuLocationAndCurrentInstructionMarkerIndependent() throws Exception {
         CPU cpu = createCpu(20);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(cpu);
+        setCPU(model, cpu);
         model.setMaxRows(5);
 
         model.showAddress(100);
@@ -244,7 +254,7 @@ public class DebugTableModelImplTest {
         model.currentPage();
         assertEquals(20, model.getLocationAt(2));
         assertTrue(model.isRowAtCurrentInstruction(2));
-        assertEquals(20, cpu.getInstructionLocation());
+        assertEquals(20, net.emustudio.application.TestCpu.context(cpu).getInstructionLocation());
         verify(cpu, org.mockito.Mockito.never()).setInstructionLocation(anyInt());
         assertThrows(IllegalArgumentException.class, () -> model.showAddress(-1));
         assertThrows(IllegalArgumentException.class, () -> model.showAddress(256));
@@ -258,7 +268,7 @@ public class DebugTableModelImplTest {
     public void resizingBrowsedPageRetainsItsAnchorAndRebuildsAdjacentPages() throws Exception {
         CPU cpu = createCpu(0);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(cpu);
+        setCPU(model, cpu);
         model.setMaxRows(9);
         model.showAddress(0);
         assertEquals(8, model.getLocationAt(8));
@@ -274,7 +284,7 @@ public class DebugTableModelImplTest {
         assertEquals(first, model.getLocationAt(4));
         model.nextPage();
         assertEquals(first, model.getLocationAt(0));
-        assertEquals(0, cpu.getInstructionLocation());
+        assertEquals(0, net.emustudio.application.TestCpu.context(cpu).getInstructionLocation());
         verify(cpu, org.mockito.Mockito.never()).setInstructionLocation(anyInt());
     }
 
@@ -286,10 +296,10 @@ public class DebugTableModelImplTest {
                 MockHelper.instruction(call.getArgument(0), (Integer) call.getArgument(0) == 0 ? 2 : 1));
         when(cpu.getDecoder()).thenReturn(disassembler);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(cpu);
+        setCPU(model, cpu);
         model.setMaxRows(7);
         assertEquals(0, model.getLocationAt(0));
-        when(cpu.getInstructionLocation()).thenReturn(2);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(2);
         model.currentPage();
         assertEquals(0, model.guessPreviousInstructionLocation());
     }
@@ -297,7 +307,7 @@ public class DebugTableModelImplTest {
     @Test
     public void resizingUnpaintedBrowsedPageRetainsItsCenter() throws Exception {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(0));
+        setCPU(model, createCpu(0));
         model.setMaxRows(9);
         model.showAddress(0);
         model.nextPage();
@@ -310,7 +320,7 @@ public class DebugTableModelImplTest {
         AtomicInteger calls = new AtomicInteger();
         CPU cpu = countedCpu(calls, at -> at + 1, 128, 256);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(cpu);
+        setCPU(model, cpu);
         model.setMaxRows(21);
         model.setDebuggerColumns(List.of(DebuggerColumn.address("%04X"), DebuggerColumn.address("%04X")));
         model.showAddress(0);
@@ -333,7 +343,7 @@ public class DebugTableModelImplTest {
         analyze(session, at -> at + 2);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(calls, at -> at + 1, 0, 16));
+        setCPU(model, countedCpu(calls, at -> at + 1, 0, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
 
@@ -346,7 +356,7 @@ public class DebugTableModelImplTest {
     public void cpuAddressesBeyondSmallerMemoryIndexRetainDecoderFallback() throws Exception {
         DebuggerSession session = session(8);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(new AtomicInteger(), at -> at + 1, 12, 16));
+        setCPU(model, countedCpu(new AtomicInteger(), at -> at + 1, 12, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
         model.showAddress(0);
@@ -361,7 +371,7 @@ public class DebugTableModelImplTest {
         analyze(session, at -> at == 0 ? 2 : at + 1);
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(calls, at -> at == 0 ? length.get() : at + 1, 0, 16));
+        setCPU(model, countedCpu(calls, at -> at == 0 ? length.get() : at + 1, 0, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
         assertEquals(2, model.getLocationAt(1));
@@ -377,7 +387,7 @@ public class DebugTableModelImplTest {
         DebuggerSession session = session(16);
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(calls, at -> at == 0 ? length.get() : at == 2 ? 4 : at + 1, 4, 16));
+        setCPU(model, countedCpu(calls, at -> at == 0 ? length.get() : at == 2 ? 4 : at + 1, 4, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
         model.showAddress(0);
@@ -396,7 +406,7 @@ public class DebugTableModelImplTest {
         analyze(session, at -> at + 2);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(calls, at -> at + 1, 0, 16));
+        setCPU(model, countedCpu(calls, at -> at + 1, 0, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
         assertEquals(1, model.getLocationAt(1));
@@ -413,7 +423,7 @@ public class DebugTableModelImplTest {
         DebuggerSession session = session(16);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(countedCpu(calls, at -> at + 1, 4, 16));
+        setCPU(model, countedCpu(calls, at -> at + 1, 4, 16));
         model.setMaxRows(3);
         model.setDebuggerSession(session);
         assertEquals(4, model.getLocationAt(1));
@@ -441,7 +451,7 @@ public class DebugTableModelImplTest {
             });
             DebuggerSession session = session(16);
             DebugTableModelImpl model = new DebugTableModelImpl();
-            model.setCPU(cpu);
+            setCPU(model, cpu);
             model.setMaxRows(3);
             model.setDebuggerSession(session);
 
@@ -470,12 +480,12 @@ public class DebugTableModelImplTest {
     @After public void closeSessions() throws Exception { sessions.forEach(DebuggerSession::close); }
 
     private DebuggerSession session(int size) {
-        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
-        when(((net.emustudio.emulib.plugins.debugger.Debugging) cpu).observe(any(), any(net.emustudio.emulib.plugins.debugger.Debugging.Capture.class)))
+        CPU cpu = net.emustudio.application.TestCpu.mockCpu(withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), any(net.emustudio.emulib.plugin.debugger.Debugging.Capture.class)))
                 .thenReturn(() -> {});
         when(cpu.getAddressSpaceSize()).thenReturn(size);
         try {
-            DebuggerSession session = new DebuggerSession(cpu, null, null);
+            DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
             sessions.add(session);
             return session;
         } catch (java.io.IOException failure) { throw new AssertionError(failure); }
@@ -499,18 +509,18 @@ public class DebugTableModelImplTest {
             if (at < 0 || at >= size) throw new IndexOutOfBoundsException();
             return MockHelper.instruction(at, next.applyAsInt(at) - at);
         });
-        CPU cpu = mock(CPU.class);
+        CPU cpu = net.emustudio.application.TestCpu.mockCpu();
         when(cpu.getDecoder()).thenReturn(disassembler);
-        when(cpu.getInstructionLocation()).thenReturn(pc);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(pc);
         when(cpu.getAddressSpaceSize()).thenReturn(size);
         return cpu;
     }
 
     private CPU createCpu(int instructionLocation) {
         Decoder disassembler = new LinearDisassembler();
-        CPU cpu = mock(CPU.class);
+        CPU cpu = net.emustudio.application.TestCpu.mockCpu();
         when(cpu.getDecoder()).thenReturn(disassembler);
-        when(cpu.getInstructionLocation()).thenReturn(instructionLocation);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(instructionLocation);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         return cpu;
     }

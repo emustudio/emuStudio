@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
@@ -42,6 +42,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private final Context8080.CpuPortDevice[] attachedDevices = new Context8080.CpuPortDevice[IO_PORTS];
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
+    private final Set<CPUContext.CPUListener> deferredCPUListeners = new HashSet<>();
 
     public ZxSpectrumBusImpl() {
         this(ModelProfile.DEFAULT);
@@ -72,14 +73,30 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             cpu.addPassedCyclesListener(listener);
         }
         cpu.addPassedCyclesListener(this);
+        deferredCPUListeners.forEach(cpu::addCPUListener);
 
         deferredAttachments.clear();
         deferredListeners.clear();
+        deferredCPUListeners.clear();
     }
 
     @Override
     public ModelProfile getProfile() {
         return profile;
+    }
+
+    @Override public net.emustudio.emulib.plugin.cpu.CPU.RunState getRunState() { return cpu.getRunState(); }
+    @Override public int getInstructionLocation() { return cpu.getInstructionLocation(); }
+    @Override public float getCpuFrequencyKhz() { return cpu.getCpuFrequencyKhz(); }
+
+    @Override public void addCPUListener(CPUContext.CPUListener listener) {
+        if (cpu == null) deferredCPUListeners.add(Objects.requireNonNull(listener));
+        else cpu.addCPUListener(listener);
+    }
+
+    @Override public void removeCPUListener(CPUContext.CPUListener listener) {
+        if (cpu == null) deferredCPUListeners.remove(listener);
+        else cpu.removeCPUListener(listener);
     }
 
     public void reset() {
@@ -335,7 +352,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 cpu.addCycles(cycles);
             }
         }
-
 
         /**
          * Reads the ZX Spectrum floating-bus value for a given frame-relative sample cycle.

@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -12,19 +14,19 @@ import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.debugger.AnnotationIndex;
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -45,12 +47,12 @@ public class VirtualComputerTest {
     public void initializationLoadsUserAnnotationsIntoSharedEngineWithoutOpeningDebuggerOrReadingMemory() throws Exception {
         java.nio.file.Path computerPath = temporary.getRoot().toPath().resolve("computer.toml");
         java.nio.file.Path debuggerPath = computerPath.resolveSibling(computerPath.getFileName() + ".debugger");
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebuggerSession seed = new DebuggerSession(cpu, memory, debuggerPath)) {
+        try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
             seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
             seed.save();
         }
@@ -58,6 +60,7 @@ public class VirtualComputerTest {
 
         ContextPoolImpl contextPool = mock(ContextPoolImpl.class);
         doReturn(memory).when(contextPool).get(0, MemoryContext.class);
+        doReturn(net.emustudio.application.TestCpu.context(cpu)).when(contextPool).get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class);
         ApplicationApiImpl api = new ApplicationApiImpl(contextPool, mock(Dialogs.class), null);
         ComputerConfig config = mock(ComputerConfig.class);
         when(config.getPath()).thenReturn(computerPath);
@@ -80,7 +83,7 @@ public class VirtualComputerTest {
 
     @Test
     public void getCPUWorks() {
-        CPU instance = mock(CPU.class);
+        CPU instance = mockCpu();
         VirtualComputer vc = new VirtualComputer(mock(ComputerConfig.class), plugins(plugin(0L, pluginConfig("cpu", PLUGIN_TYPE.CPU), instance)));
         assertSame(instance, vc.getCPU().orElseThrow());
     }
@@ -122,9 +125,10 @@ public class VirtualComputerTest {
     public void initializeSetsComputerAndInitializesPluginsInTypeOrder() throws Exception {
         Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Device d1 = mock(Device.class), d2 = mock(Device.class);
         ContextPoolImpl contextPool = new ContextPoolImpl(0);
+        contextPool.register(20L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugin.cpu.CPUContext.class);
 
         Map<Long, PluginMeta> pluginMetas = new LinkedHashMap<>();
         pluginMetas.put(10L, pluginMeta(pluginConfig("device-1", PLUGIN_TYPE.DEVICE), d1));
@@ -135,6 +139,7 @@ public class VirtualComputerTest {
 
         VirtualComputer vc = new VirtualComputer(mock(ComputerConfig.class), pluginMetas);
         vc.initialize(contextPool);
+        assertSame(net.emustudio.application.TestCpu.context(cpu), vc.getExecution().orElseThrow().cpuContext());
 
         InOrder inOrder = inOrder(compiler, memory, cpu, d1, d2);
         inOrder.verify(compiler).initialize();
@@ -148,7 +153,7 @@ public class VirtualComputerTest {
     public void resetResetsAllPresentPlugins() throws Exception {
         Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Device device = mock(Device.class);
 
         VirtualComputer vc = new VirtualComputer(mock(ComputerConfig.class), plugins(
@@ -157,8 +162,10 @@ public class VirtualComputerTest {
                 plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu),
                 plugin(3L, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)
         ));
+        ContextPoolImpl contextPool = new ContextPoolImpl(0);
+        contextPool.register(2L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugin.cpu.CPUContext.class);
         try {
-            vc.initialize(new ContextPoolImpl(0));
+            vc.initialize(contextPool);
             vc.reset();
 
             verify(compiler).reset();
@@ -180,25 +187,20 @@ public class VirtualComputerTest {
         java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
         apiField.setAccessible(true);
         apiField.set(computer, api);
-        java.util.concurrent.atomic.AtomicReference<String> thread = new java.util.concurrent.atomic.AtomicReference<>();
 
         try {
             computer.initialize(contexts);
             assertTrue(computer.getCPU().isEmpty());
             assertTrue(computer.getDebugger().isEmpty());
-            assertFalse(api.getExecutionState().snapshot().isBusy());
-            api.getExecutionState().mutate(() -> {
-                thread.set(Thread.currentThread().getName());
-                memory.reset();
-            }).get(2, java.util.concurrent.TimeUnit.SECONDS);
+            assertFalse(computer.getExecution().orElseThrow().isBusy());
+            memory.reset();
 
             verify(memory).reset();
-            assertEquals("machine-cpu", thread.get());
-            assertEquals(-1, api.getExecutionState().snapshot().currentInstruction());
+            assertEquals(-1, computer.getExecution().orElseThrow().getInstructionLocation());
         } finally {
             computer.close();
         }
-        assertTrue(api.getExecutionState().snapshot().isBusy());
+        assertTrue(computer.getExecution().orElseThrow().isBusy());
     }
 
     @Test
@@ -211,7 +213,7 @@ public class VirtualComputerTest {
 
         VirtualComputer vc = new VirtualComputer(computerConfig, plugins(
                 plugin(1L, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), mock(Compiler.class)),
-                plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), mock(CPU.class)),
+                plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), mockCpu()),
                 plugin(3L, pluginConfig("device", PLUGIN_TYPE.DEVICE), mock(Device.class))
         ));
 
@@ -352,8 +354,8 @@ public class VirtualComputerTest {
         Device device = mock(Device.class);
         AutoCloseable loader = mock(AutoCloseable.class);
         ComputerConfig config = mock(ComputerConfig.class);
-        net.emustudio.emulib.plugins.PluginInitializationException failure =
-                new net.emustudio.emulib.plugins.PluginInitializationException("bad memory");
+        net.emustudio.emulib.plugin.PluginInitializationException failure =
+                new net.emustudio.emulib.plugin.PluginInitializationException("bad memory");
         doThrow(failure).when(memory).initialize();
         // Even a broken cleanup must not hide the original initialization failure.
         doThrow(new AssertionError("destroy failed")).when(device).destroy();
@@ -361,7 +363,7 @@ public class VirtualComputerTest {
                 plugin(1, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
                 plugin(2, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory),
                 plugin(3, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)), loader);
-        assertSame(failure, assertThrows(net.emustudio.emulib.plugins.PluginInitializationException.class,
+        assertSame(failure, assertThrows(net.emustudio.emulib.plugin.PluginInitializationException.class,
                 () -> computer.initialize(new ContextPoolImpl(0))));
         computer.close();
         verify(device).destroy();
@@ -389,7 +391,7 @@ public class VirtualComputerTest {
     public void closeDestroysPluginsInReverseOrderAndClosesClassLoader() throws Exception {
         Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Device d1 = mock(Device.class);
         Device d2 = mock(Device.class);
         AutoCloseable classLoader = mock(AutoCloseable.class);
@@ -419,7 +421,7 @@ public class VirtualComputerTest {
     public void closeContinuesAfterDestroyFailureAndIsIdempotent() throws Exception {
         Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Device badDevice = mock(Device.class);
         Device goodDevice = mock(Device.class);
         AutoCloseable classLoader = mock(AutoCloseable.class);

@@ -2,23 +2,24 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.dialogs.RecordingDialog;
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.debugger.NavLink;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ui.Dialogs;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -37,7 +38,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /** Unified debugger workspace over CPU-visible addresses; browsing never changes PC. */
 public final class DebuggerPanel extends JPanel implements AutoCloseable {
@@ -122,28 +123,39 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public void memoryContentChanged(int from, int to) { requestRefresh(); }
         @Override public void memorySizeChanged() { requestRefresh(); }
     };
-    private ExecutionState.Subscription stateSubscription;
+    private final CPUContext.CPUListener stateListener = new CPUContext.CPUListener() {
+        @Override public void runStateChanged(CPU.RunState state) { refreshExecutionState(); }
+        @Override public void internalStateChanged() { refreshExecutionState(); }
+    };
+
+    private void refreshExecutionState() {
+        CPUContext context = session.execution().cpuContext();
+        executionChanged(context.getRunState(), context.getInstructionLocation());
+    }
     private final AtomicBoolean executionRefreshQueued = new AtomicBoolean();
-    private volatile ExecutionState.Snapshot pendingExecutionSnapshot;
-    private ExecutionState.Snapshot appliedExecutionSnapshot;
+    private volatile CPU.RunState pendingExecutionState;
+    private volatile int pendingInstructionLocation;
+    private CPU.RunState appliedExecutionState;
+    private int appliedInstructionLocation;
     private boolean pendingPcFollow;
     private int pendingPcAddress = -1;
 
-    private void executionChanged(ExecutionState.Snapshot snapshot) {
-        pendingExecutionSnapshot = snapshot;
+    private void executionChanged(CPU.RunState state, int instructionLocation) {
+        pendingExecutionState = state;
+        pendingInstructionLocation = instructionLocation;
         if (!executionRefreshQueued.compareAndSet(false, true)) return;
         SwingUtilities.invokeLater(() -> {
             executionRefreshQueued.set(false);
             if (disposed) return;
-            ExecutionState.Snapshot next = pendingExecutionSnapshot;
-            ExecutionState.Snapshot previous = appliedExecutionSnapshot;
-            appliedExecutionSnapshot = next;
-            if (previous == null || previous.runState() != next.runState()
-                    || previous.currentInstruction() != next.currentInstruction()) {
+            CPU.RunState nextState = pendingExecutionState;
+            int nextLocation = pendingInstructionLocation;
+            if (appliedExecutionState != nextState || appliedInstructionLocation != nextLocation) {
                 pendingPcFollow = true;
-                pendingPcAddress = next.currentInstruction();
+                pendingPcAddress = nextLocation;
             }
-            setExecutionRunning(next.runState() == CPU.RunState.STATE_RUNNING || next.isBusy());
+            appliedExecutionState = nextState;
+            appliedInstructionLocation = nextLocation;
+            setExecutionRunning(nextState == CPU.RunState.STATE_RUNNING);
             refreshDiagnostic();
             refreshWatches();
             refreshMemoryWatches();
@@ -194,7 +206,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         instructionModel.addTableModelListener(instructionRows);
         this.dialogs = Objects.requireNonNull(dialogs);
         annotationFilter = gui.textField("", 14);
-        lastInstructionAddress = session.cpu.getInstructionLocation();
+        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         historicalState = gui.textAreaReadOnly(50, 10);
         for (JList<?> list : List.of(watches, memoryWatches, annotations)) list.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -229,8 +241,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         add(debuggerDiagnostic, BorderLayout.SOUTH);
         tabs.addChangeListener(event -> activateView());
         activateView();
-        stateSubscription = session.execution().executionState().subscribe(this::executionChanged);
-        executionChanged(session.execution().snapshot());
+        session.execution().cpuContext().addCPUListener(stateListener);
+        executionChanged(session.execution().getRunState(), session.execution().getInstructionLocation());
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
         JPopupMenu selectionMenu = new JPopupMenu();
@@ -368,7 +380,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationResults.setVisible(false);
         annotationFilter.setComponentPopupMenu(null);
         tasks.close();
-        if (stateSubscription != null) stateSubscription.close();
+        session.execution().cpuContext().removeCPUListener(stateListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
         instructionModel.removeTableModelListener(instructionRows);
     }
@@ -560,7 +572,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void guard(Operation operation) {
-        if (disposed || tasks.isBusy() || session.execution().snapshot().isBusy()) return;
+        if (disposed || tasks.isBusy() || session.execution().isBusy()) return;
         try {
             session.requirePaused();
             operation.run();
@@ -697,7 +709,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
         if (hit == null) return false;
         instructionModel.currentPage();
-        lastInstructionAddress = session.cpu.getInstructionLocation();
+        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
         showInstructions();
         navigate(hit.address);
         return true;
@@ -879,8 +891,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (entry == null) annotationForm.loadNew(address);
         else annotationForm.loadEntry(entry);
         Window owner = SwingUtilities.getWindowAncestor(this);
-        net.emustudio.emulib.runtime.ui.components.DialogBase dialog =
-                new net.emustudio.emulib.runtime.ui.components.DialogBase(owner instanceof Frame ? (Frame) owner : null, title, true) {
+        net.emustudio.emulib.ui.components.DialogBase dialog =
+                new net.emustudio.emulib.ui.components.DialogBase(owner instanceof Frame ? (Frame) owner : null, title, true) {
                     { setResizable(false); buildContent(); }
                     @Override protected JComponent initializeComponents() { return annotationForm; }
                 };
@@ -1027,8 +1039,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (original == null || (original.id >= 0 && !dirty())) return;
             int target, end;
             try {
-                target = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(addressField.getText());
-                end = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(endField.getText());
+                target = net.emustudio.emulib.Numbers.parseRadix(addressField.getText());
+                end = net.emustudio.emulib.Numbers.parseRadix(endField.getText());
                 if (target < 0 || end < target || end >= session.addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "
@@ -1227,7 +1239,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void analyzeFlow() {
-        analyzeFlow(session.cpu.getInstructionLocation(), true);
+        analyzeFlow(session.execution().cpuContext().getInstructionLocation(), true);
     }
 
     private void analyzeFlow(int address) {
@@ -1765,7 +1777,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         refreshDiagnostic();
         refreshWatches();
         refreshMemoryWatches();
-        if (running || session.execution().snapshot().isBusy() || tasks.isBusy()) return;
+        if (running || session.execution().isBusy() || tasks.isBusy()) return;
         try { session.requirePaused(); } catch (IllegalStateException e) { return; }
         if (index != null && index != session.annotations()) {
             index = null;
@@ -1781,7 +1793,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (graph.flow != null && !graph.flow.isCurrent(session))
             guard(() -> analyzeFlow(graph.start, flowFromPc));
         else if (graph.flow != null && foldFlow.isSelected()
-                && graph.layoutPc != session.cpu.getInstructionLocation()) guard(graph::relayout);
+                && graph.layoutPc != session.execution().cpuContext().getInstructionLocation()) guard(graph::relayout);
     }
 
     private void refreshWatches() {
@@ -2267,7 +2279,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
                 pending.addAll(successors.getOrDefault(at, List.of()));
             }
-            layoutPc = session.cpu.getInstructionLocation();
+            layoutPc = session.execution().cpuContext().getInstructionLocation();
             Set<Integer> boundaries = new HashSet<>(List.of(start, layoutPc, selection));
             refreshNodeLabels();
             boundaries.addAll(nodeLabelCache.keySet());
@@ -2455,7 +2467,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (clip != null && !clip.intersects(box)) continue;
                 boolean selected = entry.getKey() == selectedNode;
                 boolean pc = !running && !tasks.isBusy()
-                        && entry.getKey() == session.cpu.getInstructionLocation();
+                        && entry.getKey() == session.execution().cpuContext().getInstructionLocation();
                 Color selectionBackground = UIManager.getColor("List.selectionBackground");
                 Color selectionForeground = UIManager.getColor("List.selectionForeground");
                 Color surface = UIManager.getColor("Table.background");

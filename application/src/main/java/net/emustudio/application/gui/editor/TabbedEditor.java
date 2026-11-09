@@ -3,9 +3,9 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.rsta.ui.search.SearchEvent;
 
 import javax.swing.*;

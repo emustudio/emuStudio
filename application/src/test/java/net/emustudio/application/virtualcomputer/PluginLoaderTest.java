@@ -2,12 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.cpu.AbstractCPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,7 +64,7 @@ public class PluginLoaderTest {
     @Test
     public void testDoesImplement() throws Exception {
         // test for nested interface
-        assertFalse(doesImplement(net.emustudio.emulib.runtime.ExecutionState.Subscription.class, Plugin.class));
+        assertFalse(doesImplement(CPUContext.CPUListener.class, Plugin.class));
         assertTrue(doesImplement(loadValidPlugin(), Plugin.class));
     }
 
@@ -73,7 +75,7 @@ public class PluginLoaderTest {
 
     @Test
     public void testLoadablePluginOnNotAPluginClassReturnsFalse() {
-        assertFalse(PluginLoader.isLoadablePlugin(net.emustudio.emulib.runtime.ExecutionState.Subscription.class));
+        assertFalse(PluginLoader.isLoadablePlugin(CPUContext.CPUListener.class));
     }
 
     @Test

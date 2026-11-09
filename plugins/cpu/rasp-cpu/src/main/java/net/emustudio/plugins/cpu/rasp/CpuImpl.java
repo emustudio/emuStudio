@@ -2,16 +2,18 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.cpu.AbstractCPU;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RaspDecoder;
 import net.emustudio.plugins.cpu.rasp.gui.RaspStatusPanel;
@@ -28,7 +30,7 @@ import java.util.List;
         title = "Random Access Stored Program (RASP)",
         description = "RASP machine emulator"
 )
-public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.debugger.Debugging {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RaspCpuContextImpl context = new RaspCpuContextImpl();
@@ -52,7 +54,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         disassembler = new RaspDecoder(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
-        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
+        context.setEngine(engine);
     }
 
     @Override
@@ -66,13 +68,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
             if (applicationApi.getGUI() == null) {
                 return null;
             }
-            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), applicationApi.getExecutionState());
+            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI(), context);
         }
         return gui;
     }
 
-    @Override
-    public void reset(int location) {
+    private void resetInternal(int location) {
         engine.reset(location);
     }
 
@@ -81,11 +82,10 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         context.destroy();
     }
 
-    @Override
-    public RunState execute() {
+    private RunState executeInternal() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                RunState tmpRunState = step();
+                RunState tmpRunState = stepInternal();
                 if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
 
                 /*if RunState.STATE_STOPPED_BREAK is returned, it means that
@@ -105,8 +105,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return RunState.STATE_RUNNING;
     }
 
-    @Override
-    public RunState step() throws IOException {
+    private RunState stepInternal() throws IOException {
         return engine.step();
     }
 
@@ -116,16 +115,11 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
-    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
+    public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     @Override
     public Decoder getDecoder() {
         return disassembler;
-    }
-
-    @Override
-    public int getInstructionLocation() {
-        return engine.IP.get();
     }
 
     @Override
@@ -134,8 +128,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return Integer.MAX_VALUE;
     }
 
-    @Override
-    public boolean setInstructionLocation(int location) {
+    private boolean setInstructionLocationInternal(int location) {
         return engine.setInstructionLocation(location);
     }
 
@@ -148,4 +141,48 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return memory.read(0);
     }
 
+    private void publishState(RunState state) {
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
+    }
+
+    private void internalStateChanged() {
+        publishState(context.getRunState());
+    }
+
+    @Override
+    public RunState execute() {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING);
+        try {
+            result = executeInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
+        }
+    }
+
+    @Override
+    public RunState step() throws IOException {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING);
+        try {
+            result = stepInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
+        }
+    }
+
+    @Override
+    public void reset(int location) {
+        resetInternal(location);
+        publishState(RunState.STATE_STOPPED_BREAK);
+    }
+
+    @Override
+    public boolean setInstructionLocation(int location) {
+        boolean changed = setInstructionLocationInternal(location);
+        if (changed) internalStateChanged();
+        return changed;
+    }
 }

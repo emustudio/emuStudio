@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 
 import java.nio.ByteBuffer;
@@ -19,7 +19,7 @@ public class CodeGenerator {
             if (instruction.tokenType == SSEMParser.BNUM) {
                 code.putInt((int) instruction.operand);
             } else if (instruction.tokenType == SSEMParser.NUM) {
-                code.putInt((int) NumberUtils.reverseBits(instruction.operand, 32));
+                code.putInt((int) Numbers.reverseBits(instruction.operand, 32));
             } else {
                 writeInstruction(instruction.getOpcode(), instruction.operand);
             }
@@ -28,7 +28,7 @@ public class CodeGenerator {
     }
 
     private void writeInstruction(int opcode, long operand) {
-        int instruction = NumberUtils.reverseBits((int) operand & 0x1F, 32) | ((opcode & 0x07) << 16);
+        int instruction = Numbers.reverseBits((int) operand & 0x1F, 32) | ((opcode & 0x07) << 16);
         code.putInt(instruction);
     }
 }

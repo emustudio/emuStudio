@@ -3,10 +3,10 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.Numbers;
 import org.junit.Test;
 import java.util.*;
 import static org.junit.Assert.*;
@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class DebugHooksTest {
     @Test
     public void lightObservationReportsActualConditionalSkipWithoutFullCapture() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3);
         EmulatorEngine engine = new EmulatorEngine(memory);
@@ -22,7 +22,7 @@ public class DebugHooksTest {
         engine.debugger.observe(new Debugging.Observer() {
             @Override public boolean beforeStep() { return false; }
             @Override public boolean afterStep(boolean completed,
-                    Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
                     OptionalInt nextAddress, Optional<StepView> capture) {
                 assertTrue(completed);
                 assertEquals(0, instruction.orElseThrow().address());
@@ -44,7 +44,7 @@ public class DebugHooksTest {
 
     @Test
     public void runChecksApplicationBreakpointAtNextInstructionAddress() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3);
         memory.write(5, (byte) 3);
@@ -53,7 +53,7 @@ public class DebugHooksTest {
         engine.debugger.observe(new Debugging.Observer() {
             @Override public boolean beforeStep() { int address = engine.CI.get() + 4; return address == 8; }
 
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
 }, Debugging.Capture.FULL);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.run());
@@ -63,7 +63,7 @@ public class DebugHooksTest {
     }
 
     @Test public void recordsActualFetchAddressAndRegistersDuringRun() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP skips the following instruction when ACC is negative.
         memory.write(9, (byte) 7); // STP at byte address 8.
@@ -72,7 +72,7 @@ public class DebugHooksTest {
         engine.Acc.set(-1);
         List<StepView> events = new ArrayList<>();
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
@@ -92,27 +92,27 @@ public class DebugHooksTest {
     }
 
     @Test public void stopBeforeInstructionLeavesCiAndAccumulatorUntouched() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
         engine.debugger.observe(new Debugging.Observer() {
             @Override public boolean beforeStep() { return true; }
 
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
 }, Debugging.Capture.FULL);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(-4, engine.CI.get());
         assertEquals(0, engine.Acc.get());
     }
     @Test public void repeatedAddressUsesCurrentCodeAfterMutationAndReset() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 3); // CMP.
         EmulatorEngine engine = new EmulatorEngine(memory);
         List<StepView> events = new ArrayList<>();
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
@@ -132,13 +132,13 @@ public class DebugHooksTest {
 
     @Test
     public void haltResultSurvivesDebuggerStopAfterInstruction() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(new short[128]);
         memory.write(1, (byte) 7);
         EmulatorEngine engine = new EmulatorEngine(memory);
         engine.reset(-4);
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow(); return true; }
 
             @Override public boolean beforeStep() { return false; }
@@ -148,12 +148,12 @@ public class DebugHooksTest {
         assertEquals(0, engine.CI.get());
     }
 
-    private static String encoding(net.emustudio.emulib.plugins.debugger.StepView event) {
+    private static String encoding(net.emustudio.emulib.plugin.debugger.StepView event) {
         return event.rows.stream().filter(row -> row.group.equals("Instruction") && row.label.equals("Encoding")).findFirst().orElseThrow().after;
     }
 
-    private static Long state(net.emustudio.emulib.plugins.debugger.StepView event, String name, boolean before) {
-        net.emustudio.emulib.plugins.debugger.ViewRow row = event.rows.stream()
+    private static Long state(net.emustudio.emulib.plugin.debugger.StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugin.debugger.ViewRow row = event.rows.stream()
                 .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
         return Long.valueOf(before ? row.before : row.after);
     }

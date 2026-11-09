@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.Numbers.Strategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,6 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
-        debugger.boundary();
         if (!debugger.begin(CI.get() + 4)) return CPU.RunState.STATE_STOPPED_BREAK;
         boolean completed = false;
         CPU.RunState result;
@@ -83,7 +82,7 @@ public class EmulatorEngine {
         try {
             Byte[] instruction = memory.read(CI.addAndGet(4), 4);
             if (instruction.length != 4) throw new IndexOutOfBoundsException("Truncated instruction");
-            int lineAddress = NumberUtils.reverseBits(instruction[0] & LINE_MASK, 8) * 4;
+            int lineAddress = Numbers.reverseBits(instruction[0] & LINE_MASK, 8) * 4;
             int opcode = instruction[1] & 7;
 
             Method instr = DISPATCH_TABLE[opcode];
@@ -139,19 +138,18 @@ public class EmulatorEngine {
         return CPU.RunState.STATE_STOPPED_NORMAL;
     }
 
-
     private int readLineAddress(int lineAddress) {
-        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
+        return 4 * Numbers.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
     }
 
     private int readInt(int line) {
         Byte[] word = memory.read(line, 4);
-        return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
+        return Numbers.readInt(word, Strategy.REVERSE_BITS);
     }
 
     private void writeInt(int lineAddress, int value) {
         Byte[] word = new Byte[4];
-        NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
+        Numbers.writeInt(value, word, Strategy.REVERSE_BITS);
         memory.write(lineAddress, word);
     }
 

@@ -2,15 +2,34 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
+
+
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.application.ContextPool;
 import net.emustudio.plugins.cpu.ram.api.RamCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class RamCpuContextImpl implements RamCpuContext {
+public class RamCpuContextImpl extends AbstractCPUContext implements RamCpuContext {
+
+    private volatile EmulatorEngine engine;
+
+    void setEngine(EmulatorEngine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public int getInstructionLocation() {
+        return engine == null ? -1 : engine.IP.get();
+    }
+
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+        fireStateChanged(state, instructionLocation, frequencyKhz);
+    }
+
     private final ContextPool contextPool;
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;

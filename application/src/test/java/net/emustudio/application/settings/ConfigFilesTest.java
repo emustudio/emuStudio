@@ -47,8 +47,8 @@ public class ConfigFilesTest {
             assertEquals("Test computer", loaded.getName());
         }
         assertEquals(pluginsRoot.resolve("device/display.jar").toAbsolutePath(),
-                ConfigFiles.getAbsolutePluginPath("display.jar", net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE.DEVICE));
+                ConfigFiles.getAbsolutePluginPath("display.jar", net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE.DEVICE));
         assertEquals(java.util.List.of("display.jar"),
-                ConfigFiles.listPluginFiles(net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE.DEVICE));
+                ConfigFiles.listPluginFiles(net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE.DEVICE));
     }
 }

@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.ui.Constants.*;
 
 public class TapesListRenderer extends JLabel implements ListCellRenderer<String> {
 

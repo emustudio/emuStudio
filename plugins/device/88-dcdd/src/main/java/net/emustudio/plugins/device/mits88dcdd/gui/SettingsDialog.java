@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.mits88dcdd.DiskSettings;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 import org.slf4j.Logger;
@@ -145,7 +145,7 @@ public class SettingsDialog extends DialogBase {
 
     private int parseInt(JComponent component, String name, Supplier<String> text) {
         try {
-            return RadixUtils.parseRadix(text.get());
+            return Numbers.parseRadix(text.get());
         } catch (NumberFormatException e) {
             dialogs.showError(name + ": Invalid number format", "Save settings");
             component.grabFocus();

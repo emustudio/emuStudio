@@ -16,13 +16,13 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public class Utils {
         try {
             computer.initialize(contextPool);
             computer.reset();
-            computer.getCPU().ifPresent(debugTableModel::setCPU);
+            computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, computer.getExecution().orElseThrow().cpuContext()));
             return computer;
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             try {

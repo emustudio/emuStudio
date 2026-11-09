@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.runtime.helpers.Unchecked;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.Unchecked;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

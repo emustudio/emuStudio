@@ -5,11 +5,12 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
 import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
 import javax.swing.event.TableModelEvent;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.Objects;
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
     private CPU cpu;
+    private CPUContext cpuContext;
     private PaginatingDisassembler ida;
     private BoundaryDecoder boundaryDecoder;
     private Integer inspectedLocation;
@@ -34,7 +36,8 @@ public class DebugTableModelImpl extends DebugTableModel {
     public DebugTableModelImpl() {
     }
 
-    public void setCPU(CPU cpu) {
+    public void setCPU(CPU cpu, CPUContext cpuContext) {
+        this.cpuContext = Objects.requireNonNull(cpuContext);
         this.cpu = Objects.requireNonNull(cpu);
         inspectedLocation = null;
         rowInstructions.clear();
@@ -179,7 +182,7 @@ public class DebugTableModelImpl extends DebugTableModel {
     }
 
     private int viewLocation() {
-        return inspectedLocation == null ? cpu.getInstructionLocation() : inspectedLocation;
+        return inspectedLocation == null ? cpuContext.getInstructionLocation() : inspectedLocation;
     }
 
     private void resetPagination() {
@@ -266,7 +269,7 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     @Override
     public boolean isRowAtCurrentInstruction(int rowIndex) {
-        return ida != null && getLocationAt(rowIndex) == cpu.getInstructionLocation();
+        return ida != null && getLocationAt(rowIndex) == cpuContext.getInstructionLocation();
     }
 
     @Override
@@ -298,9 +301,9 @@ public class DebugTableModelImpl extends DebugTableModel {
         CPU cpu = this.cpu;
         if (i != null && cpu != null) {
             try {
-                i.rowToLocation(cpu.getInstructionLocation(), 0);
-                int location = i.rowToLocation(cpu.getInstructionLocation(), i.getCurrentInstructionRow() - 1);
-                if (location < 0) return Math.max(0, cpu.getInstructionLocation() - 1);
+                i.rowToLocation(cpuContext.getInstructionLocation(), 0);
+                int location = i.rowToLocation(cpuContext.getInstructionLocation(), i.getCurrentInstructionRow() - 1);
+                if (location < 0) return Math.max(0, cpuContext.getInstructionLocation() - 1);
                 return location;
             } finally {
                 // This CPU-relative lookup may have moved a separately browsed paginator.

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.plugins.cpu.rasp.gui.RaspDecoder;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -82,7 +82,6 @@ public class EmulatorEngine {
 
     public CPU.RunState step() throws IOException {
         debugStopped = false;
-        debugger.boundary();
         if (!debugger.begin(IP.get())) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;

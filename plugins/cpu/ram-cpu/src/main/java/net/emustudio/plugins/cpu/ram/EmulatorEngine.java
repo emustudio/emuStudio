@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.plugins.cpu.ram.gui.RamDecoder;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -60,7 +60,7 @@ public class EmulatorEngine {
                 if (!escaped && next == '\\') escaped = true;
                 else escaped = false;
             }
-            String value = net.emustudio.emulib.plugins.debugger.ExpressionParser.parse(source,
+            String value = net.emustudio.emulib.plugin.debugger.ExpressionParser.parse(source,
                     name -> { throw new IllegalArgumentException("Expected a string literal"); },
                     name -> { throw new IllegalArgumentException("Expected a string literal"); }).display().text;
             return TapeSymbol.fromString(value);
@@ -94,7 +94,6 @@ public class EmulatorEngine {
 
     public CPU.RunState step() {
         debugStopped = false;
-        debugger.boundary();
         if (!debugger.begin(IP.get())) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;

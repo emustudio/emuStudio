@@ -2,16 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.actions;
 
+
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,8 +46,6 @@ public class CompileActionTest {
         compiler = mock(Compiler.class);
         compilerOutput = new JTextArea();
         EmulationController execution = mock(EmulationController.class);
-        when(execution.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
-                CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
         when(computer.getExecution()).thenReturn(Optional.of(execution));
         when(execution.compile(any())).thenAnswer(call -> {
             CompletableFuture<CPU.RunState> result = new CompletableFuture<>();
@@ -125,7 +126,7 @@ public class CompileActionTest {
     @Test
     public void actionCompilesCurrentFileAndResetsCpuWithoutResettingMemory() throws Exception {
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         File file = new File("program.asm");
         AtomicInteger titleUpdates = new AtomicInteger();
         compilerOutput.setText("old");
@@ -152,7 +153,7 @@ public class CompileActionTest {
     @Test
     public void failedCompilationDoesNotResetMemoryOrCpu() {
         Memory memory = mock(Memory.class);
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         List<CompilerListener> listeners = new ArrayList<>();
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
         when(computer.getMemory()).thenReturn(Optional.of(memory));

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.jcip.annotations.Immutable;
 
 import java.util.List;

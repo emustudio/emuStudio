@@ -2,18 +2,20 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
@@ -43,7 +45,7 @@ public class AutomationTest {
     @Before
     public void setUp() throws Exception {
         compiler = mock(Compiler.class);
-        cpu = mock(CPU.class);
+        cpu = mockCpu();
         when(cpu.execute()).thenReturn(CPU.RunState.STATE_STOPPED_NORMAL);
         dialogs = mock(Dialogs.class);
         input = Files.createTempFile("automation", ".asm");
@@ -78,7 +80,7 @@ public class AutomationTest {
     public void runCompilesResetsAtProgramLocationAndWaitsForStopState() throws Exception {
         stubCompilation(CompilerMessage.Type.INFO, "Compiled");
         stubCpuExecution(CPU.RunState.STATE_STOPPED_NORMAL);
-        when(cpu.getInstructionLocation()).thenReturn(0x1234);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x1234);
         Device device = mock(Device.class);
 
         new Automation(
@@ -96,7 +98,7 @@ public class AutomationTest {
     public void runAcceptsWarningsAndUsesDefaultReset() throws Exception {
         stubCompilation(CompilerMessage.Type.WARNING, "Careful");
         stubCpuExecution(CPU.RunState.STATE_STOPPED_BREAK);
-        when(cpu.getInstructionLocation()).thenReturn(0x0088);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0088);
 
         new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 200, null, EmulationProgress.NONE).run();
 
@@ -109,7 +111,7 @@ public class AutomationTest {
     @Test
     public void runWithoutInputSkipsCompilation() throws Exception {
         stubCpuExecution(CPU.RunState.STATE_STOPPED_NORMAL);
-        when(cpu.getInstructionLocation()).thenReturn(0x0042);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
         Compiler unusedCompiler = mock(Compiler.class);
 
         new Automation(mockComputer(unusedCompiler, cpu), null, NO_GUI_SETTINGS, dialogs, 20, null, EmulationProgress.NONE).run();
@@ -125,7 +127,7 @@ public class AutomationTest {
         AtomicBoolean interrupted = new AtomicBoolean(false);
 
         when(cpu.execute()).thenAnswer(inv -> gate.run());
-        when(cpu.getInstructionLocation()).thenReturn(0);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0);
 
         Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE);
 
@@ -148,7 +150,7 @@ public class AutomationTest {
 
     @Test
     public void runUsesProgressDialogWhenPresent() throws Exception {
-        when(cpu.getInstructionLocation()).thenReturn(0x0010);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0010);
         EmulationProgress progress = mock(EmulationProgress.class);
 
         Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, 10, null, progress);
@@ -166,7 +168,7 @@ public class AutomationTest {
     public void runReturnsWhenCpuStopsBeforeWaitBegins() throws Exception {
         stubCompilation(CompilerMessage.Type.INFO, "Compiled");
         stubCpuExecutionImmediately(CPU.RunState.STATE_STOPPED_NORMAL);
-        when(cpu.getInstructionLocation()).thenReturn(0x0042);
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
 
         new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE).run();
 
@@ -206,7 +208,7 @@ public class AutomationTest {
         if (cpu == null) {
             when(c.getExecution()).thenReturn(Optional.empty());
         } else {
-            EmulationController execution = new EmulationController(cpu, memory, devices, null);
+            EmulationController execution = new EmulationController(cpu, net.emustudio.application.TestCpu.context(cpu), memory, devices, null);
             executions.add(execution);
             when(c.getExecution()).thenReturn(Optional.of(execution));
         }

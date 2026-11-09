@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
@@ -14,7 +14,7 @@ import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;
@@ -28,7 +28,7 @@ public class MemoryGui extends DialogBase {
         super(parent, "SSEM Memory (Williams–Kilburn Tube)", false);
         this.gui = gui;
 
-        this.tableModel = new MemoryTableModel(memory, api.getExecutionState());
+        this.tableModel = new MemoryTableModel(memory);
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
 
         this.loadImageAction = new LoadImageAction(api, memory, () -> {
@@ -36,7 +36,7 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         });
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class), api.getExecutionState());
+                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class));
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));

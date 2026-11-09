@@ -4,12 +4,12 @@ package net.emustudio.plugins.compiler.asZ80.e2e;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.compiler.asZ80.AssemblerZ80;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,7 +35,7 @@ public abstract class AbstractCompilerTest {
     @Before
     public void setUp() throws Exception {
         annotations = new MemoryAnnotations();
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memoryStub = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memoryStub).anyTimes();

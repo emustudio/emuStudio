@@ -4,14 +4,14 @@ package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.settings.PluginSettings.*;
+import static net.emustudio.emulib.application.settings.PluginSettings.*;
 
 
 @SuppressWarnings("unused")

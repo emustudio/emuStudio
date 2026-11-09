@@ -3,8 +3,8 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;

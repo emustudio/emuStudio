@@ -3,15 +3,14 @@
 package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_JUMP;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_JUMP;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
-
 
 public class JumpAction extends AbstractAction {
 
@@ -33,13 +32,11 @@ public class JumpAction extends AbstractAction {
             try {
                 dialogs.readInteger("Memory address:", "Jump to address", 0)
                         .ifPresent(address -> {
-                            computer.getExecution().orElseThrow().update(() -> {
-                                if (!cpu.setInstructionLocation(address))
-                                    throw new IllegalArgumentException("Invalid memory address (please check memory size)");
-                            }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                                if (failure != null) dialogs.showError(failure.getMessage(), "Jump to address");
-                                else refreshDebugTable.run();
-                            }));
+                            if (!cpu.setInstructionLocation(address))
+                                dialogs.showError("Invalid memory address (please check memory size)", "Jump to address");
+                            else {
+                                refreshDebugTable.run();
+                            }
                         });
             } catch (NumberFormatException e) {
                 dialogs.showError("Invalid address format", "Jump to address");

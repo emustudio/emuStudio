@@ -2,15 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import org.junit.After;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.compiler.SourceToken;
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceToken;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -502,9 +502,9 @@ public class SourceAddressMapTest {
     }
 
     private static DebuggerSession session(int size, MemoryAnnotations annotations) throws IOException {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = net.emustudio.application.TestCpu.mockCpu();
         when(cpu.getAddressSpaceSize()).thenReturn(size);
-        DebuggerSession session = new DebuggerSession(cpu, null, null, annotations);
+        DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null, annotations);
         SESSIONS.add(session);
         return session;
     }

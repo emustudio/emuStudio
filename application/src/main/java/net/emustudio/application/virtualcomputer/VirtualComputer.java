@@ -6,15 +6,15 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginSettingsImpl;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private static final Class<?>[] PLUGIN_CONSTRUCTOR_PARAMS = {
             long.class, ApplicationApi.class, PluginSettings.class
     };
-
 
     private final ComputerConfig computerConfig;
     private final AutoCloseable pluginClassLoader;
@@ -199,25 +198,24 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 pluginMeta.pluginInstance.initialize();
             }
             if (getCPU().isPresent()) {
-                net.emustudio.emulib.plugins.memory.MemoryContext<?> memory = null;
-                try { memory = contextPool.get(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
-                catch (net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
+                net.emustudio.emulib.plugin.memory.MemoryContext<?> memory = null;
+                try { memory = contextPool.get(0, net.emustudio.emulib.plugin.memory.MemoryContext.class); }
+                catch (net.emustudio.emulib.application.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
-                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(), memory,
+                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(),
+                            contextPool.get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
-                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null),
-                            applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+                            applicationApi == null ? new net.emustudio.emulib.application.annotations.MemoryAnnotations()
+                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
                     execution = debugger.execution();
 
                 } catch (IOException e) {
                     throw new PluginInitializationException("Could not load debugger settings", e);
                 }
             } else {
-                execution = new net.emustudio.application.emulation.EmulationController(null,
-                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null),
-                        applicationApi == null ? new net.emustudio.application.ExecutionStateImpl() : applicationApi.getExecutionState());
+                execution = new net.emustudio.application.emulation.EmulationController(null, null,
+                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null));
 
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
@@ -276,7 +274,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
         destroyed = true;
         if (execution != null) execution.close();
-
 
         if (debugger != null) {
             try {

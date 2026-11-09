@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.settings;
 
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;

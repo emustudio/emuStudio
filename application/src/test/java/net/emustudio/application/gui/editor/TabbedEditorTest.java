@@ -3,8 +3,8 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;

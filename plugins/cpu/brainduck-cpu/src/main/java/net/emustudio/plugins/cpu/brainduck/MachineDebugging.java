@@ -2,16 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.plugins.debugger.*;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.debugger.*;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import javax.swing.*;
 import java.awt.FlowLayout;
 import java.util.*;
-import java.util.concurrent.CompletionStage;
 import java.util.function.*;
 
 /** Machine-local expression, editing and capture adapter. Never exposes machine data to the host. */
@@ -23,7 +22,6 @@ public final class MachineDebugging implements Debugging {
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
     private Map<String, Object> before;
-    private Runnable boundary = () -> {};
     private String mnemonic = "", opcodes = "";
     private DecodedInstruction instruction;
     private int address;
@@ -47,8 +45,6 @@ public final class MachineDebugging implements Debugging {
 
     void inspect(String name, Supplier<?> read) { bindings.put(name, new Binding(read, null)); }
 
-    public void onBoundary(Runnable callback) { boundary = callback; }
-    public void boundary() { boundary.run(); }
     public boolean isActive() { return support.isActive(); }
     public boolean requiresAccesses() { return support.requiresAccesses(); }
 
@@ -148,8 +144,8 @@ public final class MachineDebugging implements Debugging {
         return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, OptionalInt.of(address), rows);
     }
 
-    /** Plugin-owned editing controls; successful changes are applied at the next semantic boundary. */
-    public JPanel editor(Function<Runnable, ? extends CompletionStage<Void>> update) {
+    /** Plugin-owned editing controls; changes apply immediately, including while the CPU runs. */
+    public JPanel editor(Runnable stateChanged) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
         JComboBox<String> values = new JComboBox<>(bindings.entrySet().stream().filter(entry -> entry.getValue().write != null)
                 .map(Map.Entry::getKey).toArray(String[]::new));
@@ -160,10 +156,15 @@ public final class MachineDebugging implements Debugging {
         apply.addActionListener(event -> {
             String name = (String) values.getSelectedItem();
             String input = text.getText();
-            update.apply(() -> binding(name).write.accept(input)).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                result.setText(failure == null ? "Applied" : "Invalid value");
-                result.setToolTipText(failure == null ? null : failure.getMessage());
-            }));
+            try {
+                binding(name).write.accept(input);
+                stateChanged.run();
+                result.setText("Applied");
+                result.setToolTipText(null);
+            } catch (RuntimeException failure) {
+                result.setText("Invalid value");
+                result.setToolTipText(failure.getMessage());
+            }
         });
         return panel;
     }

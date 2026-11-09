@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.AccurateFrequencyRunner;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +133,6 @@ public class EmulatorEngine {
     }
 
     private int dispatch() throws Throwable {
-        debugger.boundary();
         if (!debugger.begin(PC)) {
             currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
             return 0;

@@ -2,14 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.cpu.AbstractCPU;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
@@ -22,7 +24,7 @@ import javax.swing.*;
         description = "Emulator of Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.debugger.Debugging {
     private final ContextZ80Impl context = new ContextZ80Impl();
     private final InitializerZ80 initializer;
 
@@ -30,11 +32,10 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     private Decoder disassembler;
     private EmulatorEngine engine;
 
-    private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
-
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+        applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
         applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
         context.setCPUFrequency(settings.getInt("frequency_khz").orElse(ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerZ80(
@@ -43,17 +44,11 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
-    public int getInstructionLocation() {
-        return engine.PC;
-    }
-
-    @Override
     public int getAddressSpaceSize() {
         return 0x10000;
     }
 
-    @Override
-    public boolean setInstructionLocation(int location) {
+    private boolean setInstructionLocationInternal(int location) {
         if (location < 0) {
             return false;
         }
@@ -66,12 +61,11 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         initializer.initialize();
         disassembler = initializer.getDecoder();
         engine = initializer.getEngine();
-        engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setEngine(engine);
-        context.addPassedCyclesListener(frequencyCalculator);
+        context.addPassedCyclesListener(context.frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(
-                    this, context, applicationApi.getGUI(), applicationApi.getExecutionState()
+                    this, context, applicationApi.getGUI(), context
             );
         }
     }
@@ -82,7 +76,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
-    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
+    public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     public EmulatorEngine getEngine() {
         return engine;
@@ -93,24 +87,21 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return statusPanel;
     }
 
-    @Override
-    public RunState execute() {
+    private RunState executeInternal() {
         try {
-            frequencyCalculator.start();
+            context.frequencyCalculator.start();
             return engine.run();
         } finally {
-            frequencyCalculator.stop();
+            context.frequencyCalculator.stop();
         }
     }
 
-    @Override
-    public void reset(int startPos) {
-        frequencyCalculator.stop();
+    private void resetInternal(int startPos) {
+        context.frequencyCalculator.stop();
         engine.reset(startPos);
     }
 
-    @Override
-    public RunState step() throws Exception {
+    private RunState stepInternal() throws Exception {
         return engine.step();
     }
 
@@ -121,14 +112,53 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     @Override
     protected void destroyInternal() {
-        context.removePassedCyclesListener(frequencyCalculator);
-        frequencyCalculator.stop();
+        context.removePassedCyclesListener(context.frequencyCalculator);
+        context.frequencyCalculator.stop();
         context.clearDevices();
     }
 
-    @Override
-    public float sampleFrequency() {
-        return frequencyCalculator.sample();
+    private void publishState(RunState state) {
+        context.publishState(state, context.getInstructionLocation(), context.getCpuFrequencyKhz());
     }
 
+    private void internalStateChanged() {
+        publishState(context.getRunState());
+    }
+
+    @Override
+    public RunState execute() {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING);
+        try {
+            result = executeInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
+        }
+    }
+
+    @Override
+    public RunState step() throws Exception {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING);
+        try {
+            result = stepInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result);
+        }
+    }
+
+    @Override
+    public void reset(int startPos) {
+        resetInternal(startPos);
+        publishState(RunState.STATE_STOPPED_BREAK);
+    }
+
+    @Override
+    public boolean setInstructionLocation(int location) {
+        boolean changed = setInstructionLocationInternal(location);
+        if (changed) internalStateChanged();
+        return changed;
+    }
 }

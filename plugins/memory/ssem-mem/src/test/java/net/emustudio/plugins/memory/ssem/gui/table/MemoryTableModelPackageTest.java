@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.table;
 
-import net.emustudio.plugins.memory.ssem.TestExecutionState;
-
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +19,7 @@ public class MemoryTableModelPackageTest {
     @Before
     public void setUp() {
         context = new MemoryContextImpl();
-        model = new MemoryTableModel(context, TestExecutionState.create());
+        model = new MemoryTableModel(context);
     }
 
     @Test

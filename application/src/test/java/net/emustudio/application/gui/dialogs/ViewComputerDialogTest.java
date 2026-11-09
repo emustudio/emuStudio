@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.gui.AbstractSwingTest;
@@ -11,10 +13,10 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -121,7 +123,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
         computerConfig.setCPU(pluginConfig("cpu", PLUGIN_TYPE.CPU, "cpu.jar", 10, 10));
         computerConfig.setDevices(List.of(pluginConfig("device", PLUGIN_TYPE.DEVICE, "device.jar", 40, 40)));
 
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.getTitle()).thenReturn("Z80 CPU");
         when(cpu.getVersion()).thenReturn("1.0");
         when(cpu.getCopyright()).thenReturn("CPU copyright");

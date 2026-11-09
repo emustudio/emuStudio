@@ -2,12 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.plugins.memory.bytemem.TestExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import java.util.concurrent.CompletableFuture;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,19 +18,14 @@ import static org.junit.Assert.*;
 public class MemoryTableTest {
     private MemoryTableModel tableModel;
     private final MemoryAnnotations metadata = new MemoryAnnotations();
-    private final ExecutionState execution = new ExecutionState() {
-        public Snapshot snapshot() {
-            return new Snapshot(CPU.RunState.STATE_STOPPED_BREAK, false, false, 3, Float.NaN);
-        }
-        public Subscription subscribe(java.util.function.Consumer<Snapshot> listener) { return () -> { }; }
-        public CompletableFuture<Void> mutate(Runnable operation) { return TestExecutionState.create().mutate(operation); }
-        public CompletableFuture<Void> update(Runnable operation) { return TestExecutionState.create().update(operation); }
-        public void processUpdates() { }
+    private final CPUContext execution = new AbstractCPUContext() {
+        @Override public boolean isPassedCyclesSupported() { return false; }
+        @Override public int getInstructionLocation() { return 3; }
     };
 
     @Before
     public void setUp() {
-        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4), TestExecutionState.create());
+        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 2, 4));
         metadata.put(new MemoryAnnotations.Entry(1, 1, 1, 2, "label", "<start>", null));
         metadata.put(new MemoryAnnotations.Entry(1, 2, 2, 3, "emuStudio.user/label", "Label & details", null));
     }

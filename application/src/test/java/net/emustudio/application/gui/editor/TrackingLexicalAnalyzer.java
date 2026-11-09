@@ -2,21 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
 
 final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
-    private final net.emustudio.emulib.plugins.compiler.Token[] tokens;
+    private final net.emustudio.emulib.plugin.compiler.Token[] tokens;
 
     int index;
     int nextCalls;
     String lastResetInput;
 
-    TrackingLexicalAnalyzer(net.emustudio.emulib.plugins.compiler.Token... tokens) {
+    TrackingLexicalAnalyzer(net.emustudio.emulib.plugin.compiler.Token... tokens) {
         this.tokens = tokens;
     }
 
     @Override
-    public net.emustudio.emulib.plugins.compiler.Token next() {
+    public net.emustudio.emulib.plugin.compiler.Token next() {
         nextCalls++;
         return tokens[index++];
     }

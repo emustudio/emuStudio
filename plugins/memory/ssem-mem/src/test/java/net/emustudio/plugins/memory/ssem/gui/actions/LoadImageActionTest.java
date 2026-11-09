@@ -2,11 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
-import net.emustudio.plugins.memory.ssem.TestExecutionState;
-
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Rule;
 import org.junit.Test;
@@ -88,7 +86,6 @@ public class LoadImageActionTest {
         }
     }
 
-
     private void write(Path path) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(33 * 4);
         buffer.putInt(PROGRAM_LOCATION / 4);
@@ -111,7 +108,6 @@ public class LoadImageActionTest {
         replay(dialogs);
         ApplicationApi api = createNiceMock(ApplicationApi.class);
         expect(api.getDialogs()).andReturn(dialogs).anyTimes();
-        expect(api.getExecutionState()).andReturn(TestExecutionState.create()).anyTimes();
         expect(api.getProgramLocation()).andReturn(PROGRAM_LOCATION).anyTimes();
         replay(api);
         return api;

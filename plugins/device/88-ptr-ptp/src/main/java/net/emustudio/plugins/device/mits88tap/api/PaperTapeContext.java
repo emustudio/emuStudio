@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88tap.api;
 
-import net.emustudio.emulib.plugins.Context;
+import net.emustudio.emulib.plugin.Context;
 
 import java.io.IOException;
 import java.nio.file.Path;

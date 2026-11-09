@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88pio.api;
 
-import net.emustudio.emulib.plugins.Context;
+import net.emustudio.emulib.plugin.Context;
 
 /** Pin-level connection to 88-4PIO. Channels are PIA1-A, PIA1-B, PIA2-A, PIA2-B, etc.
  * Implementations serialize accesses and peripheral callbacks on the context monitor.

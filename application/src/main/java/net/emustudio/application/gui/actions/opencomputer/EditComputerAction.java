@@ -6,7 +6,7 @@ import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_COMPUTER;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_COMPUTER;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class EditComputerAction extends AbstractAction {

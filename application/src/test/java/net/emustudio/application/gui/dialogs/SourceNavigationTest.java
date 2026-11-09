@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
@@ -9,15 +11,15 @@ import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.*;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.*;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,7 +31,6 @@ import java.awt.BorderLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -221,7 +222,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             runOnEdt(f.debugger::showInstructions);
             f.sourceLine(3);
             clearInvocations(f.original);
-            when(f.cpu.getInstructionLocation()).thenReturn(2);
+            when(net.emustudio.application.TestCpu.context(f.cpu).getInstructionLocation()).thenReturn(2);
             f.running(true);
             f.running(false);
             verify(f.original).currentPage();
@@ -339,7 +340,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     private final class Fixture implements AutoCloseable {
         final String text;
         final Path path;
-        final CPU cpu = mock(CPU.class);
+        final CPU cpu = mockCpu();
         final Compiler compiler = mock(Compiler.class);
         final MemoryContext<Byte> memory;
         final MemoryAnnotations annotations = new MemoryAnnotations();
@@ -387,7 +388,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 if (opcode >= 0 && opcode < end) tokens.add(new SourceToken(Token.RESERVED, opcode, "nop", null, null, null));
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
-            session = new DebuggerSession(cpu, memory, null, annotations);
+            session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null, annotations);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
@@ -450,7 +451,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             bank.set(0);
         }
 
-
         void sourceLine(int line) {
             runOnEdt(() -> editor.setPosition(SourceCodePosition.of(line, 0, path.toString())));
         }
@@ -472,6 +472,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         void running(boolean value) {
             if (value) session.execution().start().join();
             else session.execution().pause().join();
+            net.emustudio.application.TestCpu.publish(cpu, value ? CPU.RunState.STATE_RUNNING : CPU.RunState.STATE_STOPPED_BREAK);
             runOnEdt(() -> {});
         }
 

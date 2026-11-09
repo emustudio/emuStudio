@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.plugins.memory.rasp.TestExecutionState;
-
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.MemoryContextImplFactory;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -12,10 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 import static org.easymock.EasyMock.*;
 
 import static org.junit.Assert.*;
@@ -27,7 +21,7 @@ public class RaspTableModelTest {
     @Before
     public void setUp() {
         context = MemoryContextImplFactory.create();
-        model = new RaspTableModel(context, TestExecutionState.create());
+        model = new RaspTableModel(context);
     }
 
     @After
@@ -37,7 +31,7 @@ public class RaspTableModelTest {
 
     @Test(expected = NullPointerException.class)
     public void testConstructorWithNullMemoryThrows() {
-        new RaspTableModel(null, TestExecutionState.create());
+        new RaspTableModel(null);
     }
 
     @Test
@@ -192,33 +186,19 @@ public class RaspTableModelTest {
     public void testSetValueAtNegativeValue() {
         context.write(0, 50);
         model.setValueAt("-5", 0, 1);
-        // RadixUtils.parseRadix doesn't support negative numbers, so value remains unchanged
+        // Numbers.parseRadix doesn't support negative numbers, so value remains unchanged
         assertEquals(Integer.valueOf(50), context.read(0));
     }
 
     @Test
-    public void runningMemoryEditWaitsForTheExecutionBoundary() {
-        ExecutionState execution = createNiceMock(ExecutionState.class);
-        AtomicReference<Runnable> pending = new AtomicReference<>();
-        CompletableFuture<Void> applied = new CompletableFuture<>();
-        expect(execution.snapshot()).andReturn(new ExecutionState.Snapshot(
-                CPU.RunState.STATE_RUNNING, false, false, 0, Float.NaN)).anyTimes();
-        expect(execution.update(anyObject(Runnable.class))).andAnswer(() -> {
-            pending.set(getCurrentArgument(0));
-            return applied;
-        });
-        replay(execution);
+    public void runningMemoryEditAppliesImmediately() {
         context.write(0, 3);
-        RaspTableModel live = new RaspTableModel(context, execution);
+        RaspTableModel live = new RaspTableModel(context);
+
+        live.setValueAt("42", 0, 1);
 
         assertTrue(live.isCellEditable(0, 1));
-        live.setValueAt("42", 0, 1);
-        assertEquals(Integer.valueOf(3), context.read(0));
-        pending.get().run();
-        applied.complete(null);
-
         assertEquals(Integer.valueOf(42), context.read(0));
-        verify(execution);
     }
 
 }

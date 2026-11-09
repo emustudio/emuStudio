@@ -2,12 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ExecutionState;
-import java.util.concurrent.CompletionException;
-import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.io.FileLoader;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
@@ -23,7 +21,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class LoadImageAction extends AbstractAction {
@@ -34,11 +32,9 @@ public class LoadImageAction extends AbstractAction {
     private final JDialog parent;
     private final Runnable repaint;
     private final GUI gui;
-    private final ExecutionState execution;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui,
-                           ExecutionState execution) {
+    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui) {
         super("Load image file...", loadIcon(ICON_FILE, LoadImageAction.class));
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -46,7 +42,6 @@ public class LoadImageAction extends AbstractAction {
         this.parent = Objects.requireNonNull(parent);
         this.repaint = Objects.requireNonNull(repaint);
         this.gui = gui;
-        this.execution = Objects.requireNonNull(execution);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -64,17 +59,15 @@ public class LoadImageAction extends AbstractAction {
             Optional<MemoryImageLoader.MemoryBank> bank = askForMemoryBank(MemoryImageLoader.requiresLoadAddress(format));
             if (bank.isPresent()) {
                 setEnabled(false);
-                execution.update(() -> {
-                    try { MemoryImageLoader.load(path, context, bank.get()); }
-                    catch (Exception failure) { throw new CompletionException(failure); }
-                }).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                    if (failure == null) repaint.run();
-                    else {
-                        dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
-                        LOGGER.error("Could not load image file '{}'", path, failure);
-                    }
+                try {
+                    MemoryImageLoader.load(path, context, bank.get());
+                    repaint.run();
+                } catch (Exception failure) {
+                    dialogs.showError("Could not load selected image file: " + failure.getMessage(), "Load image file");
+                    LOGGER.error("Could not load image file '{}'", path, failure);
+                } finally {
                     setEnabled(true);
-                }));
+                }
             }
         });
     }

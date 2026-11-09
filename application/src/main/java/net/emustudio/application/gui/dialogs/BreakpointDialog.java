@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -80,7 +80,7 @@ public class BreakpointDialog extends DialogBase {
 
     private void refreshExistingState() {
         try {
-            int address = RadixUtils.parseRadix(txtAddress.getText());
+            int address = Numbers.parseRadix(txtAddress.getText());
             if (address < 0 || address >= breakpointLimit) throw new NumberFormatException();
             boolean enabled = breakpointSet.test(address);
             unset.setEnabled(enabled);
@@ -96,7 +96,7 @@ public class BreakpointDialog extends DialogBase {
 
     private Integer parseAddress(int limit) {
         try {
-            int address = RadixUtils.parseRadix(txtAddress.getText());
+            int address = Numbers.parseRadix(txtAddress.getText());
             if (address < 0 || address >= limit) throw new NumberFormatException();
             return address;
         } catch (NumberFormatException e) {

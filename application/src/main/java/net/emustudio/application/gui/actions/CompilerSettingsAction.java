@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.Compiler;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

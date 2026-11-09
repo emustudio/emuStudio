@@ -4,10 +4,10 @@ package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CompletableFuture;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_COMPILER;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_COMPILER;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
@@ -70,7 +70,7 @@ public class CompileAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState.get() == CPU.RunState.STATE_RUNNING
-                    || computer.getExecution().map(execution -> execution.snapshot().isBusy()).orElse(false)) {
+                    || computer.getExecution().map(execution -> execution.isBusy()).orElse(false)) {
                 dialogs.showError("Emulation must be stopped first.", "Compile");
             } else if (editor.saveFile()) {
                 updateTitle.run();

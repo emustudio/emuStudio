@@ -3,11 +3,11 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import org.junit.Test;
 
@@ -160,7 +160,7 @@ public class RuntimeFlowTest {
     public void decodeUsesCurrentMappedCellsAndKeepsEarlierCaptureStable() throws Exception {
         byte[][] cells = {{0, 0x34, 0}, {(byte) 0xcd, 0, 0x12}};
         int[] wiring = {1, 0, 1};
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN) {
             @Override public Byte read(int address) { return cells[wiring[address]][address]; }
             @Override public Byte[] read(int address, int count) {
                 Byte[] values = new Byte[count];
@@ -183,7 +183,7 @@ public class RuntimeFlowTest {
     }
 
     private static ByteMemoryStub memory(int... bytes) {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.setMemory(new byte[65536]);
         for (int i = 0; i < bytes.length; i++) memory.write(i, (byte) bytes[i]);
         return memory;

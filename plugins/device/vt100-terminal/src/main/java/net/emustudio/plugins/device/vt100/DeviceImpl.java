@@ -2,16 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100;
 
-import net.emustudio.emulib.plugins.AbstractPlugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.AbstractPlugin;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.device.DeviceContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
 import net.emustudio.plugins.device.vt100.api.ContextVt100;
 import net.emustudio.plugins.device.vt100.api.Keyboard;

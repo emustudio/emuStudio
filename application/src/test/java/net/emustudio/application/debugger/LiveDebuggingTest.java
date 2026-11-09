@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
 import org.junit.Test;
 
 import java.util.Optional;
@@ -161,7 +161,7 @@ public class LiveDebuggingTest {
     }
 
     @Test
-    public void liveChangesUseCpuWorkerWithoutPauseOrRestart() throws Exception {
+    public void liveChangesApplyOnCallingThreadWithoutPauseOrRestart() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null)) {
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -175,9 +175,9 @@ public class LiveDebuggingTest {
             AtomicReference<ValueView> displayed = new AtomicReference<>();
             session.update(() -> displayed.set(machine.debug.compile("A").display())).get(2, TimeUnit.SECONDS);
 
-            assertEquals("machine-cpu", thread.get());
+            assertEquals(Thread.currentThread().getName(), thread.get());
             assertEquals("7", displayed.get().text);
-            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().snapshot().runState());
+            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
             verify(machine.cpu, times(1)).execute();
             verify(machine.cpu, never()).step();
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -201,17 +201,16 @@ public class LiveDebuggingTest {
     }
 
     @Test
-    public void machineEditClearsBreakpointContinuationAllowance() throws Exception {
+    public void directMachineEditDoesNotChangeBreakpointContinuation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null)) {
             session.setBreakpoint(0, true).join();
             assertTrue(machine.beforeStep(0));
+
+            machine.values.put("A", 9L);
+
             assertFalse(machine.beforeStep(0));
-            assertTrue(machine.beforeStep(0));
-
-            session.execution().update(() -> machine.values.put("A", 9L)).join();
-
-            assertTrue(machine.beforeStep(0));
+            assertEquals(9L, machine.values.get("A"));
         }
     }
 

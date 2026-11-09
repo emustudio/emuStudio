@@ -5,7 +5,7 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
 import org.junit.Test;
-import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ public class BoundaryDecoderTest {
     @Test
     public void wrappedExtentAtLargestAddressSpaceClipsListingWithoutOverflow() {
         int address = Integer.MAX_VALUE - 1;
-        Decoder decoder = at -> net.emustudio.emulib.plugins.cpu.DecodedInstruction.of(at, 2, "NOP", "00 00");
+        Decoder decoder = at -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(at, 2, "NOP", "00 00");
         BoundaryDecoder boundaries = new BoundaryDecoder(decoder);
         boundaries.updateCache(address);
         List<Integer> next = new ArrayList<>();

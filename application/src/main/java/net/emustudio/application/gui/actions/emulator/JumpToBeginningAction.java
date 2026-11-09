@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_JUMP_TO_BEGINNING;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_JUMP_TO_BEGINNING;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class JumpToBeginningAction extends AbstractAction {
@@ -26,8 +26,8 @@ public class JumpToBeginningAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCPU().ifPresent(cpu -> {
-            computer.getExecution().orElseThrow().update(() -> cpu.setInstructionLocation(0))
-                    .thenRun(() -> SwingUtilities.invokeLater(refreshDebugTable));
+            cpu.setInstructionLocation(0);
+            refreshDebugTable.run();
         });
     }
 }

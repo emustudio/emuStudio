@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_RESET;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_RESET;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class ResetAction extends AbstractAction {

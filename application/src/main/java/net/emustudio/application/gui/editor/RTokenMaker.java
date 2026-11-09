@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
 import net.jcip.annotations.NotThreadSafe;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenMakerBase;
@@ -34,32 +34,32 @@ public class RTokenMaker extends TokenMakerBase {
 
     static int getTokenMakerType(int emuStudioTokenType) {
         switch (emuStudioTokenType) {
-            case net.emustudio.emulib.plugins.compiler.Token.RESERVED:
+            case net.emustudio.emulib.plugin.compiler.Token.RESERVED:
                 return Token.RESERVED_WORD;
-            case net.emustudio.emulib.plugins.compiler.Token.PREPROCESSOR:
-            case net.emustudio.emulib.plugins.compiler.Token.BLOCK_START:
-            case net.emustudio.emulib.plugins.compiler.Token.BLOCK_END:
+            case net.emustudio.emulib.plugin.compiler.Token.PREPROCESSOR:
+            case net.emustudio.emulib.plugin.compiler.Token.BLOCK_START:
+            case net.emustudio.emulib.plugin.compiler.Token.BLOCK_END:
                 return Token.PREPROCESSOR;
-            case net.emustudio.emulib.plugins.compiler.Token.REGISTER:
+            case net.emustudio.emulib.plugin.compiler.Token.REGISTER:
                 return Token.RESERVED_WORD_2;
-            case net.emustudio.emulib.plugins.compiler.Token.SEPARATOR:
+            case net.emustudio.emulib.plugin.compiler.Token.SEPARATOR:
                 return Token.SEPARATOR;
-            case net.emustudio.emulib.plugins.compiler.Token.OPERATOR:
+            case net.emustudio.emulib.plugin.compiler.Token.OPERATOR:
                 return Token.OPERATOR;
-            case net.emustudio.emulib.plugins.compiler.Token.COMMENT:
+            case net.emustudio.emulib.plugin.compiler.Token.COMMENT:
                 return Token.COMMENT_MARKUP;
-            case net.emustudio.emulib.plugins.compiler.Token.LITERAL:
-            case net.emustudio.emulib.plugins.compiler.Token.INCLUDE_PATH:
+            case net.emustudio.emulib.plugin.compiler.Token.LITERAL:
+            case net.emustudio.emulib.plugin.compiler.Token.INCLUDE_PATH:
                 return Token.LITERAL_NUMBER_DECIMAL_INT;
-            case net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER:
-            case net.emustudio.emulib.plugins.compiler.Token.SYMBOL_REFERENCE:
+            case net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER:
+            case net.emustudio.emulib.plugin.compiler.Token.SYMBOL_REFERENCE:
                 return Token.IDENTIFIER;
-            case net.emustudio.emulib.plugins.compiler.Token.LABEL:
-            case net.emustudio.emulib.plugins.compiler.Token.SYMBOL_DEFINITION:
+            case net.emustudio.emulib.plugin.compiler.Token.LABEL:
+            case net.emustudio.emulib.plugin.compiler.Token.SYMBOL_DEFINITION:
                 return Token.ANNOTATION;
-            case net.emustudio.emulib.plugins.compiler.Token.ERROR:
+            case net.emustudio.emulib.plugin.compiler.Token.ERROR:
                 return Token.ERROR_IDENTIFIER;
-            case net.emustudio.emulib.plugins.compiler.Token.EOF:
+            case net.emustudio.emulib.plugin.compiler.Token.EOF:
                 return Token.NULL;
             default:
                 return Token.WHITESPACE;
@@ -103,7 +103,7 @@ public class RTokenMaker extends TokenMakerBase {
         int previousEnd = -1;
 
         while (lexer.hasNext()) {
-            net.emustudio.emulib.plugins.compiler.Token token;
+            net.emustudio.emulib.plugin.compiler.Token token;
             try {
                 token = lexer.next();
             } catch (Exception ex) {
@@ -117,7 +117,7 @@ public class RTokenMaker extends TokenMakerBase {
                 int emuType = token.getType();
 
                 // Skip EOF — we terminate the list with addNullToken() after the loop
-                if (emuType == net.emustudio.emulib.plugins.compiler.Token.EOF) {
+                if (emuType == net.emustudio.emulib.plugin.compiler.Token.EOF) {
                     break;
                 }
 

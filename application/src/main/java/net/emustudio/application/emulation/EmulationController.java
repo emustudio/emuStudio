@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.application.ExecutionStateImpl;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +29,9 @@ public final class EmulationController implements Closeable {
         workerThread = Thread.currentThread();
         task.run();
     }, "machine-cpu"));
-    private final BlockingQueue<Update> updates = new ArrayBlockingQueue<>(1024);
-    private boolean updating;
-    private final ExecutionStateImpl executionState;
+    private CPU.RunState publishedState;
     private final CPU cpu;
+    private final CPUContext cpuContext;
     private final Memory memory;
     private final List<Device> devices;
     private final DebuggerSession debugger;
@@ -48,21 +47,8 @@ public final class EmulationController implements Closeable {
     private ScheduledFuture<?> tick;
     private long timerGeneration;
     private boolean shutDown;
-    private float frequencyKhz = Float.NaN;
 
     private enum Stop { PAUSE, STOP, RESET }
-
-    private static final class Update {
-        final Runnable change;
-        final boolean machineMutation;
-        final CompletableFuture<Void> result;
-
-        Update(Runnable change, boolean machineMutation, CompletableFuture<Void> result) {
-            this.change = change;
-            this.machineMutation = machineMutation;
-            this.result = result;
-        }
-    }
 
     private static final class Task {
         final boolean continuous, mutation;
@@ -94,38 +80,31 @@ public final class EmulationController implements Closeable {
         }
     }
 
-    public EmulationController(CPU cpu, Memory memory, List<Device> devices, DebuggerSession debugger) {
-        this(cpu, memory, devices, debugger, null);
+    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebuggerSession debugger) {
+        this(cpu, cpuContext, memory, devices, debugger, null);
     }
 
-    public EmulationController(CPU cpu, Memory memory, List<Device> devices, DebuggerSession debugger, Compiler compiler) {
-        this(cpu, memory, devices, debugger, compiler, new ExecutionStateImpl());
-    }
-
-    public EmulationController(CPU cpu, Memory memory, List<Device> devices, DebuggerSession debugger, Compiler compiler,
-                               ExecutionStateImpl executionState) {
+    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebuggerSession debugger, Compiler compiler) {
         this.cpu = cpu;
+        this.cpuContext = cpu == null ? null : Objects.requireNonNull(cpuContext);
         this.memory = memory;
         this.devices = List.copyOf(devices);
         this.debugger = debugger;
         this.compiler = compiler;
-        this.executionState = Objects.requireNonNull(executionState);
-        executionState.bind(this);
+
         commands.setRemoveOnCancelPolicy(true);
         commands.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         commands.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-        commands.scheduleWithFixedDelay(() -> {
-            try {
-                if (cpu != null) frequencyKhz = cpu.sampleFrequency();
-                executionState.publish(this, snapshotValues());
-            }
-            catch (RuntimeException failure) { LOGGER.warn("Frequency sampling failed", failure); }
-        }, 1, 1, TimeUnit.SECONDS);
         publish(state);
     }
 
-    public ExecutionState executionState() { return executionState; }
-    public ExecutionState.Snapshot snapshot() { return executionState.snapshot(); }
+    public CPU.RunState getRunState() { return state; }
+    public int getInstructionLocation() { return cpuContext == null ? -1 : cpuContext.getInstructionLocation(); }
+    /** Whether an application command or cooperative close is pending or executing. */
+    public boolean isBusy() { return busy || closing; }
+    /** Whether application-scheduled stepping is active, including the delay between instructions. */
+    public boolean isTimedRunning() { return timedRunning; }
+    public CPUContext cpuContext() { return cpuContext; }
     public CompletableFuture<CPU.RunState> runCompletion() { return runCompletion.copy(); }
 
     private <T> CompletableFuture<T> command(Consumer<CompletableFuture<T>> operation) {
@@ -261,67 +240,6 @@ public final class EmulationController implements Closeable {
         }).thenApply(ignored -> null);
     }
 
-    /** Applies a live machine edit at a semantic step seam without changing run state. */
-    public CompletableFuture<Void> update(Runnable change) {
-        return update(change, true);
-    }
-
-    /** Debugger configuration is serialized too, without invalidating program provenance. */
-    public CompletableFuture<Void> update(Runnable change, boolean machineMutation) {
-        Objects.requireNonNull(change);
-        return command(result -> {
-            if (active != null && active.continuous && !(cpu instanceof net.emustudio.emulib.plugins.debugger.Debugging))
-                throw new IllegalStateException("Live edits unsupported by this CPU");
-            if (!updates.offer(new Update(change, machineMutation, result)))
-                throw new RejectedExecutionException("Too many pending machine edits");
-            scheduleUpdates();
-        });
-    }
-
-    /** Called only by the CPU worker, before a guest step and once more on execution exit. */
-    public void processUpdates() {
-        processUpdates(null);
-    }
-
-    private void processUpdates(List<Runnable> completions) {
-        if (Thread.currentThread() != workerThread)
-            throw new IllegalStateException("Machine edits must run on the CPU worker");
-        int count = updates.size();
-        for (int i = 0; i < count; i++) {
-            Update update = updates.poll();
-            if (update == null) break;
-            try {
-                if (closing) throw new CancellationException("Machine is closing");
-                if (debugger != null && update.machineMutation) debugger.runMutation(update.change);
-                else update.change.run();
-                if (completions == null) update.result.complete(null);
-                else completions.add(() -> update.result.complete(null));
-            } catch (Throwable failure) {
-                if (completions == null) update.result.completeExceptionally(failure);
-                else completions.add(() -> update.result.completeExceptionally(failure));
-            }
-        }
-    }
-
-    private void scheduleUpdates() {
-        if (closing || active != null || updating || pending != null || updates.isEmpty()) return;
-        updating = true;
-        busy = true;
-        publish(state);
-        worker.execute(() -> {
-            List<Runnable> completions = new java.util.ArrayList<>();
-            processUpdates(completions);
-            commands.execute(() -> {
-                updating = false;
-                busy = pending != null || closing;
-                publish(state);
-                completions.forEach(Runnable::run);
-                scheduleUpdates();
-                finishClose();
-            });
-        });
-    }
-
     /** Compiles on the worker without resetting memory, then resets only CPU execution position. */
     public CompletableFuture<CPU.RunState> compile(Runnable compilation) {
         return compile(compilation, null);
@@ -373,7 +291,6 @@ public final class EmulationController implements Closeable {
                         : failure instanceof IndexOutOfBoundsException || failure.getCause() instanceof IndexOutOfBoundsException
                                 ? CPU.RunState.STATE_STOPPED_ADDR_FALLOUT : CPU.RunState.STATE_STOPPED_BAD_INSTR;
             } finally {
-                processUpdates();
                 task.exit();
                 Thread.interrupted();
             }
@@ -387,33 +304,26 @@ public final class EmulationController implements Closeable {
         if (active != task) return;
         active = null;
         if (!task.continuous && !task.mutation && debugger != null) debugger.completeManualStep();
-        try { if (cpu != null) frequencyKhz = cpu.sampleFrequency(); }
-        catch (RuntimeException samplingFailure) { LOGGER.warn("Frequency sampling failed", samplingFailure); }
         if (returned == CPU.RunState.STATE_RUNNING) returned = (pending != null && pending.kind == Stop.STOP) || closing
                 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
         state = returned; busy = pending != null || closing; mutationGeneration++;
         if (pending != null && task.result == pending.result) { pending = null; busy = closing; }
-        publish(state);
+        publish(state, true);
         if (debugger != null) debugger.completeSourceCapture();
         if (failure == null) task.result.complete(state); else task.result.completeExceptionally(failure);
         if (pending != null) finishPending();
-        else {
-            scheduleUpdates();
-            finishClose();
-        }
+        else finishClose();
     }
 
     private void publish(CPU.RunState value) {
-        state = value;
-        ExecutionState.Snapshot next = snapshotValues();
-        if (next.equals(executionState.snapshot())) return;
-        if (debugger != null) debugger.executionChanged(value, mutationGeneration);
-        executionState.publish(this, next);
+        publish(value, false);
     }
 
-    private ExecutionState.Snapshot snapshotValues() {
-        return new ExecutionState.Snapshot(state, busy || closing, timedRunning,
-                cpu == null ? -1 : cpu.getInstructionLocation(), frequencyKhz);
+    private void publish(CPU.RunState value, boolean internalStateChanged) {
+        state = value;
+        if (!internalStateChanged && publishedState == value) return;
+        publishedState = value;
+        if (debugger != null) debugger.executionChanged(value, mutationGeneration);
     }
 
     public CompletableFuture<Void> closeAsync() {
@@ -421,9 +331,6 @@ public final class EmulationController implements Closeable {
             commands.execute(() -> {
                 if (closing) return;
                 closing = true; busy = true; cancelTimer(); publish(state);
-                Update update;
-                while ((update = updates.poll()) != null)
-                    update.result.completeExceptionally(new CancellationException("Machine is closing"));
                 if (active != null) active.requestStop(); else if (pending == null) finishClose();
             });
         } catch (RejectedExecutionException failure) { if (!closed.isDone()) closed.completeExceptionally(failure); }
@@ -431,8 +338,9 @@ public final class EmulationController implements Closeable {
     }
 
     private void finishClose() {
-        if (!closing || active != null || pending != null || updating || shutDown) return;
-        shutDown = true; worker.shutdown(); commands.shutdown(); executionState.unbind(this); closed.complete(null);
+        if (!closing || active != null || pending != null || shutDown) return;
+        shutDown = true;
+        worker.shutdown(); commands.shutdown(); closed.complete(null);
     }
 
     /** Blocking lifecycle hook for non-UI callers. UI callers use closeAsync(). */

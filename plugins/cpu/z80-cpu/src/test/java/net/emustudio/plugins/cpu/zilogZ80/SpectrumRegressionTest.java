@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.cpu.zilogZ80.suite.TimingMemoryStub;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +16,7 @@ public class SpectrumRegressionTest {
 
     @Before
     public void setUp() {
-        memory = new TimingMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory = new TimingMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.setMemory(new byte[65536]);
         ContextZ80Impl context = new ContextZ80Impl();
         context.addPassedCyclesListener(memory);

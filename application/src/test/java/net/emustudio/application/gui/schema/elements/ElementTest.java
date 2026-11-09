@@ -6,7 +6,7 @@ import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.SchemaTestSupport;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.SchemaPoint;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import org.junit.Test;
 
 import java.awt.*;

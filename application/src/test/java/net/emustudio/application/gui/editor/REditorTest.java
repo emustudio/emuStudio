@@ -3,11 +3,11 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.fife.ui.rsyntaxtextarea.Token;
@@ -42,8 +42,8 @@ public class REditorTest extends AbstractSwingTest {
         for (String text : List.of("", "\t", "\t\t", ";X\t")) {
             for (boolean compilerBacked : List.of(false, true)) {
                 Compiler compiler = compilerBacked ? compiler(lexerFor(
-                        token(net.emustudio.emulib.plugins.compiler.Token.COMMENT, 0, text),
-                        token(net.emustudio.emulib.plugins.compiler.Token.EOF, text.length(), "")
+                        token(net.emustudio.emulib.plugin.compiler.Token.COMMENT, 0, text),
+                        token(net.emustudio.emulib.plugin.compiler.Token.EOF, text.length(), "")
                 ), List.of(new FileType("Assembly", "asm"))) : null;
                 REditor editor = createEditor(mock(Dialogs.class), compiler);
                 runOnEdt(() -> editor.textPane().setText(text));
@@ -68,8 +68,8 @@ public class REditorTest extends AbstractSwingTest {
         Dialogs dialogs = mock(Dialogs.class);
         REditor editor = createEditor(dialogs, compiler(
                 lexerFor(
-                        token(net.emustudio.emulib.plugins.compiler.Token.RESERVED, 0, "MOV"),
-                        token(net.emustudio.emulib.plugins.compiler.Token.EOF, 3, "")
+                        token(net.emustudio.emulib.plugin.compiler.Token.RESERVED, 0, "MOV"),
+                        token(net.emustudio.emulib.plugin.compiler.Token.EOF, 3, "")
                 ),
                 List.of(new FileType("Assembly", "asm"))
         ));
@@ -92,7 +92,7 @@ public class REditorTest extends AbstractSwingTest {
                 .thenReturn(Optional.of(output));
 
         REditor editor = createEditor(dialogs, compiler(
-                lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
+                lexerFor(token(net.emustudio.emulib.plugin.compiler.Token.EOF, 0, "")),
                 List.of(new FileType("Assembly", "asm"))
         ));
 
@@ -138,7 +138,7 @@ public class REditorTest extends AbstractSwingTest {
                 .thenReturn(Optional.of(saved));
 
         REditor editor = createEditor(dialogs, compiler(
-                lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
+                lexerFor(token(net.emustudio.emulib.plugin.compiler.Token.EOF, 0, "")),
                 List.of(
                         new FileType("Assembly", "asm"),
                         new FileType("Include", "inc")
@@ -168,7 +168,7 @@ public class REditorTest extends AbstractSwingTest {
                 .thenReturn(Optional.of(target));
 
         REditor editor = createEditor(dialogs, compiler(
-                lexerFor(token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")),
+                lexerFor(token(net.emustudio.emulib.plugin.compiler.Token.EOF, 0, "")),
                 List.of(
                         new FileType("Assembly", "asm"),
                         new FileType("Include", "inc")
@@ -427,12 +427,12 @@ public class REditorTest extends AbstractSwingTest {
         return new CompilerStub(lexer, fileTypes);
     }
 
-    private LexicalAnalyzer lexerFor(net.emustudio.emulib.plugins.compiler.Token... tokens) {
+    private LexicalAnalyzer lexerFor(net.emustudio.emulib.plugin.compiler.Token... tokens) {
         return new TrackingLexicalAnalyzer(tokens);
     }
 
-    private static net.emustudio.emulib.plugins.compiler.Token token(int type, int offset, String text) {
-        return new net.emustudio.emulib.plugins.compiler.Token() {
+    private static net.emustudio.emulib.plugin.compiler.Token token(int type, int offset, String text) {
+        return new net.emustudio.emulib.plugin.compiler.Token() {
             @Override
             public int getType() {
                 return type;

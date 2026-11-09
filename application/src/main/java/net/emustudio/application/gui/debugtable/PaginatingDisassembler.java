@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.LoggerFactory;
 
@@ -474,7 +474,7 @@ public class PaginatingDisassembler {
             try {
                 // A listing ends at its view boundary; wrapped successors belong to flow metadata.
                 return (int) Math.min(addressSpaceSize, (long) location + disassembler.decode(location).length());
-            } catch (net.emustudio.emulib.plugins.cpu.InvalidInstructionException invalid) {
+            } catch (net.emustudio.emulib.plugin.cpu.InvalidInstructionException invalid) {
                 return (int) Math.min(addressSpaceSize, (long) location + 1);
             }
         }

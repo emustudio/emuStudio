@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import org.junit.Test;
 
 import javax.swing.SwingUtilities;
@@ -33,7 +33,7 @@ public class AnalysisTasksTest {
                     }, value -> applied.set(true)));
                     assertTrue(entered.await(2, TimeUnit.SECONDS));
                     if (metadata) {
-                        session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+                        session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                                 7, 1, 0, 1, "comment", "changed", null));
                     } else {
                         session.setBreakpoint(0, true).join();

@@ -2,16 +2,18 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,15 +25,17 @@ import static org.junit.Assert.*;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext observedContext;
 
     @Before
     public void setup() {
         ContextPool contextPool = createNiceMock(ContextPool.class);
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -70,12 +74,13 @@ public class CpuImplTest {
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -86,17 +91,18 @@ public class CpuImplTest {
 
     @SuppressWarnings("unchecked")
     private CpuImpl createInitializedCpuWithMemory(short[] memoryContent) throws PluginInitializationException {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(memoryContent);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(anyLong(), eq(Byte.class))).andReturn(memory).anyTimes();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -121,12 +127,13 @@ public class CpuImplTest {
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemory(0, Byte.class))
                 .andThrow(new ContextNotFoundException("Unexpected memory cell type")).anyTimes();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { observedContext = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        CPUContext execution = createNiceMock(CPUContext.class);
         replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -143,7 +150,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         try {
             initialized.getEngine().CI.set(0);
-            assertEquals(4, initialized.getInstructionLocation());
+            assertEquals(4, observedContext.getInstructionLocation());
         } finally {
             initialized.destroy();
         }
@@ -154,7 +161,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         try {
             initialized.getEngine().CI.set(16);
-            assertEquals(20, initialized.getInstructionLocation());
+            assertEquals(20, observedContext.getInstructionLocation());
         } finally {
             initialized.destroy();
         }
@@ -364,7 +371,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
         } finally {
             Thread.interrupted();
             initialized.destroy();

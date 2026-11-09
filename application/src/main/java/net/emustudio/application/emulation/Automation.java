@@ -4,13 +4,13 @@ package net.emustudio.application.emulation;
 
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.runtime.helpers.Unchecked;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.Unchecked;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,7 +183,7 @@ public class Automation implements Runnable {
                     : completion.get(waitForFinishMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException expected) {
             // CLI observation duration is independent of cooperative lifecycle completion.
-            resultState = execution.snapshot().runState();
+            resultState = execution.getRunState();
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException failure) {
@@ -212,7 +212,7 @@ public class Automation implements Runnable {
                 LOGGER.error("Invalid state ({})", resultState);
                 break;
         }
-        LOGGER.info("Instruction location = {}", String.format("0x%04X", cpu.getInstructionLocation()));
+        LOGGER.info("Instruction location = {}", String.format("0x%04X", execution.cpuContext().getInstructionLocation()));
 
         setProgress("Emulation completed", false);
     }

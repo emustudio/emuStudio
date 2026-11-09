@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -95,7 +95,6 @@ public class EmulatorEngine {
 
     CPU.RunState step(boolean optimize) {
         debugStopped = false;
-        debugger.boundary();
         if (!debugger.begin(IP)) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;
