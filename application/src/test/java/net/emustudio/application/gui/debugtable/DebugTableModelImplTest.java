@@ -449,7 +449,7 @@ public class DebugTableModelImplTest {
         assertEquals(4, model.getLocationAt(1));
         int initialCalls = calls.get();
         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.put(1, 4, true);
+            edit.add(4);
             edit.commit();
         }
         assertEquals(4, model.getLocationAt(1));

@@ -3,6 +3,7 @@
 package net.emustudio.application.debugger.index;
 
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,7 +30,7 @@ public final class ProgramIndex {
     private ProgramIndex(int size, MemoryAnnotations annotationEngine) {
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         layout = new IndexLayout(size);
-        root = new AtomicReference<>(new View(identity, layout, null, new BreakpointIndex(layout, new Breakpoint[0]),
+        root = new AtomicReference<>(new View(identity, layout, null, Set.of(),
                 0, 0, 0, FlowState.NOT_BUILT));
     }
 
@@ -109,9 +110,8 @@ public final class ProgramIndex {
         default boolean sameRevisions(Snapshot other) {
             return contentRevision() == other.contentRevision() && memoryRevision() == other.memoryRevision();
         }
-        /** Enabled execution rules at the CPU-visible address. */
+        /** Whether the CPU-visible address has an execution breakpoint. */
         boolean hasExecutionBreakpoint(int address);
-        void forEachExecutionBreakpoint(int address, Consumer<? super Breakpoint> visitor);
         FlowState flowState();
         /** Exact instruction starts only; unavailable for NOT_BUILT/STALE. */
         Instruction instructionAt(int address);
@@ -141,18 +141,14 @@ public final class ProgramIndex {
 
     public interface BreakpointUpdate extends AutoCloseable {
         /** CPU-visible address only. */
-        BreakpointUpdate put(long id, int address, boolean enabled);
-        BreakpointUpdate remove(long id);
+        BreakpointUpdate add(int address);
+        BreakpointUpdate remove(int address);
+        BreakpointUpdate clear();
         /** Compares only breakpoint revision, preserving latest content/memory state. */
         CommitResult commit();
         @Override void close();
     }
 
-    public interface Breakpoint {
-        long id();
-        int address();
-        boolean enabled();
-    }
     public interface Instruction {
         Range cells();
         InstructionKind kind();
@@ -215,11 +211,11 @@ public final class ProgramIndex {
         final Object identity;
         final IndexLayout layout;
         final FlowGraph flow;
-        final BreakpointIndex breakpoints;
+        final Set<Integer> breakpoints;
         final long contentRevision, breakpointRevision, memoryRevision;
         final FlowState flowState;
 
-        View(Object identity, IndexLayout layout, FlowGraph flow, BreakpointIndex breakpoints, long contentRevision, long breakpointRevision,
+        View(Object identity, IndexLayout layout, FlowGraph flow, Set<Integer> breakpoints, long contentRevision, long breakpointRevision,
              long memoryRevision, FlowState flowState) {
             this.identity = identity;
             this.layout = layout;
@@ -238,12 +234,7 @@ public final class ProgramIndex {
 
         @Override public boolean hasExecutionBreakpoint(int address) {
             layout.checkAddress(address);
-            return breakpoints.has(address);
-        }
-        @Override public void forEachExecutionBreakpoint(int address, Consumer<? super Breakpoint> visitor) {
-            layout.checkAddress(address);
-            Objects.requireNonNull(visitor, "visitor");
-            breakpoints.visit(address, visitor);
+            return breakpoints.contains(address);
         }
         private boolean flowAvailable() { return flowState == FlowState.CURRENT || flowState == FlowState.TRUNCATED; }
         @Override public Instruction instructionAt(int address) {
@@ -282,12 +273,6 @@ public final class ProgramIndex {
                 throw new NullPointerException(name);
             }
             return value;
-        }
-        void validate(boolean valid, String message) {
-            if (!valid) {
-                open = false;
-                throw new IllegalArgumentException(message);
-            }
         }
         public void close() {
             if (writer != Thread.currentThread()) throw new IllegalStateException("Edit is thread-confined");
@@ -349,31 +334,31 @@ public final class ProgramIndex {
 
     private final class BreakpointEdit extends Edit implements BreakpointUpdate {
         final View base;
-        Map<Long, Breakpoint> values;
+        Set<Integer> values;
         BreakpointEdit(View base) { this.base = base; }
-        private Map<Long, Breakpoint> values() {
-            if (values == null) {
-                values = new TreeMap<>();
-                for (Breakpoint value : base.breakpoints.values) values.put(value.id(), value);
-            }
+        private Set<Integer> values() {
+            if (values == null) values = new HashSet<>(base.breakpoints);
             return values;
         }
-        @Override public BreakpointUpdate put(long id, int address, boolean enabled) {
+        @Override public BreakpointUpdate add(int address) {
             requireOpen();
-            validate(address >= 0 && address < layout.size, "Address outside memory layout");
-            values().put(id, new BreakpointValue(id, address, enabled));
+            values().add(address(layout, address));
             return this;
         }
-        @Override public BreakpointUpdate remove(long id) {
+        @Override public BreakpointUpdate remove(int address) {
             requireOpen();
-            values().remove(id);
+            values().remove(address(layout, address));
+            return this;
+        }
+        @Override public BreakpointUpdate clear() {
+            requireOpen();
+            values = new HashSet<>();
             return this;
         }
         @Override public CommitResult commit() {
             requireOpen();
             open = false;
-            BreakpointIndex nextBreakpoints = values == null ? base.breakpoints
-                    : new BreakpointIndex(layout, values.values().toArray(new Breakpoint[0]));
+            Set<Integer> nextBreakpoints = values == null ? base.breakpoints : Set.copyOf(values);
             boolean done = update(current -> current.breakpointRevision != base.breakpointRevision
                     ? null
                     : new View(identity, layout, current.flow, nextBreakpoints, current.contentRevision,
@@ -399,17 +384,6 @@ public final class ProgramIndex {
         }
     }
 
-    private static final class BreakpointValue implements Breakpoint {
-        final long id;
-        final int address;
-        final boolean enabled;
-        BreakpointValue(long id, int address, boolean enabled) {
-            this.id = id; this.address = address; this.enabled = enabled;
-        }
-        @Override public long id() { return id; }
-        @Override public int address() { return address; }
-        @Override public boolean enabled() { return enabled; }
-    }
     private static final class InstructionValue implements Instruction {
         final Range cells;
         final InstructionKind kind;

@@ -48,8 +48,6 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         }
 
     };
-    private final IdentityHashMap<Breakpoint, Long> breakpointIds = new IdentityHashMap<>();
-    private long nextBreakpointId;
     private Breakpoint[] evaluationBreakpoints = new Breakpoint[0];
     private final Map<Integer, MemoryWatchTracker> memoryWatchTrackers = new LinkedHashMap<>();
     private volatile List<MemoryWatchView> memoryWatchSnapshot = List.of();
@@ -554,17 +552,14 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         if (programIndex == null && memory == null && cpu.getAddressSpaceSize() <= 0) return;
         ProgramIndex index = programIndex();
         index.editBreakpoints((base, update) -> {
-            for (long id : breakpointIds.values()) update.remove(id);
+            update.clear();
             for (Breakpoint breakpoint : breakpoints) {
-                if (breakpoint.address >= base.layout().addressSpaceSize()) continue;
-                long id = breakpointIds.computeIfAbsent(breakpoint, ignored -> nextBreakpointId++);
-                update.put(id, breakpoint.address, breakpoint.enabled);
+                if (breakpoint.enabled && breakpoint.address < base.layout().addressSpaceSize())
+                    update.add(breakpoint.address);
             }
             return true;
         });
         evaluationBreakpoints = breakpoints.toArray(new Breakpoint[0]);
-        breakpointIds.keySet().removeIf(breakpoint -> !breakpoints.contains(breakpoint)
-                || breakpoint.address >= index.snapshot().layout().addressSpaceSize());
     }
 
     private synchronized Debugging.Expression expression(String source) {
@@ -654,7 +649,6 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
     private boolean checkBreakpoints(int address) {
         for (Breakpoint breakpoint : evaluationBreakpoints) {
             if (!breakpoint.enabled || breakpoint.address != address) continue;
-            status = String.format("Breakpoint: %04X", address);
             pendingHit = new BreakpointHit(address);
             return true;
         }

@@ -66,7 +66,7 @@ public class InstructionIndexTest {
         InstructionIndex instructions = new InstructionIndex(index::snapshot);
         InstructionIndex.View before = instructions.snapshot();
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-            update.put(1, 0, true);
+            update.add(0);
             update.commit();
         }
         assertSame(before, instructions.snapshot());

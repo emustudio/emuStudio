@@ -36,7 +36,7 @@ public class SparseDebugSessionTest {
             session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
                     99, 1, address, Integer.MAX_VALUE, ProgramIndex.Kinds.LABEL, "last cell", null));
             try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-                update.put(1, address, true);
+                update.add(address);
                 assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
             }
             session.annotations().add(new AnnotationIndex.Entry(address, "metadata", "CODE"));

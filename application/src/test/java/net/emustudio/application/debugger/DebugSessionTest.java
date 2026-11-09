@@ -664,7 +664,7 @@ public class DebugSessionTest {
             assertTrue(machine.beforeStep(1));
             DebugSession.BreakpointHit hit = session.takeBreakpointHit();
             assertEquals(1, hit.address);
-            assertEquals("Breakpoint: 0001", session.status);
+            assertTrue(session.status.isEmpty());
 
             session.setBreakpoint(1, false).join();
             assertTrue(session.breakpoints.isEmpty());

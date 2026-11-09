@@ -39,7 +39,7 @@ public class AnalysisTasksTest {
                                 7, 1, 0, 1, "comment", "changed", null));
                     } else {
                         try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-                            edit.put(7, 0, true).commit();
+                            edit.add(0).commit();
                         }
                     }
                     release.countDown();

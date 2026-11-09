@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Primitive address -> compact payload/list ID table. Zero means absent.
+ * Primitive address -> compact payload ID table. Zero means absent.
  * Each dense address table has an 8 MiB budget (2,097,152 cells).
  * Sparse tables use 1024-cell pages,
  * a two-level directory (at most 2048 top-level entries for an int domain).
@@ -28,20 +28,8 @@ final class AddressTable {
     }
 
     AddressTable(ProgramIndex.Layout layout, List<Segment> entries) {
-        this(layout, entries, 0);
-    }
-
-    static AddressTable bitmapWords(ProgramIndex.Layout layout, Map<Integer, Integer> entries) {
-        return new AddressTable(layout, pointSegments(entries), 6);
-    }
-
-    private AddressTable(ProgramIndex.Layout layout, List<Segment> entries, int cellShift) {
-        int addressUnits = units(layout.addressSpaceSize(), cellShift);
+        int addressUnits = layout.addressSpaceSize();
         partition = entries.isEmpty() ? null : new Partition(addressUnits, addressUnits <= DENSE_CELLS, entries);
-    }
-
-    private static int units(int cells, int shift) {
-        return (int) (((long) cells + (1L << shift) - 1) >>> shift);
     }
 
     private static List<Segment> pointSegments(Map<Integer, Integer> entries) {
