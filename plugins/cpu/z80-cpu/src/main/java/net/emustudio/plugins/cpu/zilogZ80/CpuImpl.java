@@ -9,7 +9,7 @@ import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.annotations.PluginRoot;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -29,7 +29,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     private final InitializerZ80 initializer;
 
     private StatusPanel statusPanel;
-    private Disassembler disassembler;
+    private Decoder disassembler;
     private EmulatorEngine engine;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -59,7 +59,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = initializer.getDisassembler();
+        disassembler = initializer.getDecoder();
         engine = initializer.getEngine();
         context.setEngine(engine);
         context.addPassedCyclesListener(context.frequencyCalculator);
@@ -74,7 +74,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
@@ -106,7 +106,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

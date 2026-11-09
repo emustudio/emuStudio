@@ -3,6 +3,7 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.ValueView;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ViewRow;
@@ -19,6 +20,26 @@ import static org.mockito.Mockito.*;
 
 public class LiveDebuggingTest {
     @Test
+    public void captureModeTracksInstructionAccessAndRecordingNeeds() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
+        try (DebuggerSession session = machine.session(null)) {
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+
+            session.addMemoryWatch(0).join();
+            assertEquals(Debugging.Capture.ACCESSES, machine.captureMode.get());
+
+            session.update(() -> session.record(2)).join();
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+
+            session.update(() -> session.record(0)).join();
+            assertEquals(Debugging.Capture.ACCESSES, machine.captureMode.get());
+
+            session.update(session.memoryWatches::clear).join();
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+        }
+    }
+
+    @Test
     public void recordedHistoryHasNoHiddenByteLimit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         String text = "x".repeat(65536);
@@ -27,7 +48,8 @@ public class LiveDebuggingTest {
         try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.startNewRecording(1000, DebuggerSession.RecordingMode.FIRST, 0, 0)).join();
 
-            for (int i = 0; i < 1001; i++) session.afterStep(true, Optional.of(view));
+            for (int i = 0; i < 1001; i++)
+                session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.of(view));
 
             List<InstructionRecording.Event> retained = session.history();
             assertEquals(1000, retained.size());
@@ -42,7 +64,7 @@ public class LiveDebuggingTest {
         try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("A")).join();
             assertEquals("0", session.watchValues().get("A").text);
-            verify(machine.debug, never()).observe(any(), anyBoolean());
+            verify(machine.debug).observe(any(), eq(Debugging.Capture.INSTRUCTION));
 
             machine.state(CPU.RunState.STATE_RUNNING);
             session.update(() -> machine.values.put("A", 7L)).get(2, TimeUnit.SECONDS);
@@ -62,7 +84,7 @@ public class LiveDebuggingTest {
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.beforeStep();
                 machine.values.put("A", 7L);
-                session.afterStep(true, Optional.empty());
+                session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
                 return CPU.RunState.STATE_STOPPED_BREAK;
             });
 
@@ -167,11 +189,11 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null)) {
             session.update(() -> session.watches.add("unknown")).join();
-            session.afterStep(true, Optional.empty());
+            session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
             assertTrue(session.watchErrors().containsKey("unknown"));
 
             session.update(() -> { session.watches.clear(); session.watches.add("A + 1"); }).join();
-            session.afterStep(true, Optional.empty());
+            session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
 
             assertTrue(session.watchErrors().isEmpty());
             assertEquals("1", session.watchValues().get("A + 1").text);

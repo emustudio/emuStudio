@@ -218,6 +218,7 @@ public final class EmulationController implements Closeable {
                 for (Device device : devices) device.reset();
                 if (cpu != null) {
                     if (operation.location == null) cpu.reset(); else cpu.reset(operation.location);
+                    if (debugger != null) debugger.cpuReset();
                 }
                 return CPU.RunState.STATE_STOPPED_BREAK;
             }, true);
@@ -253,6 +254,7 @@ public final class EmulationController implements Closeable {
                 compilation.run();
                 if (cpu != null) {
                     if (location == null) cpu.reset(); else cpu.reset(location);
+                    if (debugger != null) debugger.cpuReset();
                 }
                 return CPU.RunState.STATE_STOPPED_BREAK;
             }, true, true);

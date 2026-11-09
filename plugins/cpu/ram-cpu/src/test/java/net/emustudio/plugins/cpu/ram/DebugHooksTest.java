@@ -15,6 +15,31 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class DebugHooksTest extends AbstractEngineTest {
+    @Test
+    public void lightObservationCapturesTypedInstructionAndActualNextAddress() {
+        setProgram(instr(RamInstruction.Opcode.HALT, RamInstruction.Direction.DIRECT));
+        replay(input, storage, output);
+        List<Integer> nextAddresses = new ArrayList<>();
+        engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) {
+                assertTrue(completed);
+                assertEquals(0, instruction.orElseThrow().address());
+                assertEquals(1, instruction.orElseThrow().length());
+                assertTrue(instruction.orElseThrow().mnemonic().contains("halt"));
+                assertTrue(capture.isEmpty());
+                nextAddresses.add(nextAddress.orElseThrow());
+                return false;
+            }
+        }, Debugging.Capture.INSTRUCTION);
+
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
+
+        assertEquals(List.of(1), nextAddresses);
+    }
+
     @Test public void recordsTypedInstructionAndStringOperandWithoutByteMemory() {
         setProgram(instr(RamInstruction.Opcode.WRITE, RamInstruction.Direction.CONSTANT, "hello"),
                 instr(RamInstruction.Opcode.HALT, RamInstruction.Direction.DIRECT));
@@ -25,14 +50,14 @@ public class DebugHooksTest extends AbstractEngineTest {
         replay(input, storage, output);
         List<StepView> events = new ArrayList<>();
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return false;
             }
 
             @Override public boolean beforeStep() { return false; }
-}, true);
+}, Debugging.Capture.FULL);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
         assertEquals(2, events.size());
@@ -49,8 +74,8 @@ public class DebugHooksTest extends AbstractEngineTest {
         engine.debugger.observe(new Debugging.Observer() {
             @Override public boolean beforeStep() { return true; }
 
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
-}, true);
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
+}, Debugging.Capture.FULL);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(0, engine.IP.get());
         assertTrue(engine.debugStopped);
@@ -61,11 +86,11 @@ public class DebugHooksTest extends AbstractEngineTest {
         setProgram(instr(RamInstruction.Opcode.HALT, RamInstruction.Direction.DIRECT));
         replay(input, storage, output);
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow(); return true; }
 
             @Override public boolean beforeStep() { return false; }
-}, true);
+}, Debugging.Capture.FULL);
 
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
         assertFalse(engine.debugStopped);
@@ -76,11 +101,11 @@ public class DebugHooksTest extends AbstractEngineTest {
         setProgram();
         replay(input, storage, output);
         engine.debugger.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow(); return true; }
 
             @Override public boolean beforeStep() { return false; }
-}, true);
+}, Debugging.Capture.FULL);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
         assertFalse(engine.debugStopped);
@@ -98,11 +123,11 @@ public class DebugHooksTest extends AbstractEngineTest {
         Debugging.Expression condition = engine.debugger.compile("R0 == \"hello\"");
         engine.debugger.observe(new Debugging.Observer() {
             @Override public boolean beforeStep() { return false; }
-            @Override public boolean afterStep(boolean completed, Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, Optional<StepView> capture) {
                 events.add(capture.orElseThrow());
                 return false;
             }
-        }, true);
+        }, Debugging.Capture.FULL);
 
         engine.step();
 

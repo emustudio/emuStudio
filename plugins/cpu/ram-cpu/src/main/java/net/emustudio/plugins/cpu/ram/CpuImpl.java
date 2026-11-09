@@ -9,12 +9,12 @@ import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.annotations.PluginRoot;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
-import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
+import net.emustudio.plugins.cpu.ram.gui.RamDecoder;
 import net.emustudio.plugins.cpu.ram.gui.RamStatusPanel;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -39,7 +39,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
 
     private EmulatorEngine engine;
     private RamMemoryContext memory;
-    private RamDisassembler disassembler;
+    private RamDecoder disassembler;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -51,15 +51,15 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     @Override
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().get(pluginID, RamMemoryContext.class);
-        disassembler = new RamDisassembler(memory);
+        disassembler = new RamDecoder(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
         context.setEngine(engine);
     }
 
     @Override
-    public List<DebuggerColumn<?>> getDebuggerColumns() {
-        return List.of(new LabelDebugColumn(memory), DebuggerColumn.mnemo(disassembler));
+    public List<DebuggerColumn<?>> getDebuggerColumns(Decoder instructions) {
+        return List.of(new LabelDebugColumn(memory), DebuggerColumn.mnemo(instructions));
     }
 
     @Override
@@ -124,12 +124,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

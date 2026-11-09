@@ -4,7 +4,7 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ class MockHelper {
     private static BoundaryDecoder boundaryDecoder;
 
 
-    static BoundaryDecoder makeBoundaryDecoder(Disassembler disassembler, int... updateLocations) {
+    static BoundaryDecoder makeBoundaryDecoder(Decoder disassembler, int... updateLocations) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(disassembler);
         for (int knownLocation : updateLocations) {
             boundaryDecoder.updateCache(knownLocation);
@@ -36,11 +36,11 @@ class MockHelper {
         return boundaryDecoder;
     }
 
-    static BoundaryDecoder makeBoundaryDecoder(int... updateLocations) {
+    static BoundaryDecoder makeBoundaryDecoder(int... updateLocations) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
         return makeBoundaryDecoder(makeDisassembler(defaultDisassembly()), updateLocations);
     }
 
-    static BoundaryDecoder makeBoundaryDecoderStep(int... updateLocations) {
+    static BoundaryDecoder makeBoundaryDecoderStep(int... updateLocations) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
         return makeBoundaryDecoder(makeDisassembler(defaultStepDisassembly()), updateLocations);
     }
 
@@ -172,7 +172,11 @@ class MockHelper {
         return asm;
     }
 
-    static Disassembler makeDisassembler(int memorySize, int step) {
+    static net.emustudio.emulib.plugin.cpu.DecodedInstruction instruction(int address, int length) {
+        return net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, length, "NOP", "00");
+    }
+
+    static Decoder makeDisassembler(int memorySize, int step) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
         int[] nextPositions = new int[memorySize];
         Arrays.fill(nextPositions, -1);
 
@@ -183,20 +187,20 @@ class MockHelper {
         return makeDisassembler(nextPositions);
     }
 
-    static Disassembler makeDisassembler(int[] nextPositions) {
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(invocation -> {
+    static Decoder makeDisassembler(int[] nextPositions) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
+        Decoder disassembler = mock(Decoder.class);
+        when(disassembler.decode(anyInt())).thenAnswer(invocation -> {
             int position = invocation.getArgument(0);
             int nextPosition = nextPositions[position];
             if (nextPosition == -1) {
                 throw new IndexOutOfBoundsException();
             }
-            return nextPosition;
+            return instruction(position, nextPosition - position);
         });
         return disassembler;
     }
 
-    static Disassembler makeDisassembler(int memorySize, int... nextPositions) {
+    static Decoder makeDisassembler(int memorySize, int... nextPositions) throws net.emustudio.emulib.plugin.cpu.InvalidInstructionException {
         if (memorySize < nextPositions.length) {
             throw new IllegalArgumentException("Memory size < instruction.length");
         }

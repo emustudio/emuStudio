@@ -1,6 +1,9 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 pluginManagement {
+    if (providers.gradleProperty('edigenPluginPath').isPresent()) {
+        includeBuild(providers.gradleProperty('edigenPluginPath').get())
+    }
     repositories {
         maven {
             name = 'Central Portal Snapshots'
@@ -12,6 +15,14 @@ pluginManagement {
 }
 
 rootProject.name = 'emuStudio'
+
+if (providers.gradleProperty('edigenPath').isPresent()) {
+    includeBuild(providers.gradleProperty('edigenPath').get()) {
+        dependencySubstitution {
+            substitute module('net.emustudio:edigen') using project(':')
+        }
+    }
+}
 
 // Develop shared APIs against a local emuLib checkout without publishing a snapshot.
 if (providers.gradleProperty('emuLibPath').isPresent()) {

@@ -5,7 +5,7 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
 import org.junit.Test;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,12 +21,26 @@ import static org.mockito.Mockito.*;
 public class BoundaryDecoderTest {
 
     @Test
-    public void missingPredecessorTraversalRetainsValidatedBoundariesForNextQuery() {
+    public void wrappedExtentAtLargestAddressSpaceClipsListingWithoutOverflow() {
+        int address = Integer.MAX_VALUE - 1;
+        Decoder decoder = at -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(at, 2, "NOP", "00 00");
+        BoundaryDecoder boundaries = new BoundaryDecoder(decoder);
+        boundaries.updateCache(address);
+        List<Integer> next = new ArrayList<>();
+
+        boundaries.traverseForInstructionCount(address, 1, next::add);
+
+        assertEquals(List.of(Integer.MAX_VALUE), next);
+        assertEquals(1, boundaries.getLongestInstructionSize());
+    }
+
+    @Test
+    public void missingPredecessorTraversalRetainsValidatedBoundariesForNextQuery() throws Exception {
         AtomicInteger calls = new AtomicInteger();
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> {
+        Decoder disassembler = mock(Decoder.class);
+        when(disassembler.decode(anyInt())).thenAnswer(call -> {
             calls.incrementAndGet();
-            return (Integer) call.getArgument(0) + 1;
+            return instruction(call.getArgument(0), 1);
         });
         BoundaryDecoder flow = new BoundaryDecoder(disassembler);
         flow.updateCache(0);
@@ -38,19 +52,19 @@ public class BoundaryDecoderTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testCreateInstanceNullDisassemblerThrows() {
+    public void testCreateInstanceNullDisassemblerThrows() throws Exception {
         new BoundaryDecoder(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testTraverseWithFromHigherThanUntilToThrows() {
+    public void testTraverseWithFromHigherThanUntilToThrows() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0, 6);
         boundaryDecoder.traverseUpTo(6, 0, i -> {
         });
     }
 
     @Test
-    public void testTraverseToHigherLocationThanMemorySizeDoesNotThrow() {
+    public void testTraverseToHigherLocationThanMemorySizeDoesNotThrow() throws Exception {
         List<Integer> locations = new ArrayList<>();
 
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
@@ -62,7 +76,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testFlushCache() {
+    public void testFlushCache() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0, 1, 2, 3, 4, 5);
 
         List<Integer> locations = boundaryDecoder.getLocations(0, 5);
@@ -75,12 +89,12 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void getDefaultLongestInstructionSizeIsOne() {
+    public void getDefaultLongestInstructionSizeIsOne() throws Exception {
         assertEquals(1, makeBoundaryDecoder().getLongestInstructionSize());
     }
 
     @Test
-    public void testKnownFromButEmptyUntilTo() {
+    public void testKnownFromButEmptyUntilTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
         List<Integer> locations = boundaryDecoder.getLocations(0, 9);
 
@@ -88,7 +102,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testEmptyFromButKnownTo() {
+    public void testEmptyFromButKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(9);
         List<Integer> locations = boundaryDecoder.getLocations(0, 9);
 
@@ -96,7 +110,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testPreviousFromEmptyUntilTo() {
+    public void testPreviousFromEmptyUntilTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
         List<Integer> locations = boundaryDecoder.getLocations(5, 9);
 
@@ -104,7 +118,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testHigherFromEmptyUntilTo() {
+    public void testHigherFromEmptyUntilTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(3);
         List<Integer> locations = boundaryDecoder.getLocations(0, 5);
 
@@ -112,7 +126,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testKnownFromPreviousUntilTo() {
+    public void testKnownFromPreviousUntilTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(3, 5);
         List<Integer> locations = boundaryDecoder.getLocations(3, 9);
 
@@ -120,7 +134,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testEmptyFromPreviousUntilTo() {
+    public void testEmptyFromPreviousUntilTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(5);
         List<Integer> locations = boundaryDecoder.getLocations(3, 9);
 
@@ -128,7 +142,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testKnownFromUnfitTo() {
+    public void testKnownFromUnfitTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(0, 2);
         List<Integer> locations = boundaryDecoder.getLocations(0, 3);
 
@@ -136,7 +150,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitBeforeKnownFromKnownTo() {
+    public void testUnfitBeforeKnownFromKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(2, 6);
         List<Integer> locations = boundaryDecoder.getLocations(1, 6);
 
@@ -144,7 +158,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitAfterKnownFromKnownTo() {
+    public void testUnfitAfterKnownFromKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(2, 6);
         List<Integer> locations = boundaryDecoder.getLocations(3, 6);
 
@@ -152,7 +166,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitPreviousKnownFromUnfitPreviousKnownTo() {
+    public void testUnfitPreviousKnownFromUnfitPreviousKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(2, 6);
         List<Integer> locations = boundaryDecoder.getLocations(1, 5);
 
@@ -160,7 +174,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitAfterKnownFromUnfitPreviousKnownTo() {
+    public void testUnfitAfterKnownFromUnfitPreviousKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(0, 6);
         List<Integer> locations = boundaryDecoder.getLocations(1, 5);
 
@@ -168,7 +182,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitPreviousKnownFromUnfitAfterKnownTo() {
+    public void testUnfitPreviousKnownFromUnfitAfterKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(2, 6);
         List<Integer> locations = boundaryDecoder.getLocations(1, 7);
 
@@ -176,7 +190,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitAfterKnownFromUnfitAfterKnownTo() {
+    public void testUnfitAfterKnownFromUnfitAfterKnownTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep(0, 6);
         List<Integer> locations = boundaryDecoder.getLocations(1, 7);
 
@@ -184,7 +198,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testUnfitEmptyKnownUnfitEmptyTo() {
+    public void testUnfitEmptyKnownUnfitEmptyTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoderStep();
         List<Integer> locations = boundaryDecoder.getLocations(0, 5);
 
@@ -192,7 +206,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testSelfModificationKnownFromKnownUntilTo() {
+    public void testSelfModificationKnownFromKnownUntilTo() throws Exception {
         int[] disasm = defaultDisassembly();
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 2, 4);
         modify(boundaryDecoder, disasm, 2, 6);
@@ -203,7 +217,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testSelfModificationPreviousKnownFromPreviousKnownUntilTo() {
+    public void testSelfModificationPreviousKnownFromPreviousKnownUntilTo() throws Exception {
         int[] disasm = defaultDisassembly();
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 2, 4);
         modify(boundaryDecoder, disasm, 2, 6);
@@ -214,7 +228,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testSelfModificationAfterKnownFromPreviousKnownUntilTo() {
+    public void testSelfModificationAfterKnownFromPreviousKnownUntilTo() throws Exception {
         int[] disasm = defaultDisassembly();
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 2, 4);
         modify(boundaryDecoder, disasm, 2, 6);
@@ -225,7 +239,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testSelfModificationKnownFromEmptyUntilTo() {
+    public void testSelfModificationKnownFromEmptyUntilTo() throws Exception {
         int[] disasm = defaultDisassembly();
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 2);
         modify(boundaryDecoder, disasm, 2, 6);
@@ -236,7 +250,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testSelfModificationKnownFromKnownUntilToLonger() {
+    public void testSelfModificationKnownFromKnownUntilToLonger() throws Exception {
         int[] disasm = defaultDisassembly();
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 2, 4, 5, 8);
         modify(boundaryDecoder, disasm, 2, 6);
@@ -247,7 +261,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testInvalidLocationBetweenFromAndTo() {
+    public void testInvalidLocationBetweenFromAndTo() throws Exception {
         int[] disasm = defaultDisassembly();
         disasm[1] = 10;
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(makeDisassembler(disasm), 0, 6);
@@ -258,7 +272,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testNegativeFrom() {
+    public void testNegativeFrom() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
 
         List<Integer> locations = boundaryDecoder.getLocations(-10, 0);
@@ -267,7 +281,7 @@ public class BoundaryDecoderTest {
     }
 
     @Test
-    public void testNegativeFromAndNegativeTo() {
+    public void testNegativeFromAndNegativeTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
 
         List<Integer> locations = boundaryDecoder.getLocations(-10, -5);
@@ -276,14 +290,14 @@ public class BoundaryDecoderTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testFromIsHigherThanToBothNegative() {
+    public void testFromIsHigherThanToBothNegative() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
 
         boundaryDecoder.getLocations(-5, -10);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testFromIsHigherThanTo() {
+    public void testFromIsHigherThanTo() throws Exception {
         BoundaryDecoder boundaryDecoder = makeBoundaryDecoder(0);
 
         boundaryDecoder.getLocations(10, 5);

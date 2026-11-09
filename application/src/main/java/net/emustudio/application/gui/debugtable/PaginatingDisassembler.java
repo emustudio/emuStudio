@@ -3,8 +3,7 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.application.debugger.FlowAnalysis;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * Paginating disassembler
  * <p>
- * Disassembler which holds pages of disassembled instructions as they go sequentially from current CPU position
+ * Decoder which holds pages of disassembled instructions as they go sequentially from current CPU position
  * onwards. One page is active at a time, which represents the content of a debug table. Debug table model reads instructions
  * from the active page.
  * <p>
@@ -57,6 +56,7 @@ public class PaginatingDisassembler {
             throw new IllegalArgumentException("Address-space size must be positive");
         }
         this.lastAddress = addressSpaceSize - 1;
+        boundaryDecoder.limitTo(addressSpaceSize);
         bytesPerPageCache.put(0, currentPage);
     }
 
@@ -460,23 +460,23 @@ public class PaginatingDisassembler {
 
     /** Decoding adapter; storage and instruction geometry belong to the shared FlowGraph module. */
     static class BoundaryDecoder {
-        private final Disassembler disassembler;
+        private final Decoder disassembler;
         private final FlowGraph.Boundaries boundaries = new FlowGraph.Boundaries();
-        private FlowAnalysis indexed;
+        private int addressSpaceSize = Integer.MAX_VALUE;
 
-        BoundaryDecoder(Disassembler disassembler) { this.disassembler = Objects.requireNonNull(disassembler); }
+        BoundaryDecoder(Decoder disassembler) { this.disassembler = Objects.requireNonNull(disassembler); }
 
-        synchronized void useAnalysis(FlowAnalysis view) {
-            indexed = Objects.requireNonNull(view);
-            int first = indexed.nextAddress(0);
-            if (first >= 0) boundaries.record(0, first);
-        }
+        synchronized void limitTo(int size) { addressSpaceSize = size; }
 
         private int nextPosition(int location, boolean refresh) {
-            int indexedNext = indexed == null ? -1 : indexed.nextAddress(location);
-            if (indexedNext >= 0) return indexedNext;
             int known = refresh ? -1 : boundaries.nextAt(location);
-            return known >= 0 ? known : disassembler.getNextInstructionPosition(location);
+            if (known >= 0) return known;
+            try {
+                // A listing ends at its view boundary; wrapped successors belong to flow metadata.
+                return (int) Math.min(addressSpaceSize, (long) location + disassembler.decode(location).length());
+            } catch (net.emustudio.emulib.plugin.cpu.InvalidInstructionException invalid) {
+                return (int) Math.min(addressSpaceSize, (long) location + 1);
+            }
         }
 
         private int cachedNext(int location) {
@@ -529,11 +529,6 @@ public class PaginatingDisassembler {
         }
 
         private int resumeBefore(int unknown, FlowGraph.Boundaries.Window known) {
-            int next = indexed == null ? -1 : indexed.nextAddress(unknown);
-            if (next >= 0) {
-                boundaries.record(unknown, next);
-                return unknown;
-            }
             if (known.size() == 0 || known.startAt(0) > unknown) {
                 int previous = boundaries.previousStart(unknown);
                 if (previous >= 0) return traverseUpTo(previous, unknown, ignored -> {});

@@ -135,6 +135,6 @@ public class MemoryStub implements ByteMemoryContext {
 
     @Override
     public Class<Byte> getCellTypeClass() {
-        return null;
+        return Byte.class;
     }
 }

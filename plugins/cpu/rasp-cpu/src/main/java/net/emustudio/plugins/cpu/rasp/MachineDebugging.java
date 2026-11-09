@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugin.cpu.Disassembler;
-import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugin.debugger.*;
 
@@ -15,7 +15,7 @@ import java.util.function.*;
 /** Machine-local expression, editing and capture adapter. Never exposes machine data to the host. */
 public final class MachineDebugging implements Debugging {
     private final String machine;
-    private final Disassembler disassembler;
+    private final Decoder disassembler;
     private final Map<String, Binding> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
@@ -23,13 +23,14 @@ public final class MachineDebugging implements Debugging {
     private Set<String> machineFunctions = Set.of();
     private Map<String, Object> before;
     private String mnemonic = "", opcodes = "";
+    private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
 
-    MachineDebugging(String machine, Disassembler disassembler) {
+    MachineDebugging(String machine, Decoder disassembler) {
         this.machine = machine;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureBefore, this::captureAfter, active -> {});
+        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {});
     }
 
     public void register(String name, int bits, LongSupplier read, LongConsumer write) {
@@ -49,8 +50,9 @@ public final class MachineDebugging implements Debugging {
 
     void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) { machineFunctions = Set.copyOf(names); machineFunction = functions; }
     public boolean isActive() { return support.isActive(); }
+    public boolean requiresAccesses() { return support.requiresAccesses(); }
 
-    @Override public AutoCloseable observe(Observer observer, boolean capture) {
+    @Override public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
@@ -61,13 +63,13 @@ public final class MachineDebugging implements Debugging {
         return inStep;
     }
 
-    public boolean end(boolean completed) {
+    public boolean end(boolean completed, int nextAddress) {
         inStep = false;
-        return support.end(completed);
+        return support.end(completed, Optional.ofNullable(instruction), OptionalInt.of(nextAddress));
     }
 
     public void access(int at, int value, boolean write) {
-        if (inStep) accesses.add(new Access(at, value, write));
+        if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
     }
 
     @Override public Expression compile(String source) {
@@ -102,17 +104,21 @@ public final class MachineDebugging implements Debugging {
         return binding;
     }
 
-    private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
+    private void captureInstruction() {
+        instruction = null;
         try {
-            DisassembledInstruction instruction = disassembler.disassemble(address);
-            mnemonic = instruction.mnemo;
-            opcodes = instruction.opCode;
+            instruction = disassembler.decode(address);
+            mnemonic = instruction.mnemonic();
+            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
             mnemonic = "<invalid instruction>";
             opcodes = "<unavailable>";
         }
+    }
+
+    private void captureBefore() {
+        before = new LinkedHashMap<>();
+        bindings.forEach((name, binding) -> before.put(name, binding.get()));
     }
 
     private StepView captureAfter() {

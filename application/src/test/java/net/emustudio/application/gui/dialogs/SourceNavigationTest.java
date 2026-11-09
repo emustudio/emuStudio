@@ -14,8 +14,8 @@ import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.*;
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.ui.Dialogs;
@@ -371,10 +371,12 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 catch (InterruptedException stopped) { Thread.currentThread().interrupt(); }
                 return CPU.RunState.STATE_RUNNING;
             });
-            Disassembler disassembler = mock(Disassembler.class);
-            when(disassembler.disassemble(anyInt())).thenAnswer(c -> new DisassembledInstruction(c.getArgument(0), "nop", "00"));
-            when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(c -> (Integer) c.getArgument(0) + 2);
-            when(cpu.getDisassembler()).thenReturn(disassembler);
+            Decoder decoder = mock(Decoder.class);
+            when(decoder.decode(anyInt())).thenAnswer(c -> {
+                int address = c.getArgument(0);
+                return DecodedInstruction.of(address, 2, "nop", "00");
+            });
+            when(cpu.getDecoder()).thenReturn(decoder);
             LexicalAnalyzer lexer = mock(LexicalAnalyzer.class);
             when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.CODE_POINT);
             when(compiler.createLexer()).thenReturn(lexer);
@@ -418,8 +420,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             compilerEvents = captor.getValue();
             showInFrame(debugger);
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findButtonByTooltip(debugger, "Analyze from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findButtonByTooltip(debugger, "Analyze from PC")::isEnabled));
+            while (!onEdt(findButtonByTooltip(debugger, "Show observed flow from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
+            assertTrue(onEdt(findButtonByTooltip(debugger, "Show observed flow from PC")::isEnabled));
         }
 
         void compile(boolean fail) {

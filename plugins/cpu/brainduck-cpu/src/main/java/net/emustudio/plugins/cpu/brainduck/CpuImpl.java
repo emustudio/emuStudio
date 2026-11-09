@@ -9,11 +9,10 @@ import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.annotations.PluginRoot;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
-import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.StatusPanel;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
 
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
 
-    private Disassembler disassembler;
+    private Decoder disassembler;
     private ByteMemoryContext memory;
     private EmulatorEngine engine;
     private volatile boolean optimize;
@@ -44,7 +43,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().get(pluginID, ByteMemoryContext.class);
 
-        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
+        disassembler = new DecoderImpl(memory);
         engine = new EmulatorEngine(memory, context, new Profiler(memory));
         context.setEngine(engine);
     }
@@ -118,12 +117,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

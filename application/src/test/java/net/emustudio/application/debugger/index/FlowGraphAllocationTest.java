@@ -75,8 +75,8 @@ public class FlowGraphAllocationTest {
         consumed += ((Instruction) value).cells().start;
     }
 
-    private static void consumeEdge(int from, int to, EdgeKind kind) {
-        consumed += from + to + kind.ordinal();
+    private static void consumeEdge(int from, int to) {
+        consumed += from + to;
     }
 
     private static final class Workload {
@@ -96,11 +96,11 @@ public class FlowGraphAllocationTest {
                 int address = starts[i];
                 addresses[2 * i] = address;
                 addresses[2 * i + 1] = address + 1;
-                instructions.put(address, new Instruction(new Range(address, address + 2), InstructionKind.CALL));
+                instructions.put(address, new Instruction(new Range(address, address + 2)));
                 int next = starts[(i + 1) % starts.length];
-                edges.add(new Edge(address, next, EdgeKind.CALL));
-                edges.add(new Edge(address, address + 1, EdgeKind.FALL_THROUGH));
-                edges.add(new Edge(address, next, EdgeKind.BRANCH));
+                edges.add(new Edge(address, next));
+                edges.add(new Edge(address, address + 1));
+                edges.add(new Edge(address, address + 2));
             }
             graph = new FlowGraph(instructions, edges);
         }

@@ -9,7 +9,7 @@ import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.annotations.PluginRoot;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
@@ -29,7 +29,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
 
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
-    private Disassembler disassembler;
+    private Decoder disassembler;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -47,7 +47,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
         initializer.initialize();
         engine = initializer.getEngine();
         context.setCpu(engine);
-        disassembler = initializer.getDisassembler();
+        disassembler = initializer.getDecoder();
         context.addPassedCyclesListener(context.frequencyCalculator);
         if (applicationApi.getGUI() != null) {
             statusPanel = new StatusPanel(this, context, applicationApi.getGUI(), context);
@@ -65,7 +65,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
@@ -97,7 +97,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

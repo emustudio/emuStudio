@@ -116,7 +116,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         try {
             assertNotNull(initialized.getEngine());
-            assertNotNull(initialized.getDisassembler());
+            assertNotNull(initialized.getDecoder());
         } finally {
             initialized.destroy();
         }
@@ -226,7 +226,7 @@ public class CpuImplTest {
     public void testDebuggerColumns() throws PluginInitializationException {
         CpuImpl initialized = createInitializedCpu();
         try {
-            List<DebuggerColumn<?>> columns = initialized.getDebuggerColumns();
+            List<DebuggerColumn<?>> columns = initialized.getDebuggerColumns(initialized.getDecoder());
             assertEquals(3, columns.size());
             assertEquals("line", columns.get(0).getTitle());
             assertEquals("instruction", columns.get(1).getTitle());
@@ -240,7 +240,7 @@ public class CpuImplTest {
     public void testLineColumnShowsLineNumberInHex() throws PluginInitializationException {
         CpuImpl initialized = createInitializedCpu();
         try {
-            DebuggerColumn<?> line = initialized.getDebuggerColumns().get(0);
+            DebuggerColumn<?> line = initialized.getDebuggerColumns(initialized.getDecoder()).get(0);
             assertEquals(String.class, line.getClassType());
             assertFalse(line.isEditable());
             assertEquals("0000", line.getValue(0));

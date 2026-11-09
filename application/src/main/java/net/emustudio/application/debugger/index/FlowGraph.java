@@ -14,23 +14,17 @@ import java.util.function.Consumer;
  * sequential boundaries for the disassembly adapter. Neither representation invokes a decoder.
  */
 public final class FlowGraph {
-    public enum InstructionKind { LINEAR, JUMP, CALL, RETURN, STOP }
-    public enum EdgeKind { FALL_THROUGH, BRANCH, CALL }
-
     public static final class Instruction {
         private final Range cells;
-        private final InstructionKind kind;
-        public Instruction(Range cells, InstructionKind kind) {
+        public Instruction(Range cells) {
             this.cells = java.util.Objects.requireNonNull(cells);
-            this.kind = java.util.Objects.requireNonNull(kind);
         }
         public Range cells() { return cells; }
-        public InstructionKind kind() { return kind; }
     }
 
     @FunctionalInterface
     public interface EdgeVisitor {
-        void accept(int fromAddress, int toAddress, EdgeKind kind);
+        void accept(int fromAddress, int toAddress);
     }
 
     /** Nonempty half-open range of CPU-visible cells. Addresses are CPU-visible cells. */
@@ -50,9 +44,7 @@ public final class FlowGraph {
         @Override public int hashCode() { return 31 * start + end; }
     }
 
-    private static final FlowGraph.EdgeKind[] KINDS = FlowGraph.EdgeKind.values();
     private final int[] addresses, outgoingOffsets, outgoing;
-    private final byte[] outgoingKinds;
     private final FlowGraph.Instruction[] instructions;
 
     public FlowGraph(Map<Integer, FlowGraph.Instruction> decoded, Set<Edge> edges) {
@@ -78,13 +70,11 @@ public final class FlowGraph {
             outgoingOffsets[i] += outgoingOffsets[i - 1];
         }
         outgoing = new int[edges.size()];
-        outgoingKinds = new byte[edges.size()];
         int[] outCursor = outgoingOffsets.clone();
         for (Edge e : edges) {
             int from = ids.get(e.from) - 1, to = ids.get(e.to) - 1;
             int outAt = outCursor[from]++;
             outgoing[outAt] = to;
-            outgoingKinds[outAt] = (byte) e.kind.ordinal();
         }
     }
 
@@ -102,18 +92,16 @@ public final class FlowGraph {
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {
             int to = outgoing[at];
-            visitor.accept(addresses[id], addresses[to], KINDS[outgoingKinds[at]]);
+            visitor.accept(addresses[id], addresses[to]);
         }
     }
 
     public static final class Edge implements Comparable<Edge> {
         final int from, to;
-        final FlowGraph.EdgeKind kind;
-        public Edge(int from, int to, FlowGraph.EdgeKind kind) { this.from = from; this.to = to; this.kind = kind; }
+        public Edge(int from, int to) { this.from = from; this.to = to; }
         @Override public int compareTo(Edge other) {
             int comparison = Integer.compare(from, other.from);
-            if (comparison == 0) comparison = Integer.compare(to, other.to);
-            return comparison == 0 ? kind.compareTo(other.kind) : comparison;
+            return comparison == 0 ? Integer.compare(to, other.to) : comparison;
         }
     }
 

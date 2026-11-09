@@ -3,7 +3,7 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
+import net.emustudio.plugins.cpu.ram.gui.RamDecoder;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -31,7 +31,7 @@ public class EmulatorEngine {
         this.outputTape = Objects.requireNonNull(outputTape);
         this.storageTape = Objects.requireNonNull(storageTape);
         this.memory = Objects.requireNonNull(memory);
-        debugger = new MachineDebugging("RAM", new RamDisassembler(memory));
+        debugger = new MachineDebugging("RAM", new RamDecoder(memory));
         debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
         debugger.symbol("R0", () -> inspect(storageTape, 0), text -> storageTape.setSymbolAt(0, parseSymbol(text)));
         debugger.symbol("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()),
@@ -105,7 +105,7 @@ public class EmulatorEngine {
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            debugStopped = debugger.end(completed) && completed
+            debugStopped = debugger.end(completed, IP.get()) && completed
                     && result == CPU.RunState.STATE_STOPPED_BREAK;
         }
         return result;

@@ -7,9 +7,8 @@ import net.emustudio.emulib.plugin.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.CPU.RunState;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
-import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
-import net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.plugins.cpu.zilogZ80.gui.DecoderImpl;
 import net.emustudio.emulib.SleepUtils;
 import org.slf4j.Logger;
@@ -49,7 +48,6 @@ public class EmulatorEngine {
     private final ContextZ80Impl context;
     private MemoryContext<Byte> memory;
     public final MachineDebugging debugger;
-    private boolean debuggerActive;
     private final CPUContext.PassedCyclesListener passiveMemoryCycleListener;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
@@ -85,28 +83,17 @@ public class EmulatorEngine {
     // Guards cycle accounting so external memory reads do not affect active CPU timing state.
     private boolean dispatching = false;
 
-    private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
-        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
-        DecoderImpl decoder = new DecoderImpl(memory);
-        return new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int at) {
-                // Generated disassemblers cache by address. A fresh view sees same-PC writes/bank changes.
-                return new DisassemblerImpl(memory, decoder).disassemble(at);
-            }
-            @Override public int getNextInstructionPosition(int at) {
-                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(at);
-            }
-        };
+    private static Decoder recordingDecoder(MemoryContext<Byte> executionMemory) {
+        return new DecoderImpl(MachineDebugging.inspectionMemory(executionMemory));
     }
 
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
-        this.debugger = new MachineDebugging("Z80", memory, recordingDisassembler(memory));
+        this.debugger = new MachineDebugging("Z80", memory, recordingDecoder(memory));
         this.memory = memory;
         MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
         debugger.onActivityChanged(
                 active -> {
                     this.memory = active ? tracedMemory : memory;
-                    this.debuggerActive = active;
                 });
         String[] names = {"B", "C", "D", "E", "H", "L", "M", "A"};
         for (int i = 0; i < names.length; i++) {
@@ -317,7 +304,7 @@ public class EmulatorEngine {
             completed = currentRunState != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && currentRunState != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            if (debugger.end(completed) && completed
+            if (debugger.end(completed, PC) && completed
                     && (currentRunState == CPU.RunState.STATE_RUNNING
                     || currentRunState == CPU.RunState.STATE_STOPPED_BREAK)) {
                 currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -331,7 +318,7 @@ public class EmulatorEngine {
             lastQ = Q;
             Q = 0;
             if (pendingNonMaskableInterrupt.getAndSet(false)) {
-                if (debuggerActive) debugger.describeInterrupt("NMI acknowledge", "");
+                if (debugger.isActive()) debugger.describeInterrupt("NMI acknowledge", "");
                 // NMI acknowledge is an M1 cycle and advances the refresh register.
                 incrementR();
                 if (memory.read(PC) == 0x76) {
@@ -351,15 +338,15 @@ public class EmulatorEngine {
             } else if (interruptDuration > 0) {
                 // Level-triggered interrupt mode (e.g., ZX Spectrum ULA holds INT for N T-states)
                 if (IFF[0] && levelInterrupt != null) {
-                    doInterrupt();
-                    if (debuggerActive) debugger.captureInstruction(PC, "INT acknowledge; ");
+                    if (doInterrupt()) return;
+                    if (debugger.isActive()) debugger.captureInstruction(PC, "INT acknowledge; ");
                 }
                 // Don't discard when IFF[0]=false - signal persists until countdown expires
             } else {
                 // Edge-triggered interrupt mode (original behavior)
                 if (IFF[0] && !pendingInterrupts.isEmpty()) {
-                    doInterrupt();
-                    if (debuggerActive) debugger.captureInstruction(PC, "INT acknowledge; ");
+                    if (doInterrupt()) return;
+                    if (debugger.isActive()) debugger.captureInstruction(PC, "INT acknowledge; ");
                 } else if (!pendingInterrupts.isEmpty()) {
                     pendingInterrupts.poll(); // if interrupts are disabled, ignore it; otherwise stack overflow
                 }
@@ -448,7 +435,7 @@ public class EmulatorEngine {
         }
     }
 
-    private void doInterrupt() throws Throwable {
+    private boolean doInterrupt() throws Throwable {
         byte[] dataBus;
         if (interruptDuration > 0) {
             dataBus = levelInterrupt;
@@ -475,12 +462,18 @@ public class EmulatorEngine {
                         PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
                         memptr = PC;
                         advanceCycles(3);
-                        return;
+                        return false;
                     }
 
                     dispatch(); // must ignore halt
                     if (currentRunState == RunState.STATE_STOPPED_NORMAL) {
                         currentRunState = old_runstate;
+                    }
+                    boolean completed = currentRunState != RunState.STATE_STOPPED_BAD_INSTR
+                            && currentRunState != RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    if (!debugger.nextInstruction(completed, PC)) {
+                        currentRunState = RunState.STATE_STOPPED_BREAK;
+                        return true;
                     }
                 }
                 break;
@@ -517,6 +510,7 @@ public class EmulatorEngine {
                 }
                 break;
         }
+        return false;
     }
 
     private int getReg(int reg) {

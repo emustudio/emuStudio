@@ -15,13 +15,13 @@ public class DecoderImplTest {
     private DecoderImpl decoder;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         memory = new MemoryStub();
         decoder = new DecoderImpl(memory);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorNullMemory() {
+    public void testConstructorNullMemory() throws Exception {
         new DecoderImpl(null);
     }
 
@@ -31,10 +31,10 @@ public class DecoderImplTest {
         DecodedInstruction instr = decoder.decode(0);
 
         assertNotNull(instr);
-        assertEquals(1, instr.image.length);
-        assertEquals(0x00, instr.image[0]);
-        assertEquals("halt", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.HALT, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals(1, instr.length());
+        assertEquals("00", instr.encoding());
+        assertEquals("halt", instr.mnemonic());
+
     }
 
     @Test
@@ -43,10 +43,10 @@ public class DecoderImplTest {
         DecodedInstruction instr = decoder.decode(0);
 
         assertNotNull(instr);
-        assertEquals(1, instr.image.length);
-        assertEquals(0x01, instr.image[0]);
-        assertEquals("> (P++)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___P___, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals(1, instr.length());
+        assertEquals("01", instr.encoding());
+        assertEquals("> (P++)", instr.mnemonic());
+
     }
 
     @Test
@@ -55,8 +55,8 @@ public class DecoderImplTest {
         DecodedInstruction instr = decoder.decode(0);
 
         assertNotNull(instr);
-        assertEquals("< (P--)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___P___, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals("< (P--)", instr.mnemonic());
+
     }
 
     @Test
@@ -64,8 +64,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x03});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals("+ (*P++)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.____P___, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals("+ (*P++)", instr.mnemonic());
+
     }
 
     @Test
@@ -73,8 +73,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x04});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals("- (*P--)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.____P___, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals("- (*P--)", instr.mnemonic());
+
     }
 
     @Test
@@ -82,8 +82,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x05});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals(". (print)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___PRINT_, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals(". (print)", instr.mnemonic());
+
     }
 
     @Test
@@ -91,8 +91,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x06});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals(", (load)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___LOAD_, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals(", (load)", instr.mnemonic());
+
     }
 
     @Test
@@ -100,8 +100,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x07});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals("[ (loop)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___LOOP_, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals("[ (loop)", instr.mnemonic());
+
     }
 
     @Test
@@ -109,8 +109,8 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x08});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals("] (endloop)", instr.strings[DecoderImpl.INSTRUCTION]);
-        assertEquals(DecoderImpl.___ENDLOOP_, instr.constants[DecoderImpl.INSTRUCTION]);
+        assertEquals("] (endloop)", instr.mnemonic());
+
     }
 
     @Test(expected = InvalidInstructionException.class)
@@ -133,7 +133,7 @@ public class DecoderImplTest {
         for (int i = 0; i < program.length; i++) {
             DecodedInstruction instr = decoder.decode(i);
             assertNotNull(instr);
-            assertEquals(1, instr.image.length);
+            assertEquals(1, instr.length());
         }
     }
 
@@ -142,13 +142,13 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x01, 0x03, 0x05});
 
         DecodedInstruction instr0 = decoder.decode(0);
-        assertEquals("> (P++)", instr0.strings[DecoderImpl.INSTRUCTION]);
+        assertEquals("> (P++)", instr0.mnemonic());
 
         DecodedInstruction instr1 = decoder.decode(1);
-        assertEquals("+ (*P++)", instr1.strings[DecoderImpl.INSTRUCTION]);
+        assertEquals("+ (*P++)", instr1.mnemonic());
 
         DecodedInstruction instr2 = decoder.decode(2);
-        assertEquals(". (print)", instr2.strings[DecoderImpl.INSTRUCTION]);
+        assertEquals(". (print)", instr2.mnemonic());
     }
 
     @Test
@@ -166,12 +166,12 @@ public class DecoderImplTest {
     public void testDecodeCacheInvalidationOnMemoryChange() throws InvalidInstructionException {
         memory.setProgram(new byte[]{0x01});
         DecodedInstruction first = decoder.decode(0);
-        assertEquals("> (P++)", first.strings[DecoderImpl.INSTRUCTION]);
+        assertEquals("> (P++)", first.mnemonic());
 
         // Change memory at position 0
         memory.write(0, (byte) 0x03);
         DecodedInstruction second = decoder.decode(0);
-        assertEquals("+ (*P++)", second.strings[DecoderImpl.INSTRUCTION]);
+        assertEquals("+ (*P++)", second.mnemonic());
         assertNotSame(first, second);
     }
 
@@ -180,33 +180,20 @@ public class DecoderImplTest {
         memory.setProgram(new byte[]{0x00});
         DecodedInstruction instr = decoder.decode(0);
 
-        assertEquals(1, instr.image.length);
+        assertEquals(1, instr.length());
     }
 
     @Test
-    public void testDecodeConstantValues() throws InvalidInstructionException {
-        // Verify all instruction constant values
-        byte[] opcodes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-        int[] expectedConstants = {
-                DecoderImpl.HALT,
-                DecoderImpl.___P___,
-                DecoderImpl.___P___,
-                DecoderImpl.____P___,
-                DecoderImpl.____P___,
-                DecoderImpl.___PRINT_,
-                DecoderImpl.___LOAD_,
-                DecoderImpl.___LOOP_,
-                DecoderImpl.___ENDLOOP_
-        };
+    public void capturedInstructionsExposeExtentAndEncodingWithoutGeneratorKeys() throws Exception {
+        for (int opcode = 0; opcode <= 8; opcode++) {
+            memory.write(0, (byte) opcode);
 
-        for (int i = 0; i < opcodes.length; i++) {
-            memory.write(0, opcodes[i]);
-            // Force cache invalidation by creating new decoder
-            DecoderImpl d = new DecoderImpl(memory);
-            DecodedInstruction instr = d.decode(0);
-            assertEquals("Opcode 0x" + Integer.toHexString(opcodes[i] & 0xFF),
-                    expectedConstants[i], instr.constants[DecoderImpl.INSTRUCTION]);
+            DecodedInstruction instruction = decoder.decode(0);
+
+            assertEquals(0, instruction.address());
+            assertEquals(1, instruction.length());
+            assertEquals(String.format("%02X", opcode), instruction.encoding());
+            assertFalse(instruction.mnemonic().isBlank());
         }
     }
 }
-

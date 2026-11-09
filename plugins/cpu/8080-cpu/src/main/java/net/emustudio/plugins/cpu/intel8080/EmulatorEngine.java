@@ -5,9 +5,8 @@ package net.emustudio.plugins.cpu.intel8080;
 import net.emustudio.emulib.plugin.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-import net.emustudio.emulib.plugin.cpu.Disassembler;
-import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
-import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,6 @@ public class EmulatorEngine {
     );
     private MemoryContext<Byte> memory;
     public final MachineDebugging debugger;
-    private boolean debuggerActive;
     private final Context8080Impl context;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
@@ -56,28 +54,17 @@ public class EmulatorEngine {
     private short b3 = 0;
     private int lastOpcode;
 
-    private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
-        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
-        DecoderImpl decoder = new DecoderImpl(memory);
-        return new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int at) {
-                // Generated disassemblers cache by address. A fresh view sees same-PC writes/bank changes.
-                return new DisassemblerImpl(memory, decoder).disassemble(at);
-            }
-            @Override public int getNextInstructionPosition(int at) {
-                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(at);
-            }
-        };
+    private static Decoder recordingDecoder(MemoryContext<Byte> executionMemory) {
+        return new DecoderImpl(MachineDebugging.inspectionMemory(executionMemory));
     }
 
     public EmulatorEngine(MemoryContext<Byte> memory, Context8080Impl context) {
-        this.debugger = new MachineDebugging("8080", memory, recordingDisassembler(memory));
+        this.debugger = new MachineDebugging("8080", memory, recordingDecoder(memory));
         this.memory = memory;
         MemoryContext<Byte> tracedMemory = debugger.instrumentedMemory();
         debugger.onActivityChanged(
                 active -> {
                     this.memory = active ? tracedMemory : memory;
-                    this.debuggerActive = active;
                 });
         String[] names = {"B", "C", "D", "E", "H", "L", "M", "A"};
         for (int i = 0; i < names.length; i++) {
@@ -157,7 +144,7 @@ public class EmulatorEngine {
                     && currentRunState != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             return cycles;
         } finally {
-            if (debugger.end(completed) && completed
+            if (debugger.end(completed, PC) && completed
                     && (currentRunState == CPU.RunState.STATE_RUNNING
                     || currentRunState == CPU.RunState.STATE_STOPPED_BREAK)) {
                 currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -172,7 +159,7 @@ public class EmulatorEngine {
         if (isINT) {
             isINT = false;
             if (INTE) {
-                if (debuggerActive && (RST_MAP.containsKey(b1 & 0xFF) || b1 == 0xCD)) {
+                if (debugger.isActive() && (RST_MAP.containsKey(b1 & 0xFF) || b1 == 0xCD)) {
                     debugger.describeInterrupt("INT " + (b1 == 0xCD ? "CALL" : "RST"),
                             b1 == 0xCD ? String.format("%02X %02X %02X", b1 & 255, b2 & 255, b3 & 255)
                                     : String.format("%02X", b1 & 255));

@@ -13,31 +13,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # PR #473 targets the CPU-context API before the captured-instruction migration.
-      - name: Check out emuLib
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/emuLib
-          ref: a0cd17f12005ace0076dd9b051dd4dd53363ff66
-          path: .ci/emuLib
-      - name: Check out Edigen
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/edigen
-          ref: d291e7a8267dc77f5531b7c5cee1fd2b1c89da3c
-          path: .ci/edigen
-      - name: Check out Edigen Gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/edigen-gradle-plugin
-          ref: cec650655dedd00173d603da4678193b69d7f626
-          path: .ci/edigen-gradle-plugin
-      - name: Check out CPU test suite
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/cpu-testsuite
-          ref: 96e10c697c40e513b8730f472311f2965a82029a
-          path: .ci/cpu-testsuite
       - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
@@ -53,8 +28,4 @@ jobs:
       - name: Build with Gradle
         run: >-
           ./gradlew build
-          -PemuLibPath=${{ github.workspace }}/.ci/emuLib
-          -PcpuTestSuitePath=${{ github.workspace }}/.ci/cpu-testsuite
-          --include-build=${{ github.workspace }}/.ci/edigen-gradle-plugin
-          --include-build=${{ github.workspace }}/.ci/edigen
           -Porg.gradle.java.installations.fromEnv=JAVA_HOME_11_X64,JAVA_HOME_21_X64
