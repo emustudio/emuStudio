@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.AbstractPlugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -215,9 +217,17 @@ public class MemoryImpl extends AbstractPlugin implements Memory {
         if (!guiNotSupported) {
             if (gui == null) {
                 gui = new MemoryGui(parent, this, context, settings, applicationApi.getDialogs(), applicationApi.getGUI(),
-                        applicationApi.getAnnotations(), applicationApi.getExecutionState());
+                        applicationApi.getAnnotations(), findCPUContext());
             }
             gui.setVisible(true);
+        }
+    }
+
+    private CPUContext findCPUContext() {
+        try {
+            return applicationApi.getContextPool().get(pluginID, CPUContext.class);
+        } catch (net.emustudio.emulib.runtime.ContextNotFoundException absent) {
+            return null;
         }
     }
 

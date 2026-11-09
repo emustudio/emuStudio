@@ -2,6 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
+import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
@@ -10,7 +14,9 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import java.util.Optional;
 
-public class RaspCpuContextImpl implements RaspCpuContext {
+public class RaspCpuContextImpl extends AbstractCPUContext implements RaspCpuContext {
+    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
 
@@ -31,7 +37,6 @@ public class RaspCpuContextImpl implements RaspCpuContext {
         outputTape.setTitle("Output tape");
         outputTape.setAcceptTypes(TapeSymbol.Type.NUMBER);
     }
-
 
     @Override
     public AbstractTapeContext getInputTape() {

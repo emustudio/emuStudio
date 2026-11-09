@@ -32,7 +32,6 @@ import java.awt.Window;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CountDownLatch;
@@ -54,14 +53,14 @@ public class DebuggerPanelTest {
             workspace.session.failed("Instruction recording failed: disk full");
             SwingUtilities.invokeAndWait(() -> {
                 button(workspace.panel.watchesPanel(), "Refresh").doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 JLabel diagnostic = component(workspace.panel, JLabel.class, "Debugger diagnostic");
                 assertTrue(diagnostic.isVisible());
                 assertTrue(diagnostic.getText().contains("disk full"));
                 assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().snapshot().runState());
                 SwingUtilities.invokeLater(() -> button(activeRecordingDialog(), "Start").doClick(0));
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertTrue(workspace.session.isRecording());
                 assertTrue(workspace.session.recordingError().isBlank());
@@ -113,7 +112,6 @@ public class DebuggerPanelTest {
         }
     }
 
-
     @Test
     public void completedRecordingsAreRetainedWithoutHiddenBudgets() throws Exception {
         List<InstructionRecording.Event> first = List.of(traceEvent(1, "NOP", "00", true), traceEvent(2, "NOP", "00", true));
@@ -138,7 +136,7 @@ public class DebuggerPanelTest {
                 expression.setText("A ==");
                 assertTrue(button(watches, "Add").isEnabled());
                 button(watches, "Add").doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertEquals(List.of("A =="), workspace.session.watches);
                 JList<?> values = component(watches, JList.class, "Watch expressions and values");
@@ -147,7 +145,7 @@ public class DebuggerPanelTest {
                 values.setSelectedIndex(0);
                 when(workspace.dialogs.readString("Expression", "Edit watch", "A ==")).thenReturn(Optional.of("A"));
                 button(watches, "Edit watch").doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertEquals(List.of("A"), workspace.session.watches);
                 assertTrue(workspace.session.watchErrors().isEmpty());
@@ -189,7 +187,7 @@ public class DebuggerPanelTest {
                     workspace.session.startNewRecording(2, mode, 1, 2);
                     events.forEach(event -> capture(workspace.session, event));
                     workspace.panel.recordingControl().doClick(0);
-                    drainUpdates(workspace);
+                    flushUiEvents();
                     button(workspace.panel, "Analyze recording").doClick(0);
                     String[] names = {"Recording 1 · First 2 instructions", "Recording 2 · Last 2 instructions",
                             "Recording 3 · From 0x0001 to 0x0002", "Recording 4"};
@@ -212,17 +210,17 @@ public class DebuggerPanelTest {
                     assertFalse(workspace.session.isRecording());
                     assertFalse(dialog.isResizable());
                     button(dialog, "Start").doClick(0);
-                    drainUpdates(workspace);
+                    flushUiEvents();
                 });
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertTrue(workspace.session.isRecording());
                 assertEquals("Stop recording", workspace.panel.recordingControl().getToolTipText());
                 assertNotEquals(recordIcon, workspace.panel.recordingControl().getIcon());
                 capture(workspace.session, traceEvent(1, "NOP", "00", true));
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 SwingUtilities.invokeLater(() -> {
                     RecordingDialog dialog = activeRecordingDialog();
                     JRootPane root = dialog.getRootPane();
@@ -232,7 +230,7 @@ public class DebuggerPanelTest {
                             new java.awt.event.ActionEvent(root, 0, "escape"));
                 });
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertFalse(workspace.session.isRecording());
                 assertFalse(workspace.panel.recordingControl().isSelected());
@@ -267,19 +265,19 @@ public class DebuggerPanelTest {
                     mode.setSelectedIndex(0);
                     count.setText("0");
                     button(dialog, "Start").doClick(0);
-                    drainUpdates(workspace);
+                    flushUiEvents();
                     assertFalse(workspace.session.isRecording());
                     verify(workspace.dialogs).showError("Recording limit must be 1..1000000", "Record instructions");
                     mode.setSelectedIndex(2);
                     from.setText("3");
                     to.setText("1");
                     button(dialog, "Start").doClick(0);
-                    drainUpdates(workspace);
+                    flushUiEvents();
                     assertFalse(workspace.session.isRecording());
                     from.setText("0x1");
                     to.setText("2");
                     button(dialog, "Start").doClick(0);
-                    drainUpdates(workspace);
+                    flushUiEvents();
 
                     assertTrue(workspace.session.isRecording());
                     assertEquals(DebugSession.RecordingMode.ADDRESS_RANGE, workspace.session.recordingMode());
@@ -424,17 +422,14 @@ public class DebuggerPanelTest {
         button(workspace.panel, "Analyze recording").doClick(0);
     }
 
-    private static void drainUpdates(Workspace workspace) {
-        java.util.concurrent.CompletableFuture<Void> applied = workspace.session.update(() -> {});
+    private static void flushUiEvents() {
         java.awt.SecondaryLoop loop = java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();
-        applied.whenComplete((ignored, failure) -> SwingUtilities.invokeLater(loop::exit));
+        SwingUtilities.invokeLater(loop::exit);
         Timer timeout = new Timer(5000, event -> loop.exit());
         timeout.setRepeats(false);
         timeout.start();
         try { loop.enter(); }
         finally { timeout.stop(); }
-        assertTrue("Debugger updates should finish", applied.isDone());
-        applied.join();
     }
 
     @Test
@@ -548,7 +543,7 @@ public class DebuggerPanelTest {
                 workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
                 capture(workspace.session, first);
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 timeline.setRowSelectionInterval(0, 0);
                 assertTrue(component(workspace.panel, JTextArea.class, "Recorded instruction state")
@@ -557,7 +552,7 @@ public class DebuggerPanelTest {
                 workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
                 capture(workspace.session, second);
                 workspace.panel.recordingControl().doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");
                 assertEquals(3, recordings.getItemCount());
                 assertEquals(1, timeline.getRowCount());
@@ -592,7 +587,7 @@ public class DebuggerPanelTest {
                     listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
                 JMenuItem toggle = component(popup, JMenuItem.class, "Set breakpoint");
                 toggle.doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertTrue(workspace.session.isBreakpointSet(address));
                 assertFalse(workspace.session.isBreakpointSet(0));
@@ -604,7 +599,7 @@ public class DebuggerPanelTest {
                     listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
                 assertEquals("Unset breakpoint", toggle.getText());
                 toggle.doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertFalse(workspace.session.isBreakpointSet(address));
                 assertEquals(2, workspace.breakpointChanges.get());
@@ -635,7 +630,7 @@ public class DebuggerPanelTest {
 
                 assertFalse(toggle.isEnabled());
                 toggle.doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 assertEquals(0, workspace.breakpointChanges.get());
             });
         }
@@ -1185,7 +1180,7 @@ public class DebuggerPanelTest {
                 list.setSelectedIndex(1);
 
                 button(watches, "Remove memory watch").doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
 
                 assertEquals(List.of(1), workspace.session.memoryWatches);
                 assertEquals(List.of(2), workspace.session.ordinaryBreakpoints());
@@ -1204,13 +1199,13 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 0)));
-                drainUpdates(workspace);
+                flushUiEvents();
                 assertTrue(workspace.session.isBreakpointSet(0));
 
                 Container watches = workspace.panel.watchesPanel();
                 assertNull(findComponent(watches, JComboBox.class, "Memory watch bank"));
                 button(watches, "Add memory watch").doClick(0);
-                drainUpdates(workspace);
+                flushUiEvents();
                 assertEquals(List.of(0), workspace.session.memoryWatches);
             });
         }
@@ -1241,7 +1236,7 @@ public class DebuggerPanelTest {
                 assertEquals("start", workspace.table.getToolTipText(hover));
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 0)));
-                drainUpdates(workspace);
+                flushUiEvents();
                 JComponent rendered = (JComponent) workspace.table.prepareRenderer(
                         workspace.table.getCellRenderer(0, 0), 0, 0);
                 assertTrue(rendered.getFont().isBold());
@@ -1304,14 +1299,14 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.SET, 1)));
-                drainUpdates(workspace);
+                flushUiEvents();
                 assertTrue(workspace.session.isBreakpointSet(1));
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals(1, workspace.breakpointChanges.get());
 
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
                         BreakpointDialog.Operation.UNSET, 1)));
-                drainUpdates(workspace);
+                flushUiEvents();
                 assertFalse(workspace.session.isBreakpointSet(1));
                 assertEquals(2, workspace.breakpointChanges.get());
             });
@@ -1830,7 +1825,6 @@ public class DebuggerPanelTest {
             verify(workspace.dialogs, never()).showError(anyString(), eq("Debugger"));
         }
     }
-
 
     private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");

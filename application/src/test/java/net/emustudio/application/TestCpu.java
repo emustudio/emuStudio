@@ -1,0 +1,37 @@
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
+package net.emustudio.application;
+
+import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
+import org.mockito.MockSettings;
+import static org.mockito.Mockito.*;
+
+/** CPU test doubles expose the same stable context as real CPU plugins. */
+public final class TestCpu {
+    private static final Map<CPU, Context> contexts = Collections.synchronizedMap(new WeakHashMap<>());
+    private TestCpu() { }
+    public static CPU mockCpu() { return mockCpu(withSettings()); }
+    public static CPU mockCpu(MockSettings settings) {
+        CPU cpu = mock(CPU.class, settings);
+        contexts.put(cpu, new Context());
+        return cpu;
+    }
+
+    public static CPUContext context(CPU cpu) { return Objects.requireNonNull(contexts.get(cpu)); }
+
+    public static void publish(CPU cpu, CPU.RunState state) {
+        ((Context) context(cpu)).publish(new CPUSnapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
+    }
+
+    private static final class Context extends AbstractCPUContext {
+        @Override public boolean isPassedCyclesSupported() { return false; }
+        void publish(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    }
+}

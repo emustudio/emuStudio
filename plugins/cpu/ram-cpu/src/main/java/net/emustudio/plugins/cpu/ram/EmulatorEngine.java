@@ -94,7 +94,6 @@ public class EmulatorEngine {
 
     public CPU.RunState step() {
         debugStopped = false;
-        debugger.boundary();
         if (!debugger.begin(IP.get())) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;

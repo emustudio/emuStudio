@@ -2,23 +2,23 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080.gui;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.function.Consumer;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
-    private final ExecutionState execution;
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
     private final Context8080 context;
@@ -44,9 +44,9 @@ public class StatusPanel extends JPanel {
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, ExecutionState execution) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, GUI gui, CPUContext execution) {
         this.gui = gui;
-        this.execution = execution;
+        this.cpuContext = execution;
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();
@@ -60,23 +60,11 @@ public class StatusPanel extends JPanel {
     }
 
     private void setupListeners() {
-        PanelUpdater updater = new PanelUpdater();
-        observeSnapshots(snapshot -> {
-            updater.runStateChanged(snapshot.runState());
-            if (!snapshot.isBusy() && snapshot.runState() != CPU.RunState.STATE_RUNNING) updater.internalStateChanged();
-            SwingUtilities.invokeLater(() -> {
-                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
-                spnFrequency.setEnabled(!snapshot.isBusy());
-            });
-        });
+        observeCPU(new PanelUpdater());
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
-                execution.update(() -> StatusPanel.this.context.setCPUFrequency(i))
-                        .exceptionally(failure -> {
-                            SwingUtilities.invokeLater(() -> spnFrequency.getModel().setValue(context.getCPUFrequency()));
-                            return null;
-                        });
+                context.setCPUFrequency(i);
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }
@@ -191,34 +179,44 @@ public class StatusPanel extends JPanel {
         return field;
     }
 
-    private final class PanelUpdater {
+    private final class PanelUpdater implements CPUContext.CPUListener {
         public void runStateChanged(RunState state) {
             runState = state;
             SwingUtilities.invokeLater(() -> lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString()));
         }
 
         public void internalStateChanged() {
+            CPUSnapshot snapshot = cpuContext.snapshot();
+            SwingUtilities.invokeLater(() -> {
+                lblFrequency.setText(Float.isNaN(snapshot.frequencyKhz()) ? "N/A" : String.format("%.2f kHz", snapshot.frequencyKhz()));
+                spnFrequency.setEnabled(!snapshot.isBusy());
+            });
             updateGUI();
         }
 
     }
 
-    private Consumer<ExecutionState.Snapshot> snapshotListener;
-    private ExecutionState.Subscription subscription;
+    private CPUContext.CPUListener cpuListener;
+    private boolean listening;
+    private final CPUContext cpuContext;
 
-    private void observeSnapshots(Consumer<ExecutionState.Snapshot> listener) {
-        snapshotListener = listener;
-        subscription = execution.subscribe(listener);
+    private void observeCPU(CPUContext.CPUListener listener) {
+        cpuListener = listener;
+        cpuContext.addCPUListener(listener);
+        listening = true;
     }
 
     @Override public void addNotify() {
         super.addNotify();
-        if (subscription == null) subscription = execution.subscribe(snapshotListener);
+        if (!listening) {
+            cpuContext.addCPUListener(cpuListener);
+            listening = true;
+        }
     }
 
     @Override public void removeNotify() {
-        if (subscription != null) subscription.close();
-        subscription = null;
+        if (listening) cpuContext.removeCPUListener(cpuListener);
+        listening = false;
         super.removeNotify();
     }
 }

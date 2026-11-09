@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.plugins.memory.bytemem.TestExecutionState;
-
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 import org.junit.Before;
@@ -21,7 +19,7 @@ public class MouseHandlerTest {
 
     @Before
     public void setUp() {
-        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 1, 0), TestExecutionState.create());
+        tableModel = new MemoryTableModel(TestMemoryContextFactory.create(65536, 1, 0));
     }
 
     @Test(expected = NullPointerException.class)

@@ -2,6 +2,9 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
@@ -15,7 +18,6 @@ import net.emustudio.emulib.plugins.debugger.NavLink;
 import net.emustudio.emulib.plugins.debugger.ValueView;
 import net.emustudio.emulib.plugins.debugger.ViewRow;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -122,21 +124,26 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         @Override public void memoryContentChanged(int from, int to) { requestRefresh(); }
         @Override public void memorySizeChanged() { requestRefresh(); }
     };
-    private ExecutionState.Subscription stateSubscription;
+    private final CPUContext.CPUListener stateListener = new CPUContext.CPUListener() {
+        @Override public void runStateChanged(CPU.RunState state) { refreshExecutionState(); }
+        @Override public void internalStateChanged() { refreshExecutionState(); }
+    };
+
+    private void refreshExecutionState() { executionChanged(session.execution().cpuContext().snapshot()); }
     private final AtomicBoolean executionRefreshQueued = new AtomicBoolean();
-    private volatile ExecutionState.Snapshot pendingExecutionSnapshot;
-    private ExecutionState.Snapshot appliedExecutionSnapshot;
+    private volatile CPUSnapshot pendingExecutionSnapshot;
+    private CPUSnapshot appliedExecutionSnapshot;
     private boolean pendingPcFollow;
     private int pendingPcAddress = -1;
 
-    private void executionChanged(ExecutionState.Snapshot snapshot) {
+    private void executionChanged(CPUSnapshot snapshot) {
         pendingExecutionSnapshot = snapshot;
         if (!executionRefreshQueued.compareAndSet(false, true)) return;
         SwingUtilities.invokeLater(() -> {
             executionRefreshQueued.set(false);
             if (disposed) return;
-            ExecutionState.Snapshot next = pendingExecutionSnapshot;
-            ExecutionState.Snapshot previous = appliedExecutionSnapshot;
+            CPUSnapshot next = pendingExecutionSnapshot;
+            CPUSnapshot previous = appliedExecutionSnapshot;
             appliedExecutionSnapshot = next;
             if (previous == null || previous.runState() != next.runState()
                     || previous.currentInstruction() != next.currentInstruction()) {
@@ -229,7 +236,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         add(debuggerDiagnostic, BorderLayout.SOUTH);
         tabs.addChangeListener(event -> activateView());
         activateView();
-        stateSubscription = session.execution().executionState().subscribe(this::executionChanged);
+        session.execution().cpuContext().addCPUListener(stateListener);
         executionChanged(session.execution().snapshot());
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
@@ -368,7 +375,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationResults.setVisible(false);
         annotationFilter.setComponentPopupMenu(null);
         tasks.close();
-        if (stateSubscription != null) stateSubscription.close();
+        session.execution().cpuContext().removeCPUListener(stateListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
         instructionModel.removeTableModelListener(instructionRows);
     }

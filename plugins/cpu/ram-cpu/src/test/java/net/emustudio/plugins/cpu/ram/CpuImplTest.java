@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -33,7 +33,7 @@ public class CpuImplTest {
     private AbstractTapeContext storageTape;
     private ContextPool contextPool;
     private ApplicationApi applicationApi;
-    private ExecutionState execution;
+    private CPUContext execution;
     private boolean initialized = false;
 
     @Before
@@ -54,11 +54,10 @@ public class CpuImplTest {
 
         replay(contextPool);
 
-        execution = createNiceMock(ExecutionState.class);
+        execution = createNiceMock(CPUContext.class);
         replay(execution);
         applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         replay(applicationApi);
 
         this.cpu = new CpuImpl(0, applicationApi, PluginSettings.UNAVAILABLE);
@@ -230,7 +229,6 @@ public class CpuImplTest {
     public void testGetStatusPanelReturnsPanel() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();
@@ -335,7 +333,6 @@ public class CpuImplTest {
     public void testGetStatusPanelWithGui() throws Exception {
         reset(applicationApi);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         GUI gui = createNiceMock(GUI.class);
         expect(gui.section(anyString(), anyString(), anyString(), anyString()))
                 .andReturn(new JPanel()).anyTimes();

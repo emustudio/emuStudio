@@ -698,7 +698,7 @@ public class DebugSessionTest {
     public void settingsRoundTripWatchesBreakpointsAndMemoryWatches() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+        try (DebugSession session = new DebugSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings)) {
             session.watches.add("A + 1");
             session.memoryWatches.add(1);
             session.setBreakpoint(2, true).join();
@@ -715,7 +715,7 @@ public class DebugSessionTest {
         expected.setProperty("memoryWatch.0", "1");
         assertEquals(expected, saved);
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
+        try (DebugSession session = new DebugSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings)) {
             assertEquals(List.of("A + 1"), session.watches);
             assertEquals(List.of(1), session.memoryWatches);
             assertEquals(List.of(2), session.ordinaryBreakpoints());
@@ -818,7 +818,7 @@ public class DebugSessionTest {
     public void portableDisabledBreakpointSurvivesSettingsRoundTrip() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("portable.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+        try (DebugSession session = new DebugSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings)) {
             session.setBreakpoint(1, true).join();
             session.toggleOrdinaryBreakpoint(1);
             session.update(() -> { }).join();
@@ -826,7 +826,7 @@ public class DebugSessionTest {
         }
 
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
+        try (DebugSession session = new DebugSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings)) {
             assertEquals(List.of(1), session.ordinaryBreakpoints());
             assertFalse(session.isBreakpointSet(1));
             session.toggleOrdinaryBreakpoint(1);
@@ -965,7 +965,7 @@ public class DebugSessionTest {
         engine.put(compiler);
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
 
-        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings, engine)) {
+        try (DebugSession session = new DebugSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings, engine)) {
             assertEquals(List.of("valid first"), session.annotations().entries().stream()
                     .map(entry -> entry.label).collect(java.util.stream.Collectors.toList()));
             assertSame(compiler, engine.get(17, 1));
@@ -1023,17 +1023,17 @@ public class DebugSessionTest {
     public void annotationsAreRestoredRegardlessOfProgramOrLayout() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
-        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+        try (DebugSession session = new DebugSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings)) {
             session.annotations().add(new AnnotationIndex.Entry(1, "buffer", "DATA"));
             session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
-        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings)) {
+        try (DebugSession session = new DebugSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings)) {
             assertEquals("buffer", session.annotations().get(1).label);
             verify(reopened.memory, never()).read(anyInt());
         }
         DebuggerTestMachine otherLayout = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3);
-        try (DebugSession session = new DebugSession(otherLayout.cpu, otherLayout.memory, settings)) {
+        try (DebugSession session = new DebugSession(otherLayout.cpu, net.emustudio.application.TestCpu.context(otherLayout.cpu), otherLayout.memory, settings)) {
             assertEquals("buffer", session.annotations().get(1).label);
         }
     }
@@ -1042,7 +1042,7 @@ public class DebugSessionTest {
     public void metadataLoadRetriesConcurrentChangesAndPreservesLiveUserEdits() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("concurrent-debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
-        try (DebugSession session = new DebugSession(original.cpu, original.memory, settings)) {
+        try (DebugSession session = new DebugSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings)) {
             session.annotations().add(new AnnotationIndex.Entry(0, "disk old", "CODE"));
             session.annotations().add(new AnnotationIndex.Entry(1, "disk retained", "DATA"));
             session.save();
@@ -1062,7 +1062,7 @@ public class DebugSessionTest {
             return revision;
         }).when(engine).revision();
 
-        try (DebugSession session = new DebugSession(reopened.cpu, reopened.memory, settings, engine)) {
+        try (DebugSession session = new DebugSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings, engine)) {
             AnnotationIndex annotations = session.annotations();
 
             assertEquals(Set.of("live edit", "disk old", "disk retained"), annotations.entries().stream()

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -42,6 +43,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private final Context8080.CpuPortDevice[] attachedDevices = new Context8080.CpuPortDevice[IO_PORTS];
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
+    private final Set<CPUContext.CPUListener> deferredCPUListeners = new HashSet<>();
 
     public ZxSpectrumBusImpl() {
         this(ModelProfile.DEFAULT);
@@ -72,14 +74,28 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             cpu.addPassedCyclesListener(listener);
         }
         cpu.addPassedCyclesListener(this);
+        deferredCPUListeners.forEach(cpu::addCPUListener);
 
         deferredAttachments.clear();
         deferredListeners.clear();
+        deferredCPUListeners.clear();
     }
 
     @Override
     public ModelProfile getProfile() {
         return profile;
+    }
+
+    @Override public CPUSnapshot snapshot() { return cpu.snapshot(); }
+
+    @Override public void addCPUListener(CPUContext.CPUListener listener) {
+        if (cpu == null) deferredCPUListeners.add(Objects.requireNonNull(listener));
+        else cpu.addCPUListener(listener);
+    }
+
+    @Override public void removeCPUListener(CPUContext.CPUListener listener) {
+        if (cpu == null) deferredCPUListeners.remove(listener);
+        else cpu.removeCPUListener(listener);
     }
 
     public void reset() {
@@ -335,7 +351,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 cpu.addCycles(cycles);
             }
         }
-
 
         /**
          * Reads the ZX Spectrum floating-bus value for a given frame-relative sample cycle.

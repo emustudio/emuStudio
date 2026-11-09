@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.gui.AbstractSwingTest;
@@ -121,7 +123,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
         computerConfig.setCPU(pluginConfig("cpu", PLUGIN_TYPE.CPU, "cpu.jar", 10, 10));
         computerConfig.setDevices(List.of(pluginConfig("device", PLUGIN_TYPE.DEVICE, "device.jar", 40, 40)));
 
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.getTitle()).thenReturn("Z80 CPU");
         when(cpu.getVersion()).thenReturn("1.0");
         when(cpu.getCopyright()).thenReturn("CPU copyright");

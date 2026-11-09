@@ -160,19 +160,18 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         }
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
-        this(cpu, memory, settings, new MemoryAnnotations());
+    public DebugSession(CPU cpu, net.emustudio.emulib.plugins.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
+        this(cpu, cpuContext, memory, settings, new MemoryAnnotations());
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
-        this(cpu, memory, settings, annotationEngine, null, List.of(), null, new net.emustudio.application.ExecutionStateImpl());
+    public DebugSession(CPU cpu, net.emustudio.emulib.plugins.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+        this(cpu, cpuContext, memory, settings, annotationEngine, null, List.of(), null);
     }
 
-    public DebugSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
+    public DebugSession(CPU cpu, net.emustudio.emulib.plugins.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
                         net.emustudio.emulib.plugins.memory.Memory memoryPlugin,
                         List<net.emustudio.emulib.plugins.device.Device> devices,
-                        net.emustudio.emulib.plugins.compiler.Compiler compiler,
-                        net.emustudio.application.ExecutionStateImpl executionState) throws IOException {
+                        net.emustudio.emulib.plugins.compiler.Compiler compiler) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
@@ -182,7 +181,7 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
         load();
         annotationEngine.addListener(annotationListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
-        execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler, executionState);
+        execution = new net.emustudio.application.emulation.EmulationController(cpu, cpuContext, memoryPlugin, devices, this, compiler);
         update(() -> {}).join();
     }
 
@@ -408,13 +407,10 @@ public final class DebugSession implements AutoCloseable, Debugging.Observer {
             throw new IllegalStateException("Analysis discarded: machine mutation in progress");
     }
 
-    /** Serializes debugger edits without pausing or invalidating program provenance. */
+    /** Applies debugger settings immediately without pausing execution. */
     public CompletableFuture<Void> update(Runnable change) {
-        if (execution.isWorkerThread()) {
-            try { applyUpdate(change); return CompletableFuture.completedFuture(null); }
-            catch (Throwable failure) { return CompletableFuture.failedFuture(failure); }
-        }
-        return execution.update(() -> applyUpdate(change), false);
+        try { applyUpdate(change); return CompletableFuture.completedFuture(null); }
+        catch (RuntimeException failure) { return CompletableFuture.failedFuture(failure); }
     }
 
     private synchronized void applyUpdate(Runnable change) {

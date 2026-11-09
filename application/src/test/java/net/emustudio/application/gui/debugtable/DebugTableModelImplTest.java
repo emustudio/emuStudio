@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.application.debugger.index.ProgramIndex;
@@ -464,7 +466,7 @@ public class DebugTableModelImplTest {
             if (at < 0 || at >= size) throw new IndexOutOfBoundsException();
             return next.applyAsInt(at);
         });
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.getDisassembler()).thenReturn(disassembler);
         when(cpu.getInstructionLocation()).thenReturn(pc);
         when(cpu.getAddressSpaceSize()).thenReturn(size);
@@ -473,7 +475,7 @@ public class DebugTableModelImplTest {
 
     private CPU createCpu(int instructionLocation) {
         Disassembler disassembler = new LinearDisassembler();
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.getDisassembler()).thenReturn(disassembler);
         when(cpu.getInstructionLocation()).thenReturn(instructionLocation);
         when(cpu.getAddressSpaceSize()).thenReturn(256);

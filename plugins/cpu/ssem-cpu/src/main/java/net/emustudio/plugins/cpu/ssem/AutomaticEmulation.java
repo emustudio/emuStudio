@@ -2,8 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
@@ -22,25 +24,33 @@ class AutomaticEmulation {
 
     private final MemoryContext<Byte> memory;
     private final EmulatorEngine engine;
-    private final ExecutionState.Subscription subscription;
+    private final CPUContext context;
+    private final CPUContext.CPUListener listener;
 
     private volatile boolean waitingForStop = false;
 
-    AutomaticEmulation(ExecutionState execution, EmulatorEngine engine, MemoryContext<Byte> memory) {
+    AutomaticEmulation(CPUContext context, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.memory = MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
         this.engine = Objects.requireNonNull(engine);
-        subscription = Objects.requireNonNull(execution).subscribe(state -> {
-            if (state.runState() == CPU.RunState.STATE_RUNNING) {
-                waitingForStop = true;
-            } else if (!state.isBusy() && waitingForStop) {
-                waitingForStop = false;
-                snapshot();
+        this.context = Objects.requireNonNull(context);
+        listener = new CPUContext.CPUListener() {
+            @Override public void runStateChanged(CPU.RunState state) {
+                if (state == CPU.RunState.STATE_RUNNING) waitingForStop = true;
             }
-        });
+
+            @Override public void internalStateChanged() {
+                CPUSnapshot state = context.snapshot();
+                if (state.runState() != CPU.RunState.STATE_RUNNING && !state.isBusy() && waitingForStop) {
+                    waitingForStop = false;
+                    snapshot();
+                }
+            }
+        };
+        context.addCPUListener(listener);
     }
 
     void destroy() {
-        subscription.close();
+        context.removeCPUListener(listener);
     }
 
     private void snapshot() {

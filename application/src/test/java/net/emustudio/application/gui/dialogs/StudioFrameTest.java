@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
@@ -89,10 +91,10 @@ public class StudioFrameTest extends AbstractSwingTest {
         MemoryAnnotations annotations = new MemoryAnnotations();
         annotations.put(new MemoryAnnotations.Entry(4, 1, 12, 13, "source", "",
                 SourceCodePosition.of(2, 0, sourceFile.toString())));
-        CPU sessionCpu = mock(CPU.class);
+        CPU sessionCpu = mockCpu();
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
         when(memoryContext.getSize()).thenReturn(256);
-        DebugSession session = new DebugSession(sessionCpu, memoryContext, null, annotations);
+        DebugSession session = new DebugSession(sessionCpu, net.emustudio.application.TestCpu.context(sessionCpu), memoryContext, null, annotations);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
@@ -132,8 +134,8 @@ public class StudioFrameTest extends AbstractSwingTest {
 
     @Test
     public void enteringEmulatorSelectsDebuggerTab() throws Exception {
-        CPU cpu = mock(CPU.class);
-        try (DebugSession session = new DebugSession(cpu, null, null)) {
+        CPU cpu = mockCpu();
+        try (DebugSession session = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
             StudioFrame frame = createFrame(null, session);
             showFrame(frame);
             JTabbedPane workspace = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);

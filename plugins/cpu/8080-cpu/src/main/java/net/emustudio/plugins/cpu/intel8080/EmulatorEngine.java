@@ -146,7 +146,6 @@ public class EmulatorEngine {
     }
 
     private int dispatch() throws Throwable {
-        debugger.boundary();
         if (!debugger.begin(PC)) {
             currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
             return 0;

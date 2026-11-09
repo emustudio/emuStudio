@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,7 +11,6 @@ import org.junit.Test;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.application.emulation.EmulationControllerTest.*;
 import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
@@ -17,7 +18,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class EmulationControllerSchedulingTest {
-    private final CPU cpu = mock(CPU.class);
+    private final CPU cpu = mockCpu();
     private final BlockingQueue<Integer> steps = new LinkedBlockingQueue<>();
     private final AtomicInteger stepCount = new AtomicInteger();
 
@@ -208,19 +209,17 @@ public class EmulationControllerSchedulingTest {
         RunGate gate = new RunGate(STATE_RUNNING);
         Set<Thread> threads = ConcurrentHashMap.newKeySet();
         CountDownLatch sampled = new CountDownLatch(1);
-        AtomicReference<Thread> commandThread = new AtomicReference<>();
         when(cpu.execute()).thenAnswer(call -> {
             threads.add(Thread.currentThread());
             return gate.run();
         });
         doAnswer(call -> {
             threads.add(Thread.currentThread());
-            assertSame(commandThread.get(), Thread.currentThread());
+            assertEquals("machine-commands", Thread.currentThread().getName());
             sampled.countDown();
-            return null;
+            return Float.NaN;
         }).when(cpu).sampleFrequency();
         EmulationController controller = controller(cpu);
-        controller.executionState().subscribe(listener(state -> commandThread.set(Thread.currentThread())));
 
         try {
             await(controller.start());

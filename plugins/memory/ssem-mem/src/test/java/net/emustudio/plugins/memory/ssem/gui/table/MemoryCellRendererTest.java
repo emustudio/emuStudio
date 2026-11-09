@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.table;
 
-import net.emustudio.plugins.memory.ssem.TestExecutionState;
-
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +20,7 @@ public class MemoryCellRendererTest {
     @Before
     public void setUp() {
         MemoryContextImpl context = new MemoryContextImpl();
-        MemoryTableModel tableModel = new MemoryTableModel(context, TestExecutionState.create());
+        MemoryTableModel tableModel = new MemoryTableModel(context);
         scrollPane = new JScrollPane();
         table = new JTable(tableModel);
         renderer = new MemoryCellRenderer(table.getTableHeader(), tableModel, scrollPane, table.getRowHeight());

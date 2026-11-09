@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.MemoryStub;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
@@ -26,7 +26,11 @@ import static org.junit.Assert.*;
 public class StatusPanelTest {
     private CpuImpl cpu;
     private StatusPanel panel;
-    private java.util.function.Consumer<ExecutionState.Snapshot> observer;
+    private final TestContext context = new TestContext();
+    private static final class TestContext extends AbstractCPUContext {
+        @Override public boolean isPassedCyclesSupported() { return false; }
+        void publish(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -35,14 +39,8 @@ public class StatusPanelTest {
         expect(contextPool.get(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
         replay(contextPool);
-        ExecutionState execution = createNiceMock(ExecutionState.class);
-        expect(execution.subscribe(anyObject())).andAnswer(() -> {
-            observer = getCurrentArgument(0);
-            return () -> {};
-        }).anyTimes();
-        replay(execution);
+
         ApplicationApi application = createNiceMock(ApplicationApi.class);
-        expect(application.getExecutionState()).andReturn(execution).anyTimes();
         expect(application.getContextPool()).andReturn(contextPool).anyTimes();
         replay(application);
         cpu = new CpuImpl(0L, application, PluginSettings.UNAVAILABLE);
@@ -52,7 +50,7 @@ public class StatusPanelTest {
         expect(gui.panel(anyString(), anyString(), anyString())).andAnswer(JPanel::new).anyTimes();
         expect(gui.label(anyString())).andAnswer(() -> new JLabel((String) getCurrentArguments()[0])).anyTimes();
         replay(gui);
-        panel = new StatusPanel(memory, cpu, gui, execution);
+        panel = new StatusPanel(memory, cpu, gui, context);
     }
 
     @After
@@ -91,7 +89,7 @@ public class StatusPanelTest {
     }
 
     private void publish(CPU.RunState state) {
-        observer.accept(new ExecutionState.Snapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
+        context.publish(new CPUSnapshot(state, false, false, cpu.getInstructionLocation(), Float.NaN));
     }
 
     private static boolean containsText(Component component, String text) {

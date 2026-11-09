@@ -84,7 +84,6 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
-        debugger.boundary();
         if (!debugger.begin(CI.get() + 4)) return CPU.RunState.STATE_STOPPED_BREAK;
         boolean completed = false;
         CPU.RunState result;
@@ -157,7 +156,6 @@ public class EmulatorEngine {
     private CPU.RunState op_stp(int lineAddress) {
         return CPU.RunState.STATE_STOPPED_NORMAL;
     }
-
 
     private int readLineAddress(int lineAddress) {
         return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);

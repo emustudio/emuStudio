@@ -2,6 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.gui.actions.emulator.*;
@@ -14,15 +17,12 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
 import java.awt.event.*;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,7 +68,7 @@ public class EmulatorPanel extends JPanel {
     private final DebuggerPanel inspection;
     private final CPU cpu;
     private final EmulationController execution;
-    private ExecutionState.Subscription executionSubscription;
+    private CPUContext.CPUListener executionListener;
     private boolean closed;
     private boolean commandBusy;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -290,15 +290,25 @@ public class EmulatorPanel extends JPanel {
         };
 
         if (cpu != null && execution != null) {
-            executionSubscription = execution.executionState().subscribe(snapshot -> runOnEdt(() -> {
-                if (closed) return;
-                runState = snapshot.runState();
-                if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
-                else setStateNotRunning(runState, snapshot.isTimedRunning());
-                commandBusy = false;
-                updateExecutionControls();
-                refreshDebugTable();
-            }));
+            executionListener = new CPUContext.CPUListener() {
+                @Override public void runStateChanged(CPU.RunState state) {
+                    runOnEdt(() -> {
+                        if (closed) return;
+                        runState = state;
+                        if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
+                        else setStateNotRunning(runState, execution.snapshot().isTimedRunning());
+                    });
+                }
+                @Override public void internalStateChanged() {
+                    runOnEdt(() -> {
+                        if (closed) return;
+                        commandBusy = false;
+                        updateExecutionControls();
+                        refreshDebugTable();
+                    });
+                }
+            };
+            execution.cpuContext().addCPUListener(executionListener);
             runState = execution.snapshot().runState();
         }
 
@@ -338,7 +348,6 @@ public class EmulatorPanel extends JPanel {
         return runState;
     }
 
-
     private void setStatusPanel(JPanel statusPanel) {
         statusWindow.removeAll();
         statusWindow.add(statusPanel, "grow");
@@ -356,7 +365,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
-        if (executionSubscription != null) executionSubscription.close();
+        if (executionListener != null) execution.cpuContext().removeCPUListener(executionListener);
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }
 
@@ -395,7 +404,6 @@ public class EmulatorPanel extends JPanel {
     private void stepCompleted() {
         if (!closed && inspection != null) inspection.stepCompleted();
     }
-
 
     private void setStateNotRunning(CPU.RunState state, boolean timedRunning) {
         resetAction.setEnabled(true);
@@ -466,7 +474,7 @@ public class EmulatorPanel extends JPanel {
 
     private void updateExecutionControls() {
         if (closed || execution == null) return;
-        ExecutionState.Snapshot snapshot = execution.snapshot();
+        CPUSnapshot snapshot = execution.snapshot();
         boolean busy = snapshot.isBusy();
         if (!busy && commandBusy) {
             if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();

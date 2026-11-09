@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ExecutionState;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
@@ -23,13 +23,13 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
 
     private final MemoryTableModel tableModel;
     private final MemoryAnnotations annotations;
-    private final ExecutionState executionState;
+    private final CPUContext executionState;
     private final JList<String> rowHeader;
     private final String[] addresses;
     private int currentPage;
 
     MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight,
-                       MemoryAnnotations annotations, ExecutionState executionState) {
+                       MemoryAnnotations annotations, CPUContext executionState) {
         this.tableModel = Objects.requireNonNull(tableModel);
         this.annotations = annotations;
         this.executionState = executionState;

@@ -2,6 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
@@ -34,6 +38,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
+        applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
     }
 
     @Override
@@ -54,8 +59,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         return memory.getSize();
     }
 
-    @Override
-    public boolean setInstructionLocation(int location) {
+    private boolean setInstructionLocationInternal(int location) {
         if (location < 0) {
             return false;
         }
@@ -72,23 +76,21 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new StatusPanel(memory, this, applicationApi.getGUI(), applicationApi.getExecutionState());
+        return new StatusPanel(memory, this, applicationApi.getGUI(), context);
     }
 
-    @Override
-    public void reset(int adr) {
+    private void resetInternal(int adr) {
         engine.reset(adr);
         LOGGER.debug("Register P was reset to {}", engine.P);
     }
 
-    @Override
-    public RunState execute() {
+    private RunState executeInternal() {
         optimize = true;
         memory.setMemoryNotificationsEnabled(false);
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    RunState tmpRunState = step();
+                    RunState tmpRunState = stepInternal();
                     if (engine.debugStopped) return RunState.STATE_STOPPED_BREAK;
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
@@ -113,8 +115,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
         context.detachDevice();
     }
 
-    @Override
-    public RunState step() throws IOException {
+    private RunState stepInternal() throws IOException {
         return engine.step(optimize);
     }
 
@@ -122,16 +123,60 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public void onBoundary(Runnable callback) { engine.debugger.onBoundary(callback); }
-
-    @Override
     public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
 
-    public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
+    public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     @Override
     public Disassembler getDisassembler() {
         return disassembler;
     }
 
+    private float measuredFrequency = Float.NaN;
+
+    private void publishState(RunState state, boolean busy) {
+        context.publishState(new CPUSnapshot(
+                state, busy, false, getInstructionLocation(), measuredFrequency));
+    }
+
+    private void internalStateChanged() {
+        publishState(context.snapshot().runState(), context.snapshot().isBusy());
+    }
+
+    @Override
+    public RunState execute() {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING, false);
+        try {
+            result = executeInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result, false);
+        }
+    }
+
+    @Override
+    public RunState step() throws IOException {
+        RunState result = RunState.STATE_STOPPED_BAD_INSTR;
+        publishState(RunState.STATE_RUNNING, true);
+        try {
+            result = stepInternal();
+            return result;
+        } finally {
+            publishState(result == RunState.STATE_RUNNING ? RunState.STATE_STOPPED_BREAK : result, false);
+        }
+    }
+
+    @Override
+    public void reset(int adr) {
+        resetInternal(adr);
+        publishState(RunState.STATE_STOPPED_BREAK, false);
+    }
+
+    @Override
+    public boolean setInstructionLocation(int location) {
+        boolean changed = setInstructionLocationInternal(location);
+        if (changed) internalStateChanged();
+        return changed;
+    }
 }

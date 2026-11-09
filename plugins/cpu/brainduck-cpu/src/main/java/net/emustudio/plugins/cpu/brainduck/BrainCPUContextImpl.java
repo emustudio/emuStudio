@@ -2,11 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
+import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
 import java.util.Objects;
 
-class BrainCPUContextImpl implements BrainCPUContext {
+class BrainCPUContextImpl extends AbstractCPUContext implements BrainCPUContext {
+    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
 
     private DeviceContext<Byte> device;
 

@@ -2,12 +2,13 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import org.junit.Test;
-import java.util.concurrent.CompletionStage;
 import java.util.*;
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 import static org.easymock.EasyMock.*;
@@ -112,7 +113,6 @@ public class DebugHooksTest {
         assertFalse(engine.debugStopped);
     }
 
-
     @Test
     public void accumulatorEditorPreservesSignedHexWord() throws Exception {
         MemoryStub memory = new MemoryStub();
@@ -120,11 +120,9 @@ public class DebugHooksTest {
         AbstractTapeContext output = createNiceMock(AbstractTapeContext.class);
         replay(input, output);
         EmulatorEngine engine = new EmulatorEngine(memory, input, output);
-        java.util.function.Function<Runnable, CompletionStage<Void>> update = change -> {
-            change.run();
-            return java.util.concurrent.CompletableFuture.completedFuture(null);
-        };
-        javax.swing.JPanel editor = engine.debugger.editor(update);
+        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
+        org.easymock.EasyMock.replay(context);
+        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
 
         javax.swing.SwingUtilities.invokeAndWait(() -> {
             ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("ACC");

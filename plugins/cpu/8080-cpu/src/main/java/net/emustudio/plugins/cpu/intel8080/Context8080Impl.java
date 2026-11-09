@@ -3,6 +3,8 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugins.cpu.CPUSnapshot;
+
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -13,6 +15,8 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Context8080Impl extends AbstractCPUContext implements Context8080 {
+    void publishState(CPUSnapshot snapshot) { publishSnapshot(snapshot); }
+
     public final static int DEFAULT_FREQUENCY_KHZ = 2000;
     private final static Logger LOGGER = LoggerFactory.getLogger(Context8080Impl.class);
     private final static byte NO_DATA = (byte) 0xFF; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"

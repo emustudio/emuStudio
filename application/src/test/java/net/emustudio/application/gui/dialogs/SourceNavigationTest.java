@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
@@ -29,7 +31,6 @@ import java.awt.BorderLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -338,7 +339,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     private final class Fixture implements AutoCloseable {
         final String text;
         final Path path;
-        final CPU cpu = mock(CPU.class);
+        final CPU cpu = mockCpu();
         final Compiler compiler = mock(Compiler.class);
         final MemoryContext<Byte> memory;
         final MemoryAnnotations annotations = new MemoryAnnotations();
@@ -384,7 +385,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 if (opcode >= 0 && opcode < end) tokens.add(new SourceToken(Token.RESERVED, opcode, "nop", null, null, null));
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
-            session = new DebugSession(cpu, memory, null, annotations);
+            session = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null, annotations);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = mock(DebugTableModel.class);
@@ -447,7 +448,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             bank.set(0);
         }
 
-
         void sourceLine(int line) {
             runOnEdt(() -> editor.setPosition(SourceCodePosition.of(line, 0, path.toString())));
         }
@@ -469,6 +469,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         void running(boolean value) {
             if (value) session.execution().start().join();
             else session.execution().pause().join();
+            net.emustudio.application.TestCpu.publish(cpu, value ? CPU.RunState.STATE_RUNNING : CPU.RunState.STATE_STOPPED_BREAK);
             runOnEdt(() -> {});
         }
 

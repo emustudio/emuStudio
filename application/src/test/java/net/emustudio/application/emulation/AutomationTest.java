@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -43,7 +45,7 @@ public class AutomationTest {
     @Before
     public void setUp() throws Exception {
         compiler = mock(Compiler.class);
-        cpu = mock(CPU.class);
+        cpu = mockCpu();
         when(cpu.execute()).thenReturn(CPU.RunState.STATE_STOPPED_NORMAL);
         dialogs = mock(Dialogs.class);
         input = Files.createTempFile("automation", ".asm");
@@ -206,7 +208,7 @@ public class AutomationTest {
         if (cpu == null) {
             when(c.getExecution()).thenReturn(Optional.empty());
         } else {
-            EmulationController execution = new EmulationController(cpu, memory, devices, null);
+            EmulationController execution = new EmulationController(cpu, net.emustudio.application.TestCpu.context(cpu), memory, devices, null);
             executions.add(execution);
             when(c.getExecution()).thenReturn(Optional.of(execution));
         }

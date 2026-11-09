@@ -2,10 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ExecutionState;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,46 +21,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class EmulationControllerTest {
-    @Test(timeout = 5000)
-    public void liveEditsRunOnCpuWorkerWithoutDebuggingObserverAndRecoverFromFailure() throws Exception {
-        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
-        net.emustudio.emulib.plugins.debugger.Debugging debugging =
-                (net.emustudio.emulib.plugins.debugger.Debugging) cpu;
-        AtomicReference<Runnable> boundary = new AtomicReference<>();
-        AtomicReference<Thread> cpuThread = new AtomicReference<>();
-        AtomicReference<Thread> editThread = new AtomicReference<>();
-        CountDownLatch entered = new CountDownLatch(1);
-        doAnswer(call -> { boundary.set(call.getArgument(0)); return null; }).when(debugging).onBoundary(any());
-        when(cpu.execute()).thenAnswer(call -> {
-            cpuThread.set(Thread.currentThread());
-            entered.countDown();
-            while (!Thread.currentThread().isInterrupted()) {
-                boundary.get().run();
-                Thread.onSpinWait();
-            }
-            return STATE_RUNNING;
-        });
-
-        try (EmulationController controller = controller(cpu)) {
-            await(controller.start());
-            assertTrue(entered.await(2, TimeUnit.SECONDS));
-            IllegalArgumentException failure = new IllegalArgumentException("invalid live edit");
-
-            CompletableFuture<Void> rejected = controller.executionState().update(() -> { throw failure; });
-            assertSame(failure, assertThrows(ExecutionException.class, () -> await(rejected)).getCause());
-            await(controller.executionState().update(() -> editThread.set(Thread.currentThread())));
-
-            assertSame(cpuThread.get(), editThread.get());
-            assertEquals(STATE_RUNNING, controller.snapshot().runState());
-            assertFalse(controller.runCompletion().isDone());
-            verify(debugging, never()).observe(any(), anyBoolean());
-            assertThrows(IllegalStateException.class, () -> boundary.get().run());
-        }
-    }
 
     @Test(timeout = 5000)
     public void startAcknowledgesRunningBeforeExecutionExits() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_STOPPED_NORMAL);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
@@ -76,12 +43,12 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void pauseWaitsForActualExecutionExitBeforePublishingPaused() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_RUNNING);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
         AtomicBoolean prematureNotification = new AtomicBoolean();
-        controller.executionState().subscribe(listener(state -> {
+        controller.cpuContext().addCPUListener(listener(state -> {
             if (state == STATE_STOPPED_BREAK && !gate.exited.get()) prematureNotification.set(true);
         }));
 
@@ -107,7 +74,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void resetRemainsPendingAndResetsMemoryDevicesThenCpuAfterExit() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Memory memory = mock(Memory.class);
         Device device = mock(Device.class);
         RunGate gate = new RunGate(STATE_RUNNING);
@@ -120,7 +87,7 @@ public class EmulationControllerTest {
         doAnswer(call -> { order.add("memory"); return null; }).when(memory).reset();
         doAnswer(call -> { order.add("device"); return null; }).when(device).reset();
         doAnswer(call -> { order.add("cpu"); return null; }).when(cpu).reset(123);
-        EmulationController controller = new EmulationController(cpu, memory, List.of(device), null);
+        EmulationController controller = new EmulationController(cpu, net.emustudio.application.TestCpu.context(cpu), memory, List.of(device), null);
 
         try {
             await(controller.start());
@@ -143,7 +110,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void stoppingRejectsNewMutationsWithoutRunningThemLater() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_RUNNING);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         AtomicBoolean edited = new AtomicBoolean();
@@ -193,7 +160,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void resetDuringManualInstructionWaitsForExitEvenWhenCallerCancelsView() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_STOPPED_BREAK);
         when(cpu.step()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
@@ -221,7 +188,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void cancelledCloseViewCannotAcknowledgeExecutionExit() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_RUNNING);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
@@ -248,7 +215,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void thrownFailureCompletesRunExceptionallyAndStillAllowsReset() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         IllegalStateException failure = new IllegalStateException("broken instruction");
         when(cpu.execute()).thenThrow(failure);
 
@@ -265,7 +232,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void immediatePauseAfterStartDoesNotLoseInterruption() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.execute()).thenAnswer(call -> {
             while (!Thread.currentThread().isInterrupted()) Thread.yield();
             return STATE_RUNNING;
@@ -281,7 +248,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void cancelledRunFutureDoesNotPretendExecutionExited() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_RUNNING);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
@@ -307,11 +274,11 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void closeRemainsPendingUntilExecutionAndPendingResetFinish() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         Memory memory = mock(Memory.class);
         RunGate gate = new RunGate(STATE_RUNNING);
         when(cpu.execute()).thenAnswer(call -> gate.run());
-        EmulationController controller = new EmulationController(cpu, memory, List.of(), null);
+        EmulationController controller = new EmulationController(cpu, net.emustudio.application.TestCpu.context(cpu), memory, List.of(), null);
 
         try {
             await(controller.start());
@@ -339,38 +306,38 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void stepAndPausedEditRunOnSameCpuWorkerAndPublishBeforeCompletion() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         AtomicReference<Thread> stepThread = new AtomicReference<>();
         AtomicReference<Thread> editThread = new AtomicReference<>();
-        List<ExecutionState.Snapshot> states = new CopyOnWriteArrayList<>();
+        AtomicBoolean busyDuringEdit = new AtomicBoolean();
         when(cpu.step()).thenAnswer(call -> {
             stepThread.set(Thread.currentThread());
             return STATE_RUNNING;
         });
 
         try (EmulationController controller = controller(cpu)) {
-            controller.executionState().subscribe(states::add);
-
             assertEquals(STATE_STOPPED_BREAK, await(controller.step()));
-            assertEquals(STATE_STOPPED_BREAK, states.get(states.size() - 1).runState());
-            int changes = states.size();
-            await(controller.mutate(() -> editThread.set(Thread.currentThread())));
+            assertEquals(STATE_STOPPED_BREAK, controller.snapshot().runState());
+            await(controller.mutate(() -> {
+                editThread.set(Thread.currentThread());
+                busyDuringEdit.set(controller.snapshot().isBusy());
+            }));
 
             assertSame(stepThread.get(), editThread.get());
             assertEquals("machine-cpu", editThread.get().getName());
-            assertTrue(states.get(changes).isBusy());
-            assertFalse(states.get(states.size() - 1).isBusy());
-            assertEquals(0, states.get(states.size() - 1).currentInstruction());
+            assertTrue(busyDuringEdit.get());
+            assertFalse(controller.snapshot().isBusy());
+            assertEquals(0, controller.snapshot().currentInstruction());
         }
     }
 
     @Test(timeout = 5000)
     public void throwingListenerCannotStrandCommandCompletion() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         when(cpu.step()).thenReturn(STATE_STOPPED_BREAK);
 
         try (EmulationController controller = controller(cpu)) {
-            controller.executionState().subscribe(listener(state -> { throw new IllegalStateException("observer failed"); }));
+            controller.cpuContext().addCPUListener(listener(state -> { throw new IllegalStateException("observer failed"); }));
 
             assertEquals(STATE_STOPPED_BREAK, await(controller.step()));
             assertEquals(STATE_STOPPED_BREAK, await(controller.reset()));
@@ -379,7 +346,7 @@ public class EmulationControllerTest {
 
     @Test(timeout = 5000)
     public void failedPausedEditPreservesRunStateAndAllowsAnotherEdit() throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         IllegalArgumentException failure = new IllegalArgumentException("register value outside range");
         AtomicBoolean edited = new AtomicBoolean();
 
@@ -395,7 +362,7 @@ public class EmulationControllerTest {
     }
 
     private void assertTerminalResultWins(CPU.RunState terminal, boolean stop) throws Exception {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         RunGate gate = new RunGate(terminal);
         when(cpu.execute()).thenAnswer(call -> gate.run());
         EmulationController controller = controller(cpu);
@@ -417,12 +384,14 @@ public class EmulationControllerTest {
     }
 
     static EmulationController controller(CPU cpu) {
-        return new EmulationController(cpu, null, List.of(), null);
+        return new EmulationController(cpu, net.emustudio.application.TestCpu.context(cpu), null, List.of(), null);
     }
 
-    static java.util.function.Consumer<net.emustudio.emulib.runtime.ExecutionState.Snapshot> listener(
-            java.util.function.Consumer<CPU.RunState> changed) {
-        return snapshot -> changed.accept(snapshot.runState());
+    static CPUContext.CPUListener listener(java.util.function.Consumer<CPU.RunState> changed) {
+        return new CPUContext.CPUListener() {
+            @Override public void runStateChanged(CPU.RunState state) { changed.accept(state); }
+            @Override public void internalStateChanged() { }
+        };
     }
 
     static <T> T await(CompletableFuture<T> future) throws Exception {

@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.debugger.ExpressionParser;
@@ -33,7 +35,6 @@ final class DebuggerTestMachine {
     final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
     final AtomicInteger detached = new AtomicInteger();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
-    private Runnable boundary = () -> { };
     private DebugSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
@@ -46,7 +47,7 @@ final class DebuggerTestMachine {
 
     @SuppressWarnings("unchecked")
     DebuggerTestMachine(byte[][] banks, int commonBoundary, boolean debugging) throws Exception {
-        cpu = debugging ? mock(CPU.class, withSettings().extraInterfaces(Debugging.class)) : mock(CPU.class);
+        cpu = debugging ? mockCpu( withSettings().extraInterfaces(Debugging.class)) : mockCpu();
         debug = debugging ? (Debugging) cpu : null;
         memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
@@ -54,14 +55,12 @@ final class DebuggerTestMachine {
         when(cpu.execute()).thenAnswer(call -> {
             entered.countDown();
             while (!Thread.currentThread().isInterrupted()) {
-                boundary.run();
                 Thread.onSpinWait();
             }
             return result.get();
         });
         when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
         if (debug != null) {
-            doAnswer(call -> { boundary = call.getArgument(0); return null; }).when(debug).onBoundary(any());
             when(debug.compile(anyString())).thenAnswer(call -> ExpressionParser.parse(
                     call.getArgument(0), this::variable, this::function));
             when(debug.observe(any(), anyBoolean())).thenAnswer(call -> {
@@ -132,12 +131,13 @@ final class DebuggerTestMachine {
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
             session.execution().step().join();
         }
+        net.emustudio.application.TestCpu.publish(cpu, state);
     }
 
     DebugSession session(Path settings) throws IOException { return session(settings, true); }
 
     DebugSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebugSession(cpu, withMemory ? memory : null, settings);
+        session = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
         return session;
     }
 

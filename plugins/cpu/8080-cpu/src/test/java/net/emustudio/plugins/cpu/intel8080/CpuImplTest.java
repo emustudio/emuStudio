@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -17,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 public class CpuImplTest {
     private CpuImpl cpu;
+    private CPUContext context;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -26,11 +29,10 @@ public class CpuImplTest {
         expect(memory.getCellTypeClass()).andReturn(Byte.class).anyTimes();
         replay(memory);
         expect(contextPool.getMemory(0, Byte.class)).andReturn(memory).anyTimes();
+        contextPool.register(eq(0L), anyObject(), eq(CPUContext.class));
+        expectLastCall().andAnswer(() -> { context = getCurrentArgument(1); return null; }).once();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
-        replay(execution);
-        expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
@@ -51,6 +53,34 @@ public class CpuImplTest {
     @Test
     public void testCopyrightIsKnown() {
         assertNotEquals("(unknown)", cpu.getCopyright());
+    }
+
+    @Test
+    public void directRegisterEditPublishesInternalCPUStateWithoutChangingRunState() throws Exception {
+        java.util.concurrent.atomic.AtomicInteger changes = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.List<net.emustudio.emulib.plugins.cpu.CPU.RunState> states = new java.util.ArrayList<>();
+        CPUContext.CPUListener listener = new CPUContext.CPUListener() {
+            @Override public void runStateChanged(net.emustudio.emulib.plugins.cpu.CPU.RunState state) { states.add(state); }
+            @Override public void internalStateChanged() { changes.incrementAndGet(); }
+        };
+        context.addCPUListener(listener);
+        javax.swing.JPanel editor = cpu.debuggingEditor();
+
+        javax.swing.SwingUtilities.invokeAndWait(() -> {
+            ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("A");
+            ((javax.swing.JTextField) editor.getComponent(1)).setText("8");
+            ((javax.swing.JButton) editor.getComponent(2)).doClick();
+        });
+
+        assertEquals(8, cpu.getEngine().regs[7]);
+        assertEquals(cpu.getInstructionLocation(), context.snapshot().currentInstruction());
+        assertEquals(1, changes.get());
+        assertEquals(java.util.List.of(), states);
+
+        context.removeCPUListener(listener);
+        cpu.setInstructionLocation(12);
+        assertEquals(12, context.snapshot().currentInstruction());
+        assertEquals(1, changes.get());
     }
 
     @Test

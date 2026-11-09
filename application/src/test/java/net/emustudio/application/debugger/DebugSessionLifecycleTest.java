@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import static net.emustudio.application.TestCpu.mockCpu;
+
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import org.junit.Test;
@@ -15,14 +17,14 @@ import static org.mockito.Mockito.*;
 public class DebugSessionLifecycleTest {
     @Test
     public void failedMemoryListenerRegistrationDoesNotStartAnOrphanScheduler() {
-        CPU cpu = mock(CPU.class);
+        CPU cpu = mockCpu();
         MemoryContext<?> memory = mock(MemoryContext.class);
         when(cpu.getAddressSpaceSize()).thenReturn(1);
         IllegalStateException failure = new IllegalStateException("Memory listener rejected");
         doThrow(failure).when(memory).addMemoryListener(any());
         Set<Thread> before = commandThreads();
 
-        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebugSession(cpu, memory, null)));
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)));
 
         Set<Thread> after = commandThreads();
         after.removeAll(before);

@@ -2,6 +2,8 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+
 import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
@@ -10,7 +12,6 @@ import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import org.junit.Test;
-import java.util.concurrent.CompletionStage;
 
 import java.util.*;
 
@@ -214,24 +215,14 @@ public class DebugHooksTest {
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.run());
     }
 
-
     @Test
-    public void pluginEditorQueuesChangeUntilNextBoundaryWithoutObservation() throws Exception {
+    public void pluginEditorAppliesChangeImmediatelyWithoutObservation() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
-        List<Runnable> pending = new ArrayList<>();
-        java.util.concurrent.CompletableFuture<Void> applied = new java.util.concurrent.CompletableFuture<>();
-        java.util.function.Function<Runnable, CompletionStage<Void>> update = change -> {
-            pending.add(() -> { change.run(); applied.complete(null); });
-            return applied;
-        };
-        engine.debugger.onBoundary(() -> {
-            List<Runnable> changes = new ArrayList<>(pending);
-            pending.clear();
-            changes.forEach(Runnable::run);
-        });
-        javax.swing.JPanel editor = engine.debugger.editor(update);
+        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
+        org.easymock.EasyMock.replay(context);
+        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
 
         javax.swing.SwingUtilities.invokeAndWait(() -> {
             ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("A");
@@ -239,14 +230,18 @@ public class DebugHooksTest {
             ((javax.swing.JButton) editor.getComponent(2)).doClick();
         });
 
-        assertEquals(0, engine.regs[7]);
-        assertFalse(applied.isDone());
-
-        engine.step();
-
-        assertTrue(applied.isDone());
-        assertEquals(9, engine.regs[7]);
+        assertEquals(8, engine.regs[7]);
         assertFalse(engine.debugger.isActive());
+        engine.step();
+        assertEquals(9, engine.regs[7]);
+
+        javax.swing.SwingUtilities.invokeAndWait(() -> {
+            ((javax.swing.JTextField) editor.getComponent(1)).setText("invalid");
+            ((javax.swing.JButton) editor.getComponent(2)).doClick();
+        });
+
+        assertEquals(9, engine.regs[7]);
+        assertEquals("Invalid value", ((javax.swing.JLabel) editor.getComponent(3)).getText());
     }
 
     @Test
@@ -274,7 +269,6 @@ public class DebugHooksTest {
         assertEquals(42, memory.read(0x100).intValue());
     }
 
-
     @Test
     public void captureFailureDisablesCaptureWhileGuestInstructionsContinue() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
@@ -301,7 +295,6 @@ public class DebugHooksTest {
         assertEquals(1, failures.size());
         assertTrue(failures.get(0).contains("Cannot format value"));
     }
-
 
     @Test
     public void adjacentNopsShareFoldIdentityWhileAccessLabelsShowTheirAddresses() throws Exception {
