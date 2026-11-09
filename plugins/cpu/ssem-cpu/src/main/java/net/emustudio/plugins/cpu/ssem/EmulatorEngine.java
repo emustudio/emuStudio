@@ -4,7 +4,6 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.*;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.Bits;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
 import org.slf4j.Logger;
@@ -13,10 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
 
 public class EmulatorEngine {
     public final static double INSTRUCTION_TIME_MS = 1.44;
@@ -46,36 +42,20 @@ public class EmulatorEngine {
     public final AtomicInteger CI = new AtomicInteger();
     private MemoryContext<Byte> memory;
     public final MachineDebugging debugger;
-    private Decoder decoder;
-    private final Bits emptyBits = new Bits(0, 0);
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
-    private static Disassembler recordingDisassembler(MemoryContext<Byte> executionMemory) {
-        MemoryContext<Byte> memory = MachineDebugging.inspectionMemory(executionMemory);
-        DecoderImpl decoder = new DecoderImpl(memory);
-        return new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int address) {
-                // Generated disassemblers cache by address; each capture must see current code.
-                return new DisassemblerImpl(memory, decoder).disassemble(address);
-            }
-            @Override public int getNextInstructionPosition(int address) {
-                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(address);
-            }
-        };
+    private static Decoder recordingDecoder(MemoryContext<Byte> executionMemory) {
+        return new DecoderImpl(MachineDebugging.inspectionMemory(executionMemory));
     }
 
     EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
-        this.decoder = new DecoderImpl(memory);
-        debugger = new MachineDebugging("SSEM", memory, recordingDisassembler(memory));
+        debugger = new MachineDebugging("SSEM", memory, recordingDecoder(memory));
         debugger.register("PC", 32, () -> Integer.toUnsignedLong(CI.get() + 4), value -> CI.set((int) value - 4));
         debugger.register("CI", 32, () -> Integer.toUnsignedLong(CI.get()), value -> CI.set((int) value));
         debugger.register("ACC", 32, () -> Integer.toUnsignedLong(Acc.get()), value -> Acc.set((int) value));
         MemoryContext<Byte> instrumented = debugger.instrumentedMemory();
-        debugger.onActivityChanged(active -> {
-            this.memory = active ? instrumented : memory;
-            this.decoder = new DecoderImpl(this.memory);
-        });
+        debugger.onActivityChanged(active -> this.memory = active ? instrumented : memory);
     }
 
     void reset(int startingPos) {
@@ -94,16 +74,17 @@ public class EmulatorEngine {
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            stop = debugger.end(completed);
+            stop = debugger.end(completed, CI.get() + 4);
         }
         return stop && result == CPU.RunState.STATE_RUNNING ? CPU.RunState.STATE_STOPPED_BREAK : result;
     }
 
     private CPU.RunState stepInstruction() {
         try {
-            DecodedInstruction instruction = decoder.decode(CI.addAndGet(4));
-            int lineAddress = Optional.ofNullable(instruction.bits[LINE]).orElse(emptyBits).reverseBits().number * 4;
-            int opcode = instruction.image[1] & 7;
+            Byte[] instruction = memory.read(CI.addAndGet(4), 4);
+            if (instruction.length != 4) throw new IndexOutOfBoundsException("Truncated instruction");
+            int lineAddress = NumberUtils.reverseBits(instruction[0] & LINE_MASK, 8) * 4;
+            int opcode = instruction[1] & 7;
 
             Method instr = DISPATCH_TABLE[opcode];
             if (instr == null) {
@@ -111,7 +92,7 @@ public class EmulatorEngine {
             }
             return (CPU.RunState) instr.invoke(this, lineAddress);
 
-        } catch (InvalidInstructionException | InvocationTargetException | IllegalAccessException e) {
+        } catch (InvocationTargetException | IllegalAccessException e) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
     }

@@ -19,7 +19,8 @@ import static org.mockito.Mockito.*;
 public class SparseDebuggerSessionTest {
     @Test public void blankWordMemoryCanLoadAndClearWithoutReplacingItsSparseAddressDomain() throws Exception {
         CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
-        when(((net.emustudio.emulib.plugins.debugger.Debugging) cpu).observe(any(), anyBoolean()))
+        when(((net.emustudio.emulib.plugins.debugger.Debugging) cpu).observe(any(),
+                any(net.emustudio.emulib.plugins.debugger.Debugging.Capture.class)))
                 .thenReturn(() -> {});
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
         AtomicInteger occupancy = new AtomicInteger();

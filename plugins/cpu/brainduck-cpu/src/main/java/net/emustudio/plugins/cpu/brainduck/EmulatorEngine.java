@@ -3,12 +3,11 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
-import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.ArrayDeque;
@@ -57,24 +56,15 @@ public class EmulatorEngine {
         };
     }
 
-    private static Disassembler recordingDisassembler(MemoryContext<Byte> memory) {
-        DecoderImpl decoder = new DecoderImpl(memory);
-        return new Disassembler() {
-            @Override public DisassembledInstruction disassemble(int address) {
-                // Generated disassemblers cache by address; each capture must see current code.
-                return new DisassemblerImpl(memory, decoder).disassemble(address);
-            }
-            @Override public int getNextInstructionPosition(int address) {
-                return new DisassemblerImpl(memory, decoder).getNextInstructionPosition(address);
-            }
-        };
+    private static Decoder recordingDecoder(MemoryContext<Byte> memory) {
+        return new DecoderImpl(memory);
     }
 
     EmulatorEngine(ByteMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
         this.rawMemory = Objects.requireNonNull(Objects.requireNonNull(memory.getRawMemory())[0]);
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
-        debugger = new MachineDebugging("BrainDuck", rawBankZero(memory, rawMemory), recordingDisassembler(rawBankZero(memory, rawMemory)));
+        debugger = new MachineDebugging("BrainDuck", rawBankZero(memory, rawMemory), recordingDecoder(rawBankZero(memory, rawMemory)));
         debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
         debugger.register("P", 32, () -> Integer.toUnsignedLong(P), value -> P = (int) value);
         debugger.inspect("LOOP_DEPTH", loopPointers::size);
@@ -112,14 +102,14 @@ public class EmulatorEngine {
         }
         boolean completed = false;
         CPU.RunState result = CPU.RunState.STATE_STOPPED_BAD_INSTR;
-        recording = debugger.isActive();
+        recording = debugger.requiresAccesses();
         try {
             result = stepInstruction(!debugger.isActive() && optimize); // Observed execution retains each guest instruction.
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
             recording = false;
-            debugStopped = debugger.end(completed) && completed
+            debugStopped = debugger.end(completed, IP) && completed
                     && result == CPU.RunState.STATE_STOPPED_BREAK;
         }
         return result;

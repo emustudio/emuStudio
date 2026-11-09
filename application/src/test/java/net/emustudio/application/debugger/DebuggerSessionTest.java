@@ -3,10 +3,10 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
+import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import org.junit.Rule;
@@ -47,46 +47,38 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void breakpointEditsKeepCurrentFlowWhileAnnotationsInvalidateIt() throws Exception {
+    public void breakpointAndAnnotationEditsPreserveObservedFlow() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        Disassembler decoder = mock(Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        stopAtZero(decoder);
         try (DebuggerSession session = machine.session(null)) {
-            FlowAnalysis analysis = session.analyzeFlow(0, 10);
-            long revision = session.programRevision();
-
+            observed(session, 0, 1, "NOP", OptionalInt.of(1));
+            session.analyzeFlow(0, 10);
             session.setBreakpoint(1, true).join();
+            session.annotations().add(new AnnotationIndex.Entry(0, "code", "DATA"));
 
-            assertEquals(revision, session.programRevision());
-            assertSame(analysis, session.flowAnalysis());
-            assertTrue(analysis.isCurrent(session));
-            session.annotations().add(new AnnotationIndex.Entry(1, "data", "DATA"));
-            assertNull(session.flowAnalysis());
-            assertFalse(analysis.isCurrent(session));
-            assertNotNull(analysis.instructionAt(0));
+            FlowAnalysis retained = session.analyzeFlow(0, 10);
+            assertNotNull(retained.instructionAt(0));
+            assertEquals(1, retained.nextAddress(0));
+            assertTrue(retained.isData(0));
             assertTrue(session.isBreakpointSet(1));
         }
     }
 
     @Test
-    public void replacingFlowKeepsCapturedAnalysisImmutable() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        Disassembler decoder = mock(Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        stopAtZero(decoder);
+    public void newObservedInstructionDoesNotMutateCapturedView() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
         try (DebuggerSession session = machine.session(null)) {
+            observed(session, 0, 1, "FIRST", OptionalInt.of(1));
             FlowAnalysis first = session.analyzeFlow(0, 10);
-            when(decoder.getNextInstructionPosition(0)).thenReturn(2);
 
+            observed(session, 0, 2, "SECOND", OptionalInt.of(2));
             FlowAnalysis second = session.analyzeFlow(0, 10);
 
             assertEquals(1, first.nextAddress(0));
+            assertEquals("FIRST", first.mnemonic(0));
             assertEquals(2, second.nextAddress(0));
-            assertFalse(first.isCurrent(session));
-            assertTrue(second.isCurrent(session));
+            assertEquals("SECOND", second.mnemonic(0));
             machine.memoryChanged(1);
-            assertNull(session.flowAnalysis());
+            assertNotNull(session.analyzeFlow(0, 10).instructionAt(0));
             assertEquals(2, second.nextAddress(0));
         }
     }
@@ -261,20 +253,17 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void executionInvalidatesFlowEvenWithoutMemoryNotificationsAndOldSnapshotStaysImmutable() throws Exception {
+    public void executionAndMemoryChangesRetainObservedFlowAndItsCapturedSnapshot() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null)) {
-            Disassembler decoder = mock(Disassembler.class);
-            when(machine.cpu.getDisassembler()).thenReturn(decoder);
-            stopAtZero(decoder);
+            observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
             FlowAnalysis old = session.analyzeFlow(0, 10);
             session.runExecution(() -> machine.state(CPU.RunState.STATE_RUNNING));
-            assertNull(session.flowAnalysis());
-            assertNotNull(old.instructionAt(0));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            long beforeWrite = session.memoryRevision();
             machine.memoryChanged(1);
-            assertTrue(session.memoryRevision() > beforeWrite);
+
+            assertNotNull(session.analyzeFlow(0, 10).instructionAt(0));
+            assertEquals("CAPTURED", old.mnemonic(0));
         }
     }
 
@@ -314,119 +303,70 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void liveFlowDecodeDoesNotHoldSessionMonitorAndRejectsLateMetadata() throws Exception {
+    public void observedFlowFilteringNeverCallsTheLiveDecoder() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        net.emustudio.emulib.plugins.cpu.Disassembler decoder = mock(net.emustudio.emulib.plugins.cpu.Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
-        when(decoder.getFlow(0)).thenAnswer(call -> {
-            entered.countDown(); await(release);
-            return Optional.of(new net.emustudio.emulib.plugins.cpu.InstructionFlow(
-                    net.emustudio.emulib.plugins.cpu.InstructionFlow.Kind.STOP, 1, false, List.of()));
-        });
-        when(decoder.getNextInstructionPosition(0)).thenReturn(1);
-        when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Decoder decoder = mock(Decoder.class);
+        when(machine.cpu.getDecoder()).thenReturn(decoder);
         try (DebuggerSession session = machine.session(null)) {
-            Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
-            await(entered);
-            executor.submit(session::requirePaused).get(2, TimeUnit.SECONDS);
-            session.annotations().add(new AnnotationIndex.Entry(1, "new", "DATA"));
-            release.countDown();
-            ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
-            assertTrue(rejected.getCause() instanceof IllegalStateException);
-            assertNull(session.flowAnalysis());
-        } finally { release.countDown(); executor.shutdownNow(); }
+            observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
+
+            assertEquals("CAPTURED", session.analyzeFlow(0, 10).mnemonic(0));
+            verifyNoInteractions(decoder);
+        }
     }
 
     @Test
-    public void flowUsesCpuWiredDecoderAndLiveOperands() throws Exception {
-        byte[][] cells = {{1, 0}, {7, 0}};
-        DebuggerTestMachine machine = new DebuggerTestMachine(cells, 1);
-        Disassembler decoder = mock(Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        stopAtZero(decoder);
-        when(decoder.disassemble(0)).thenAnswer(call -> new DisassembledInstruction(0,
-                "VALUE " + cells[1][0], ""));
-
+    public void memoryChangesDoNotRewritePreviouslyExecutedInstructionFacts() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{7, 0}}, 2);
         try (DebuggerSession session = machine.session(null)) {
+            observed(session, 0, 1, "VALUE 7", OptionalInt.of(1));
+            machine.memoryChanged(0);
+            session.runMutation(() -> {});
+
             assertEquals("VALUE 7", session.analyzeFlow(0, 10).mnemonic(0));
-
-            cells[1][0] = 8;
-            machine.memoryChanged(0);
-
-            assertEquals("VALUE 8", session.analyzeFlow(0, 10).mnemonic(0));
         }
     }
 
     @Test
-    public void lateFlowCannotPublishAfterMemoryExecutionOrDisposalChanges() throws Exception {
-        for (int change = 0; change < 3; change++) {
-            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-            Disassembler decoder = mock(Disassembler.class);
-            when(machine.cpu.getDisassembler()).thenReturn(decoder);
-            stopAtZero(decoder);
-            CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
-            when(decoder.getFlow(0)).thenAnswer(call -> {
-                entered.countDown(); await(release);
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
-            });
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            DebuggerSession session = machine.session(null);
-            boolean disposed = false;
-            try {
-                Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
-                await(entered);
-                if (change == 0) machine.memoryChanged(1);
-                else if (change == 1) {
-                    machine.state(CPU.RunState.STATE_RUNNING);
-                    machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-                } else {
-                    session.close();
-                    disposed = true;
-                }
-                release.countDown();
-                ExecutionException rejected = assertThrows(ExecutionException.class, () -> result.get(2, TimeUnit.SECONDS));
-                assertTrue(rejected.getCause() instanceof IllegalStateException);
-                assertNull(session.flowAnalysis());
-                verify(decoder, never()).getNextInstructionPosition(anyInt());
-                verify(decoder, never()).disassemble(anyInt());
-            } finally {
-                release.countDown();
-                if (!disposed) session.close();
-                executor.shutdownNow();
-            }
-        }
-    }
-
-    private static void stopAtZero(Disassembler decoder) throws Exception {
-        when(decoder.getFlow(0)).thenReturn(Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of())));
-        when(decoder.getNextInstructionPosition(0)).thenReturn(1);
-        when(decoder.disassemble(0)).thenReturn(new DisassembledInstruction(0, "STOP", "00"));
-    }
-
-    @Test
-    public void decoderRejectsNotifiedMappingChangesAndInterruptedWorkBeforeAnotherRead() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}, {1, 0}}, 1);
-        Disassembler decoder = mock(Disassembler.class);
-        when(machine.cpu.getDisassembler()).thenReturn(decoder);
-        stopAtZero(decoder);
-        when(decoder.getFlow(0)).thenAnswer(call -> {
-            machine.memoryChanged(0);
-            return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
-        });
+    public void defaultObserverRetainsBothBranchOutcomesUntilCpuReset() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[256]}, 256);
         try (DebuggerSession session = machine.session(null)) {
-            IllegalStateException changed = assertThrows(IllegalStateException.class,
-                    () -> session.analyzeFlow(0, 10));
-            assertTrue(changed.getMessage().contains("changed"));
-            verify(decoder, never()).getNextInstructionPosition(anyInt());
-            verify(decoder, never()).disassemble(anyInt());
-            Thread.currentThread().interrupt();
-            try {
-                assertThrows(java.util.concurrent.CancellationException.class,
-                        () -> session.analyzeFlow(0, 10));
-            } finally { Thread.interrupted(); }
-            assertNull(session.flowAnalysis());
+            assertEquals(net.emustudio.emulib.plugins.debugger.Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            assertNull(session.analyzeFlow(100, 10).instructionAt(100));
+            machine.observedStep(DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(103), true);
+            machine.observedStep(DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(200), true);
+            machine.observedStep(DecodedInstruction.of(201, 1, "FAILED", "00"), OptionalInt.of(202), false);
+            machine.observedStep(null, OptionalInt.of(203), true);
+            session.annotations().add(new AnnotationIndex.Entry(100, "entry", "CODE"));
+            machine.memoryChanged(100);
+            session.analyzeFlow(200, 10);
+
+            FlowAnalysis retained = session.analyzeFlow(100, 10);
+            java.util.Set<String> edges = new java.util.HashSet<>();
+            retained.forEachEdge((from, to) -> edges.add(from + "->" + to));
+            assertEquals(Set.of("100->103", "100->200"), edges);
+            assertNull(retained.instructionAt(201));
+
+            session.execution().reset().get(2, TimeUnit.SECONDS);
+
+            assertNull(session.analyzeFlow(100, 10).instructionAt(100));
+            assertEquals("entry", session.annotations().get(100).label);
+        }
+    }
+
+
+    @Test
+    public void failedOrUncapturedStepsDoNotInventExecutedInstructions() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
+        try (DebuggerSession session = machine.session(null)) {
+            session.afterStep(false, Optional.of(DecodedInstruction.of(0, 1, "FAILED", "00")),
+                    OptionalInt.of(1), Optional.empty());
+            session.afterStep(true, Optional.empty(), OptionalInt.of(1), Optional.empty());
+
+            assertNull(session.analyzeFlow(0, 10).instructionAt(0));
+
+            observed(session, 0, 1, "DONE", OptionalInt.empty());
+            assertEquals("DONE", session.analyzeFlow(0, 10).mnemonic(0));
         }
     }
 
@@ -524,14 +464,14 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0x3E, 0x11}}, 2);
         try (DebuggerSession session = machine.session(null)) {
             session.addMemoryWatch(1).join();
-            verify(machine.debug).observe(eq(session), anyBoolean());
+            verify(machine.debug, atLeastOnce()).observe(eq(session), any(Debugging.Capture.class));
 
             assertFalse(machine.beforeStep(0));
             machine.accessed(0, true);
-            assertFalse(session.afterStep(true, Optional.empty()));
+            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
             assertFalse(machine.beforeStep(0));
             machine.accessed(1, false);
-            assertFalse(session.afterStep(true, Optional.empty()));
+            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
             session.refreshWatches().join();
 
             DebuggerSession.MemoryWatchView view = session.memoryWatchValues().get(0);
@@ -545,7 +485,7 @@ public class DebuggerSessionTest {
 
             assertFalse(machine.beforeStep(1));
             machine.accessed(1, true);
-            assertFalse(session.afterStep(true, Optional.empty()));
+            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
             session.refreshWatches().join();
             view = session.memoryWatchValues().get(0);
             assertEquals(1, view.lastWritePc);
@@ -584,7 +524,7 @@ public class DebuggerSessionTest {
             capture(session, instruction(4));
             assertFalse(session.isRecording());
             assertEquals(List.of(second, third), views(session));
-            verify(machine.debug, atLeastOnce()).observe(eq(session), anyBoolean());
+            verify(machine.debug, atLeastOnce()).observe(eq(session), any(Debugging.Capture.class));
             assertTrue(machine.detached.get() > 0);
         }
     }
@@ -689,7 +629,7 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void portableBreakpointAddressesAreUniqueAndControlProbeAttachment() throws Exception {
+    public void portableBreakpointAddressesAreUniqueWhileInstructionObservationRemainsAttached() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null)) {
             session.setBreakpoint(1, true).join();
@@ -703,8 +643,8 @@ public class DebuggerSessionTest {
 
             session.setBreakpoint(1, false).join();
             assertTrue(session.breakpoints.isEmpty());
-            verify(machine.debug, atLeastOnce()).observe(eq(session), anyBoolean());
-            assertTrue(machine.detached.get() > 0);
+            verify(machine.debug, atLeastOnce()).observe(eq(session), any(Debugging.Capture.class));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
         }
     }
 
@@ -1053,12 +993,16 @@ public class DebuggerSessionTest {
         }
     }
 
+    private static void observed(DebuggerSession session, int address, int length, String mnemonic, OptionalInt next) {
+        session.afterStep(true, Optional.of(DecodedInstruction.of(address, length, mnemonic, "00")), next, Optional.empty());
+    }
+
     private static StepView instruction(long sequence) {
         return addressInstruction(sequence, 0);
     }
 
     private static boolean capture(DebuggerSession session, StepView view) {
-        return session.afterStep(true, Optional.of(view));
+        return session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.of(view));
     }
 
     private static List<StepView> views(DebuggerSession session) {

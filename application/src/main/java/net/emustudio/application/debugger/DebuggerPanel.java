@@ -1168,9 +1168,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         JPanel panel = borderPanel(0);
         JPanel tools = new InspectionTools();
         JToolBar actions = line(tools);
-        JButton analyzePc = inspectionButton(ICON_CPU, "Analyze from PC", this::analyzeFlow);
+        JButton analyzePc = inspectionButton(ICON_CPU, "Show observed flow from PC", this::analyzeFlow);
         actions.add(analyzePc);
-        JButton analyzeSelection = inspectionButton(ICON_PAGE_CURRENT, "Analyze from selected instruction", () -> analyzeFlow(lastInstructionAddress));
+        JButton analyzeSelection = inspectionButton(ICON_PAGE_CURRENT, "Show observed flow from selected instruction", () -> analyzeFlow(lastInstructionAddress));
         actions.add(analyzeSelection);
         JButton analyzeRecording = inspectionButton(ICON_SNAPSHOT, "Analyze recording", this::analyzeRecording);
         actions.add(analyzeRecording);
@@ -1227,7 +1227,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void analyzeFlow() {
-        if (session.memory == null) throw new IllegalStateException("Flow analysis requires memory");
         analyzeFlow(session.cpu.getInstructionLocation(), true);
     }
 
@@ -1236,9 +1235,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public void stepCompleted() {
-        if (!disposed && flowFromPc && tabs.getSelectedIndex() == tabs.indexOfTab("Inspection") && !tasks.isBusy())
-            guard(this::analyzeFlow);
-        else if (!disposed && foldFlow.isSelected() && !tasks.isBusy()) guard(graph::relayout);
+        if (!disposed) requestRefresh();
     }
 
     public void setFlowAnalysisLimit(int limit) {
@@ -1262,10 +1259,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             flowFromPc = fromPc;
             graph.start = address;
             graph.setFlow(flow);
-            String truncated = flow.truncated() ? " · Truncated at " + limit + " instructions" : "";
+            String truncated = flow.truncated() ? " · View limited to " + limit + " instructions" : "";
             flowOrigin.setText(String.format("%04X · %s", address, fromPc ? "PC" : "Selected") + truncated);
-            flowOrigin.setToolTipText(String.format("Flow analyzed from %s at %04X", fromPc ? "PC" : "selected instruction", address)
-                    + (flow.truncated() ? "; stopped after " + limit + " instructions (flowAnalysisLimit)" : ""));
+            flowOrigin.setToolTipText(String.format("Observed execution flow from %s at %04X", fromPc ? "PC" : "selected instruction", address)
+                    + (flow.truncated() ? "; view limited to " + limit + " instructions (flowAnalysisLimit)" : ""));
             flowOrigin.getAccessibleContext().setAccessibleDescription(flowOrigin.getToolTipText());
         });
     }
@@ -1781,6 +1778,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
         table.repaint();
         refreshAnnotations(annotationFilter.getText());
+        if (graph.flow != null && !graph.flow.isCurrent(session))
+            guard(() -> analyzeFlow(graph.start, flowFromPc));
+        else if (graph.flow != null && foldFlow.isSelected()
+                && graph.layoutPc != session.cpu.getInstructionLocation()) guard(graph::relayout);
     }
 
     private void refreshWatches() {
@@ -1907,15 +1908,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private final class GraphPanel extends JPanel {
-        private final JLabel emptyHint = new JLabel("<html>Analyze from PC or selected instruction to show flow.</html>");
+        private final JLabel emptyHint = new JLabel("<html>Run or step the CPU, then show observed flow from PC or selected instruction.</html>");
         FlowAnalysis flow;
+        private int layoutPc = -1;
         int start;
         int selectedNode = -1;
         final Map<Integer, Rectangle> boxes = new LinkedHashMap<>();
         final Map<Integer, Integer> representatives = new HashMap<>();
         final Map<Integer, List<Integer>> nodeMembers = new HashMap<>();
         final Map<Integer, Integer> instructionEnds = new HashMap<>();
-        final Set<Integer> branchNodes = new HashSet<>();
         private Map<Integer, String> nodeLabelCache;
         private DebuggerSession labelSession;
         private long labelContentRevision, labelMemoryRevision;
@@ -2207,7 +2208,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (lane.header.contains(point))
                     return String.format("%s · %04X–%04X", laneTitle(lane.annotation),
                             lane.annotation.address, lane.annotation.end - 1);
-            return flow == null ? "Analyze from PC or selected instruction to show flow" : null;
+            return flow == null ? "Run or step the CPU, then show observed flow from PC or selected instruction" : null;
         }
 
         void setFlow(FlowAnalysis flow) {
@@ -2233,9 +2234,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             String labels = nodeLabels(address);
             String unknown = flow.unknown().get(address);
             return (labels.isEmpty() ? "" : labels + " · ") + nodeAddress(address) + " · " + nodeMnemonic(address)
-                    + (branchNodes.contains(address) ? " · Branch" : "")
                     + (flow.isData(address) ? " · Data region" : "")
-                    + (unknown == null ? "" : " · Not decoded: " + unknown);
+                    + (unknown == null ? "" : " · " + unknown);
         }
 
         private void setFlow(FlowAnalysis flow, int selection) {
@@ -2246,14 +2246,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             representatives.clear();
             nodeMembers.clear();
             instructionEnds.clear();
-            branchNodes.clear();
             lanes.clear();
             selectedLane = -1;
             selectedNode = selection;
             Map<Integer, FlowGraph.Instruction> instructions = new HashMap<>();
             flow.forEachInstruction(instruction -> instructions.put(instruction.cells().start, instruction));
             Map<Integer, List<Integer>> successors = new HashMap<>();
-            flow.forEachEdge((from, to, kind) ->
+            flow.forEachEdge((from, to) ->
                     successors.computeIfAbsent(from, ignored -> new ArrayList<>()).add(to));
             Deque<Integer> pending = new ArrayDeque<>();
             Set<Integer> visited = new HashSet<>();
@@ -2268,7 +2267,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 }
                 pending.addAll(successors.getOrDefault(at, List.of()));
             }
-            Set<Integer> boundaries = new HashSet<>(List.of(start, session.cpu.getInstructionLocation(), selection));
+            layoutPc = session.cpu.getInstructionLocation();
+            Set<Integer> boundaries = new HashSet<>(List.of(start, layoutPc, selection));
             refreshNodeLabels();
             boundaries.addAll(nodeLabelCache.keySet());
             if (index != null) for (AnnotationIndex.Entry annotation : index.entries()) {
@@ -2289,7 +2289,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 run.forEach(member -> representatives.put(member, at));
                 FlowGraph.Instruction last = instructions.get(run.get(run.size() - 1));
                 instructionEnds.put(at, last == null ? at + 1 : last.cells().end);
-                if (instruction != null && instruction.kind() == FlowGraph.InstructionKind.JUMP) branchNodes.add(at);
             }
             if (index != null) {
                 List<AnnotationIndex.Entry> visible = new ArrayList<>();
@@ -2313,6 +2312,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (!boxes.containsKey(selectedNode) && !boxes.isEmpty()) selectedNode = boxes.keySet().iterator().next();
             AnnotationIndex.Entry selectedAnnotation = annotations.getSelectedValue();
             if (selectedAnnotation != null) showAnnotation(selectedAnnotation);
+            emptyHint.setVisible(boxes.isEmpty());
             updateFlowNavigation();
             updateSelectedEdges();
             updateGraphSize();
@@ -2364,12 +2364,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
         private void updateSelectedEdges() {
             List<FlowAnalysis.Edge> edges = new ArrayList<>();
-            if (flow != null) flow.forEachEdge((from, to, kind) -> {
+            if (flow != null) flow.forEachEdge((from, to) -> {
                 Integer source = representatives.get(from), target = representatives.get(to);
                 if (source == null || target == null) return;
-                if (source.equals(target) && from != to && kind == FlowGraph.EdgeKind.FALL_THROUGH) return;
+                if (source.equals(target) && from != to) return;
                 if (source == selectedNode || target == selectedNode)
-                    edges.add(new FlowAnalysis.Edge(source, target, kind));
+                    edges.add(new FlowAnalysis.Edge(source, target));
             });
             selectedEdges = edges;
         }
@@ -2427,7 +2427,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 bounds.grow(getPreferredSize().width, 20);
                 if (clip != null && !clip.intersects(bounds)) continue;
                 g.setColor(getForeground());
-                boolean fallThrough = edge.kind.equals("next") && b.y == a.y + 90;
+                boolean fallThrough = flow.nextAddress(from) == to && b.y == a.y + 90;
                 int lane = a.x + a.width + 35 + edgeIndex * 20;
                 int x = fallThrough ? a.x + a.width / 2 : a.x + a.width;
                 int offset = Math.floorMod(edgeIndex, 9) * 5 - 20;
@@ -2463,7 +2463,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 g.setColor(selected && selectionBackground != null ? selectionBackground : surface != null ? surface : getBackground());
                 g.fillRoundRect(box.x, box.y, box.width, box.height, 10, 10);
                 g.setColor(selected && selectionForeground != null ? selectionForeground : foreground != null ? foreground : getForeground());
-                float width = branchNodes.contains(entry.getKey()) ? 3.5f : selected ? 2f : 1f;
+                float width = selected ? 2f : 1f;
                 boolean marked = flow.isData(entry.getKey()) || flow.unknown().containsKey(entry.getKey());
                 g.setStroke(marked ? new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10f, new float[]{6f, 4f}, 0f)
                         : new BasicStroke(width));

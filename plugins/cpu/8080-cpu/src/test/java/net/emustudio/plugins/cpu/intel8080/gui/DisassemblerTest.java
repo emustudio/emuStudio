@@ -5,8 +5,6 @@ package net.emustudio.plugins.cpu.intel8080.gui;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Before;
@@ -18,13 +16,13 @@ public class DisassemblerTest {
 
     private ByteMemoryStub memoryStub;
     private Decoder decoder;
-    private Disassembler disassembler;
+    private Decoder disassembler;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         decoder = new DecoderImpl(memoryStub);
-        disassembler = new DisassemblerImpl(memoryStub, decoder);
+        disassembler = decoder;
     }
 
     @Test
@@ -280,9 +278,9 @@ public class DisassemblerTest {
         });
 
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < memoryStub.getSize(); i = disassembler.getNextInstructionPosition(i)) {
-            DisassembledInstruction instr = disassembler.disassemble(i);
-            builder.append(instr.mnemo);
+        for (int i = 0; i < memoryStub.getSize(); i = (i + disassembler.decode(i).length())) {
+            DecodedInstruction instr = disassembler.decode(i);
+            builder.append(instr.mnemonic());
             builder.append("|");
         }
         String result = builder.toString();
@@ -491,60 +489,60 @@ public class DisassemblerTest {
     public void testDecoder() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x00});
         DecodedInstruction instr = decoder.decode(0);
-        assertEquals(1, instr.image.length);
+        assertEquals(1, instr.length());
     }
 
     @Test
     public void testDecoderThreeByteInstruction() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0xC3, 0x34, 0x12});
         DecodedInstruction instr = decoder.decode(0);
-        assertEquals(3, instr.image.length);
+        assertEquals(3, instr.length());
     }
 
     @Test
     public void testDecoderTwoByteInstruction() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x06, 0x20});
         DecodedInstruction instr = decoder.decode(0);
-        assertEquals(2, instr.image.length);
+        assertEquals(2, instr.length());
     }
 
     @Test
     public void testGetNextInstructionPositionOneByteInstruction() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x00});
-        assertEquals(1, disassembler.getNextInstructionPosition(0));
+        assertEquals(1, (0 + disassembler.decode(0).length()));
     }
 
     @Test
     public void testGetNextInstructionPositionTwoByteInstruction() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x06, 0x20});
-        assertEquals(2, disassembler.getNextInstructionPosition(0));
+        assertEquals(2, (0 + disassembler.decode(0).length()));
     }
 
     @Test
     public void testGetNextInstructionPositionThreeByteInstruction() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0xC3, 0x34, 0x12});
-        assertEquals(3, disassembler.getNextInstructionPosition(0));
+        assertEquals(3, (0 + disassembler.decode(0).length()));
     }
 
     @Test
     public void testDisassembleReturnsCode() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0xC3, 0x34, 0x12});
-        DisassembledInstruction instr = disassembler.disassemble(0);
-        assertEquals("C3 34 12", instr.opCode);
+        DecodedInstruction instr = disassembler.decode(0);
+        assertEquals("C3 34 12", instr.encoding());
     }
 
     @Test
     public void testDisassembleOneByteCode() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x00});
-        DisassembledInstruction instr = disassembler.disassemble(0);
-        assertEquals("00", instr.opCode);
+        DecodedInstruction instr = disassembler.decode(0);
+        assertEquals("00", instr.encoding());
     }
 
     @Test
     public void testDisassembleTwoByteCode() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x06, 0xAB});
-        DisassembledInstruction instr = disassembler.disassemble(0);
-        assertEquals("06 AB", instr.opCode);
+        DecodedInstruction instr = disassembler.decode(0);
+        assertEquals("06 AB", instr.encoding());
     }
 
     @Test
@@ -559,19 +557,19 @@ public class DisassemblerTest {
     @Test
     public void testDisassembleCachingReturnsSameResult() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x00});
-        DisassembledInstruction first = disassembler.disassemble(0);
-        DisassembledInstruction second = disassembler.disassemble(0);
-        assertEquals(first.mnemo, second.mnemo);
-        assertEquals(first.opCode, second.opCode);
+        DecodedInstruction first = disassembler.decode(0);
+        DecodedInstruction second = disassembler.decode(0);
+        assertEquals(first.mnemonic(), second.mnemonic());
+        assertEquals(first.encoding(), second.encoding());
     }
 
     @Test
     public void testDisassembleMultiplePositions() throws InvalidInstructionException {
         memoryStub.setMemory(new short[]{0x00, 0xC3, 0x34, 0x12});
-        DisassembledInstruction first = disassembler.disassemble(0);
-        DisassembledInstruction second = disassembler.disassemble(1);
-        assertEquals("nop", first.mnemo);
-        assertEquals("jmp 1234h", second.mnemo);
+        DecodedInstruction first = disassembler.decode(0);
+        DecodedInstruction second = disassembler.decode(1);
+        assertEquals("nop", first.mnemonic());
+        assertEquals("jmp 1234h", second.mnemonic());
     }
 
     @Test
@@ -636,8 +634,8 @@ public class DisassemblerTest {
         });
 
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < memoryStub.getSize(); i = disassembler.getNextInstructionPosition(i)) {
-            builder.append(disassembler.disassemble(i).mnemo);
+        for (int i = 0; i < memoryStub.getSize(); i = (i + disassembler.decode(i).length())) {
+            builder.append(disassembler.decode(i).mnemonic());
             builder.append("|");
         }
         String result = builder.toString();

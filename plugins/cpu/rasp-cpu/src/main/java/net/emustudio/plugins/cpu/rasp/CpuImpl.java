@@ -7,13 +7,13 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
-import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
+import net.emustudio.plugins.cpu.rasp.gui.RaspDecoder;
 import net.emustudio.plugins.cpu.rasp.gui.RaspStatusPanel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
 
     private EmulatorEngine engine;
     private RaspMemoryContext memory;
-    private RaspDisassembler disassembler;
+    private RaspDecoder disassembler;
     private RaspStatusPanel gui;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -49,15 +49,15 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().get(pluginID, RaspMemoryContext.class);
-        disassembler = new RaspDisassembler(memory);
+        disassembler = new RaspDecoder(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
         engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
     }
 
     @Override
-    public List<DebuggerColumn<?>> getDebuggerColumns() {
-        return List.of(DebuggerColumn.address("%d"), new LabelDebugColumn(memory), DebuggerColumn.mnemo(disassembler));
+    public List<DebuggerColumn<?>> getDebuggerColumns(Decoder instructions) {
+        return List.of(DebuggerColumn.address("%d"), new LabelDebugColumn(memory), DebuggerColumn.mnemo(instructions));
     }
 
     @Override
@@ -114,12 +114,12 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugins.debugger.*;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
@@ -20,22 +20,23 @@ import java.util.function.*;
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final MemoryContext<?> memory;
-    private final Disassembler disassembler;
+    private final Decoder disassembler;
     private final Map<String, Binding> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
     private Map<String, Object> before;
     private Runnable boundary = () -> {};
     private String mnemonic = "", opcodes = "";
+    private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
     private boolean hasProgramLocation;
 
-    MachineDebugging(String machine, MemoryContext<?> memory, Disassembler disassembler) {
+    MachineDebugging(String machine, MemoryContext<?> memory, Decoder disassembler) {
         this.machine = machine;
         this.memory = memory;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureBefore, this::captureAfter, active -> activityChanged.accept(active));
+        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> activityChanged.accept(active));
     }
 
     public void register(String name, int bits, LongSupplier read, LongConsumer write) {
@@ -52,8 +53,9 @@ public final class MachineDebugging implements Debugging {
     public void onBoundary(Runnable callback) { boundary = callback; }
     public void boundary() { boundary.run(); }
     public boolean isActive() { return support.isActive(); }
+    public boolean requiresAccesses() { return support.requiresAccesses(); }
 
-    @Override public AutoCloseable observe(Observer observer, boolean capture) {
+    @Override public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
@@ -64,16 +66,16 @@ public final class MachineDebugging implements Debugging {
         return inStep;
     }
 
-    public boolean end(boolean completed) {
+    public boolean end(boolean completed, int nextAddress) {
         inStep = false;
-        return support.end(completed);
+        return support.end(completed, Optional.ofNullable(instruction), OptionalInt.of(nextAddress));
     }
 
     public void access(int at, int value, boolean write) {
-        if (inStep) accesses.add(new Access(at, value, write));
+        if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
     }
 
-    public void describeInterrupt(String text, String bytes) { mnemonic = text; opcodes = bytes; hasProgramLocation = false; }
+    public void describeInterrupt(String text, String bytes) { mnemonic = text; opcodes = bytes; hasProgramLocation = false; instruction = null; }
     @Override public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
@@ -117,18 +119,22 @@ public final class MachineDebugging implements Debugging {
         return binding;
     }
 
-    private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
+    private void captureInstruction() {
+        instruction = null;
         hasProgramLocation = true;
         try {
-            DisassembledInstruction instruction = disassembler.disassemble(address);
-            mnemonic = instruction.mnemo;
-            opcodes = instruction.opCode;
+            instruction = disassembler.decode(address);
+            mnemonic = instruction.mnemonic();
+            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
             mnemonic = "<invalid instruction>";
             opcodes = "<unavailable>";
         }
+    }
+
+    private void captureBefore() {
+        before = new LinkedHashMap<>();
+        bindings.forEach((name, binding) -> before.put(name, binding.get()));
     }
 
     private StepView captureAfter() {
@@ -168,11 +174,10 @@ public final class MachineDebugging implements Debugging {
 
     public static <T> MemoryContext<T> inspectionMemory(MemoryContext<T> memory) {
         return new AbstractMemoryContext<T>() {
-            @Override public T read(int at) { return memory.peek(at); }
+            @Override public T read(int at) { return memory.peek(at & 0xFFFF); }
             @Override @SuppressWarnings("unchecked") public T[] read(int at, int count) {
-                Objects.checkFromIndexSize(at, 0, memory.getSize());
                 if (count < 0) throw new IndexOutOfBoundsException("Negative count");
-                int size = Math.min(count, memory.getSize() - at);
+                int size = count;
                 T[] cells = (T[]) Array.newInstance(memory.getCellTypeClass(), size);
                 for (int i = 0; i < size; i++) cells[i] = read(at + i);
                 return cells;

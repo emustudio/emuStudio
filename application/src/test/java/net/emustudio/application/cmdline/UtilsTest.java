@@ -87,7 +87,7 @@ public class UtilsTest extends AbstractSwingTest {
             StudioFrame frame = waitForWindow(StudioFrame.class, window -> "emuStudio [Startup test]".equals(window.getTitle()));
             DebuggerPanel debugger = findComponent(frame, DebuggerPanel.class, panel -> true);
             try {
-                JButton find = findButtonByTooltip(debugger, "Analyze from PC");
+                JButton find = findButtonByTooltip(debugger, "Show observed flow from PC");
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
                 assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));

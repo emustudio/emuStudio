@@ -2,330 +2,162 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CancellationException;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class FlowAnalysisTest {
+    private final FlowAnalysis.Observations observations = new FlowAnalysis.Observations();
+    private final MemoryAnnotations annotations = new MemoryAnnotations();
+
     @Test
-    public void identicalRunsStopAtProtectedInstructionsAndLeaveAnalysisIntact() throws Exception {
-        Disassembler decoder = nopDecoder(6);
-        FlowAnalysis analysis = reachable(decoder, 0, 10, 8);
+    public void noInstructionOrDestinationIsInventedBeforeExecution() {
+        FlowAnalysis analysis = view(100, 10);
 
-        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3, 4, 5), Set.of(0, 3));
-
-        assertEquals(List.of(List.of(0), List.of(1, 2), List.of(3), List.of(4, 5)), runs);
-        assertEquals(List.of(0, 1, 2, 3, 4, 5), addresses(analysis));
-        assertEquals(6, edges(analysis).size());
+        assertTrue(addresses(analysis).isEmpty());
+        assertTrue(edges(analysis).isEmpty());
+        assertTrue(analysis.unknown().isEmpty());
     }
 
     @Test
-    public void branchTargetsStaySeparateFromIdenticalNeighbors() throws Exception {
-        Disassembler decoder = nopDecoder(6);
-        instruction(decoder, 6, "JP 3", InstructionFlow.Kind.JUMP, 7, false, List.of(3));
-        FlowAnalysis analysis = reachable(decoder, 0, 10, 8);
+    public void observedNextPcIsKeptWithoutDecodingItsDestination() {
+        observed(100, 3, "EXECUTED", "AA BB CC", 200);
 
-        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3, 4, 5, 6), Set.of(0));
+        FlowAnalysis analysis = view(100, 10);
 
-        assertEquals(List.of(List.of(0), List.of(1, 2), List.of(3), List.of(4, 5), List.of(6)), runs);
+        assertEquals(List.of(100), addresses(analysis));
+        assertEquals(Set.of("100:200"), edges(analysis));
+        assertEquals("EXECUTED", analysis.mnemonic(100));
+        assertNull(analysis.instructionAt(200));
+        assertEquals(Map.of(200, "Observed next PC; not executed yet"), analysis.unknown());
+        assertFalse(analysis.unknown().containsKey(103));
     }
 
     @Test
-    public void equalMnemonicWithDifferentEncodingDoesNotFold() throws Exception {
-        Disassembler decoder = nopDecoder(4);
-        when(decoder.disassemble(2)).thenReturn(new DisassembledInstruction(2, "NOP", "DD00"));
-        FlowAnalysis analysis = reachable(decoder, 0, 10, 6);
+    public void differentExecutedPathsFromSameAddressAccumulate() {
+        observed(100, 3, "TEST", "AA BB CC", 103);
+        observed(100, 3, "TEST", "AA BB CC", 200);
+        observed(103, 1, "NEXT", "00", 300);
+        observed(200, 1, "OTHER", "01", 100);
 
-        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3), Set.of());
+        FlowAnalysis analysis = view(100, 10);
 
-        assertEquals(List.of(List.of(0, 1), List.of(2), List.of(3)), runs);
+        assertEquals(Set.of("100:103", "100:200", "103:300", "200:100"), edges(analysis));
+        assertEquals(List.of(100, 103, 200), addresses(analysis));
     }
 
     @Test
-    public void missingEncodingAndDifferentMnemonicDoNotFold() throws Exception {
-        Disassembler decoder = nopDecoder(4);
-        when(decoder.disassemble(1)).thenReturn(new DisassembledInstruction(1, "NOP", ""));
-        when(decoder.disassemble(3)).thenReturn(new DisassembledInstruction(3, "INC A", "00"));
-        FlowAnalysis analysis = reachable(decoder, 0, 10, 6);
+    public void changedEncodingUpdatesMetadataWithoutRemovingAnyOldEdge() {
+        observed(100, 1, "OLD", "00", 101);
+        FlowAnalysis before = view(100, 10);
 
-        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 2, 3), Set.of());
+        observed(100, 3, "NEW", "AA BB CC", 500);
+        FlowAnalysis after = view(100, 10);
 
-        assertEquals(List.of(List.of(0), List.of(1), List.of(2), List.of(3)), runs);
+        assertEquals("OLD", before.mnemonic(100));
+        assertEquals(Set.of("100:101"), edges(before));
+        assertEquals("NEW", after.mnemonic(100));
+        assertEquals(103, after.nextAddress(100));
+        assertEquals(Set.of("100:101", "100:500"), edges(after));
     }
 
     @Test
-    public void onlyContiguousLinearFallThroughInstructionsFold() throws Exception {
-        Disassembler decoder = nopDecoder(5);
-        instruction(decoder, 1, "NOP", InstructionFlow.Kind.CALL, 2, true, List.of(4));
-        when(decoder.disassemble(1)).thenReturn(new DisassembledInstruction(1, "NOP", "00"));
-        FlowAnalysis analysis = reachable(decoder, 0, 10, 8);
+    public void rootSelectionAndSmallViewLimitsNeverDiscardLearnedEdges() {
+        observed(100, 1, "A", "00", 200);
+        observed(100, 1, "A", "00", 300);
+        observed(200, 1, "B", "01", 100);
+        Set<String> all = edges(view(100, 10));
 
-        List<List<Integer>> runs = analysis.instructionRuns(Set.of(0, 1, 3, 4), Set.of());
+        FlowAnalysis small = view(100, 1);
+        view(200, 1);
+        view(700, 1);
 
-        assertEquals(List.of(List.of(0), List.of(1), List.of(3), List.of(4)), runs);
+        assertTrue(small.truncated());
+        assertEquals(all, edges(view(100, 10)));
+        assertEquals(Set.of("100:200", "100:300", "200:100"), all);
     }
 
-    private static Disassembler nopDecoder(int count) throws Exception {
-        Disassembler decoder = mock(Disassembler.class);
-        for (int at = 0; at < count; at++) {
-            instruction(decoder, at, "NOP", InstructionFlow.Kind.LINEAR, at + 1, true, List.of());
-            when(decoder.disassemble(at)).thenReturn(new DisassembledInstruction(at, "NOP", "00"));
+    @Test
+    public void annotationsChangePresentationWithoutClearingObservedGraph() {
+        observed(100, 1, "A", "00", 200);
+        FlowAnalysis analysis = view(100, 10);
+        annotations.put(new MemoryAnnotations.Entry(8, 10, 100, 101, "data", "DATA", null));
+
+        assertTrue(analysis.isData(100));
+        assertEquals(Set.of("100:200"), edges(view(100, 10)));
+        observations.reset();
+
+        assertTrue(addresses(view(100, 10)).isEmpty());
+        assertTrue(edges(view(100, 10)).isEmpty());
+        assertEquals(1, annotations.at(100).size());
+    }
+
+    @Test
+    public void repeatedObservationDeduplicatesEdgeButSelfLoopsRemain() {
+        observed(100, 1, "LOOP", "00", 100);
+        observed(100, 1, "LOOP", "00", 100);
+
+        assertEquals(Set.of("100:100"), edges(view(100, 10)));
+    }
+
+    @Test
+    public void largeAddressExtentClipsGeometryWithoutLosingObservedWrappedEdge() {
+        int address = Integer.MAX_VALUE - 1;
+        observed(address, 2, "EXECUTED", "00 00", 1);
+
+        FlowAnalysis analysis = view(address, 10);
+
+        assertEquals(Integer.MAX_VALUE, analysis.nextAddress(address));
+        assertEquals(Set.of(address + ":1"), edges(analysis));
+    }
+
+    @Test
+    public void foldingRequiresActualSequentialEdgesAndSingleObservedPath() {
+        observed(0, 1, "NOP", "00", 1);
+        observed(1, 1, "NOP", "00", 2);
+        observed(2, 1, "NOP", "00", 3);
+        FlowAnalysis before = view(0, 10);
+        assertEquals(List.of(List.of(0, 1, 2)), before.instructionRuns(Set.of(0, 1, 2), Set.of()));
+
+        observed(1, 1, "NOP", "00", 10);
+        FlowAnalysis after = view(0, 20);
+
+        assertEquals(List.of(List.of(0, 1), List.of(2)), after.instructionRuns(Set.of(0, 1, 2), Set.of()));
+        assertEquals(Set.of("0:1", "1:2", "1:10", "2:3"), edges(after));
+    }
+
+    @Test
+    public void cancellationAndInvalidViewDoNotMutateObservations() {
+        observed(100, 1, "NOP", "00", 200);
+        assertThrows(IllegalArgumentException.class, () -> view(-1, 10));
+        assertThrows(IllegalArgumentException.class, () -> view(100, 0));
+        Thread.currentThread().interrupt();
+        try {
+            assertThrows(CancellationException.class, () -> view(100, 10));
+        } finally {
+            Thread.interrupted();
         }
-        return decoder;
+
+        assertEquals(Set.of("100:200"), edges(view(100, 10)));
     }
 
-    @Test
-    public void analysisStartsAtRequestedAddressAndFollowsBackwardBranches() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 3, "JP 1", InstructionFlow.Kind.JUMP, 4, true, List.of(1));
-        instruction(disassembler, 1, "RET", InstructionFlow.Kind.RETURN, 2, false, List.of());
-        instruction(disassembler, 4, "HALT", InstructionFlow.Kind.STOP, 5, false, List.of());
-
-        FlowAnalysis analysis = reachable(disassembler, 3, 10, 8);
-
-        assertEquals(List.of(1, 3, 4), addresses(analysis));
-        assertEquals(3, predecessors(analysis, 1).get(0).from);
-        verify(disassembler, never()).getFlow(0);
-        verify(disassembler, never()).getFlow(2);
+    private void observed(int address, int length, String mnemonic, String encoding, int next) {
+        observations.executed(DecodedInstruction.of(address, length, mnemonic, encoding), OptionalInt.of(next));
     }
-
-    @Test
-    public void callVisitsTargetAndFallThroughAndDistinguishesIncomingFromCalls() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "CALL 4", InstructionFlow.Kind.CALL, 1, true, List.of(4));
-        instruction(disassembler, 1, "HALT", InstructionFlow.Kind.STOP, 2, false, List.of());
-        instruction(disassembler, 4, "RET", InstructionFlow.Kind.RETURN, 5, false, List.of());
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, 8);
-
-        assertEquals(List.of(0, 1, 4), addresses(analysis));
-        assertEquals("CALL 4", analysis.mnemonic(0));
-        assertEquals("RET", analysis.mnemonic(4));
-        assertEquals(2, edges(analysis).size());
-        FlowAnalysis.Edge call = predecessors(analysis, 4).get(0);
-        assertEquals(0, call.from);
-        assertEquals(4, call.to);
-        assertEquals("call", call.kind);
-        assertEquals("next", predecessors(analysis, 1).get(0).kind);
-        assertEquals(1, callSites(analysis, 4).size());
-        assertTrue(callSites(analysis, 1).isEmpty());
-        assertFalse(analysis.truncated());
-    }
-
-    @Test
-    public void loopsAndDuplicateTargetsDecodeOnceAndKeepDistinctEdgeKinds() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "CALL 0", InstructionFlow.Kind.CALL, 0, true, List.of(0, 0, 2));
-        instruction(disassembler, 2, "JP 0", InstructionFlow.Kind.JUMP, 3, false, List.of(0));
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, 4);
-
-        assertEquals(List.of(0, 2), addresses(analysis));
-        assertEquals(4, edges(analysis).size());
-        assertEquals(3, predecessors(analysis, 0).size());
-        assertEquals(1, callSites(analysis, 0).size());
-        assertFalse(analysis.truncated());
-        verify(disassembler).getFlow(0);
-        verify(disassembler).getFlow(2);
-    }
-
-    @Test
-    public void boundRetainsKnownUndecodedTargetAndMarksPartialFlow() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "NOP", InstructionFlow.Kind.LINEAR, 1, true, List.of());
-
-        int size = 4;
-        FlowAnalysis analysis = reachable(disassembler, 0, 1, size);
-
-        assertEquals(List.of(0), addresses(analysis));
-        assertTrue(analysis.truncated());
-        assertNull(analysis.instructionAt(1));
-        assertEquals("next", predecessors(analysis, 1).get(0).kind);
-        verify(disassembler, never()).getFlow(1);
-    }
-
-    @Test
-    public void reachableDataRegionFromAnyOwnerIsAnalyzedAndMarked() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "JP 3", InstructionFlow.Kind.JUMP, 1, false, List.of(3));
-        instruction(disassembler, 3, "HALT", InstructionFlow.Kind.STOP, 4, false, List.of());
-        int size = 6;
-        MemoryAnnotations annotations = new MemoryAnnotations();
-        annotations.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
-                8, 10, 2, 5, "data", "table", null));
-
-        FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, size, annotations);
-
-        assertEquals(List.of(0, 3), addresses(analysis));
-        assertEquals(3, predecessors(analysis, 3).get(0).to);
-        assertFalse(analysis.truncated());
-        assertFalse(analysis.isData(0));
-        assertTrue(analysis.isData(3));
-    }
-
-    @Test
-    public void indirectJumpIsUnresolvedWithoutInventedEdgeOrTruncation() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "JP (HL)", InstructionFlow.Kind.JUMP, 1, false, List.of());
-
-        int size = 4;
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, size);
-
-        assertEquals(List.of(0), addresses(analysis));
-        assertTrue(edges(analysis).isEmpty());
-        assertEquals(FlowGraph.InstructionKind.JUMP, analysis.instructionAt(0).kind());
-        assertFalse(analysis.truncated());
-    }
-
-    @Test
-    public void undecodableAddressesAreReportedAsUnknownNodesWithReason() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "CALL 8", InstructionFlow.Kind.CALL, 1, true, List.of(8));
-        when(disassembler.getFlow(8)).thenThrow(new IllegalArgumentException("bad opcode"));
-        instruction(disassembler, 1, "HALT", InstructionFlow.Kind.STOP, 2, false, List.of());
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, 16);
-
-        assertEquals(java.util.Map.of(8, "bad opcode"), analysis.unknown());
-    }
-
-    @Test
-    public void manyTargetsAreAllIndexedWithoutHiddenEdgeCap() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        List<Integer> targets = new java.util.ArrayList<>();
-        for (int target = 1; target < 3000; target++) {
-            targets.add(target);
-            instruction(disassembler, target, "HALT", InstructionFlow.Kind.STOP, target + 1, false, List.of());
-        }
-        instruction(disassembler, 0, "SWITCH", InstructionFlow.Kind.JUMP, 1, false, targets);
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 5000, 4096);
-
-        assertEquals(2999, edges(analysis).size());
-        assertEquals(3000, addresses(analysis).size());
-        assertFalse(analysis.truncated());
-    }
-
-    @Test
-    public void undecodableTargetIsNotRetriedAndDoesNotBlockFallThrough() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "CALL 8", InstructionFlow.Kind.CALL, 1, true, List.of(8, 8));
-        when(disassembler.getFlow(8)).thenThrow(new IndexOutOfBoundsException("unavailable"));
-        instruction(disassembler, 1, "HALT", InstructionFlow.Kind.STOP, 2, false, List.of());
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, 16);
-
-        assertEquals(List.of(0, 1), addresses(analysis));
-        assertEquals(1, predecessors(analysis, 8).size());
-        assertFalse(analysis.truncated());
-        verify(disassembler).getFlow(8);
-    }
-
-    @Test
-    public void outOfSpaceTargetsAndInvalidInstructionExtentAreNotIndexed() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "JP 9", InstructionFlow.Kind.JUMP, 1, false, List.of(-1, 9));
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, 4);
-        assertTrue(edges(analysis).isEmpty());
-
-        when(disassembler.getNextInstructionPosition(0)).thenReturn(5);
-        assertTrue(addresses(reachable(disassembler, 0, 10, 4)).isEmpty());
-    }
-
-    @Test
-    public void malformedDecoderInvalidTargetsAreIgnoredWithoutTruncation() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "JUMP", InstructionFlow.Kind.JUMP, 1, false,
-                Collections.nCopies(1000, -1));
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 1, 4);
-
-        assertFalse(analysis.truncated());
-        assertTrue(edges(analysis).isEmpty());
-        assertEquals(List.of(0), addresses(analysis));
-    }
-
-    @Test
-    public void edgesConnectCpuVisibleInstructionAddresses() throws Exception {
-        Disassembler disassembler = mock(Disassembler.class);
-        instruction(disassembler, 0, "CALL 6", InstructionFlow.Kind.CALL, 2, false, List.of(6));
-        instruction(disassembler, 6, "JP 0", InstructionFlow.Kind.JUMP, 7, false, List.of(0));
-        int size = 8;
-
-        FlowAnalysis analysis = reachable(disassembler, 0, 10, size);
-
-        assertNotNull(analysis.instructionAt(0));
-        assertNotNull(analysis.instructionAt(6));
-        FlowAnalysis.Edge call = predecessors(analysis, 6).get(0);
-        assertEquals(0, call.from);
-        assertEquals(6, call.to);
-        FlowAnalysis.Edge branch = predecessors(analysis, 0).get(0);
-        assertEquals(6, branch.from);
-        assertEquals(0, branch.to);
-    }
-
-    @Test
-    public void invalidBoundsAreRejectedBeforeUsingDisassembler() {
-        Disassembler disassembler = mock(Disassembler.class);
-        int size = 4;
-
-        assertThrows(IllegalArgumentException.class, () -> reachable(disassembler, -1, 1, size));
-        assertThrows(IllegalArgumentException.class, () -> reachable(disassembler, 4, 1, size));
-        assertThrows(IllegalArgumentException.class, () -> reachable(disassembler, 0, 0, size));
-
-        verifyNoInteractions(disassembler);
-    }
-
-    private static FlowAnalysis reachable(Disassembler disassembler, int start, int limit, int size) {
-        return FlowAnalysis.reachable(disassembler, start, limit, size, new MemoryAnnotations());
-    }
-
+    private FlowAnalysis view(int root, int limit) { return observations.view(root, limit, annotations); }
     private static List<Integer> addresses(FlowAnalysis analysis) {
         List<Integer> result = new ArrayList<>();
         analysis.forEachInstruction(instruction -> result.add(instruction.cells().start));
         return result;
     }
-
-    private static List<String> edges(FlowAnalysis analysis) {
-        List<String> result = new ArrayList<>();
-        analysis.forEachEdge((from, to, kind) -> result.add(from + ":" + to + ":" + kind));
+    private static Set<String> edges(FlowAnalysis analysis) {
+        Set<String> result = new TreeSet<>();
+        analysis.forEachEdge((from, to) -> result.add(from + ":" + to));
         return result;
-    }
-
-    private static List<FlowAnalysis.Edge> predecessors(FlowAnalysis analysis, int address) {
-        List<FlowAnalysis.Edge> result = new ArrayList<>();
-        analysis.forEachEdge((from, to, kind) -> {
-            if (to == address) result.add(new FlowAnalysis.Edge(from, to, kind));
-        });
-        return result;
-    }
-
-    private static List<FlowAnalysis.Edge> callSites(FlowAnalysis analysis, int address) {
-        List<FlowAnalysis.Edge> result = new ArrayList<>();
-        analysis.forEachEdge((from, to, kind) -> {
-            if (to == address && kind == FlowGraph.EdgeKind.CALL) result.add(new FlowAnalysis.Edge(from, to, kind));
-        });
-        return result;
-    }
-
-    private static void instruction(Disassembler disassembler, int address, String mnemonic,
-                                    InstructionFlow.Kind kind, int next, boolean fallThrough,
-                                    List<Integer> targets) throws InvalidInstructionException {
-        when(disassembler.getFlow(address)).thenReturn(Optional.of(new InstructionFlow(kind, next, fallThrough, targets)));
-        when(disassembler.getNextInstructionPosition(address)).thenReturn(next > address ? next : address + 1);
-        when(disassembler.disassemble(address)).thenReturn(new DisassembledInstruction(address, mnemonic, ""));
     }
 }

@@ -5,13 +5,16 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
 import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.application.debugger.FlowAnalysis;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 
 import javax.swing.event.TableModelEvent;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class DebugTableModelImpl extends DebugTableModel {
@@ -21,9 +24,11 @@ public class DebugTableModelImpl extends DebugTableModel {
     private BoundaryDecoder boundaryDecoder;
     private Integer inspectedLocation;
     private DebuggerSession session;
-    private FlowAnalysis indexedFlow;
     private long programRevision = -1;
     private int[] rowLocations;
+    private final Map<Integer, DecodedInstruction> rowInstructions = new HashMap<>();
+    private final Map<Integer, InvalidInstructionException> invalidRows = new HashMap<>();
+    private final Decoder rowDecoder = this::decodeRow;
     private int cachedAnchor = -1, cachedPage;
 
     public DebugTableModelImpl() {
@@ -32,18 +37,18 @@ public class DebugTableModelImpl extends DebugTableModel {
     public void setCPU(CPU cpu) {
         this.cpu = Objects.requireNonNull(cpu);
         inspectedLocation = null;
-        boundaryDecoder = new BoundaryDecoder(cpu.getDisassembler());
+        rowInstructions.clear();
+        invalidRows.clear();
+        boundaryDecoder = new BoundaryDecoder(rowDecoder);
         this.ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
         rowLocations = null;
-        indexedFlow = null;
-        List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns();
-        setDebuggerColumns(cpuColumns.isEmpty() ? defaultColumns(cpu.getDisassembler()) : cpuColumns);
+        List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns(rowDecoder);
+        setDebuggerColumns(cpuColumns.isEmpty() ? defaultColumns(rowDecoder) : cpuColumns);
     }
 
     /** Optional logical instruction view; no analysis is performed here. */
     public void setDebuggerSession(DebuggerSession session) {
         this.session = Objects.requireNonNull(session);
-        indexedFlow = null;
         resetPagination();
     }
 
@@ -184,8 +189,7 @@ public class DebugTableModelImpl extends DebugTableModel {
             int center = rowLocations[rowLocations.length / 2];
             if (center >= 0) inspectedLocation = center;
         }
-        boundaryDecoder = new BoundaryDecoder(cpu.getDisassembler());
-        if (indexedFlow != null) boundaryDecoder.useAnalysis(indexedFlow);
+        boundaryDecoder = new BoundaryDecoder(rowDecoder);
         ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
         ida.setInstructionsPerPage(rows);
         rowLocations = null;
@@ -193,21 +197,37 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     private void materializePage() {
         if (ida == null || cpu == null) return;
-        FlowAnalysis analysis = session == null ? null : session.flowAnalysis();
         long revision = session == null ? 0 : session.programRevision();
-        if (analysis != indexedFlow || revision != programRevision) {
-            indexedFlow = analysis;
+        if (revision != programRevision) {
             programRevision = revision;
             resetPagination();
         }
         int rows = ida.getInstructionsPerPage(), anchor = viewLocation(), page = ida.getPageIndex();
         if (rows <= 0 || (rowLocations != null && rowLocations.length == rows
                 && cachedAnchor == anchor && cachedPage == page)) return;
+        rowInstructions.clear();
+        invalidRows.clear();
         int[] locations = new int[rows];
         for (int row = 0; row < rows; row++) locations[row] = ida.rowToLocation(anchor, row);
         rowLocations = locations;
         cachedAnchor = anchor;
         cachedPage = page;
+    }
+
+    private DecodedInstruction decodeRow(int address) throws InvalidInstructionException {
+        InvalidInstructionException failure = invalidRows.get(address);
+        if (failure != null) throw failure;
+        DecodedInstruction instruction = rowInstructions.get(address);
+        if (instruction == null) {
+            try {
+                instruction = cpu.getDecoder().decode(address);
+                rowInstructions.put(address, instruction);
+            } catch (InvalidInstructionException invalid) {
+                invalidRows.put(address, invalid);
+                throw invalid;
+            }
+        }
+        return instruction;
     }
 
     @Override
@@ -265,7 +285,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         fireTableDataChanged();
     }
 
-    static List<DebuggerColumn<?>> defaultColumns(Disassembler disassembler) {
+    static List<DebuggerColumn<?>> defaultColumns(Decoder disassembler) {
         return List.of(
                 DebuggerColumn.address("%04X"), DebuggerColumn.mnemo(disassembler), DebuggerColumn.opcode(disassembler)
         );

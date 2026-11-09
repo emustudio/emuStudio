@@ -13,7 +13,6 @@ dependencies {
 
 edigen {
   decoderName = 'net.emustudio.plugins.cpu.zilogZ80.gui.DecoderImpl'
-  disassemblerName = 'net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl'
 }
 
 apply from: "$rootDir/gradle/conventions/java-conventions.gradle"

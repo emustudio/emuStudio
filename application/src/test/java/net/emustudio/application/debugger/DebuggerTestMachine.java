@@ -3,6 +3,7 @@
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.debugger.ExpressionParser;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +35,7 @@ final class DebuggerTestMachine {
     final List<MemoryContext.MemoryListener> memoryListeners = new ArrayList<>();
     final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
     final AtomicInteger detached = new AtomicInteger();
+    final AtomicReference<Debugging.Capture> captureMode = new AtomicReference<>();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
     private DebuggerSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
@@ -62,11 +66,15 @@ final class DebuggerTestMachine {
         if (debug != null) {
             when(debug.compile(anyString())).thenAnswer(call -> ExpressionParser.parse(
                     call.getArgument(0), this::variable, this::function));
-            when(debug.observe(any(), anyBoolean())).thenAnswer(call -> {
+            when(debug.observe(any(), any(Debugging.Capture.class))).thenAnswer(call -> {
                 Debugging.Observer installed = call.getArgument(0);
                 if (!observer.compareAndSet(null, installed)) throw new IllegalStateException("Observer already installed");
+                captureMode.set(call.getArgument(1));
                 return (AutoCloseable) () -> {
-                    if (observer.compareAndSet(installed, null)) detached.incrementAndGet();
+                    if (observer.compareAndSet(installed, null)) {
+                        captureMode.set(null);
+                        detached.incrementAndGet();
+                    }
                 };
             });
         }
@@ -111,6 +119,14 @@ final class DebuggerTestMachine {
     }
 
     void accessed(int address, boolean write) { accessed = address; wrote = write; }
+
+    void observedStep(DecodedInstruction instruction, OptionalInt nextAddress, boolean completed) {
+        Debugging.Observer installed = observer.get();
+        if (installed == null) throw new AssertionError("No runtime observer installed");
+        if (instruction != null) when(cpu.getInstructionLocation()).thenReturn(instruction.address());
+        if (installed.beforeStep()) throw new AssertionError("Unexpected pre-execution stop");
+        installed.afterStep(completed, Optional.ofNullable(instruction), nextAddress, Optional.empty());
+    }
 
     boolean beforeStep(int address) {
         when(cpu.getInstructionLocation()).thenReturn(address);

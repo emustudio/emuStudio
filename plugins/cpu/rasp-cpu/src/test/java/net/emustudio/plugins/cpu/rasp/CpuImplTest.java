@@ -94,7 +94,7 @@ public class CpuImplTest {
     @Test
     public void testGetDisassemblerAfterInit() throws Exception {
         initCpu();
-        assertNotNull(cpu.getDisassembler());
+        assertNotNull(cpu.getDecoder());
     }
 
     @Test
@@ -234,7 +234,7 @@ public class CpuImplTest {
     @Test
     public void testDebuggerColumns() throws Exception {
         initCpu();
-        java.util.List<DebuggerColumn<?>> columns = cpu.getDebuggerColumns();
+        java.util.List<DebuggerColumn<?>> columns = cpu.getDebuggerColumns(cpu.getDecoder());
         assertEquals(3, columns.size());
         assertEquals("address", columns.get(0).getTitle());
         assertEquals("label", columns.get(1).getTitle());
@@ -277,14 +277,14 @@ public class CpuImplTest {
         cpu.reset(0);
         java.util.List<StepView> events = new java.util.ArrayList<>();
         cpu.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
 
             @Override public boolean beforeStep() { return false; }
-}, true);
+}, Debugging.Capture.FULL);
         assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(0, cpu.getInstructionLocation());

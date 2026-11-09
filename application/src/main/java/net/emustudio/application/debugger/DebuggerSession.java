@@ -3,10 +3,7 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.debugger.Debugging;
 import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.plugins.debugger.ValueView;
@@ -43,8 +40,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final Object programLock = new Object();
     private final java.util.concurrent.atomic.AtomicLong memoryRevision = new java.util.concurrent.atomic.AtomicLong();
     private volatile FlowAnalysis flow;
-    private long flowRevision;
-    private final Runnable annotationListener = () -> { synchronized (programLock) { flow = null; } };
+    private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
     private final Map<Integer, MemoryWatchTracker> memoryWatchTrackers = new LinkedHashMap<>();
     private volatile List<MemoryWatchView> memoryWatchSnapshot = List.of();
     private int stepAddress = -1;
@@ -75,11 +71,13 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
     public long programRevision() { return memoryRevision.get() + annotationEngine.revision(); }
 
-    /** Current immutable analysis, or null when its program has changed. */
-    public synchronized FlowAnalysis flowAnalysis() {
-        if (closed) return null;
-        addressSpaceSize();
-        synchronized (programLock) { return flowRevision == programRevision() ? flow : null; }
+    /** Last selected immutable runtime-flow view; independent of current memory contents. */
+    public synchronized FlowAnalysis flowAnalysis() { return closed ? null : flow; }
+
+    /** Called only after a successful explicit CPU reset; annotations are retained. */
+    public synchronized void cpuReset() {
+        observedFlow.reset();
+        flow = null;
     }
 
     public synchronized void setSourceMappings(SourceAddressMap mappings) {
@@ -129,7 +127,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private volatile Map<String, ValueView> watchSnapshot = Map.of();
     private volatile Map<String, String> watchFailures = Map.of();
     private AutoCloseable observation;
-    private boolean captureAttached, skipBeforeStep, observationDirty;
+    private Debugging.Capture captureAttached;
+    private boolean skipBeforeStep, observationDirty;
     private int historyLimit;
     public enum RecordingMode { FIRST, LAST, ADDRESS_RANGE, UNLIMITED }
     private RecordingMode recordingMode = RecordingMode.LAST;
@@ -191,7 +190,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         this.settings = settings;
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) annotations();
         load();
-        annotationEngine.addListener(annotationListener);
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
         execution = new net.emustudio.application.emulation.EmulationController(cpu, memoryPlugin, devices, this, compiler, executionState);
         update(() -> {}).join();
@@ -337,48 +335,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         applyCurrent(stamp, "Analysis discarded: memory, source or metadata changed", () -> {});
     }
 
-    /** Use the CPU's wired decoder off the UI thread; publish only while its paused program revision is current. */
-    public FlowAnalysis analyzeFlow(int start, int limit) {
-        Stamp stamp = liveStamp();
-        Runnable validate = () -> requireCurrent(stamp);
-        Disassembler decoder = guardedDecoder(cpu.getDisassembler(), validate);
-        FlowAnalysis result = FlowAnalysis.reachable(decoder, start, limit, stamp.size, annotationEngine);
-        synchronized (this) {
-            synchronized (programLock) {
-                boolean published = annotationEngine.ifRevision(stamp.annotationRevision, () ->
-                        applyCurrent(stamp, "Flow analysis discarded: program changed", () -> {
-                            flow = result;
-                            flowRevision = programRevision();
-                        }));
-                if (!published) throw new IllegalStateException("Flow analysis discarded: annotations changed");
-                return result;
-            }
-        }
-    }
-
-    private static Disassembler guardedDecoder(Disassembler decoder, Runnable validate) {
-        return new Disassembler() {
-            @Override public Optional<InstructionFlow> getFlow(int address) {
-                validate.run();
-                Optional<InstructionFlow> flow = decoder.getFlow(address);
-                validate.run();
-                return flow;
-            }
-
-            @Override public DisassembledInstruction disassemble(int address) throws InvalidInstructionException {
-                validate.run();
-                DisassembledInstruction instruction = decoder.disassemble(address);
-                validate.run();
-                return instruction;
-            }
-
-            @Override public int getNextInstructionPosition(int address) {
-                validate.run();
-                int next = decoder.getNextInstructionPosition(address);
-                validate.run();
-                return next;
-            }
-        };
+    /** Select an immutable view of completed runtime observations; never decode or execute memory. */
+    public synchronized FlowAnalysis analyzeFlow(int start, int limit) {
+        requirePaused();
+        flow = observedFlow.view(start, limit, annotationEngine);
+        return flow;
     }
 
     /** Associates a compiler callback with its enclosing machine mutation, including its reset. */
@@ -421,7 +382,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private void invalidateProgram() {
         synchronized (programLock) {
             memoryRevision.incrementAndGet();
-            flow = null;
         }
     }
 
@@ -534,12 +494,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     public synchronized void updateProbe() {
         observationDirty = false;
         syncMemoryWatches();
-        boolean needed = recording != null || historyLimit > 0 || !memoryWatchTrackers.isEmpty()
-                || !breakpoints.isEmpty();
-        boolean capture = recording != null || historyLimit > 0;
+        Debugging.Capture capture = recording != null || historyLimit > 0 ? Debugging.Capture.FULL
+                : !memoryWatchTrackers.isEmpty() ? Debugging.Capture.ACCESSES : Debugging.Capture.INSTRUCTION;
         if (debug == null) return;
-        if (observation != null && (!needed || capture != captureAttached)) detachObservation();
-        if (needed && observation == null) {
+        if (observation != null && capture != captureAttached) detachObservation();
+        if (observation == null) {
             observation = debug.observe(this, capture);
             captureAttached = capture;
         }
@@ -624,7 +583,12 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     @Override
-    public synchronized boolean afterStep(boolean completed, Optional<StepView> captured) {
+    public synchronized boolean afterStep(boolean completed, Optional<DecodedInstruction> instruction,
+                                          OptionalInt nextAddress, Optional<StepView> captured) {
+        if (completed && instruction.isPresent()) {
+            observedFlow.executed(instruction.get(), nextAddress);
+            flow = null;
+        }
         long sequence = ++nextSequence;
         if (captured.isPresent()) {
             InstructionRecording.Event event = new InstructionRecording.Event(sequence, completed, captured.get());
@@ -661,7 +625,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     @Override
     public synchronized void failed(String message) {
         historyLimit = 0;
-        captureAttached = false;
+        captureAttached = null;
         stopFailedRecorder(message);
     }
 
@@ -814,7 +778,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                         .error("Could not save debugger settings", e);
             }
 
-        annotationEngine.removeListener(annotationListener);
         if (memory != null) memory.removeMemoryListener(memoryListener);
         detachObservation();
         synchronized (this) {

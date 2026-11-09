@@ -423,7 +423,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     private static CPU debuggingCpu() {
         CPU cpu = mock(CPU.class, withSettings().extraInterfaces(Debugging.class));
         Debugging debugging = (Debugging) cpu;
-        when(debugging.observe(any(), anyBoolean())).thenReturn(() -> {});
+        when(debugging.observe(any(), any(Debugging.Capture.class))).thenReturn(() -> {});
         when(debugging.compile(anyString())).thenReturn(new Debugging.Expression() {
             @Override public boolean test() { return true; }
             @Override public ValueView display() { return new ValueView("ready", List.of(), false); }

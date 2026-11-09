@@ -23,17 +23,17 @@ public class PaginatingDisassemblerTest {
     private BoundaryDecoder boundaryDecoder;
 
     @Test(expected = NullPointerException.class)
-    public void testCreateInstanceNullDisassemblerThrows() {
+    public void testCreateInstanceNullDisassemblerThrows() throws Exception {
         new PaginatingDisassembler(null, 1);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testCreateInstanceEmptyAddressSpaceThrows() {
+    public void testCreateInstanceEmptyAddressSpaceThrows() throws Exception {
         new PaginatingDisassembler(mock(BoundaryDecoder.class), 0);
     }
 
     @Test
-    public void testInstructionsPerPageCurrentRowAndCurrentInstructionMarkerCanChange() {
+    public void testInstructionsPerPageCurrentRowAndCurrentInstructionMarkerCanChange() throws Exception {
         boundaryDecoder = mock(BoundaryDecoder.class);
         when(boundaryDecoder.getLongestInstructionSize()).thenReturn(2);
 
@@ -48,7 +48,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void boundaryPageFillsFromFirstKnownInstructionAndNextPageOverlapsOnce() {
+    public void boundaryPageFillsFromFirstKnownInstructionAndNextPageOverlapsOnce() throws Exception {
         int[] successors = new int[256];
         java.util.Arrays.fill(successors, -1);
         int at = 0;
@@ -72,7 +72,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void boundaryRowsRemainValidAfterResizeAndFirstLastPageTravel() {
+    public void boundaryRowsRemainValidAfterResizeAndFirstLastPageTravel() throws Exception {
         BoundaryDecoder flow = new BoundaryDecoder(makeDisassembler(80, 2));
         flow.updateCache(0);
         PaginatingDisassembler asm = new PaginatingDisassembler(flow, 80);
@@ -90,7 +90,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test(timeout = 2000)
-    public void singleVisibleRowCanPageToBothAddressBoundaries() {
+    public void singleVisibleRowCanPageToBothAddressBoundaries() throws Exception {
         PaginatingDisassembler asm = new PaginatingDisassembler(new BoundaryDecoder(makeDisassembler(8, 2)), 8);
         asm.setInstructionsPerPage(1);
         assertEquals(0, asm.rowToLocation(0, 0));
@@ -103,7 +103,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void steppedCpuRetainsPartialFirstPageOverlapAfterNeighborCacheIsInvalidated() {
+    public void steppedCpuRetainsPartialFirstPageOverlapAfterNeighborCacheIsInvalidated() throws Exception {
         BoundaryDecoder flow = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 2));
         flow.updateCache(0);
         PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
@@ -118,7 +118,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void overlapOnlyPreviousPageCanReturnToCurrentPageAfterCpuMovesNearZero() {
+    public void overlapOnlyPreviousPageCanReturnToCurrentPageAfterCpuMovesNearZero() throws Exception {
         BoundaryDecoder flow = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 2));
         flow.updateCache(0);
         PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
@@ -133,7 +133,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void singleVisibleRowCanPageToPredecessorOfPositiveCpuAddress() {
+    public void singleVisibleRowCanPageToPredecessorOfPositiveCpuAddress() throws Exception {
         BoundaryDecoder flow = new BoundaryDecoder(makeDisassembler(8, 2));
         flow.updateCache(0);
         PaginatingDisassembler asm = new PaginatingDisassembler(flow, 8);
@@ -148,7 +148,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageCurrentReturnsToPageZero() {
+    public void testPageCurrentReturnsToPageZero() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -162,7 +162,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testFlushCacheAddsInclusiveUpperBoundOffset() {
+    public void testFlushCacheAddsInclusiveUpperBoundOffset() throws Exception {
         boundaryDecoder = mock(BoundaryDecoder.class);
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -172,7 +172,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testRowAboveHalfReturnsMinusOneAtAddressSpaceEnd() {
+    public void testRowAboveHalfReturnsMinusOneAtAddressSpaceEnd() throws Exception {
         boundaryDecoder = mock(BoundaryDecoder.class);
         when(boundaryDecoder.getLongestInstructionSize()).thenReturn(1);
         when(boundaryDecoder.getLocations(0, 0)).thenReturn(new ArrayList<>(Collections.singletonList(0)));
@@ -184,7 +184,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testRowAboveHalfReturnsMinusOneWhenNoInstructionsAreKnown() {
+    public void testRowAboveHalfReturnsMinusOneWhenNoInstructionsAreKnown() throws Exception {
         boundaryDecoder = mock(BoundaryDecoder.class);
         when(boundaryDecoder.getLongestInstructionSize()).thenReturn(1);
         when(boundaryDecoder.getLocations(0, 5)).thenReturn(Collections.emptyList());
@@ -195,7 +195,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testCachedNextAndPreviousPagesCanBeReused() {
+    public void testCachedNextAndPreviousPagesCanBeReused() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -215,7 +215,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroCurrentInstruction() {
+    public void testPageZeroCurrentInstruction() throws Exception {
         boundaryDecoder = mock(BoundaryDecoder.class);
 
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
@@ -225,7 +225,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroOneBelowCurrentInstructionIsUnknown() {
+    public void testPageZeroOneBelowCurrentInstructionIsUnknown() throws Exception {
         int page0curr = CURRENT_INSTR;
         int page0min = page0curr - HALF_PAGE_MAX_BYTES;
 
@@ -244,7 +244,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroOneAboveCurrentInstructionIsUnknown() {
+    public void testPageZeroOneAboveCurrentInstructionIsUnknown() throws Exception {
         int page0curr = CURRENT_INSTR;
         int page0max = page0curr + HALF_PAGE_MAX_BYTES;
 
@@ -263,7 +263,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroOneBelowCurrentInstructionIsKnown() {
+    public void testPageZeroOneBelowCurrentInstructionIsKnown() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 0, 1, true
         );
@@ -275,7 +275,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroFirstRow() {
+    public void testPageZeroFirstRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 0, LONGEST_INSTR, true
         );
@@ -288,7 +288,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroLastRow() {
+    public void testPageZeroLastRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 0, LONGEST_INSTR, true
         );
@@ -301,7 +301,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageOneFirstRow() {
+    public void testPageOneFirstRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 1, LONGEST_INSTR, true
         );
@@ -314,7 +314,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageOneLastRow() {
+    public void testPageOneLastRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 1, LONGEST_INSTR, true
         );
@@ -327,7 +327,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageTwoFirstRow() {
+    public void testPageTwoFirstRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 2, LONGEST_INSTR, true
         );
@@ -340,7 +340,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageTwoLastRow() {
+    public void testPageTwoLastRow() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 CURRENT_INSTR, 2, LONGEST_INSTR, true
         );
@@ -353,7 +353,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageOneFirstRowWhenCurrentInstructionIs0AndInstructionSizeIs4() {
+    public void testPageOneFirstRowWhenCurrentInstructionIs0AndInstructionSizeIs4() throws Exception {
         PaginatingDisassembler asm = new PaginatingDisassembler(new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 4)), MEMORY_SIZE);
         asm.rowToLocation(0, 0);
         int page1min = (INSTR_PER_PAGE - 1) * 4;
@@ -366,7 +366,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testCurrentLocationDifferenceBetweenPagesIsCorrect() {
+    public void testCurrentLocationDifferenceBetweenPagesIsCorrect() throws Exception {
         // pages do overlap by 1 instruction:
         //   pagePrevMax = pageNextMin
 
@@ -385,7 +385,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageMinusOneLastRowNotEnoughInstructions() {
+    public void testPageMinusOneLastRowNotEnoughInstructions() throws Exception {
         BoundaryDecoder flow = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, LONGEST_INSTR));
         flow.updateCache(0);
         PaginatingDisassembler asm = new PaginatingDisassembler(flow, MEMORY_SIZE);
@@ -400,7 +400,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageMinusOneFirstRowNotEnoughInstructions() {
+    public void testPageMinusOneFirstRowNotEnoughInstructions() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, LONGEST_INSTR));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -416,7 +416,7 @@ public class PaginatingDisassemblerTest {
 
     @Test
     @Ignore
-    public void testPageMinusOneCurrentRowNotEnoughInstructions() {
+    public void testPageMinusOneCurrentRowNotEnoughInstructions() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
                 10, -1, LONGEST_INSTR, false
         );
@@ -428,7 +428,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageZeroInstructionStepped() {
+    public void testPageZeroInstructionStepped() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -447,7 +447,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageOneInstructionStepped() {
+    public void testPageOneInstructionStepped() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -478,7 +478,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageMinusOneInstructionStepped() {
+    public void testPageMinusOneInstructionStepped() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -510,7 +510,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
-    public void testPageMinusOneMinLocationIsNotKnownThenAnotherPreviousPageIsIgnored() {
+    public void testPageMinusOneMinLocationIsNotKnownThenAnotherPreviousPageIsIgnored() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(MEMORY_SIZE, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, MEMORY_SIZE);
 
@@ -525,7 +525,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test(timeout = 1000)
-    public void testLastPageThenAnotherPageNextIsIgnored() {
+    public void testLastPageThenAnotherPageNextIsIgnored() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(5 * CURRENT_INSTR, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, 5 * CURRENT_INSTR);
 
@@ -541,7 +541,7 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test(timeout = 1000)
-    public void testLastPageThenFirstPageReturnsBack() {
+    public void testLastPageThenFirstPageReturnsBack() throws Exception {
         BoundaryDecoder boundaryDecoder = new BoundaryDecoder(makeDisassembler(5 * CURRENT_INSTR, 1));
         PaginatingDisassembler asm = new PaginatingDisassembler(boundaryDecoder, 5 * CURRENT_INSTR);
 

@@ -3,7 +3,7 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
+import net.emustudio.plugins.cpu.rasp.gui.RaspDecoder;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
@@ -47,7 +47,7 @@ public class EmulatorEngine {
         this.inputTape = Objects.requireNonNull(inputTape);
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
-        debugger = new MachineDebugging("RASP", new RaspDisassembler(memory));
+        debugger = new MachineDebugging("RASP", new RaspDecoder(memory));
         debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
         debugger.symbol("ACC", () -> memory.peek(0), text -> memory.write(0, parseWord(text)));
         debugger.symbol("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()),
@@ -94,7 +94,7 @@ public class EmulatorEngine {
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
-            debugStopped = debugger.end(completed) && completed
+            debugStopped = debugger.end(completed, IP.get()) && completed
                     && result == CPU.RunState.STATE_STOPPED_BREAK;
         }
         return result;
@@ -256,13 +256,13 @@ public class EmulatorEngine {
 
     private int readWord(int address) {
         int value = memory.read(address);
-        if (debugger.isActive()) debugger.access(address, value, false);
+        if (debugger.requiresAccesses()) debugger.access(address, value, false);
         return value;
     }
 
     private void writeWord(int address, int value) {
         memory.write(address, value);
-        if (debugger.isActive()) debugger.access(address, value, true);
+        if (debugger.requiresAccesses()) debugger.access(address, value, true);
     }
 
     @FunctionalInterface

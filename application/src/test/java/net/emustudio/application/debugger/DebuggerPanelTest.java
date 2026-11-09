@@ -7,10 +7,9 @@ import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.dialogs.RecordingDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
 import net.emustudio.emulib.plugins.debugger.NavLink;
 import net.emustudio.emulib.plugins.debugger.StepView;
 import net.emustudio.emulib.plugins.debugger.ViewRow;
@@ -72,43 +71,26 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void pcFollowWaitsForCancelledAnalysisToExitWithoutLosingTheStoppedLocation() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), ready = new CountDownLatch(1);
-        AtomicInteger pc = new AtomicInteger();
-        AtomicBoolean armed = new AtomicBoolean();
+    public void flowDisplayUsesCapturedInstructionsWithoutBackgroundDecoding() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        AtomicBoolean decodedOffEdt = new AtomicBoolean();
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
-            when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
-            when(session.cpu.getDisassembler().getFlow(0)).thenAnswer(call -> {
-                if (!armed.get()) return Optional.empty();
-                entered.countDown();
-                boolean interrupted = false;
-                while (true) {
-                    try { release.await(); break; }
-                    catch (InterruptedException cancelled) { interrupted = true; }
-                }
-                if (interrupted) Thread.currentThread().interrupt();
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
+            when(session.cpu.getDecoder().decode(anyInt())).thenAnswer(call -> {
+                if (!SwingUtilities.isEventDispatchThread()) decodedOffEdt.set(true);
+                return instruction(call.getArgument(0));
             });
+            observed(session, 0, OptionalInt.of(2));
+            observed(session, 2, OptionalInt.empty());
         })) {
-            try {
-                armed.set(true);
-                SwingUtilities.invokeAndWait(() -> {
-                    workspace.panel.setInspectionReadyListener(ready::countDown);
-                    button(workspace.panel, "Analyze from PC").doClick(0);
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                assertTrue(entered.await(2, TimeUnit.SECONDS));
-                pc.set(2);
-                workspace.machine.state(CPU.RunState.STATE_RUNNING);
-                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-                SwingUtilities.invokeAndWait(() -> {});
-
-                release.countDown();
-
-                assertTrue("Stopped PC should be followed when the cancelled analysis exits", ready.await(5, TimeUnit.SECONDS));
-                SwingUtilities.invokeAndWait(() -> assertEquals(2, workspace.table.instructionModel()
-                        .getLocationAt(workspace.table.getSelectedRow())));
-                verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
-            } finally { release.countDown(); }
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
+            });
+            assertTrue("Observed flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            assertFalse(decodedOffEdt.get());
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(2));
         }
     }
 
@@ -415,7 +397,7 @@ public class DebuggerPanelTest {
     }
 
     private static void capture(DebuggerSession session, InstructionRecording.Event event) {
-        session.afterStep(event.completed, Optional.of(event.view));
+        session.afterStep(event.completed, Optional.empty(), OptionalInt.empty(), Optional.of(event.view));
     }
 
     private static void showRecording(Workspace workspace, List<InstructionRecording.Event> events) {
@@ -438,22 +420,19 @@ public class DebuggerPanelTest {
 
     @Test
     public void pcAnalysisFoldsRepeatsAndRevealsIndividualNavigationTargets() throws Exception {
-        assertAnalysisFolding("Analyze from PC");
+        assertAnalysisFolding("Show observed flow from PC");
     }
 
     @Test
     public void selectionAnalysisFoldsRepeatsAndRevealsIndividualNavigationTargets() throws Exception {
-        assertAnalysisFolding("Analyze from selected instruction");
+        assertAnalysisFolding("Show observed flow from selected instruction");
     }
 
     private void assertAnalysisFolding(String origin) throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {new byte[9]}, 9, session -> {
-            Disassembler decoder = session.cpu.getDisassembler();
-            for (int at = 0; at < 8; at++) when(decoder.getFlow(at)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.LINEAR, at + 1, true, List.of())));
-            when(decoder.getFlow(8)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 9, false, List.of())));
+            for (int at = 0; at < 8; at++) observed(session, at, OptionalInt.of(at + 1));
+            observed(session, DecodedInstruction.of(8, 1, "STOP", "76"), OptionalInt.empty());
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
@@ -500,11 +479,8 @@ public class DebuggerPanelTest {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {new byte[11]}, 11, session -> {
             when(session.cpu.getInstructionLocation()).thenAnswer(call -> pc.get());
-            Disassembler decoder = session.cpu.getDisassembler();
-            for (int at = 0; at < 10; at++) when(decoder.getFlow(at)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.LINEAR, at + 1, true, List.of())));
-            when(decoder.getFlow(10)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 11, false, List.of())));
+            for (int at = 0; at < 10; at++) observed(session, at, OptionalInt.of(at + 1));
+            observed(session, DecodedInstruction.of(10, 1, "STOP", "76"), OptionalInt.empty());
         })) {
             workspace.session.annotations().add(new AnnotationIndex.Entry(6, "checkpoint", "CODE"));
             SwingUtilities.invokeAndWait(() -> {
@@ -512,7 +488,7 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+                button(workspace.panel, "Show observed flow from selected instruction").doClick(0);
             });
             assertTrue("Analysis should finish", shown.await(5, TimeUnit.SECONDS));
 
@@ -525,6 +501,9 @@ public class DebuggerPanelTest {
                 assertEquals("checkpoint · 0006 · NOP", graphTooltip(graph, 150, 400));
                 pc.set(2);
                 workspace.panel.stepCompleted();
+            });
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
                 assertEquals("0002 · NOP", graphTooltip(graph, 150, 220));
                 assertEquals("0003–0005 · NOP × 3", graphTooltip(graph, 150, 310));
             });
@@ -709,7 +688,7 @@ public class DebuggerPanelTest {
                 Container inspection = (Container) tabs.getSelectedComponent();
                 JTextField search = component(inspection, JTextField.class, "Search annotations");
                 JToolBar toolbar = (JToolBar) SwingUtilities.getAncestorOfClass(JToolBar.class, search);
-                assertNotSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Analyze from PC")));
+                assertNotSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Show observed flow from PC")));
                 assertSame(toolbar, SwingUtilities.getAncestorOfClass(JToolBar.class, button(inspection, "Export annotations")));
                 assertNull(findComponent(inspection, JLabel.class, "Search annotations"));
                 JFrame frame = new JFrame();
@@ -1129,7 +1108,7 @@ public class DebuggerPanelTest {
                 workspace.panel.setExecutionRunning(true);
                 assertFalse(workspace.table.isEnabled());
                 assertFalse(workspace.table.isVisible());
-                for (String name : List.of("Analyze from PC", "Analyze from selected instruction",
+                for (String name : List.of("Show observed flow from PC", "Show observed flow from selected instruction",
                         "Go to instruction", "Annotate inspected address", "Edit selected annotation",
                         "Delete selected annotation", "Import annotations", "Export annotations"))
                     assertFalse(name, button(workspace.panel, name).isEnabled());
@@ -1140,8 +1119,8 @@ public class DebuggerPanelTest {
                 workspace.panel.showInstructions();
                 assertTrue(workspace.table.isVisible());
                 assertTrue(workspace.table.isEnabled());
-                assertTrue(button(workspace.panel, "Analyze from PC").isEnabled());
-                assertTrue(button(workspace.panel, "Analyze from selected instruction").isEnabled());
+                assertTrue(button(workspace.panel, "Show observed flow from PC").isEnabled());
+                assertTrue(button(workspace.panel, "Show observed flow from selected instruction").isEnabled());
                 assertFalse(button(workspace.panel, "Edit selected annotation").isEnabled());
                 assertFalse(button(workspace.panel, "Delete selected annotation").isEnabled());
                 assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
@@ -1176,7 +1155,7 @@ public class DebuggerPanelTest {
             workspace.session.update(() -> {}).join();
             assertFalse(workspace.session.beforeStep());
             workspace.machine.accessed(1, false);
-            workspace.session.afterStep(true, Optional.empty());
+            workspace.session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
             workspace.session.refreshWatches().join();
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
@@ -1388,20 +1367,17 @@ public class DebuggerPanelTest {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0, 0}}, 5, session -> {
             when(session.cpu.getInstructionLocation()).thenReturn(3);
-            Disassembler decoder = session.cpu.getDisassembler();
-            when(decoder.getFlow(3)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.JUMP, 4, true, List.of(1))));
-            when(decoder.getFlow(1)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.RETURN, 2, false, List.of())));
-            when(decoder.getFlow(4)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 5, false, List.of())));
+            observed(session, 3, OptionalInt.of(1));
+            observed(session, 1, OptionalInt.of(4));
+            observed(session, 3, OptionalInt.of(4));
+            observed(session, 4, OptionalInt.empty());
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.navigate(0);
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                button(workspace.panel, "Analyze from PC").doClick(0);
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
             });
 
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
@@ -1426,23 +1402,40 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void selectingGraphInstructionUpdatesDebuggerAndAnalysisStart() throws Exception {
-        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
-        AtomicInteger reads = new AtomicInteger();
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
-            Disassembler decoder = session.cpu.getDisassembler();
-            when(decoder.getFlow(0)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.JUMP, 1, true, List.of(1))));
-            when(decoder.getFlow(1)).thenAnswer(call -> {
-                if (reads.incrementAndGet() == 2) reanalyzed.countDown();
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of()));
-            });
-        })) {
+    public void observedDestinationDoesNotInventAnExecutedInstruction() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2,
+                session -> observed(session, 0, OptionalInt.of(1)))) {
             SwingUtilities.invokeAndWait(() -> {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                button(workspace.panel, "Analyze from PC").doClick(0);
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
+            });
+            assertTrue("Observed flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(0));
+            assertNull(workspace.session.flowAnalysis().instructionAt(1));
+            assertTrue(workspace.session.flowAnalysis().unknown().containsKey(1));
+        }
+    }
+
+    @Test
+    public void selectingGraphInstructionUpdatesDebuggerAndAnalysisStart() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
+        AtomicInteger published = new AtomicInteger();
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
+            observed(session, 0, OptionalInt.of(1));
+            observed(session, 1, OptionalInt.empty());
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) {
+                        shown.countDown();
+                        if (published.incrementAndGet() >= 2) reanalyzed.countDown();
+                    }
+                });
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
             });
             assertTrue(shown.await(5, TimeUnit.SECONDS));
 
@@ -1455,62 +1448,56 @@ public class DebuggerPanelTest {
 
                 assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
-                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+                button(workspace.panel, "Show observed flow from selected instruction").doClick(0);
             });
             assertTrue("Analysis should start at the selected graph instruction", reanalyzed.await(5, TimeUnit.SECONDS));
         }
     }
 
     @Test
-    public void steppingReanalyzesVisiblePcBasedFlow() throws Exception {
-        CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1), release = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
-            Disassembler decoder = session.cpu.getDisassembler();
-            when(decoder.getFlow(0)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of())));
-            when(decoder.getFlow(1)).thenAnswer(call -> {
-                reanalyzed.countDown();
-                assertTrue(release.await(5, TimeUnit.SECONDS));
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of()));
-            });
+    public void steppingRefreshesObservedBranchesWithoutAdvancingExplicitRoot() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {new byte[256]}, 256, session -> {
+            when(session.cpu.getInstructionLocation()).thenReturn(100);
+            observed(session, DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(103));
+            observed(session, DecodedInstruction.of(103, 1, "A", "01"), OptionalInt.empty());
         })) {
             SwingUtilities.invokeAndWait(() -> {
-                JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
-                tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                button(workspace.panel, "Analyze from PC").doClick(0);
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
             });
             assertTrue(shown.await(5, TimeUnit.SECONDS));
+            observed(workspace.session, DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(200));
+            observed(workspace.session, DecodedInstruction.of(200, 1, "B", "02"), OptionalInt.empty());
+            workspace.session.annotations().add(new AnnotationIndex.Entry(100, "entry", "CODE"));
+            workspace.machine.memoryChanged(100);
+            when(workspace.session.cpu.getInstructionLocation()).thenReturn(200);
+            SwingUtilities.invokeAndWait(workspace.panel::stepCompleted);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while ((workspace.session.flowAnalysis() == null
+                    || workspace.session.flowAnalysis().instructionAt(103) == null
+                    || workspace.session.flowAnalysis().instructionAt(200) == null)
+                    && System.nanoTime() < deadline) Thread.sleep(10);
 
-            try {
-                SwingUtilities.invokeAndWait(() -> {
-                    JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
-                    graph.setSize(graph.getPreferredSize());
-                    java.awt.image.BufferedImage before = new java.awt.image.BufferedImage(460, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-                    java.awt.Graphics beforeGraphics = before.getGraphics();
-                    try { graph.paint(beforeGraphics); } finally { beforeGraphics.dispose(); }
-                    workspace.session.runExecution(() -> {});
-                    when(workspace.session.cpu.getInstructionLocation()).thenReturn(1);
-                    workspace.panel.stepCompleted();
-                    java.awt.image.BufferedImage during = new java.awt.image.BufferedImage(460, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-                    java.awt.Graphics duringGraphics = during.getGraphics();
-                    try { graph.paint(duringGraphics); } finally { duringGraphics.dispose(); }
-                    assertEquals("Existing graph remains visible during analysis", before.getRGB(100, 50), during.getRGB(100, 50));
-                });
-                assertTrue("Stepping should analyze the new PC", reanalyzed.await(5, TimeUnit.SECONDS));
-            } finally { release.countDown(); }
+            FlowAnalysis refreshed = workspace.session.flowAnalysis();
+            assertNotNull(refreshed);
+            assertNotNull(refreshed.instructionAt(100));
+            assertNotNull(refreshed.instructionAt(103));
+            assertNotNull(refreshed.instructionAt(200));
+            java.util.Set<String> edges = new java.util.HashSet<>();
+            refreshed.forEachEdge((from, to) -> edges.add(from + "->" + to));
+            assertEquals(java.util.Set.of("100->103", "100->200"), edges);
         }
     }
 
     @Test
-    public void inspectionCanAnalyzeSelectedInstructionInsteadOfPc() throws Exception {
+    public void inspectionCanFilterObservedFlowFromSelectedInstructionInsteadOfPc() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0, 0}}, 4, session -> {
             when(session.cpu.getInstructionLocation()).thenReturn(3);
-            when(session.cpu.getDisassembler().getFlow(1)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+            observed(session, 1, OptionalInt.empty());
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.navigate(1);
@@ -1519,14 +1506,13 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
-                button(workspace.panel, "Analyze from selected instruction").doClick(0);
+                button(workspace.panel, "Show observed flow from selected instruction").doClick(0);
             });
-
-            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            assertTrue("Selected observed instruction should be displayed", shown.await(5, TimeUnit.SECONDS));
             assertNotNull(workspace.session.flowAnalysis().instructionAt(1));
             assertNull(workspace.session.flowAnalysis().instructionAt(3));
             SwingUtilities.invokeAndWait(workspace.panel::stepCompleted);
-            verify(workspace.session.cpu.getDisassembler(), never()).getFlow(3);
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(1));
         }
     }
 
@@ -1534,8 +1520,7 @@ public class DebuggerPanelTest {
     public void inspectPopupAnalyzesRightClickedInstruction() throws Exception {
         CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {
-            when(session.cpu.getDisassembler().getFlow(5)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 6, false, List.of())));
+            observed(session, 5, OptionalInt.empty());
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.table.getSelectionModel().addListSelectionListener(event -> {
@@ -1590,25 +1575,13 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void reachableFlowDecodesOffEdtAndGraphNavigatesOnDoubleClick() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), shown = new CountDownLatch(1);
-        AtomicBoolean decodedOnEdt = new AtomicBoolean();
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
-        when(disassembler.disassemble(anyInt())).thenAnswer(call ->
-                new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
+    public void reachableObservedFlowGraphNavigatesOnDoubleClick() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
-            when(session.cpu.getDisassembler()).thenReturn(disassembler);
-            when(disassembler.getFlow(0)).thenAnswer(call -> {
-                decodedOnEdt.set(SwingUtilities.isEventDispatchThread());
-                entered.countDown();
-                assertTrue("Test should release decoder", release.await(10, TimeUnit.SECONDS));
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.JUMP, 1, true, List.of(1)));
-            });
-            when(disassembler.getFlow(1)).thenReturn(Optional.of(
-                    new InstructionFlow(InstructionFlow.Kind.STOP, 2, false, List.of())));
+            observed(session, 0, OptionalInt.of(0));
+            observed(session, 0, OptionalInt.of(1));
+            observed(session, 1, OptionalInt.empty());
         })) {
-            try {
                 workspace.session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
                 workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "UNKNOWN"));
                 SwingUtilities.invokeAndWait(() -> {
@@ -1617,17 +1590,9 @@ public class DebuggerPanelTest {
                     goTo.addPropertyChangeListener("enabled", event -> {
                         if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                     });
-                    button(workspace.panel, "Analyze from PC").doClick(0);
-                    assertFalse("Analysis should disable inspection before worker starts", workspace.table.isEnabled());
+                    button(workspace.panel, "Show observed flow from PC").doClick(0);
                 });
-                assertTrue("Background decoder should start", entered.await(5, TimeUnit.SECONDS));
-                assertFalse("Decoder must not run on Swing event thread", decodedOnEdt.get());
-                CountDownLatch responsive = new CountDownLatch(1);
-                SwingUtilities.invokeLater(() -> { workspace.session.requirePaused(); responsive.countDown(); });
-                assertTrue("Paused queries on EDT must not wait for live flow decode",
-                        responsive.await(5, TimeUnit.SECONDS));
-                release.countDown();
-                assertTrue("Published instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
+                assertTrue("Observed instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
                 AnnotationIndex annotationIndex = workspace.session.annotations();
                 SwingUtilities.invokeAndWait(() -> {
                     assertNull(findComponent(workspace.panel, JList.class, "Static references"));
@@ -1655,8 +1620,6 @@ public class DebuggerPanelTest {
                         assertEquals("Paint after selection should recheck live symbols", 3, symbolReads.get());
                     } finally { graphics.dispose(); }
                     assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
-                            System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("Branch"));
-                    assertTrue(graph.getToolTipText(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_MOVED,
                             System.currentTimeMillis(), 0, 260, 40, 0, false)).contains("start"));
                     graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
                             System.currentTimeMillis(), 0, 10, 25, 1, false, java.awt.event.MouseEvent.BUTTON1));
@@ -1669,11 +1632,11 @@ public class DebuggerPanelTest {
                     assertTrue(annotationIndex.entries().stream().anyMatch(entry -> entry.label.equals("region")));
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
-                    for (String name : List.of("Analyze from PC", "Analyze from selected instruction", "Go to instruction")) {
+                    for (String name : List.of("Show observed flow from PC", "Show observed flow from selected instruction", "Go to instruction")) {
                         AbstractButton action = button(workspace.panel, name);
                         assertNotNull(action.getIcon());
                     }
-                    for (String name : List.of("Analyze from PC", "Analyze from selected instruction", "Analyze recording"))
+                    for (String name : List.of("Show observed flow from PC", "Show observed flow from selected instruction", "Analyze recording"))
                         assertTrue(button(workspace.panel, name).getHideActionText());
                     JViewport graphViewport = graphScroll.getViewport();
                     graphViewport.setViewSize(graph.getPreferredSize());
@@ -1746,7 +1709,6 @@ public class DebuggerPanelTest {
                     assertTrue(annotationIndex.entries().stream().anyMatch(entry ->
                             entry.label.isEmpty() && entry.address == 0 && entry.end == 2));
                 });
-            } finally { release.countDown(); }
         }
     }
 
@@ -1804,24 +1766,18 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void flowUsesCpuDecoderForInspectedAddress() throws Exception {
-        CountDownLatch decoded = new CountDownLatch(1), shown = new CountDownLatch(1);
-        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {
-            Disassembler decoder = session.cpu.getDisassembler();
-            when(decoder.getFlow(0)).thenAnswer(call -> {
-                decoded.countDown();
-                return Optional.of(new InstructionFlow(InstructionFlow.Kind.STOP, 1, false, List.of()));
-            });
-        })) {
+    public void observedInstructionCanNavigateBackToLiveListing() throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2,
+                session -> observed(session, 0, OptionalInt.empty()))) {
             SwingUtilities.invokeAndWait(() -> {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
                 });
                 workspace.panel.navigate(0);
-                button(workspace.panel, "Analyze from PC").doClick(0);
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
             });
-            assertTrue("CPU decoder should run", decoded.await(5, TimeUnit.SECONDS));
-            assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
+            assertTrue("Observed flow should be displayed", shown.await(5, TimeUnit.SECONDS));
             SwingUtilities.invokeAndWait(() -> {
                 button(workspace.panel, "Go to instruction").doClick(0);
                 assertTrue(workspace.panel.isInstructionView());
@@ -1831,15 +1787,14 @@ public class DebuggerPanelTest {
     }
 
 
-    private Workspace workspace(byte[][] banks, int common, Consumer<DebuggerSession> configure) throws Exception {
+    private Workspace workspace(byte[][] banks, int common, Configuration configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");
         Workspace workspace = new Workspace();
         workspace.machine = new DebuggerTestMachine(banks, common);
-        Disassembler disassembler = mock(Disassembler.class);
-        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(call -> (int) call.getArgument(0) + 1);
-        when(disassembler.disassemble(anyInt())).thenAnswer(call ->
-                new DisassembledInstruction(call.getArgument(0), "NOP", "00"));
-        when(workspace.machine.cpu.getDisassembler()).thenReturn(disassembler);
+        Decoder decoder = mock(Decoder.class);
+        when(decoder.decode(anyInt())).thenAnswer(call ->
+                instruction(call.getArgument(0)));
+        when(workspace.machine.cpu.getDecoder()).thenReturn(decoder);
         workspace.session = workspace.machine.session(settings);
         configure.accept(workspace.session);
         CountDownLatch ready = new CountDownLatch(1);
@@ -1863,6 +1818,23 @@ public class DebuggerPanelTest {
             workspace.close();
             throw failure;
         }
+    }
+
+    @FunctionalInterface
+    private interface Configuration {
+        void accept(DebuggerSession session) throws Exception;
+    }
+
+    private static DecodedInstruction instruction(int address) {
+        return DecodedInstruction.of(address, 1, "NOP", "00");
+    }
+
+    private static void observed(DebuggerSession session, int address, OptionalInt next) {
+        observed(session, instruction(address), next);
+    }
+
+    private static void observed(DebuggerSession session, DecodedInstruction instruction, OptionalInt next) {
+        session.afterStep(true, Optional.of(instruction), next, Optional.empty());
     }
 
     private static AbstractButton button(Container root, String name) {

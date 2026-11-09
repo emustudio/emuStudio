@@ -6,7 +6,7 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -27,7 +27,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     private final InitializerZ80 initializer;
 
     private StatusPanel statusPanel;
-    private Disassembler disassembler;
+    private Decoder disassembler;
     private EmulatorEngine engine;
 
     private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
@@ -64,7 +64,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     @Override
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
-        disassembler = initializer.getDisassembler();
+        disassembler = initializer.getDecoder();
         engine = initializer.getEngine();
         engine.debugger.onBoundary(() -> applicationApi.getExecutionState().processUpdates());
         context.setEngine(engine);
@@ -80,7 +80,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
-    public AutoCloseable observe(Observer observer, boolean capture) { return engine.debugger.observe(observer, capture); }
+    public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     public JPanel debuggingEditor() { return engine.debugger.editor(applicationApi.getExecutionState()::update); }
 
@@ -115,7 +115,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins
     }
 
     @Override
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 

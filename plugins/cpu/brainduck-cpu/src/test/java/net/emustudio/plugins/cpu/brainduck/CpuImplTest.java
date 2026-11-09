@@ -107,9 +107,9 @@ public class CpuImplTest {
         Debugging.Observer listener = new Debugging.Observer() {
             @Override public boolean beforeStep() { int address = cpu.getInstructionLocation(); return address == breakpoint; }
 
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) { return false; }
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) { return false; }
 };
-        AutoCloseable observation = cpu.observe(listener, true);
+        AutoCloseable observation = cpu.observe(listener, Debugging.Capture.FULL);
         try {
             assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         } finally {
@@ -379,14 +379,14 @@ public class CpuImplTest {
         setupEmulator(new byte[] {3, 3, 0}, null, null);
         java.util.List<StepView> events = new java.util.ArrayList<>();
         cpu.observe(new Debugging.Observer() {
-            @Override public boolean afterStep(boolean completed, java.util.Optional<StepView> capture) {
+            @Override public boolean afterStep(boolean completed, java.util.Optional<net.emustudio.emulib.plugins.cpu.DecodedInstruction> instruction, java.util.OptionalInt nextAddress, java.util.Optional<StepView> capture) {
                 StepView event = capture.orElseThrow();
                 events.add(event);
                 return true;
             }
 
             @Override public boolean beforeStep() { return false; }
-}, true);
+}, Debugging.Capture.FULL);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, cpu.getInstructionLocation());

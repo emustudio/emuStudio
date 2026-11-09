@@ -3,7 +3,7 @@
 package net.emustudio.plugins.cpu.intel8080.api;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.plugins.cpu.intel8080.MachineDebugging;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -13,7 +13,7 @@ import java.util.Objects;
 public abstract class DefaultInitializer<Engine> {
     private final long pluginId;
     private final ContextPool contextPool;
-    private Disassembler disassembler;
+    private Decoder disassembler;
     private Engine engine;
 
     public DefaultInitializer(long pluginId, ContextPool contextPool) {
@@ -23,11 +23,11 @@ public abstract class DefaultInitializer<Engine> {
 
     public final void initialize() throws PluginInitializationException {
         MemoryContext<Byte> memory = contextPool.getMemory(pluginId, Byte.class);
-        disassembler = createDisassembler(MachineDebugging.inspectionMemory(memory));
+        disassembler = createDecoder(MachineDebugging.inspectionMemory(memory));
         engine = createEmulatorEngine(memory);
     }
 
-    public Disassembler getDisassembler() {
+    public Decoder getDecoder() {
         return disassembler;
     }
 
@@ -37,5 +37,5 @@ public abstract class DefaultInitializer<Engine> {
 
     protected abstract Engine createEmulatorEngine(MemoryContext<Byte> memory);
 
-    protected abstract Disassembler createDisassembler(MemoryContext<Byte> memory);
+    protected abstract Decoder createDecoder(MemoryContext<Byte> memory);
 }
