@@ -4,9 +4,8 @@ package net.emustudio.application.debugger;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,9 +16,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
-public class SparseDebugSessionTest {
+public class SparseDebuggerSessionTest {
     @Test public void blankWordMemoryCanLoadAndClearWithoutReplacingItsSparseAddressDomain() throws Exception {
-        CPU cpu = mockCpu();
+        CPU cpu = mockCpu(withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), anyBoolean()))
+                .thenReturn(() -> {});
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
         AtomicInteger occupancy = new AtomicInteger();
         AtomicReference<MemoryContext.MemoryListener> listener = new AtomicReference<>();
@@ -28,30 +29,26 @@ public class SparseDebugSessionTest {
         when(memory.getSize()).thenAnswer(call -> occupancy.get());
         doAnswer(call -> { listener.set(call.getArgument(0)); return null; }).when(memory).addMemoryListener(any());
 
-        try (DebugSession session = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
-            ProgramIndex index = session.programIndex();
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
             assertEquals(0, memory.getSize());
-            assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
+            assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;
-            session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
-                    99, 1, address, Integer.MAX_VALUE, ProgramIndex.Kinds.LABEL, "last cell", null));
-            try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-                update.add(address);
-                assertEquals(ProgramIndex.CommitResult.PUBLISHED, update.commit());
-            }
+            session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
+                    99, 1, address, Integer.MAX_VALUE, "label", "last cell", null));
+            session.setBreakpoint(address, true).join();
             session.annotations().add(new AnnotationIndex.Entry(address, "metadata", "CODE"));
             assertEquals("metadata", session.annotations().get(address).label);
             assertThrows(IllegalArgumentException.class, session::liveMemory);
 
             occupancy.set(1);
             listener.get().memorySizeChanged();
-            assertSame(index, session.programIndex());
-            assertTrue(index.snapshot().hasExecutionBreakpoint(address));
+            assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
+            assertTrue(session.isBreakpointSet(address));
             occupancy.set(0);
             listener.get().memorySizeChanged();
-            assertSame(index, session.programIndex());
+            assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             assertEquals("last cell", session.annotationEngine.get(99, 1).text);
-            assertEquals(Integer.MAX_VALUE, index.snapshot().layout().addressSpaceSize());
+            assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             verify(memory, never()).read(anyInt());
             verify(memory, never()).read(anyInt());
         }

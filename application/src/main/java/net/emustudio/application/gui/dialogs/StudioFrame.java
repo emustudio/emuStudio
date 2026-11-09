@@ -16,10 +16,10 @@ import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_FAVICON;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_FAVICON;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 

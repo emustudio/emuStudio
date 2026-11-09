@@ -7,7 +7,7 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.bcd2bin;
+import static net.emustudio.emulib.Numbers.bcd2bin;
 import static net.emustudio.plugins.device.simh.commands.GetClockCPM3.*;
 
 public class SetClockCPM3 implements Command {

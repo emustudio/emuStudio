@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger.index;
 
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
 import com.sun.management.ThreadMXBean;
 import org.junit.Assume;
 import org.junit.Test;
@@ -10,16 +9,17 @@ import org.junit.Test;
 import java.lang.management.ManagementFactory;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.debugger.index.ProgramIndex.*;
+import static net.emustudio.application.debugger.index.FlowGraph.*;
+import java.util.*;
 import static org.junit.Assert.assertEquals;
 
 /** Flow query allocation contract; breakpoint set lookups may box addresses. */
-public class ProgramIndexAllocationTest {
+public class FlowGraphAllocationTest {
     private static final int WARMUP = 30000;
     private static final int SAMPLES = 10000;
     private static volatile long consumed;
-    private static final Consumer<Object> VALUES = ProgramIndexAllocationTest::consume;
-    private static final EdgeVisitor EDGES = ProgramIndexAllocationTest::consumeEdge;
+    private static final Consumer<Object> VALUES = FlowGraphAllocationTest::consume;
+    private static final EdgeVisitor EDGES = FlowGraphAllocationTest::consumeEdge;
 
     @Test public void denseFlowQueriesAllocateNothingAfterWarmup() {
         verifyQueries("dense", 65536, 49152);
@@ -49,7 +49,7 @@ public class ProgramIndexAllocationTest {
             allocated(bean, thread, workload, false);
             long baseline = allocated(bean, thread, workload, false);
             long queries = allocated(bean, thread, workload, true);
-            System.out.println(name + " ProgramIndex flow queries: " + queries + " B / " + SAMPLES
+            System.out.println(name + " FlowGraph queries: " + queries + " B / " + SAMPLES
                     + " batches; empty-loop/counter baseline " + baseline + " B");
             assertEquals(name + " hot queries allocated bytes above the empty-loop/counter baseline",
                     0L, queries - baseline);
@@ -80,46 +80,39 @@ public class ProgramIndexAllocationTest {
     }
 
     private static final class Workload {
-        final ProgramIndex index;
+        final FlowGraph graph;
         final int[] addresses;
         int cursor;
 
         Workload(int size, int common) {
-            index = ProgramIndex.create(size, new MemoryAnnotations());
             int[] starts = {0, 32, 4096, size / 2, common - 2, common, size - 2};
             addresses = new int[starts.length * 2 + 3];
             addresses[starts.length * 2] = 128;
             addresses[starts.length * 2 + 1] = size / 4 + 17;
             addresses[starts.length * 2 + 2] = common - 1025;
-            try (ContentUpdate content = index.updateContent(index.snapshot())) {
-                content.replaceFlow(false);
-                for (int i = 0; i < starts.length; i++) {
-                    int address = starts[i];
-                    addresses[2 * i] = address;
-                    addresses[2 * i + 1] = address + 1;
-                    content.putInstruction(new Range(address, address + 2), InstructionKind.CALL);
-                    int next = starts[(i + 1) % starts.length];
-                    content.putEdge(address, next, EdgeKind.CALL);
-                    content.putEdge(address, address + 1, EdgeKind.FALL_THROUGH);
-                    content.putEdge(address, next, EdgeKind.BRANCH);
-                }
-                assertEquals(CommitResult.PUBLISHED, content.commit());
+            Map<Integer, Instruction> instructions = new TreeMap<>();
+            Set<Edge> edges = new TreeSet<>();
+            for (int i = 0; i < starts.length; i++) {
+                int address = starts[i];
+                addresses[2 * i] = address;
+                addresses[2 * i + 1] = address + 1;
+                instructions.put(address, new Instruction(new Range(address, address + 2), InstructionKind.CALL));
+                int next = starts[(i + 1) % starts.length];
+                edges.add(new Edge(address, next, EdgeKind.CALL));
+                edges.add(new Edge(address, address + 1, EdgeKind.FALL_THROUGH));
+                edges.add(new Edge(address, next, EdgeKind.BRANCH));
             }
-            try (BreakpointUpdate breakpoints = index.updateBreakpoints(index.snapshot())) {
-                for (int start : starts) breakpoints.add(start);
-                assertEquals(CommitResult.PUBLISHED, breakpoints.commit());
-            }
+            graph = new FlowGraph(instructions, edges);
         }
 
         void query(int iterations) {
             for (int i = 0; i < iterations; i++) {
                 int selected = cursor++ & Integer.MAX_VALUE;
                 int address = addresses[selected % addresses.length];
-                Snapshot snapshot = index.snapshot();
-                Instruction instruction = snapshot.instructionAt(address);
+                Instruction instruction = graph.instructionAt(address);
                 if (instruction != null) consumed += instruction.cells().end;
-                snapshot.forEachSuccessor(address, EDGES);
-                snapshot.forEachInstruction(VALUES);
+                graph.successors(address, EDGES);
+                graph.instructions(VALUES);
             }
         }
     }

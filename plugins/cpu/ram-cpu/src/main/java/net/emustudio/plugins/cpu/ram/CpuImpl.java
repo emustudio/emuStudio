@@ -3,16 +3,16 @@
 package net.emustudio.plugins.cpu.ram;
 
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.cpu.AbstractCPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.cpu.AbstractCPU;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RamStatusPanel;
@@ -32,7 +32,7 @@ import java.util.List;
         description = "Emulator of abstract RAM machine"
 )
 @SuppressWarnings("unused")
-public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugins.debugger.Debugging {
+public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.debugger.Debugging {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RamCpuContextImpl context;

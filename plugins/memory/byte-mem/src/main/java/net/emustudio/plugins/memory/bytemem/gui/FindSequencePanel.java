@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence.PerformFindSequenceAction;
 import net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence.PerformFindSequenceAction.Format;
 

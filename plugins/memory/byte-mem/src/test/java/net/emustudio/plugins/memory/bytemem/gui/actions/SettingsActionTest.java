@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;

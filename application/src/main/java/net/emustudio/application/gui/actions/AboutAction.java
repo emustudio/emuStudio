@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_FAVICON;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_FAVICON;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class AboutAction extends AbstractAction {

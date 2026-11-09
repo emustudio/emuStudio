@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.api;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.*;

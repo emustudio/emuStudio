@@ -4,7 +4,7 @@ package net.emustudio.application.emulation;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.application.emulation.EmulationControllerTest.*;
-import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
+import static net.emustudio.emulib.plugin.cpu.CPU.RunState.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -50,6 +50,9 @@ public class EmulationControllerSchedulingTest {
         try (EmulationController controller = controller(cpu)) {
             await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            while (controller.isBusy() && System.nanoTime() < deadline) Thread.sleep(1);
+            assertFalse(controller.isBusy());
 
             assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
             assertFalse(controller.isTimedRunning());

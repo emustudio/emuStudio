@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 
 public class MemoryTable extends JTable {
     private final MemoryTableModel tableModel;

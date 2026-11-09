@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.application.debugger.DebugSession;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.application.debugger.DebuggerSession;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ public final class EmulationController implements Closeable {
     private final CPUContext cpuContext;
     private final Memory memory;
     private final List<Device> devices;
-    private final DebugSession debugger;
+    private final DebuggerSession debugger;
     private final Compiler compiler;
     private volatile CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
     private volatile boolean busy, timedRunning, closing;
@@ -80,11 +80,11 @@ public final class EmulationController implements Closeable {
         }
     }
 
-    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebugSession debugger) {
+    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebuggerSession debugger) {
         this(cpu, cpuContext, memory, devices, debugger, null);
     }
 
-    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebugSession debugger, Compiler compiler) {
+    public EmulationController(CPU cpu, CPUContext cpuContext, Memory memory, List<Device> devices, DebuggerSession debugger, Compiler compiler) {
         this.cpu = cpu;
         this.cpuContext = cpu == null ? null : Objects.requireNonNull(cpuContext);
         this.memory = memory;
@@ -321,7 +321,7 @@ public final class EmulationController implements Closeable {
         state = value;
         if (!internalStateChanged && publishedState == value) return;
         publishedState = value;
-        if (debugger != null) debugger.executionChanged(value);
+        if (debugger != null) debugger.executionChanged(value, mutationGeneration);
     }
 
     public CompletableFuture<Void> closeAsync() {

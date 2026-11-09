@@ -3,7 +3,7 @@
 package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import org.junit.Test;
 
 import java.io.File;

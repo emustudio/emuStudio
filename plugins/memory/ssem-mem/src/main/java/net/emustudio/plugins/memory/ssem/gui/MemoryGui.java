@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
@@ -14,7 +14,7 @@ import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;

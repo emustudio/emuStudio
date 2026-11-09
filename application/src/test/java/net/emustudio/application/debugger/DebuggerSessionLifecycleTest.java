@@ -4,8 +4,8 @@ package net.emustudio.application.debugger;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
 import java.util.Set;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class DebugSessionLifecycleTest {
+public class DebuggerSessionLifecycleTest {
     @Test
     public void failedMemoryListenerRegistrationDoesNotStartAnOrphanScheduler() {
         CPU cpu = mockCpu();
@@ -24,7 +24,7 @@ public class DebugSessionLifecycleTest {
         doThrow(failure).when(memory).addMemoryListener(any());
         Set<Thread> before = commandThreads();
 
-        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)));
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)));
 
         Set<Thread> after = commandThreads();
         after.removeAll(before);

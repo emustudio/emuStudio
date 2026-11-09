@@ -3,7 +3,7 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import java.util.HashMap;
 import java.util.Map;

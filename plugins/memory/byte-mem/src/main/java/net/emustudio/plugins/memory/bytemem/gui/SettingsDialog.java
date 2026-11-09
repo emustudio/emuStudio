@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
@@ -158,8 +158,8 @@ public class SettingsDialog extends DialogBase {
         Optional<RangeTree.Range> rangeOpt = Optional.empty();
         try {
             if (i >= 0) {
-                int from = RadixUtils.parseRadix((String) romModel.getValueAt(i, 0));
-                int to = RadixUtils.parseRadix((String) romModel.getValueAt(i, 1));
+                int from = Numbers.parseRadix((String) romModel.getValueAt(i, 0));
+                int to = Numbers.parseRadix((String) romModel.getValueAt(i, 1));
                 rangeOpt = Optional.of(new RangeTree.Range(from, to));
             } else {
                 Optional<Integer> from = dialogs.readInteger("Enter FROM address:", "Remove ROM range", 0);
@@ -180,7 +180,7 @@ public class SettingsDialog extends DialogBase {
 
     private int getPositiveIntegerOrThrow(String name, JTextField textField) {
         try {
-            int number = RadixUtils.parseRadix(textField.getText());
+            int number = Numbers.parseRadix(textField.getText());
             if (number < 0) {
                 throw new NumberFormatException();
             }

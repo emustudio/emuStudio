@@ -7,9 +7,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_BREAKPOINT;
-import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_EVEN;
-import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_ODD;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_BREAKPOINT;
+import static net.emustudio.emulib.ui.Constants.TABLE_COLOR_ROW_EVEN;
+import static net.emustudio.emulib.ui.Constants.TABLE_COLOR_ROW_ODD;
 
 class BooleanCellRenderer extends DefaultTableCellRenderer {
     private static final Icon BOOLEAN_ICON = loadIcon(ICON_BREAKPOINT);

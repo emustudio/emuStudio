@@ -8,10 +8,10 @@ import static net.emustudio.application.TestCpu.mockCpu;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Test;
 
 import javax.swing.*;

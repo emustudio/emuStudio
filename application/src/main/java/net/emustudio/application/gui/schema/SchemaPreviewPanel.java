@@ -5,8 +5,8 @@ package net.emustudio.application.gui.schema;
 import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.io.FileType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

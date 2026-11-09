@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.plugins.debugger.*;
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.debugger.*;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import javax.swing.*;
 import java.awt.FlowLayout;

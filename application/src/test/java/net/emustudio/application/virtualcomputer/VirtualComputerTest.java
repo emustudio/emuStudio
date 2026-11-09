@@ -12,21 +12,21 @@ import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.debugger.AnnotationIndex;
-import net.emustudio.application.debugger.DebugSession;
+import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -52,7 +52,7 @@ public class VirtualComputerTest {
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebugSession seed = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
+        try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
             seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
             seed.save();
         }
@@ -60,7 +60,7 @@ public class VirtualComputerTest {
 
         ContextPoolImpl contextPool = mock(ContextPoolImpl.class);
         doReturn(memory).when(contextPool).get(0, MemoryContext.class);
-        doReturn(net.emustudio.application.TestCpu.context(cpu)).when(contextPool).get(0, net.emustudio.emulib.plugins.cpu.CPUContext.class);
+        doReturn(net.emustudio.application.TestCpu.context(cpu)).when(contextPool).get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class);
         ApplicationApiImpl api = new ApplicationApiImpl(contextPool, mock(Dialogs.class), null);
         ComputerConfig config = mock(ComputerConfig.class);
         when(config.getPath()).thenReturn(computerPath);
@@ -128,7 +128,7 @@ public class VirtualComputerTest {
         CPU cpu = mockCpu();
         Device d1 = mock(Device.class), d2 = mock(Device.class);
         ContextPoolImpl contextPool = new ContextPoolImpl(0);
-        contextPool.register(20L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugins.cpu.CPUContext.class);
+        contextPool.register(20L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugin.cpu.CPUContext.class);
 
         Map<Long, PluginMeta> pluginMetas = new LinkedHashMap<>();
         pluginMetas.put(10L, pluginMeta(pluginConfig("device-1", PLUGIN_TYPE.DEVICE), d1));
@@ -163,7 +163,7 @@ public class VirtualComputerTest {
                 plugin(3L, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)
         ));
         ContextPoolImpl contextPool = new ContextPoolImpl(0);
-        contextPool.register(2L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugins.cpu.CPUContext.class);
+        contextPool.register(2L, net.emustudio.application.TestCpu.context(cpu), net.emustudio.emulib.plugin.cpu.CPUContext.class);
         try {
             vc.initialize(contextPool);
             vc.reset();
@@ -354,8 +354,8 @@ public class VirtualComputerTest {
         Device device = mock(Device.class);
         AutoCloseable loader = mock(AutoCloseable.class);
         ComputerConfig config = mock(ComputerConfig.class);
-        net.emustudio.emulib.plugins.PluginInitializationException failure =
-                new net.emustudio.emulib.plugins.PluginInitializationException("bad memory");
+        net.emustudio.emulib.plugin.PluginInitializationException failure =
+                new net.emustudio.emulib.plugin.PluginInitializationException("bad memory");
         doThrow(failure).when(memory).initialize();
         // Even a broken cleanup must not hide the original initialization failure.
         doThrow(new AssertionError("destroy failed")).when(device).destroy();
@@ -363,7 +363,7 @@ public class VirtualComputerTest {
                 plugin(1, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
                 plugin(2, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory),
                 plugin(3, pluginConfig("device", PLUGIN_TYPE.DEVICE), device)), loader);
-        assertSame(failure, assertThrows(net.emustudio.emulib.plugins.PluginInitializationException.class,
+        assertSame(failure, assertThrows(net.emustudio.emulib.plugin.PluginInitializationException.class,
                 () -> computer.initialize(new ContextPoolImpl(0))));
         computer.close();
         verify(device).destroy();

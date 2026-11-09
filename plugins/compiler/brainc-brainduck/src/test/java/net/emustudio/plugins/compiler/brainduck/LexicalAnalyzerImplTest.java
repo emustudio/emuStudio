@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.brainduck;
 
-import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.emulib.plugin.compiler.Token;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.Test;
 

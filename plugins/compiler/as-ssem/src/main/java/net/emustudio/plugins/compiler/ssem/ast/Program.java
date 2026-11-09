@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem.ast;
 
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 
 import java.util.Collections;
 import java.util.HashMap;

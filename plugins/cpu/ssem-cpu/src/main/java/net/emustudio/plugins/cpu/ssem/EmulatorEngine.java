@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.Bits;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.Bits;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.Numbers.Strategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,17 +158,17 @@ public class EmulatorEngine {
     }
 
     private int readLineAddress(int lineAddress) {
-        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
+        return 4 * Numbers.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
     }
 
     private int readInt(int line) {
         Byte[] word = memory.read(line, 4);
-        return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
+        return Numbers.readInt(word, Strategy.REVERSE_BITS);
     }
 
     private void writeInt(int lineAddress, int value) {
         Byte[] word = new Byte[4];
-        NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
+        Numbers.writeInt(value, word, Strategy.REVERSE_BITS);
         memory.write(lineAddress, word);
     }
 

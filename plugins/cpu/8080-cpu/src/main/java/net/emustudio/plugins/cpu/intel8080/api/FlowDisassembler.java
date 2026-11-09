@@ -2,10 +2,10 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080.api;
 
-import static net.emustudio.emulib.plugins.cpu.InstructionFlow.Kind.*;
+import static net.emustudio.emulib.plugin.cpu.InstructionFlow.Kind.*;
 
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import java.util.*;
 

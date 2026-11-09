@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.TestMemoryContextFactory;
 import org.junit.Before;
 import org.junit.Test;

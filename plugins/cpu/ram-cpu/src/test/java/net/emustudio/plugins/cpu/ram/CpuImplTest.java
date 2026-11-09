@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
@@ -15,8 +15,8 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -368,7 +368,7 @@ public class CpuImplTest {
 
             @Override public boolean beforeStep() { return false; }
 }, true);
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_NORMAL, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(1, observedContext.getInstructionLocation());
     }
@@ -378,7 +378,7 @@ public class CpuImplTest {
         initCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

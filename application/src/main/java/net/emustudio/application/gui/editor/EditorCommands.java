@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.Compiler;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rsyntaxtextarea.folding.Fold;
 import org.fife.ui.rtextarea.*;
@@ -198,10 +198,10 @@ final class EditorCommands {
         int level = 0;
         Map<Integer, Integer> deltas = new HashMap<>();
         if (compiler != null) {
-            for (net.emustudio.emulib.plugins.compiler.Token token : compiler.createLexer().analyze(text)) {
-                if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.BLOCK_START || token.getType() == net.emustudio.emulib.plugins.compiler.Token.BLOCK_END) {
+            for (net.emustudio.emulib.plugin.compiler.Token token : compiler.createLexer().analyze(text)) {
+                if (token.getType() == net.emustudio.emulib.plugin.compiler.Token.BLOCK_START || token.getType() == net.emustudio.emulib.plugin.compiler.Token.BLOCK_END) {
                     int line = (int) text.substring(0, token.getOffset()).chars().filter(ch -> ch == '\n').count();
-                    deltas.merge(line, token.getType() == net.emustudio.emulib.plugins.compiler.Token.BLOCK_START ? 1 : -1, Integer::sum);
+                    deltas.merge(line, token.getType() == net.emustudio.emulib.plugin.compiler.Token.BLOCK_START ? 1 : -1, Integer::sum);
                 }
             }
         }
@@ -221,26 +221,26 @@ final class EditorCommands {
         // Preserve token contents, including quoted strings and comments. Only gaps change.
         lines(text -> {
             if (compiler == null) throw new IllegalArgumentException("Select compiler syntax to align token columns");
-            List<net.emustudio.emulib.plugins.compiler.Token> tokens = compiler.createLexer().analyze(text);
+            List<net.emustudio.emulib.plugin.compiler.Token> tokens = compiler.createLexer().analyze(text);
             List<String> result = new ArrayList<>();
             int offset = 0;
             for (String line : text.split("\n", -1)) {
                 final int start = offset, end = offset + line.length();
-                List<net.emustudio.emulib.plugins.compiler.Token> row = new ArrayList<>();
-                for (net.emustudio.emulib.plugins.compiler.Token token : tokens) {
-                    if (token.getOffset() >= start && token.getOffset() < end && token.getType() != net.emustudio.emulib.plugins.compiler.Token.WHITESPACE && token.getType() != net.emustudio.emulib.plugins.compiler.Token.EOF)
+                List<net.emustudio.emulib.plugin.compiler.Token> row = new ArrayList<>();
+                for (net.emustudio.emulib.plugin.compiler.Token token : tokens) {
+                    if (token.getOffset() >= start && token.getOffset() < end && token.getType() != net.emustudio.emulib.plugin.compiler.Token.WHITESPACE && token.getType() != net.emustudio.emulib.plugin.compiler.Token.EOF)
                         row.add(token);
                 }
                 if (row.isEmpty()) result.add(line);
                 else {
                     StringBuilder formatted = new StringBuilder();
                     for (int i = 0; i < row.size(); i++) {
-                        net.emustudio.emulib.plugins.compiler.Token token = row.get(i);
-                        int target = i == 0 ? 0 : token.getType() == net.emustudio.emulib.plugins.compiler.Token.COMMENT ? state.number("CommentColumn", 40) : i == 1 ? state.number("OperandColumn", 16) : -1;
+                        net.emustudio.emulib.plugin.compiler.Token token = row.get(i);
+                        int target = i == 0 ? 0 : token.getType() == net.emustudio.emulib.plugin.compiler.Token.COMMENT ? state.number("CommentColumn", 40) : i == 1 ? state.number("OperandColumn", 16) : -1;
                         if (target >= 0 && formatted.length() > 0)
                             formatted.append(" ".repeat(Math.max(1, target - formatted.length())));
                         else if (i > 0) {
-                            net.emustudio.emulib.plugins.compiler.Token previous = row.get(i - 1);
+                            net.emustudio.emulib.plugin.compiler.Token previous = row.get(i - 1);
                             int gap = token.getOffset() - previous.getOffset() - previous.getText().length();
                             if (gap > 0) formatted.append(" ".repeat(gap));
                         }

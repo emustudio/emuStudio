@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.loaders;
 
-import net.emustudio.emulib.runtime.io.FileLoader;
+import net.emustudio.emulib.io.FileLoader;
 import org.junit.Test;
 
 import java.nio.file.Path;

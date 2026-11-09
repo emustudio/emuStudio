@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_BREAKPOINTS;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_BREAKPOINTS;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 

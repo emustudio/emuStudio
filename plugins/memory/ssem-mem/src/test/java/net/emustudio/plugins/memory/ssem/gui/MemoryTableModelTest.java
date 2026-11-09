@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
@@ -239,14 +239,14 @@ public class MemoryTableModelTest {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
         Byte[] row = new Byte[4];
-        NumberUtils.writeInt(0x61686F6A, row, NumberUtils.Strategy.REVERSE_BITS);
+        Numbers.writeInt(0x61686F6A, row, Numbers.Strategy.REVERSE_BITS);
 
         expect(memoryContext.read(10 * 4, 4)).andReturn(row).anyTimes();
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
 
-        int value = NumberUtils.readInt(row, NumberUtils.Strategy.REVERSE_BITS);
+        int value = Numbers.readInt(row, Numbers.Strategy.REVERSE_BITS);
         assertEquals(Integer.toHexString(value).toUpperCase(), model.getValueAt(10, MemoryTableModel.COLUMN_HEX_VALUE));
         assertEquals("ahoj", model.getValueAt(10, MemoryTableModel.COLUMN_RAW_VALUE));
     }

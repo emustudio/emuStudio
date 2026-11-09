@@ -2,18 +2,18 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.abstracttape.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 
 public class TapeGui extends DialogBase {

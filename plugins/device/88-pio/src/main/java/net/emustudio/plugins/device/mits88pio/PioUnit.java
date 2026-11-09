@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88pio;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 /** Original 88-PIO: separate Intel 8212 input/output latches and two handshake flags. */

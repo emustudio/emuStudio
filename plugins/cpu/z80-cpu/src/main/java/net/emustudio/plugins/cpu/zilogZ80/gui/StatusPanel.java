@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
@@ -13,8 +13,8 @@ import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
-import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.Numbers.formatHex;
+import static net.emustudio.emulib.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.debugger.DebuggerPanel;
@@ -11,12 +11,12 @@ import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ public class EmulatorPanel extends JPanel {
     private final ShowDeviceGuiAction showDeviceGuiAction;
 
     private final MemoryContext<?> memoryContext;
-    private final net.emustudio.application.debugger.DebugSession session;
+    private final net.emustudio.application.debugger.DebuggerSession session;
     private final MemoryContext.MemoryListener memoryListener;
     private final DebuggerPanel inspection;
     private final CPU cpu;

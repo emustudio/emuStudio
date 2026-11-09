@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem;
 
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
 
 import java.util.Arrays;
 

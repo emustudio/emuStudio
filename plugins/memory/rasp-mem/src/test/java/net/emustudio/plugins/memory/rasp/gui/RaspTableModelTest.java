@@ -186,7 +186,7 @@ public class RaspTableModelTest {
     public void testSetValueAtNegativeValue() {
         context.write(0, 50);
         model.setValueAt("-5", 0, 1);
-        // RadixUtils.parseRadix doesn't support negative numbers, so value remains unchanged
+        // Numbers.parseRadix doesn't support negative numbers, so value remains unchanged
         assertEquals(Integer.valueOf(50), context.read(0));
     }
 

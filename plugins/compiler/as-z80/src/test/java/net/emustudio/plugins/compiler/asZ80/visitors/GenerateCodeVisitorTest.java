@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.io.IntelHEX;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;

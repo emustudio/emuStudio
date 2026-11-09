@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
@@ -13,7 +13,7 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;

@@ -3,7 +3,7 @@
 package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.application.settings.PluginSettings;
 
 import java.util.List;
 import java.util.Objects;

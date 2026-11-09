@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.ay38910.gui;
 
-import net.emustudio.emulib.runtime.audio.AudioSink;
+import net.emustudio.emulib.audio.AudioSink;
 import net.emustudio.plugins.device.ay38910.Ay38910Chip;
 import org.junit.Test;
 

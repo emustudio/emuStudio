@@ -6,15 +6,15 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginSettingsImpl;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     private final Map<Long, PluginMeta> pluginsById = new HashMap<>();
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
     private boolean destroyed;
-    private net.emustudio.application.debugger.DebugSession debugger;
+    private net.emustudio.application.debugger.DebuggerSession debugger;
     private net.emustudio.application.emulation.EmulationController execution;
     private net.emustudio.application.ApplicationApiImpl applicationApi;
 
@@ -198,15 +198,15 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 pluginMeta.pluginInstance.initialize();
             }
             if (getCPU().isPresent()) {
-                net.emustudio.emulib.plugins.memory.MemoryContext<?> memory = null;
-                try { memory = contextPool.get(0, net.emustudio.emulib.plugins.memory.MemoryContext.class); }
-                catch (net.emustudio.emulib.runtime.ContextNotFoundException ignored) { }
+                net.emustudio.emulib.plugin.memory.MemoryContext<?> memory = null;
+                try { memory = contextPool.get(0, net.emustudio.emulib.plugin.memory.MemoryContext.class); }
+                catch (net.emustudio.emulib.application.ContextNotFoundException ignored) { }
                 try {
                     java.nio.file.Path path = computerConfig.getPath();
-                    debugger = new net.emustudio.application.debugger.DebugSession(getCPU().get(),
-                            contextPool.get(0, net.emustudio.emulib.plugins.cpu.CPUContext.class), memory,
+                    debugger = new net.emustudio.application.debugger.DebuggerSession(getCPU().get(),
+                            contextPool.get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new net.emustudio.emulib.runtime.annotations.MemoryAnnotations()
+                            applicationApi == null ? new net.emustudio.emulib.application.annotations.MemoryAnnotations()
                                     : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
                     execution = debugger.execution();
 
@@ -224,7 +224,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
     }
 
-    public Optional<net.emustudio.application.debugger.DebugSession> getDebugger() { return Optional.ofNullable(debugger); }
+    public Optional<net.emustudio.application.debugger.DebuggerSession> getDebugger() { return Optional.ofNullable(debugger); }
 
     public Optional<net.emustudio.application.emulation.EmulationController> getExecution() {
         return Optional.ofNullable(execution);

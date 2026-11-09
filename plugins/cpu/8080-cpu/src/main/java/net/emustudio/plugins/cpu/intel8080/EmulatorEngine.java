@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.AccurateFrequencyRunner;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
 import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import org.slf4j.Logger;

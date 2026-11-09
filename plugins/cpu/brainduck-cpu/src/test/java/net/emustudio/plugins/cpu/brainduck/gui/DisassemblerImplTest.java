@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
 import net.emustudio.plugins.cpu.brainduck.MemoryStub;
 import org.junit.Before;
 import org.junit.Test;

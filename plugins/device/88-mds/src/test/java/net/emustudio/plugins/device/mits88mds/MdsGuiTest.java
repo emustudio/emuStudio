@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88mds;
 
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

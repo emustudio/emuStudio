@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.FrequencyCalculator;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
@@ -28,7 +28,7 @@ public class Context8080Impl extends AbstractCPUContext implements Context8080 {
         return frequencyCalculator.sample();
     }
 
-    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }
 

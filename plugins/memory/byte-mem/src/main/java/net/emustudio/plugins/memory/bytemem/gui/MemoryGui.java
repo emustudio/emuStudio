@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.actions.*;
@@ -21,8 +21,8 @@ import java.awt.*;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinary;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.Numbers.formatBinary;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;
@@ -34,7 +34,7 @@ public class MemoryGui extends DialogBase {
     private boolean listening;
     private final CPUContext.CPUListener executionListener =
             new CPUContext.CPUListener() {
-                @Override public void runStateChanged(net.emustudio.emulib.plugins.cpu.CPU.RunState state) { }
+                @Override public void runStateChanged(net.emustudio.emulib.plugin.cpu.CPU.RunState state) { }
                 @Override public void internalStateChanged() { debuggerListener.run(); }
             };
     private boolean handlingSearchEscape;

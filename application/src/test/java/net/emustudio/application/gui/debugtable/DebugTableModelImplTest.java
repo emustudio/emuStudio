@@ -4,13 +4,13 @@ package net.emustudio.application.gui.debugtable;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.application.debugger.InstructionIndex;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.application.debugger.DebuggerSession;
+import org.junit.After;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -27,10 +27,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 public class DebugTableModelImplTest {
     private static void setCPU(DebugTableModelImpl model, CPU cpu) {
@@ -336,18 +339,13 @@ public class DebugTableModelImplTest {
 
     @Test
     public void currentIndexedInstructionCoverageSuppliesLengthsWithoutLiveDecode() {
-        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
-        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.replaceFlow(false);
-            for (int at = 0; at < 16; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
-            edit.commit();
-        }
+        DebuggerSession session = session(16);
+        analyze(session, at -> at + 2);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(calls, at -> { throw new AssertionError("Unexpected live decode"); }, 4, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         assertEquals(2, model.getLocationAt(0));
         assertEquals(4, model.getLocationAt(1));
         assertEquals(6, model.getLocationAt(2));
@@ -362,11 +360,11 @@ public class DebugTableModelImplTest {
 
     @Test
     public void cpuAddressesBeyondSmallerMemoryIndexRetainDecoderFallback() {
-        ProgramIndex index = ProgramIndex.create(8, new MemoryAnnotations());
+        DebuggerSession session = session(8);
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(new AtomicInteger(), at -> at + 1, 12, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         model.showAddress(0);
         model.showAddress(12);
         assertEquals(12, model.getLocationAt(1));
@@ -375,69 +373,50 @@ public class DebugTableModelImplTest {
 
     @Test
     public void revisionChangeInvalidatesOperandCellAndFallbackWithoutUiNotification() {
-        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
-        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.replaceFlow(false);
-            edit.putInstruction(new ProgramIndex.Range(0, 2), ProgramIndex.InstructionKind.LINEAR);
-            for (int at = 2; at < 16; at++)
-                edit.putInstruction(new ProgramIndex.Range(at, at + 1), ProgramIndex.InstructionKind.LINEAR);
-            edit.commit();
-        }
+        DebuggerSession session = session(16);
+        analyze(session, at -> at == 0 ? 2 : at + 1);
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(calls, at -> at == 0 ? length.get() : at + 1, 0, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         assertEquals(2, model.getLocationAt(1));
         int firstCalls = calls.get();
         length.set(3); // Encoding changed in cell1 of instruction [0,2), not at its start.
-        index.memoryChanged(); // UI memory notifications are disabled; root revision is the signal.
+        session.runMutation(() -> {}); // UI memory notifications are disabled; root revision is the signal.
         assertEquals(3, model.getLocationAt(1));
         assertTrue(calls.get() > firstCalls);
     }
 
     @Test
     public void previousInstructionRefreshesRevisionBeforeAnyTableCellIsRead() {
-        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
+        DebuggerSession session = session(16);
         AtomicInteger calls = new AtomicInteger(), length = new AtomicInteger(2);
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(calls, at -> at == 0 ? length.get() : at == 2 ? 4 : at + 1, 4, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         model.showAddress(0);
         model.currentPage();
         assertEquals(2, model.guessPreviousInstructionLocation());
         int previousCalls = calls.get();
         length.set(3);
-        index.memoryChanged();
+        session.runMutation(() -> {});
         assertEquals(3, model.guessPreviousInstructionLocation());
         assertTrue(calls.get() > previousCalls);
     }
 
     @Test
     public void instructionViewChangesLengthsAtTheSamePcAfterPublication() {
-        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
-        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.replaceFlow(false);
-            for (int at = 0; at < 16; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
-            edit.commit();
-        }
+        DebuggerSession session = session(16);
+        analyze(session, at -> at + 2);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(calls, at -> { throw new AssertionError("Unexpected live decode"); }, 0, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         assertEquals(2, model.getLocationAt(1));
-        try (ProgramIndex.ContentUpdate edit = index.updateContent(index.snapshot())) {
-            edit.replaceFlow(false);
-            edit.putInstruction(new ProgramIndex.Range(0, 3), ProgramIndex.InstructionKind.LINEAR);
-            edit.putInstruction(new ProgramIndex.Range(3, 6), ProgramIndex.InstructionKind.LINEAR);
-            edit.putInstruction(new ProgramIndex.Range(6, 8), ProgramIndex.InstructionKind.LINEAR);
-            for (int at = 8; at < 16; at += 2)
-                edit.putInstruction(new ProgramIndex.Range(at, at + 2), ProgramIndex.InstructionKind.LINEAR);
-            edit.commit();
-        }
+        analyze(session, at -> at < 6 ? at + 3 : at + 2);
         assertEquals(3, model.getLocationAt(1));
         model.showAddress(8);
         assertEquals(8, model.getLocationAt(1));
@@ -449,20 +428,48 @@ public class DebugTableModelImplTest {
 
     @Test
     public void breakpointOnlyPublicationKeepsMaterializedInstructionPage() {
-        ProgramIndex index = ProgramIndex.create(16, new MemoryAnnotations());
+        DebuggerSession session = session(16);
         AtomicInteger calls = new AtomicInteger();
         DebugTableModelImpl model = new DebugTableModelImpl();
         setCPU(model, countedCpu(calls, at -> at + 1, 4, 16));
         model.setMaxRows(3);
-        model.setInstructionIndex(new InstructionIndex(index::snapshot));
+        model.setDebuggerSession(session);
         assertEquals(4, model.getLocationAt(1));
         int initialCalls = calls.get();
-        try (ProgramIndex.BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.add(4);
-            edit.commit();
-        }
+        session.setBreakpoint(4, true).join();
         assertEquals(4, model.getLocationAt(1));
         assertEquals(initialCalls, calls.get());
+    }
+
+    private final java.util.List<DebuggerSession> sessions = new java.util.ArrayList<>();
+
+    @After public void closeSessions() { sessions.forEach(DebuggerSession::close); }
+
+    private DebuggerSession session(int size) {
+        CPU cpu = mockCpu(withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), anyBoolean()))
+                .thenReturn(() -> {});
+        when(cpu.getAddressSpaceSize()).thenReturn(size);
+        try {
+            DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
+            sessions.add(session);
+            return session;
+        } catch (java.io.IOException failure) { throw new AssertionError(failure); }
+    }
+
+    private void analyze(DebuggerSession session, java.util.function.IntUnaryOperator next) {
+        Disassembler decoder = mock(Disassembler.class);
+        when(session.cpu.getDisassembler()).thenReturn(decoder);
+        when(decoder.getNextInstructionPosition(anyInt())).thenAnswer(call -> next.applyAsInt(call.getArgument(0)));
+        when(decoder.getFlow(anyInt())).thenAnswer(call -> java.util.Optional.of(
+                new net.emustudio.emulib.plugin.cpu.InstructionFlow(
+                        net.emustudio.emulib.plugin.cpu.InstructionFlow.Kind.LINEAR,
+                        next.applyAsInt(call.getArgument(0)), true, java.util.List.of())));
+        try {
+            when(decoder.disassemble(anyInt())).thenAnswer(call -> new net.emustudio.emulib.plugin.cpu.DisassembledInstruction(
+                    call.getArgument(0), "NOP", "00"));
+        } catch (net.emustudio.emulib.plugin.cpu.InvalidInstructionException failure) { throw new AssertionError(failure); }
+        session.analyzeFlow(0, session.addressSpaceSize());
     }
 
     private CPU countedCpu(AtomicInteger calls, java.util.function.IntUnaryOperator next, int pc, int size) {

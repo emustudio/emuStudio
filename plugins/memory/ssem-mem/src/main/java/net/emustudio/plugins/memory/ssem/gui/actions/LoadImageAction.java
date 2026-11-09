@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.io.FileType;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.io.FileType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
@@ -64,7 +64,7 @@ public class LoadImageAction extends AbstractAction {
                     byte[] data = new byte[code.remaining()];
                     code.get(data);
                     api.setProgramLocation(startLine * 4);
-                    context.write(0, NumberUtils.nativeBytesToBytes(data));
+                    context.write(0, Numbers.nativeBytesToBytes(data));
                 }
                 repaint.run();
             } catch (Exception failure) {

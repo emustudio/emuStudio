@@ -5,8 +5,8 @@ package net.emustudio.plugins.cpu.intel8080;
 import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler;
 import net.emustudio.plugins.cpu.intel8080.gui.*;
 
@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class FlowMetadataTest {
     private InstructionFlow flow(int... bytes) {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         for (int i = 0; i < bytes.length; i++) memory.write(i, (byte) bytes[i]);
         Disassembler decoder = new DisassemblerImpl(memory, new DecoderImpl(memory));
         return new FlowDisassembler(decoder, memory, false).getFlow(0).orElseThrow();
@@ -45,7 +45,7 @@ public class FlowMetadataTest {
     public void decoderUsesPluginWiringForEveryInstructionByte() throws Exception {
         byte[][] cells = {{0, 0x34, 0}, {(byte) 0xcd, 0, 0x12}};
         int[] wiring = {1, 0, 1};
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN) {
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN) {
             @Override public Byte read(int address) { return cells[wiring[address]][address]; }
             @Override public Byte[] read(int address, int count) {
                 Byte[] values = new Byte[count];
@@ -67,7 +67,7 @@ public class FlowMetadataTest {
 
     @Test
     public void decoderReadsUpdatedOperandsAndDisassembly() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0xcd);
         memory.write(1, (byte) 0x34);
         memory.write(2, (byte) 0x12);

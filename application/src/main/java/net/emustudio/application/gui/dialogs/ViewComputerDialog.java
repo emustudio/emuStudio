@@ -7,11 +7,11 @@ import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 
 public class ViewComputerDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);

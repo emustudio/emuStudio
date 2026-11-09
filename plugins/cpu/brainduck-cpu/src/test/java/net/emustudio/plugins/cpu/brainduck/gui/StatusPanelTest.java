@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.MemoryStub;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;

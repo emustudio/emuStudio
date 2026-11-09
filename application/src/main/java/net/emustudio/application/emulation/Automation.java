@@ -4,13 +4,13 @@ package net.emustudio.application.emulation;
 
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.runtime.helpers.Unchecked;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.Unchecked;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

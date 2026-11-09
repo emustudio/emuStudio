@@ -2,17 +2,17 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.AbstractPlugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.AbstractPlugin;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
 import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
@@ -226,7 +226,7 @@ public class MemoryImpl extends AbstractPlugin implements Memory {
     private CPUContext findCPUContext() {
         try {
             return applicationApi.getContextPool().get(pluginID, CPUContext.class);
-        } catch (net.emustudio.emulib.runtime.ContextNotFoundException absent) {
+        } catch (net.emustudio.emulib.application.ContextNotFoundException absent) {
             return null;
         }
     }

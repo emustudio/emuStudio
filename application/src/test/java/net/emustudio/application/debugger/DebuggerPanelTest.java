@@ -2,20 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.ProgramIndex;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.dialogs.RecordingDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.debugger.NavLink;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,7 +47,7 @@ public class DebuggerPanelTest {
     @Test
     public void recordingFailureIsVisibleWhileRunningAndClearsWhenAFreshCaptureStarts() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session ->
-                session.startNewRecording(10, DebugSession.RecordingMode.LAST, 0, 0))) {
+                session.startNewRecording(10, DebuggerSession.RecordingMode.LAST, 0, 0))) {
             workspace.machine.state(CPU.RunState.STATE_RUNNING);
             workspace.session.failed("Instruction recording failed: disk full");
             SwingUtilities.invokeAndWait(() -> {
@@ -183,7 +182,7 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Fold identical repeats").doClick(0);
                 JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
-                for (DebugSession.RecordingMode mode : DebugSession.RecordingMode.values()) {
+                for (DebuggerSession.RecordingMode mode : DebuggerSession.RecordingMode.values()) {
                     workspace.session.startNewRecording(2, mode, 1, 2);
                     events.forEach(event -> capture(workspace.session, event));
                     workspace.panel.recordingControl().doClick(0);
@@ -192,7 +191,7 @@ public class DebuggerPanelTest {
                     String[] names = {"Recording 1 · First 2 instructions", "Recording 2 · Last 2 instructions",
                             "Recording 3 · From 0x0001 to 0x0002", "Recording 4"};
                     assertEquals(names[mode.ordinal()], recordings.getSelectedItem());
-                    assertEquals(mode == DebugSession.RecordingMode.UNLIMITED ? 4 : 2, timeline.getRowCount());
+                    assertEquals(mode == DebuggerSession.RecordingMode.UNLIMITED ? 4 : 2, timeline.getRowCount());
                 }
                 assertEquals("Record instructions", workspace.panel.recordingControl().getToolTipText());
                 assertFalse(workspace.panel.recordingControl().isSelected());
@@ -280,7 +279,7 @@ public class DebuggerPanelTest {
                     flushUiEvents();
 
                     assertTrue(workspace.session.isRecording());
-                    assertEquals(DebugSession.RecordingMode.ADDRESS_RANGE, workspace.session.recordingMode());
+                    assertEquals(DebuggerSession.RecordingMode.ADDRESS_RANGE, workspace.session.recordingMode());
                     assertEquals(1, workspace.session.recordingFrom());
                     assertEquals(2, workspace.session.recordingThrough());
                 } finally {
@@ -413,7 +412,7 @@ public class DebuggerPanelTest {
                 List.of(new NavLink("Find earlier write", "test/write/3")));
     }
 
-    private static void capture(DebugSession session, InstructionRecording.Event event) {
+    private static void capture(DebuggerSession session, InstructionRecording.Event event) {
         session.afterStep(event.completed, Optional.of(event.view));
     }
 
@@ -540,7 +539,7 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Analyze recording").doClick(0);
                 assertEquals("No instructions recorded",
                         component(workspace.panel, JLabel.class, "History empty state").getText());
-                workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
+                workspace.session.startNewRecording(1024, DebuggerSession.RecordingMode.LAST, 0, 0);
                 capture(workspace.session, first);
                 workspace.panel.recordingControl().doClick(0);
                 flushUiEvents();
@@ -549,7 +548,7 @@ public class DebuggerPanelTest {
                 assertTrue(component(workspace.panel, JTextArea.class, "Recorded instruction state")
                         .getText().contains("A    1 → 2"));
 
-                workspace.session.startNewRecording(1024, DebugSession.RecordingMode.LAST, 0, 0);
+                workspace.session.startNewRecording(1024, DebuggerSession.RecordingMode.LAST, 0, 0);
                 capture(workspace.session, second);
                 workspace.panel.recordingControl().doClick(0);
                 flushUiEvents();
@@ -1148,7 +1147,7 @@ public class DebuggerPanelTest {
     @Test
     public void debuggerTabsExcludeBreakpointManagerAndRetainExistingBreakpoints() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
-            session.breakpoints.add(new DebugSession.Breakpoint(1));
+            session.breakpoints.add(1);
             session.memoryWatches.addAll(List.of(0, 2));
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -1166,7 +1165,7 @@ public class DebuggerPanelTest {
     @Test
     public void memoryWatchRemoveTargetsSelectedWatchAndShowsLastAccess() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0x3E, 0}}, 3, session -> {
-            session.breakpoints.add(new DebugSession.Breakpoint(2));
+            session.breakpoints.add(2);
             session.memoryWatches.addAll(List.of(1, 2));
         })) {
             workspace.session.update(() -> {}).join();
@@ -1401,7 +1400,7 @@ public class DebuggerPanelTest {
             });
 
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
-            ProgramIndex.Snapshot snapshot = workspace.session.programIndex().snapshot();
+            FlowAnalysis snapshot = workspace.session.flowAnalysis();
             assertNull(snapshot.instructionAt(0));
             assertNotNull(snapshot.instructionAt(1));
             assertNull(snapshot.instructionAt(2));
@@ -1519,8 +1518,8 @@ public class DebuggerPanelTest {
             });
 
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
-            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(1));
-            assertNull(workspace.session.programIndex().snapshot().instructionAt(3));
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(1));
+            assertNull(workspace.session.flowAnalysis().instructionAt(3));
             SwingUtilities.invokeAndWait(workspace.panel::stepCompleted);
             verify(workspace.session.cpu.getDisassembler(), never()).getFlow(3);
         }
@@ -1557,8 +1556,8 @@ public class DebuggerPanelTest {
             });
 
             assertTrue("Flow should be displayed", shown.await(5, TimeUnit.SECONDS));
-            assertNotNull(workspace.session.programIndex().snapshot().instructionAt(5));
-            assertNull(workspace.session.programIndex().snapshot().instructionAt(4));
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(5));
+            assertNull(workspace.session.flowAnalysis().instructionAt(4));
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
@@ -1571,9 +1570,9 @@ public class DebuggerPanelTest {
     @Test
     public void goToSourcePopupUsesSelectedInstruction() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {})) {
-            net.emustudio.emulib.plugins.compiler.SourceCodePosition position =
-                    mock(net.emustudio.emulib.plugins.compiler.SourceCodePosition.class);
-            workspace.session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+            net.emustudio.emulib.plugin.compiler.SourceCodePosition position =
+                    mock(net.emustudio.emulib.plugin.compiler.SourceCodePosition.class);
+            workspace.session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                     1, 0, 1, 2, "source", "", position));
 
             SwingUtilities.invokeAndWait(() -> {
@@ -1826,7 +1825,7 @@ public class DebuggerPanelTest {
         }
     }
 
-    private Workspace workspace(byte[][] banks, int common, Consumer<DebugSession> configure) throws Exception {
+    private Workspace workspace(byte[][] banks, int common, Consumer<DebuggerSession> configure) throws Exception {
         Path settings = temporary.newFolder().toPath().resolve("debug.properties");
         Workspace workspace = new Workspace();
         workspace.machine = new DebuggerTestMachine(banks, common);
@@ -1892,12 +1891,12 @@ public class DebuggerPanelTest {
 
     private static final class Workspace implements AutoCloseable {
         DebuggerTestMachine machine;
-        DebugSession session;
+        DebuggerSession session;
         DebuggerPanel panel;
         DebugTableImpl table;
         final Dialogs dialogs = mock(Dialogs.class);
         final AtomicInteger breakpointChanges = new AtomicInteger();
-        final java.util.concurrent.atomic.AtomicReference<net.emustudio.emulib.plugins.compiler.SourceCodePosition> sourcePosition = new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicReference<net.emustudio.emulib.plugin.compiler.SourceCodePosition> sourcePosition = new java.util.concurrent.atomic.AtomicReference<>();
 
         @Override public void close() throws Exception {
             if (panel != null) SwingUtilities.invokeAndWait(panel::close);

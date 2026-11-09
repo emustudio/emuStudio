@@ -3,12 +3,12 @@
 package net.emustudio.plugins.cpu.intel8080.gui;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugins.cpu.Decoder;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public class DisassemblerTest {
 
     @Before
     public void setUp() {
-        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memoryStub = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         decoder = new DecoderImpl(memoryStub);
         disassembler = new DisassemblerImpl(memoryStub, decoder);
     }

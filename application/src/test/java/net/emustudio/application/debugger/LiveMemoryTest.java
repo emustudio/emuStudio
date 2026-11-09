@@ -2,9 +2,7 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
-import net.emustudio.application.debugger.index.ProgramIndex;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,7 +16,7 @@ public class LiveMemoryTest {
     @Test public void readsCurrentCellsWithoutRetainingThem() throws Exception {
         byte[][] cells = {{1, 2, 9}, {3, 4, 99}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, 2);
-        LiveMemory live = new LiveMemory(machine.memory, ProgramIndex.create(3, new MemoryAnnotations()).snapshot().layout(), () -> {});
+        LiveMemory live = new LiveMemory(machine.memory, 3, () -> {});
         verify(machine.memory, never()).read(anyInt());
         assertEquals(3, live.size());
         assertEquals(1, live.value(0));
@@ -34,7 +32,7 @@ public class LiveMemoryTest {
         byte[][] cells = {{0x12, 0x34, 0x12, 0x3f, 0, 'H', 'I', 0, 'O', 'K'}};
         DebuggerTestMachine machine = new DebuggerTestMachine(cells, cells[0].length);
         LiveMemory live = new LiveMemory(machine.memory,
-                ProgramIndex.create(cells[0].length, new MemoryAnnotations()).snapshot().layout(), () -> {});
+                cells[0].length, () -> {});
         byte[][] pattern = LiveMemory.pattern("12 3?");
         assertEquals(List.of(0, 2), live.search(pattern[0], pattern[1]));
         assertEquals(0x3412, live.number(0, 2, true));
@@ -56,7 +54,7 @@ public class LiveMemoryTest {
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.peek(Integer.MAX_VALUE - 1)).thenReturn((byte) 42);
         LiveMemory live = new LiveMemory(memory,
-                ProgramIndex.create(Integer.MAX_VALUE, new MemoryAnnotations()).snapshot().layout(), () -> {});
+                Integer.MAX_VALUE, () -> {});
         assertEquals(Integer.MAX_VALUE, live.size());
         verify(memory, never()).read(anyInt());
         assertEquals(42, live.value(Integer.MAX_VALUE - 1));
@@ -64,7 +62,7 @@ public class LiveMemoryTest {
 
     @Test public void guardsRunAfterReadsAndCancellationAndTypedMemoryAreRejected() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1}}, 1);
-        ProgramIndex.Layout layout = ProgramIndex.create(1, new MemoryAnnotations()).snapshot().layout();
+        int layout = 1;
         int[] checks = {0};
         LiveMemory live = new LiveMemory(machine.memory, layout, () -> {
             if (++checks[0] == 2) throw new IllegalStateException("Changed during read");

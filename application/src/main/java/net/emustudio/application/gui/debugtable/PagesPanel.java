@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 
 public class PagesPanel extends JPanel {
 

@@ -9,7 +9,7 @@ import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.application.ui.GUI;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +21,8 @@ import java.awt.event.ItemEvent;
 import java.util.function.Consumer;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
-import static net.emustudio.emulib.runtime.ui.Constants.*;
-import static net.emustudio.emulib.runtime.ui.StandardIcons.LOGO_FILE;
+import static net.emustudio.emulib.ui.Constants.*;
+import static net.emustudio.emulib.ui.StandardIcons.LOGO_FILE;
 
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.

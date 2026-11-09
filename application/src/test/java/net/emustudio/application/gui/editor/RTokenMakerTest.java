@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
 import org.junit.Test;
 
 import javax.swing.text.Segment;
@@ -15,8 +15,8 @@ public class RTokenMakerTest {
     @Test
     public void testConsumesLexerViaNextHasNext() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "LABEL"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 5, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "LABEL"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 5, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -28,7 +28,7 @@ public class RTokenMakerTest {
     @Test
     public void testResetsLexerWithSegmentText() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 0, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -40,8 +40,8 @@ public class RTokenMakerTest {
     @Test
     public void testTokenListAlwaysEndsWithNullToken() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "X"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 1, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "X"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 1, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -54,7 +54,7 @@ public class RTokenMakerTest {
     @Test
     public void testEmptyInputProducesOnlyNullToken() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 0, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 0, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -78,67 +78,67 @@ public class RTokenMakerTest {
 
     @Test
     public void testReservedMapsToReservedWord() {
-        assertSingleTokenType("MOV", net.emustudio.emulib.plugins.compiler.Token.RESERVED,
+        assertSingleTokenType("MOV", net.emustudio.emulib.plugin.compiler.Token.RESERVED,
                 org.fife.ui.rsyntaxtextarea.Token.RESERVED_WORD);
     }
 
     @Test
     public void testPreprocessorMapsToPreprocessor() {
-        assertSingleTokenType("ORG", net.emustudio.emulib.plugins.compiler.Token.PREPROCESSOR,
+        assertSingleTokenType("ORG", net.emustudio.emulib.plugin.compiler.Token.PREPROCESSOR,
                 org.fife.ui.rsyntaxtextarea.Token.PREPROCESSOR);
     }
 
     @Test
     public void testRegisterMapsToReservedWord2() {
-        assertSingleTokenType("A", net.emustudio.emulib.plugins.compiler.Token.REGISTER,
+        assertSingleTokenType("A", net.emustudio.emulib.plugin.compiler.Token.REGISTER,
                 org.fife.ui.rsyntaxtextarea.Token.RESERVED_WORD_2);
     }
 
     @Test
     public void testSeparatorMapsToSeparator() {
-        assertSingleTokenType(",", net.emustudio.emulib.plugins.compiler.Token.SEPARATOR,
+        assertSingleTokenType(",", net.emustudio.emulib.plugin.compiler.Token.SEPARATOR,
                 org.fife.ui.rsyntaxtextarea.Token.SEPARATOR);
     }
 
     @Test
     public void testOperatorMapsToOperator() {
-        assertSingleTokenType("+", net.emustudio.emulib.plugins.compiler.Token.OPERATOR,
+        assertSingleTokenType("+", net.emustudio.emulib.plugin.compiler.Token.OPERATOR,
                 org.fife.ui.rsyntaxtextarea.Token.OPERATOR);
     }
 
     @Test
     public void testCommentMapsToCommentMarkup() {
-        assertSingleTokenType("; comment", net.emustudio.emulib.plugins.compiler.Token.COMMENT,
+        assertSingleTokenType("; comment", net.emustudio.emulib.plugin.compiler.Token.COMMENT,
                 org.fife.ui.rsyntaxtextarea.Token.COMMENT_MARKUP);
     }
 
     @Test
     public void testLiteralMapsToLiteralNumberDecimalInt() {
-        assertSingleTokenType("42", net.emustudio.emulib.plugins.compiler.Token.LITERAL,
+        assertSingleTokenType("42", net.emustudio.emulib.plugin.compiler.Token.LITERAL,
                 org.fife.ui.rsyntaxtextarea.Token.LITERAL_NUMBER_DECIMAL_INT);
     }
 
     @Test
     public void testIdentifierMapsToIdentifier() {
-        assertSingleTokenType("myVar", net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER,
+        assertSingleTokenType("myVar", net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER,
                 org.fife.ui.rsyntaxtextarea.Token.IDENTIFIER);
     }
 
     @Test
     public void testLabelMapsToAnnotation() {
-        assertSingleTokenType("loop:", net.emustudio.emulib.plugins.compiler.Token.LABEL,
+        assertSingleTokenType("loop:", net.emustudio.emulib.plugin.compiler.Token.LABEL,
                 org.fife.ui.rsyntaxtextarea.Token.ANNOTATION);
     }
 
     @Test
     public void testErrorMapsToErrorIdentifier() {
-        assertSingleTokenType("@", net.emustudio.emulib.plugins.compiler.Token.ERROR,
+        assertSingleTokenType("@", net.emustudio.emulib.plugin.compiler.Token.ERROR,
                 org.fife.ui.rsyntaxtextarea.Token.ERROR_IDENTIFIER);
     }
 
     @Test
     public void testWhitespaceMapsToWhitespace() {
-        assertSingleTokenType(" ", net.emustudio.emulib.plugins.compiler.Token.WHITESPACE,
+        assertSingleTokenType(" ", net.emustudio.emulib.plugin.compiler.Token.WHITESPACE,
                 org.fife.ui.rsyntaxtextarea.Token.WHITESPACE);
     }
 
@@ -152,10 +152,10 @@ public class RTokenMakerTest {
     public void testMultipleTokensFormLinkedList() {
         // "MOV A"
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.RESERVED, 0, "MOV"),
-                token(net.emustudio.emulib.plugins.compiler.Token.WHITESPACE, 3, " "),
-                token(net.emustudio.emulib.plugins.compiler.Token.REGISTER, 4, "A"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 5, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.RESERVED, 0, "MOV"),
+                token(net.emustudio.emulib.plugin.compiler.Token.WHITESPACE, 3, " "),
+                token(net.emustudio.emulib.plugin.compiler.Token.REGISTER, 4, "A"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 5, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -177,10 +177,10 @@ public class RTokenMakerTest {
     public void testTokenOffsetsAreCorrect() {
         // "LD BC" — offsets: LD=0, space=2, BC=3
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.RESERVED, 0, "LD"),
-                token(net.emustudio.emulib.plugins.compiler.Token.WHITESPACE, 2, " "),
-                token(net.emustudio.emulib.plugins.compiler.Token.REGISTER, 3, "BC"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 5, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.RESERVED, 0, "LD"),
+                token(net.emustudio.emulib.plugin.compiler.Token.WHITESPACE, 2, " "),
+                token(net.emustudio.emulib.plugin.compiler.Token.REGISTER, 3, "BC"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 5, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -199,8 +199,8 @@ public class RTokenMakerTest {
     public void testStartOffsetIsAddedToTokenOffsets() {
         // Line starts at document offset 100
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "ABC"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 3, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "ABC"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 3, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -219,8 +219,8 @@ public class RTokenMakerTest {
         Segment seg = new Segment(array, 2, 3); // text = "ABC" starting at index 2
 
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "ABC"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 3, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "ABC"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 3, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -237,8 +237,8 @@ public class RTokenMakerTest {
     public void testGapAtBeginningProducesErrorToken() {
         // Lexer reports first token starting at offset 2, but text starts at 0 → gap [0,1]
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 2, "ABC"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 5, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 2, "ABC"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 5, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -259,9 +259,9 @@ public class RTokenMakerTest {
     public void testGapInMiddleProducesErrorToken() {
         // "AB__CD" — two tokens with a gap of 2 characters between them
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "AB"),
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 4, "CD"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 6, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "AB"),
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 4, "CD"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 6, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -285,9 +285,9 @@ public class RTokenMakerTest {
     public void testContiguousTokensProduceNoErrorGaps() {
         // "AB" at 0, "CD" at 2 — no gap
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "AB"),
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 2, "CD"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 4, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "AB"),
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 2, "CD"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 4, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -309,7 +309,7 @@ public class RTokenMakerTest {
         int[] nextCalls = {0};
         LexicalAnalyzer throwingLexer = new LexicalAnalyzer() {
             @Override
-            public net.emustudio.emulib.plugins.compiler.Token next() {
+            public net.emustudio.emulib.plugin.compiler.Token next() {
                 nextCalls[0]++;
                 throw new RuntimeException("Lexer error");
             }
@@ -341,7 +341,7 @@ public class RTokenMakerTest {
         // A lexer where reset() throws — simulates corrupted lexer state after compilation
         LexicalAnalyzer resetThrowingLexer = new LexicalAnalyzer() {
             @Override
-            public net.emustudio.emulib.plugins.compiler.Token next() {
+            public net.emustudio.emulib.plugin.compiler.Token next() {
                 throw new AssertionError("next() should not be called if reset() throws");
             }
 
@@ -369,7 +369,7 @@ public class RTokenMakerTest {
     @Test
     public void testTokenProcessingExceptionStillProducesNullTerminator() {
         // A token whose getType() throws during processing — should be skipped
-        net.emustudio.emulib.plugins.compiler.Token badToken = new net.emustudio.emulib.plugins.compiler.Token() {
+        net.emustudio.emulib.plugin.compiler.Token badToken = new net.emustudio.emulib.plugin.compiler.Token() {
             @Override
             public int getType() {
                 throw new RuntimeException("bad token");
@@ -387,7 +387,7 @@ public class RTokenMakerTest {
         };
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
                 badToken,
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 1, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 1, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -403,9 +403,9 @@ public class RTokenMakerTest {
     public void testEmptyTokenTextIsSkipped() {
         // A token with empty text should be skipped to prevent end < start corruption
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, ""),
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "OK"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 2, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, ""),
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "OK"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 2, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -425,9 +425,9 @@ public class RTokenMakerTest {
     public void testNullTokenTextIsSkipped() {
         // A token with null text should be skipped
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, null),
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "OK"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 2, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, null),
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "OK"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 2, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -444,8 +444,8 @@ public class RTokenMakerTest {
     @Test
     public void testRepeatedCallsResetState() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "A"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 1, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "A"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 1, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -470,8 +470,8 @@ public class RTokenMakerTest {
     @Test
     public void testEofTokenIsNotIncludedAsRealToken() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
-                token(net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER, 0, "X"),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, 1, "")
+                token(net.emustudio.emulib.plugin.compiler.Token.IDENTIFIER, 0, "X"),
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, 1, "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 
@@ -492,8 +492,8 @@ public class RTokenMakerTest {
         return new Segment(text.toCharArray(), 0, text.length());
     }
 
-    private static net.emustudio.emulib.plugins.compiler.Token token(int type, int offset, String text) {
-        return new net.emustudio.emulib.plugins.compiler.Token() {
+    private static net.emustudio.emulib.plugin.compiler.Token token(int type, int offset, String text) {
+        return new net.emustudio.emulib.plugin.compiler.Token() {
             @Override
             public int getType() {
                 return type;
@@ -517,7 +517,7 @@ public class RTokenMakerTest {
     private void assertSingleTokenType(String text, int emuStudioType, int expectedRstaType) {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
                 token(emuStudioType, 0, text),
-                token(net.emustudio.emulib.plugins.compiler.Token.EOF, text.length(), "")
+                token(net.emustudio.emulib.plugin.compiler.Token.EOF, text.length(), "")
         );
         RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
 

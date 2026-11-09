@@ -3,8 +3,8 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.application.debugger.InstructionIndex;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.application.debugger.FlowAnalysis;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.LoggerFactory;
 
@@ -462,11 +462,11 @@ public class PaginatingDisassembler {
     static class BoundaryDecoder {
         private final Disassembler disassembler;
         private final FlowGraph.Boundaries boundaries = new FlowGraph.Boundaries();
-        private InstructionIndex.View indexed;
+        private FlowAnalysis indexed;
 
         BoundaryDecoder(Disassembler disassembler) { this.disassembler = Objects.requireNonNull(disassembler); }
 
-        synchronized void useIndex(InstructionIndex.View view) {
+        synchronized void useAnalysis(FlowAnalysis view) {
             indexed = Objects.requireNonNull(view);
             int first = indexed.nextAddress(0);
             if (first >= 0) boundaries.record(0, first);

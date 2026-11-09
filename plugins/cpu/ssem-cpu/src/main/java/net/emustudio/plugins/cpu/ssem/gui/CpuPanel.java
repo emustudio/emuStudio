@@ -2,20 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.*;
+import static net.emustudio.emulib.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
     private final GUI gui;
@@ -115,18 +114,18 @@ public class CpuPanel extends JPanel {
 
             try {
                 Byte[] mCI = memory.read(ci, 4);
-                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                byte line = (byte) Numbers.reverseBits(mCI[0] & 0b11111000, 8);
                 Byte[] mLine = memory.read(line * 4, 4);
 
-                memoryValues[0] = String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[0] = String.format("%08x", Numbers.readInt(mCI, Numbers.Strategy.REVERSE_BITS));
                 memoryValues[1] = String.format("%02x", line);
-                memoryValues[2] = String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
-                memoryValues[3] = String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[2] = String.format("%08x", Numbers.readInt(mLine, Numbers.Strategy.REVERSE_BITS));
+                memoryValues[3] = String.format("%d", Numbers.readInt(mCI, Numbers.Strategy.REVERSE_BITS));
                 memoryValues[4] = String.format("%d", line);
-                memoryValues[5] = String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
-                memoryValues[6] = formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN));
+                memoryValues[5] = String.format("%d", Numbers.readInt(mLine, Numbers.Strategy.REVERSE_BITS));
+                memoryValues[6] = formatBinary(Numbers.readInt(mCI, Numbers.Strategy.BIG_ENDIAN));
                 memoryValues[7] = formatBinary(line, 8);
-                memoryValues[8] = formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN));
+                memoryValues[8] = formatBinary(Numbers.readInt(mLine, Numbers.Strategy.BIG_ENDIAN));
             } catch (IndexOutOfBoundsException e) {
                 for (int i = 0; i < memoryValues.length; i++) {
                     memoryValues[i] = "?";
@@ -157,7 +156,7 @@ public class CpuPanel extends JPanel {
         }
 
         private String formatBinary(int number, int length) {
-            return RadixUtils.formatBinary(number, length, 4);
+            return Numbers.formatBinary(number, length, 4);
         }
     }
 

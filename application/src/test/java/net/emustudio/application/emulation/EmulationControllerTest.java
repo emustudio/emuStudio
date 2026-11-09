@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
 import org.junit.Test;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
+import static net.emustudio.emulib.plugin.cpu.CPU.RunState.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 

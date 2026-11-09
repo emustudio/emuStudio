@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.easymock.Capture;
 import org.junit.After;
@@ -399,7 +399,7 @@ public class CpuImplTest {
     public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

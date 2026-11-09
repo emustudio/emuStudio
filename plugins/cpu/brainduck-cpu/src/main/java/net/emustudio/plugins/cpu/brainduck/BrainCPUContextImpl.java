@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
 
 import java.util.Objects;
 
@@ -22,7 +22,7 @@ class BrainCPUContextImpl extends AbstractCPUContext implements BrainCPUContext 
         return engine == null ? -1 : engine.IP;
     }
 
-    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }
 

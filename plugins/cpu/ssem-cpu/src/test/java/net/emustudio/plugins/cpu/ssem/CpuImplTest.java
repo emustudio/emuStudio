@@ -2,18 +2,18 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.Numbers;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,7 +91,7 @@ public class CpuImplTest {
 
     @SuppressWarnings("unchecked")
     private CpuImpl createInitializedCpuWithMemory(short[] memoryContent) throws PluginInitializationException {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);
         memory.setMemory(memoryContent);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
@@ -371,7 +371,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
         } finally {
             Thread.interrupted();
             initialized.destroy();

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import org.junit.Before;

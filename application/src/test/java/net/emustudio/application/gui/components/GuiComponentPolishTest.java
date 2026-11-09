@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.components;
 
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.ui.StandardIcons;
 import org.junit.Test;
 
 import javax.swing.*;

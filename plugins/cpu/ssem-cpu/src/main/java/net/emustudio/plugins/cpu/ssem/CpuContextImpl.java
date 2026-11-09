@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
 final class CpuContextImpl extends AbstractCPUContext {
 
@@ -18,7 +18,7 @@ final class CpuContextImpl extends AbstractCPUContext {
     }
 
     @Override public boolean isPassedCyclesSupported() { return false; }
-    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }
 }

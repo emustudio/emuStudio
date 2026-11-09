@@ -4,10 +4,10 @@ package net.emustudio.application.debugger;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.ExpressionParser;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.ExpressionParser;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -35,7 +35,7 @@ final class DebuggerTestMachine {
     final Map<String, Object> values = new ConcurrentHashMap<>(Map.of("A", 0L));
     final AtomicInteger detached = new AtomicInteger();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
-    private DebugSession session;
+    private DebuggerSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
     private int accessed = -1;
@@ -134,10 +134,10 @@ final class DebuggerTestMachine {
         net.emustudio.application.TestCpu.publish(cpu, state);
     }
 
-    DebugSession session(Path settings) throws IOException { return session(settings, true); }
+    DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
 
-    DebugSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebugSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
+    DebuggerSession session(Path settings, boolean withMemory) throws IOException {
+        session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
         return session;
     }
 

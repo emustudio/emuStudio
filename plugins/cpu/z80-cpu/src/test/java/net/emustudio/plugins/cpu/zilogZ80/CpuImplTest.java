@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class CpuImplTest {
     public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

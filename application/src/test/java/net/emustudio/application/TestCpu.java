@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;

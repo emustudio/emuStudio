@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.junit.Test;
 import javax.swing.*;

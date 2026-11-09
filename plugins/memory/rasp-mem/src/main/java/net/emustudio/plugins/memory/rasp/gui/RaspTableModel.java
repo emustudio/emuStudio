@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.Numbers;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
@@ -104,7 +104,7 @@ public class RaspTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
-            int numberValue = RadixUtils.parseRadix((String) value);
+            int numberValue = Numbers.parseRadix((String) value);
             if (numberValue < 0) {
                 return;
             }

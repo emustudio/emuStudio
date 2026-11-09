@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.emulib.plugins.Context;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.plugin.Context;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

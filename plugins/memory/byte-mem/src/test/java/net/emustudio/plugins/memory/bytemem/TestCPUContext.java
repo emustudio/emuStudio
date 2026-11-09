@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
 
 /** Execution snapshots for isolated memory formatting and action tests. */

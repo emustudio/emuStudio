@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.application.ContextPool;
 import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -26,7 +26,7 @@ public class RaspCpuContextImpl extends AbstractCPUContext implements RaspCpuCon
         return engine == null ? -1 : engine.IP.get();
     }
 
-    void publishState(net.emustudio.emulib.plugins.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
+    void publishState(net.emustudio.emulib.plugin.cpu.CPU.RunState state, int instructionLocation, float frequencyKhz) {
         fireStateChanged(state, instructionLocation, frequencyKhz);
     }
 

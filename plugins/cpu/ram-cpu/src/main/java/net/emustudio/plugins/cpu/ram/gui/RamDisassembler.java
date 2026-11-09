@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram.gui;
 
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
