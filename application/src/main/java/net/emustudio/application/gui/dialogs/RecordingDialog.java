@@ -1,7 +1,8 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.debugger;
+package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.debugger.DebugSession;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
@@ -10,7 +11,7 @@ import javax.swing.*;
 import java.awt.Frame;
 
 /** Configures a new instruction recording without changing the current recording on cancellation. */
-final class RecordingDialog extends DialogBase {
+public final class RecordingDialog extends DialogBase {
     private final GUI gui;
     private final Dialogs dialogs;
     private final DebugSession session;
@@ -22,7 +23,7 @@ final class RecordingDialog extends DialogBase {
     private final JTextField from = new JTextField("0x0", 10);
     private final JTextField to = new JTextField(10);
 
-    RecordingDialog(Frame owner, GUI gui, Dialogs dialogs, DebugSession session, Runnable started) {
+    public RecordingDialog(Frame owner, GUI gui, Dialogs dialogs, DebugSession session, Runnable started) {
         super(owner, "Record instructions", true);
         this.gui = gui;
         this.dialogs = dialogs;

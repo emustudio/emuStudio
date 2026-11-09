@@ -19,6 +19,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -100,6 +101,7 @@ public class StudioFrame extends JFrame {
         this.aboutAction = new AboutAction(this, gui);
 
         initComponents();
+        GUI.relayoutOnShow(this);
 
         setTitle(computerTitle);
 

@@ -33,8 +33,8 @@ public class ProgramIndexPublicationRaceTest {
                 ProgramIndex index = create(65536, new MemoryAnnotations());
                 Snapshot base = index.snapshot();
                 CountDownLatch staged = new CountDownLatch(2), release = new CountDownLatch(1);
-                Future<CommitResult> first = workers.submit(() -> edit(index, base, 1, content, staged, release));
-                Future<CommitResult> second = workers.submit(() -> edit(index, base, 2, content, staged, release));
+                Future<CommitResult> first = workers.submit(() -> edit(index, base, 0, content, staged, release));
+                Future<CommitResult> second = workers.submit(() -> edit(index, base, 1, content, staged, release));
                 assertTrue("Both edits must capture the same root", staged.await(5, TimeUnit.SECONDS));
                 release.countDown();
                 List<CommitResult> results = List.of(first.get(5, TimeUnit.SECONDS), second.get(5, TimeUnit.SECONDS));
@@ -44,8 +44,13 @@ public class ProgramIndexPublicationRaceTest {
                 int[] entries = {0};
                 if (content) current.forEachInstruction(instruction -> entries[0]++);
                 else {
-                    current.forEachExecutionBreakpoint(0, breakpoint -> entries[0]++);
-                    current.forEachExecutionBreakpoint(1, breakpoint -> entries[0]++);
+                    int winner = results.get(0) == CommitResult.PUBLISHED ? 0 : 2;
+                    for (int address = 0; address < 4; address++) {
+                        assertEquals(address == winner || address == winner + 1,
+                                current.hasExecutionBreakpoint(address));
+                        if (current.hasExecutionBreakpoint(address)) entries[0]++;
+                        assertFalse(base.hasExecutionBreakpoint(address));
+                    }
                 }
                 assertEquals("The losing edit publishes no partial entries", 2, entries[0]);
                 assertEquals(content ? 1 : 0, current.contentRevision());
@@ -56,7 +61,7 @@ public class ProgramIndexPublicationRaceTest {
         } finally { workers.shutdownNow(); }
     }
 
-    private static CommitResult edit(ProgramIndex index, Snapshot base, long owner, boolean content,
+    private static CommitResult edit(ProgramIndex index, Snapshot base, int owner, boolean content,
                                      CountDownLatch staged, CountDownLatch release) throws InterruptedException {
         if (content) {
             try (ContentUpdate update = index.updateContent(base)) {
@@ -69,8 +74,8 @@ public class ProgramIndexPublicationRaceTest {
             }
         }
         try (BreakpointUpdate update = index.updateBreakpoints(base)) {
-            update.put(owner * 2, 0, true);
-            update.put(owner * 2 + 1, 1, true);
+            update.add(owner * 2);
+            update.add(owner * 2 + 1);
             staged.countDown();
             assertTrue(release.await(5, TimeUnit.SECONDS));
             return update.commit();

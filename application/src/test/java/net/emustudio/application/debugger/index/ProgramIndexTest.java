@@ -10,15 +10,11 @@ import static net.emustudio.application.debugger.index.ProgramIndex.*;
 import static org.junit.Assert.*;
 
 public class ProgramIndexTest {
-    @Test public void breakpointBitmapPreservesMultipleDisabledAndConditionalRulesAtCpuVisibleAddresses() {
+    @Test public void breakpointAddressesAreUniqueAndSnapshotsKeepTheirPreviousState() {
         ProgramIndex index = create(128, new MemoryAnnotations());
         assertFalse(index.snapshot().hasExecutionBreakpoint(0));
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.put(1, 0, true);
-            edit.put(2, 0, true);
-            edit.put(3, 63, true);
-            edit.put(4, 1, false);
-            edit.put(5, 127, true);
+            edit.add(0).add(0).add(63).add(127);
             edit.commit();
         }
         Snapshot old = index.snapshot();
@@ -27,21 +23,42 @@ public class ProgramIndexTest {
         assertTrue(old.hasExecutionBreakpoint(63));
         assertTrue(old.hasExecutionBreakpoint(127));
         assertFalse(old.hasExecutionBreakpoint(64));
-        List<Breakpoint> rules = new ArrayList<>();
-        old.forEachExecutionBreakpoint(0, rules::add);
-        assertEquals(2, rules.size());
-        assertEquals(Set.of(1L, 2L), Set.of(rules.get(0).id(), rules.get(1).id()));
         try (BreakpointUpdate edit = index.updateBreakpoints(old)) {
-            edit.remove(1).put(4, 1, true);
+            edit.remove(0).add(1);
             edit.commit();
         }
-        assertTrue(index.snapshot().hasExecutionBreakpoint(0));
+        assertFalse(index.snapshot().hasExecutionBreakpoint(0));
         assertTrue(index.snapshot().hasExecutionBreakpoint(1));
         try (BreakpointUpdate edit = index.updateBreakpoints(index.snapshot())) {
-            edit.remove(2).commit();
+            edit.clear().add(64).commit();
         }
         assertFalse(index.snapshot().hasExecutionBreakpoint(0));
+        assertFalse(index.snapshot().hasExecutionBreakpoint(1));
+        assertFalse(index.snapshot().hasExecutionBreakpoint(63));
+        assertFalse(index.snapshot().hasExecutionBreakpoint(127));
+        assertTrue(index.snapshot().hasExecutionBreakpoint(64));
         assertTrue(old.hasExecutionBreakpoint(0));
+        assertTrue(old.hasExecutionBreakpoint(63));
+        assertTrue(old.hasExecutionBreakpoint(127));
+        assertFalse(old.hasExecutionBreakpoint(64));
+    }
+
+    @Test public void invalidBreakpointAddressesConsumeTheEditWithoutPublishing() {
+        ProgramIndex index = create(128, new MemoryAnnotations());
+        Snapshot base = index.snapshot();
+        for (int invalid : new int[]{-1, 128}) {
+            try (BreakpointUpdate edit = index.updateBreakpoints(base)) {
+                edit.add(0);
+                assertThrows(IllegalArgumentException.class, () -> edit.add(invalid));
+                assertThrows(IllegalStateException.class, edit::commit);
+            }
+            try (BreakpointUpdate edit = index.updateBreakpoints(base)) {
+                edit.add(0);
+                assertThrows(IllegalArgumentException.class, () -> edit.remove(invalid));
+                assertThrows(IllegalStateException.class, edit::commit);
+            }
+            assertSame(base, index.snapshot());
+        }
     }
 
     @Test public void graphKeepsEdgeKindsSelfLoopsAndKnownUndecodedTargets() {
@@ -88,7 +105,7 @@ public class ProgramIndexTest {
                 }
             });
             BreakpointUpdate breakpoint = index.updateBreakpoints(base);
-            breakpoint.put(1, 0, true);
+            breakpoint.add(0);
             await(staged); index.memoryChanged(); changed.countDown();
             assertEquals(CommitResult.STALE, result.get(10, TimeUnit.SECONDS));
             assertEquals(CommitResult.PUBLISHED, breakpoint.commit());
@@ -120,7 +137,7 @@ public class ProgramIndexTest {
         ContentUpdate graph = index.updateContent(base);
         BreakpointUpdate breakpoint = index.updateBreakpoints(base);
         graph.replaceFlow(false).putInstruction(new Range(0, 1), InstructionKind.STOP);
-        breakpoint.put(7, 0, true);
+        breakpoint.add(0);
 
         assertEquals(CommitResult.PUBLISHED, breakpoint.commit());
         assertEquals(CommitResult.PUBLISHED, graph.commit());

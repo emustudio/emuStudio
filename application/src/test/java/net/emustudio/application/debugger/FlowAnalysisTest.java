@@ -318,7 +318,7 @@ public class FlowAnalysisTest {
         ProgramIndex index = index(4);
         FlowAnalysis.Pending pending = FlowAnalysis.reachable(disassembler, 0, 10, index);
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-            update.put(7, 0, true);
+            update.add(0);
             update.commit();
         }
 
@@ -327,7 +327,7 @@ public class FlowAnalysisTest {
         assertTrue(index.snapshot().hasExecutionBreakpoint(0));
         assertTrue(analysis.isCurrent(index));
         try (ProgramIndex.BreakpointUpdate update = index.updateBreakpoints(index.snapshot())) {
-            update.remove(7);
+            update.remove(0);
             update.commit();
         }
         assertTrue(analysis.isCurrent(index));

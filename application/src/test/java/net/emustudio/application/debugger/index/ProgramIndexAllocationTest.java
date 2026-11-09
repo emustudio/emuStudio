@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import static net.emustudio.application.debugger.index.ProgramIndex.*;
 import static org.junit.Assert.assertEquals;
 
-/** Allocation contract only. */
+/** Flow query allocation contract; breakpoint set lookups may box addresses. */
 public class ProgramIndexAllocationTest {
     private static final int WARMUP = 30000;
     private static final int SAMPLES = 10000;
@@ -21,11 +21,11 @@ public class ProgramIndexAllocationTest {
     private static final Consumer<Object> VALUES = ProgramIndexAllocationTest::consume;
     private static final EdgeVisitor EDGES = ProgramIndexAllocationTest::consumeEdge;
 
-    @Test public void denseBankedQueriesAllocateNothingAfterWarmup() {
+    @Test public void denseFlowQueriesAllocateNothingAfterWarmup() {
         verifyQueries("dense", 65536, 49152);
     }
 
-    @Test public void sparseLargeDomainQueriesAllocateNothingAfterWarmup() {
+    @Test public void sparseLargeDomainFlowQueriesAllocateNothingAfterWarmup() {
         verifyQueries("sparse", Integer.MAX_VALUE, Integer.MAX_VALUE - 1024);
     }
 
@@ -49,7 +49,7 @@ public class ProgramIndexAllocationTest {
             allocated(bean, thread, workload, false);
             long baseline = allocated(bean, thread, workload, false);
             long queries = allocated(bean, thread, workload, true);
-            System.out.println(name + " ProgramIndex queries: " + queries + " B / " + SAMPLES
+            System.out.println(name + " ProgramIndex flow queries: " + queries + " B / " + SAMPLES
                     + " batches; empty-loop/counter baseline " + baseline + " B");
             assertEquals(name + " hot queries allocated bytes above the empty-loop/counter baseline",
                     0L, queries - baseline);
@@ -72,8 +72,7 @@ public class ProgramIndexAllocationTest {
     }
 
     private static void consume(Object value) {
-        if (value instanceof Breakpoint) consumed += ((Breakpoint) value).id();
-        else consumed += ((Instruction) value).cells().start;
+        consumed += ((Instruction) value).cells().start;
     }
 
     private static void consumeEdge(int from, int to, EdgeKind kind) {
@@ -107,11 +106,7 @@ public class ProgramIndexAllocationTest {
                 assertEquals(CommitResult.PUBLISHED, content.commit());
             }
             try (BreakpointUpdate breakpoints = index.updateBreakpoints(index.snapshot())) {
-                for (int i = 0; i < starts.length; i++) {
-                    breakpoints.put(i, starts[i], true);
-                    breakpoints.put(100 + i, starts[i], true);
-                    breakpoints.put(200 + i, starts[i], false);
-                }
+                for (int start : starts) breakpoints.add(start);
                 assertEquals(CommitResult.PUBLISHED, breakpoints.commit());
             }
         }
@@ -121,8 +116,6 @@ public class ProgramIndexAllocationTest {
                 int selected = cursor++ & Integer.MAX_VALUE;
                 int address = addresses[selected % addresses.length];
                 Snapshot snapshot = index.snapshot();
-                consumed += snapshot.hasExecutionBreakpoint(address) ? 1 : 0;
-                snapshot.forEachExecutionBreakpoint(address, VALUES);
                 Instruction instruction = snapshot.instructionAt(address);
                 if (instruction != null) consumed += instruction.cells().end;
                 snapshot.forEachSuccessor(address, EDGES);
