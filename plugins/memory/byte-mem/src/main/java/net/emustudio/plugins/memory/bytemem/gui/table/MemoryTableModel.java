@@ -3,7 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.application.ExecutionState;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

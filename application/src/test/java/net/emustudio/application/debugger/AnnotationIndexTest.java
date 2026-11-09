@@ -9,7 +9,7 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;

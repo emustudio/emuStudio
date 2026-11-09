@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88hdsk;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.Context8080Impl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;

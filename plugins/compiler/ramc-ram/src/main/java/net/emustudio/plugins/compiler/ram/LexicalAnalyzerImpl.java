@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.compiler.antlr.AntlrLexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.antlr.CharArrayCharStream;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.compiler.antlr.AntlrLexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.antlr.CharArrayCharStream;
 
 import static net.emustudio.plugins.compiler.ram.RAMLexer.*;
 
@@ -68,7 +68,7 @@ public class LexicalAnalyzerImpl extends AntlrLexicalAnalyzer {
                     : token.getType() == Token.IDENTIFIER ? token.getText() : null;
             int type = token.getType() == Token.LABEL ? Token.SYMBOL_DEFINITION
                     : token.getType() == Token.IDENTIFIER ? Token.SYMBOL_REFERENCE : token.getType();
-            result.add(new net.emustudio.emulib.plugins.compiler.SourceToken(type, token.getOffset(), token.getText(), name,
+            result.add(new net.emustudio.emulib.plugin.compiler.SourceToken(type, token.getOffset(), token.getText(), name,
                     name == null ? null : "", name == null ? null : ""));
         }
         return result;

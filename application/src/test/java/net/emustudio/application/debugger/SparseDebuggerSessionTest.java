@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -18,8 +18,8 @@ import static org.mockito.Mockito.*;
 
 public class SparseDebuggerSessionTest {
     @Test public void blankWordMemoryCanLoadAndClearWithoutReplacingItsSparseAddressDomain() throws Exception {
-        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
-        when(((net.emustudio.emulib.plugins.debugger.Debugging) cpu).observe(any(), anyBoolean()))
+        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), anyBoolean()))
                 .thenReturn(() -> {});
         @SuppressWarnings("unchecked") MemoryContext<Integer> memory = mock(MemoryContext.class);
         AtomicInteger occupancy = new AtomicInteger();
@@ -33,7 +33,7 @@ public class SparseDebuggerSessionTest {
             assertEquals(0, memory.getSize());
             assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;
-            session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+            session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                     99, 1, address, Integer.MAX_VALUE, "label", "last cell", null));
             session.setBreakpoint(address, true).join();
             session.annotations().add(new AnnotationIndex.Entry(address, "metadata", "CODE"));

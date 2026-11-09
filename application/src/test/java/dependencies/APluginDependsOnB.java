@@ -3,12 +3,12 @@
 package dependencies;
 
 import dependencies.hidden.BdependsOnC;
-import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.Plugin;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.settings.PluginSettings;
 
 import javax.swing.*;
 

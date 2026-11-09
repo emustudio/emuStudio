@@ -1,6 +1,3 @@
-# How to compile the classes:
-
-At first, copy emuLib.jar to ../../../../build/libs
-Then, run:
-
-        javac -cp ../../../../build/libs/emuLib.jar APluginDependsOnB.java hidden/BdependsOnC.java hidden/C.java
+Plugin-loader fixtures live in application/src/test/java/dependencies and compile
+with the normal test sources against the configured emuLib dependency.
+Do not copy precompiled class files into this resource directory.

@@ -4,21 +4,21 @@ package net.emustudio.application.debugger;
 
 import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.dialogs.RecordingDialog;
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.plugins.debugger.NavLink;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ExecutionState;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ui.Dialogs;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -37,7 +37,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /** Unified debugger workspace over CPU-visible addresses; browsing never changes PC. */
 public final class DebuggerPanel extends JPanel implements AutoCloseable {
@@ -879,8 +879,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (entry == null) annotationForm.loadNew(address);
         else annotationForm.loadEntry(entry);
         Window owner = SwingUtilities.getWindowAncestor(this);
-        net.emustudio.emulib.runtime.ui.components.DialogBase dialog =
-                new net.emustudio.emulib.runtime.ui.components.DialogBase(owner instanceof Frame ? (Frame) owner : null, title, true) {
+        net.emustudio.emulib.ui.components.DialogBase dialog =
+                new net.emustudio.emulib.ui.components.DialogBase(owner instanceof Frame ? (Frame) owner : null, title, true) {
                     { setResizable(false); buildContent(); }
                     @Override protected JComponent initializeComponents() { return annotationForm; }
                 };
@@ -1027,8 +1027,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (original == null || (original.id >= 0 && !dirty())) return;
             int target, end;
             try {
-                target = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(addressField.getText());
-                end = net.emustudio.emulib.runtime.helpers.RadixUtils.parseRadix(endField.getText());
+                target = net.emustudio.emulib.RadixUtils.parseRadix(addressField.getText());
+                end = net.emustudio.emulib.RadixUtils.parseRadix(endField.getText());
                 if (target < 0 || end < target || end >= session.addressSpaceSize()) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid address. Enter a value from 0 to "

@@ -50,23 +50,22 @@ Useful CLI entry points:
 
 ## Building and contributing
 
-Build the full project:
+Build the full project with a sibling `cpu-testsuite` checkout on `feature-454-consumer-packages`:
 
 ```bash
-./gradlew build
+./gradlew build -PcpuTestSuitePath=../cpu-testsuite
 ```
 
 Install Eclipse Temurin 11 for the Swing tests. Gradle selects it explicitly because their Cacio toolkit is incompatible
 with IntelliJ's JetBrains Runtime.
 
-Snapshot dependencies resolve from Maven local first. After updating sibling repositories, refresh their snapshots with
-`publishToMavenLocal` in emuLib, cpu-testsuite, Edigen, and edigen-gradle-plugin, in that order. Use JDK 21 for those builds.
-For edigen-gradle-plugin, add `-PedigenPath=../edigen` to use the same generator sources.
-Alternatively, build directly against sibling sources:
+emuLib (`net.emustudio:emulib:12.1.0-SNAPSHOT`) and Edigen resolve from the Central Portal snapshot repository.
+The CPU test-suite checkout supplies helpers migrated to the current emuLib packages; CI uses the same helper sources.
+For changes to emuLib or the generator, build directly against sibling sources:
 
 ```bash
 ./gradlew build -PemuLibPath=../emuLib -PcpuTestSuitePath=../cpu-testsuite \
-  --include-build ../edigen --include-build ../edigen-gradle-plugin
+  --include-build ../edigen-gradle-plugin -PedigenPath=/absolute/path/to/edigen
 ```
 
 Run composite builds with JDK 21 and keep Temurin 11 installed for tests. After upgrading the Edigen plugin, run

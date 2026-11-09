@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer;
 
-import net.emustudio.emulib.runtime.io.TapeListener;
+import net.emustudio.emulib.io.TapeListener;
 
 /** Plugin-owned cassette state in addition to shared tape callbacks. */
 public interface TapePlayback extends TapeListener {

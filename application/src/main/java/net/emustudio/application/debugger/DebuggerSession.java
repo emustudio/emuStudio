@@ -2,17 +2,17 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ValueView;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.io.*;
 import java.nio.file.*;
@@ -180,9 +180,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public DebuggerSession(CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
-                        net.emustudio.emulib.plugins.memory.Memory memoryPlugin,
-                        List<net.emustudio.emulib.plugins.device.Device> devices,
-                        net.emustudio.emulib.plugins.compiler.Compiler compiler,
+                        net.emustudio.emulib.plugin.memory.Memory memoryPlugin,
+                        List<net.emustudio.emulib.plugin.device.Device> devices,
+                        net.emustudio.emulib.plugin.compiler.Compiler compiler,
                         net.emustudio.application.ExecutionStateImpl executionState) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);

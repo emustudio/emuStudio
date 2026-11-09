@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;

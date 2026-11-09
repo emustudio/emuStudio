@@ -5,13 +5,13 @@ package net.emustudio.application.gui.actions;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.Memory;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,7 +43,7 @@ public class CompileActionTest {
         compiler = mock(Compiler.class);
         compilerOutput = new JTextArea();
         EmulationController execution = mock(EmulationController.class);
-        when(execution.snapshot()).thenReturn(new net.emustudio.emulib.runtime.ExecutionState.Snapshot(
+        when(execution.snapshot()).thenReturn(new net.emustudio.emulib.application.ExecutionState.Snapshot(
                 CPU.RunState.STATE_STOPPED_BREAK, false, false, 0, Float.NaN));
         when(computer.getExecution()).thenReturn(Optional.of(execution));
         when(execution.compile(any())).thenAnswer(call -> {

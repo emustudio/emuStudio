@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.spaceinvaders;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Test;
 import java.util.ArrayList;

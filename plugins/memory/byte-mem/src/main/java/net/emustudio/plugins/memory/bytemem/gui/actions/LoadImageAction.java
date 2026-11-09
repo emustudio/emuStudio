@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.ExecutionState;
 import java.util.concurrent.CompletionException;
-import net.emustudio.emulib.runtime.io.FileLoader;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.io.FileLoader;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.MemoryImageLoader;
@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_FILE_TYPES;
 
 public class LoadImageAction extends AbstractAction {

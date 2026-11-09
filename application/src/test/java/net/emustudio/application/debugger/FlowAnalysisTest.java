@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -164,7 +164,7 @@ public class FlowAnalysisTest {
         instruction(disassembler, 3, "HALT", InstructionFlow.Kind.STOP, 4, false, List.of());
         int size = 6;
         MemoryAnnotations annotations = new MemoryAnnotations();
-        annotations.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+        annotations.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                 8, 10, 2, 5, "data", "table", null));
 
         FlowAnalysis analysis = FlowAnalysis.reachable(disassembler, 0, 10, size, annotations);

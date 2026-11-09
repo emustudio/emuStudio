@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.application.emulation.EmulationControllerTest.*;
-import static net.emustudio.emulib.plugins.cpu.CPU.RunState.*;
+import static net.emustudio.emulib.plugin.cpu.CPU.RunState.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -46,9 +46,15 @@ public class EmulationControllerSchedulingTest {
 
     @Test(timeout = 5000)
     public void stopCancelsTimedSteppingWithoutWaitingForInterval() throws Exception {
+        CountDownLatch completed = new CountDownLatch(1);
         try (EmulationController controller = controller(cpu)) {
+            controller.executionState().subscribe(snapshot -> {
+                if (stepCount.get() > 0 && !snapshot.isBusy() && snapshot.runState() == STATE_STOPPED_BREAK)
+                    completed.countDown();
+            });
             await(controller.step(1, TimeUnit.DAYS));
             awaitStep(1);
+            assertTrue(completed.await(2, TimeUnit.SECONDS));
 
             assertEquals(STATE_STOPPED_NORMAL, await(controller.stop()));
             assertFalse(controller.snapshot().isTimedRunning());

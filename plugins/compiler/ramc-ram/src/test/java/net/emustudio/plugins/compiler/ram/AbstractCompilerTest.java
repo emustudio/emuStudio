@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.Before;

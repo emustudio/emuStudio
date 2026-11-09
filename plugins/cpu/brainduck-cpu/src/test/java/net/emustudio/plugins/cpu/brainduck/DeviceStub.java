@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.emulib.plugin.device.DeviceContext;
 
 import java.util.List;
 import java.util.Queue;

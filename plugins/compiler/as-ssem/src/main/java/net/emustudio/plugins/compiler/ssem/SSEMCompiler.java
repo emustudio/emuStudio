@@ -2,17 +2,17 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.antlr.ParserErrorListener;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
 import org.antlr.v4.runtime.*;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatHex;
+import static net.emustudio.emulib.RadixUtils.formatHex;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,

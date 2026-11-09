@@ -1,5 +1,5 @@
 {
-  "../emuLib/src/main/resources/net/emustudio/emulib/runtime/ui/icons": {
+  "../emuLib/src/main/resources/net/emustudio/emulib/ui/icons": {
     "add.png": "virtual-computer/add-plugin.svg",
     "ascii.png": "text/ascii-table.svg",
     "bidirection.png": "virtual-computer/bidirectional-connection.svg",

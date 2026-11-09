@@ -3,10 +3,10 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.Constants;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
@@ -372,11 +372,11 @@ public class REditor implements Editor {
     private Optional<Path> resolveIncludeAt(int offset) {
         String filename = null;
         if (compiler != null) {
-            net.emustudio.emulib.plugins.compiler.LexicalAnalyzer lexer = compiler.createLexer();
+            net.emustudio.emulib.plugin.compiler.LexicalAnalyzer lexer = compiler.createLexer();
             char[] source = textPane.getText().toCharArray();
             lexer.reset(source, 0, source.length);
             while (lexer.hasNext()) {
-                net.emustudio.emulib.plugins.compiler.Token token = lexer.next();
+                net.emustudio.emulib.plugin.compiler.Token token = lexer.next();
                 if (token.getReferencedFile() != null && offset >= token.getOffset()
                         && offset < token.getOffset() + token.getText().length()) {
                     filename = token.getReferencedFile();

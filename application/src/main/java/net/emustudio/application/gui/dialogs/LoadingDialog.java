@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_MOTHERBOARD;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class LoadingDialog extends DialogBase {

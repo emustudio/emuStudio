@@ -4,7 +4,7 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.debugger.index.FlowGraph;
 import net.emustudio.application.debugger.FlowAnalysis;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.LoggerFactory;
 

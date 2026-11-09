@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.plugins.compiler.CompileException;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.CompileException;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import org.antlr.v4.runtime.Token;
 
 import java.util.function.Function;

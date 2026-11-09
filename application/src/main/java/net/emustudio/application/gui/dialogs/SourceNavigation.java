@@ -7,10 +7,10 @@ import net.emustudio.application.debugger.DebuggerPanel;
 import net.emustudio.application.debugger.SourceAddressMap;
 import net.emustudio.application.debugger.SourceInputs;
 import net.emustudio.application.gui.editor.TabbedEditor;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.CompilerMessage;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.CompilerListener;
+import net.emustudio.emulib.plugin.compiler.CompilerMessage;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 
 import javax.swing.*;
 import java.io.UncheckedIOException;

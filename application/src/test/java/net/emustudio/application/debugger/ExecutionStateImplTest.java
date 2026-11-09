@@ -4,8 +4,8 @@ package net.emustudio.application.debugger;
 
 import net.emustudio.application.ExecutionStateImpl;
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
 import org.junit.Test;
 
 import java.util.List;

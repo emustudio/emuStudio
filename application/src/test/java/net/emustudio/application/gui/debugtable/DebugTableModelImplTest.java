@@ -2,12 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.application.debugger.DebuggerSession;
 import org.junit.After;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -436,8 +436,8 @@ public class DebugTableModelImplTest {
     @After public void closeSessions() { sessions.forEach(DebuggerSession::close); }
 
     private DebuggerSession session(int size) {
-        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugins.debugger.Debugging.class));
-        when(((net.emustudio.emulib.plugins.debugger.Debugging) cpu).observe(any(), anyBoolean()))
+        CPU cpu = mock(CPU.class, withSettings().extraInterfaces(net.emustudio.emulib.plugin.debugger.Debugging.class));
+        when(((net.emustudio.emulib.plugin.debugger.Debugging) cpu).observe(any(), anyBoolean()))
                 .thenReturn(() -> {});
         when(cpu.getAddressSpaceSize()).thenReturn(size);
         try {
@@ -452,13 +452,13 @@ public class DebugTableModelImplTest {
         when(session.cpu.getDisassembler()).thenReturn(decoder);
         when(decoder.getNextInstructionPosition(anyInt())).thenAnswer(call -> next.applyAsInt(call.getArgument(0)));
         when(decoder.getFlow(anyInt())).thenAnswer(call -> java.util.Optional.of(
-                new net.emustudio.emulib.plugins.cpu.InstructionFlow(
-                        net.emustudio.emulib.plugins.cpu.InstructionFlow.Kind.LINEAR,
+                new net.emustudio.emulib.plugin.cpu.InstructionFlow(
+                        net.emustudio.emulib.plugin.cpu.InstructionFlow.Kind.LINEAR,
                         next.applyAsInt(call.getArgument(0)), true, java.util.List.of())));
         try {
-            when(decoder.disassemble(anyInt())).thenAnswer(call -> new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(
+            when(decoder.disassemble(anyInt())).thenAnswer(call -> new net.emustudio.emulib.plugin.cpu.DisassembledInstruction(
                     call.getArgument(0), "NOP", "00"));
-        } catch (net.emustudio.emulib.plugins.cpu.InvalidInstructionException failure) { throw new AssertionError(failure); }
+        } catch (net.emustudio.emulib.plugin.cpu.InvalidInstructionException failure) { throw new AssertionError(failure); }
         session.analyzeFlow(0, session.addressSpaceSize());
     }
 

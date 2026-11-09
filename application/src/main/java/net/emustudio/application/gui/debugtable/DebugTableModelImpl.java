@@ -6,9 +6,9 @@ import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryD
 
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.debugger.FlowAnalysis;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
 import javax.swing.event.TableModelEvent;
 import java.util.List;

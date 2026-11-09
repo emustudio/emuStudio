@@ -11,7 +11,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.*;
+import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /** Inline search scoped to the active source view or a captured selection. */
 public final class InlineSearchBar extends JPanel {

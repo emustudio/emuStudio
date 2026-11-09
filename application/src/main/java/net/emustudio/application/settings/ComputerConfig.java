@@ -4,7 +4,7 @@ package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 
 import java.io.Closeable;
 import java.io.IOException;

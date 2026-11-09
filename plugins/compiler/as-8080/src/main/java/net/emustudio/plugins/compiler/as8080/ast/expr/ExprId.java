@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
 
-import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.normalizeId;
+import static net.emustudio.emulib.plugin.compiler.antlr.ParsingUtils.normalizeId;
 
 public class ExprId extends Node {
     public final String id;

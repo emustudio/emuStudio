@@ -2,15 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.plugins.annotations.PluginRoot;
-import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PluginRoot;
+import net.emustudio.emulib.plugin.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.antlr.ParserErrorListener;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Program;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.antlr.v4.runtime.CharStream;

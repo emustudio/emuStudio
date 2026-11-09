@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88pio;
 
-import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.application.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.plugins.device.mits88pio.api.PioContext;
 import org.junit.After;
 import org.junit.Before;

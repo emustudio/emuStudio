@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
+import net.emustudio.emulib.plugin.cpu.AbstractCPUContext;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;

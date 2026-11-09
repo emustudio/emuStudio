@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.brainduck.ast;
 
-import net.emustudio.emulib.runtime.io.IntelHEX;
+import net.emustudio.emulib.io.IntelHEX;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

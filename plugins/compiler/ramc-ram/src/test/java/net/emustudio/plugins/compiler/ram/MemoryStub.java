@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamLabel;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;

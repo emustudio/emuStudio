@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.ui.StandardIcons;
 
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class Constants {
     public final static String DIALOG_TITLE = "MITS 88-DCDD";

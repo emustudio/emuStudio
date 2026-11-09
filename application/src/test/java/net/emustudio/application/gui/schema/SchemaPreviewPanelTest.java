@@ -4,7 +4,7 @@ package net.emustudio.application.gui.schema;
 
 import net.emustudio.application.gui.schema.elements.CompilerElement;
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

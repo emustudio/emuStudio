@@ -4,11 +4,11 @@ package net.emustudio.application.emulation;
 
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.ExecutionStateImpl;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -269,7 +269,7 @@ public final class EmulationController implements Closeable {
     public CompletableFuture<Void> update(Runnable change, boolean machineMutation) {
         Objects.requireNonNull(change);
         return command(result -> {
-            if (active != null && active.continuous && !(cpu instanceof net.emustudio.emulib.plugins.debugger.Debugging))
+            if (active != null && active.continuous && !(cpu instanceof net.emustudio.emulib.plugin.debugger.Debugging))
                 throw new IllegalStateException("Live edits unsupported by this CPU");
             if (!updates.offer(new Update(change, machineMutation, result)))
                 throw new RejectedExecutionException("Too many pending machine edits");

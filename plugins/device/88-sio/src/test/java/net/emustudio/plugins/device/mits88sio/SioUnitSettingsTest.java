@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.application.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 

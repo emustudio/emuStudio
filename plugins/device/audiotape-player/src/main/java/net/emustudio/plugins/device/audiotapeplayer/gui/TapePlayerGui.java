@@ -2,14 +2,14 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer.gui;
 
-import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.application.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.ui.components.CachedComboBoxModel;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.audiotapeplayer.AutomationEvent;
 import net.emustudio.plugins.device.audiotapeplayer.AutomationController;
 import net.emustudio.plugins.device.audiotapeplayer.TapePlaybackController;

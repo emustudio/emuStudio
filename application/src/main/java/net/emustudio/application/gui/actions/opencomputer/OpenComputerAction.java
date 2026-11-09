@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.application.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.ui.StandardIcons.ICON_ADD;
+import static net.emustudio.emulib.ui.StandardIcons.ICON_ADD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class OpenComputerAction extends AbstractAction {

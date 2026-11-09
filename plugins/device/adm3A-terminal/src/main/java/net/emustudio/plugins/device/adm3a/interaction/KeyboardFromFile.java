@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.runtime.helpers.SleepUtils;
+import net.emustudio.emulib.SleepUtils;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import org.slf4j.Logger;

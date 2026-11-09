@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.*;
+import net.emustudio.emulib.plugin.compiler.*;
 
 import javax.swing.*;
 import java.io.*;

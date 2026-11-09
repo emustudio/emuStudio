@@ -5,7 +5,7 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
 
 import org.junit.Test;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
 
 import java.util.ArrayList;
 import java.util.Arrays;

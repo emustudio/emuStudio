@@ -2,7 +2,7 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Test;
 
 import java.util.List;

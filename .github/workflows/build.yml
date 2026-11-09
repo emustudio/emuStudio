@@ -13,31 +13,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # Keep shared APIs and generated sources on compatible revisions.
-      - name: Check out emuLib
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/emuLib
-          ref: 9b41a20d08fac1293281abc25f406ceb88b2a0dd
-          path: .ci/emuLib
       - name: Check out CPU test suite
         uses: actions/checkout@v4
         with:
           repository: emustudio/cpu-testsuite
-          ref: d102dd0dacfa568b491746fe930f79b315e674e1
+          ref: 31b4b818b7c3177dda7b7352d3339274fa6ddc4e
           path: .ci/cpu-testsuite
-      - name: Check out Edigen
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/edigen
-          ref: 66daf44dfb91ea3448a4ca34f0a4012b4f6a1f6f
-          path: .ci/edigen
-      - name: Check out Edigen Gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: emustudio/edigen-gradle-plugin
-          ref: cec650655dedd00173d603da4678193b69d7f626
-          path: .ci/edigen-gradle-plugin
       - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
@@ -53,8 +34,5 @@ jobs:
       - name: Build with Gradle
         run: >-
           ./gradlew build
-          --include-build .ci/edigen-gradle-plugin
-          -PedigenPath=${{ github.workspace }}/.ci/edigen
-          -PemuLibPath=${{ github.workspace }}/.ci/emuLib
           -PcpuTestSuitePath=${{ github.workspace }}/.ci/cpu-testsuite
           -Porg.gradle.java.installations.fromEnv=JAVA_HOME_11_X64,JAVA_HOME_21_X64

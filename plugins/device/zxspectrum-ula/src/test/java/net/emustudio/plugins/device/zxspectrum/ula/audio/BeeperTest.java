@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.audio;
 
-import net.emustudio.emulib.runtime.audio.AudioSink;
+import net.emustudio.emulib.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ModelProfile;
 
 import org.junit.Test;

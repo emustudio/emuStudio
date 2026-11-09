@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
+import net.emustudio.emulib.ui.StandardIcons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,7 +10,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class FindSequenceAction extends AbstractAction {
     private final static String ICON_FILE = StandardIcons.ICON_FIND;

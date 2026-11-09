@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 
 import java.nio.ByteBuffer;

@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -316,16 +316,16 @@ public class DebuggerSessionTest {
     @Test
     public void liveFlowDecodeDoesNotHoldSessionMonitorAndRejectsLateMetadata() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
-        net.emustudio.emulib.plugins.cpu.Disassembler decoder = mock(net.emustudio.emulib.plugins.cpu.Disassembler.class);
+        net.emustudio.emulib.plugin.cpu.Disassembler decoder = mock(net.emustudio.emulib.plugin.cpu.Disassembler.class);
         when(machine.cpu.getDisassembler()).thenReturn(decoder);
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
         when(decoder.getFlow(0)).thenAnswer(call -> {
             entered.countDown(); await(release);
-            return Optional.of(new net.emustudio.emulib.plugins.cpu.InstructionFlow(
-                    net.emustudio.emulib.plugins.cpu.InstructionFlow.Kind.STOP, 1, false, List.of()));
+            return Optional.of(new net.emustudio.emulib.plugin.cpu.InstructionFlow(
+                    net.emustudio.emulib.plugin.cpu.InstructionFlow.Kind.STOP, 1, false, List.of()));
         });
         when(decoder.getNextInstructionPosition(0)).thenReturn(1);
-        when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugins.cpu.DisassembledInstruction(0, "STOP", "00"));
+        when(decoder.disassemble(0)).thenReturn(new net.emustudio.emulib.plugin.cpu.DisassembledInstruction(0, "STOP", "00"));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (DebuggerSession session = machine.session(null)) {
             Future<FlowAnalysis> result = executor.submit(() -> session.analyzeFlow(0, 10));
@@ -1030,15 +1030,15 @@ public class DebuggerSessionTest {
             session.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
-        net.emustudio.emulib.runtime.annotations.MemoryAnnotations engine = spy(
-                new net.emustudio.emulib.runtime.annotations.MemoryAnnotations());
+        net.emustudio.emulib.application.annotations.MemoryAnnotations engine = spy(
+                new net.emustudio.emulib.application.annotations.MemoryAnnotations());
         AtomicBoolean firstRevision = new AtomicBoolean(true);
         doAnswer(call -> {
             long revision = (long) call.callRealMethod();
             if (firstRevision.getAndSet(false)) {
-                engine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+                engine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                         AnnotationIndex.OWNER, 1L << 40, 0, 1, AnnotationIndex.USER_KIND + "CODE", "live edit", null));
-                engine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+                engine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                         17, 1, 2, 3, "source", "", null));
             }
             return revision;

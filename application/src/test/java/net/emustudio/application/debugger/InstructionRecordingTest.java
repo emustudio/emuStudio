@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.emulib.plugins.debugger.NavLink;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
+import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

@@ -3,10 +3,10 @@
 package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.dialogs.InputDialog;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.io.FileType;
-import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.io.FileType;
+import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.ui.GUI;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;

@@ -3,15 +3,15 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.plugin.PluginInitializationException;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ContextNotFoundException;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +29,7 @@ public class CpuImplTest {
         ContextPool contextPool = createNiceMock(ContextPool.class);
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
@@ -73,7 +73,7 @@ public class CpuImplTest {
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
@@ -94,7 +94,7 @@ public class CpuImplTest {
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
@@ -124,7 +124,7 @@ public class CpuImplTest {
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
-        net.emustudio.emulib.runtime.ExecutionState execution = createNiceMock(net.emustudio.emulib.runtime.ExecutionState.class);
+        net.emustudio.emulib.application.ExecutionState execution = createNiceMock(net.emustudio.emulib.application.ExecutionState.class);
         replay(execution);
         expect(applicationApi.getExecutionState()).andReturn(execution).anyTimes();
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
@@ -364,7 +364,7 @@ public class CpuImplTest {
         CpuImpl initialized = createInitializedCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, initialized.execute());
         } finally {
             Thread.interrupted();
             initialized.destroy();

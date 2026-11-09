@@ -14,7 +14,7 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.settings.SchemaPoint;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88dcdd.drive;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.RadixUtils;
 import net.jcip.annotations.Immutable;
 
 import java.nio.file.Path;

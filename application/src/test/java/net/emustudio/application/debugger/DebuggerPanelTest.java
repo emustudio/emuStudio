@@ -7,14 +7,14 @@ import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.dialogs.RecordingDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.debugger.NavLink;
-import net.emustudio.emulib.plugins.debugger.StepView;
-import net.emustudio.emulib.plugins.debugger.ViewRow;
-import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.ViewRow;
+import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -1575,9 +1575,9 @@ public class DebuggerPanelTest {
     @Test
     public void goToSourcePopupUsesSelectedInstruction() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {})) {
-            net.emustudio.emulib.plugins.compiler.SourceCodePosition position =
-                    mock(net.emustudio.emulib.plugins.compiler.SourceCodePosition.class);
-            workspace.session.annotationEngine.put(new net.emustudio.emulib.runtime.annotations.MemoryAnnotations.Entry(
+            net.emustudio.emulib.plugin.compiler.SourceCodePosition position =
+                    mock(net.emustudio.emulib.plugin.compiler.SourceCodePosition.class);
+            workspace.session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                     1, 0, 1, 2, "source", "", position));
 
             SwingUtilities.invokeAndWait(() -> {
@@ -1902,7 +1902,7 @@ public class DebuggerPanelTest {
         DebugTableImpl table;
         final Dialogs dialogs = mock(Dialogs.class);
         final AtomicInteger breakpointChanges = new AtomicInteger();
-        final java.util.concurrent.atomic.AtomicReference<net.emustudio.emulib.plugins.compiler.SourceCodePosition> sourcePosition = new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicReference<net.emustudio.emulib.plugin.compiler.SourceCodePosition> sourcePosition = new java.util.concurrent.atomic.AtomicReference<>();
 
         @Override public void close() throws Exception {
             if (panel != null) SwingUtilities.invokeAndWait(panel::close);

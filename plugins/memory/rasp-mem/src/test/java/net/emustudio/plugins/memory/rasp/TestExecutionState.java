@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp;
 
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 

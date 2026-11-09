@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.ast;
 
-import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.CompileError;
 import org.junit.Test;
 

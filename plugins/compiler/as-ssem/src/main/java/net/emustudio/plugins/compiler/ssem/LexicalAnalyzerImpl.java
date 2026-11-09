@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.compiler.antlr.AntlrLexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.compiler.antlr.AntlrLexicalAnalyzer;
 
 import static net.emustudio.plugins.compiler.ssem.SSEMLexer.*;
 

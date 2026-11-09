@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.bin2bcd;
+import static net.emustudio.emulib.NumberUtils.bin2bcd;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate.*;
 import static org.junit.Assert.*;

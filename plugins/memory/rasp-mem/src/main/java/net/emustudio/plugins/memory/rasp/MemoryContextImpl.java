@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp;
 
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
+import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
+import net.emustudio.emulib.ReadWriteLockSupport;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 

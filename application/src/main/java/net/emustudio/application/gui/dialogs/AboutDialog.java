@@ -4,7 +4,7 @@ package net.emustudio.application.gui.dialogs;
 
 
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.*;

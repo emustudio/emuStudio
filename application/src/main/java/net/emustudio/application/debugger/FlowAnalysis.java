@@ -3,11 +3,11 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
 import net.emustudio.application.debugger.index.FlowGraph;
-import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InstructionFlow;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.cpu.Disassembler;
+import net.emustudio.emulib.plugin.cpu.DisassembledInstruction;
+import net.emustudio.emulib.plugin.cpu.InstructionFlow;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;

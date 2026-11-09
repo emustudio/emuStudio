@@ -3,9 +3,9 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.NumberUtils;
 import org.easymock.Capture;
 import org.junit.After;
 import org.junit.Test;

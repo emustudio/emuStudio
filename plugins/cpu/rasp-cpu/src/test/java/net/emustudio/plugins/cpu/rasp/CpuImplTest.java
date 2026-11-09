@@ -2,19 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.application.ContextPool;
+import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.emustudio.emulib.plugins.debugger.Debugging;
-import net.emustudio.emulib.plugins.debugger.StepView;
+import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.StepView;
 
 import javax.swing.*;
 import java.util.Optional;
@@ -285,7 +285,7 @@ public class CpuImplTest {
 
             @Override public boolean beforeStep() { return false; }
 }, true);
-        assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
+        assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_STOPPED_BREAK, cpu.execute());
         assertEquals(1, events.size());
         assertEquals(0, cpu.getInstructionLocation());
     }
@@ -295,7 +295,7 @@ public class CpuImplTest {
         initCpu();
         Thread.currentThread().interrupt();
         try {
-            assertEquals(net.emustudio.emulib.plugins.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
+            assertEquals(net.emustudio.emulib.plugin.cpu.CPU.RunState.STATE_RUNNING, cpu.execute());
         } finally {
             Thread.interrupted();
         }

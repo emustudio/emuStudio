@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.emulib.runtime.ui.StandardIcons;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.ui.StandardIcons;
+import net.emustudio.emulib.application.ApplicationApi;
+import net.emustudio.emulib.application.ui.GUI;
+import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.gui.actions.LoadImageAction;
 
@@ -13,8 +13,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;

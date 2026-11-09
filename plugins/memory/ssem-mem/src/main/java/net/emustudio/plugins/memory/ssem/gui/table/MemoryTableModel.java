@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ssem.gui.table;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
+import net.emustudio.emulib.application.ExecutionState;
 import javax.swing.SwingUtilities;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.RadixUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

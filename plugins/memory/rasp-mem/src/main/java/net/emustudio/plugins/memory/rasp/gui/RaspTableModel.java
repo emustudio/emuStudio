@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.RadixUtils;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
-import net.emustudio.emulib.runtime.ExecutionState;
+import net.emustudio.emulib.application.ExecutionState;
 import javax.swing.SwingUtilities;
 
 import javax.swing.table.AbstractTableModel;

@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80;
 
-import net.emustudio.emulib.plugins.compiler.Token;
-import net.emustudio.emulib.plugins.compiler.antlr.AntlrLexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.antlr.CharArrayCharStream;
+import net.emustudio.emulib.plugin.compiler.Token;
+import net.emustudio.emulib.plugin.compiler.antlr.AntlrLexicalAnalyzer;
+import net.emustudio.emulib.plugin.compiler.antlr.CharArrayCharStream;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Lexer.*;
 
@@ -218,7 +218,7 @@ public class LexicalAnalyzerImpl extends AntlrLexicalAnalyzer {
         if (includePath && token.getType() == Token.LITERAL && token.getText().length() >= 2) {
             includePath = false;
             String text = token.getText();
-            return new net.emustudio.emulib.plugins.compiler.SourceToken(Token.INCLUDE_PATH, token.getOffset(), text,
+            return new net.emustudio.emulib.plugin.compiler.SourceToken(Token.INCLUDE_PATH, token.getOffset(), text,
                     null, null, null, text.substring(1, text.length() - 1));
         }
         includePath = token.getType() == Token.PREPROCESSOR && token.getText().equalsIgnoreCase("include");

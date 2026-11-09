@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.ExecutionState;
-import net.emustudio.emulib.runtime.annotations.MemoryAnnotations;
+import net.emustudio.emulib.RadixUtils;
+import net.emustudio.emulib.application.ExecutionState;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.plugins.memory.bytemem.gui.AnnotationLabels;
 
 import javax.swing.*;
@@ -13,7 +13,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.BANK_COLOR;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.ROM_COLOR;
 

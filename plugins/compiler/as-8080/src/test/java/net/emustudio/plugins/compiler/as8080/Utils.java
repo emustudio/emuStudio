@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.emulib.plugins.compiler.antlr.ParserErrorListener;
+import net.emustudio.emulib.plugin.compiler.antlr.ParserErrorListener;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;

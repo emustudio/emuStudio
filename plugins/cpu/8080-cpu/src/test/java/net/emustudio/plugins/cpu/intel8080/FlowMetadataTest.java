@@ -5,8 +5,8 @@ package net.emustudio.plugins.cpu.intel8080;
 import static org.junit.Assert.*;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.*;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.*;
+import net.emustudio.emulib.NumberUtils;
 import net.emustudio.plugins.cpu.intel8080.api.FlowDisassembler;
 import net.emustudio.plugins.cpu.intel8080.gui.*;
 
