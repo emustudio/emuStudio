@@ -308,6 +308,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         java.util.concurrent.atomic.AtomicBoolean busy = new java.util.concurrent.atomic.AtomicBoolean();
         java.util.concurrent.CompletableFuture<CPU.RunState> completed = new java.util.concurrent.CompletableFuture<>();
         when(fixture.controller.isBusy()).thenAnswer(call -> busy.get());
+        when(fixture.controller.isStepping()).thenAnswer(call -> busy.get());
         when(fixture.controller.step()).thenAnswer(call -> {
             busy.set(true);
             fixture.publish(CPU.RunState.STATE_RUNNING);
@@ -329,8 +330,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     step.doClick(0);
                     assertTrue(table.isShowing());
                     assertTrue(scroll.isShowing());
-                    assertFalse(table.isEnabled());
-                    assertFalse(step.isEnabled());
+                    assertTrue(table.isEnabled());
+                    assertTrue(step.isEnabled());
                     busy.set(false);
                     fixture.publish(CPU.RunState.STATE_STOPPED_BREAK);
                     completed.complete(CPU.RunState.STATE_STOPPED_BREAK);
@@ -342,6 +343,63 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     assertTrue(step.isEnabled());
                 });
             } finally { runOnEdt(panel::close); }
+        }
+    }
+
+    @Test
+    public void singleStepDoesNotDisableToolbarsWhileInstructionIsExecuting() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = debuggingCpu();
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        java.util.concurrent.CountDownLatch entered = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch completed = new java.util.concurrent.CountDownLatch(1);
+        when(cpu.step()).thenAnswer(call -> {
+            net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_RUNNING);
+            entered.countDown();
+            if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new AssertionError("Step not released");
+            net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
+            return CPU.RunState.STATE_STOPPED_BREAK;
+        });
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
+                    createDebugTableModel(), mock(Dialogs.class), session.execution(),
+                    null, position -> {}, new EmuStudioGui()));
+            try {
+                JButton step = findButtonByTooltip(panel, "Step forward");
+                JButton run = findButtonByTooltip(panel, "Run emulation");
+                JToggleButton follow = findToggleButtonByTooltip(panel, "Show instructions from PC");
+                java.util.concurrent.atomic.AtomicInteger disabled = new java.util.concurrent.atomic.AtomicInteger();
+                session.addExecutionListener(state -> {
+                    if (state == CPU.RunState.STATE_STOPPED_BREAK) completed.countDown();
+                });
+                runOnEdt(() -> {
+                    for (AbstractButton button : List.of(step, run, follow)) {
+                        button.addPropertyChangeListener("enabled", event -> {
+                            if (Boolean.FALSE.equals(event.getNewValue())) disabled.incrementAndGet();
+                        });
+                    }
+                    step.doClick(0);
+                });
+                assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS));
+                assertTrue(session.execution().isStepping());
+                runOnEdt(() -> {
+                    assertTrue(step.isEnabled());
+                    assertTrue(run.isEnabled());
+                    assertTrue(follow.isEnabled());
+                });
+                release.countDown();
+                assertTrue(completed.await(2, java.util.concurrent.TimeUnit.SECONDS));
+                assertFalse(session.execution().isStepping());
+                runOnEdt(() -> {});
+                assertEquals(0, disabled.get());
+            } finally {
+                release.countDown();
+                runOnEdt(panel::close);
+            }
         }
     }
 

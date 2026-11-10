@@ -58,7 +58,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final Consumer<SourceCodePosition> sourceNavigator;
     private final Runnable breakpointsChanged;
     private final AnalysisTasks tasks;
-    private final Map<Component, Boolean> enabledControls = new IdentityHashMap<>();
     private boolean disposed;
     private final AtomicBoolean refreshQueued = new AtomicBoolean();
     private boolean initializationPending;
@@ -134,7 +133,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void refreshExecutionState() {
         CPUContext context = session.execution().cpuContext();
-        executionChanged(context.getRunState(), context.getInstructionLocation());
+        executionChanged(session.execution().getRunState(), context.getInstructionLocation());
     }
     private final AtomicBoolean executionRefreshQueued = new AtomicBoolean();
     private volatile CPU.RunState pendingExecutionState;
@@ -145,12 +144,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int pendingPcAddress = -1;
 
     private void executionChanged(CPU.RunState state, int instructionLocation) {
+        if (session.execution().isStepping()) return;
         pendingExecutionState = state;
         pendingInstructionLocation = instructionLocation;
         if (!executionRefreshQueued.compareAndSet(false, true)) return;
         SwingUtilities.invokeLater(() -> {
             executionRefreshQueued.set(false);
-            if (disposed) return;
+            if (disposed || session.execution().isStepping()) return;
             CPU.RunState nextState = pendingExecutionState;
             int nextLocation = pendingInstructionLocation;
             if (appliedExecutionState != nextState || appliedInstructionLocation != nextLocation) {
@@ -216,15 +216,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         tasks = new AnalysisTasks(session, this::setBusy, this::showRuntimeFailure);
         table.setInstructionRowPresentation(row -> {
-            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return false;
+            if (table.getModel() != instructionRows || disposed || running) return false;
             int address = instructionModel.getLocationAt(row);
             return address >= 0 && session.isBreakpointSet(address);
         }, row -> {
-            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
+            if (table.getModel() != instructionRows || disposed || running) return null;
             return annotationTooltip(instructionModel.getLocationAt(row));
         });
         table.setRowBackground(row -> {
-            if (table.getModel() != instructionRows || disposed || running || tasks.isBusy()) return null;
+            if (table.getModel() != instructionRows || disposed || running) return null;
             return annotationBackground(instructionModel.getLocationAt(row));
         });
         setLayout(new BorderLayout(6, 6));
@@ -425,11 +425,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void setBusy(boolean busy) {
         if (busy) {
             annotationResults.setVisible(false);
-            rememberAndDisable(this);
         }
         else {
-            enabledControls.forEach(Component::setEnabled);
-            enabledControls.clear();
             updateFlowNavigation();
             updateExecutionState();
             boolean paused = true;
@@ -448,13 +445,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 catch (IllegalStateException unavailable) { /* A concurrent change discards the notification. */ }
             }
         }
-    }
-
-    private void rememberAndDisable(Component component) {
-        enabledControls.put(component, component.isEnabled());
-        component.setEnabled(false);
-        if (component instanceof Container)
-            for (Component child : ((Container) component).getComponents()) rememberAndDisable(child);
     }
 
     private JPanel borderPanel(int gap) {
@@ -606,6 +596,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public void setExecutionRunning(boolean running) {
+        if (running && session.execution().isStepping()) return;
         if (this.running == running) return;
         this.running = running;
         refreshDiagnostic();
@@ -613,7 +604,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void updateExecutionState() {
-        boolean paused = !running && !tasks.isBusy();
+        boolean paused = !running;
         table.setEnabled(paused);
         if (recordingControl != null) updateRecordingControls(paused);
         inspectionButtons.stream()
@@ -870,7 +861,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void updateAnnotationActions() {
-        boolean selected = !running && !tasks.isBusy() && annotations.getSelectedValue() != null;
+        boolean selected = !running && annotations.getSelectedValue() != null;
         if (editAnnotation != null) editAnnotation.setEnabled(selected);
         if (deleteAnnotation != null) deleteAnnotation.setEnabled(selected);
     }
@@ -1241,7 +1232,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateFlowNavigation() {
         if (goToFlowInstruction != null)
-            goToFlowInstruction.setEnabled(!running && !tasks.isBusy() && !browsingRecording && graph.boxes.containsKey(graph.selectedNode));
+            goToFlowInstruction.setEnabled(!running && !browsingRecording && graph.boxes.containsKey(graph.selectedNode));
     }
 
     private void analyzeFlow() {
@@ -1460,8 +1451,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         recordingControl.setIcon(EmuStudioGui.loadIcon(session.isRecording() ? ICON_STOP : ICON_RECORD, DebuggerPanel.class));
         recordingControl.setToolTipText(action);
         recordingControl.getAccessibleContext().setAccessibleName(action);
-        recordingControl.setEnabled(session.debug != null && !tasks.isBusy() && !recordingChangePending);
-        historyEmptyRecord.setEnabled(session.debug != null && !tasks.isBusy() && !recordingChangePending);
+        recordingControl.setEnabled(session.debug != null && !recordingChangePending);
+        historyEmptyRecord.setEnabled(session.debug != null && !recordingChangePending);
         historyOrigin.setEnabled(paused);
         history.setEnabled(paused);
     }
@@ -1902,16 +1893,16 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             return instructionModel.getColumnClass(baseColumn(col));
         }
         @Override public Object getValueAt(int row, int col) {
-            if (disposed || tasks.isBusy() || running) return null;
+            if (disposed || running) return null;
             if (col == 0) return sourceLabelsAt(instructionModel.getLocationAt(row));
             return instructionModel.getValueAt(row, baseColumn(col));
         }
         @Override public boolean isCellEditable(int row, int col) {
-            if (col == 0 || disposed || tasks.isBusy() || running) return false;
+            if (col == 0 || disposed || tasks.isBusy() || running || session.execution().isBusy()) return false;
             return instructionModel.isCellEditable(row, baseColumn(col));
         }
         @Override public void setValueAt(Object value, int row, int col) {
-            if (col == 0) return;
+            if (!isCellEditable(row, col)) return;
             instructionModel.setValueAt(value, row, baseColumn(col));
         }
         @Override public void tableChanged(TableModelEvent event) {

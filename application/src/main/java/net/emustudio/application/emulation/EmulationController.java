@@ -36,7 +36,7 @@ public final class EmulationController implements Closeable {
     private final DebuggerSession debugger;
     private final Compiler compiler;
     private volatile CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
-    private volatile boolean busy, timedRunning, closing;
+    private volatile boolean busy, timedRunning, closing, stepping;
     private volatile long mutationGeneration;
     private volatile CompletableFuture<CPU.RunState> runCompletion = CompletableFuture.completedFuture(state);
     private final CompletableFuture<Void> closed = new CompletableFuture<>();
@@ -103,6 +103,8 @@ public final class EmulationController implements Closeable {
     public boolean isBusy() { return busy || closing; }
     /** Whether application-scheduled stepping is active, including the delay between instructions. */
     public boolean isTimedRunning() { return timedRunning; }
+    /** An individual instruction is executing; views can retain their paused controls. */
+    public boolean isStepping() { return stepping; }
     public CPUContext cpuContext() { return cpuContext; }
     public CompletableFuture<CPU.RunState> runCompletion() { return runCompletion.copy(); }
 
@@ -271,6 +273,7 @@ public final class EmulationController implements Closeable {
         CPU.RunState previousState = state;
         Task task = new Task(continuous, mutation, result);
         active = task; busy = !continuous || pending != null || closing; mutationGeneration++;
+        stepping = !continuous && !mutation;
         publish(mutation ? state : CPU.RunState.STATE_RUNNING);
         worker.execute(() -> {
             task.enter();
@@ -308,6 +311,7 @@ public final class EmulationController implements Closeable {
         if (returned == CPU.RunState.STATE_RUNNING) returned = (pending != null && pending.kind == Stop.STOP) || closing
                 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
         state = returned; busy = pending != null || closing; mutationGeneration++;
+        stepping = false;
         if (pending != null && task.result == pending.result) { pending = null; busy = closing; }
         publish(state, true);
         if (debugger != null) debugger.completeSourceCapture();

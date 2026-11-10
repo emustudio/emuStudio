@@ -47,6 +47,22 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void flowRefreshKeepsInspectionToolbarAndListingEnabled() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8,
+                session -> observed(session, 0, OptionalInt.of(1)))) {
+            SwingUtilities.invokeAndWait(() -> {
+                AbstractButton follow = button(workspace.panel, "Show instructions from PC");
+                follow.doClick(0);
+                assertTrue(follow.isEnabled());
+                assertTrue(button(workspace.panel, "Fold identical analysis repeats").isEnabled());
+                assertTrue(component(workspace.panel, JTextField.class, "Search annotations").isEnabled());
+                assertTrue(workspace.panel.recordingControl().isEnabled());
+                assertTrue(workspace.table.isEnabled());
+            });
+        }
+    }
+
+    @Test
     public void stepDoesNotRenderCellsForSizingOrResetUserColumnWidths() throws Exception {
         AtomicInteger pc = new AtomicInteger();
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
@@ -780,6 +796,7 @@ public class DebuggerPanelTest {
     @Test
     public void pcOriginInspectionFollowsTimedExecutionWithoutStepCompletedCallback() throws Exception {
         AtomicInteger pc = new AtomicInteger();
+        AtomicInteger disabled = new AtomicInteger();
         CountDownLatch shown = new CountDownLatch(1), followed = new CountDownLatch(2);
         java.util.Set<String> selections = java.util.concurrent.ConcurrentHashMap.newKeySet();
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
@@ -805,9 +822,17 @@ public class DebuggerPanelTest {
                 String selected = graph.getAccessibleContext().getAccessibleDescription();
                 if (selected != null && selections.add(selected.substring(0, 4))) followed.countDown();
             }));
+            SwingUtilities.invokeAndWait(() -> {
+                for (String name : List.of("Show instructions from PC", "Fold identical analysis repeats")) {
+                    button(workspace.panel, name).addPropertyChangeListener("enabled", event -> {
+                        if (Boolean.FALSE.equals(event.getNewValue())) disabled.incrementAndGet();
+                    });
+                }
+            });
             workspace.session.execution().step(500, TimeUnit.MILLISECONDS).get(2, TimeUnit.SECONDS);
             assertTrue("Both timed steps should update graph selection", followed.await(5, TimeUnit.SECONDS));
             assertEquals(java.util.Set.of("0000", "0001"), selections);
+            assertEquals("Timed steps must keep inspection controls enabled", 0, disabled.get());
             SwingUtilities.invokeAndWait(() -> assertEquals(-1, workspace.table.getSelectedRow()));
         }
     }
@@ -1730,7 +1755,6 @@ public class DebuggerPanelTest {
     @Test
     public void selectingGraphInstructionUpdatesDebuggerAndAnalysisStart() throws Exception {
         CountDownLatch shown = new CountDownLatch(1), reanalyzed = new CountDownLatch(1);
-        AtomicInteger published = new AtomicInteger();
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {
             observed(session, 0, OptionalInt.of(1));
             observed(session, 1, OptionalInt.empty());
@@ -1739,7 +1763,6 @@ public class DebuggerPanelTest {
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
                     if (Boolean.TRUE.equals(event.getNewValue())) {
                         shown.countDown();
-                        if (published.incrementAndGet() >= 2) reanalyzed.countDown();
                     }
                 });
                 button(workspace.panel, "Show instructions from PC").doClick(0);
@@ -1755,9 +1778,13 @@ public class DebuggerPanelTest {
 
                 assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
                 assertEquals("Inspection", tabs.getTitleAt(tabs.getSelectedIndex()));
+                button(workspace.panel, "Show instructions from PC").doClick(0);
+                workspace.panel.setInspectionReadyListener(reanalyzed::countDown);
                 button(workspace.panel, "Refresh instruction flow").doClick(0);
             });
             assertTrue("Analysis should start at the selected graph instruction", reanalyzed.await(5, TimeUnit.SECONDS));
+            assertNull(workspace.session.flowAnalysis().instructionAt(0));
+            assertNotNull(workspace.session.flowAnalysis().instructionAt(1));
         }
     }
 

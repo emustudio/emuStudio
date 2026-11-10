@@ -67,6 +67,7 @@ public class EmulatorPanel extends JPanel {
     private final CPU cpu;
     private final EmulationController execution;
     private CPUContext.CPUListener executionListener;
+    private Consumer<CPU.RunState> hostExecutionListener;
     private boolean closed;
     private boolean commandBusy;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -273,16 +274,11 @@ public class EmulatorPanel extends JPanel {
         if (cpu != null && execution != null) {
             executionListener = new CPUContext.CPUListener() {
                 @Override public void runStateChanged(CPU.RunState state) {
-                    runOnEdt(() -> {
-                        if (closed) return;
-                        runState = state;
-                        if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
-                        else setStateNotRunning(runState, execution.isTimedRunning());
-                    });
+                    runOnEdt(EmulatorPanel.this::refreshExecutionState);
                 }
                 @Override public void internalStateChanged() {
                     runOnEdt(() -> {
-                        if (closed) return;
+                        if (closed || execution.isStepping()) return;
                         commandBusy = false;
                         updateExecutionControls();
                         refreshDebugTable();
@@ -290,6 +286,10 @@ public class EmulatorPanel extends JPanel {
                 }
             };
             execution.cpuContext().addCPUListener(executionListener);
+            if (session != null) {
+                hostExecutionListener = state -> runOnEdt(this::refreshExecutionState);
+                session.addExecutionListener(hostExecutionListener);
+            }
             runState = execution.getRunState();
         }
 
@@ -342,6 +342,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
+        if (hostExecutionListener != null) session.removeExecutionListener(hostExecutionListener);
         if (executionListener != null) execution.cpuContext().removeCPUListener(executionListener);
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }
@@ -443,8 +444,15 @@ public class EmulatorPanel extends JPanel {
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
     }
 
+    private void refreshExecutionState() {
+        if (closed || execution.isStepping()) return;
+        runState = execution.getRunState();
+        if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
+        else setStateNotRunning(runState, execution.isTimedRunning());
+    }
+
     private void updateExecutionControls() {
-        if (closed || execution == null) return;
+        if (closed || execution == null || execution.isStepping()) return;
         boolean busy = execution.isBusy();
         if (!busy && commandBusy) {
             if (runState == CPU.RunState.STATE_RUNNING) setStateRunning();
