@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +54,28 @@ public class OpenComputerDialogTest extends AbstractSwingTest {
         triggerButton(findButton(dialog, "Exit"));
 
         assertFalse(onEdt(dialog::isDisplayable));
+    }
+
+    @Test
+    public void schemaGetsThreeQuartersOfPreviewHeightOnOpening() {
+        for (Dimension size : List.of(new Dimension(900, 650), new Dimension(1400, 1600))) {
+            OpenComputerDialog dialog = createDialog(mock(Dialogs.class), mock(Consumer.class));
+            showDialog(dialog);
+            runOnEdt(() -> {
+                dialog.setSize(size);
+                dialog.setVisible(true);
+            });
+
+            JSplitPane split = findComponent(dialog, JSplitPane.class,
+                    pane -> pane.getOrientation() == JSplitPane.VERTICAL_SPLIT);
+            runOnEdt(() -> {
+                int availableHeight = split.getHeight() - split.getDividerSize();
+                assertTrue(availableHeight > 0);
+                assertEquals(0.75 * availableHeight, split.getTopComponent().getHeight(), 1.0);
+                split.setDividerLocation(150);
+                assertEquals(150, split.getDividerLocation());
+            });
+        }
     }
 
     @Test
