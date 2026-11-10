@@ -23,6 +23,8 @@ import net.emustudio.emulib.application.ui.GUI;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.*;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -120,6 +122,20 @@ public class StudioFrame extends JFrame {
         }
         updateWindowTitle();
         editor.grabFocus();
+    }
+
+    @Override
+    public void paint(Graphics graphics) {
+        Insets insets = getInsets();
+        JRootPane root = getRootPane();
+        // Native mapping can correct decoration insets after the showing notification.
+        if (root.getX() != insets.left || root.getY() != insets.top
+                || root.getWidth() != getWidth() - insets.left - insets.right
+                || root.getHeight() != getHeight() - insets.top - insets.bottom) {
+            invalidate();
+            validate();
+        }
+        super.paint(graphics);
     }
 
     private void resizeComponents() {

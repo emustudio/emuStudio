@@ -23,7 +23,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +40,31 @@ import static org.mockito.Mockito.*;
 public class StudioFrameTest extends AbstractSwingTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void firstPaintRelayoutsRootPaneAfterNativeGeometryChanges() {
+        StudioFrame frame = createFrame(null);
+        showFrame(frame);
+
+        runOnEdt(() -> {
+            Insets insets = frame.getInsets();
+            Rectangle clientBounds = new Rectangle(insets.left, insets.top,
+                    frame.getWidth() - insets.left - insets.right,
+                    frame.getHeight() - insets.top - insets.bottom);
+            frame.getRootPane().setBounds(clientBounds.x + 5, clientBounds.y + 25,
+                    clientBounds.width + 10, clientBounds.height + 30);
+            BufferedImage image = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = image.createGraphics();
+
+            try {
+                frame.paint(graphics);
+            } finally {
+                graphics.dispose();
+            }
+
+            assertEquals(clientBounds, frame.getRootPane().getBounds());
+        });
+    }
 
     @Test
     public void frameBuildsTitleTabsAndMenus() {
