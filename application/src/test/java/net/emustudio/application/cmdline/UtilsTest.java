@@ -5,10 +5,10 @@ package net.emustudio.application.cmdline;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.application.debugger.DebuggerPanel;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.gui.dialogs.StudioFrame;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
@@ -89,7 +89,7 @@ public class UtilsTest extends AbstractSwingTest {
             StudioFrame frame = waitForWindow(StudioFrame.class, window -> "emuStudio [Startup test]".equals(window.getTitle()));
             DebuggerPanel debugger = findComponent(frame, DebuggerPanel.class, panel -> true);
             try {
-                JButton find = findButtonByTooltip(debugger, "Show observed flow from PC");
+                JToggleButton find = findToggleButtonByTooltip(debugger, "Show instructions from PC");
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
                 assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));

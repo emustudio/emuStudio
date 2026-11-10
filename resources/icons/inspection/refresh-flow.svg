@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <g fill="none" stroke="#2e3436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 7h8v8H7z M11 3v4 M11 15v4"/>
+    <path d="M3 11a8 8 0 0 1 13-6 M19 11a8 8 0 0 1-13 6 M16 2v3h-3 M6 20v-3h3" stroke="#3465a4"/>
+  </g>
+</svg>

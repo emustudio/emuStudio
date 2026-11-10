@@ -11,7 +11,7 @@ import net.emustudio.application.gui.actions.editor.FindNextAction;
 import net.emustudio.application.gui.actions.editor.FindPreviousAction;
 import net.emustudio.application.gui.actions.editor.CloseTabAction;
 import net.emustudio.application.gui.actions.editor.SaveFileAsAction;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;

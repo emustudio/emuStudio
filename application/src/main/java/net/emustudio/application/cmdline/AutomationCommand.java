@@ -8,7 +8,7 @@ import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.framework.DialogsNoGui;
-import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
+import net.emustudio.application.gui.debugger.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;

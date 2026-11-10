@@ -4,8 +4,8 @@ package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.gui.framework.DialogsGui;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
-import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
+import net.emustudio.application.gui.debugger.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.gui.dialogs.OpenComputerDialog;
 import net.emustudio.application.gui.dialogs.StudioFrame;

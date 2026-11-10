@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.actions.emulator;
 
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 
 import javax.swing.*;

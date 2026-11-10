@@ -6,7 +6,7 @@ package net.emustudio.application.gui.actions.emulator;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.device.Device;

@@ -65,6 +65,8 @@
     "goto-address.png": "plugins/byte-mem/go-to-address.svg"
   },
   "application/src/main/resources/net/emustudio/application/gui/icons/inspection": {
+    "follow-pc.png": "inspection/follow-pc.svg",
+    "refresh-flow.png": "inspection/refresh-flow.svg",
     "analyze-program.png": "inspection/analyze-program.svg",
     "go-to-instruction.png": "inspection/go-to-instruction.svg",
     "search-annotations.png": "inspection/search-annotations.svg",

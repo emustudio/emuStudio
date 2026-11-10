@@ -7,12 +7,12 @@ import net.emustudio.emulib.plugin.cpu.CPUContext;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.debugger.DebuggerPanel;
-import net.emustudio.application.debugger.DebuggerSession;
+import net.emustudio.application.gui.debugger.DebuggerPanel;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
-import net.emustudio.application.gui.debugtable.DebugTableImpl;
+import net.emustudio.application.gui.debugger.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;

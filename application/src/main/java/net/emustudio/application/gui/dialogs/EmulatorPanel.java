@@ -5,11 +5,11 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.debugger.DebuggerPanel;
+import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.actions.emulator.*;
-import net.emustudio.application.gui.debugtable.DebugTableImpl;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
-import net.emustudio.application.gui.debugtable.PagesPanel;
+import net.emustudio.application.gui.debugger.DebugTableImpl;
+import net.emustudio.application.gui.debugger.DebugTableModel;
+import net.emustudio.application.gui.debugger.PagesPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugin.cpu.CPU;
@@ -61,7 +61,7 @@ public class EmulatorPanel extends JPanel {
     private final ShowDeviceGuiAction showDeviceGuiAction;
 
     private final MemoryContext<?> memoryContext;
-    private final net.emustudio.application.debugger.DebuggerSession session;
+    private final net.emustudio.application.emulation.debugger.DebuggerSession session;
     private final MemoryContext.MemoryListener memoryListener;
     private final DebuggerPanel inspection;
     private final CPU cpu;

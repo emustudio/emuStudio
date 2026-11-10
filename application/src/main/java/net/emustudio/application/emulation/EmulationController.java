@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.application.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.compiler.Compiler;

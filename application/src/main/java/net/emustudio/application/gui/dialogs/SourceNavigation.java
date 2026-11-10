@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.application.debugger.DebuggerPanel;
-import net.emustudio.application.debugger.SourceAddressMap;
-import net.emustudio.application.debugger.SourceInputs;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.gui.debugger.DebuggerPanel;
+import net.emustudio.application.emulation.debugger.SourceAddressMap;
+import net.emustudio.application.emulation.debugger.SourceInputs;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.CompilerListener;

@@ -4,10 +4,10 @@ package net.emustudio.application.gui.dialogs;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.application.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;

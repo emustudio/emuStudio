@@ -4,11 +4,11 @@ package net.emustudio.application.gui.dialogs;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
-import net.emustudio.application.debugger.DebuggerSession;
-import net.emustudio.application.debugger.DebuggerPanel;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.debugtable.DebugTableImpl;
-import net.emustudio.application.gui.debugtable.DebugTableModel;
+import net.emustudio.application.gui.debugger.DebugTableImpl;
+import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.plugin.compiler.Compiler;
@@ -420,8 +420,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             compilerEvents = captor.getValue();
             showInFrame(debugger);
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findButtonByTooltip(debugger, "Show observed flow from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findButtonByTooltip(debugger, "Show observed flow from PC")::isEnabled));
+            while (!onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
+            assertTrue(onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled));
         }
 
         void compile(boolean fail) {
