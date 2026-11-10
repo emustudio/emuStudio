@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import static org.junit.Assert.*;
 
@@ -216,35 +215,6 @@ public class DebugHooksTest {
     }
 
     @Test
-    public void pluginEditorAppliesChangeImmediatelyWithoutObservation() throws Exception {
-        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
-        memory.write(0, (byte) 0x3c);
-        EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
-        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
-        org.easymock.EasyMock.replay(context);
-        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
-
-        javax.swing.SwingUtilities.invokeAndWait(() -> {
-            ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("A");
-            ((javax.swing.JTextField) editor.getComponent(1)).setText("8");
-            ((javax.swing.JButton) editor.getComponent(2)).doClick();
-        });
-
-        assertEquals(8, engine.regs[7]);
-        assertFalse(engine.debugger.isActive());
-        engine.step();
-        assertEquals(9, engine.regs[7]);
-
-        javax.swing.SwingUtilities.invokeAndWait(() -> {
-            ((javax.swing.JTextField) editor.getComponent(1)).setText("invalid");
-            ((javax.swing.JButton) editor.getComponent(2)).doClick();
-        });
-
-        assertEquals(9, engine.regs[7]);
-        assertEquals("Invalid value", ((javax.swing.JLabel) editor.getComponent(3)).getText());
-    }
-
-    @Test
     public void accessConditionNeedsNoFullPresentationCapture() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x32, 0x00, 0x01}, 3);
@@ -272,7 +242,7 @@ public class DebugHooksTest {
         ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, new Byte[] {0x3c, 0x3c}, 2);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
-        engine.debugger.register("BROKEN", 8, () -> { throw new IllegalStateException("Cannot format value"); }, value -> {});
+        engine.debugger.register("BROKEN", () -> { throw new IllegalStateException("Cannot format value"); });
         List<String> failures = new ArrayList<>();
         List<Boolean> completions = new ArrayList<>();
         engine.debugger.observe(new Debugging.Observer() {

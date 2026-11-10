@@ -5,8 +5,10 @@ package net.emustudio.application.gui.framework;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
+import net.emustudio.application.gui.components.ToolbarPanel;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.application.ui.GUI;
@@ -15,10 +17,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.ui.Constants.*;
@@ -31,6 +39,8 @@ public class EmuStudioGui implements GUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
     private static final int ICON_SIZE = 22;
     private static final String CUSTOM_PREFIX = "emuStudio.icon.";
+    private static final String TOOLBAR_ICON = "emuStudio.toolbarIcon";
+    private static final String TOOLBAR_ICON_CALLER = "emuStudio.toolbarIconCaller";
     public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, 12);
     public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, 12);
 
@@ -197,7 +207,9 @@ public class EmuStudioGui implements GUI {
 
     public JButton toolbarButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        return new ToolbarButton(action, iconResource, tooltipText, callerClass);
+        JButton button = new ToolbarButton(action, iconResource, tooltipText, callerClass);
+        toolbarIcon(button, iconResource, callerClass);
+        return button;
     }
 
     @Override
@@ -207,18 +219,34 @@ public class EmuStudioGui implements GUI {
 
     public JButton toolbarButton(Action action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        return new ToolbarButton(action, iconResource, tooltipText, callerClass);
+        JButton button = new ToolbarButton(action, iconResource, tooltipText, callerClass);
+        toolbarIcon(button, iconResource, callerClass);
+        return button;
     }
 
     public JToggleButton toolbarToggleButton(Consumer<ActionEvent> action, Consumer<ItemEvent> itemAction,
                                              String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        return new ToolbarToggleButton(action, itemAction, iconResource, tooltipText, callerClass);
+        JToggleButton button = new ToolbarToggleButton(action, itemAction, iconResource, tooltipText, callerClass);
+        toolbarIcon(button, iconResource, callerClass);
+        return button;
     }
 
     public JToggleButton toolbarToggleButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
         Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
-        return new ToolbarToggleButton(action, iconResource, tooltipText, callerClass);
+        JToggleButton button = new ToolbarToggleButton(action, iconResource, tooltipText, callerClass);
+        toolbarIcon(button, iconResource, callerClass);
+        return button;
+    }
+
+    public JButton toolbarTextButton(Consumer<ActionEvent> action, String iconResource, String text) {
+        Class<?> callerClass = StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass();
+        JButton button = new ToolbarButton(action, iconResource, text, callerClass);
+        toolbarIcon(button, iconResource, callerClass);
+        button.setText(text);
+        button.setHorizontalAlignment(SwingConstants.LEADING);
+        button.getAccessibleContext().setAccessibleName(text);
+        return button;
     }
 
     @Override
@@ -267,6 +295,7 @@ public class EmuStudioGui implements GUI {
     @Override
     public JToolBar toolBar() {
         JToolBar toolbar = new JToolBar();
+        toolbar.putClientProperty("FlatLaf.style", "focusableButtons: true");
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
         toolbar.setBorderPainted(false);
@@ -308,4 +337,123 @@ public class EmuStudioGui implements GUI {
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
     }
+
+    public JLabel label(String text, JComponent field) {
+        JLabel label = label(text);
+        label.setLabelFor(field);
+        field.getAccessibleContext().setAccessibleName(text);
+        return label;
+    }
+
+    /**
+     * Adds a full-width toolbar row to a MigLayout panel.
+     */
+    public JToolBar toolbarRow(JPanel panel, Component... components) {
+        JToolBar group = toolBar();
+        group.setLayout(new MigLayout("insets 0, hidemode 3, gapx 2", "", ""));
+        for (Component component : components) group.add(component);
+        panel.add(group, "span, growx, wrap");
+        return group;
+    }
+
+    public JScrollPane toolbarScrollPane(JComponent tools) {
+        JScrollPane scroll = scrollPane(tools);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setBorder(null);
+        scroll.setMinimumSize(new Dimension(0, 0));
+        return scroll;
+    }
+
+    public static void toolbarIcon(AbstractButton button, String resource) {
+        toolbarIcon(button, resource, StackWalker.getInstance(RETAIN_CLASS_REFERENCE).getCallerClass());
+    }
+
+    private static void toolbarIcon(AbstractButton button, String resource, Class<?> callerClass) {
+        if (resource == null) return;
+        if (button.getClientProperty(TOOLBAR_ICON) == null)
+            button.addPropertyChangeListener("UI", event -> updateToolbarIcon(button));
+        button.putClientProperty(TOOLBAR_ICON, resource);
+        button.putClientProperty(TOOLBAR_ICON_CALLER, callerClass);
+        updateToolbarIcon(button);
+    }
+
+    private static void updateToolbarIcon(AbstractButton button) {
+        Icon icon = loadIcon((String) button.getClientProperty(TOOLBAR_ICON),
+                (Class<?>) button.getClientProperty(TOOLBAR_ICON_CALLER));
+        Icon disabled = UIManager.getLookAndFeel().getDisabledIcon(button, icon);
+        button.setIcon(scaledIcon(icon));
+        button.setDisabledIcon(scaledIcon(disabled));
+    }
+
+    private static Icon scaledIcon(Icon icon) {
+        return icon instanceof ImageIcon ? new ScaledImageIcon((ImageIcon) icon) : icon;
+    }
+
+    public JTextField searchField(String prompt, int columns, String iconResource) {
+        JTextField field = textField("", columns);
+        field.setToolTipText(prompt);
+        field.getAccessibleContext().setAccessibleName(prompt);
+        field.putClientProperty("JTextField.placeholderText", prompt);
+        field.putClientProperty("FlatLaf.style", "placeholderForeground: $TextField.foreground");
+        Runnable updateIcon = () -> field.putClientProperty("JTextField.leadingIcon", scaledIcon(loadIcon(iconResource)));
+        field.addPropertyChangeListener("UI", event -> updateIcon.run());
+        updateIcon.run();
+        return field;
+    }
+
+    public static Font monospaced(Component component) {
+        return new Font(Font.MONOSPACED, Font.PLAIN, component.getFont().getSize());
+    }
+
+    public static Font monospaced(Font font) {
+        return new Font(Font.MONOSPACED, font.getStyle(), font.getSize()).deriveFont(font.getSize2D());
+    }
+
+    public static void onTextChange(Runnable action, JTextComponent... fields) {
+        DocumentListener listener = new DocumentListener() {
+            public void insertUpdate(DocumentEvent event) {
+                action.run();
+            }
+
+            public void removeUpdate(DocumentEvent event) {
+                action.run();
+            }
+
+            public void changedUpdate(DocumentEvent event) {
+                action.run();
+            }
+        };
+        for (JTextComponent field : fields) field.getDocument().addDocumentListener(listener);
+    }
+
+    public static void bindKey(JComponent component, KeyStroke key, String name, Runnable action) {
+        component.getInputMap().put(key, name);
+        component.getActionMap().put(name, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                action.run();
+            }
+        });
+    }
+
+    public JPanel toolbarPanel() {
+        return new ToolbarPanel();
+    }
+
+    public static <T> int rowOf(ListModel<T> model, Predicate<T> matches) {
+        for (int row = 0; row < model.getSize(); row++)
+            if (matches.test(model.getElementAt(row))) return row;
+        return -1;
+    }
+
+    public static <T> void updateRows(DefaultListModel<T> model, List<T> values) {
+        for (int i = 0; i < values.size(); i++) {
+            if (i >= model.size()) model.addElement(values.get(i));
+            else if (!Objects.equals(model.get(i), values.get(i))) model.set(i, values.get(i));
+        }
+        while (model.size() > values.size()) model.remove(model.size() - 1);
+    }
+
+
 }

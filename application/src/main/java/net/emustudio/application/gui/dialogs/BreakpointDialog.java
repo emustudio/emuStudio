@@ -3,9 +3,11 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.emulib.Numbers;
-import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -14,6 +16,7 @@ import java.util.function.IntPredicate;
 
 /** Set or remove an execution breakpoint at a CPU address. */
 public class BreakpointDialog extends DialogBase {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BreakpointDialog.class);
     public enum Operation { SET, UNSET }
 
     public static final class Request {
@@ -26,7 +29,6 @@ public class BreakpointDialog extends DialogBase {
         }
     }
 
-    private final Dialogs dialogs;
     private final GUI gui;
     private final int initialAddress, breakpointLimit;
     private final Predicate<Request> submit;
@@ -34,10 +36,9 @@ public class BreakpointDialog extends DialogBase {
     private JTextField txtAddress;
     private JButton unset;
 
-    public BreakpointDialog(JFrame parent, Dialogs dialogs, GUI gui, int initialAddress, int breakpointLimit,
+    public BreakpointDialog(JFrame parent, GUI gui, int initialAddress, int breakpointLimit,
                             IntPredicate breakpointSet, Predicate<Request> submit) {
         super(parent, "Set breakpoint", true);
-        this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = Objects.requireNonNull(gui);
         this.initialAddress = initialAddress;
         this.breakpointLimit = breakpointLimit;
@@ -100,7 +101,7 @@ public class BreakpointDialog extends DialogBase {
             if (address < 0 || address >= limit) throw new NumberFormatException();
             return address;
         } catch (NumberFormatException e) {
-            dialogs.showError("Invalid address. Enter a value from 0 to " + (limit - 1) + ".", "Error");
+            LOGGER.warn("Invalid address. Enter a value from 0 to " + (limit - 1) + ".", e);
             txtAddress.requestFocusInWindow();
             return null;
         }

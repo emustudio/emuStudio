@@ -4,7 +4,7 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.application.gui.LogCapture;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -14,12 +14,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class BreakpointDialogTest extends AbstractSwingTest {
     @Test
     public void existingBreakpointFollowsTheAddressAndPreventsMeaninglessUnset() {
-        BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(), mock(Dialogs.class),
+        BreakpointDialog dialog = onEdt(() -> new BreakpointDialog(new JFrame(),
                 new EmuStudioGui(), 7, 256, address -> address == 7, request -> false));
         showDialog(dialog);
         assertTrue(onEdt(findButton(dialog, "Unset")::isEnabled));
@@ -29,7 +28,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
 
     @Test
     public void dialogContainsOnlyBreakpointControls() {
-        BreakpointDialog dialog = createDialog(mock(Dialogs.class), request -> false);
+        BreakpointDialog dialog = createDialog(request -> false);
         showDialog(dialog);
         runOnEdt(() -> assertNoInspectionControls(dialog));
         assertEquals("Set", onEdt(() -> dialog.getRootPane().getDefaultButton().getText()));
@@ -38,7 +37,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
     @Test
     public void setSubmitsCpuAddress() {
         AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
-        BreakpointDialog dialog = createDialog(mock(Dialogs.class),
+        BreakpointDialog dialog = createDialog(
                 request -> { submitted.set(request); return true; });
         showDialog(dialog);
         setText(findComponent(dialog, JTextField.class, field -> true), "0xFF");
@@ -51,7 +50,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
     @Test
     public void unsetSubmitsCpuAddress() {
         AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
-        BreakpointDialog dialog = createDialog(mock(Dialogs.class),
+        BreakpointDialog dialog = createDialog(
                 request -> { submitted.set(request); return true; });
         showDialog(dialog);
         setText(findComponent(dialog, JTextField.class, field -> true), "21");
@@ -63,25 +62,26 @@ public class BreakpointDialogTest extends AbstractSwingTest {
 
     @Test
     public void invalidAddressKeepsTheDialogAndDoesNotSubmit() {
-        Dialogs dialogs = mock(Dialogs.class);
         AtomicReference<BreakpointDialog.Request> submitted = new AtomicReference<>();
-        BreakpointDialog dialog = createDialog(dialogs,
+        BreakpointDialog dialog = createDialog(
                 request -> { submitted.set(request); return true; });
         showDialog(dialog);
         JTextField address = findComponent(dialog, JTextField.class, field -> true);
-        for (String text : new String[]{"invalid", "-1", "0x100"}) {
-            setText(address, text);
-            triggerButton(findButton(dialog, "Set"));
-            assertEquals(text, onEdt(address::getText));
-            assertNull(submitted.get());
-            assertTrue(onEdt(dialog::isDisplayable));
+        try (LogCapture logs = new LogCapture(BreakpointDialog.class)) {
+            for (String text : new String[]{"invalid", "-1", "0x100"}) {
+                setText(address, text);
+                triggerButton(findButton(dialog, "Set"));
+                assertEquals(text, onEdt(address::getText));
+                assertNull(submitted.get());
+                assertTrue(onEdt(dialog::isDisplayable));
+            }
+            assertTrue(logs.contains("Invalid address. Enter a value from 0 to 255."));
         }
-        verify(dialogs, times(3)).showError("Invalid address. Enter a value from 0 to 255.", "Error");
     }
 
     @Test
     public void rejectedRequestKeepsDialogOpen() {
-        BreakpointDialog dialog = createDialog(mock(Dialogs.class), request -> false);
+        BreakpointDialog dialog = createDialog(request -> false);
         showDialog(dialog);
         triggerButton(findButton(dialog, "Set"));
         assertTrue(onEdt(dialog::isDisplayable));
@@ -98,9 +98,9 @@ public class BreakpointDialogTest extends AbstractSwingTest {
             for (Component child : ((Container) component).getComponents()) assertNoInspectionControls(child);
     }
 
-    private BreakpointDialog createDialog(Dialogs dialogs, Predicate<BreakpointDialog.Request> submit) {
+    private BreakpointDialog createDialog(Predicate<BreakpointDialog.Request> submit) {
         return onEdt(() -> {
-            BreakpointDialog result = new BreakpointDialog(new JFrame(), dialogs, new EmuStudioGui(),
+            BreakpointDialog result = new BreakpointDialog(new JFrame(), new EmuStudioGui(),
                     7, 256, address -> true, submit);
             result.setModal(false);
             return result;

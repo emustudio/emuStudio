@@ -21,7 +21,7 @@ public class ToolbarButton extends JButton {
         super(action);
         setHideActionText(true);
         setToolTipText((String) action.getValue(SHORT_DESCRIPTION));
-        setFocusable(false);
+        setFocusable(true);
         putClientProperty("JButton.buttonType", "toolBarButton");
     }
 
@@ -31,7 +31,7 @@ public class ToolbarButton extends JButton {
         action.putValue(SMALL_ICON, EmuStudioGui.loadIcon(iconResource, callerClass));
         setHideActionText(true);
         setToolTipText(tooltipText);
-        setFocusable(false);
+        setFocusable(true);
         putClientProperty("JButton.buttonType", "toolBarButton");
     }
 

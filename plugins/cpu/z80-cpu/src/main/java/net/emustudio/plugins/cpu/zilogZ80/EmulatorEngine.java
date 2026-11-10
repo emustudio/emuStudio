@@ -99,42 +99,28 @@ public class EmulatorEngine {
         for (int i = 0; i < names.length; i++) {
             if (i == 6) continue;
             final int index = i;
-            debugger.register(names[i], 8, () -> regs[index], v -> regs[index] = (int) v);
+            debugger.register(names[i], () -> regs[index]);
         }
-        debugger.register("PC", 16, () -> PC, v -> PC = (int) v);
-        debugger.register("SP", 16, () -> SP, v -> SP = (int) v);
-        debugger.register("F", 8, () -> flags & 255, v -> flags = (int) v);
+        debugger.register("PC", () -> PC);
+        debugger.register("SP", () -> SP);
+        debugger.register("F", () -> flags & 255);
         for (int i = 0; i < 3; i++) {
             final int index = i * 2;
-            debugger.register(
-                    new String[] {"BC", "DE", "HL"}[i],
-                    16,
-                    () -> (regs[index] << 8) | regs[index + 1],
-                    v -> {
-                        regs[index] = ((int) v >>> 8) & 255;
-                        regs[index + 1] = (int) v & 255;
-                    });
+            debugger.register(new String[] {"BC", "DE", "HL"}[i], () -> (regs[index] << 8) | regs[index + 1]);
         }
-        debugger.register("IFF1", 1, () -> IFF[0] ? 1 : 0, v -> IFF[0] = v != 0);
-        debugger.register("IFF2", 1, () -> IFF[1] ? 1 : 0, v -> IFF[1] = v != 0);
-        debugger.register(
-                "IM",
-                2,
-                () -> interruptMode,
-                v -> {
-                    if (v > 2) throw new IllegalArgumentException("IM must be 0..2");
-                    interruptMode = (byte) v;
-                });
-        debugger.register("MEMPTR", 16, () -> memptr, v -> memptr = (int) v);
-        debugger.register("IX", 16, () -> IX, v -> IX = (int) v);
-        debugger.register("IY", 16, () -> IY, v -> IY = (int) v);
-        debugger.register("I", 8, () -> I, v -> I = (int) v);
-        debugger.register("R", 8, () -> R, v -> R = (int) v);
-        debugger.register("F2", 8, () -> flags2, v -> flags2 = (int) v);
+        debugger.register("IFF1", () -> IFF[0] ? 1 : 0);
+        debugger.register("IFF2", () -> IFF[1] ? 1 : 0);
+        debugger.register("IM", () -> interruptMode);
+        debugger.register("MEMPTR", () -> memptr);
+        debugger.register("IX", () -> IX);
+        debugger.register("IY", () -> IY);
+        debugger.register("I", () -> I);
+        debugger.register("R", () -> R);
+        debugger.register("F2", () -> flags2);
         for (int i = 0; i < names.length; i++) {
             if (i == 6) continue;
             final int index = i;
-            debugger.register(names[i] + "2", 8, () -> regs2[index], v -> regs2[index] = (int) v);
+            debugger.register(names[i] + "2", () -> regs2[index]);
         }
 
         this.context = Objects.requireNonNull(context);

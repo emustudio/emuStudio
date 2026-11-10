@@ -32,7 +32,6 @@ public class RaspStatusPanel extends JPanel {
         this.output = output;
         this.cpuContext = execution;
         initComponents();
-        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
 
         observeCPU(new PanelUpdater());
     }

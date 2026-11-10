@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -96,7 +98,7 @@ public class OpenComputerDialog extends DialogBase {
         JScrollPane scrollConfiguration = gui.scrollPane(configurationPanel);
         scrollPreview.setMinimumSize(new Dimension(0, 100));
         scrollConfiguration.setMinimumSize(new Dimension(0, 100));
-        JSplitPane splitPreview = gui.splitPane(JSplitPane.VERTICAL_SPLIT, scrollPreview, scrollConfiguration, 0.6);
+        JSplitPane splitPreview = gui.splitPane(JSplitPane.VERTICAL_SPLIT, scrollPreview, scrollConfiguration, 0.75);
         JButton btnClose = new JButton();
         JLabel lblLogo = gui.createLogoJLabel();
 
@@ -160,9 +162,12 @@ public class OpenComputerDialog extends DialogBase {
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 
-        SwingUtilities.invokeLater(() -> {
-            splitConfig.setDividerLocation(270);
-            splitPreview.setDividerLocation(0.6);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent event) {
+                splitConfig.setDividerLocation(270);
+                splitPreview.setDividerLocation(0.75);
+            }
         });
 
         // Center Panel: Header + SplitPane

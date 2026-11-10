@@ -36,7 +36,7 @@ public class ToolbarToggleButtonTest extends AbstractSwingTest {
         assertTrue(onEdt(button::isSelected));
         assertTrue(onEdt(button::getHideActionText));
         assertEquals("Toggle tracing", onEdt(button::getToolTipText));
-        assertFalse(onEdt(button::isFocusable));
+        assertTrue(onEdt(button::isFocusable));
         assertEquals("toolBarButton", onEdt(() -> button.getClientProperty("JButton.buttonType")));
     }
 

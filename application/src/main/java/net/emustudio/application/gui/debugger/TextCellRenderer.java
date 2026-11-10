@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugger;
 
+import net.emustudio.application.gui.framework.EmuStudioGui;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -28,7 +30,7 @@ class TextCellRenderer extends DefaultTableCellRenderer {
         setIcon(address ? (current ? CURRENT_INSTRUCTION : EMPTY_MARKER) : null);
         setIconTextGap(4);
         Font tableFont = table.getFont();
-        setFont(new Font(Font.MONOSPACED, tableFont.getStyle(), tableFont.getSize()).deriveFont(tableFont.getSize2D()));
+        setFont(EmuStudioGui.monospaced(tableFont));
         setToolTipText(current ? "Current instruction (PC)" : null);
         getAccessibleContext().setAccessibleDescription(current ? "Current instruction (PC)" : null);
         return this;

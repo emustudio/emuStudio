@@ -16,6 +16,8 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.HierarchyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -84,6 +86,11 @@ public class EditorPanel extends JPanel {
         // Resize the syntax editor once on release rather than repainting it throughout the drag.
         splitSource.setContinuousLayout(false);
         splitSource.setOneTouchExpandable(true);
+        splitSource.addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent event) {
+                resizeComponents(getHeight());
+            }
+        });
         addHierarchyListener(event -> {
             if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
                 resizeComponents(getHeight());
@@ -99,11 +106,13 @@ public class EditorPanel extends JPanel {
     }
 
     public void resizeComponents(int height) {
-        if (!dividerInitialized && isShowing() && splitSource.getHeight() > 0) {
+        if (dividerInitialized || !isShowing()) return;
+        SwingUtilities.invokeLater(() -> {
+            if (dividerInitialized || !isShowing() || splitSource.getHeight() <= 0) return;
             splitSource.setDividerLocation(Math.max(0,
                     splitSource.getHeight() - splitSource.getDividerSize() - COMPILER_OUTPUT_HEIGHT));
             dividerInitialized = true;
-        }
+        });
     }
 
     public Action getFindAction() {

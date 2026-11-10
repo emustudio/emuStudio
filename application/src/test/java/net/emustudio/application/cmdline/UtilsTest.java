@@ -8,7 +8,6 @@ import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.gui.dialogs.StudioFrame;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
@@ -53,7 +52,7 @@ public class UtilsTest extends AbstractSwingTest {
 
         InvocationTargetException thrown = assertThrows(InvocationTargetException.class, () ->
                 Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), mock(DialogsGui.class),
-                        mock(DebugTableModel.class), mock(ContextPool.class), null, new EmuStudioGui()));
+                        mock(ContextPool.class), null, new EmuStudioGui()));
 
         assertSame(failure, thrown.getCause());
     }
@@ -73,15 +72,22 @@ public class UtilsTest extends AbstractSwingTest {
         });
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(cpu.getAddressSpaceSize()).thenReturn(8);
+        when(cpu.getDecoder()).thenReturn(address ->
+                net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "NOP", "00"));
+        when(cpu.getDebuggerColumns(any())).thenAnswer(invocation -> {
+            assertTrue("Table model must be initialized on Swing event thread", SwingUtilities.isEventDispatchThread());
+            return java.util.List.of();
+        });
         when(memory.getCellTypeClass()).thenReturn(Byte.class);
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
         try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
+            when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
             java.util.concurrent.Callable<Void> start = () -> {
                 Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), dialogs,
-                        mock(DebugTableModel.class), contextPool, null, new EmuStudioGui());
+                        contextPool, null, new EmuStudioGui());
                 return null;
             };
             if (fromEdt) onEdt(start);
@@ -93,6 +99,7 @@ public class UtilsTest extends AbstractSwingTest {
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
                 while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
                 assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));
+                verify(cpu).getDebuggerColumns(any());
                 verify(memory, never()).read(anyInt());
                 verify(dialogs, never()).showError(anyString(), anyString());
             } finally {

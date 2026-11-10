@@ -37,8 +37,8 @@ public class SparseDebuggerSessionTest {
             session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
                     99, 1, address, Integer.MAX_VALUE, "label", "last cell", null));
             session.setBreakpoint(address, true).join();
-            session.annotations().add(new UserAnnotations.Entry(address, "metadata", "CODE"));
-            assertEquals("metadata", session.annotations().get(address).label);
+            session.config.annotations().add(new UserAnnotations.Entry(address, "metadata", "CODE"));
+            assertEquals("metadata", session.config.annotations().get(address).label);
 
             occupancy.set(1);
             listener.get().memorySizeChanged();

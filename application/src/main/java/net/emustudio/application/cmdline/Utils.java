@@ -4,14 +4,11 @@ package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.gui.framework.DialogsGui;
-import net.emustudio.application.gui.debugger.DebugTableModel;
-import net.emustudio.application.gui.debugger.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.gui.dialogs.OpenComputerDialog;
 import net.emustudio.application.gui.dialogs.StudioFrame;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
@@ -29,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.SwingUtilities;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,23 +34,11 @@ public class Utils {
     public static final long EMUSTUDIO_ID = 0L;
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
-    public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {
-        Path configFile = ConfigFiles.getConfigBasePath().resolve("emuStudio.toml");
-        if (Files.notExists(configFile)) {
-            LOGGER.warn("No configuration file found; creating empty one");
-            Files.createDirectories(configFile.getParent());
-            Files.createFile(configFile);
-        }
-
-        return AppSettings.fromFile(configFile, !gui, auto);
-    }
-
     public static VirtualComputer loadComputer(
             AppSettings appConfig,
             ComputerConfig computerConfig,
             Dialogs dialogs,
             ContextPoolImpl contextPool,
-            DebugTableModelImpl debugTableModel,
             GUI gui
     ) throws InvalidPluginException, IOException, PluginInitializationException {
         ApplicationApi applicationApi = new ApplicationApiImpl(contextPool, dialogs, gui);
@@ -63,7 +47,6 @@ public class Utils {
         try {
             computer.initialize(contextPool);
             computer.reset();
-            computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, computer.getExecution().orElseThrow().cpuContext()));
             return computer;
         } catch (PluginInitializationException | RuntimeException | Error failure) {
             try {
@@ -93,7 +76,7 @@ public class Utils {
     }
 
     public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, DialogsGui dialogs,
-                                      DebugTableModel debugTableModel, ContextPool contextPool, Path inputFile, EmuStudioGui gui)
+                                      ContextPool contextPool, Path inputFile, EmuStudioGui gui)
             throws InterruptedException, InvocationTargetException {
         MemoryContext<?> memoryContext = null;
         try {
@@ -105,7 +88,7 @@ public class Utils {
         MemoryContext<?> windowMemory = memoryContext;
         Runnable showWindow = () -> {
             StudioFrame mainWindow = new StudioFrame(
-                    computer, appSettings, dialogs, debugTableModel, windowMemory, inputFile, gui
+                    computer, appSettings, dialogs, windowMemory, inputFile, gui
             );
 
             dialogs.setParent(mainWindow);

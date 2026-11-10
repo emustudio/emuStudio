@@ -32,12 +32,10 @@ public class EmulatorEngine {
         this.storageTape = Objects.requireNonNull(storageTape);
         this.memory = Objects.requireNonNull(memory);
         debugger = new MachineDebugging("RAM", new RamDecoder(memory));
-        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
-        debugger.symbol("R0", () -> inspect(storageTape, 0), text -> storageTape.setSymbolAt(0, parseSymbol(text)));
-        debugger.symbol("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()),
-                text -> inputTape.setSymbolAt(inputTape.getHeadPosition(), parseSymbol(text)));
-        debugger.symbol("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)),
-                text -> outputTape.setSymbolAt(Math.max(0, outputTape.getHeadPosition() - 1), parseSymbol(text)));
+        debugger.register("IP", () -> Integer.toUnsignedLong(IP.get()));
+        debugger.inspect("R0", () -> inspect(storageTape, 0));
+        debugger.inspect("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()));
+        debugger.inspect("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)));
         debugger.inspect("INPUT_POSITION", inputTape::getHeadPosition);
         debugger.inspect("OUTPUT_POSITION", outputTape::getHeadPosition);
         debugger.functions(java.util.Set.of("storage", "input", "output", "read_storage", "write_storage", "read_input", "write_output"), (name, args) -> {
@@ -47,25 +45,6 @@ public class EmulatorEngine {
             AbstractTapeContext tape = name.equals("storage") ? storageTape : name.equals("input") ? inputTape : outputTape;
             return inspect(tape, MachineDebugging.location(args));
         });
-    }
-
-    private static TapeSymbol parseSymbol(String text) {
-        String source = text.trim();
-        if (source.startsWith("\"") || source.startsWith("'")) {
-            char quote = source.charAt(0);
-            boolean escaped = false;
-            for (int i = 1; i < source.length() - 1; i++) {
-                char next = source.charAt(i);
-                if (!escaped && next == quote) throw new IllegalArgumentException("Expected one string literal");
-                if (!escaped && next == '\\') escaped = true;
-                else escaped = false;
-            }
-            String value = net.emustudio.emulib.plugin.debugger.ExpressionParser.parse(source,
-                    name -> { throw new IllegalArgumentException("Expected a string literal"); },
-                    name -> { throw new IllegalArgumentException("Expected a string literal"); }).display().text;
-            return TapeSymbol.fromString(value);
-        }
-        return TapeSymbol.guess(text);
     }
 
     private static Object inspect(AbstractTapeContext tape, int at) {

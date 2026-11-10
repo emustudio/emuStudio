@@ -173,6 +173,39 @@ public class EmuStudioGuiTest {
     }
 
     @Test
+    public void toolbarAndSearchControlsKeepTheirStateAcrossThemeChanges() throws Exception {
+        EmuStudioGui gui = new EmuStudioGui();
+        JButton button = gui.toolbarTextButton(event -> {}, ICON_FIND, "Follow link");
+        button.setToolTipText("Follow the selected link");
+        JToggleButton toggle = gui.toolbarToggleButton(event -> {}, ICON_RECORD, "Record instructions");
+        toggle.setSelected(true);
+        toggle.setEnabled(false);
+        EmuStudioGui.toolbarIcon(toggle, ICON_STOP);
+        JTextField search = gui.searchField("Search annotations", 14, ICON_FIND);
+        search.setText("entry");
+        JPanel panel = gui.toolbarPanel();
+        gui.toolbarRow(panel, button, toggle, search);
+
+        for (String theme : new String[]{UIManager.getCrossPlatformLookAndFeelClassName(),
+                "javax.swing.plaf.nimbus.NimbusLookAndFeel"}) {
+            UIManager.setLookAndFeel(theme);
+            SwingUtilities.updateComponentTreeUI(panel);
+            assertEquals("Follow link", button.getText());
+            assertEquals("Follow link", button.getAccessibleContext().getAccessibleName());
+            assertEquals("Follow the selected link", button.getToolTipText());
+            assertTrue(button.isFocusable());
+            assertTrue(toggle.isFocusable());
+            assertTrue(toggle.isSelected());
+            assertFalse(toggle.isEnabled());
+            assertNotNull(toggle.getIcon());
+            assertNotNull(toggle.getDisabledIcon());
+            assertEquals("entry", search.getText());
+            assertEquals("Search annotations", search.getAccessibleContext().getAccessibleName());
+            assertNotNull(search.getClientProperty("JTextField.leadingIcon"));
+        }
+    }
+
+    @Test
     public void labelsButtonsAndTextFactoriesApplyExpectedStyling() {
         EmuStudioGui gui = new EmuStudioGui();
         JLabel plain = gui.label("plain");

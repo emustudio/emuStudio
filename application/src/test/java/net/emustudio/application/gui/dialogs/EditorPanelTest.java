@@ -34,7 +34,7 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void inlineSearchLeavesMostOfThePanelForSourceEditing() {
         Dialogs dialogs = mock(Dialogs.class);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
         EditorPanel panel = createPanel(dialogs, editor);
         JFrame frame = showInFrame(panel);
         try {
@@ -53,7 +53,7 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void findShowsOneRowAndReplacementCanBeRevealedWithoutLosingTheQuery() {
         Dialogs dialogs = mock(Dialogs.class);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
         EditorPanel panel = createPanel(dialogs, editor);
         JFrame frame = showInFrame(panel);
         try {
@@ -81,7 +81,7 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void fontZoomComboTracksShortcutsWheelAndActiveTabs() {
         Dialogs dialogs = mock(Dialogs.class);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
         EditorPanel panel = createPanel(dialogs, editor);
         try {
             JComboBox<?> zoom = findComponent(panel, JComboBox.class,
@@ -149,7 +149,7 @@ public class EditorPanelTest extends AbstractSwingTest {
     @Test
     public void customFontZoomAcceptsPercentagesAndRestoresInvalidInput() {
         Dialogs dialogs = mock(Dialogs.class);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {}));
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
         EditorPanel panel = createPanel(dialogs, editor);
         try {
             JComboBox<?> zoom = findComponent(panel, JComboBox.class,
@@ -216,6 +216,39 @@ public class EditorPanelTest extends AbstractSwingTest {
         } finally {
             runOnEdt(panel::dispose);
         }
+    }
+
+    @Test
+    public void compilerOutputGetsInitialHeightWhenShowingPrecedesChildLayout() {
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
+        EditorPanel panel = createPanel(mock(Dialogs.class), editor);
+        JFrame frame = showFrame(onEdt(JFrame::new));
+        JSplitPane split = findComponent(panel, JSplitPane.class, component -> true);
+        try {
+            runOnEdt(() -> {
+                frame.setSize(1000, 650);
+                frame.setVisible(true);
+                // Showing may precede layout at the final window size.
+                frame.setContentPane(panel);
+                frame.validate();
+            });
+            runOnEdt(() -> {});
+            runOnEdt(() -> {
+                frame.validate();
+                assertEquals(120, split.getBottomComponent().getHeight());
+                split.setDividerLocation(split.getDividerLocation() - 40);
+                frame.validate();
+            });
+            runOnEdt(() -> {
+                frame.setSize(1100, 750);
+                frame.validate();
+            });
+            runOnEdt(() -> {
+                frame.validate();
+                assertEquals("Resizing must preserve the user's output height", 160,
+                        split.getBottomComponent().getHeight());
+            });
+        } finally { runOnEdt(panel::dispose); }
     }
 
     @Test

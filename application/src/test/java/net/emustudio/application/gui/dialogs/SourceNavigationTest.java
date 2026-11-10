@@ -19,7 +19,6 @@ import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.ui.Dialogs;
-import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -389,25 +388,23 @@ public class SourceNavigationTest extends AbstractSwingTest {
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
             session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null, annotations);
-            editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler, List.of(path), paths -> {}));
+            editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler));
+            assertTrue(onEdt(() -> editor.openFile(path)));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
-            original = mock(DebugTableModel.class);
-            DebuggerColumn column = mock(DebuggerColumn.class);
-            when(column.getClassType()).thenReturn(String.class);
-            when(column.getDefaultWidth()).thenReturn(-1);
-            when(original.getColumnCount()).thenReturn(1);
-            when(original.getColumnName(0)).thenReturn("Instruction");
-            when(original.getColumnAt(0)).thenReturn(column);
-            when(original.getColumnClass(0)).thenReturn((Class) String.class);
-            when(original.getRowCount()).thenReturn(4);
-            when(original.getLocationAt(anyInt())).thenAnswer(c -> (Integer) c.getArgument(0) * 2);
+            original = onEdt(() -> {
+                DebugTableModel model = spy(new DebugTableModel());
+                model.setCPU(cpu, net.emustudio.application.TestCpu.context(cpu));
+                doReturn(4).when(model).getRowCount();
+                doAnswer(c -> (Integer) c.getArgument(0) * 2).when(model).getLocationAt(anyInt());
+                return model;
+            });
             debugger = onEdt(() -> {
                 EmuStudioGui gui = new EmuStudioGui();
                 DebugTableImpl listing = new DebugTableImpl(original);
                 JScrollPane scroll = gui.scrollPane(listing);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                return new DebuggerPanel(session, listing, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
+                return new DebuggerPanel(session, listing, instructions, p -> {}, () -> {}, gui);
             });
             table = findComponent(debugger, JTable.class, t -> true);
             runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {

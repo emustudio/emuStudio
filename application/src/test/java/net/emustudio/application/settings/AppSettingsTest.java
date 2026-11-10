@@ -51,30 +51,4 @@ public class AppSettingsTest {
         }
     }
 
-    @Test
-    public void flowAnalysisLimitDefaultsToOneThousand() throws IOException {
-        FileConfig config = FileConfig.of(temporaryFolder.newFile("emustudio.toml"));
-
-        assertEquals(1000, new AppSettings(config, false, false).getFlowAnalysisLimit());
-    }
-
-    @Test
-    public void flowAnalysisLimitIsConfigurable() throws IOException {
-        FileConfig config = FileConfig.of(temporaryFolder.newFile("emustudio.toml"));
-        config.set(AppSettings.KEY_FLOW_ANALYSIS_LIMIT, 250000);
-
-        assertEquals(250000, new AppSettings(config, false, false).getFlowAnalysisLimit());
-    }
-
-    @Test
-    public void invalidFlowAnalysisLimitUsesDefault() throws IOException {
-        Object[] invalidValues = {0, -5, "many"};
-        for (int i = 0; i < invalidValues.length; i++) {
-            Object invalid = invalidValues[i];
-            FileConfig config = FileConfig.of(temporaryFolder.newFile("invalid" + i + ".toml"));
-            config.set(AppSettings.KEY_FLOW_ANALYSIS_LIMIT, invalid);
-
-            assertEquals(1000, new AppSettings(config, false, false).getFlowAnalysisLimit());
-        }
-    }
 }

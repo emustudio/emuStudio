@@ -194,7 +194,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         command(editor, "Shrink selection"); assertEquals("(word)", onEdt(editor::getSelectedText));
     }
     @Test public void workspaceSearchShortcutsUseTheInlineQueryAndWrap() {
-        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(), paths -> { }));
+        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
         runOnEdt(() -> { tabs.activeEditor().textPane().setText("one two one"); tabs.searchBar().find.setText("one"); });
         assertTrue(onEdt(() -> tabs.findNext().orElse(false)));
         assertEquals(0, onEdt(() -> tabs.activeEditor().textPane().getSelectionStart()).intValue());
@@ -277,7 +277,8 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         Files.writeString(source, "anything\n  body\ndone\n");
         LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "anything", null, null, null),
                 new SourceToken(Token.BLOCK_END, 16, "done", null, null, null)));
-        TabbedEditor workspace = onEdt(() -> new TabbedEditor(mock(Dialogs.class), new CompilerStub(lexer), List.of(source), paths -> { }));
+        TabbedEditor workspace = onEdt(() -> new TabbedEditor(mock(Dialogs.class), new CompilerStub(lexer)));
+        assertTrue(onEdt(() -> workspace.openFile(source)));
         REditor original = workspace.activeEditor();
         runOnEdt(() -> original.textPane().getFoldManager().reparse());
         assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
@@ -318,7 +319,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         assertEquals(1, folds.size()); assertEquals(1, folds.get(0).getEndLine());
     }
     @Test public void sameFileSplitSharesDocumentAndKeepsTabCount() {
-        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(), paths -> { }));
+        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
         REditor original = tabs.activeEditor();
         runOnEdt(() -> { original.textPane().setText("source"); tabs.split(true); });
         JTabbedPane view = (JTabbedPane) tabs.getView();
@@ -338,7 +339,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         assertEquals("!source! edited", onEdt(original.textPane()::getText));
     }
     @Test public void differentFilesSplitSideBySideAndTheirTabsRemainUsable() {
-        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(), paths -> { }));
+        TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
         runOnEdt(() -> { tabs.activeEditor().textPane().setText("first"); tabs.newFile(); tabs.activeEditor().textPane().setText("second"); });
         JFrame frame = showInFrame(tabs.getView());
         runOnEdt(() -> { frame.setSize(1000, 600); frame.setVisible(true); });

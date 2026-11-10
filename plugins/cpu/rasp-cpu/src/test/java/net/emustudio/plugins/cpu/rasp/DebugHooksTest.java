@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
@@ -142,27 +141,6 @@ public class DebugHooksTest {
 
         assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
         assertFalse(engine.debugStopped);
-    }
-
-    @Test
-    public void accumulatorEditorPreservesSignedHexWord() throws Exception {
-        MemoryStub memory = new MemoryStub();
-        AbstractTapeContext input = createNiceMock(AbstractTapeContext.class);
-        AbstractTapeContext output = createNiceMock(AbstractTapeContext.class);
-        replay(input, output);
-        EmulatorEngine engine = new EmulatorEngine(memory, input, output);
-        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
-        org.easymock.EasyMock.replay(context);
-        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
-
-        javax.swing.SwingUtilities.invokeAndWait(() -> {
-            ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("ACC");
-            ((javax.swing.JTextField) editor.getComponent(1)).setText("0xffffffff");
-            ((javax.swing.JButton) editor.getComponent(2)).doClick();
-        });
-
-        assertEquals(-1, memory.read(0).intValue());
-        assertTrue(engine.debugger.compile("ACC == -1").test());
     }
 
     private static String encoding(net.emustudio.emulib.plugin.debugger.StepView event) {

@@ -15,10 +15,9 @@ public final class FlowAnalysis {
     private final Map<Integer, DecodedInstruction> instructions;
     private final Map<Integer, String> unknown;
     private final MemoryAnnotations annotations;
-    private final boolean truncated;
 
     private FlowAnalysis(Map<Integer, DecodedInstruction> captured, Set<FlowGraph.Edge> edges,
-                         Set<Integer> destinations, MemoryAnnotations annotations, boolean truncated) {
+                         Set<Integer> destinations, MemoryAnnotations annotations) {
         instructions = Map.copyOf(captured);
         Map<Integer, FlowGraph.Instruction> geometry = new TreeMap<>();
         captured.forEach((address, instruction) -> geometry.put(address, new FlowGraph.Instruction(
@@ -29,11 +28,9 @@ public final class FlowAnalysis {
             pending.put(address, "Observed next PC; not executed yet");
         unknown = Map.copyOf(pending);
         this.annotations = annotations;
-        this.truncated = truncated;
     }
 
     public boolean isCurrent(DebuggerSession session) { return session.flowAnalysis() == this; }
-    public boolean truncated() { return truncated; }
     public FlowGraph.Instruction instructionAt(int address) { return graph.instructionAt(address); }
     public int nextAddress(int address) {
         FlowGraph.Instruction instruction = instructionAt(address);
@@ -123,14 +120,13 @@ public final class FlowAnalysis {
             return next == null ? -1 : next;
         }
 
-        FlowAnalysis view(int root, int limit, MemoryAnnotations annotations) {
-            if (root < 0 || limit < 1) throw new IllegalArgumentException("Invalid observed flow bounds");
+        FlowAnalysis view(int root, MemoryAnnotations annotations) {
+            if (root < 0) throw new IllegalArgumentException("Invalid observed flow root");
             Map<Integer, DecodedInstruction> selected = new TreeMap<>();
             Set<FlowGraph.Edge> edges = new TreeSet<>();
             Set<Integer> visited = new HashSet<>();
             Set<Integer> scheduled = new HashSet<>();
             Deque<Integer> pending = new ArrayDeque<>();
-            boolean truncated = false;
             if (instructions.containsKey(root) || successors.values().stream().anyMatch(targets -> targets.contains(root))) {
                 pending.add(root);
                 scheduled.add(root);
@@ -144,7 +140,6 @@ public final class FlowAnalysis {
                 selected.put(address, instruction);
                 for (int target : successors.getOrDefault(address, Set.of())) {
                     if (scheduled.contains(target)) continue;
-                    if (scheduled.size() == limit) { truncated = true; continue; }
                     scheduled.add(target);
                     pending.addLast(target);
                 }
@@ -152,7 +147,7 @@ public final class FlowAnalysis {
             for (int address : selected.keySet())
                 for (int target : successors.getOrDefault(address, Set.of()))
                     if (visited.contains(target)) edges.add(new FlowGraph.Edge(address, target));
-            return new FlowAnalysis(selected, edges, visited, annotations, truncated);
+            return new FlowAnalysis(selected, edges, visited, annotations);
         }
     }
 

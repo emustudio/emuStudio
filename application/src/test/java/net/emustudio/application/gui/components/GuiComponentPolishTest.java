@@ -46,7 +46,7 @@ public class GuiComponentPolishTest {
                     gui.toolbarButton(event -> {}, StandardIcons.ICON_MEMORY, "Inspect memory"),
                     gui.toolbarToggleButton(event -> {}, StandardIcons.ICON_RECORD, "Record instructions")}) {
                 assertEquals(button.getToolTipText(), button.getAccessibleContext().getAccessibleName());
-                assertFalse(button.isFocusable());
+                assertTrue(button.isFocusable());
                 button.getAccessibleContext().setAccessibleName("Custom control");
                 button.setToolTipText("Updated description");
                 assertEquals("Custom control", button.getAccessibleContext().getAccessibleName());
