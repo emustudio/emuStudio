@@ -65,12 +65,15 @@ public class AnnotationIndexTest {
         AnnotationIndex saved = new AnnotationIndex(size, new MemoryAnnotations());
         saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
         Properties input = saved.properties();
-        input.setProperty("entry.1.address", "invalid");
-        input.setProperty("entry.2.address", "0");
-        input.setProperty("entry.2.end", "1");
-        input.setProperty("entry.2.kind", "SOURCE");
+        input.setProperty("annotation.1.address", "invalid");
+        input.setProperty("annotation.2.address", "0");
+        input.setProperty("annotation.2.end", "1");
+        input.setProperty("annotation.2.kind", "SOURCE");
+        input.setProperty("annotation.3.address", "0");
+        input.setProperty("annotation.3.end", "1");
+        input.setProperty("annotation.3.kind", "UNKNOWN");
 
-        assertEquals(2, live.importProperties(input));
+        assertEquals(3, live.importProperties(input));
 
         assertEquals(2, live.entries().size());
         assertEquals("keep", live.get(0).label);
@@ -100,10 +103,10 @@ public class AnnotationIndexTest {
         input.setProperty("version", "1");
         input.setProperty("entries", "1");
         for (int i : new int[] {0, 7}) {
-            input.setProperty("entry." + i + ".address", Integer.toString(i == 0 ? 1 : 2));
-            input.setProperty("entry." + i + ".end", Integer.toString(i == 0 ? 2 : 3));
-            input.setProperty("entry." + i + ".label", "value" + i);
-            input.setProperty("entry." + i + ".kind", "DATA");
+            input.setProperty("annotation." + i + ".address", Integer.toString(i == 0 ? 1 : 2));
+            input.setProperty("annotation." + i + ".end", Integer.toString(i == 0 ? 2 : 3));
+            input.setProperty("annotation." + i + ".label", "value" + i);
+            input.setProperty("annotation." + i + ".kind", "DATA");
         }
 
         assertEquals(0, annotations.importProperties(input));
@@ -129,12 +132,26 @@ public class AnnotationIndexTest {
         AnnotationIndex annotations = new AnnotationIndex(4, new MemoryAnnotations());
         annotations.add(new AnnotationIndex.Entry(-1, 1, 3, "buffer", "DATA"));
         Properties expected = new Properties();
-        expected.setProperty("entry.0.address", "1");
-        expected.setProperty("entry.0.end", "3");
-        expected.setProperty("entry.0.label", "buffer");
-        expected.setProperty("entry.0.kind", "DATA");
+        expected.setProperty("annotation.0.address", "1");
+        expected.setProperty("annotation.0.end", "3");
+        expected.setProperty("annotation.0.label", "buffer");
+        expected.setProperty("annotation.0.kind", "DATA");
 
         assertEquals(expected, annotations.properties());
+    }
+
+    @Test
+    public void importedAnnotationWithoutKindDefaultsToCode() {
+        AnnotationIndex annotations = new AnnotationIndex(4, new MemoryAnnotations());
+        Properties input = new Properties();
+        input.setProperty("annotation.0.address", "1");
+        input.setProperty("annotation.0.end", "3");
+        input.setProperty("annotation.0.label", "routine");
+
+        assertEquals(0, annotations.importProperties(input));
+
+        assertEquals("CODE", annotations.get(1).kind);
+        assertEquals("CODE", annotations.properties().getProperty("annotation.0.kind"));
     }
 
     @Test
@@ -173,7 +190,7 @@ public class AnnotationIndexTest {
         AnnotationIndex.Entry first = annotations.add(new AnnotationIndex.Entry(0, "first", "CODE"));
         AnnotationIndex.Entry second = annotations.add(new AnnotationIndex.Entry(0, "second", "DATA"));
 
-        annotations.update(new AnnotationIndex.Entry(first.id, 1, 2, "updated", "UNKNOWN"));
+        annotations.update(new AnnotationIndex.Entry(first.id, 1, 2, "updated", "CODE"));
 
         assertEquals("updated", annotations.get(1).label);
         assertEquals(first.id, annotations.get(1).id);
@@ -187,7 +204,7 @@ public class AnnotationIndexTest {
         AnnotationIndex annotations = new AnnotationIndex(3, new MemoryAnnotations());
         annotations.add(new AnnotationIndex.Entry(0, "MainLoop", "CODE"));
         annotations.add(new AnnotationIndex.Entry(1, "MainLoop buffer", "DATA"));
-        annotations.add(new AnnotationIndex.Entry(2, "other", "UNKNOWN"));
+        annotations.add(new AnnotationIndex.Entry(2, "other", "CODE"));
 
         List<AnnotationIndex.Entry> matches = annotations.search("mainloop");
 
@@ -204,7 +221,7 @@ public class AnnotationIndexTest {
         Path file = temporary.newFile("annotations.properties").toPath();
 
         original.save(file);
-        assertFalse(original.properties().containsKey("entry.0.bookmark"));
+        assertFalse(original.properties().containsKey("annotation.0.bookmark"));
         AnnotationIndex restored = new AnnotationIndex(size, new MemoryAnnotations());
         restored.load(file);
 
@@ -221,7 +238,7 @@ public class AnnotationIndexTest {
         annotations.add(new AnnotationIndex.Entry(0, "old", "CODE"));
         annotations.add(new AnnotationIndex.Entry(1, "keep", "DATA"));
         AnnotationIndex imported = new AnnotationIndex(size, new MemoryAnnotations());
-        imported.add(new AnnotationIndex.Entry(0, "replacement", "UNKNOWN"));
+        imported.add(new AnnotationIndex.Entry(0, "replacement", "CODE"));
 
         annotations.importProperties(imported.properties());
 
@@ -238,6 +255,8 @@ public class AnnotationIndexTest {
         assertThrows(IllegalArgumentException.class,
                 () -> annotations.add(new AnnotationIndex.Entry(0, "", "FUNCTION")));
         assertThrows(IllegalArgumentException.class,
+                () -> annotations.add(new AnnotationIndex.Entry(0, "", "UNKNOWN")));
+        assertThrows(IllegalArgumentException.class,
                 () -> annotations.add(new AnnotationIndex.Entry(1, "", "CODE")));
         assertTrue(annotations.entries().isEmpty());
     }
@@ -246,15 +265,15 @@ public class AnnotationIndexTest {
     public void overlappingRangesRemainIndependentAfterSaveAndReload() throws Exception {
         int size = 16;
         AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(-1, 2, 8, "first", "UNKNOWN"));
-        annotations.add(new AnnotationIndex.Entry(-1, 2, 5, "second", "UNKNOWN"));
+        annotations.add(new AnnotationIndex.Entry(-1, 2, 8, "first", "CODE"));
+        annotations.add(new AnnotationIndex.Entry(-1, 2, 5, "second", "CODE"));
         Properties saved = annotations.properties();
         AnnotationIndex restored = new AnnotationIndex(size, new MemoryAnnotations());
 
         restored.importProperties(saved);
         AnnotationIndex.Entry first = restored.entries().stream().filter(entry -> entry.label.equals("first")).findFirst().orElseThrow();
         AnnotationIndex.Entry second = restored.entries().stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
-        restored.update(new AnnotationIndex.Entry(first.id, 3, 9, "changed", "UNKNOWN"));
+        restored.update(new AnnotationIndex.Entry(first.id, 3, 9, "changed", "CODE"));
         restored.remove(second);
 
         assertEquals(1, restored.entries().size());
@@ -270,7 +289,7 @@ public class AnnotationIndexTest {
         AnnotationIndex annotations = new AnnotationIndex(8, engine);
 
         assertThrows(IllegalArgumentException.class,
-                () -> annotations.add(new AnnotationIndex.Entry(-1, 3, 9, "outside", "UNKNOWN")));
+                () -> annotations.add(new AnnotationIndex.Entry(-1, 3, 9, "outside", "CODE")));
 
         assertTrue(annotations.entries().isEmpty());
     }
@@ -280,7 +299,7 @@ public class AnnotationIndexTest {
         MemoryAnnotations engine = new MemoryAnnotations();
         AnnotationIndex annotations = new AnnotationIndex(8, engine);
 
-        AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 3, 5, "shared", "UNKNOWN"));
+        AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 3, 5, "shared", "CODE"));
 
         assertTrue(engine.at(4).stream().anyMatch(annotation -> annotation.ownerId == AnnotationIndex.OWNER
                 && annotation.entryId == entry.id));
@@ -290,9 +309,9 @@ public class AnnotationIndexTest {
     public void importingAllocatesIndependentIdentities() throws Exception {
         int size = 8;
         AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
-        AnnotationIndex.Entry original = annotations.add(new AnnotationIndex.Entry(-1, 1, 4, "original", "UNKNOWN"));
+        AnnotationIndex.Entry original = annotations.add(new AnnotationIndex.Entry(-1, 1, 4, "original", "CODE"));
         Properties imported = annotations.properties();
-        imported.setProperty("entry.0.label", "imported");
+        imported.setProperty("annotation.0.label", "imported");
 
         annotations.importProperties(imported);
 

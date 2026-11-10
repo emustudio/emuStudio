@@ -89,7 +89,7 @@ public final class FlowAnalysis {
 
     /** Session-confined accumulation; only an explicit successful CPU reset clears observations. */
     static final class Observations {
-        private final Map<Integer, DecodedInstruction> instructions = new TreeMap<>();
+        private final NavigableMap<Integer, DecodedInstruction> instructions = new TreeMap<>();
         private final Map<Integer, Set<Integer>> successors = new TreeMap<>();
 
         void executed(DecodedInstruction instruction, OptionalInt nextAddress) {
@@ -101,6 +101,16 @@ public final class FlowAnalysis {
         void reset() {
             instructions.clear();
             successors.clear();
+        }
+
+        List<Integer> instructionsBefore(int address, int count) {
+            List<Integer> previous = new ArrayList<>();
+            for (int at : instructions.headMap(address, false).descendingKeySet()) {
+                if (previous.size() == count) break;
+                previous.add(at);
+            }
+            Collections.reverse(previous);
+            return previous;
         }
 
         FlowAnalysis view(int root, int limit, MemoryAnnotations annotations) {

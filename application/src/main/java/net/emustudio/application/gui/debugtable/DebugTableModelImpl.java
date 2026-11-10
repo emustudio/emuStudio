@@ -44,6 +44,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         invalidRows.clear();
         boundaryDecoder = new BoundaryDecoder(rowDecoder);
         this.ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
+        if (session != null) ida.setObservedInstructionsBefore(session::observedInstructionsBefore);
         rowLocations = null;
         List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns(rowDecoder);
         setDebuggerColumns(cpuColumns.isEmpty() ? defaultColumns(rowDecoder) : cpuColumns);
@@ -194,6 +195,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         }
         boundaryDecoder = new BoundaryDecoder(rowDecoder);
         ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
+        if (session != null) ida.setObservedInstructionsBefore(session::observedInstructionsBefore);
         ida.setInstructionsPerPage(rows);
         rowLocations = null;
     }

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
+import java.util.function.BiFunction;
 
 /**
  * Paginating disassembler
@@ -38,6 +39,7 @@ public class PaginatingDisassembler {
     public final static int INSTR_PER_PAGE = 2 * 10 + 1;
 
     private final BoundaryDecoder boundaryDecoder;
+    private BiFunction<Integer, Integer, List<Integer>> observedInstructionsBefore;
     private final NavigableMap<Integer, Page> bytesPerPageCache = new ConcurrentSkipListMap<>();
 
     private volatile int pageIndex;
@@ -62,6 +64,10 @@ public class PaginatingDisassembler {
 
     int getInstructionsPerPage() {
         return instructionsPerPage;
+    }
+
+    synchronized void setObservedInstructionsBefore(BiFunction<Integer, Integer, List<Integer>> instructions) {
+        observedInstructionsBefore = Objects.requireNonNull(instructions);
     }
 
     synchronized void setInstructionsPerPage(int value) {
@@ -247,6 +253,7 @@ public class PaginatingDisassembler {
 
     /** Keep valid instructions at the top when the centered page reaches address zero. */
     private int boundaryRowShift(int location) {
+        if (observedInstructionsBefore != null) return 0;
         int half = boundaryDecoder.getLongestInstructionSize() * instrPerHalfPage;
         if (location >= half) return 0;
         List<Integer> previous = boundaryDecoder.getLocations(0, location);
@@ -417,6 +424,8 @@ public class PaginatingDisassembler {
     }
 
     private List<Integer> precedingLocations(int currentLocation, int half) {
+        if (observedInstructionsBefore != null)
+            return observedInstructionsBefore.apply(currentLocation, instrPerHalfPage);
         int realFrom = Math.max(0, currentLocation - half);
 
         List<Integer> halfPage = new ArrayList<>(boundaryDecoder.getLocations(realFrom, currentLocation));

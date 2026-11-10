@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -120,37 +118,92 @@ public class DebuggerPanelTest {
                 flushUiEvents();
 
                 assertEquals(List.of("A =="), workspace.session.watches);
-                JList<?> values = component(watches, JList.class, "Watch expressions and values");
+                JTable values = component(watches, JTable.class, "Watch expressions and values");
                 assertTrue(renderedRowTooltip(values, 0).contains("Inactive"));
                 assertTrue(workspace.session.watchErrors().containsKey("A =="));
-                values.setSelectedIndex(0);
-                when(workspace.dialogs.readString("Expression", "Edit watch", "A ==")).thenReturn(Optional.of("A"));
+                values.setRowSelectionInterval(0, 0);
                 button(watches, "Edit watch").doClick(0);
+                assertTrue(values.isEditing());
+                JTextField editor = (JTextField) values.getEditorComponent();
+                assertEquals("A ==", editor.getText());
+                editor.setText("A");
+                editor.postActionEvent();
                 flushUiEvents();
 
                 assertEquals(List.of("A"), workspace.session.watches);
                 assertTrue(workspace.session.watchErrors().isEmpty());
-                values.setSelectedIndex(0);
+                values.setRowSelectionInterval(0, 0);
                 JComboBox<?> format = component(watches, JComboBox.class, "Watch value format");
                 format.setSelectedItem("Hexadecimal");
                 assertTrue(renderedRowTooltip(values, 0).contains("0x41"));
-                assertEquals(0, values.getSelectedIndex());
+                assertEquals(0, values.getSelectedRow());
                 assertNull(findComponent(watches, AbstractButton.class, "Edit register"));
                 verify(workspace.dialogs, never()).showError(anyString(), anyString());
+                verify(workspace.dialogs, never()).readString(anyString(), anyString(), anyString());
             });
         }
     }
 
     @Test
-    public void memoryWatchPanelOffersOnlyAddressAddAndRemove() throws Exception {
-        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
+    public void watchCellsEditOnDoubleClickAndEscapeDiscardsDraftAcrossRefresh() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
+            session.watches.add("A");
+            session.refreshWatches().join();
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JFrame frame = new JFrame();
+                try {
+                    frame.setContentPane(workspace.panel.watchesPanel());
+                    frame.setSize(320, 260);
+                    frame.setVisible(true);
+                    JTable values = component(frame, JTable.class, "Watch expressions and values");
+                    assertTrue(values.isCellEditable(0, 0));
+                    assertFalse(values.isCellEditable(0, 1));
+                    java.awt.Rectangle cell = values.getCellRect(0, 0, true);
+                    values.dispatchEvent(new java.awt.event.MouseEvent(values, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                            0, 0, cell.x + 4, cell.y + 4, 2, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertTrue(values.isEditing());
+                    JTextField editor = (JTextField) values.getEditorComponent();
+                    editor.setText("mem[0x0001]");
+                    workspace.machine.values.put("A", 7L);
+                    button(frame, "Refresh").doClick(0);
+                    workspace.session.refreshWatches().join();
+                    flushUiEvents();
+                    assertTrue(values.isEditing());
+                    assertEquals("mem[0x0001]", editor.getText());
+                    Object cancel = values.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                            .get(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0));
+                    values.getActionMap().get(cancel).actionPerformed(new java.awt.event.ActionEvent(values, 0, "cancel"));
+                    flushUiEvents();
+                    assertFalse(values.isEditing());
+                    assertEquals(List.of("A"), workspace.session.watches);
+                    assertEquals("A", values.getValueAt(0, 0));
+                    assertTrue(values.getValueAt(0, 1).toString(), values.getValueAt(0, 1).toString().startsWith("7"));
+                    verify(workspace.dialogs, never()).readString(anyString(), anyString(), anyString());
+                } finally { frame.dispose(); }
+            });
+        }
+    }
+
+    @Test
+    public void watchesShowValuesWithoutTabsAndEvaluateMemoryExpressions() throws Exception {
+        byte[] memory = {0, 17, 0, 0};
+        try (Workspace workspace = workspace(new byte[][] {memory}, 4, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
-                for (String removed : List.of("Memory watch name", "Memory watch condition", "Memory watch stop from hit"))
-                    assertNull(findComponent(watches, JTextField.class, removed));
-                for (String removed : List.of("Enable / disable memory watch", "Edit memory watch",
-                        "Reset memory watch hit counts", "Memory watch options"))
-                    assertNull(findComponent(watches, AbstractButton.class, removed));
+                assertNull(findComponent(watches, JTabbedPane.class, null));
+                assertNull(findComponent(watches, JList.class, "Memory access watches"));
+                JTextField expression = component(watches, JTextField.class, "Expression");
+                expression.setText("mem[0x0001]");
+                button(watches, "Add").doClick(0);
+                flushUiEvents();
+                JTable values = component(watches, JTable.class, "Watch expressions and values");
+                assertEquals(List.of("mem[0x0001]"), workspace.session.watches);
+                assertEquals("mem[0x0001] = 17", renderedRowTooltip(values, 0));
+                memory[1] = 42;
+                button(watches, "Refresh").doClick(0);
+                flushUiEvents();
+                assertTrue(renderedRowTooltip(values, 0).contains("mem[0x0001] = 42"));
             });
         }
     }
@@ -469,6 +522,51 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void clearedInspectionSelectionSurvivesSteppingAndFlowRefresh() throws Exception {
+        AtomicInteger pc = new AtomicInteger();
+        CountDownLatch shown = new CountDownLatch(1);
+        try (Workspace workspace = workspace(new byte[][] {new byte[6]}, 6, session -> {
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenAnswer(call -> pc.get());
+            for (int at = 0; at < 4; at++) observed(session, at, OptionalInt.of(at + 1));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
+                    if (Boolean.TRUE.equals(event.getNewValue())) shown.countDown();
+                });
+                button(workspace.panel, "Show observed flow from PC").doClick(0);
+            });
+            assertTrue("Analysis should finish", shown.await(5, TimeUnit.SECONDS));
+            SwingUtilities.invokeAndWait(() -> {
+                JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
+                graph.dispatchEvent(new java.awt.event.MouseEvent(graph, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                        0, 0, 1, 1, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                assertFalse(button(workspace.panel, "Go to instruction").isEnabled());
+                button(workspace.panel, "Fold identical analysis repeats").doClick(0);
+                assertFalse("Relayout must preserve deselection", button(workspace.panel, "Go to instruction").isEnabled());
+                button(workspace.panel, "Fold identical analysis repeats").doClick(0);
+                pc.set(2);
+                workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+                workspace.panel.stepCompleted();
+                flushUiEvents();
+                flushUiEvents();
+                assertFalse("PC following must preserve deselection", button(workspace.panel, "Go to instruction").isEnabled());
+            });
+            CountDownLatch refreshed = new CountDownLatch(1);
+            SwingUtilities.invokeAndWait(() -> {
+                workspace.panel.setInspectionReadyListener(refreshed::countDown);
+                observed(workspace.session, 4, OptionalInt.of(5));
+                workspace.panel.stepCompleted();
+            });
+            assertTrue("Flow refresh should finish", refreshed.await(5, TimeUnit.SECONDS));
+            SwingUtilities.invokeAndWait(() -> {
+                assertFalse("Analysis refresh must preserve deselection", button(workspace.panel, "Go to instruction").isEnabled());
+                workspace.panel.navigate(2);
+                assertTrue("Explicit navigation still selects", button(workspace.panel, "Go to instruction").isEnabled());
+            });
+        }
+    }
+
+    @Test
     public void foldedSelectionKeepsLabelsAndMovingPcVisible() throws Exception {
         AtomicInteger pc = new AtomicInteger(4);
         CountDownLatch shown = new CountDownLatch(1);
@@ -651,6 +749,12 @@ public class DebuggerPanelTest {
                         try {
                             JLabel label = component((Container) window, JLabel.class, "Label");
                             ((JTextField) label.getLabelFor()).setText("entry");
+                                JLabel type = component((Container) window, JLabel.class, "Type");
+                                JComboBox<?> kind = (JComboBox<?>) type.getLabelFor();
+                                assertEquals(2, kind.getItemCount());
+                                assertEquals("Code", kind.getItemAt(0));
+                                assertEquals("Data", kind.getItemAt(1));
+                                assertEquals("Code", kind.getSelectedItem());
                             JLabel address = component((Container) window, JLabel.class, "Address");
                             ((JTextField) address.getLabelFor()).setText("0x0001");
                             JLabel end = component((Container) window, JLabel.class, "End address");
@@ -669,6 +773,7 @@ public class DebuggerPanelTest {
             });
             if (failure.get() != null) throw new AssertionError(failure.get());
             assertEquals("entry", workspace.session.annotations().get(1).label);
+            assertEquals("CODE", workspace.session.annotations().get(1).kind);
         }
     }
 
@@ -1047,18 +1152,14 @@ public class DebuggerPanelTest {
         })) {
             AtomicInteger changes = new AtomicInteger();
             SwingUtilities.invokeAndWait(() -> {
-                JList<?> values = component(workspace.panel.watchesPanel(), JList.class, "Watch expressions and values");
-                values.getModel().addListDataListener(new ListDataListener() {
-                    @Override public void intervalAdded(ListDataEvent event) { changes.incrementAndGet(); }
-                    @Override public void intervalRemoved(ListDataEvent event) { changes.incrementAndGet(); }
-                    @Override public void contentsChanged(ListDataEvent event) { changes.incrementAndGet(); }
-                });
+                JTable values = component(workspace.panel.watchesPanel(), JTable.class, "Watch expressions and values");
+                values.getModel().addTableModelListener(event -> changes.incrementAndGet());
                 for (int i = 0; i < 100; i++) workspace.session.execution().step().join();
             });
             SwingUtilities.invokeAndWait(() -> {});
             SwingUtilities.invokeAndWait(() -> {
-                JList<?> values = component(workspace.panel.watchesPanel(), JList.class, "Watch expressions and values");
-                assertEquals(1, values.getModel().getSize());
+                JTable values = component(workspace.panel.watchesPanel(), JTable.class, "Watch expressions and values");
+                assertEquals(1, values.getRowCount());
                 assertEquals("A = 0", renderedRowTooltip(values, 0));
                 assertEquals(0, changes.get());
             });
@@ -1127,7 +1228,6 @@ public class DebuggerPanelTest {
     public void debuggerTabsExcludeBreakpointManagerAndRetainExistingBreakpoints() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             session.breakpoints.add(1);
-            session.memoryWatches.addAll(List.of(0, 2));
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
@@ -1136,43 +1236,12 @@ public class DebuggerPanelTest {
                                 .mapToObj(tabs::getTitleAt).collect(java.util.stream.Collectors.toList()));
                 assertNull(findComponent(workspace.panel, JList.class, "Breakpoints"));
                 assertEquals(List.of(1), workspace.session.ordinaryBreakpoints());
-                assertEquals(List.of(0, 2), workspace.session.memoryWatches);
             });
         }
     }
 
     @Test
-    public void memoryWatchRemoveTargetsSelectedWatchAndShowsLastAccess() throws Exception {
-        try (Workspace workspace = workspace(new byte[][] {{0, 0x3E, 0}}, 3, session -> {
-            session.breakpoints.add(2);
-            session.memoryWatches.addAll(List.of(1, 2));
-        })) {
-            workspace.session.update(() -> {}).join();
-            assertFalse(workspace.session.beforeStep());
-            workspace.machine.accessed(1, false);
-            workspace.session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
-            workspace.session.refreshWatches().join();
-            SwingUtilities.invokeAndWait(() -> {
-                Container watches = workspace.panel.watchesPanel();
-                JList<?> list = component(watches, JList.class, "Memory access watches");
-                list.setSelectedIndex(1);
-
-                button(watches, "Remove memory watch").doClick(0);
-                flushUiEvents();
-
-                assertEquals(List.of(1), workspace.session.memoryWatches);
-                assertEquals(List.of(2), workspace.session.ordinaryBreakpoints());
-                assertEquals(1, list.getModel().getSize());
-                String tooltip = renderedRowTooltip(list, 0);
-                assertTrue(tooltip, tooltip.contains("= 62"));
-                assertTrue(tooltip, tooltip.contains("last read @0000 (62)"));
-                assertTrue(tooltip, tooltip.contains("last write \u2014"));
-            });
-        }
-    }
-
-    @Test
-    public void executionControlsAndMemoryWatchesUseCpuVisibleAddresses() throws Exception {
+    public void executionControlsUseCpuVisibleAddresses() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}, {0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 assertTrue(workspace.panel.applyBreakpointRequest(new BreakpointDialog.Request(
@@ -1180,11 +1249,6 @@ public class DebuggerPanelTest {
                 flushUiEvents();
                 assertTrue(workspace.session.isBreakpointSet(0));
 
-                Container watches = workspace.panel.watchesPanel();
-                assertNull(findComponent(watches, JComboBox.class, "Memory watch bank"));
-                button(watches, "Add memory watch").doClick(0);
-                flushUiEvents();
-                assertEquals(List.of(0), workspace.session.memoryWatches);
             });
         }
     }
@@ -1226,8 +1290,8 @@ public class DebuggerPanelTest {
     public void instructionRowsAndTooltipsCoverAnnotationRangeAndUseLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
-                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "UNKNOWN"));
-                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "UNKNOWN"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "CODE"));
+                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -1578,7 +1642,7 @@ public class DebuggerPanelTest {
             observed(session, 1, OptionalInt.empty());
         })) {
                 workspace.session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
-                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "UNKNOWN"));
+                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "CODE"));
                 SwingUtilities.invokeAndWait(() -> {
                     AbstractButton goTo = button(workspace.panel, "Go to instruction");
                     assertFalse(goTo.isEnabled());
@@ -1702,7 +1766,7 @@ public class DebuggerPanelTest {
                     });
                     assertEquals(before + 1, annotationIndex.entries().size());
                     assertTrue(annotationIndex.entries().stream().anyMatch(entry ->
-                            entry.label.isEmpty() && entry.address == 0 && entry.end == 2));
+                            entry.label.isEmpty() && entry.address == 0 && entry.end == 2 && entry.kind.equals("CODE")));
                 });
         }
     }
@@ -1839,6 +1903,10 @@ public class DebuggerPanelTest {
     private static <T> String renderedRowTooltip(JList<T> list, int row) {
         return ((JComponent) list.getCellRenderer().getListCellRendererComponent(
                 list, list.getModel().getElementAt(row), row, false, false)).getToolTipText();
+    }
+
+    private static String renderedRowTooltip(JTable table, int row) {
+        return ((JComponent) table.prepareRenderer(table.getCellRenderer(row, 0), row, 0)).getToolTipText();
     }
 
     private static <T extends Component> T component(Container root, Class<T> type, String name) {

@@ -20,21 +20,19 @@ import static org.mockito.Mockito.*;
 
 public class LiveDebuggingTest {
     @Test
-    public void captureModeTracksInstructionAccessAndRecordingNeeds() throws Exception {
+    public void memoryValueWatchesNeedOnlyInstructionCaptureUnlessRecording() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null)) {
             assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
 
-            session.addMemoryWatch(0).join();
-            assertEquals(Debugging.Capture.ACCESSES, machine.captureMode.get());
+            session.update(() -> session.watches.add("mem[0]")).join();
+            assertEquals("0", session.watchValues().get("mem[0]").text);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
 
             session.update(() -> session.record(2)).join();
             assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
 
             session.update(() -> session.record(0)).join();
-            assertEquals(Debugging.Capture.ACCESSES, machine.captureMode.get());
-
-            session.update(session.memoryWatches::clear).join();
             assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
         }
     }
@@ -73,6 +71,28 @@ public class LiveDebuggingTest {
             assertEquals("0", session.watchValues().get("A").text);
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             assertEquals("7", session.watchValues().get("A").text);
+        }
+    }
+
+    @Test
+    public void memoryValueWatchUpdatesAfterCompletedStep() throws Exception {
+        byte[] memory = {17};
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {memory}, 1);
+        try (DebuggerSession session = machine.session(null)) {
+            session.update(() -> session.watches.add("mem[0x0000]")).join();
+            assertEquals("17", session.watchValues().get("mem[0x0000]").text);
+            when(machine.cpu.step()).thenAnswer(call -> {
+                session.beforeStep();
+                memory[0] = 42;
+                session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
+                return CPU.RunState.STATE_STOPPED_BREAK;
+            });
+
+            session.execution().step().get(2, TimeUnit.SECONDS);
+
+            assertEquals("42", session.watchValues().get("mem[0x0000]").text);
+            assertTrue(session.watchValues().get("mem[0x0000]").changed);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
         }
     }
 

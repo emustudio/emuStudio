@@ -51,7 +51,7 @@ public final class AnnotationIndex {
     }
 
     private static void validateKind(String kind) {
-        if (!List.of("UNKNOWN", "CODE", "DATA").contains(kind))
+        if (!List.of("CODE", "DATA").contains(kind))
             throw new IllegalArgumentException("Invalid annotation kind");
     }
 
@@ -112,7 +112,7 @@ public final class AnnotationIndex {
         Properties p = new Properties();
         int i = 0;
         for (Entry e : entries()) {
-            String k = "entry." + (i++) + ".";
+            String k = "annotation." + (i++) + ".";
             p.setProperty(k + "address", Integer.toString(e.address));
             p.setProperty(k + "end", Integer.toString(e.end));
             p.setProperty(k + "label", e.label);
@@ -131,13 +131,13 @@ public final class AnnotationIndex {
         for (Entry entry : entries()) known.add(key(entry));
         List<Entry> added = new ArrayList<>();
         int skipped = 0;
-        for (int i : AtomicProperties.indices(p, "entry.", ".address")) {
-            String k = "entry." + i + ".";
+        for (int i : AtomicProperties.indices(p, "annotation.", ".address")) {
+            String k = "annotation." + i + ".";
             Entry entry;
             try {
                 entry = new Entry(IDS.getAndAdd(2), Integer.parseInt(p.getProperty(k + "address")),
                         Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
-                        p.getProperty(k + "kind", "UNKNOWN"));
+                        p.getProperty(k + "kind", "CODE"));
                 validateKind(entry.kind);
                 validateRange(size, entry);
             } catch (RuntimeException invalid) {

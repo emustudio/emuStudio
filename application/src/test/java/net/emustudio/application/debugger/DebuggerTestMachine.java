@@ -42,8 +42,6 @@ final class DebuggerTestMachine {
     private DebuggerSession session;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
-    private int accessed = -1;
-    private boolean wrote;
 
     DebuggerTestMachine(byte[][] banks, int commonBoundary) throws Exception {
         this(banks, commonBoundary, true);
@@ -100,8 +98,6 @@ final class DebuggerTestMachine {
         switch (name.toLowerCase(Locale.ROOT)) {
             case "reg": return args -> args.get(0) instanceof String
                     ? variable((String) args.get(0)).get() : args.get(0);
-            case "read": return args -> accessed == ((Number) args.get(0)).intValue() && !wrote;
-            case "write": return args -> accessed == ((Number) args.get(0)).intValue() && wrote;
             case "mem": return args -> bytes(args, 1, false);
             case "mem16": return args -> bytes(args, 2, false);
             case "mem16be": return args -> bytes(args, 2, true);
@@ -118,8 +114,6 @@ final class DebuggerTestMachine {
         for (int i = 0; i < width; i++) value |= (memory.peek(at + i) & 255L) << (8 * (bigEndian ? width - i - 1 : i));
         return value;
     }
-
-    void accessed(int address, boolean write) { accessed = address; wrote = write; }
 
     void observedStep(DecodedInstruction instruction, OptionalInt nextAddress, boolean completed) {
         Debugging.Observer installed = observer.get();

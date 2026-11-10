@@ -29,7 +29,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     public final MemoryAnnotations annotationEngine;
     public final List<String> watches = new CopyOnWriteArrayList<>();
     public final Set<Integer> breakpoints = new java.util.concurrent.ConcurrentSkipListSet<>();
-    public final List<Integer> memoryWatches = new CopyOnWriteArrayList<>();
     private final List<String> loadWarnings = new ArrayList<>();
     private final Path settings;
     private Properties lastSaved;
@@ -42,9 +41,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final java.util.concurrent.atomic.AtomicLong memoryRevision = new java.util.concurrent.atomic.AtomicLong();
     private volatile FlowAnalysis flow;
     private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
-    private final Map<Integer, MemoryWatchTracker> memoryWatchTrackers = new LinkedHashMap<>();
-    private volatile List<MemoryWatchView> memoryWatchSnapshot = List.of();
-    private int stepAddress = -1;
     private long generation;
     private boolean closed;
     private int activeMutations;
@@ -74,6 +70,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     /** Last selected immutable runtime-flow view; independent of current memory contents. */
     public synchronized FlowAnalysis flowAnalysis() { return closed ? null : flow; }
+
+    /** Address-ordered predecessors from the same observations used by Inspection. */
+    public synchronized List<Integer> observedInstructionsBefore(int address, int count) {
+        return observedFlow.instructionsBefore(address, count);
+    }
 
     /** Called only after a successful explicit CPU reset; annotations are retained. */
     public synchronized void cpuReset() {
@@ -491,9 +492,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     public synchronized void updateProbe() {
         observationDirty = false;
-        syncMemoryWatches();
         Debugging.Capture capture = recording != null || historyLimit > 0 ? Debugging.Capture.FULL
-                : !memoryWatchTrackers.isEmpty() ? Debugging.Capture.ACCESSES : Debugging.Capture.INSTRUCTION;
+                : Debugging.Capture.INSTRUCTION;
         if (debug == null) return;
         if (observation != null && capture != captureAttached) detachObservation();
         if (observation == null) {
@@ -511,16 +511,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    private void syncMemoryWatches() {
-        Map<Integer, MemoryWatchTracker> current = new LinkedHashMap<>();
-        for (int address : memoryWatches) {
-            MemoryWatchTracker tracker = memoryWatchTrackers.get(address);
-            current.putIfAbsent(address, tracker != null ? tracker : new MemoryWatchTracker(address, debug));
-        }
-        memoryWatchTrackers.clear();
-        memoryWatchTrackers.putAll(current);
-    }
-
     private void trimHistory() {
         while (historyLimit > 0 && history.size() > historyLimit) history.removeFirst();
     }
@@ -532,7 +522,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     public Map<String, ValueView> watchValues() { return watchSnapshot; }
     public Map<String, String> watchErrors() { return watchFailures; }
-    public List<MemoryWatchView> memoryWatchValues() { return memoryWatchSnapshot; }
     public CompletableFuture<Void> refreshWatches() { return update(() -> {}); }
 
     private void refreshWatchesNow() {
@@ -556,9 +545,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
         watchSnapshot = Map.copyOf(values);
         watchFailures = Map.copyOf(errors);
-        List<MemoryWatchView> memoryValues = new ArrayList<>();
-        for (MemoryWatchTracker tracker : memoryWatchTrackers.values()) memoryValues.add(tracker.view());
-        memoryWatchSnapshot = List.copyOf(memoryValues);
     }
 
     private void clearWatchChanges() {
@@ -570,7 +556,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     @Override
     public synchronized boolean beforeStep() {
         int address = execution.cpuContext().getInstructionLocation();
-        stepAddress = address;
         boolean stop = false;
         if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;
         else stop = checkBreakpoints(address);
@@ -607,9 +592,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                 catch (IOException failure) { stopFailedRecorder("Incomplete recording: " + failure.getMessage()); }
             }
         }
-        int address = captured.isPresent() && captured.get().programLocation.isPresent()
-                ? captured.get().programLocation.getAsInt() : stepAddress;
-        for (MemoryWatchTracker tracker : memoryWatchTrackers.values()) tracker.afterStep(address);
         if (observationDirty) updateProbe();
         return false;
     }
@@ -657,17 +639,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     List<Integer> ordinaryBreakpoints() { return List.copyOf(breakpoints); }
 
-    /** Passive monitors; they record the last access but never stop execution. */
-    public CompletableFuture<Void> addMemoryWatch(int address) {
-        if (address < 0) throw new IllegalArgumentException("Invalid memory watch address");
-        if (debug == null) throw new IllegalStateException("Memory watches unavailable for this CPU");
-        return update(() -> { if (!memoryWatches.contains(address)) memoryWatches.add(address); });
-    }
-
-    public CompletableFuture<Void> removeMemoryWatch(int address) {
-        return update(() -> memoryWatches.remove(Integer.valueOf(address)));
-    }
-
     synchronized BreakpointHit takeBreakpointHit() {
         if (closed || state == CPU.RunState.STATE_RUNNING) return null;
         BreakpointHit hit = pendingHit;
@@ -697,7 +668,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         int breakpointIndex = 0;
         for (int address : breakpoints)
             p.setProperty("breakpoint." + breakpointIndex++ + ".address", Integer.toString(address));
-        for (int i = 0; i < memoryWatches.size(); i++) p.setProperty("memoryWatch." + i, Integer.toString(memoryWatches.get(i)));
         if (!p.equals(lastSaved)) {
             AtomicProperties.save(settings, p);
             lastSaved = p;
@@ -724,9 +694,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             String k = "breakpoint." + i + ".";
             if (!addLoadedBreakpoint(p.getProperty(k + "address"))) skipped++;
         }
-        for (int i : AtomicProperties.indices(p, "memoryWatch.", "")) {
-            if (!addLoadedMemoryWatch(p.getProperty("memoryWatch." + i))) skipped++;
-        }
         if (addressSpaceSize != 0) {
             skipped += annotations().importProperties(p);
         }
@@ -738,17 +705,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             int at = Integer.parseInt(address);
             if (at < 0 || at >= cpu.getAddressSpaceSize()) return false;
             breakpoints.add(at);
-            return true;
-        } catch (NumberFormatException invalid) {
-            return false;
-        }
-    }
-
-    private boolean addLoadedMemoryWatch(String address) {
-        try {
-            int at = Integer.parseInt(address);
-            if (at < 0 || at >= cpu.getAddressSpaceSize()) return false;
-            if (!memoryWatches.contains(at)) memoryWatches.add(at);
             return true;
         } catch (NumberFormatException invalid) {
             return false;
@@ -783,71 +739,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             invalidateProgram();
             pendingHit = null;
             generation++;
-        }
-    }
-
-    /** Memory watch state published at execution boundaries; PCs are -1 until an access is seen. */
-    public static final class MemoryWatchView {
-        public final int address;
-        public final String value, lastReadValue, lastWriteValue, error;
-        public final int lastReadPc, lastWritePc;
-
-        MemoryWatchView(int address, String value, int lastReadPc, String lastReadValue,
-                        int lastWritePc, String lastWriteValue, String error) {
-            this.address = address;
-            this.value = value;
-            this.lastReadPc = lastReadPc;
-            this.lastReadValue = lastReadValue;
-            this.lastWritePc = lastWritePc;
-            this.lastWriteValue = lastWriteValue;
-            this.error = error;
-        }
-    }
-
-    /** Uses private expressions so watch display state and the shared expression cache stay untouched. */
-    private static final class MemoryWatchTracker {
-        final int address;
-        Debugging.Expression read, write, value;
-        String error = "";
-        int lastReadPc = -1, lastWritePc = -1;
-        String lastReadValue = "", lastWriteValue = "";
-
-        MemoryWatchTracker(int address, Debugging debug) {
-            this.address = address;
-            try {
-                if (debug == null) throw new IllegalStateException("Memory watches unavailable for this CPU");
-                read = debug.compile("read(" + address + ")");
-                write = debug.compile("write(" + address + ")");
-                value = debug.compile("mem(" + address + ")");
-            } catch (RuntimeException failure) {
-                fail(failure);
-            }
-        }
-
-        void afterStep(int pc) {
-            if (!error.isEmpty()) return;
-            try {
-                boolean wasRead = read.test(), wasWritten = write.test();
-                if (!wasRead && !wasWritten) return;
-                String current = value.display().text;
-                if (wasRead) { lastReadPc = pc; lastReadValue = current; }
-                if (wasWritten) { lastWritePc = pc; lastWriteValue = current; }
-            } catch (RuntimeException failure) {
-                fail(failure);
-            }
-        }
-
-        MemoryWatchView view() {
-            String current = "";
-            if (error.isEmpty()) {
-                try { current = value.display().text; }
-                catch (RuntimeException failure) { fail(failure); }
-            }
-            return new MemoryWatchView(address, current, lastReadPc, lastReadValue, lastWritePc, lastWriteValue, error);
-        }
-
-        private void fail(RuntimeException failure) {
-            error = Objects.toString(failure.getMessage(), "Memory watch evaluation failed");
         }
     }
 

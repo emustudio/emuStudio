@@ -401,7 +401,7 @@ public class DebuggerSessionTest {
             machine.memoryChanged(1);
             assertThrows(IllegalStateException.class, () -> first.value(0));
             LiveMemory second = session.liveMemory();
-            session.annotations().add(new AnnotationIndex.Entry(1, "changed", "UNKNOWN"));
+            session.annotations().add(new AnnotationIndex.Entry(1, "changed", "CODE"));
             assertThrows(IllegalStateException.class, second::requireCurrent);
             LiveMemory third = session.liveMemory();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -457,53 +457,6 @@ public class DebuggerSessionTest {
         assertTrue(session.execution().closeAsync().isDone());
         assertTrue(machine.memoryListeners.isEmpty());
         assertThrows(IllegalStateException.class, session::requirePaused);
-    }
-
-    @Test
-    public void memoryWatchRecordsLastAccessWithoutStopping() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0x3E, 0x11}}, 2);
-        try (DebuggerSession session = machine.session(null)) {
-            session.addMemoryWatch(1).join();
-            verify(machine.debug, atLeastOnce()).observe(eq(session), any(Debugging.Capture.class));
-
-            assertFalse(machine.beforeStep(0));
-            machine.accessed(0, true);
-            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
-            assertFalse(machine.beforeStep(0));
-            machine.accessed(1, false);
-            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
-            session.refreshWatches().join();
-
-            DebuggerSession.MemoryWatchView view = session.memoryWatchValues().get(0);
-            assertEquals(1, view.address);
-            assertEquals("17", view.value);
-            assertEquals(0, view.lastReadPc);
-            assertEquals("17", view.lastReadValue);
-            assertEquals(-1, view.lastWritePc);
-            assertEquals("", view.error);
-            assertNull(session.takeBreakpointHit());
-
-            assertFalse(machine.beforeStep(1));
-            machine.accessed(1, true);
-            assertFalse(session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty()));
-            session.refreshWatches().join();
-            view = session.memoryWatchValues().get(0);
-            assertEquals(1, view.lastWritePc);
-            assertEquals(0, view.lastReadPc);
-
-            session.removeMemoryWatch(1).join();
-            assertTrue(session.memoryWatchValues().isEmpty());
-            assertTrue(machine.detached.get() > 0);
-        }
-    }
-
-    @Test
-    public void memoryWatchesAreUnavailableWithoutCpuDebugging() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
-        try (DebuggerSession session = machine.session(null)) {
-            assertThrows(IllegalStateException.class, () -> session.addMemoryWatch(0));
-            assertTrue(session.memoryWatches.isEmpty());
-        }
     }
 
     @Test
@@ -670,12 +623,12 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void settingsRoundTripWatchesBreakpointsAndMemoryWatches() throws Exception {
+    public void settingsRoundTripWatchesAndBreakpoints() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
         try (DebuggerSession session = new DebuggerSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings)) {
             session.watches.add("A + 1");
-            session.memoryWatches.add(1);
+            session.watches.add("mem[0x0001]");
             session.setBreakpoint(2, true).join();
             session.update(() -> { }).join();
             session.save();
@@ -684,13 +637,12 @@ public class DebuggerSessionTest {
         Properties saved = AtomicProperties.load(settings);
         Properties expected = new Properties();
         expected.setProperty("watch.0", "A + 1");
+        expected.setProperty("watch.1", "mem[0x0001]");
         expected.setProperty("breakpoint.0.address", "2");
-        expected.setProperty("memoryWatch.0", "1");
         assertEquals(expected, saved);
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
         try (DebuggerSession session = new DebuggerSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings)) {
-            assertEquals(List.of("A + 1"), session.watches);
-            assertEquals(List.of(1), session.memoryWatches);
+            assertEquals(List.of("A + 1", "mem[0x0001]"), session.watches);
             assertEquals(List.of(2), session.ordinaryBreakpoints());
             assertTrue(session.isBreakpointSet(2));
             assertTrue(session.takeLoadWarnings().isEmpty());
@@ -772,22 +724,19 @@ public class DebuggerSessionTest {
         values.setProperty("breakpoint.2.address", "x");
         values.setProperty("breakpoint.3.address", "0");
         values.setProperty("breakpoint.3.enabled", "maybe");
-        values.setProperty("memoryWatch.0", "zero");
-        values.setProperty("memoryWatch.1", "1");
         values.setProperty("watch.0", " ");
         values.setProperty("rule.0.kind", "SOURCE");
-        values.setProperty("entry.0.address", "0");
-        values.setProperty("entry.0.end", "99");
-        values.setProperty("entry.0.kind", "DATA");
+        values.setProperty("annotation.0.address", "0");
+        values.setProperty("annotation.0.end", "99");
+        values.setProperty("annotation.0.kind", "DATA");
         AtomicProperties.save(settings, values);
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
 
         try (DebuggerSession session = machine.session(settings)) {
             assertEquals(List.of(0), session.ordinaryBreakpoints());
-            assertTrue(session.memoryWatches.isEmpty());
             assertTrue(session.watches.isEmpty());
             assertTrue(session.annotations().entries().isEmpty());
-            assertEquals(List.of("Skipped 6 invalid debugger setting(s) in " + settings + "."), session.takeLoadWarnings());
+            assertEquals(List.of("Skipped 4 invalid debugger setting(s) in " + settings + "."), session.takeLoadWarnings());
         }
     }
 
@@ -807,7 +756,7 @@ public class DebuggerSessionTest {
             session.save();
 
             Properties saved = AtomicProperties.load(settings);
-            assertEquals("buffer", saved.getProperty("entry.0.label"));
+            assertEquals("buffer", saved.getProperty("annotation.0.label"));
             assertEquals("unknown + 1", saved.getProperty("watch.1"));
             assertEquals("2", saved.getProperty("breakpoint.0.address"));
         }
@@ -821,7 +770,7 @@ public class DebuggerSessionTest {
             assertTrue(session.watchErrors().containsKey("unknown + 1"));
             session.annotations().update(new AnnotationIndex.Entry(restored.id, 1, 3, "edited buffer", "DATA"));
             session.save();
-            assertEquals("edited buffer", AtomicProperties.load(settings).getProperty("entry.0.label"));
+            assertEquals("edited buffer", AtomicProperties.load(settings).getProperty("annotation.0.label"));
 
             reopened.state(CPU.RunState.STATE_RUNNING);
             session.update(() -> session.watches.add("A * 2")).get(2, TimeUnit.SECONDS);
@@ -838,7 +787,7 @@ public class DebuggerSessionTest {
 
             assertSame(compiler, session.annotationEngine.get(17, 1));
             Properties saved = AtomicProperties.load(settings);
-            assertTrue(saved.stringPropertyNames().stream().noneMatch(key -> key.startsWith("entry.")));
+            assertTrue(saved.stringPropertyNames().stream().noneMatch(key -> key.startsWith("annotation.")));
         }
 
         DebuggerTestMachine afterClear = new DebuggerTestMachine(new byte[][] {{6, 5, 4}}, 3);
@@ -880,7 +829,7 @@ public class DebuggerSessionTest {
             session.save();
         }
         Properties corrupt = AtomicProperties.load(settings);
-        corrupt.setProperty("entry.1.end", "99");
+        corrupt.setProperty("annotation.1.end", "99");
         AtomicProperties.save(settings, corrupt);
         MemoryAnnotations engine = new MemoryAnnotations();
         MemoryAnnotations.Entry compiler = new MemoryAnnotations.Entry(17, 1, 0, 1, "source", "compiler", null);
@@ -918,8 +867,8 @@ public class DebuggerSessionTest {
 
             Properties saved = AtomicProperties.load(settings);
             assertEquals("A + 1", saved.getProperty("watch.1"));
-            assertEquals("after", saved.getProperty("entry.0.label"));
-            assertEquals("CODE", saved.getProperty("entry.0.kind"));
+            assertEquals("after", saved.getProperty("annotation.0.label"));
+            assertEquals("CODE", saved.getProperty("annotation.0.kind"));
         }
     }
 
