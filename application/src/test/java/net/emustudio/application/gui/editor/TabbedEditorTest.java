@@ -31,7 +31,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
     @Test
     public void updatesTitleWhileTabHeaderIsAbsent() throws Exception {
         Path file = source("header.asm", "NOP");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), files -> { }));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(file)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
 
         runOnEdt(() -> {
@@ -54,10 +54,8 @@ public class TabbedEditorTest extends AbstractSwingTest {
     public void opensFilesInTabsAndRoutesToSelectedTab() throws Exception {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");
-        List<List<Path>> persisted = new ArrayList<>();
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(
-                mock(Dialogs.class), null, List.of(), files -> persisted.add(List.copyOf(files))
-        ));
+        TabbedEditor editor = onEdt(() -> editor(
+                mock(Dialogs.class), null, List.of()));
 
         assertTrue(onEdt(() -> editor.openFile(first)));
         assertTrue(onEdt(() -> editor.openFile(second)));
@@ -66,7 +64,6 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(2, onEdt(tabs::getTabCount).intValue());
         assertEquals("second.asm", onEdt(() -> tabs.getTitleAt(1)));
         assertEquals(second.toAbsolutePath(), editor.getCurrentFile().orElseThrow().toPath());
-        assertEquals(List.of(first.toAbsolutePath(), second.toAbsolutePath()), persisted.get(persisted.size() - 1));
 
         runOnEdt(() -> tabs.setSelectedIndex(0));
         assertEquals(first.toAbsolutePath(), editor.getCurrentFile().orElseThrow().toPath());
@@ -77,8 +74,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         Dialogs dialogs = mock(Dialogs.class);
         when(dialogs.ask("File is not saved yet. Do you want to save it?", "Confirmation"))
                 .thenReturn(Dialogs.Answer.CANCEL, Dialogs.Answer.NO);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(), files -> {
-        }));
+        TabbedEditor editor = onEdt(() -> editor(dialogs, null, List.of()));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         TextEditorPane textPane = findComponent(
                 (Container) onEdt(tabs::getSelectedComponent), TextEditorPane.class, pane -> true
@@ -100,9 +96,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");
         Path third = source("third.asm", "RET");
-        List<List<Path>> persisted = new ArrayList<>();
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
-                List.of(first, second, third), files -> persisted.add(List.copyOf(files))));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first, second, third)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         JButton closeFirst = closeButton(tabs, 0);
         JButton closeSecond = closeButton(tabs, 1);
@@ -111,7 +105,6 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(2, onEdt(tabs::getTabCount).intValue());
         assertEquals(third, editor.getCurrentFile().orElseThrow().toPath());
         triggerButton(closeSecond);
-        assertEquals(List.of(third), persisted.get(persisted.size() - 1));
         assertEquals("third.asm", onEdt(() -> tabs.getTitleAt(0)));
 
         triggerButton(closeButton(tabs, 0));
@@ -126,7 +119,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         Path second = source("second.asm", "HLT");
         Dialogs dialogs = mock(Dialogs.class);
         when(dialogs.ask(anyString(), eq("Confirmation"))).thenReturn(Dialogs.Answer.CANCEL, Dialogs.Answer.YES);
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null, List.of(first, second), files -> { }));
+        TabbedEditor editor = onEdt(() -> editor(dialogs, null, List.of(first, second)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         REditor firstEditor = editor.editors().get(0);
         runOnEdt(() -> firstEditor.textPane().append("\nRET"));
@@ -146,7 +139,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
     public void closeButtonClosesSplitDocumentAndRestoresOtherTab() throws Exception {
         Path first = source("first.asm", "NOP");
         Path second = source("second.asm", "HLT");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(first, second), files -> { }));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first, second)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         runOnEdt(() -> editor.split(true));
         triggerButton(closeButton(tabs, 1));
@@ -157,7 +150,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
 
     @Test
     public void extendedEditMenuPreservesStandardItemsAndUsesSelectedEditor() {
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(), files -> { }));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of()));
         REditor first = editor.activeEditor();
         runOnEdt(() -> {
             first.textPane().setText("first");
@@ -188,26 +181,26 @@ public class TabbedEditorTest extends AbstractSwingTest {
     }
 
     @Test
-    public void restoresExistingFilesAndSkipsMissingOnes() throws Exception {
-        Path existing = source("existing.asm", "NOP");
-        Path missing = temporaryFolder.getRoot().toPath().resolve("missing.asm");
+    public void reopeningEditorStartsWithNoFile() throws Exception {
+        Path file = source("program.asm", "NOP");
+        TabbedEditor first = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
+        assertTrue(onEdt(() -> first.openFile(file)));
+        runOnEdt(() -> first.editors().forEach(REditor::dispose));
 
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(
-                mock(Dialogs.class), null, List.of(existing, missing), files -> {
-                }
-        ));
-        JTabbedPane tabs = (JTabbedPane) editor.getView();
+        TabbedEditor reopened = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
+        JTabbedPane tabs = (JTabbedPane) reopened.getView();
 
         assertEquals(1, onEdt(tabs::getTabCount).intValue());
-        assertEquals("existing.asm", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals("Untitled", onEdt(() -> tabs.getTitleAt(0)));
+        assertTrue(reopened.getCurrentFile().isEmpty());
+        assertEquals("", onEdt(() -> reopened.activeEditor().textPane().getText()));
     }
 
     @Test
     public void ctrlClickingIncludeOpensItInNewTab() throws Exception {
         Path include = source("library.asm", "NOP");
         Path main = source("main.asm", "include \"library.asm\"");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(main), files -> {
-        }));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(main)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         showInFrame(tabs);
         TextEditorPane textPane = findComponent(
@@ -238,8 +231,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
         Path first = source("a.asm", "nop\nhlt\n");
         Path second = source("b.asm", "nop\nret\n");
         Path third = source("c.asm", "nop\ninr a\n");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
-                List.of(first, second), paths -> {}));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first, second)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         runOnEdt(() -> {
             tabs.setSelectedIndex(0);
@@ -260,7 +252,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
     @Test
     public void synchronizedPositionsKeepSplitAndDoNotEmitSourceFeedback() throws Exception {
         Path file = source("split.asm", "nop\ninr a\nhlt\n");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(file)));
         List<SourceCodePosition> selected = new ArrayList<>();
         runOnEdt(() -> {
             editor.setSourcePositionChanged(selected::add);
@@ -277,7 +269,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
     @Test
     public void splitFocusAndDebuggerFollowingKeepTheSearchTargetOnTheActivePane() throws Exception {
         Path file = source("panes.asm", "nop\ninr a\nhlt\n");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null, List.of(file), paths -> {}));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(file)));
         runOnEdt(() -> editor.split(true));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         JSplitPane split = onEdt(() -> (JSplitPane) tabs.getSelectedComponent());
@@ -306,8 +298,7 @@ public class TabbedEditorTest extends AbstractSwingTest {
     @Test
     public void switchingTabsPreservesExistingSplit() throws Exception {
         Path splitFile = source("split.asm", "nop\n"), otherFile = source("other.asm", "hlt\n");
-        TabbedEditor editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null,
-                List.of(splitFile, otherFile), paths -> {}));
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(splitFile, otherFile)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
         runOnEdt(() -> { tabs.setSelectedIndex(0); editor.split(true); });
         Component split = onEdt(tabs::getSelectedComponent);
@@ -315,6 +306,13 @@ public class TabbedEditorTest extends AbstractSwingTest {
         assertEquals(otherFile, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
         runOnEdt(() -> tabs.setSelectedIndex(0));
         assertSame(split, onEdt(tabs::getSelectedComponent));
+    }
+
+    private static TabbedEditor editor(Dialogs dialogs, net.emustudio.emulib.plugin.compiler.Compiler compiler,
+                                       List<Path> files) {
+        TabbedEditor editor = new TabbedEditor(dialogs, compiler);
+        files.forEach(file -> assertTrue(editor.openFile(file)));
+        return editor;
     }
 
     private Path source(String name, String text) throws Exception {

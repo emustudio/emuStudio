@@ -17,7 +17,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
@@ -30,7 +29,6 @@ public class TabbedEditor implements Editor {
 
     private final Dialogs dialogs;
     private final Compiler compiler;
-    private final Consumer<List<Path>> openFilesChanged;
     private final JTabbedPane tabs = new JTabbedPane();
     private final List<REditor> editors = new ArrayList<>();
     private final List<Runnable> fontSizeChangeListeners = new ArrayList<>();
@@ -59,15 +57,10 @@ public class TabbedEditor implements Editor {
     private Runnable activeEditorChanged = () -> {
     };
 
-    public TabbedEditor(Dialogs dialogs, Compiler compiler, Collection<Path> openFiles, Consumer<List<Path>> openFilesChanged) {
+    public TabbedEditor(Dialogs dialogs, Compiler compiler) {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.compiler = compiler;
-        this.openFilesChanged = Objects.requireNonNull(openFilesChanged);
-
-        Optional.ofNullable(openFiles).orElse(Collections.emptyList()).stream().filter(Files::isRegularFile).forEach(this::openFile);
-        if (editors.isEmpty()) {
-            addEditor(createEditor());
-        }
+        addEditor(createEditor());
         tabs.addChangeListener(e -> {
             if (splitIndex >= 0 && tabs.getSelectedIndex() == secondaryIndex) {
                 tabs.setSelectedIndex(splitIndex);
@@ -81,7 +74,6 @@ public class TabbedEditor implements Editor {
                 notifySourcePosition(activeEditor());
             }
         });
-        notifyOpenFilesChanged();
     }
 
     public void setActiveEditorChanged(Runnable activeEditorChanged) {
@@ -170,7 +162,6 @@ public class TabbedEditor implements Editor {
                 if (!target.openFile(path)) { target.dispose(); return false; }
                 addEditor(target);
                 tabs.setSelectedIndex(editors.indexOf(target));
-                notifyOpenFilesChanged();
             } else if (target != activeEditor().sourceEditor()) {
                 int index = editors.indexOf(target);
                 if (index != secondaryIndex) tabs.setSelectedIndex(index);
@@ -221,7 +212,6 @@ public class TabbedEditor implements Editor {
         if (editors.isEmpty()) {
             addEditor(createEditor());
         }
-        notifyOpenFilesChanged();
         notifyActiveEditorChanged();
         notifyFontSizeChanged();
         grabFocus();
@@ -277,7 +267,6 @@ public class TabbedEditor implements Editor {
         }
         tabs.setSelectedIndex(editors.indexOf(editor));
         updateTitle(editor);
-        notifyOpenFilesChanged();
         notifyActiveEditorChanged();
         return true;
     }
@@ -296,7 +285,6 @@ public class TabbedEditor implements Editor {
         boolean saved = save.test(editor);
         if (saved) {
             updateTitle(editor);
-            notifyOpenFilesChanged();
         }
         return saved;
     }
@@ -680,7 +668,4 @@ public class TabbedEditor implements Editor {
         return editor.isDirty() ? title + "*" : title;
     }
 
-    private void notifyOpenFilesChanged() {
-        openFilesChanged.accept(editors.stream().map(REditor::getCurrentFile).flatMap(Optional::stream).map(File::toPath).map(Path::toAbsolutePath).map(Path::normalize).collect(Collectors.toList()));
-    }
 }

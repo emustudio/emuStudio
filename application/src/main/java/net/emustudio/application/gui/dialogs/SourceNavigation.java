@@ -13,12 +13,17 @@ import net.emustudio.emulib.plugin.compiler.CompilerMessage;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 
 import javax.swing.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
 /** Coordinates view selections; execution state and source editing histories remain their owners'. */
 final class SourceNavigation implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SourceNavigation.class);
+
     private final Compiler compiler;
     private final DebuggerSession session;
     private final TabbedEditor editor;
@@ -53,7 +58,7 @@ final class SourceNavigation implements AutoCloseable {
                 synchronized (SourceNavigation.this) { if (current == compilation) inputs = captured; }
             } catch (Exception e) {
                 synchronized (SourceNavigation.this) { if (current == compilation) inputCaptureFailed = true; }
-                org.slf4j.LoggerFactory.getLogger(SourceNavigation.class).debug("Source inputs unavailable", e);
+                LOGGER.debug("Source inputs unavailable", e);
             }
         }
 
@@ -101,7 +106,7 @@ final class SourceNavigation implements AutoCloseable {
                     });
                     captured = result[0];
                 } catch (Exception e) {
-                    org.slf4j.LoggerFactory.getLogger(SourceNavigation.class).debug("Source navigation unavailable", e);
+                    LOGGER.debug("Source navigation unavailable", e);
                     publishCurrent(current, false);
                     return;
                 }

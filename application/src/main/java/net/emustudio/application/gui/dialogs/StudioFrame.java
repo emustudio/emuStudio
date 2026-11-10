@@ -69,9 +69,7 @@ public class StudioFrame extends JFrame {
 
         this.editor = new TabbedEditor(
                 dialogs,
-                computer.getCompiler().orElse(null),
-                computer.getComputerConfig().getOpenSourceFiles(),
-                computer.getComputerConfig()::setOpenSourceFiles
+                computer.getCompiler().orElse(null)
         );
         this.editor.configure(appSettings);
         this.editor.setActiveEditorChanged(this::updateWindowTitle);
