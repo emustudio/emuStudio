@@ -5,7 +5,6 @@ package net.emustudio.application.debugger;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import com.formdev.flatlaf.util.ScaledImageIcon;
-import net.emustudio.application.debugger.index.FlowGraph;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -97,9 +96,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JComboBox<String> watchFormat = new JComboBox<>();
     private final JCheckBox showUnchangedValues = new JCheckBox("Show unchanged values");
     private final WatchTableModel watchRows = new WatchTableModel();
-    private final DefaultListModel<AnnotationIndex.Entry> annotationRows = new DefaultListModel<>();
+    private final DefaultListModel<UserAnnotations.Entry> annotationRows = new DefaultListModel<>();
     private final JTable watches = new JTable(watchRows);
-    private final JList<AnnotationIndex.Entry> annotations = new JList<>(annotationRows);
+    private final JList<UserAnnotations.Entry> annotations = new JList<>(annotationRows);
     private final JTextArea historicalState;
     private final DebugTableImpl table;
     private final DebugTableModel instructionModel;
@@ -115,7 +114,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private int flowAnalysisLimit = 1000;
     private final List<JButton> inspectionButtons = new ArrayList<>();
     private boolean flowFromPc;
-    private AnnotationIndex index;
+    private UserAnnotations index;
     private boolean navigating;
     private final MemoryContext.MemoryListener memoryListener = new MemoryContext.MemoryListener() {
         @Override public void memoryContentChanged(int from, int to) { requestRefresh(); }
@@ -382,7 +381,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         instructionModel.removeTableModelListener(instructionRows);
     }
 
-    private void showAnnotations(AnnotationIndex loaded) {
+    private void showAnnotations(UserAnnotations loaded) {
         viewError = "";
         refreshDiagnostic();
         index = loaded;
@@ -769,7 +768,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationFilter.putClientProperty("FlatLaf.style", "placeholderForeground: $TextField.foreground");
         annotationForm = new AnnotationForm();
         editAnnotation = inspectionButton("edit-annotation", "Edit selected annotation", () -> {
-            AnnotationIndex.Entry entry = annotations.getSelectedValue();
+            UserAnnotations.Entry entry = annotations.getSelectedValue();
             if (entry != null) showAnnotationEditor(entry.address, "Edit annotation", entry);
         });
         editAnnotation.setEnabled(false);
@@ -791,7 +790,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tools.add(newAnnotation);
         tools.add(editAnnotation);
         deleteAnnotation = inspectionButton("remove-annotation", "Delete selected annotation", () -> {
-            AnnotationIndex.Entry entry = annotations.getSelectedValue();
+            UserAnnotations.Entry entry = annotations.getSelectedValue();
             if (entry == null || !confirmSaveAnnotations()) return;
             if (!confirm(String.format("Delete annotation at %04X?", entry.address), "Delete annotation")) return;
             changeAnnotations(() -> index.remove(entry));
@@ -864,7 +863,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void activateAnnotationResult() {
         if (annotations.getSelectedIndex() < 0 && !annotationRows.isEmpty()) annotations.setSelectedIndex(0);
-        AnnotationIndex.Entry entry = annotations.getSelectedValue();
+        UserAnnotations.Entry entry = annotations.getSelectedValue();
         if (entry == null) return;
         if (!confirmSaveAnnotations()) {
             selectAnnotationTarget();
@@ -882,7 +881,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (deleteAnnotation != null) deleteAnnotation.setEnabled(selected);
     }
 
-    private void showAnnotationEditor(int address, String title, AnnotationIndex.Entry entry) {
+    private void showAnnotationEditor(int address, String title, UserAnnotations.Entry entry) {
         if (entry == null) annotationForm.loadNew(address);
         else annotationForm.loadEntry(entry);
         Window owner = SwingUtilities.getWindowAncestor(this);
@@ -913,7 +912,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void changeAnnotations(Operation change) throws Exception {
-        List<AnnotationIndex.Entry> previous = index.entries();
+        List<UserAnnotations.Entry> previous = index.entries();
         try {
             change.run();
             session.save();
@@ -927,7 +926,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         else {
             graph.lanes.clear();
             graph.selectedLane = -1;
-            AnnotationIndex.Entry selected = annotations.getSelectedValue();
+            UserAnnotations.Entry selected = annotations.getSelectedValue();
             if (selected != null) graph.showAnnotation(selected);
             graph.updateGraphSize();
             graph.repaint();
@@ -955,7 +954,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private final JComboBox<String> kind = new JComboBox<>(new String[]{"Code", "Data"});
         private final JButton save;
         private int address;
-        private AnnotationIndex.Entry original;
+        private UserAnnotations.Entry original;
         private boolean loading, confirming;
         private Runnable onSaved = () -> {};
 
@@ -986,21 +985,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             updateState();
         }
 
-        boolean matches(AnnotationIndex.Entry entry) {
+        boolean matches(UserAnnotations.Entry entry) {
             return original != null && original.id >= 0 && entry.id == original.id;
         }
 
         void load(int at) {
-            AnnotationIndex.Entry entry = index == null ? null : index.get(at);
+            UserAnnotations.Entry entry = index == null ? null : index.get(at);
             if (entry == null) loadNew(at);
             else loadEntry(entry);
         }
 
         void loadNew(int at) {
-            loadEntry(new AnnotationIndex.Entry(at, "", "CODE"));
+            loadEntry(new UserAnnotations.Entry(at, "", "CODE"));
         }
 
-        void loadEntry(AnnotationIndex.Entry entry) {
+        void loadEntry(UserAnnotations.Entry entry) {
             loading = true;
             try {
                 address = entry.address;
@@ -1042,8 +1041,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                         + (session.addressSpaceSize() - 1) + ".");
             }
             address = target;
-            AnnotationIndex.Entry draft = new AnnotationIndex.Entry(original.id, address, end + 1, labelField.getText(), kinds.get(kind.getSelectedIndex()));
-            AnnotationIndex.Entry[] saved = {draft};
+            UserAnnotations.Entry draft = new UserAnnotations.Entry(original.id, address, end + 1, labelField.getText(), kinds.get(kind.getSelectedIndex()));
+            UserAnnotations.Entry[] saved = {draft};
             changeAnnotations(() -> {
                 if (draft.id < 0) saved[0] = index.add(draft);
                 else index.update(draft);
@@ -1070,10 +1069,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private JPanel watchPanel() {
         JPanel panel = borderPanel(4);
+        watches.setTableHeader(null);
         watches.setFont(new Font(Font.MONOSPACED, Font.PLAIN, watches.getFont().getSize()));
         watches.getAccessibleContext().setAccessibleName("Watch expressions and values");
         watches.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         watches.putClientProperty("terminateEditOnFocusLost", true);
+        watches.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent event) {
+                if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() == 2
+                        && watches.columnAtPoint(event.getPoint()) == 0)
+                    editWatch(watches.rowAtPoint(event.getPoint()));
+            }
+        });
         watches.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
                                                                      boolean focus, int row, int column) {
@@ -1118,18 +1125,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             String selected = selectedWatch();
             if (selected != null) submitUpdate(() -> { session.watches.remove(selected); session.save(); });
         }), liveButton(ICON_RENAME, "Edit watch", () -> {
-            int row = watches.getSelectedRow();
-            if (row >= 0 && watches.editCellAt(row, 0)) {
-                JTextField editor = (JTextField) watches.getEditorComponent();
-                editor.requestFocusInWindow();
-                editor.selectAll();
-            }
+            editWatch(watches.getSelectedRow());
         }), liveButton(ICON_REFRESH, "Refresh", () -> submitUpdate(() -> {})));
         watchTools.addSeparator();
         watchTools.add(watchFormat);
         panel.add(scrollTools(tools), BorderLayout.NORTH);
         panel.setPreferredSize(new Dimension(280, 230));
         return panel;
+    }
+
+    private void editWatch(int row) {
+        if (row >= 0 && watches.editCellAt(row, 0)) {
+            JTextField editor = (JTextField) watches.getEditorComponent();
+            editor.requestFocusInWindow();
+            editor.selectAll();
+        }
     }
 
     private String selectedWatch() {
@@ -1633,8 +1643,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void refreshAnnotations(String filter) {
-        AnnotationIndex.Entry selected = annotations.getSelectedValue();
-        List<AnnotationIndex.Entry> entries = index == null ? List.of() : index.search(filter);
+        UserAnnotations.Entry selected = annotations.getSelectedValue();
+        List<UserAnnotations.Entry> entries = index == null ? List.of() : index.search(filter);
         updateRows(annotationRows, entries);
         annotations.clearSelection();
         if (selected != null) annotations.setSelectedIndex(rowOf(annotationRows, entry -> entry.id == selected.id));
@@ -1645,20 +1655,20 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         ((CardLayout) annotationList.getLayout()).show(annotationList, entries.isEmpty() ? "empty" : "list");
     }
 
-    private List<AnnotationIndex.Entry> annotationsCovering(int address) {
+    private List<UserAnnotations.Entry> annotationsCovering(int address) {
         if (index == null) return List.of();
         int size = session.addressSpaceSize();
         if (address < 0 || address >= size)
             return List.of();
-        List<AnnotationIndex.Entry> result = new ArrayList<>();
-        for (AnnotationIndex.Entry entry : index.entries())
+        List<UserAnnotations.Entry> result = new ArrayList<>();
+        for (UserAnnotations.Entry entry : index.entries())
             if (entry.address <= address && address < entry.end) result.add(entry);
         return result;
     }
 
     private String annotationTooltip(int address) {
         List<String> descriptions = new ArrayList<>();
-        for (AnnotationIndex.Entry entry : annotationsCovering(address)) {
+        for (UserAnnotations.Entry entry : annotationsCovering(address)) {
             String description = entry.label.trim();
             descriptions.add(description.isEmpty() ? "Annotation" : description);
         }
@@ -1666,17 +1676,17 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     /** Derived from the annotated range only, so an annotation keeps its color across sessions. */
-    private static Color laneFill(AnnotationIndex.Entry annotation) {
+    private static Color laneFill(UserAnnotations.Entry annotation) {
         int hue = Math.floorMod((annotation.address * 31 + annotation.end) * 0x9E3779B9, 360);
         return Color.getHSBColor(hue / 360f, .55f, .78f);
     }
 
     private Color annotationBackground(int address) {
-        List<AnnotationIndex.Entry> entries = annotationsCovering(address);
+        List<UserAnnotations.Entry> entries = annotationsCovering(address);
         if (entries.isEmpty()) return null;
         Color background = graph.getBackground();
         if (background == null) background = table.getBackground();
-        for (AnnotationIndex.Entry entry : entries) {
+        for (UserAnnotations.Entry entry : entries) {
             Color lane = laneFill(entry);
             background = new Color((lane.getRed() * 28 + background.getRed() * 227 + 127) / 255,
                     (lane.getGreen() * 28 + background.getGreen() * 227 + 127) / 255,
@@ -1921,11 +1931,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         private boolean draggedSelection;
 
         private final class AnnotationLane {
-            final AnnotationIndex.Entry annotation;
+            final UserAnnotations.Entry annotation;
             final Rectangle bounds;
             final Rectangle header;
 
-            AnnotationLane(AnnotationIndex.Entry annotation, Rectangle bounds, Rectangle header) {
+            AnnotationLane(UserAnnotations.Entry annotation, Rectangle bounds, Rectangle header) {
                 this.annotation = annotation;
                 this.bounds = bounds;
                 this.header = header;
@@ -1996,7 +2006,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                                     requireCurrent();
                                     if (confirmSaveAnnotations())
                                         showAnnotationEditor(first, "New annotation",
-                                                new AnnotationIndex.Entry(-1, first, end, "", "CODE"));
+                                                new UserAnnotations.Entry(-1, first, end, "", "CODE"));
                                 });
                             }
                             candidateLane = null;
@@ -2119,14 +2129,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
 
         private void editLane(int lane) {
-            AnnotationIndex.Entry annotation = lanes.get(lane).annotation;
+            UserAnnotations.Entry annotation = lanes.get(lane).annotation;
             guard(() -> {
                 if (confirmSaveAnnotations())
                     showAnnotationEditor(annotation.address, "Edit annotation", annotation);
             });
         }
 
-        private void showAnnotation(AnnotationIndex.Entry annotation) {
+        private void showAnnotation(UserAnnotations.Entry annotation) {
             for (int i = 0; i < lanes.size(); i++) {
                 if (lanes.get(i).annotation.id == annotation.id) {
                     selectLane(i);
@@ -2141,7 +2151,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             selectLane(lanes.size() - 1);
         }
 
-        private String laneTitle(AnnotationIndex.Entry annotation) {
+        private String laneTitle(UserAnnotations.Entry annotation) {
             return annotation.label.isBlank() ? String.format("%04X", annotation.address) : annotation.label;
         }
 
@@ -2256,7 +2266,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             Set<Integer> boundaries = new HashSet<>(List.of(start, layoutPc, selection));
             refreshNodeLabels();
             boundaries.addAll(nodeLabelCache.keySet());
-            if (index != null) for (AnnotationIndex.Entry annotation : index.entries()) {
+            if (index != null) for (UserAnnotations.Entry annotation : index.entries()) {
                 instructions.forEach((at, instruction) -> {
                     if ((at <= annotation.address && annotation.address < instruction.cells().end)
                             || (at < annotation.end && annotation.end <= instruction.cells().end))
@@ -2276,14 +2286,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 instructionEnds.put(at, last == null ? at + 1 : last.cells().end);
             }
             if (index != null) {
-                List<AnnotationIndex.Entry> visible = new ArrayList<>();
-                for (AnnotationIndex.Entry annotation : index.entries()) {
+                List<UserAnnotations.Entry> visible = new ArrayList<>();
+                for (UserAnnotations.Entry annotation : index.entries()) {
                     if (boxes.keySet().stream().anyMatch(at -> coversInstruction(annotation, at))) visible.add(annotation);
                 }
                 int nodeX = 30 + visible.size() * 110;
                 boxes.values().forEach(box -> box.x = nodeX);
                 for (int i = 0; i < visible.size(); i++) {
-                    AnnotationIndex.Entry annotation = visible.get(i);
+                    UserAnnotations.Entry annotation = visible.get(i);
                     List<Rectangle> covered = new ArrayList<>();
                     boxes.forEach((at, box) -> {
                         if (coversInstruction(annotation, at)) covered.add(box);
@@ -2296,7 +2306,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             if (selectedNode >= 0 && !boxes.containsKey(selectedNode) && !boxes.isEmpty())
                 selectedNode = boxes.keySet().iterator().next();
-            AnnotationIndex.Entry selectedAnnotation = annotations.getSelectedValue();
+            UserAnnotations.Entry selectedAnnotation = annotations.getSelectedValue();
             if (selectedAnnotation != null) showAnnotation(selectedAnnotation);
             updateFlowNavigation();
             updateSelectedEdges();
@@ -2320,7 +2330,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (nodeLabelCache != null && labelSession == currentSession
                     && labelContentRevision == content && labelMemoryRevision == memory) return;
             Map<Integer, LinkedHashSet<String>> annotations = new HashMap<>(), symbols = new HashMap<>();
-            if (index != null) for (AnnotationIndex.Entry entry : index.entries()) {
+            if (index != null) for (UserAnnotations.Entry entry : index.entries()) {
                 String label = entry.label.trim();
                 if (!label.isEmpty()) annotations.computeIfAbsent(entry.address, ignored -> new LinkedHashSet<>()).add(label);
             }
@@ -2342,7 +2352,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             labelMemoryRevision = memory;
         }
 
-        private boolean coversInstruction(AnnotationIndex.Entry annotation, int at) {
+        private boolean coversInstruction(UserAnnotations.Entry annotation, int at) {
             int overlap = Math.max(at, annotation.address);
             return overlap < Math.min(instructionEnds.get(at), annotation.end);
         }

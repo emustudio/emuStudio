@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.debugger.index;
+package net.emustudio.application.debugger;
 
 import com.sun.management.ThreadMXBean;
 import org.junit.Assume;
@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.lang.management.ManagementFactory;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.debugger.index.FlowGraph.*;
+import static net.emustudio.application.debugger.FlowGraph.*;
 import java.util.*;
 import static org.junit.Assert.assertEquals;
 

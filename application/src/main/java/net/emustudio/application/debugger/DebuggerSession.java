@@ -14,7 +14,6 @@ import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -32,7 +31,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final List<String> loadWarnings = new ArrayList<>();
     private final Path settings;
     private Properties lastSaved;
-    private AnnotationIndex annotations;
+    private UserAnnotations annotations;
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
     private int addressSpaceSize;
@@ -113,17 +112,10 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     }
 
-    /** Live reads never retain a copy of memory cells. Reacquire after a machine or metadata edit. */
-    public LiveMemory liveMemory() {
-        if (memory == null) throw new IllegalStateException("Memory unavailable");
-        Stamp stamp = liveStamp();
-        return new LiveMemory(memory, stamp.size, () -> requireCurrent(stamp));
-    }
-
     /** User metadata is restored once at startup; reads need no disk access or paused CPU. */
-    public synchronized AnnotationIndex annotations() {
+    public synchronized UserAnnotations annotations() {
         int size = addressSpaceSize();
-        if (annotations == null) annotations = new AnnotationIndex(size, annotationEngine);
+        if (annotations == null) annotations = new UserAnnotations(size, annotationEngine);
         return annotations;
     }
 
@@ -293,13 +285,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         apply.run();
     }
 
-    private synchronized Stamp liveStamp() {
-        requirePaused();
-        requireNoMutation();
-        addressSpaceSize();
-        return new Stamp(this);
-    }
-
     /** Captures operation provenance, excluding independent breakpoint edits. */
     synchronized Stamp pausedStamp() {
         pausedGeneration();
@@ -334,11 +319,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                 apply.run();
             }
         });
-    }
-
-    private void requireCurrent(Stamp stamp) {
-        if (Thread.currentThread().isInterrupted()) throw new CancellationException();
-        applyCurrent(stamp, "Analysis discarded: memory, source or metadata changed", () -> {});
     }
 
     /** Select an immutable view of completed runtime observations; never decode or execute memory. */

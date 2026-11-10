@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
-import net.emustudio.application.debugger.index.FlowGraph;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
@@ -47,7 +46,8 @@ public final class FlowAnalysis {
     public Map<Integer, String> unknown() { return unknown; }
     public boolean isData(int address) {
         return annotations.at(address).stream().anyMatch(annotation ->
-                annotation.kind.equals(AnnotationIndex.USER_KIND + "DATA") || annotation.kind.equals("data"));
+                (annotation.ownerId == UserAnnotations.OWNER && annotation.kind.equals("DATA"))
+                        || annotation.kind.equals("data"));
     }
 
     /** Folding follows observed adjacency only; no opcode or transfer classification. */

@@ -160,10 +160,18 @@ public class DebuggerPanelTest {
                     assertTrue(values.isCellEditable(0, 0));
                     assertFalse(values.isCellEditable(0, 1));
                     java.awt.Rectangle cell = values.getCellRect(0, 0, true);
-                    values.dispatchEvent(new java.awt.event.MouseEvent(values, java.awt.event.MouseEvent.MOUSE_PRESSED,
+                    values.dispatchEvent(new java.awt.event.MouseEvent(values, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            0, 0, cell.x + 4, cell.y + 4, 1, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(values.isEditing());
+                    java.awt.Rectangle valueCell = values.getCellRect(0, 1, true);
+                    values.dispatchEvent(new java.awt.event.MouseEvent(values, java.awt.event.MouseEvent.MOUSE_CLICKED,
+                            0, 0, valueCell.x + 4, valueCell.y + 4, 2, false, java.awt.event.MouseEvent.BUTTON1));
+                    assertFalse(values.isEditing());
+                    values.dispatchEvent(new java.awt.event.MouseEvent(values, java.awt.event.MouseEvent.MOUSE_CLICKED,
                             0, 0, cell.x + 4, cell.y + 4, 2, false, java.awt.event.MouseEvent.BUTTON1));
                     assertTrue(values.isEditing());
                     JTextField editor = (JTextField) values.getEditorComponent();
+                    assertEquals("A", editor.getSelectedText());
                     editor.setText("mem[0x0001]");
                     workspace.machine.values.put("A", 7L);
                     button(frame, "Refresh").doClick(0);
@@ -575,7 +583,7 @@ public class DebuggerPanelTest {
             for (int at = 0; at < 10; at++) observed(session, at, OptionalInt.of(at + 1));
             observed(session, DecodedInstruction.of(10, 1, "STOP", "76"), OptionalInt.empty());
         })) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(6, "checkpoint", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(6, "checkpoint", "CODE"));
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.navigate(0);
                 button(workspace.panel, "Go to instruction").addPropertyChangeListener("enabled", event -> {
@@ -780,8 +788,8 @@ public class DebuggerPanelTest {
     @Test
     public void inspectionToolbarShowsAllAnnotationsWhenEmptySearchIsClicked() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 8, 9, "second", "DATA"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 3, 4, "first", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 8, 9, "second", "DATA"));
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
@@ -802,8 +810,8 @@ public class DebuggerPanelTest {
                     assertTrue(popup.isVisible());
                     JList<?> results = component(popup, JList.class, "Annotations");
                     assertEquals(2, results.getModel().getSize());
-                    assertEquals("first", ((AnnotationIndex.Entry) results.getModel().getElementAt(0)).label);
-                    assertEquals("second", ((AnnotationIndex.Entry) results.getModel().getElementAt(1)).label);
+                    assertEquals("first", ((UserAnnotations.Entry) results.getModel().getElementAt(0)).label);
+                    assertEquals("second", ((UserAnnotations.Entry) results.getModel().getElementAt(1)).label);
                     results.setSelectedIndex(1);
                     java.awt.Rectangle selected = results.getCellBounds(1, 1);
                     results.dispatchEvent(new java.awt.event.MouseEvent(results, java.awt.event.MouseEvent.MOUSE_CLICKED,
@@ -819,8 +827,8 @@ public class DebuggerPanelTest {
     @Test
     public void annotationSearchKeyboardPreviewsThenActivatesTheChosenResult() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 8, 9, "second", "DATA"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 3, 4, "first", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 8, 9, "second", "DATA"));
             List<Integer> visits = new ArrayList<>();
             JFrame frame = new JFrame();
             try {
@@ -872,7 +880,7 @@ public class DebuggerPanelTest {
     @Test
     public void annotationSearchHandlesEmptyResultsAndClosesWithTheWorkspace() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 4, "first", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 3, 4, "first", "CODE"));
             List<Integer> visits = new ArrayList<>();
             JFrame frame = new JFrame();
             try {
@@ -924,7 +932,7 @@ public class DebuggerPanelTest {
     @Test
     public void searchingSelectsAnAnnotationOutsideTheAnalyzedFlow() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 12, 14, "buffer", "DATA"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 12, 14, "buffer", "DATA"));
             SwingUtilities.invokeAndWait(() -> {
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 assertEquals(-1, tabs.indexOfTab("Annotations"));
@@ -964,7 +972,7 @@ public class DebuggerPanelTest {
     public void annotationToolbarExportsAndImportsUserAnnotations() throws Exception {
         Path file = temporary.getRoot().toPath().resolve("annotations.properties");
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 3, 5, "buffer", "DATA"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 3, 5, "buffer", "DATA"));
             SwingUtilities.invokeAndWait(() -> chooseAnnotationFile(workspace.panel, "Export annotations", file));
             assertTrue(java.nio.file.Files.isRegularFile(file));
             workspace.session.annotations().replace(List.of());
@@ -999,7 +1007,7 @@ public class DebuggerPanelTest {
     @Test
     public void cancelledAnnotationNavigationClearsSelectionAndEscapeDiscardsDraft() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
-            workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "saved", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(-1, 1, 2, "saved", "CODE"));
             List<Integer> visits = new ArrayList<>();
             java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
             SwingUtilities.invokeAndWait(() -> {
@@ -1079,7 +1087,7 @@ public class DebuggerPanelTest {
                     annotationField(dialog, "Label").setText("second");
                 });
                 JTextField search = component(panel, JTextField.class, "Search annotations");
-                @SuppressWarnings("unchecked") JList<AnnotationIndex.Entry> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                @SuppressWarnings("unchecked") JList<UserAnnotations.Entry> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
                 assertEquals(2, list.getModel().getSize());
                 int firstRow = list.getModel().getElementAt(0).label.equals("first") ? 0 : 1;
                 list.setSelectedIndex(firstRow);
@@ -1089,10 +1097,10 @@ public class DebuggerPanelTest {
                 });
             });
 
-            List<AnnotationIndex.Entry> entries = workspace.session.annotations().entries();
+            List<UserAnnotations.Entry> entries = workspace.session.annotations().entries();
             assertEquals(2, entries.size());
-            AnnotationIndex.Entry updated = entries.stream().filter(entry -> entry.label.equals("updated")).findFirst().orElseThrow();
-            AnnotationIndex.Entry second = entries.stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
+            UserAnnotations.Entry updated = entries.stream().filter(entry -> entry.label.equals("updated")).findFirst().orElseThrow();
+            UserAnnotations.Entry second = entries.stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
             assertEquals(1, updated.address);
             assertEquals(7, updated.end);
             assertEquals(2, second.address);
@@ -1257,7 +1265,7 @@ public class DebuggerPanelTest {
     public void instructionRowsShowLabelFirstAndBreakpointsAsBoldText() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {
             try {
-                session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
+                session.annotations().add(new UserAnnotations.Entry(0, "start", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -1290,8 +1298,8 @@ public class DebuggerPanelTest {
     public void instructionRowsAndTooltipsCoverAnnotationRangeAndUseLaneColors() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0, 0}}, 3, session -> {
             try {
-                session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "range", "CODE"));
-                session.annotations().add(new AnnotationIndex.Entry(-1, 1, 2, "inner", "CODE"));
+                session.annotations().add(new UserAnnotations.Entry(-1, 0, 2, "range", "CODE"));
+                session.annotations().add(new UserAnnotations.Entry(-1, 1, 2, "inner", "CODE"));
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
@@ -1531,7 +1539,7 @@ public class DebuggerPanelTest {
             assertTrue(shown.await(5, TimeUnit.SECONDS));
             observed(workspace.session, DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(200));
             observed(workspace.session, DecodedInstruction.of(200, 1, "B", "02"), OptionalInt.empty());
-            workspace.session.annotations().add(new AnnotationIndex.Entry(100, "entry", "CODE"));
+            workspace.session.annotations().add(new UserAnnotations.Entry(100, "entry", "CODE"));
             workspace.machine.memoryChanged(100);
             when(net.emustudio.application.TestCpu.context(workspace.session.cpu).getInstructionLocation()).thenReturn(200);
             SwingUtilities.invokeAndWait(workspace.panel::stepCompleted);
@@ -1642,8 +1650,8 @@ public class DebuggerPanelTest {
             observed(session, 0, OptionalInt.of(1));
             observed(session, 1, OptionalInt.empty());
         })) {
-                workspace.session.annotations().add(new AnnotationIndex.Entry(0, "start", "CODE"));
-                workspace.session.annotations().add(new AnnotationIndex.Entry(-1, 0, 2, "region", "CODE"));
+                workspace.session.annotations().add(new UserAnnotations.Entry(0, "start", "CODE"));
+                workspace.session.annotations().add(new UserAnnotations.Entry(-1, 0, 2, "region", "CODE"));
                 SwingUtilities.invokeAndWait(() -> {
                     AbstractButton goTo = button(workspace.panel, "Go to instruction");
                     assertFalse(goTo.isEnabled());
@@ -1653,7 +1661,7 @@ public class DebuggerPanelTest {
                     button(workspace.panel, "Show observed flow from PC").doClick(0);
                 });
                 assertTrue("Observed instructions should reach UI", shown.await(5, TimeUnit.SECONDS));
-                AnnotationIndex annotationIndex = workspace.session.annotations();
+                UserAnnotations annotationIndex = workspace.session.annotations();
                 SwingUtilities.invokeAndWait(() -> {
                     assertNull(findComponent(workspace.panel, JList.class, "Static references"));
                     JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");

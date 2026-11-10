@@ -10,14 +10,13 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** User-metadata editor and persistence adapter over CPU-visible addresses. */
-public final class AnnotationIndex {
+public final class UserAnnotations {
     public static final long OWNER = Long.MIN_VALUE;
-    public static final String USER_KIND = "emuStudio.user/";
     private static final AtomicLong IDS = new AtomicLong();
     private final int addressSpaceSize;
     private final MemoryAnnotations engine;
 
-    public AnnotationIndex(int addressSpaceSize, MemoryAnnotations engine) {
+    public UserAnnotations(int addressSpaceSize, MemoryAnnotations engine) {
         if (addressSpaceSize < 1) throw new IllegalArgumentException("Invalid memory layout");
         this.addressSpaceSize = addressSpaceSize;
         this.engine = Objects.requireNonNull(engine);
@@ -75,7 +74,7 @@ public final class AnnotationIndex {
                 }
                 values.removeIf(existing -> existing.entryId == entry.id);
                 values.add(new MemoryAnnotations.Entry(OWNER, entry.id, entry.address, entry.end,
-                        USER_KIND + entry.kind, entry.label, null));
+                        entry.kind, entry.label, null));
             }
             if (engine.compareAndReplaceOwner(revision, OWNER, values)) break;
         }
@@ -88,8 +87,7 @@ public final class AnnotationIndex {
     public List<Entry> entries() {
         List<Entry> result = new ArrayList<>();
         for (MemoryAnnotations.Entry entry : userEntries())
-            if (entry.kind.startsWith(USER_KIND)) result.add(new Entry(entry.entryId, entry.start, entry.end,
-                    entry.text, entry.kind.substring(USER_KIND.length())));
+            result.add(new Entry(entry.entryId, entry.start, entry.end, entry.text, entry.kind));
         return List.copyOf(result);
     }
 

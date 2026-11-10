@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.debugger.index;
+package net.emustudio.application.debugger;
 
 import java.util.Arrays;
 import java.util.Map;

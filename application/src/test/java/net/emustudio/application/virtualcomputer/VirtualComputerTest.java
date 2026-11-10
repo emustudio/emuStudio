@@ -11,7 +11,7 @@ import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.debugger.AnnotationIndex;
+import net.emustudio.application.debugger.UserAnnotations;
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugin.Plugin;
@@ -53,7 +53,7 @@ public class VirtualComputerTest {
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
         try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
-            seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "CODE"));
+            seed.annotations().add(new UserAnnotations.Entry(3, "saved label", "CODE"));
             seed.save();
         }
         clearInvocations(memory);

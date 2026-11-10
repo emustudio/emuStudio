@@ -15,14 +15,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class AnnotationIndexTest {
+public class UserAnnotationsTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
     public void replacingCompilerAnnotationsPreservesUserMetadata() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(8, engine);
-        annotations.add(new AnnotationIndex.Entry(1, "user", "CODE"));
+        UserAnnotations annotations = new UserAnnotations(8, engine);
+        annotations.add(new UserAnnotations.Entry(1, "user", "CODE"));
         engine.put(new MemoryAnnotations.Entry(10, 1, 1, 2, "source", "old", null));
 
         engine.replaceOwner(10, List.of(new MemoryAnnotations.Entry(10, 2, 2, 3, "source", "new", null)));
@@ -34,20 +34,20 @@ public class AnnotationIndexTest {
 
     @Test
     public void importRetriesConcurrentEditsWithoutLosingLiveValuesOrOtherOwners() throws Exception {
-        AnnotationIndex saved = new AnnotationIndex(8, new MemoryAnnotations());
-        saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
-        saved.add(new AnnotationIndex.Entry(2, "retained", "CODE"));
+        UserAnnotations saved = new UserAnnotations(8, new MemoryAnnotations());
+        saved.add(new UserAnnotations.Entry(1, "saved", "DATA"));
+        saved.add(new UserAnnotations.Entry(2, "retained", "CODE"));
         MemoryAnnotations engine = spy(new MemoryAnnotations());
         AtomicBoolean first = new AtomicBoolean(true);
         doAnswer(call -> {
             if (first.getAndSet(false)) {
-                engine.put(new MemoryAnnotations.Entry(AnnotationIndex.OWNER, 1L << 40, 3, 4,
-                        AnnotationIndex.USER_KIND + "DATA", "live edit", null));
+                engine.put(new MemoryAnnotations.Entry(UserAnnotations.OWNER, 1L << 40, 3, 4,
+                        "DATA", "live edit", null));
                 engine.put(new MemoryAnnotations.Entry(42, 1, 0, 1, "custom", "changed", null));
             }
             return call.callRealMethod();
-        }).when(engine).compareAndReplaceOwner(anyLong(), eq(AnnotationIndex.OWNER), anyCollection());
-        AnnotationIndex live = new AnnotationIndex(8, engine);
+        }).when(engine).compareAndReplaceOwner(anyLong(), eq(UserAnnotations.OWNER), anyCollection());
+        UserAnnotations live = new UserAnnotations(8, engine);
 
         assertEquals(0, live.importProperties(saved.properties()));
 
@@ -60,10 +60,10 @@ public class AnnotationIndexTest {
     @Test
     public void malformedImportEntriesAreSkippedAndCounted() {
         int size = 2;
-        AnnotationIndex live = new AnnotationIndex(size, new MemoryAnnotations());
-        live.add(new AnnotationIndex.Entry(0, "keep", "CODE"));
-        AnnotationIndex saved = new AnnotationIndex(size, new MemoryAnnotations());
-        saved.add(new AnnotationIndex.Entry(1, "saved", "DATA"));
+        UserAnnotations live = new UserAnnotations(size, new MemoryAnnotations());
+        live.add(new UserAnnotations.Entry(0, "keep", "CODE"));
+        UserAnnotations saved = new UserAnnotations(size, new MemoryAnnotations());
+        saved.add(new UserAnnotations.Entry(1, "saved", "DATA"));
         Properties input = saved.properties();
         input.setProperty("annotation.1.address", "invalid");
         input.setProperty("annotation.2.address", "0");
@@ -84,9 +84,9 @@ public class AnnotationIndexTest {
     public void metadataLoadPreservesCompilerMappingsAndOtherOwners() throws Exception {
         int size = 2;
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex live = new AnnotationIndex(size, engine);
-        AnnotationIndex captured = new AnnotationIndex(size, new MemoryAnnotations());
-        captured.add(new AnnotationIndex.Entry(0, "user", "CODE"));
+        UserAnnotations live = new UserAnnotations(size, engine);
+        UserAnnotations captured = new UserAnnotations(size, new MemoryAnnotations());
+        captured.add(new UserAnnotations.Entry(0, "user", "CODE"));
         engine.put(new MemoryAnnotations.Entry(9, 8, 1, 2, "custom:note", "keep", null));
 
         live.importProperties(captured.properties());
@@ -98,7 +98,7 @@ public class AnnotationIndexTest {
     @Test
     public void importIgnoresLegacyCountAndVersionKeys() {
         int size = 4;
-        AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
+        UserAnnotations annotations = new UserAnnotations(size, new MemoryAnnotations());
         Properties input = new Properties();
         input.setProperty("version", "1");
         input.setProperty("entries", "1");
@@ -117,8 +117,8 @@ public class AnnotationIndexTest {
 
     @Test
     public void repeatedImportDoesNotDuplicateAnnotations() {
-        AnnotationIndex annotations = new AnnotationIndex(4, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(-1, 1, 3, "buffer", "DATA"));
+        UserAnnotations annotations = new UserAnnotations(4, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(-1, 1, 3, "buffer", "DATA"));
         Properties saved = annotations.properties();
 
         annotations.importProperties(saved);
@@ -129,8 +129,8 @@ public class AnnotationIndexTest {
 
     @Test
     public void savedAnnotationsContainOnlyRangesLabelsAndKinds() {
-        AnnotationIndex annotations = new AnnotationIndex(4, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(-1, 1, 3, "buffer", "DATA"));
+        UserAnnotations annotations = new UserAnnotations(4, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(-1, 1, 3, "buffer", "DATA"));
         Properties expected = new Properties();
         expected.setProperty("annotation.0.address", "1");
         expected.setProperty("annotation.0.end", "3");
@@ -142,7 +142,7 @@ public class AnnotationIndexTest {
 
     @Test
     public void importedAnnotationWithoutKindDefaultsToCode() {
-        AnnotationIndex annotations = new AnnotationIndex(4, new MemoryAnnotations());
+        UserAnnotations annotations = new UserAnnotations(4, new MemoryAnnotations());
         Properties input = new Properties();
         input.setProperty("annotation.0.address", "1");
         input.setProperty("annotation.0.end", "3");
@@ -158,8 +158,8 @@ public class AnnotationIndexTest {
     public void clearingUserMetadataPreservesCompilerAndOtherOwners() {
         int size = 2;
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(size, engine);
-        annotations.add(new AnnotationIndex.Entry(0, "user", "DATA"));
+        UserAnnotations annotations = new UserAnnotations(size, engine);
+        annotations.add(new UserAnnotations.Entry(0, "user", "DATA"));
         engine.put(new MemoryAnnotations.Entry(2, 1, 0, 1, "label", "compiler", null));
         engine.put(new MemoryAnnotations.Entry(99, 1, 0, 2, "custom:region", "external", null));
 
@@ -173,10 +173,10 @@ public class AnnotationIndexTest {
 
     @Test
     public void annotationIsFoundAndRemovedAtItsCpuVisibleAddress() {
-        AnnotationIndex annotations = new AnnotationIndex(2, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(1, "shared", "DATA"));
+        UserAnnotations annotations = new UserAnnotations(2, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(1, "shared", "DATA"));
 
-        AnnotationIndex.Entry shared = annotations.get(1);
+        UserAnnotations.Entry shared = annotations.get(1);
         assertEquals("shared", shared.label);
         assertEquals(shared.id, annotations.get(1).id);
 
@@ -186,11 +186,11 @@ public class AnnotationIndexTest {
 
     @Test
     public void updatingIdentityReplacesOnlyThatAnnotation() {
-        AnnotationIndex annotations = new AnnotationIndex(2, new MemoryAnnotations());
-        AnnotationIndex.Entry first = annotations.add(new AnnotationIndex.Entry(0, "first", "CODE"));
-        AnnotationIndex.Entry second = annotations.add(new AnnotationIndex.Entry(0, "second", "DATA"));
+        UserAnnotations annotations = new UserAnnotations(2, new MemoryAnnotations());
+        UserAnnotations.Entry first = annotations.add(new UserAnnotations.Entry(0, "first", "CODE"));
+        UserAnnotations.Entry second = annotations.add(new UserAnnotations.Entry(0, "second", "DATA"));
 
-        annotations.update(new AnnotationIndex.Entry(first.id, 1, 2, "updated", "CODE"));
+        annotations.update(new UserAnnotations.Entry(first.id, 1, 2, "updated", "CODE"));
 
         assertEquals("updated", annotations.get(1).label);
         assertEquals(first.id, annotations.get(1).id);
@@ -201,12 +201,12 @@ public class AnnotationIndexTest {
 
     @Test
     public void searchMatchesLabelsWithoutCaseSensitivity() {
-        AnnotationIndex annotations = new AnnotationIndex(3, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(0, "MainLoop", "CODE"));
-        annotations.add(new AnnotationIndex.Entry(1, "MainLoop buffer", "DATA"));
-        annotations.add(new AnnotationIndex.Entry(2, "other", "CODE"));
+        UserAnnotations annotations = new UserAnnotations(3, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(0, "MainLoop", "CODE"));
+        annotations.add(new UserAnnotations.Entry(1, "MainLoop buffer", "DATA"));
+        annotations.add(new UserAnnotations.Entry(2, "other", "CODE"));
 
-        List<AnnotationIndex.Entry> matches = annotations.search("mainloop");
+        List<UserAnnotations.Entry> matches = annotations.search("mainloop");
 
         assertEquals(2, matches.size());
         assertEquals(0, matches.get(0).address);
@@ -216,16 +216,16 @@ public class AnnotationIndexTest {
     @Test
     public void savedAnnotationsRestoreEveryUserField() throws Exception {
         int size = 2;
-        AnnotationIndex original = new AnnotationIndex(size, new MemoryAnnotations());
-        original.add(new AnnotationIndex.Entry(1, "Entrée\nsecond line", "CODE"));
+        UserAnnotations original = new UserAnnotations(size, new MemoryAnnotations());
+        original.add(new UserAnnotations.Entry(1, "Entrée\nsecond line", "CODE"));
         Path file = temporary.newFile("annotations.properties").toPath();
 
         original.save(file);
         assertFalse(original.properties().containsKey("annotation.0.bookmark"));
-        AnnotationIndex restored = new AnnotationIndex(size, new MemoryAnnotations());
+        UserAnnotations restored = new UserAnnotations(size, new MemoryAnnotations());
         restored.load(file);
 
-        AnnotationIndex.Entry entry = restored.get(1);
+        UserAnnotations.Entry entry = restored.get(1);
         assertEquals(1, entry.address);
         assertEquals("Entrée\nsecond line", entry.label);
         assertEquals("CODE", entry.kind);
@@ -234,11 +234,11 @@ public class AnnotationIndexTest {
     @Test
     public void importKeepsIndependentAnnotationsAtTheSameAddress() throws Exception {
         int size = 2;
-        AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(0, "old", "CODE"));
-        annotations.add(new AnnotationIndex.Entry(1, "keep", "DATA"));
-        AnnotationIndex imported = new AnnotationIndex(size, new MemoryAnnotations());
-        imported.add(new AnnotationIndex.Entry(0, "replacement", "CODE"));
+        UserAnnotations annotations = new UserAnnotations(size, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(0, "old", "CODE"));
+        annotations.add(new UserAnnotations.Entry(1, "keep", "DATA"));
+        UserAnnotations imported = new UserAnnotations(size, new MemoryAnnotations());
+        imported.add(new UserAnnotations.Entry(0, "replacement", "CODE"));
 
         annotations.importProperties(imported.properties());
 
@@ -250,30 +250,30 @@ public class AnnotationIndexTest {
 
     @Test
     public void invalidKindAndOutOfRangeAddressLeaveIndexEmpty() {
-        AnnotationIndex annotations = new AnnotationIndex(1, new MemoryAnnotations());
+        UserAnnotations annotations = new UserAnnotations(1, new MemoryAnnotations());
 
         assertThrows(IllegalArgumentException.class,
-                () -> annotations.add(new AnnotationIndex.Entry(0, "", "FUNCTION")));
+                () -> annotations.add(new UserAnnotations.Entry(0, "", "FUNCTION")));
         assertThrows(IllegalArgumentException.class,
-                () -> annotations.add(new AnnotationIndex.Entry(0, "", "UNKNOWN")));
+                () -> annotations.add(new UserAnnotations.Entry(0, "", "UNKNOWN")));
         assertThrows(IllegalArgumentException.class,
-                () -> annotations.add(new AnnotationIndex.Entry(1, "", "CODE")));
+                () -> annotations.add(new UserAnnotations.Entry(1, "", "CODE")));
         assertTrue(annotations.entries().isEmpty());
     }
 
     @Test
     public void overlappingRangesRemainIndependentAfterSaveAndReload() throws Exception {
         int size = 16;
-        AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
-        annotations.add(new AnnotationIndex.Entry(-1, 2, 8, "first", "CODE"));
-        annotations.add(new AnnotationIndex.Entry(-1, 2, 5, "second", "CODE"));
+        UserAnnotations annotations = new UserAnnotations(size, new MemoryAnnotations());
+        annotations.add(new UserAnnotations.Entry(-1, 2, 8, "first", "CODE"));
+        annotations.add(new UserAnnotations.Entry(-1, 2, 5, "second", "CODE"));
         Properties saved = annotations.properties();
-        AnnotationIndex restored = new AnnotationIndex(size, new MemoryAnnotations());
+        UserAnnotations restored = new UserAnnotations(size, new MemoryAnnotations());
 
         restored.importProperties(saved);
-        AnnotationIndex.Entry first = restored.entries().stream().filter(entry -> entry.label.equals("first")).findFirst().orElseThrow();
-        AnnotationIndex.Entry second = restored.entries().stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
-        restored.update(new AnnotationIndex.Entry(first.id, 3, 9, "changed", "CODE"));
+        UserAnnotations.Entry first = restored.entries().stream().filter(entry -> entry.label.equals("first")).findFirst().orElseThrow();
+        UserAnnotations.Entry second = restored.entries().stream().filter(entry -> entry.label.equals("second")).findFirst().orElseThrow();
+        restored.update(new UserAnnotations.Entry(first.id, 3, 9, "changed", "CODE"));
         restored.remove(second);
 
         assertEquals(1, restored.entries().size());
@@ -286,10 +286,10 @@ public class AnnotationIndexTest {
     @Test
     public void rangesOutsideAddressSpaceAreRejectedWithoutChanges() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(8, engine);
+        UserAnnotations annotations = new UserAnnotations(8, engine);
 
         assertThrows(IllegalArgumentException.class,
-                () -> annotations.add(new AnnotationIndex.Entry(-1, 3, 9, "outside", "CODE")));
+                () -> annotations.add(new UserAnnotations.Entry(-1, 3, 9, "outside", "CODE")));
 
         assertTrue(annotations.entries().isEmpty());
     }
@@ -297,19 +297,20 @@ public class AnnotationIndexTest {
     @Test
     public void rangesCanCoverAnyContiguousCpuVisibleCells() {
         MemoryAnnotations engine = new MemoryAnnotations();
-        AnnotationIndex annotations = new AnnotationIndex(8, engine);
+        UserAnnotations annotations = new UserAnnotations(8, engine);
 
-        AnnotationIndex.Entry entry = annotations.add(new AnnotationIndex.Entry(-1, 3, 5, "shared", "CODE"));
+        UserAnnotations.Entry entry = annotations.add(new UserAnnotations.Entry(-1, 3, 5, "shared", "CODE"));
 
-        assertTrue(engine.at(4).stream().anyMatch(annotation -> annotation.ownerId == AnnotationIndex.OWNER
+        assertTrue(engine.at(4).stream().anyMatch(annotation -> annotation.ownerId == UserAnnotations.OWNER
                 && annotation.entryId == entry.id));
+        assertEquals("CODE", engine.get(UserAnnotations.OWNER, entry.id).kind);
     }
 
     @Test
     public void importingAllocatesIndependentIdentities() throws Exception {
         int size = 8;
-        AnnotationIndex annotations = new AnnotationIndex(size, new MemoryAnnotations());
-        AnnotationIndex.Entry original = annotations.add(new AnnotationIndex.Entry(-1, 1, 4, "original", "CODE"));
+        UserAnnotations annotations = new UserAnnotations(size, new MemoryAnnotations());
+        UserAnnotations.Entry original = annotations.add(new UserAnnotations.Entry(-1, 1, 4, "original", "CODE"));
         Properties imported = annotations.properties();
         imported.setProperty("annotation.0.label", "imported");
 

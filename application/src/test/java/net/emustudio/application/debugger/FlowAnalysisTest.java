@@ -89,12 +89,17 @@ public class FlowAnalysisTest {
         annotations.put(new MemoryAnnotations.Entry(8, 10, 100, 101, "data", "DATA", null));
 
         assertTrue(analysis.isData(100));
+        new UserAnnotations(256, annotations).add(new UserAnnotations.Entry(200, "user data", "DATA"));
+        assertTrue(analysis.isData(200));
+        annotations.put(new MemoryAnnotations.Entry(8, 11, 201, 202, "DATA", "other owner", null));
+        assertFalse(analysis.isData(201));
         assertEquals(Set.of("100:200"), edges(view(100, 10)));
         observations.reset();
 
         assertTrue(addresses(view(100, 10)).isEmpty());
         assertTrue(edges(view(100, 10)).isEmpty());
         assertEquals(1, annotations.at(100).size());
+        assertTrue(analysis.isData(200));
     }
 
     @Test
