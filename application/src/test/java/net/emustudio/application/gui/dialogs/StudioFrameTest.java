@@ -16,7 +16,6 @@ import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.ui.Dialogs;
-import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
@@ -116,26 +115,28 @@ public class StudioFrameTest extends AbstractSwingTest {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
         MemoryContext<?> memoryContext = mock(MemoryContext.class);
-        DebugTableModel model = createDebugTableModel();
         MemoryAnnotations annotations = new MemoryAnnotations();
         annotations.put(new MemoryAnnotations.Entry(4, 1, 12, 13, "source", "",
                 SourceCodePosition.of(2, 0, sourceFile.toString())));
         CPU sessionCpu = mockCpu();
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
+        when(sessionCpu.getDecoder()).thenReturn(address ->
+                net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "NOP", "00"));
+        when(net.emustudio.application.TestCpu.context(sessionCpu).getInstructionLocation()).thenReturn(12);
         when(memoryContext.getSize()).thenReturn(256);
         DebuggerSession session = new DebuggerSession(sessionCpu, net.emustudio.application.TestCpu.context(sessionCpu), memoryContext, null, annotations);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
         when(computer.getCompiler()).thenReturn(Optional.empty());
-        when(computer.getCPU()).thenReturn(Optional.empty());
+        when(computer.getCPU()).thenReturn(Optional.of(sessionCpu));
+        when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
         when(computer.getDebugger()).thenReturn(Optional.of(session));
-        when(model.getLocationAt(0)).thenReturn(12);
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
-                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
+                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false), mock(Dialogs.class), memoryContext, null, new EmuStudioGui()
         ));
         showFrame(frame);
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
@@ -144,9 +145,13 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         runOnEdt(() -> {
             tabs.setSelectedIndex(1);
+            DebugTableModel model = (DebugTableModel) debugTable.getModel();
+            int row = java.util.stream.IntStream.range(0, model.getRowCount())
+                    .filter(index -> model.getLocationAt(index) == 12).findFirst().orElseThrow();
+            Rectangle cell = debugTable.getCellRect(row, 0, true);
             debugTable.dispatchEvent(new MouseEvent(
                     debugTable, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
-                    5, 5, 2, false, MouseEvent.BUTTON1
+                    cell.x + 5, cell.y + 5, 2, false, MouseEvent.BUTTON1
             ));
         });
 
@@ -195,32 +200,19 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
         when(computer.getDebugger()).thenReturn(Optional.ofNullable(session));
+        if (session != null) {
+            when(computer.getCPU()).thenReturn(Optional.of(session.cpu));
+            when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
+        }
 
         return onEdt(() -> new StudioFrame(
                 computer,
                 new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false),
                 mock(Dialogs.class),
-                createDebugTableModel(),
                 null,
                 fileName,
                 new EmuStudioGui()
         ));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private DebugTableModel createDebugTableModel() {
-        DebugTableModel model = mock(DebugTableModel.class);
-        DebuggerColumn<String> column = mock(DebuggerColumn.class);
-
-        when(column.getClassType()).thenReturn(String.class);
-        when(column.getDefaultWidth()).thenReturn(-1);
-        when(model.getColumnCount()).thenReturn(1);
-        when(model.getColumnName(0)).thenReturn("Address");
-        when(model.getColumnClass(0)).thenReturn((Class) String.class);
-        when(model.getRowCount()).thenReturn(1);
-        when(model.getValueAt(anyInt(), eq(0))).thenReturn("00");
-        when(model.getColumnAt(0)).thenReturn((DebuggerColumn) column);
-
-        return model;
-    }
 }

@@ -22,7 +22,7 @@ public final class SourceAddressMap {
     private final DebuggerSession session;
     private final int addressSpaceSize;
     private final long revision;
-    private final long memoryRevision;
+    private final long memoryImageRevision;
     private final Map<Path, Source> sources = new LinkedHashMap<>();
     private final List<String> diagnostics = new ArrayList<>();
     private final SourceCodePosition.ColumnUnit columnUnit;
@@ -35,7 +35,7 @@ public final class SourceAddressMap {
         this.annotations = annotations;
         this.columnUnit = columnUnit;
         addressSpaceSize = session == null ? 0 : session.addressSpaceSize();
-        memoryRevision = session == null ? 0 : session.memoryRevision();
+        memoryImageRevision = session == null ? 0 : session.memoryImageRevision();
         revision = annotations == null ? 0 : annotations.revision();
     }
 
@@ -230,7 +230,8 @@ public final class SourceAddressMap {
     }
 
     private boolean sameLayout() {
-        return memory != null && annotations != null && session != null && session.isCurrentMemory(addressSpaceSize, memoryRevision);
+        return memory != null && annotations != null && session != null
+                && session.isCurrentMemoryImage(addressSpaceSize, memoryImageRevision);
     }
 
     private Entry unique(Source source, int line, long currentMemoryRevision, Projection projection) {
@@ -244,7 +245,7 @@ public final class SourceAddressMap {
     }
 
     private boolean live(Entry entry, long currentMemoryRevision) {
-        return entry != null && currentMemoryRevision >= 0 && sameLayout() && memoryRevision == currentMemoryRevision
+        return entry != null && currentMemoryRevision >= 0 && sameLayout()
                 && annotations.get(entry.annotation.ownerId, entry.annotation.entryId) == entry.annotation;
     }
 

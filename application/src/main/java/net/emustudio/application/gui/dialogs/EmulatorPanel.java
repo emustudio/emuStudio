@@ -85,7 +85,6 @@ public class EmulatorPanel extends JPanel {
         this.debugTable = new DebugTableImpl(debugTableModel);
         this.debugTable.getAccessibleContext().setAccessibleName("Instruction listing");
         this.toolDebug = gui.toolBar();
-        this.toolDebug.putClientProperty("FlatLaf.style", "focusableButtons: true");
 
         paneDebug = gui.scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -136,7 +135,7 @@ public class EmulatorPanel extends JPanel {
 
         this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
                 session, (DebugTableImpl) debugTable, debuggerPanel,
-                sourceNavigator, this::refreshDebugTable, gui, dialogs)).orElse(null);
+                sourceNavigator, this::refreshDebugTable, gui)).orElse(null);
         this.breakpointAction = new BreakpointAction(() -> {
             if (inspection != null) inspection.showBreakpointDialog(parent);
         });
@@ -349,7 +348,6 @@ public class EmulatorPanel extends JPanel {
 
     private void setupDebugToolbar() {
         toolDebug.add(gui.toolbarButton(resetAction));
-        if (inspection != null) toolDebug.add(inspection.recordingControl());
         toolDebug.addSeparator();
         toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
         toolDebug.add(gui.toolbarButton(stepBackAction));
@@ -396,7 +394,6 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setVisible(true);
         panelPages.setVisible(true);
         panelPages.setEnabled(true);
-        if (inspection != null) inspection.setExecutionRunning(false);
 
         if (state == CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) {
             stopAction.setEnabled(true);
@@ -439,7 +436,6 @@ public class EmulatorPanel extends JPanel {
         runTimedAction.setEnabled(false);
         debugTable.setEnabled(false);
         paneDebug.setEnabled(false);
-        if (inspection != null) inspection.setExecutionRunning(true);
 
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
     }
@@ -473,7 +469,6 @@ public class EmulatorPanel extends JPanel {
             debugTable.setEnabled(false);
             paneDebug.setEnabled(false);
             panelPages.setEnabled(false);
-            if (inspection != null) inspection.setExecutionRunning(true);
         }
     }
 

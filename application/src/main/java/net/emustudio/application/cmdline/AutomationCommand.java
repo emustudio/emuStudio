@@ -8,7 +8,6 @@ import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.framework.DialogsNoGui;
-import net.emustudio.application.gui.debugger.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -52,7 +51,7 @@ public class AutomationCommand implements Callable<Integer> {
         Dialogs dialogs = new DialogsNoGui();
         DialogsGui guiDialogs = null;
         try {
-            AppSettings appConfig = loadAppSettings(this.gui, true);
+            AppSettings appConfig = AppSettings.load(this.gui, true);
             EmuStudioGui gui = null;
             if (this.gui) {
                 gui = new EmuStudioGui();
@@ -76,9 +75,8 @@ public class AutomationCommand implements Callable<Integer> {
             Optional<LoadingDialog> splash = this.gui ? Optional.of(showSplashScreen(gui)) : Optional.empty();
 
             ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
-            DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
             try (VirtualComputer computer = loadComputer(
-                    appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
+                    appConfig, computerConfig, dialogs, contextPool, gui
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
                         ? null : Numbers.parseRadix(this.programLocation);

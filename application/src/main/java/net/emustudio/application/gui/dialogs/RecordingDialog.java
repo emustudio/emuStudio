@@ -3,17 +3,20 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
-import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.Frame;
+import java.util.concurrent.CompletionException;
 
 /** Configures a new instruction recording without changing the current recording on cancellation. */
 public final class RecordingDialog extends DialogBase {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecordingDialog.class);
     private final GUI gui;
-    private final Dialogs dialogs;
     private final DebuggerSession session;
     private final Runnable started;
     private final JComboBox<String> mode = new JComboBox<>(new String[] {
@@ -23,10 +26,9 @@ public final class RecordingDialog extends DialogBase {
     private final JTextField from = new JTextField("0x0", 10);
     private final JTextField to = new JTextField(10);
 
-    public RecordingDialog(Frame owner, GUI gui, Dialogs dialogs, DebuggerSession session, Runnable started) {
+    public RecordingDialog(Frame owner, GUI gui, DebuggerSession session, Runnable started) {
         super(owner, "Record instructions", true);
         this.gui = gui;
-        this.dialogs = dialogs;
         this.session = session;
         this.started = started;
         mode.setSelectedIndex(1);
@@ -75,20 +77,15 @@ public final class RecordingDialog extends DialogBase {
             int limit = count.isEnabled() ? Integer.parseInt(count.getText().strip()) : 0;
             int first = from.isEnabled() ? address(from) : 0;
             int last = to.isEnabled() ? address(to) : 0;
-            start.setEnabled(false);
-            session.update(() -> session.startNewRecording(limit, selected, first, last))
-                    .whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
-                        if (!isDisplayable()) return;
-                        if (failure != null) {
-                            start.setEnabled(true);
-                            Throwable cause = failure.getCause() == null ? failure : failure.getCause();
-                            dialogs.showError(cause.getMessage(), "Record instructions");
-                        } else { started.run(); dispose(); }
-                    }));
-        } catch (IllegalArgumentException | IllegalStateException failure) {
-            dialogs.showError(failure instanceof NumberFormatException
+            session.update(() -> session.startNewRecording(limit, selected, first, last)).join();
+            started.run();
+            dispose();
+        } catch (RuntimeException failure) {
+            Throwable cause = failure instanceof CompletionException && failure.getCause() != null
+                    ? failure.getCause() : failure;
+            LOGGER.warn(cause instanceof NumberFormatException
                     ? "Enter a valid instruction count or address (decimal or 0x-prefixed hexadecimal)."
-                    : failure.getMessage(), "Record instructions");
+                    : cause.getMessage(), cause);
         }
     }
 

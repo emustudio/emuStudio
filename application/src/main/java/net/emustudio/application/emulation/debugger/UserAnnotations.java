@@ -4,12 +4,10 @@ package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** User-metadata editor and persistence adapter over CPU-visible addresses. */
+/** User-metadata editor over CPU-visible addresses. */
 public final class UserAnnotations {
     public static final long OWNER = Long.MIN_VALUE;
     private static final AtomicLong IDS = new AtomicLong();
@@ -105,44 +103,22 @@ public final class UserAnnotations {
         return result;
     }
 
-    /** Only user annotations are saved; identities are runtime-only. */
-    public Properties properties() {
-        Properties p = new Properties();
-        int i = 0;
-        for (Entry e : entries()) {
-            String k = "annotation." + (i++) + ".";
-            p.setProperty(k + "address", Integer.toString(e.address));
-            p.setProperty(k + "end", Integer.toString(e.end));
-            p.setProperty(k + "label", e.label);
-            p.setProperty(k + "kind", e.kind);
-        }
-        return p;
-    }
-
-    public void save(Path path) throws IOException { AtomicProperties.save(path, properties()); }
-    public int load(Path path) throws IOException { return importProperties(AtomicProperties.load(path)); }
-
-    /** Appends saved annotations, skipping exact duplicates. Returns the number of invalid entries skipped. */
-    public int importProperties(Properties p) {
-        int size = addressSpaceSize;
+    /** Appends valid annotations with fresh identities, skipping duplicates. Returns the number of invalid entries. */
+    public int merge(List<Entry> entries) {
         Set<List<Object>> known = new HashSet<>();
         for (Entry entry : entries()) known.add(key(entry));
         List<Entry> added = new ArrayList<>();
         int skipped = 0;
-        for (int i : AtomicProperties.indices(p, "annotation.", ".address")) {
-            String k = "annotation." + i + ".";
-            Entry entry;
+        for (Entry entry : entries) {
             try {
-                entry = new Entry(IDS.getAndAdd(2), Integer.parseInt(p.getProperty(k + "address")),
-                        Integer.parseInt(p.getProperty(k + "end")), p.getProperty(k + "label", ""),
-                        p.getProperty(k + "kind", "CODE"));
                 validateKind(entry.kind);
-                validateRange(size, entry);
+                validateRange(addressSpaceSize, entry);
             } catch (RuntimeException invalid) {
                 skipped++;
                 continue;
             }
-            if (known.add(key(entry))) added.add(entry);
+            if (known.add(key(entry)))
+                added.add(new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind));
         }
         edit(added, false, false);
         return skipped;

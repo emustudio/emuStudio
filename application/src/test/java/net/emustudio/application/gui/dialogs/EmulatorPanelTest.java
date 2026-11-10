@@ -71,7 +71,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     }
 
     @Test
-    public void recordingToggleAfterResetStartsAndStopsRecordingWithoutButtonText() throws Exception {
+    public void recordingTabStartsAndStopsRecordingWithoutButtonText() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = debuggingCpu();
         when(cpu.getTitle()).thenReturn("Recording CPU");
@@ -87,8 +87,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             JButton reset = findButtonByTooltip(panel, "Reset emulation");
             JToggleButton recording = findToggleButtonByTooltip(panel, "Record instructions");
+            JTabbedPane tabs = findComponent(manager, JTabbedPane.class,
+                    component -> "debuggerViews".equals(component.getName()));
 
             runOnEdt(() -> {
+                tabs.setSelectedIndex(tabs.indexOfTab("Recording"));
                 SwingUtilities.invokeLater(() -> {
                     for (java.awt.Window window : java.awt.Window.getWindows()) {
                         if (window instanceof JDialog && window.isShowing()
@@ -107,9 +110,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             assertTrue(session.isRecording());
             runOnEdt(() -> {
                 JToolBar toolbar = (JToolBar) reset.getParent();
-                assertSame(toolbar, recording.getParent());
-                assertEquals(toolbar.getComponentIndex(reset) + 1, toolbar.getComponentIndex(recording));
-                assertFalse(SwingUtilities.isDescendingFrom(recording, manager));
+                assertFalse(SwingUtilities.isDescendingFrom(recording, toolbar));
+                assertTrue(SwingUtilities.isDescendingFrom(recording, tabs.getSelectedComponent()));
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
                 assertNotNull(recording.getIcon());
                 assertTrue(recording.isSelected());
@@ -117,12 +119,9 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 assertEquals("Stop recording", recording.getAccessibleContext().getAccessibleName());
             });
 
-            runOnEdt(() -> manager.setExecutionRunning(true));
-
             assertTrue(onEdt(recording::isEnabled));
             assertTrue(session.isRecording());
 
-            runOnEdt(() -> manager.setExecutionRunning(false));
             triggerButton(recording);
             session.update(() -> {}).join();
             runOnEdt(() -> {});
@@ -164,11 +163,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_CLICKED, 3, 0, x, y, 1, false, MouseEvent.BUTTON1));
             });
             runOnEdt(() -> {});
-            assertTrue(session.breakpoints.isEmpty());
+            assertTrue(session.config.breakpoints.isEmpty());
             runOnEdt(() -> table.getActionMap().get("showSource").actionPerformed(
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
-            assertTrue(session.breakpoints.isEmpty());
+            assertTrue(session.config.breakpoints.isEmpty());
             verify(model).showAddress(4);
             assertNull(source.get());
             runOnEdt(panel::close);
@@ -218,7 +217,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
         try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
-            session.breakpoints.add(12);
+            session.config.breakpoints.add(12);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,

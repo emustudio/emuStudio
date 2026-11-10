@@ -61,7 +61,7 @@ public class StudioFrame extends JFrame {
 
 
     public StudioFrame(VirtualComputer computer, AppSettings appSettings, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Path fileName, EmuStudioGui gui) {
+                       MemoryContext<?> memoryContext, Path fileName, EmuStudioGui gui) {
         Objects.requireNonNull(computer);
         this.gui = Objects.requireNonNull(gui);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -77,12 +77,14 @@ public class StudioFrame extends JFrame {
         this.editor.setActiveEditorChanged(this::updateWindowTitle);
 
         EmulationController emulationController = computer.getExecution().orElse(null);
+        DebugTableModel debugTableModel = new DebugTableModel();
+        computer.getCPU().ifPresent(cpu ->
+                debugTableModel.setCPU(cpu, computer.getExecution().orElseThrow().cpuContext()));
 
         this.emulatorPanel = new EmulatorPanel(
                 this, computer, debugTableModel, dialogs, emulationController, memoryContext,
                 this::navigateToSource, gui
         );
-        emulatorPanel.getDebuggerPanel().ifPresent(panel -> panel.setFlowAnalysisLimit(appSettings.getFlowAnalysisLimit()));
         this.editorPanel = new EditorPanel(
                 this, dialogs, editor, computer, this::updateWindowTitle, emulatorPanel::getRunState,
                 gui
@@ -227,8 +229,7 @@ public class StudioFrame extends JFrame {
     }
 
     boolean confirmSaveBeforeExit() {
-        return emulatorPanel.getDebuggerPanel().map(panel -> panel.confirmSaveAnnotations()).orElse(true)
-                && editorPanel.confirmSave();
+        return editorPanel.confirmSave();
     }
 
     private void formWindowClosing() {

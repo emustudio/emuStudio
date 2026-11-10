@@ -155,6 +155,41 @@ public class SourceAddressMapTest {
     }
 
     @Test
+    public void steppingKeepsCompiledSourceNavigation() throws Exception {
+        String text = "NOP\nNOP\nHALT\n";
+        Path source = source("stepping.asm", text);
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null)) {
+            replaceSources(session.annotationEngine, Map.of(0, Set.of(annotation(source, 1, 0)),
+                    1, Set.of(annotation(source, 2, 0)), 2, Set.of(annotation(source, 3, 0))));
+            SourceAddressMap map = SourceAddressMap.capture(compiler(), machine.memory,
+                    SourceInputs.of(compiler(), Map.of(source, text)), session, session.annotationEngine);
+            session.setSourceMappings(map);
+            assertTrue(session.sourceAt(0).isPresent());
+
+            for (int address = 1; address <= 2; address++) {
+                if (address == 2) when(machine.cpu.step()).thenAnswer(call -> {
+                    machine.memoryChanged(7);
+                    return CPU.RunState.STATE_STOPPED_BREAK;
+                });
+                when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(address);
+                session.execution().step().join();
+                assertEquals(annotation(source, address + 1, 0), session.sourceAt(address).orElseThrow());
+                assertEquals(address, map.addressOf(annotation(source, address + 1, 0)).orElseThrow().address);
+            }
+
+            machine.state(CPU.RunState.STATE_RUNNING);
+            machine.memoryChanged(7);
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            assertEquals(annotation(source, 3, 0), session.sourceAt(2).orElseThrow());
+            assertEquals(2, map.addressOf(annotation(source, 3, 0)).orElseThrow().address);
+
+            session.runMutation(() -> {});
+            assertTrue(session.sourceAt(2).isEmpty());
+        }
+    }
+
+    @Test
     public void notifiedMemoryChangeInvalidatesCapturedLocations() throws Exception {
         Path source = source("program.asm", "NOP\n");
         MemoryContext<Byte> memory = memory(4, 1, 4, 0, Map.of(0, Set.of(annotation(source, 1, 0))));

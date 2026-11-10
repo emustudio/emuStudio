@@ -5,7 +5,6 @@ package net.emustudio.application.cmdline;
 import net.emustudio.application.Resources;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
-import net.emustudio.application.gui.debugger.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -148,7 +147,7 @@ public class Runner implements Callable<Integer> {
         }
 
         try {
-            AppSettings appConfig = loadAppSettings(true, false);
+            AppSettings appConfig = AppSettings.load(true, false);
             EmuStudioGui gui = new EmuStudioGui();
             gui.initialize(appConfig);
             DialogsGui dialogs = new DialogsGui(gui);
@@ -165,14 +164,13 @@ public class Runner implements Callable<Integer> {
 
             LoadingDialog splash = showSplashScreen(gui);
             ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
-            DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
             VirtualComputer computer = loadComputer(
-                    appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
+                    appConfig, computerConfig, dialogs, contextPool, gui
             );
             splash.dispose();
 
             showMainWindow(
-                    computer, appConfig, dialogs, debugTableModel, contextPool, inputFile, gui
+                    computer, appConfig, dialogs, contextPool, inputFile, gui
             );
             return 0;
         } catch (Exception e) {

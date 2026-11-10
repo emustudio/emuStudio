@@ -30,7 +30,7 @@ public class FlowAnalysisTest {
 
     @Test
     public void noInstructionOrDestinationIsInventedBeforeExecution() {
-        FlowAnalysis analysis = view(100, 10);
+        FlowAnalysis analysis = view(100);
 
         assertTrue(addresses(analysis).isEmpty());
         assertTrue(edges(analysis).isEmpty());
@@ -41,7 +41,7 @@ public class FlowAnalysisTest {
     public void observedNextPcIsKeptWithoutDecodingItsDestination() {
         observed(100, 3, "EXECUTED", "AA BB CC", 200);
 
-        FlowAnalysis analysis = view(100, 10);
+        FlowAnalysis analysis = view(100);
 
         assertEquals(List.of(100), addresses(analysis));
         assertEquals(Set.of("100:200"), edges(analysis));
@@ -58,7 +58,7 @@ public class FlowAnalysisTest {
         observed(103, 1, "NEXT", "00", 300);
         observed(200, 1, "OTHER", "01", 100);
 
-        FlowAnalysis analysis = view(100, 10);
+        FlowAnalysis analysis = view(100);
 
         assertEquals(Set.of("100:103", "100:200", "103:300", "200:100"), edges(analysis));
         assertEquals(List.of(100, 103, 200), addresses(analysis));
@@ -67,10 +67,10 @@ public class FlowAnalysisTest {
     @Test
     public void changedEncodingUpdatesMetadataWithoutRemovingAnyOldEdge() {
         observed(100, 1, "OLD", "00", 101);
-        FlowAnalysis before = view(100, 10);
+        FlowAnalysis before = view(100);
 
         observed(100, 3, "NEW", "AA BB CC", 500);
-        FlowAnalysis after = view(100, 10);
+        FlowAnalysis after = view(100);
 
         assertEquals("OLD", before.mnemonic(100));
         assertEquals(Set.of("100:101"), edges(before));
@@ -80,25 +80,37 @@ public class FlowAnalysisTest {
     }
 
     @Test
-    public void rootSelectionAndSmallViewLimitsNeverDiscardLearnedEdges() {
+    public void rootSelectionNeverDiscardsLearnedEdges() {
         observed(100, 1, "A", "00", 200);
         observed(100, 1, "A", "00", 300);
         observed(200, 1, "B", "01", 100);
-        Set<String> all = edges(view(100, 10));
+        Set<String> all = edges(view(100));
 
-        FlowAnalysis small = view(100, 1);
-        view(200, 1);
-        view(700, 1);
+        view(200);
+        view(700);
 
-        assertTrue(small.truncated());
-        assertEquals(all, edges(view(100, 10)));
+        assertEquals(all, edges(view(100)));
         assertEquals(Set.of("100:200", "100:300", "200:100"), all);
+    }
+
+    @Test
+    public void viewIncludesAllReachableAddressesBeyondFormerLimit() {
+        int count = 1500;
+        for (int address = 0; address < count; address++)
+            observed(address, 1, "NOP", "00", address == count - 1 ? 0 : address + 1);
+
+        FlowAnalysis analysis = view(0);
+
+        assertEquals(count, addresses(analysis).size());
+        assertEquals(count, edges(analysis).size());
+        assertEquals("NOP", analysis.mnemonic(count - 1));
+        assertTrue(edges(analysis).contains((count - 1) + ":0"));
     }
 
     @Test
     public void annotationsChangePresentationWithoutClearingObservedGraph() {
         observed(100, 1, "A", "00", 200);
-        FlowAnalysis analysis = view(100, 10);
+        FlowAnalysis analysis = view(100);
         annotations.put(new MemoryAnnotations.Entry(8, 10, 100, 101, "data", "DATA", null));
 
         assertTrue(analysis.isData(100));
@@ -106,11 +118,11 @@ public class FlowAnalysisTest {
         assertTrue(analysis.isData(200));
         annotations.put(new MemoryAnnotations.Entry(8, 11, 201, 202, "DATA", "other owner", null));
         assertFalse(analysis.isData(201));
-        assertEquals(Set.of("100:200"), edges(view(100, 10)));
+        assertEquals(Set.of("100:200"), edges(view(100)));
         observations.reset();
 
-        assertTrue(addresses(view(100, 10)).isEmpty());
-        assertTrue(edges(view(100, 10)).isEmpty());
+        assertTrue(addresses(view(100)).isEmpty());
+        assertTrue(edges(view(100)).isEmpty());
         assertEquals(1, annotations.at(100).size());
         assertTrue(analysis.isData(200));
     }
@@ -120,7 +132,7 @@ public class FlowAnalysisTest {
         observed(100, 1, "LOOP", "00", 100);
         observed(100, 1, "LOOP", "00", 100);
 
-        assertEquals(Set.of("100:100"), edges(view(100, 10)));
+        assertEquals(Set.of("100:100"), edges(view(100)));
     }
 
     @Test
@@ -128,7 +140,7 @@ public class FlowAnalysisTest {
         int address = Integer.MAX_VALUE - 1;
         observed(address, 2, "EXECUTED", "00 00", 1);
 
-        FlowAnalysis analysis = view(address, 10);
+        FlowAnalysis analysis = view(address);
 
         assertEquals(Integer.MAX_VALUE, analysis.nextAddress(address));
         assertEquals(Set.of(address + ":1"), edges(analysis));
@@ -139,11 +151,11 @@ public class FlowAnalysisTest {
         observed(0, 1, "NOP", "00", 1);
         observed(1, 1, "NOP", "00", 2);
         observed(2, 1, "NOP", "00", 3);
-        FlowAnalysis before = view(0, 10);
+        FlowAnalysis before = view(0);
         assertEquals(List.of(List.of(0, 1, 2)), before.instructionRuns(Set.of(0, 1, 2), Set.of()));
 
         observed(1, 1, "NOP", "00", 10);
-        FlowAnalysis after = view(0, 20);
+        FlowAnalysis after = view(0);
 
         assertEquals(List.of(List.of(0, 1), List.of(2)), after.instructionRuns(Set.of(0, 1, 2), Set.of()));
         assertEquals(Set.of("0:1", "1:2", "1:10", "2:3"), edges(after));
@@ -152,22 +164,21 @@ public class FlowAnalysisTest {
     @Test
     public void cancellationAndInvalidViewDoNotMutateObservations() {
         observed(100, 1, "NOP", "00", 200);
-        assertThrows(IllegalArgumentException.class, () -> view(-1, 10));
-        assertThrows(IllegalArgumentException.class, () -> view(100, 0));
+        assertThrows(IllegalArgumentException.class, () -> view(-1));
         Thread.currentThread().interrupt();
         try {
-            assertThrows(CancellationException.class, () -> view(100, 10));
+            assertThrows(CancellationException.class, () -> view(100));
         } finally {
             Thread.interrupted();
         }
 
-        assertEquals(Set.of("100:200"), edges(view(100, 10)));
+        assertEquals(Set.of("100:200"), edges(view(100)));
     }
 
     private void observed(int address, int length, String mnemonic, String encoding, int next) {
         observations.executed(DecodedInstruction.of(address, length, mnemonic, encoding), OptionalInt.of(next));
     }
-    private FlowAnalysis view(int root, int limit) { return observations.view(root, limit, annotations); }
+    private FlowAnalysis view(int root) { return observations.view(root, annotations); }
     private static List<Integer> addresses(FlowAnalysis analysis) {
         List<Integer> result = new ArrayList<>();
         analysis.forEachInstruction(instruction -> result.add(instruction.cells().start));
