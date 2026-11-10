@@ -21,16 +21,22 @@ import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
+import java.awt.Toolkit;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Optional;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.*;
 
 public class DialogAndExitActionsTest extends AbstractSwingTest {
@@ -83,21 +89,49 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         CountDownLatch exited = new CountDownLatch(1);
         when(controller.closeAsync()).thenReturn(stopped);
         JFrame window = showFrame(onEdt(JFrame::new));
+        AtomicInteger input = new AtomicInteger(), otherInput = new AtomicInteger();
+        JButton target = mouseTarget(window, input);
+        JButton otherTarget = mouseTarget(showFrame(onEdt(JFrame::new)), otherInput);
+        runOnEdt(() -> window.setVisible(true));
         ExitAction action = new ExitAction(window, () -> true, controller, computer, dispose, exited::countDown);
 
         runOnEdt(() -> action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit")));
 
         assertFalse(onEdt(action::isEnabled));
-        assertFalse(onEdt(window::isEnabled));
+        assertTrue("Closing must not synchronously disable/repaint the native window", onEdt(window::isEnabled));
+        assertTrue(onEdt(window::isVisible));
         verifyNoInteractions(computer, dispose);
+        postMousePress(target);
+        postMousePress(otherTarget);
+        assertEquals(0, input.get());
+        assertEquals(1, otherInput.get());
 
         stopped.complete(null);
 
         assertTrue(exited.await(5, TimeUnit.SECONDS));
+        postMousePress(target);
+        assertEquals(1, input.get());
         InOrder shutdown = inOrder(controller, dispose, computer);
         shutdown.verify(controller).closeAsync();
         shutdown.verify(dispose).run();
         shutdown.verify(computer).close();
+    }
+
+    private JButton mouseTarget(JFrame window, AtomicInteger input) {
+        return onEdt(() -> {
+            JButton target = new JButton();
+            target.addMouseListener(new MouseAdapter() {
+                @Override public void mousePressed(MouseEvent event) { input.incrementAndGet(); }
+            });
+            window.add(target);
+            return target;
+        });
+    }
+
+    private void postMousePress(JButton target) {
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new MouseEvent(target,
+                MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 1, 1, 1, false, MouseEvent.BUTTON1));
+        runOnEdt(() -> {});
     }
 
     @Test
@@ -153,13 +187,18 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         CompletableFuture<Void> stopped = new CompletableFuture<>();
         when(controller.closeAsync()).thenReturn(stopped);
         JFrame window = showFrame(onEdt(JFrame::new));
+        runOnEdt(() -> window.setVisible(true));
+        EventQueue originalQueue = onEdt(() -> Toolkit.getDefaultToolkit().getSystemEventQueue());
         ExitAction action = new ExitAction(window, () -> true, controller, computer, dispose, exit);
 
         runOnEdt(() -> action.actionPerformed(null));
-        assertFalse(onEdt(window::isEnabled));
+        assertTrue(onEdt(window::isEnabled));
+        assertTrue(onEdt(window::isVisible));
         stopped.completeExceptionally(new IllegalStateException("Could not close execution"));
 
         JDialog error = waitForWindow(JDialog.class, dialog -> "Exit".equals(dialog.getTitle()));
+        assertTrue(onEdt(window::isVisible));
+        assertSame(originalQueue, onEdt(() -> Toolkit.getDefaultToolkit().getSystemEventQueue()));
         assertTrue(onEdt(window::isEnabled));
         assertTrue(onEdt(action::isEnabled));
         runOnEdt(error::dispose);
