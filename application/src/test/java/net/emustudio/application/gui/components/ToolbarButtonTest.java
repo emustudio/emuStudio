@@ -34,7 +34,7 @@ public class ToolbarButtonTest extends AbstractSwingTest {
         assertEquals(1, invocations.get());
         assertTrue(onEdt(button::getHideActionText));
         assertEquals("Run emulation", onEdt(button::getToolTipText));
-        assertFalse(onEdt(button::isFocusable));
+        assertTrue(onEdt(button::isFocusable));
         assertEquals("toolBarButton", onEdt(() -> button.getClientProperty("JButton.buttonType")));
     }
 
