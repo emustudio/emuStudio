@@ -48,21 +48,13 @@ public class EmulatorEngine {
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
         debugger = new MachineDebugging("RASP", new RaspDecoder(memory));
-        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP.get()), value -> IP.set((int) value));
-        debugger.symbol("ACC", () -> memory.peek(0), text -> memory.write(0, parseWord(text)));
-        debugger.symbol("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()),
-                text -> inputTape.setSymbolAt(inputTape.getHeadPosition(), TapeSymbol.fromInt(parseWord(text))));
-        debugger.symbol("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)),
-                text -> outputTape.setSymbolAt(Math.max(0, outputTape.getHeadPosition() - 1), TapeSymbol.fromInt(parseWord(text))));
+        debugger.register("IP", () -> Integer.toUnsignedLong(IP.get()));
+        debugger.inspect("ACC", () -> memory.peek(0));
+        debugger.inspect("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()));
+        debugger.inspect("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)));
         debugger.inspect("INPUT_POSITION", inputTape::getHeadPosition);
         debugger.inspect("OUTPUT_POSITION", outputTape::getHeadPosition);
         debugger.functions(java.util.Set.of("mem"), (name, args) -> memory.peek(MachineDebugging.location(args)));
-    }
-
-    private static int parseWord(String text) {
-        long value = Long.decode(text.trim());
-        if (value < Integer.MIN_VALUE || value > 0xffffffffL) throw new IllegalArgumentException("Value exceeds a RASP word");
-        return (int) value;
     }
 
     private static Object inspect(AbstractTapeContext tape, int at) {

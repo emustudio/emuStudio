@@ -65,10 +65,10 @@ public class EmulatorEngine {
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
         debugger = new MachineDebugging("BrainDuck", rawBankZero(memory, rawMemory), recordingDecoder(rawBankZero(memory, rawMemory)));
-        debugger.register("IP", 32, () -> Integer.toUnsignedLong(IP), value -> IP = (int) value);
-        debugger.register("P", 32, () -> Integer.toUnsignedLong(P), value -> P = (int) value);
+        debugger.register("IP", () -> Integer.toUnsignedLong(IP));
+        debugger.register("P", () -> Integer.toUnsignedLong(P));
         debugger.inspect("LOOP_DEPTH", loopPointers::size);
-        debugger.register("CELL", 8, () -> rawMemory[P] & 255, value -> rawMemory[P] = (byte) value);
+        debugger.register("CELL", () -> rawMemory[P] & 255);
     }
 
     public void reset(int adr) {

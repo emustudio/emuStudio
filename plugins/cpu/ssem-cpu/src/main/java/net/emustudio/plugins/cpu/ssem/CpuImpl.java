@@ -80,7 +80,7 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
         if (applicationApi.getGUI() == null) {
             return null;
         }
-        return new CpuPanel(engine, memory, applicationApi.getGUI(), context, this::internalStateChanged);
+        return new CpuPanel(engine, memory, applicationApi.getGUI(), context);
     }
 
     @Override
@@ -102,8 +102,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
 
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
-
-    public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
 
     @Override
     public Decoder getDecoder() {

@@ -76,7 +76,6 @@ public class StatusPanel extends JPanel {
         this.spnFrequency = new JSpinner(new SpinnerNumberModel(context.getCPUFrequency(), 1, null, 100));
 
         initComponents();
-        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblFlags1.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
 

@@ -54,7 +54,6 @@ public class StatusPanel extends JPanel {
         this.flagModel = new FlagsModel(engine);
 
         initComponents();
-        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblFlags.setModel(flagModel);
 
         setupListeners();

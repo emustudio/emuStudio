@@ -38,7 +38,6 @@ public class StatusPanel extends JPanel {
         this.tableModel = new MemoryTableModel(this.memory);
 
         initComponents();
-        add(cpu.debuggingEditor(), BorderLayout.SOUTH);
         tblMemory.setModel(tableModel);
         tblMemory.getTableHeader().setReorderingAllowed(false);
         columnsRepainter.setMainColumn(2, tblMemory);

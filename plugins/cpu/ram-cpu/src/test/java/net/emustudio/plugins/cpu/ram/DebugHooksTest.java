@@ -2,7 +2,6 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram;
 
-import net.emustudio.emulib.plugin.cpu.CPUContext;
 
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.debugger.Debugging;
@@ -136,29 +135,6 @@ public class DebugHooksTest extends AbstractEngineTest {
         assertTrue(events.get(0).rows.stream().anyMatch(row -> row.label.equals("Write storage[0]") && row.after.equals("hello")));
         assertTrue(events.get(0).rows.stream().anyMatch(row -> row.group.equals("State") && row.label.equals("R0") && row.changed
                 && row.before.isEmpty() && row.after.equals("hello")));
-        verify(storage);
-    }
-
-    @Test
-    public void symbolEditorPreservesQuotedNumericStringType() throws Exception {
-        java.util.concurrent.atomic.AtomicReference<TapeSymbol> r0 = new java.util.concurrent.atomic.AtomicReference<>(TapeSymbol.EMPTY);
-        expect(storage.getSymbolAt(0)).andAnswer(() -> Optional.of(r0.get())).anyTimes();
-        storage.setSymbolAt(eq(0), anyObject(TapeSymbol.class));
-        expectLastCall().andAnswer(() -> { r0.set(getCurrentArgument(1)); return null; }).once();
-        replay(input, storage, output);
-        CPUContext context = org.easymock.EasyMock.createNiceMock(CPUContext.class);
-        org.easymock.EasyMock.replay(context);
-        javax.swing.JPanel editor = engine.debugger.editor(() -> {});
-
-        javax.swing.SwingUtilities.invokeAndWait(() -> {
-            ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("R0");
-            ((javax.swing.JTextField) editor.getComponent(1)).setText("\"42\"");
-            ((javax.swing.JButton) editor.getComponent(2)).doClick();
-        });
-
-        assertEquals(TapeSymbol.Type.STRING, r0.get().type);
-        assertEquals("42", r0.get().string);
-        assertTrue(engine.debugger.compile("R0 == \"42\"").test());
         verify(storage);
     }
 

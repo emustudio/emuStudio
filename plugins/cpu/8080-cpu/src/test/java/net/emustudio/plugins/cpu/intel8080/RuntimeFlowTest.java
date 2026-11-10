@@ -108,7 +108,7 @@ public class RuntimeFlowTest {
     public void lightObservationKeepsExecutionMemoryAndSkipsFullPresentation() throws Exception {
         ByteMemoryStub memory = memory(0);
         EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
-        engine.debugger.register("BROKEN", 8, () -> { throw new AssertionError("Full presentation requested"); }, value -> {});
+        engine.debugger.register("BROKEN", () -> { throw new AssertionError("Full presentation requested"); });
         List<DecodedInstruction> instructions = new ArrayList<>();
         List<Integer> destinations = new ArrayList<>();
         observe(engine, instructions, destinations);

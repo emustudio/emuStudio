@@ -39,14 +39,13 @@ public class CpuPanel extends JPanel {
     private final JTextField txtMLine = readOnlyField("0");
     private final JTextField txtDecMLine = readOnlyField("0");
 
-    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, CPUContext execution, Runnable stateChanged) {
+    public CpuPanel(EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui, CPUContext execution) {
         this.gui = gui;
         this.cpuContext = execution;
         this.engine = Objects.requireNonNull(engine);
         this.memory = net.emustudio.plugins.cpu.ssem.MachineDebugging.inspectionMemory(Objects.requireNonNull(memory));
 
         initComponents();
-        add(engine.debugger.editor(stateChanged), BorderLayout.SOUTH);
         observeCPU(new Updater());
         lblSpeed.setText(String.format("%.2f", EmulatorEngine.INSTRUCTIONS_PER_SECOND));
     }

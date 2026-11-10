@@ -51,9 +51,9 @@ public class EmulatorEngine {
     EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
         debugger = new MachineDebugging("SSEM", memory, recordingDecoder(memory));
-        debugger.register("PC", 32, () -> Integer.toUnsignedLong(CI.get() + 4), value -> CI.set((int) value - 4));
-        debugger.register("CI", 32, () -> Integer.toUnsignedLong(CI.get()), value -> CI.set((int) value));
-        debugger.register("ACC", 32, () -> Integer.toUnsignedLong(Acc.get()), value -> Acc.set((int) value));
+        debugger.register("PC", () -> Integer.toUnsignedLong(CI.get() + 4));
+        debugger.register("CI", () -> Integer.toUnsignedLong(CI.get()));
+        debugger.register("ACC", () -> Integer.toUnsignedLong(Acc.get()));
         MemoryContext<Byte> instrumented = debugger.instrumentedMemory();
         debugger.onActivityChanged(active -> this.memory = active ? instrumented : memory);
     }

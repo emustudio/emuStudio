@@ -63,34 +63,6 @@ public class CpuImplTest {
     }
 
     @Test
-    public void directRegisterEditPublishesInternalCPUStateWithoutChangingRunState() throws Exception {
-        java.util.concurrent.atomic.AtomicInteger changes = new java.util.concurrent.atomic.AtomicInteger();
-        java.util.List<net.emustudio.emulib.plugin.cpu.CPU.RunState> states = new java.util.ArrayList<>();
-        CPUContext.CPUListener listener = new CPUContext.CPUListener() {
-            @Override public void runStateChanged(net.emustudio.emulib.plugin.cpu.CPU.RunState state) { states.add(state); }
-            @Override public void internalStateChanged() { changes.incrementAndGet(); }
-        };
-        context.addCPUListener(listener);
-        javax.swing.JPanel editor = cpu.debuggingEditor();
-
-        javax.swing.SwingUtilities.invokeAndWait(() -> {
-            ((javax.swing.JComboBox<?>) editor.getComponent(0)).setSelectedItem("A");
-            ((javax.swing.JTextField) editor.getComponent(1)).setText("8");
-            ((javax.swing.JButton) editor.getComponent(2)).doClick();
-        });
-
-        assertEquals(8, cpu.getEngine().regs[7]);
-        assertEquals(cpu.getEngine().PC, context.getInstructionLocation());
-        assertEquals(1, changes.get());
-        assertEquals(java.util.List.of(), states);
-
-        context.removeCPUListener(listener);
-        cpu.setInstructionLocation(12);
-        assertEquals(12, context.getInstructionLocation());
-        assertEquals(1, changes.get());
-    }
-
-    @Test
     public void interruptedExecutionReturnsContinuingStateForHostToResolve() throws Exception {
         Thread.currentThread().interrupt();
         try {

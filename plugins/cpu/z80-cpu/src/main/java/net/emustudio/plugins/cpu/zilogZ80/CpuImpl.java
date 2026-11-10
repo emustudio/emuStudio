@@ -76,8 +76,6 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
-    public JPanel debuggingEditor() { return engine.debugger.editor(this::internalStateChanged); }
-
     public EmulatorEngine getEngine() {
         return engine;
     }
