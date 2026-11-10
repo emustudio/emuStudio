@@ -104,8 +104,7 @@ public class StatusPanel extends JPanel {
 
     private void initComponents() {
         tblFlags.setAutoCreateRowSorter(true);
-        tblFlags.setBackground(UIManager.getColor("Table.background"));
-        tblFlags.setForeground(UIManager.getColor("Table.foreground"));
+        tblFlags.setBackground(Color.white);
         tblFlags.setBorder(null);
         tblFlags.setRowSelectionAllowed(false);
 
@@ -151,7 +150,7 @@ public class StatusPanel extends JPanel {
         spnFrequency.setModel(spFrequencyModel);
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
-        lblRun.setForeground(UIManager.getColor("Label.foreground"));
+        lblRun.setForeground(new Color(0, 102, 0));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
 
         JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[grow]6[]", "[][][][]");

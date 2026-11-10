@@ -297,6 +297,96 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     }
 
     @Test
+    public void stepKeepsListingVisibleUntilCompletion() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = debuggingCpu();
+        when(cpu.getTitle()).thenReturn("Stepping CPU");
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        ExecutionFixture fixture = new ExecutionFixture();
+        java.util.concurrent.atomic.AtomicBoolean busy = new java.util.concurrent.atomic.AtomicBoolean();
+        java.util.concurrent.CompletableFuture<CPU.RunState> completed = new java.util.concurrent.CompletableFuture<>();
+        when(fixture.controller.isBusy()).thenAnswer(call -> busy.get());
+        when(fixture.controller.step()).thenAnswer(call -> {
+            busy.set(true);
+            fixture.publish(CPU.RunState.STATE_RUNNING);
+            return completed;
+        });
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
+                    createDebugTableModel(), mock(Dialogs.class), fixture.controller,
+                    null, position -> {}, new EmuStudioGui()));
+            try {
+                JFrame frame = showInFrame(panel);
+                runOnEdt(() -> frame.setVisible(true));
+                JTable table = findComponent(panel, DebugTableImpl.class, component -> true);
+                JScrollPane scroll = onEdt(() -> (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, table));
+                JButton step = findButtonByTooltip(panel, "Step forward");
+                runOnEdt(() -> {
+                    assertTrue("Listing must start visible", table.isShowing());
+                    step.doClick(0);
+                    assertTrue(table.isShowing());
+                    assertTrue(scroll.isShowing());
+                    assertFalse(table.isEnabled());
+                    assertFalse(step.isEnabled());
+                    busy.set(false);
+                    fixture.publish(CPU.RunState.STATE_STOPPED_BREAK);
+                    completed.complete(CPU.RunState.STATE_STOPPED_BREAK);
+                });
+                runOnEdt(() -> {
+                    assertTrue(table.isShowing());
+                    assertTrue(scroll.isShowing());
+                    assertTrue(table.isEnabled());
+                    assertTrue(step.isEnabled());
+                });
+            } finally { runOnEdt(panel::close); }
+        }
+    }
+
+    @Test
+    public void completedFastStepNeverHidesListingWhenEdtProcessesQueuedStateChanges() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = debuggingCpu();
+        when(cpu.getTitle()).thenReturn("Fast stepping CPU");
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        when(cpu.step()).thenAnswer(call -> {
+            net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_RUNNING);
+            net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
+            return CPU.RunState.STATE_STOPPED_BREAK;
+        });
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
+                    createDebugTableModel(), mock(Dialogs.class), session.execution(),
+                    null, position -> {}, new EmuStudioGui()));
+            try {
+                JFrame frame = showInFrame(panel);
+                runOnEdt(() -> frame.setVisible(true));
+                DebugTableImpl table = findComponent(panel, DebugTableImpl.class, component -> true);
+                java.util.concurrent.atomic.AtomicInteger hidden = new java.util.concurrent.atomic.AtomicInteger();
+                runOnEdt(() -> {
+                    assertTrue(table.isShowing());
+                    table.addComponentListener(new java.awt.event.ComponentAdapter() {
+                        @Override public void componentHidden(java.awt.event.ComponentEvent event) { hidden.incrementAndGet(); }
+                    });
+                    try { session.execution().step().get(2, java.util.concurrent.TimeUnit.SECONDS); }
+                    catch (Exception failure) { throw new RuntimeException(failure); }
+                    assertFalse(session.execution().isBusy());
+                });
+                runOnEdt(() -> {});
+                runOnEdt(() -> {
+                    assertEquals("Queued RUNNING event must not hide a completed step", 0, hidden.get());
+                    assertTrue(table.isShowing());
+                });
+            } finally { runOnEdt(panel::close); }
+        }
+    }
+
+    @Test
     public void cpuStateChangesToggleDebugControlsAndMemoryListenerRegistration() {
         Dialogs dialogs = mock(Dialogs.class);
         VirtualComputer computer = mock(VirtualComputer.class);
@@ -347,7 +437,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertTrue(onEdt(pauseButton::isEnabled));
         assertFalse(onEdt(stepButton::isEnabled));
         assertFalse(onEdt(debugTable::isEnabled));
-        assertFalse(onEdt(debugTable::isVisible));
+        assertTrue(onEdt(debugTable::isVisible));
 
         runOnEdt(() -> fixture.publish(CPU.RunState.STATE_STOPPED_BREAK));
 

@@ -2,10 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.emulib.plugin.cpu.CPUContext;
-
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.device.Device;
 import net.emustudio.emulib.plugin.memory.Memory;
@@ -216,10 +215,7 @@ public final class EmulationController implements Closeable {
                 if (compiler != null) compiler.reset();
                 if (memory != null) memory.reset();
                 for (Device device : devices) device.reset();
-                if (cpu != null) {
-                    if (operation.location == null) cpu.reset(); else cpu.reset(operation.location);
-                    if (debugger != null) debugger.cpuReset();
-                }
+                resetCpu(operation.location);
                 return CPU.RunState.STATE_STOPPED_BREAK;
             }, true);
         } else {
@@ -252,13 +248,17 @@ public final class EmulationController implements Closeable {
             cancelTimer();
             launch(false, result, () -> {
                 compilation.run();
-                if (cpu != null) {
-                    if (location == null) cpu.reset(); else cpu.reset(location);
-                    if (debugger != null) debugger.cpuReset();
-                }
+                resetCpu(location);
                 return CPU.RunState.STATE_STOPPED_BREAK;
             }, true, true);
         });
+    }
+
+    private void resetCpu(Integer location) {
+        if (cpu == null) return;
+        if (location == null) cpu.reset();
+        else cpu.reset(location);
+        if (debugger != null) debugger.cpuReset();
     }
 
     private void launch(boolean continuous, CompletableFuture<CPU.RunState> result,
@@ -287,9 +287,10 @@ public final class EmulationController implements Closeable {
                 else debugger.runExecution(action);
             } catch (Throwable problem) {
                 failure = problem instanceof CompletionException && problem.getCause() != null ? problem.getCause() : problem;
-                returned[0] = mutation ? previousState
-                        : failure instanceof IndexOutOfBoundsException || failure.getCause() instanceof IndexOutOfBoundsException
-                                ? CPU.RunState.STATE_STOPPED_ADDR_FALLOUT : CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                if (mutation) returned[0] = previousState;
+                else if (failure instanceof IndexOutOfBoundsException || failure.getCause() instanceof IndexOutOfBoundsException)
+                    returned[0] = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                else returned[0] = CPU.RunState.STATE_STOPPED_BAD_INSTR;
             } finally {
                 task.exit();
                 Thread.interrupted();

@@ -96,7 +96,6 @@ public class EmulatorPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event) || memoryContext == null
-                        || isBreakpointCellSelected()
                         || (inspection != null && !inspection.isInstructionView())) {
                     return;
                 }
@@ -135,7 +134,7 @@ public class EmulatorPanel extends JPanel {
         debuggerPanel.add(panelPages, "growx");
 
         this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
-                session, (DebugTableImpl) debugTable, paneDebug, debuggerPanel,
+                session, (DebugTableImpl) debugTable, debuggerPanel,
                 sourceNavigator, this::refreshDebugTable, gui, dialogs)).orElse(null);
         this.breakpointAction = new BreakpointAction(() -> {
             if (inspection != null) inspection.showBreakpointDialog(parent);
@@ -148,7 +147,6 @@ public class EmulatorPanel extends JPanel {
         setupDebugToolbar();
         debugTable.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting() && inspection != null && inspection.isInstructionView()
-                    && !isBreakpointCellSelected()
                     && runState != CPU.RunState.STATE_RUNNING && debugTable.getSelectedRow() >= 0) {
                 int location = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(debugTable.getSelectedRow()));
                 if (location >= 0) inspection.followAddress(location);
@@ -157,12 +155,6 @@ public class EmulatorPanel extends JPanel {
         debugTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "showSource");
         debugTable.getActionMap().put("showSource", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent event) {
-                if (isBreakpointCellSelected()) {
-                    int row = debugTable.getSelectedRow(), column = debugTable.getSelectedColumn();
-                    if (row >= 0 && debugTable.isCellEditable(row, column))
-                        debugTable.setValueAt(!Boolean.TRUE.equals(debugTable.getValueAt(row, column)), row, column);
-                    return;
-                }
                 if (inspection != null && !inspection.isInstructionView()) {
                     inspection.showSelectedSource();
                     return;
@@ -305,10 +297,6 @@ public class EmulatorPanel extends JPanel {
         setStateNotRunning(runState, false);
     }
 
-    private boolean isBreakpointCellSelected() {
-        return inspection != null && inspection.isBreakpointCellSelected();
-    }
-
     public Optional<DebuggerPanel> getDebuggerPanel() {
         return Optional.ofNullable(inspection);
     }
@@ -449,10 +437,7 @@ public class EmulatorPanel extends JPanel {
         pauseAction.setEnabled(true);
         runTimedAction.setEnabled(false);
         debugTable.setEnabled(false);
-        debugTable.setVisible(false);
-        paneDebug.setVisible(false);
         paneDebug.setEnabled(false);
-        panelPages.setVisible(false);
         if (inspection != null) inspection.setExecutionRunning(true);
 
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
@@ -478,11 +463,8 @@ public class EmulatorPanel extends JPanel {
             jumpToBeginningAction.setEnabled(false);
             breakpointAction.setEnabled(false);
             debugTable.setEnabled(false);
-            debugTable.setVisible(false);
             paneDebug.setEnabled(false);
-            paneDebug.setVisible(false);
             panelPages.setEnabled(false);
-            panelPages.setVisible(false);
             if (inspection != null) inspection.setExecutionRunning(true);
         }
     }

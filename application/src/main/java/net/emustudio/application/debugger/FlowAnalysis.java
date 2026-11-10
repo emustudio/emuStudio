@@ -133,7 +133,7 @@ public final class FlowAnalysis {
             while (!pending.isEmpty()) {
                 if (Thread.currentThread().isInterrupted()) throw new CancellationException();
                 int address = pending.removeFirst();
-                if (!visited.add(address)) continue;
+                visited.add(address);
                 DecodedInstruction instruction = instructions.get(address);
                 if (instruction == null) continue;
                 selected.put(address, instruction);

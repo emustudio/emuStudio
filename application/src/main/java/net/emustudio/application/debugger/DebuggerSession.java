@@ -2,32 +2,39 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.debugger;
 
+import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.compiler.Compiler;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ValueView;
-import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.device.Device;
+import net.emustudio.emulib.plugin.memory.Memory;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Host debugging policy; plugins interpret machine state at the execution seam. */
 public final class DebuggerSession implements AutoCloseable, Debugging.Observer {
-    private final net.emustudio.application.emulation.EmulationController execution;
-    public net.emustudio.application.emulation.EmulationController execution() { return execution; }
+    private final EmulationController execution;
+    public EmulationController execution() { return execution; }
     public final CPU cpu;
-    private final net.emustudio.emulib.plugin.cpu.CPUContext cpuContext;
+    private final CPUContext cpuContext;
     public final Debugging debug;
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
     public final List<String> watches = new CopyOnWriteArrayList<>();
-    public final Set<Integer> breakpoints = new java.util.concurrent.ConcurrentSkipListSet<>();
+    public final Set<Integer> breakpoints = new ConcurrentSkipListSet<>();
     private final List<String> loadWarnings = new ArrayList<>();
     private final Path settings;
     private Properties lastSaved;
@@ -37,7 +44,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private int addressSpaceSize;
     // Memory notifications advance the revision before waiting for the session monitor.
     private final Object programLock = new Object();
-    private final java.util.concurrent.atomic.AtomicLong memoryRevision = new java.util.concurrent.atomic.AtomicLong();
+    private final AtomicLong memoryRevision = new AtomicLong();
     private volatile FlowAnalysis flow;
     private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
     private long generation;
@@ -168,18 +175,18 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
         this(cpu, cpuContext, memory, settings, new MemoryAnnotations());
     }
 
-    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
         this(cpu, cpuContext, memory, settings, annotationEngine, null, List.of(), null);
     }
 
-    public DebuggerSession(CPU cpu, net.emustudio.emulib.plugin.cpu.CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
-                        net.emustudio.emulib.plugin.memory.Memory memoryPlugin,
-                        List<net.emustudio.emulib.plugin.device.Device> devices,
-                        net.emustudio.emulib.plugin.compiler.Compiler compiler) throws IOException {
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
+                        Memory memoryPlugin,
+                        List<Device> devices,
+                        Compiler compiler) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.cpuContext = Objects.requireNonNull(cpuContext);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
@@ -189,7 +196,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) annotations();
         load();
         if (this.memory != null) this.memory.addMemoryListener(memoryListener);
-        execution = new net.emustudio.application.emulation.EmulationController(cpu, cpuContext, memoryPlugin, devices, this, compiler);
+        execution = new EmulationController(cpu, cpuContext, memoryPlugin, devices, this, compiler);
         update(() -> {}).join();
     }
 
@@ -350,8 +357,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     public static final class SourceCaptureGuard {
         private volatile Stamp stamp;
-        private final java.util.concurrent.CompletableFuture<Void> ready = new java.util.concurrent.CompletableFuture<>();
-        public java.util.concurrent.CompletableFuture<Void> whenReady() { return ready.copy(); }
+        private final CompletableFuture<Void> ready = new CompletableFuture<>();
+        public CompletableFuture<Void> whenReady() { return ready.copy(); }
         private SourceCaptureGuard() { }
     }
 
@@ -403,8 +410,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
         historyLimit = limit;
         if (limit > 0) {
-            if (status.equals(recordingError)) status = "";
-            recordingError = "";
+            clearRecordingError();
         }
         recordingMode = RecordingMode.LAST;
         trimHistory();
@@ -447,9 +453,13 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             throw failure;
         }
         recordingPath = path.toAbsolutePath().normalize();
+        clearRecordingError();
+        updateProbe();
+    }
+
+    private void clearRecordingError() {
         if (status.equals(recordingError)) status = "";
         recordingError = "";
-        updateProbe();
     }
 
     public synchronized void stopRecordingFile() throws IOException {
@@ -559,18 +569,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         long sequence = ++nextSequence;
         if (captured.isPresent()) {
             InstructionRecording.Event event = new InstructionRecording.Event(sequence, completed, captured.get());
-            int address = event.view.programLocation.orElse(-1);
-            if (historyLimit > 0 && (recordingMode != RecordingMode.ADDRESS_RANGE
-                    || (address >= recordingFrom && address <= recordingThrough))) {
-                if (recordingMode != RecordingMode.FIRST || historyCaptured < historyLimit) {
-                    try {
-                        InstructionRecording.sizeOf(event); // rejects steps the recording format cannot encode
-                        historyCaptured++;
-                        history.addLast(event);
-                        trimHistory();
-                    } catch (IOException failure) { failed("History capture failed: " + failure.getMessage()); }
-                }
-            }
+            retainHistory(event);
             if (recording != null) {
                 try { recording.append(event); }
                 catch (IOException failure) { stopFailedRecorder("Incomplete recording: " + failure.getMessage()); }
@@ -578,6 +577,21 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
         if (observationDirty) updateProbe();
         return false;
+    }
+
+    private void retainHistory(InstructionRecording.Event event) {
+        if (historyLimit <= 0) return;
+        int address = event.view.programLocation.orElse(-1);
+        if (recordingMode == RecordingMode.ADDRESS_RANGE && (address < recordingFrom || address > recordingThrough)) return;
+        if (recordingMode == RecordingMode.FIRST && historyCaptured >= historyLimit) return;
+        try {
+            InstructionRecording.sizeOf(event); // rejects steps the recording format cannot encode
+            historyCaptured++;
+            history.addLast(event);
+            trimHistory();
+        } catch (IOException failure) {
+            failed("History capture failed: " + failure.getMessage());
+        }
     }
 
     private boolean checkBreakpoints(int address) {

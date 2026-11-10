@@ -90,8 +90,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final JLabel historyEmptyTitle = new JLabel(), historyEmptyHint = new JLabel();
     private JButton historyEmptyRecord;
     private boolean browsingRecording;
-    private final int breakpointColumn;
-    private final boolean addedBreakpointColumn;
     private int inspectedAddress;
     private final JComboBox<String> watchFormat = new JComboBox<>();
     private final JCheckBox showUnchangedValues = new JCheckBox("Show unchanged values");
@@ -104,7 +102,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final DebugTableModel instructionModel;
     private final boolean byteMemory;
     private final InstructionAnnotationsModel instructionRows;
-    private final JScrollPane tableScroll;
     private final JComponent instructionView;
     private boolean running;
     private int lastInstructionAddress;
@@ -184,18 +181,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public DebuggerPanel(
             DebuggerSession session,
             DebugTableImpl table,
-            JScrollPane tableScroll,
             JComponent instructionView,
             Consumer<SourceCodePosition> sourceNavigator,
             Runnable breakpointsChanged,
             EmuStudioGui gui, Dialogs dialogs) {
         this.gui = Objects.requireNonNull(gui);
         this.table = Objects.requireNonNull(table);
-        this.tableScroll = Objects.requireNonNull(tableScroll);
         this.instructionView = Objects.requireNonNull(instructionView);
         this.instructionModel = table.instructionModel();
-        addedBreakpointColumn = session.debug != null;
-        breakpointColumn = addedBreakpointColumn ? 1 : -1;
         this.byteMemory = session.memory != null && session.memory.getCellTypeClass() == Byte.class
                 && session.memory.getSize() > 0;
         this.instructionRows = new InstructionAnnotationsModel();
@@ -584,12 +577,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return tabs.getSelectedComponent() == instructionView;
     }
 
-    public boolean isBreakpointCellSelected() {
-        int column = table.getSelectedColumn();
-        return table.getModel() == instructionRows && column >= 0
-                && table.convertColumnIndexToModel(column) == breakpointColumn;
-    }
-
     public void showSelectedSource() {
         guard(() -> showSource(inspectedAddress));
     }
@@ -620,9 +607,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!paused) annotationResults.setVisible(false);
         updateAnnotationActions();
         updateFlowNavigation();
-        boolean visible = !running || !isInstructionView();
-        table.setVisible(visible);
-        tableScroll.setVisible(visible);
         graph.repaint();
         if (annotationForm != null) annotationForm.updateState();
     }
@@ -647,10 +631,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void configureInstructionColumns() {
         if (table.getModel() != instructionRows) return;
-        if (breakpointColumn >= 0) {
-            int view = table.convertColumnIndexToView(breakpointColumn);
-            if (view >= 0) table.removeColumn(table.getColumnModel().getColumn(view));
-        }
         for (int col = 0; col < table.getColumnCount(); col++) {
             TableColumn column = table.getColumnModel().getColumn(col);
             int width = Math.max(column.getPreferredWidth(),
@@ -1006,8 +986,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 addressField.setText(String.format("0x%04X", address));
                 endField.setText(String.format("0x%04X", entry.end - 1));
                 original = entry;
-                labelField.setText(original == null ? "" : original.label);
-                kind.setSelectedIndex(original == null ? 0 : kinds.indexOf(original.kind));
+                labelField.setText(entry.label);
+                kind.setSelectedIndex(kinds.indexOf(entry.kind));
             } finally {
                 loading = false;
             }
@@ -1391,11 +1371,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void toggleRecentRecording() {
         if (session.isRecording()) {
             DebuggerSession.RecordingMode mode = session.recordingMode();
-            String scope = mode == DebuggerSession.RecordingMode.ADDRESS_RANGE
-                    ? String.format("From 0x%04X to 0x%04X", session.recordingFrom(), session.recordingThrough())
-                    : mode == DebuggerSession.RecordingMode.UNLIMITED ? ""
-                    : (mode == DebuggerSession.RecordingMode.FIRST ? "First " : "Last ")
-                            + session.recordingLimit() + " instructions";
+            String scope;
+            if (mode == DebuggerSession.RecordingMode.ADDRESS_RANGE) {
+                scope = String.format("From 0x%04X to 0x%04X", session.recordingFrom(), session.recordingThrough());
+            } else if (mode == DebuggerSession.RecordingMode.UNLIMITED) {
+                scope = "";
+            } else {
+                String position = mode == DebuggerSession.RecordingMode.FIRST ? "First " : "Last ";
+                scope = position + session.recordingLimit() + " instructions";
+            }
             recordingChangePending = true;
             session.update(() -> session.record(0)).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
                 recordingChangePending = false;
@@ -1854,45 +1838,29 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private final class InstructionAnnotationsModel extends AbstractTableModel implements TableModelListener {
-        private int baseColumn(int col) { return col - 1 - (addedBreakpointColumn ? 1 : 0); }
+        private int baseColumn(int col) { return col - 1; }
         @Override public int getRowCount() { return instructionModel.getRowCount(); }
-        @Override public int getColumnCount() { return instructionModel.getColumnCount() + 1 + (addedBreakpointColumn ? 1 : 0); }
+        @Override public int getColumnCount() { return instructionModel.getColumnCount() + 1; }
         @Override public String getColumnName(int col) {
             if (col == 0) return "label";
-            if (col == breakpointColumn) return "bp";
             return instructionModel.getColumnName(baseColumn(col));
         }
         @Override public Class<?> getColumnClass(int col) {
             if (col == 0) return String.class;
-            if (col == breakpointColumn) return Boolean.class;
             return instructionModel.getColumnClass(baseColumn(col));
         }
         @Override public Object getValueAt(int row, int col) {
             if (disposed || tasks.isBusy() || running) return null;
             if (col == 0) return sourceLabelsAt(instructionModel.getLocationAt(row));
-            if (col == breakpointColumn) {
-                int address = instructionModel.getLocationAt(row);
-                return address < 0 ? null : session.isBreakpointSet(address);
-            }
             return instructionModel.getValueAt(row, baseColumn(col));
         }
         @Override public boolean isCellEditable(int row, int col) {
             if (col == 0 || disposed || tasks.isBusy() || running) return false;
-            if (col == breakpointColumn) return instructionModel.getLocationAt(row) >= 0;
             return instructionModel.isCellEditable(row, baseColumn(col));
         }
         @Override public void setValueAt(Object value, int row, int col) {
             if (col == 0) return;
-            if (col == breakpointColumn && value instanceof Boolean) {
-                int address = instructionModel.getLocationAt(row);
-                // Finish the edit before breakpoint refreshes. Keep the listing visible so
-                // consecutive clicks toggle the breakpoint.
-                SwingUtilities.invokeLater(() -> {
-                    if (!disposed) applyBreakpointRequest(new BreakpointDialog.Request(
-                            (Boolean) value ? BreakpointDialog.Operation.SET : BreakpointDialog.Operation.UNSET,
-                            address));
-                });
-            } else instructionModel.setValueAt(value, row, baseColumn(col));
+            instructionModel.setValueAt(value, row, baseColumn(col));
         }
         @Override public void tableChanged(TableModelEvent event) {
             if (event.getFirstRow() == TableModelEvent.HEADER_ROW) {

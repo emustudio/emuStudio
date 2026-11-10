@@ -1206,12 +1206,12 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void executionDisablesTableAndHidesInstructionListingUntilPaused() throws Exception {
+    public void executionDisablesTableWithoutHidingInstructionListing() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.panel.setExecutionRunning(true);
                 assertFalse(workspace.table.isEnabled());
-                assertFalse(workspace.table.isVisible());
+                assertTrue(workspace.table.isVisible());
                 for (String name : List.of("Show observed flow from PC", "Show observed flow from selected instruction",
                         "Go to instruction", "Annotate inspected address", "Edit selected annotation",
                         "Delete selected annotation", "Import annotations", "Export annotations"))
@@ -1269,6 +1269,7 @@ public class DebuggerPanelTest {
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
+                assertEquals(workspace.table.getColumnCount(), workspace.table.getModel().getColumnCount());
                 assertEquals(List.of("label", "address", "instruction", "opcode"),
                         java.util.stream.IntStream.range(0, workspace.table.getColumnCount())
                                 .mapToObj(workspace.table::getColumnName).collect(java.util.stream.Collectors.toList()));
@@ -1875,7 +1876,7 @@ public class DebuggerPanelTest {
                 JScrollPane scroll = new JScrollPane(workspace.table);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                workspace.panel = new DebuggerPanel(workspace.session, workspace.table, scroll, instructions,
+                workspace.panel = new DebuggerPanel(workspace.session, workspace.table, instructions,
                         workspace.sourcePosition::set, workspace.breakpointChanges::incrementAndGet,
                         new EmuStudioGui(), workspace.dialogs);
                 workspace.panel.setInspectionReadyListener(ready::countDown);

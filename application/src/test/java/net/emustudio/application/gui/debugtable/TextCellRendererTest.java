@@ -114,7 +114,7 @@ public class TextCellRendererTest {
         doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         when(model.getColumnName(0)).thenReturn("address");
         when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
-        JTable table = new JTable(new Object[][] {{"", "0000", "nop"}}, new Object[] {"bp", "address", "instruction"});
+        JTable table = new JTable(new Object[][] {{"", "0000", "nop"}}, new Object[] {"label", "address", "instruction"});
         table.moveColumn(1, 2);
         TextCellRenderer renderer = new TextCellRenderer(model);
         renderer.getTableCellRendererComponent(table, "nop", false, false, 0, 1);

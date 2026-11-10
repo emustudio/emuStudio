@@ -407,7 +407,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 JScrollPane scroll = gui.scrollPane(listing);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                return new DebuggerPanel(session, listing, scroll, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
+                return new DebuggerPanel(session, listing, instructions, p -> {}, () -> {}, gui, mock(Dialogs.class));
             });
             table = findComponent(debugger, JTable.class, t -> true);
             runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {

@@ -69,11 +69,7 @@ final class SourceNavigation implements AutoCloseable {
                 compiling = false;
                 if (closed) return;
                 current = compilation;
-                if (failed) {
-                    publishCurrent(current, false);
-                    return;
-                }
-                if (inputCaptureFailed) {
+                if (failed || inputCaptureFailed) {
                     publishCurrent(current, false);
                     return;
                 }
@@ -143,22 +139,14 @@ final class SourceNavigation implements AutoCloseable {
     private Optional<SourceAddressMap> current(SourceCodePosition position) {
         SourceAddressMap snapshot = mappings;
         if (compiling) return Optional.empty();
-        if (snapshot.sourceFiles().isEmpty()) {
-            debugger.setSourceMappingsCurrent(false);
-            return Optional.empty();
-        }
-        if (session.memory != null && snapshot.session() != session) {
-            debugger.setSourceMappingsCurrent(false);
-            return Optional.empty();
-        }
+        if (snapshot.sourceFiles().isEmpty() || (session.memory != null && snapshot.session() != session))
+            return stale();
         if (!snapshot.inputsUnchanged()) return stale();
         for (Path file : snapshot.sourceFiles())
             if (editor.openSourceText(file).filter(text -> !snapshot.matches(file, text)).isPresent()) return stale();
-        if (!snapshot.sourceFiles().contains(Path.of(position.fileName).toAbsolutePath().normalize())) {
-            debugger.setSourceMappingsCurrent(true);
-            return Optional.empty();
-        }
+        boolean mappedFile = snapshot.sourceFiles().contains(Path.of(position.fileName).toAbsolutePath().normalize());
         debugger.setSourceMappingsCurrent(true);
+        if (!mappedFile) return Optional.empty();
         return mappings == snapshot ? Optional.of(snapshot) : Optional.empty();
     }
 
@@ -206,8 +194,6 @@ final class SourceNavigation implements AutoCloseable {
             } finally { synchronizing = false; }
         });
     }
-
-
     @Override public void close() {
         if (closed) return;
         closed = true;
