@@ -50,7 +50,9 @@ public class ExitAction extends AbstractAction {
             window.setEnabled(false);
             CompletableFuture<Void> stopped = emulationController == null
                     ? CompletableFuture.completedFuture(null) : emulationController.closeAsync();
-            stopped.thenRunAsync(computer::close).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
+            // Detach views and queued UI callbacks before plugin-owned memory is destroyed.
+            stopped.thenRunAsync(dispose, SwingUtilities::invokeLater)
+                    .thenRunAsync(computer::close).whenComplete((ignored, failure) -> SwingUtilities.invokeLater(() -> {
                 if (failure != null) {
                     setEnabled(true);
                     window.setEnabled(true);
@@ -58,7 +60,6 @@ public class ExitAction extends AbstractAction {
                             "Exit", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                dispose.run();
                 exit.run();
             }));
         }

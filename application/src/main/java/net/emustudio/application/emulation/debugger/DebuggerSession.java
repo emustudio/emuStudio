@@ -328,12 +328,18 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public synchronized void applyCurrent(Stamp stamp, String message, Runnable apply) {
-        applyPaused(stamp.generation, () -> {
-            synchronized (programLock) {
-                if (!stamp.matches(this)) throw new IllegalStateException(message);
-                apply.run();
-            }
-        });
+        if (!applyIfCurrent(stamp, apply)) throw new IllegalStateException(message);
+    }
+
+    /** A normal execution boundary may invalidate a background result before publication. */
+    public synchronized boolean applyIfCurrent(Stamp stamp, Runnable apply) {
+        if (closed || state == CPU.RunState.STATE_RUNNING || activeMutations != 0
+                || generation != stamp.generation) return false;
+        synchronized (programLock) {
+            if (!stamp.matches(this)) return false;
+            apply.run();
+            return true;
+        }
     }
 
     /** Select an immutable view of completed runtime observations; never decode or execute memory. */

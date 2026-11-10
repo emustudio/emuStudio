@@ -60,8 +60,7 @@ final class AnalysisTasks implements AutoCloseable {
         if (closed || active != task) return;
         active = null;
         try {
-            session.applyCurrent(stamp, "Analysis discarded: memory, source or metadata changed",
-                    () -> apply.accept(result(task)));
+            session.applyIfCurrent(stamp, () -> apply.accept(result(task)));
         } catch (CancellationException e) {
             failure.accept(new IllegalStateException("Analysis cancelled", e));
         } catch (RuntimeException e) {

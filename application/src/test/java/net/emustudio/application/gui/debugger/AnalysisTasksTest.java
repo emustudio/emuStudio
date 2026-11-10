@@ -44,8 +44,7 @@ public class AnalysisTasksTest {
                     release.countDown();
                     completion.await();
                     assertEquals(!metadata, applied.get());
-                    if (metadata) assertTrue(completion.failure.get().getMessage().contains("metadata changed"));
-                    else assertNull(completion.failure.get());
+                    assertNull(completion.failure.get());
                 } finally {
                     release.countDown();
                     SwingUtilities.invokeAndWait(tasks::close);
@@ -131,10 +130,45 @@ public class AnalysisTasksTest {
                 completion.await();
 
                 assertFalse(applied.get());
-                assertTrue(completion.failure.get() instanceof IllegalStateException);
-                assertTrue(completion.failure.get().getMessage().contains("machine changed"));
+                assertNull(completion.failure.get());
             } finally {
                 release.countDown();
+                SwingUtilities.invokeAndWait(tasks::close);
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
+    public void stepBeforeSwingPublishesAnalysisQuietlyDiscardsResultAndAllowsRetry() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
+        try (DebuggerSession session = machine.session(null)) {
+            Completion completion = new Completion();
+            AnalysisTasks tasks = new AnalysisTasks(session, completion::busyChanged, completion.failure::set);
+            CountDownLatch computed = new CountDownLatch(1);
+            AtomicBoolean applied = new AtomicBoolean();
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    tasks.submit(() -> {
+                        computed.countDown();
+                        return 42;
+                    }, value -> applied.set(true));
+                    try {
+                        assertTrue(computed.await(2, TimeUnit.SECONDS));
+                    } catch (InterruptedException e) {
+                        throw new AssertionError(e);
+                    }
+                    // A timed step may finish before Swing can publish the previous result.
+                    session.execution().step().join();
+                });
+                completion.await();
+                assertFalse(applied.get());
+                assertNull(completion.failure.get());
+                assertEquals(List.of(true, false), completion.busyStates);
+
+                CountDownLatch recovered = new CountDownLatch(1);
+                SwingUtilities.invokeAndWait(() -> tasks.submit(() -> 7, value -> recovered.countDown()));
+                assertTrue(recovered.await(2, TimeUnit.SECONDS));
+            } finally {
                 SwingUtilities.invokeAndWait(tasks::close);
             }
         }

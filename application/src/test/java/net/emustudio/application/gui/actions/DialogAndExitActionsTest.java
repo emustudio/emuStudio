@@ -6,15 +6,19 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.AbstractSwingTest;
+import net.emustudio.application.gui.debugger.DebugTableModel;
+import net.emustudio.application.gui.dialogs.EmulatorPanel;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.InOrder;
+import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -92,8 +96,8 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         assertTrue(exited.await(5, TimeUnit.SECONDS));
         InOrder shutdown = inOrder(controller, dispose, computer);
         shutdown.verify(controller).closeAsync();
-        shutdown.verify(computer).close();
         shutdown.verify(dispose).run();
+        shutdown.verify(computer).close();
     }
 
     @Test
@@ -105,6 +109,39 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
         new ExitAction(onEdt(JFrame::new), () -> false, controller, computer, dispose).actionPerformed(null);
 
         verifyNoInteractions(controller, computer, dispose);
+    }
+
+    @Test
+    public void exitDetachesMemoryListenerBeforePluginDestructionQueuesNotification() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        MemoryContext<?> memory = mock(MemoryContext.class);
+        DebugTableModel model = mock(DebugTableModel.class);
+        JFrame window = showFrame(onEdt(JFrame::new));
+        EmulatorPanel panel = onEdt(() -> new EmulatorPanel(window, computer, model,
+                mock(Dialogs.class), null, memory, position -> {}, new EmuStudioGui()));
+        ArgumentCaptor<MemoryContext.MemoryListener> listener =
+                ArgumentCaptor.forClass(MemoryContext.MemoryListener.class);
+        verify(memory).addMemoryListener(listener.capture());
+        clearInvocations(memory, model);
+        CountDownLatch exited = new CountDownLatch(1);
+        doAnswer(call -> {
+            assertFalse("Plugin destruction must not block Swing", SwingUtilities.isEventDispatchThread());
+            // A notification already captured by a memory plugin can arrive after listener removal.
+            listener.getValue().memoryContentChanged(0, 0);
+            return null;
+        }).when(computer).close();
+        ExitAction action = new ExitAction(window, () -> true, null, computer, () -> {
+            assertTrue(SwingUtilities.isEventDispatchThread());
+            panel.close();
+            window.dispose();
+        }, exited::countDown);
+
+        runOnEdt(() -> action.actionPerformed(null));
+
+        assertTrue(exited.await(5, TimeUnit.SECONDS));
+        runOnEdt(() -> {});
+        verify(memory).removeMemoryListener(listener.getValue());
+        verify(model, never()).memoryChanged(anyInt(), anyInt());
     }
 
     @Test
