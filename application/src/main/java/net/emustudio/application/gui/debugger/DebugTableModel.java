@@ -6,9 +6,12 @@ import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntFunction;
 
 public abstract class DebugTableModel extends AbstractTableModel {
     // Titles of columns created by DebuggerColumn.address/mnemo/opcode factories
+    static final String TITLE_LABEL = "label";
     static final String TITLE_ADDRESS = "address";
     static final String TITLE_MNEMO = "instruction";
     static final String TITLE_OPCODE = "opcode";
@@ -42,4 +45,7 @@ public abstract class DebugTableModel extends AbstractTableModel {
     public abstract void setMaxRows(int maxRows);
 
     public abstract void setDebuggerColumns(List<DebuggerColumn<?>> columns);
+
+    public abstract void setPresentation(IntFunction<String> labels, BooleanSupplier valuesVisible,
+                                         BooleanSupplier editingAllowed);
 }

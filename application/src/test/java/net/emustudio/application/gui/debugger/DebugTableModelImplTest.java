@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -53,18 +54,19 @@ public class DebugTableModelImplTest {
         assertNull(empty.getValueAt(0, 0));
         DebuggerSession session = session(8, 0);
         DebugTableModelImpl model = model(session, 5);
-        assertEquals(3, model.getColumnCount());
-        assertEquals("address", model.getColumnName(0));
-        assertEquals("instruction", model.getColumnName(1));
-        assertEquals("opcode", model.getColumnName(2));
+        assertEquals(4, model.getColumnCount());
+        assertEquals("label", model.getColumnName(0));
+        assertEquals("address", model.getColumnName(1));
+        assertEquals("instruction", model.getColumnName(2));
+        assertEquals("opcode", model.getColumnName(3));
         assertEquals(String.class, model.getColumnClass(1));
-        assertNull(model.getValueAt(0, 0));
+        assertEquals("", model.getValueAt(0, 0));
         assertFalse(model.isCellEditable(0, 0));
         DebuggerColumn<String> custom = DebuggerColumn.text("Label", at -> "label-" + at);
         when(session.cpu.getDebuggerColumns(any(Decoder.class))).thenReturn(List.of(custom));
         model.setCPU(session.cpu, TestCpu.context(session.cpu));
-        assertSame(custom, model.getColumnAt(0));
-        assertEquals("label-0", model.getValueAt(2, 0));
+        assertSame(custom, model.getColumnAt(1));
+        assertEquals("label-0", model.getValueAt(2, 1));
     }
 
     @Test public void pcStaysCenteredAtStartAndEndAndAfterResize() throws Exception {
@@ -293,18 +295,18 @@ public class DebugTableModelImplTest {
         });
         DebugTableModelImpl model = model(session, 3);
         assertEquals(2, model.getLocationAt(2));
-        assertEquals("LIVE 2", model.getValueAt(1, 1));
+        assertEquals("LIVE 2", model.getValueAt(1, 2));
         int initial = calls.get();
         for (int i = 0; i < 20; i++) {
-            model.getValueAt(1, 2);
+            model.getValueAt(1, 3);
             model.showAddress(0);
-            model.getValueAt(1, 1);
+            model.getValueAt(1, 2);
         }
         assertEquals(initial, calls.get());
         length.set(3);
         session.runMutation(() -> {});
         assertEquals(3, model.getLocationAt(2));
-        assertEquals("LIVE 3", model.getValueAt(1, 1));
+        assertEquals("LIVE 3", model.getValueAt(1, 2));
         assertTrue(calls.get() > initial);
     }
 
@@ -331,12 +333,26 @@ public class DebugTableModelImplTest {
         };
         DebugTableModelImpl model = model(session, 3);
         model.setDebuggerColumns(List.of(column));
-        assertFalse(model.isCellEditable(0, 0));
-        assertTrue(model.isCellEditable(1, 0));
-        model.setValueAt("edit", 1, 0);
+        assertFalse(model.isCellEditable(0, 1));
+        assertTrue(model.isCellEditable(1, 1));
+        model.setValueAt("edit", 1, 1);
         assertEquals(2, edited.get());
-        model.setValueAt(42, 2, 0);
-        model.setValueAt("ignored", 0, 0);
+        model.setValueAt(42, 2, 1);
+        model.setValueAt("ignored", 0, 1);
         assertEquals(2, edited.get());
+
+        AtomicBoolean visible = new AtomicBoolean(true), editing = new AtomicBoolean(true);
+        model.setPresentation(address -> "label-" + address, visible::get, editing::get);
+        assertEquals("label-2", model.getValueAt(1, 0));
+        assertFalse(model.isCellEditable(1, 0));
+        model.setValueAt("read-only label", 2, 0);
+        assertEquals(2, edited.get());
+        editing.set(false);
+        assertFalse(model.isCellEditable(2, 1));
+        model.setValueAt("blocked", 2, 1);
+        assertEquals(2, edited.get());
+        visible.set(false);
+        assertNull(model.getValueAt(1, 0));
+        assertNull(model.getValueAt(1, 1));
     }
 }

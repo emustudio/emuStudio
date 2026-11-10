@@ -6,7 +6,7 @@ import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -23,6 +23,7 @@ public class DebugTableImpl extends JTable {
     private IntPredicate breakpointRow = row -> false;
     private IntFunction<String> rowTooltip = row -> null;
     private IntFunction<Color> rowBackground = row -> null;
+    private Runnable restoreSelection = () -> {};
     private Color tooltipBackground;
 
     public DebugTableImpl(DebugTableModel tableModel) {
@@ -72,6 +73,8 @@ public class DebugTableImpl extends JTable {
             } else if (debugColumn.getClassType() == Boolean.class) {
                 tableColumn.setMaxWidth(32);
                 tableColumn.setPreferredWidth(32);
+            } else if (DebugTableModel.TITLE_LABEL.equals(debugColumn.getTitle())) {
+                tableColumn.setPreferredWidth(140);
             } else if (DebugTableModel.TITLE_ADDRESS.equals(debugColumn.getTitle())) {
                 tableColumn.setPreferredWidth(80);
             } else if (DebugTableModel.TITLE_MNEMO.equals(debugColumn.getTitle())) {
@@ -86,15 +89,22 @@ public class DebugTableImpl extends JTable {
         return tableModel;
     }
 
-    public void showInstructions(TableModel model) {
-        setModel(model);
-        setupRenderers();
-        setupColumnWidths();
+    @Override public void tableChanged(TableModelEvent event) {
+        boolean selected = getSelectionModel() != null && getSelectedRow() >= 0;
+        super.tableChanged(event);
+        if (tableModel == null) return;
+        if (event == null || event.getFirstRow() == TableModelEvent.HEADER_ROW) {
+            setupRenderers();
+            setupColumnWidths();
+        }
+        if (selected) restoreSelection.run();
     }
 
-    public void setInstructionRowPresentation(IntPredicate breakpointRow, IntFunction<String> rowTooltip) {
+    public void setInstructionRowPresentation(IntPredicate breakpointRow, IntFunction<String> rowTooltip,
+                                              Runnable restoreSelection) {
         this.breakpointRow = Objects.requireNonNull(breakpointRow);
         this.rowTooltip = Objects.requireNonNull(rowTooltip);
+        this.restoreSelection = Objects.requireNonNull(restoreSelection);
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 

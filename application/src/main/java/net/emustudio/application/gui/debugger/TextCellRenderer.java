@@ -24,14 +24,7 @@ class TextCellRenderer extends DefaultTableCellRenderer {
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         boolean current = model.isRowAtCurrentInstruction(table.convertRowIndexToModel(row));
-        boolean address = false;
-        for (int col = 0; col < model.getColumnCount(); col++) {
-            if (DebugTableModel.TITLE_ADDRESS.equals(model.getColumnAt(col).getTitle())
-                    && model.getColumnName(col).equals(table.getColumnName(column))) {
-                address = true;
-                break;
-            }
-        }
+        boolean address = DebugTableModel.TITLE_ADDRESS.equals(table.getColumnName(column));
         setIcon(address ? (current ? CURRENT_INSTRUCTION : EMPTY_MARKER) : null);
         setIconTextGap(4);
         Font tableFont = table.getFont();

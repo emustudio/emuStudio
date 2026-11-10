@@ -169,7 +169,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     new java.awt.event.ActionEvent(table, 0, "")));
             runOnEdt(() -> {});
             assertTrue(session.breakpoints.isEmpty());
-            verify(model, never()).showAddress(anyInt());
+            verify(model).showAddress(4);
             assertNull(source.get());
             runOnEdt(panel::close);
         }

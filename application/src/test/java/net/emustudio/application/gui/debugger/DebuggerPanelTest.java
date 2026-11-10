@@ -19,6 +19,7 @@ import net.emustudio.emulib.plugin.debugger.NavLink;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ViewRow;
 import net.emustudio.emulib.application.ui.Dialogs;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -46,6 +47,39 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
+    @Test
+    public void annotationsAndBreakpointNavigationUseCpuAddressesRegardlessOfMemoryCellType() throws Exception {
+        for (Class<?> cellType : List.of(Integer.class, Byte.class)) {
+            try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
+                doReturn(cellType).when(session.memory).getCellTypeClass();
+                when(session.memory.getSize()).thenReturn(0);
+                session.annotations().add(new UserAnnotations.Entry(1, "entry", "CODE"));
+                when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation()).thenReturn(1);
+                session.setBreakpoint(1, true).join();
+                clearInvocations(session.memory);
+            })) {
+                SwingUtilities.invokeAndWait(() -> {
+                    assertTrue(button(workspace.panel, "Annotate inspected address").isEnabled());
+                    JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                    JList<?> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                    assertEquals(1, list.getModel().getSize());
+                    assertEquals("entry", ((MemoryAnnotations.Entry) list.getModel().getElementAt(0)).text);
+                });
+                workspace.machine.state(CPU.RunState.STATE_RUNNING);
+                SwingUtilities.invokeAndWait(() -> {
+                    assertTrue(workspace.session.beforeStep());
+                    workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+                });
+                SwingUtilities.invokeAndWait(() -> {
+                    assertTrue(workspace.panel.isInstructionView());
+                    assertEquals(1, workspace.table.instructionModel().getLocationAt(workspace.table.getSelectedRow()));
+                });
+                verify(workspace.machine.memory, never()).getCellTypeClass();
+                verify(workspace.machine.memory, never()).getSize();
+            }
+        }
+    }
+
     @Test
     public void flowRefreshKeepsInspectionToolbarAndListingEnabled() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8,
@@ -102,6 +136,36 @@ public class DebuggerPanelTest {
     }
 
     @Test
+    public void annotationSearchUsesEngineEntriesAndPreservesSelectionAfterReplacement() throws Exception {
+        MemoryAnnotations.Entry initial = new MemoryAnnotations.Entry(UserAnnotations.OWNER, 100, 1, 4,
+                "CODE", "original", null);
+        MemoryAnnotations.Entry replacement = new MemoryAnnotations.Entry(UserAnnotations.OWNER, 100, 1, 4,
+                "CODE", "updated", null);
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
+            session.annotationEngine.replaceOwner(UserAnnotations.OWNER, List.of(initial));
+            session.annotationEngine.replaceOwner(42, List.of(new MemoryAnnotations.Entry(42, 1, 1, 4,
+                    "label", "compiler label", null)));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                JList<?> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                assertEquals(1, list.getModel().getSize());
+                assertSame(initial, list.getModel().getElementAt(0));
+                list.setSelectedIndex(0);
+                workspace.session.annotationEngine.replaceOwner(UserAnnotations.OWNER, List.of(replacement));
+                workspace.panel.stepCompleted();
+                flushUiEvents();
+                assertSame(replacement, list.getSelectedValue());
+                search.setText("compiler");
+                assertEquals(0, list.getModel().getSize());
+                search.setText("updated");
+                assertEquals(1, list.getModel().getSize());
+                assertSame(replacement, list.getModel().getElementAt(0));
+            });
+        }
+    }
+
+    @Test
     public void refreshingUnchangedAnnotationsDoesNotRebuildListOrClearSelection() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session ->
                 session.annotations().add(new UserAnnotations.Entry(0, "start", "CODE")))) {
@@ -120,10 +184,49 @@ public class DebuggerPanelTest {
                 assertEquals(0, changes.get());
                 assertEquals(0, list.getSelectedIndex());
                 workspace.session.annotations().add(new UserAnnotations.Entry(1, "next", "CODE"));
-                workspace.panel.stepCompleted();
                 flushUiEvents();
                 assertEquals(2, list.getModel().getSize());
                 assertTrue(changes.get() > 0);
+            });
+        }
+    }
+
+    @Test
+    public void annotationEventsUpdateSearchOnSwingAndIgnoreQueuedChangesAfterClose() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session ->
+                session.annotations().add(new UserAnnotations.Entry(0, "start", "CODE")))) {
+            AtomicInteger changes = new AtomicInteger();
+            java.util.concurrent.atomic.AtomicReference<JList<?>> rows = new java.util.concurrent.atomic.AtomicReference<>();
+            SwingUtilities.invokeAndWait(() -> {
+                JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                JList<?> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                rows.set(list);
+                list.setSelectedIndex(0);
+                list.getModel().addListDataListener(new javax.swing.event.ListDataListener() {
+                    private void changed() {
+                        assertTrue(SwingUtilities.isEventDispatchThread());
+                        changes.incrementAndGet();
+                    }
+                    public void intervalAdded(javax.swing.event.ListDataEvent event) { changed(); }
+                    public void intervalRemoved(javax.swing.event.ListDataEvent event) { changed(); }
+                    public void contentsChanged(javax.swing.event.ListDataEvent event) { changed(); }
+                });
+            });
+            // Model updates may arrive from a compiler or another worker, without a CPU step.
+            workspace.session.annotations().add(new UserAnnotations.Entry(1, "next", "CODE"));
+            SwingUtilities.invokeAndWait(() -> {
+                assertEquals(2, rows.get().getModel().getSize());
+                assertEquals(0, rows.get().getSelectedIndex());
+                JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                search.setText("next");
+                assertEquals(1, rows.get().getModel().getSize());
+                assertEquals("next", ((MemoryAnnotations.Entry) rows.get().getModel().getElementAt(0)).text);
+                workspace.session.annotations().add(new UserAnnotations.Entry(2, "next again", "CODE"));
+                workspace.panel.close();
+                changes.set(0);
+                flushUiEvents();
+                assertEquals(0, changes.get());
+                assertEquals(1, rows.get().getModel().getSize());
             });
         }
     }
@@ -984,20 +1087,15 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void instructionViewAcceptsColumnsRenamedByWrapper() throws Exception {
+    public void instructionViewUsesInstructionModelDirectlyForCustomColumns() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{0, 0}}, 2, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
-                javax.swing.table.TableModel base = workspace.table.instructionModel();
-                javax.swing.table.TableModel wrapper = new javax.swing.table.AbstractTableModel() {
-                    @Override public int getRowCount() { return base.getRowCount(); }
-                    @Override public int getColumnCount() { return base.getColumnCount(); }
-                    @Override public String getColumnName(int column) {
-                        return column == 0 ? "renamed" : base.getColumnName(column);
-                    }
-                    @Override public Object getValueAt(int row, int column) { return base.getValueAt(row, column); }
-                };
-                workspace.table.showInstructions(wrapper);
-                assertEquals("renamed", workspace.table.getColumnName(0));
+                DebugTableModel model = workspace.table.instructionModel();
+                model.setDebuggerColumns(List.of(net.emustudio.emulib.application.ui.debugger.DebuggerColumn
+                        .text("renamed", address -> "custom")));
+                assertSame(model, workspace.table.getModel());
+                assertEquals("label", workspace.table.getColumnName(0));
+                assertEquals("renamed", workspace.table.getColumnName(1));
             });
         }
     }
@@ -1073,8 +1171,8 @@ public class DebuggerPanelTest {
                     assertTrue(popup.isVisible());
                     JList<?> results = component(popup, JList.class, "Annotations");
                     assertEquals(2, results.getModel().getSize());
-                    assertEquals("first", ((UserAnnotations.Entry) results.getModel().getElementAt(0)).label);
-                    assertEquals("second", ((UserAnnotations.Entry) results.getModel().getElementAt(1)).label);
+                    assertEquals("first", ((MemoryAnnotations.Entry) results.getModel().getElementAt(0)).text);
+                    assertEquals("second", ((MemoryAnnotations.Entry) results.getModel().getElementAt(1)).text);
                     results.setSelectedIndex(1);
                     java.awt.Rectangle selected = results.getCellBounds(1, 1);
                     results.dispatchEvent(new java.awt.event.MouseEvent(results, java.awt.event.MouseEvent.MOUSE_CLICKED,
@@ -1350,9 +1448,9 @@ public class DebuggerPanelTest {
                     annotationField(dialog, "Label").setText("second");
                 });
                 JTextField search = component(panel, JTextField.class, "Search annotations");
-                @SuppressWarnings("unchecked") JList<UserAnnotations.Entry> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                @SuppressWarnings("unchecked") JList<MemoryAnnotations.Entry> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
                 assertEquals(2, list.getModel().getSize());
-                int firstRow = list.getModel().getElementAt(0).label.equals("first") ? 0 : 1;
+                int firstRow = list.getModel().getElementAt(0).text.equals("first") ? 0 : 1;
                 list.setSelectedIndex(firstRow);
                 editAnnotationDialog(panel, "Edit annotation", "Edit selected annotation", dialog -> {
                     annotationField(dialog, "End address").setText("0x0006");

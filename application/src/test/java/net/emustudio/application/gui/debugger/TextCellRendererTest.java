@@ -24,7 +24,7 @@ public class TextCellRendererTest {
         doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         when(model.isRowAtCurrentInstruction(0)).thenReturn(true);
         DebugTableImpl table = new DebugTableImpl(model);
-        table.setInstructionRowPresentation(row -> row == 1, row -> null);
+        table.setInstructionRowPresentation(row -> row == 1, row -> null, () -> {});
         table.setRowSelectionInterval(0, 0);
 
         Component current = table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0);
@@ -46,7 +46,7 @@ public class TextCellRendererTest {
         doReturn(String.class).when(model).getColumnClass(0);
         doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);
         DebugTableImpl table = new DebugTableImpl(model);
-        table.setInstructionRowPresentation(row -> true, row -> null);
+        table.setInstructionRowPresentation(row -> true, row -> null, () -> {});
 
         for (Color background : new Color[] {Color.WHITE, new Color(60, 63, 65)}) {
             table.setBackground(background);
@@ -64,7 +64,7 @@ public class TextCellRendererTest {
             assertTrue(paintedInk(breakpoint) > paintedInk(standard));
         }
 
-        table.setInstructionRowPresentation(row -> false, row -> null);
+        table.setInstructionRowPresentation(row -> false, row -> null, () -> {});
         assertFalse(table.prepareRenderer(table.getCellRenderer(0, 0), 0, 0).getFont().isBold());
     }
 
@@ -108,7 +108,7 @@ public class TextCellRendererTest {
     }
 
     @Test
-    public void pcMarkerStaysInAddressCellWithWrappedAndReorderedColumns() {
+    public void pcMarkerStaysInAddressCellWithLabelsAndReorderedColumns() {
         DebugTableModel model = mock(DebugTableModel.class);
         when(model.getColumnCount()).thenReturn(1);
         doReturn(DebuggerColumn.address("%04X")).when(model).getColumnAt(0);

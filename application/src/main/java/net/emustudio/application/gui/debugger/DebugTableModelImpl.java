@@ -11,10 +11,15 @@ import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntFunction;
 
 /** Centered live listing; preceding addresses come from the shared execution observations. */
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
+    private IntFunction<String> labels = address -> "";
+    private BooleanSupplier valuesVisible = () -> true;
+    private BooleanSupplier editingAllowed = () -> true;
     private CPU cpu;
     private CPUContext cpuContext;
     private DebuggerSession session;
@@ -232,17 +237,20 @@ public class DebugTableModelImpl extends DebugTableModel {
     }
 
     @Override public Object getValueAt(int row, int column) {
-        if (cpu == null) return null;
+        if (cpu == null || !valuesVisible.getAsBoolean()) return null;
         int address = getLocationAt(row);
-        if (address < 0) return columns[column].getClassType() == Boolean.class ? Boolean.FALSE : null;
+        if (address < 0) return column == 0 ? ""
+                : columns[column].getClassType() == Boolean.class ? Boolean.FALSE : null;
         return columns[column].getValue(address);
     }
 
     @Override public boolean isCellEditable(int row, int column) {
-        return cpu != null && columns[column].isEditable() && getLocationAt(row) >= 0;
+        return cpu != null && editingAllowed.getAsBoolean()
+                && columns[column].isEditable() && getLocationAt(row) >= 0;
     }
 
     @Override public void setValueAt(Object value, int row, int column) {
+        if (!isCellEditable(row, column)) return;
         int address = getLocationAt(row);
         if (address < 0 || !columns[column].getClassType().isInstance(value)) return;
         try { columns[column].setValue(address, value); }
@@ -263,8 +271,18 @@ public class DebugTableModelImpl extends DebugTableModel {
     }
 
     @Override public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
-        this.columns = columns.toArray(new DebuggerColumn[0]);
+        List<DebuggerColumn<?>> displayed = new ArrayList<>();
+        displayed.add(DebuggerColumn.text(TITLE_LABEL, address -> labels.apply(address)));
+        displayed.addAll(columns);
+        this.columns = displayed.toArray(new DebuggerColumn[0]);
         fireTableStructureChanged();
+    }
+
+    @Override public void setPresentation(IntFunction<String> labels, BooleanSupplier valuesVisible,
+                                          BooleanSupplier editingAllowed) {
+        this.labels = Objects.requireNonNull(labels);
+        this.valuesVisible = Objects.requireNonNull(valuesVisible);
+        this.editingAllowed = Objects.requireNonNull(editingAllowed);
     }
 
     static List<DebuggerColumn<?>> defaultColumns(Decoder decoder) {
