@@ -113,6 +113,11 @@ public final class FlowAnalysis {
             return previous;
         }
 
+        int nextInstruction(int address) {
+            Integer next = instructions.higherKey(address);
+            return next == null ? -1 : next;
+        }
+
         FlowAnalysis view(int root, int limit, MemoryAnnotations annotations) {
             if (root < 0 || limit < 1) throw new IllegalArgumentException("Invalid observed flow bounds");
             Map<Integer, DecodedInstruction> selected = new TreeMap<>();

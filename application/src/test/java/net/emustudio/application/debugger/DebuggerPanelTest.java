@@ -650,8 +650,8 @@ public class DebuggerPanelTest {
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 workspace.table.setRowSelectionInterval(0, 0);
-                int address = workspace.table.instructionModel().getLocationAt(1);
-                java.awt.Rectangle cell = workspace.table.getCellRect(1, 0, true);
+                int address = workspace.table.instructionModel().getLocationAt(2);
+                java.awt.Rectangle cell = workspace.table.getCellRect(2, 0, true);
                 java.awt.event.MouseEvent click = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_PRESSED, 0, 0, cell.x + 1, cell.y + 1,
                         1, false, java.awt.event.MouseEvent.BUTTON3);
@@ -1272,7 +1272,7 @@ public class DebuggerPanelTest {
                             >= workspace.table.getColumnModel().getColumn(col).getPreferredWidth());
                 }
                 assertEquals(JTable.AUTO_RESIZE_OFF, workspace.table.getAutoResizeMode());
-                java.awt.Rectangle cell = workspace.table.getCellRect(0, 0, true);
+                java.awt.Rectangle cell = workspace.table.getCellRect(1, 0, true);
                 java.awt.event.MouseEvent hover = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, cell.x + 1, cell.y + 1, 0, false);
                 assertEquals("start", workspace.table.getToolTipText(hover));
@@ -1280,7 +1280,7 @@ public class DebuggerPanelTest {
                         BreakpointDialog.Operation.SET, 0)));
                 flushUiEvents();
                 JComponent rendered = (JComponent) workspace.table.prepareRenderer(
-                        workspace.table.getCellRenderer(0, 0), 0, 0);
+                        workspace.table.getCellRenderer(1, 0), 1, 0);
                 assertTrue(rendered.getFont().isBold());
             });
         }
@@ -1295,8 +1295,9 @@ public class DebuggerPanelTest {
             } catch (Exception e) { throw new RuntimeException(e); }
         })) {
             SwingUtilities.invokeAndWait(() -> {
+                workspace.table.instructionModel().setMaxRows(7);
                 JPanel graph = component(workspace.panel, JPanel.class, "Instruction flow graph");
-                java.awt.Rectangle first = workspace.table.getCellRect(0, 0, true);
+                java.awt.Rectangle first = workspace.table.getCellRect(3, 0, true);
                 java.awt.event.MouseEvent hoverFirst = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, first.x + 1, first.y + 1, 0, false);
                 assertEquals("range", workspace.table.getToolTipText(hoverFirst));
@@ -1307,7 +1308,7 @@ public class DebuggerPanelTest {
                         (lane.getBlue() * 28 + base.getBlue() * 227 + 127) / 255);
                 assertEquals(expected, workspace.table.createToolTip().getBackground());
 
-                java.awt.Rectangle second = workspace.table.getCellRect(1, 0, true);
+                java.awt.Rectangle second = workspace.table.getCellRect(4, 0, true);
                 java.awt.event.MouseEvent hoverSecond = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, second.x + 1, second.y + 1, 0, false);
                 assertEquals("range | inner", workspace.table.getToolTipText(hoverSecond));
@@ -1316,18 +1317,18 @@ public class DebuggerPanelTest {
                 workspace.table.clearSelection();
                 for (int col = 0; col < workspace.table.getColumnCount(); col++) {
                     assertEquals(overlap, workspace.table.prepareRenderer(
-                            workspace.table.getCellRenderer(1, col), 1, col).getBackground());
+                            workspace.table.getCellRenderer(4, col), 4, col).getBackground());
                     assertEquals(workspace.table.getBackground(), workspace.table.prepareRenderer(
-                            workspace.table.getCellRenderer(2, col), 2, col).getBackground());
+                            workspace.table.getCellRenderer(5, col), 5, col).getBackground());
                 }
 
-                workspace.table.setRowSelectionInterval(1, 1);
+                workspace.table.setRowSelectionInterval(4, 4);
                 assertEquals(workspace.table.getSelectionBackground(), workspace.table.prepareRenderer(
-                        workspace.table.getCellRenderer(1, 0), 1, 0).getBackground());
+                        workspace.table.getCellRenderer(4, 0), 4, 0).getBackground());
                 assertEquals(new java.awt.Color(255, 179, 179), workspace.table.prepareRenderer(
-                        workspace.table.getCellRenderer(0, 0), 0, 0).getBackground());
+                        workspace.table.getCellRenderer(3, 0), 3, 0).getBackground());
 
-                java.awt.Rectangle third = workspace.table.getCellRect(2, 0, true);
+                java.awt.Rectangle third = workspace.table.getCellRect(5, 0, true);
                 java.awt.event.MouseEvent hoverThird = new java.awt.event.MouseEvent(workspace.table,
                         java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, third.x + 1, third.y + 1, 0, false);
                 assertNull(workspace.table.getToolTipText(hoverThird));

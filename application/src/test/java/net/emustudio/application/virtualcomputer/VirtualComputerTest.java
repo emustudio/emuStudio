@@ -53,7 +53,7 @@ public class VirtualComputerTest {
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
         try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
-            seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "UNKNOWN"));
+            seed.annotations().add(new AnnotationIndex.Entry(3, "saved label", "CODE"));
             seed.save();
         }
         clearInvocations(memory);

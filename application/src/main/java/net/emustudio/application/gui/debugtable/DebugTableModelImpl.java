@@ -2,326 +2,272 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.gui.debugtable.PaginatingDisassembler.BoundaryDecoder;
-
 import net.emustudio.application.debugger.DebuggerSession;
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.emulib.plugin.cpu.Decoder;
-import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
-import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
+import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.Decoder;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 
-import javax.swing.event.TableModelEvent;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
+/** Centered live listing; preceding addresses come from the shared execution observations. */
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
     private CPU cpu;
     private CPUContext cpuContext;
-    private PaginatingDisassembler ida;
-    private BoundaryDecoder boundaryDecoder;
-    private Integer inspectedLocation;
     private DebuggerSession session;
+    private Integer inspectedLocation;
+    private int maxRows = 21;
+    private int pageIndex;
+    private int cachedAnchor = -1;
     private long programRevision = -1;
     private int[] rowLocations;
-    private final Map<Integer, DecodedInstruction> rowInstructions = new HashMap<>();
-    private final Map<Integer, InvalidInstructionException> invalidRows = new HashMap<>();
-    private final Decoder rowDecoder = this::decodeRow;
-    private int cachedAnchor = -1, cachedPage;
-
-    public DebugTableModelImpl() {
-    }
+    // No size limit; only changes to the memory view invalidate decoded presentation.
+    private final Map<Integer, DecodedInstruction> instructions = new HashMap<>();
+    private final Map<Integer, InvalidInstructionException> invalidInstructions = new HashMap<>();
+    private final Decoder rowDecoder = this::decode;
 
     public void setCPU(CPU cpu, CPUContext cpuContext) {
-        this.cpuContext = Objects.requireNonNull(cpuContext);
         this.cpu = Objects.requireNonNull(cpu);
+        this.cpuContext = Objects.requireNonNull(cpuContext);
         inspectedLocation = null;
-        rowInstructions.clear();
-        invalidRows.clear();
-        boundaryDecoder = new BoundaryDecoder(rowDecoder);
-        this.ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
-        if (session != null) ida.setObservedInstructionsBefore(session::observedInstructionsBefore);
-        rowLocations = null;
-        List<DebuggerColumn<?>> cpuColumns = cpu.getDebuggerColumns(rowDecoder);
-        setDebuggerColumns(cpuColumns.isEmpty() ? defaultColumns(rowDecoder) : cpuColumns);
+        pageIndex = 0;
+        clearDecodedInstructions();
+        List<DebuggerColumn<?>> provided = cpu.getDebuggerColumns(rowDecoder);
+        setDebuggerColumns(provided.isEmpty() ? defaultColumns(rowDecoder) : provided);
     }
 
-    /** Optional logical instruction view; no analysis is performed here. */
     public void setDebuggerSession(DebuggerSession session) {
         this.session = Objects.requireNonNull(session);
-        resetPagination();
+        programRevision = -1;
+        clearDecodedInstructions();
     }
 
-    public void setMaxRows(int maxRows) {
-        if (ida != null) {
-            int rows = Math.max(1, maxRows);
-            if (cpu != null && ida.getInstructionsPerPage() != rows && ida.getPageIndex() != 0) {
-                ida.rowToLocation(viewLocation(), 0);
-                int anchor = ida.rowToLocation(viewLocation(), ida.getCurrentInstructionRow());
-                if (anchor >= 0) inspectedLocation = anchor;
-            }
-            ida.setInstructionsPerPage(rows);
-            if (rowLocations != null && rowLocations.length != rows) rowLocations = null;
-            fireTableChanged(new TableModelEvent(this));
-        }
-    }
-
-    @Override
-    public int getRowCount() {
-        return (ida != null) ? ida.getInstructionsPerPage() : 0;
-    }
-
-    @Override
-    public DebuggerColumn<?> getColumnAt(int index) {
-        return columns[index];
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columns.length;
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        return columns[col].getTitle();
-    }
-
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        return columns[columnIndex].getClassType();
-    }
-
-    @Override
-    public void previousPage() {
-        if (ida != null) {
+    @Override public void setMaxRows(int rows) {
+        int size = Math.max(1, rows);
+        if (maxRows == size) return;
+        if (cpu != null && pageIndex != 0) {
             materializePage();
-            ida.pagePrevious();
-            rowLocations = null;
-            fireTableDataChanged();
+            int center = rowLocations[maxRows / 2];
+            if (center >= 0) inspectedLocation = center;
+            pageIndex = 0;
         }
-    }
-
-    @Override
-    public void seekBackwardPage(final int value) {
-        if (ida != null) {
-            materializePage();
-            for (int counter = 0; counter < value; counter++) {
-                ida.pagePrevious();
-            }
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void firstPage() {
-        if (ida != null) {
-            materializePage();
-            ida.pageFirst();
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void nextPage() {
-        if (ida != null) {
-            materializePage();
-            ida.pageNext();
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void seekForwardPage(final int value) {
-        if (ida != null) {
-            materializePage();
-            for (int counter = 0; counter < value; counter++) {
-                ida.pageNext();
-            }
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void lastPage() {
-        if (ida != null) {
-            materializePage();
-            ida.pageLast();
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void currentPage() {
-        if (ida != null) {
-            inspectedLocation = null;
-            ida.pageCurrent();
-            rowLocations = null;
-            fireTableDataChanged();
-        }
-    }
-
-    @Override
-    public void showAddress(int address) {
-        if (cpu == null) return;
-        if (address < 0 || address >= cpu.getAddressSpaceSize()) {
-            throw new IllegalArgumentException("Address outside CPU");
-        }
-        inspectedLocation = address;
-        ida.pageCurrent();
+        maxRows = size;
         rowLocations = null;
-        materializePage();
         fireTableDataChanged();
     }
+
+    @Override public int getRowCount() { return cpu == null ? 0 : maxRows; }
+    @Override public int getColumnCount() { return columns.length; }
+    @Override public DebuggerColumn<?> getColumnAt(int index) { return columns[index]; }
+    @Override public String getColumnName(int column) { return columns[column].getTitle(); }
+    @Override public Class<?> getColumnClass(int column) { return columns[column].getClassType(); }
 
     private int viewLocation() {
         return inspectedLocation == null ? cpuContext.getInstructionLocation() : inspectedLocation;
     }
 
-    private void resetPagination() {
-        if (ida == null || boundaryDecoder == null) { rowLocations = null; return; }
-        int rows = ida.getInstructionsPerPage();
-        if (ida.getPageIndex() != 0 && rowLocations != null && rowLocations.length > 0) {
-            int center = rowLocations[rowLocations.length / 2];
-            if (center >= 0) inspectedLocation = center;
-        }
-        boundaryDecoder = new BoundaryDecoder(rowDecoder);
-        ida = new PaginatingDisassembler(boundaryDecoder, cpu.getAddressSpaceSize());
-        if (session != null) ida.setObservedInstructionsBefore(session::observedInstructionsBefore);
-        ida.setInstructionsPerPage(rows);
+    private void clearDecodedInstructions() {
+        instructions.clear();
+        invalidInstructions.clear();
         rowLocations = null;
     }
 
-    private void materializePage() {
-        if (ida == null || cpu == null) return;
+    private void refreshRevision() {
         long revision = session == null ? 0 : session.programRevision();
         if (revision != programRevision) {
             programRevision = revision;
-            resetPagination();
+            clearDecodedInstructions();
         }
-        int rows = ida.getInstructionsPerPage(), anchor = viewLocation(), page = ida.getPageIndex();
-        if (rows <= 0 || (rowLocations != null && rowLocations.length == rows
-                && cachedAnchor == anchor && cachedPage == page)) return;
-        rowInstructions.clear();
-        invalidRows.clear();
-        int[] locations = new int[rows];
-        for (int row = 0; row < rows; row++) locations[row] = ida.rowToLocation(anchor, row);
-        rowLocations = locations;
-        cachedAnchor = anchor;
-        cachedPage = page;
     }
 
-    private DecodedInstruction decodeRow(int address) throws InvalidInstructionException {
-        InvalidInstructionException failure = invalidRows.get(address);
+    private List<Integer> instructionsBefore(int address, int count) {
+        if (count == 0) return List.of();
+        int pc = cpuContext.getInstructionLocation();
+        Deque<Integer> previous = new ArrayDeque<>(session == null ? List.of()
+                : session.observedInstructionsBefore(Math.min(address, pc), count));
+        // Extend observed history through the browsed, unexecuted instructions.
+        // Only this displayed window is shortened; decoded instructions remain cached.
+        for (int at = pc; at < address; at = nextAddress(at)) {
+            previous.addLast(at);
+            if (previous.size() > count) previous.removeFirst();
+        }
+        return new ArrayList<>(previous);
+    }
+
+    private void materializePage() {
+        if (cpu == null) return;
+        refreshRevision();
+        int anchor = viewLocation();
+        if (rowLocations != null && cachedAnchor == anchor) return;
+        int[] locations = new int[maxRows];
+        Arrays.fill(locations, -1);
+        if (anchor >= 0 && anchor < cpu.getAddressSpaceSize()) {
+            long first = (long) pageIndex * Math.max(1, maxRows - 1) - maxRows / 2;
+            long end = first + maxRows;
+            if (first < 0) {
+                List<Integer> previous = instructionsBefore(anchor, (int) Math.min(Integer.MAX_VALUE, -first));
+                for (int i = 0; i < previous.size(); i++) {
+                    long row = (long) i - previous.size() - first;
+                    if (row >= 0 && row < maxRows) locations[(int) row] = previous.get(i);
+                }
+            }
+            int address = anchor;
+            for (long slot = 0; slot < end && address < cpu.getAddressSpaceSize(); slot++) {
+                if (slot >= first) locations[(int) (slot - first)] = address;
+                address = nextListingAddress(address);
+            }
+        }
+        rowLocations = locations;
+        cachedAnchor = anchor;
+    }
+
+    private DecodedInstruction decode(int address) throws InvalidInstructionException {
+        InvalidInstructionException failure = invalidInstructions.get(address);
         if (failure != null) throw failure;
-        DecodedInstruction instruction = rowInstructions.get(address);
+        DecodedInstruction instruction = instructions.get(address);
         if (instruction == null) {
             try {
                 instruction = cpu.getDecoder().decode(address);
-                rowInstructions.put(address, instruction);
+                instructions.put(address, instruction);
             } catch (InvalidInstructionException invalid) {
-                invalidRows.put(address, invalid);
+                invalidInstructions.put(address, invalid);
                 throw invalid;
             }
         }
         return instruction;
     }
 
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        if (ida == null) return null;
-        int location = getLocationAt(rowIndex);
-        if (location == -1) {
-            return getEmptyValue(columns[columnIndex]);
-        }
-        return columns[columnIndex].getValue(location);
+    private int nextAddress(int address) {
+        int length = 1;
+        try { length = decode(address).length(); }
+        catch (InvalidInstructionException invalid) { /* Invalid cells remain individually browsable. */ }
+        return (int) Math.min(cpu.getAddressSpaceSize(), (long) address + length);
     }
 
-    @Override
-    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-        if (ida == null) return;
-        int location = getLocationAt(rowIndex);
-        if (location == -1) return;
-        
-        DebuggerColumn<?> column = columns[columnIndex];
-        if (column.getClassType().isInstance(value)) {
-            try {
-                column.setValue(location, value);
-            } catch (IllegalArgumentException ignored) {
+    private int nextListingAddress(int address) {
+        int pc = cpuContext.getInstructionLocation();
+        if (address < pc) {
+            int observed = session == null ? -1 : session.nextObservedInstruction(address);
+            return observed >= 0 && observed < pc ? observed : pc;
+        }
+        return nextAddress(address);
+    }
+
+    @Override public void previousPage() { seekBackwardPage(1); }
+    @Override public void nextPage() { seekForwardPage(1); }
+
+    @Override public void seekBackwardPage(int pages) {
+        seekPages(pages, -1);
+    }
+
+    @Override public void seekForwardPage(int pages) {
+        seekPages(pages, 1);
+    }
+
+    private void seekPages(int pages, int direction) {
+        if (cpu == null) return;
+        for (int page = 0; page < pages; page++) {
+            pageIndex += direction;
+            rowLocations = null;
+            materializePage();
+            if (Arrays.stream(rowLocations).allMatch(address -> address < 0)) {
+                pageIndex -= direction;
+                rowLocations = null;
+                break;
             }
-        }
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        if (ida == null || !columns[columnIndex].isEditable()) {
-            return false;
-        }
-
-        return getLocationAt(rowIndex) != -1;
-    }
-
-    @Override
-    public boolean isRowAtCurrentInstruction(int rowIndex) {
-        return ida != null && getLocationAt(rowIndex) == cpuContext.getInstructionLocation();
-    }
-
-    @Override
-    public int getLocationAt(int rowIndex) {
-        if (ida == null) return -1;
-        materializePage();
-        return rowLocations == null || rowIndex < 0 || rowIndex >= rowLocations.length ? -1 : rowLocations[rowIndex];
-    }
-
-    @Override
-    public void memoryChanged(int from, int to) {
-        if (ida != null) {
-            ida.flushCache(from, to + 1);
-            resetPagination();
         }
         fireTableDataChanged();
     }
 
-    static List<DebuggerColumn<?>> defaultColumns(Decoder disassembler) {
-        return List.of(
-                DebuggerColumn.address("%04X"), DebuggerColumn.mnemo(disassembler), DebuggerColumn.opcode(disassembler)
-        );
+    @Override public void firstPage() {
+        if (cpu == null) return;
+        refreshRevision();
+        List<Integer> previous = instructionsBefore(viewLocation(), Integer.MAX_VALUE);
+        pageIndex = Math.floorDiv(maxRows / 2 - previous.size(), Math.max(1, maxRows - 1));
+        rowLocations = null;
+        fireTableDataChanged();
     }
 
-    @Override
-    public int guessPreviousInstructionLocation() {
-        materializePage();
-        PaginatingDisassembler i = ida;
-        CPU cpu = this.cpu;
-        if (i != null && cpu != null) {
-            try {
-                i.rowToLocation(cpuContext.getInstructionLocation(), 0);
-                int location = i.rowToLocation(cpuContext.getInstructionLocation(), i.getCurrentInstructionRow() - 1);
-                if (location < 0) return Math.max(0, cpuContext.getInstructionLocation() - 1);
-                return location;
-            } finally {
-                // This CPU-relative lookup may have moved a separately browsed paginator.
-                rowLocations = null;
-            }
+    @Override public void lastPage() {
+        if (cpu == null) return;
+        refreshRevision();
+        int anchor = viewLocation();
+        int last = 0;
+        for (int next = nextListingAddress(anchor); next < cpu.getAddressSpaceSize(); next = nextListingAddress(anchor)) {
+            anchor = next;
+            last++;
         }
-        return 0;
+        pageIndex = (int) (((long) last + maxRows / 2) / Math.max(1, maxRows - 1));
+        rowLocations = null;
+        fireTableDataChanged();
     }
 
-    @Override
-    public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
+    @Override public void currentPage() {
+        inspectedLocation = null;
+        pageIndex = 0;
+        rowLocations = null;
+        fireTableDataChanged();
+    }
+
+    @Override public void showAddress(int address) {
+        if (cpu == null) return;
+        if (address < 0 || address >= cpu.getAddressSpaceSize())
+            throw new IllegalArgumentException("Address outside CPU");
+        inspectedLocation = address;
+        pageIndex = 0;
+        rowLocations = null;
+        fireTableDataChanged();
+    }
+
+    @Override public int getLocationAt(int row) {
+        materializePage();
+        return rowLocations == null || row < 0 || row >= rowLocations.length ? -1 : rowLocations[row];
+    }
+
+    @Override public boolean isRowAtCurrentInstruction(int row) {
+        return cpu != null && getLocationAt(row) == cpuContext.getInstructionLocation();
+    }
+
+    @Override public Object getValueAt(int row, int column) {
+        if (cpu == null) return null;
+        int address = getLocationAt(row);
+        if (address < 0) return columns[column].getClassType() == Boolean.class ? Boolean.FALSE : null;
+        return columns[column].getValue(address);
+    }
+
+    @Override public boolean isCellEditable(int row, int column) {
+        return cpu != null && columns[column].isEditable() && getLocationAt(row) >= 0;
+    }
+
+    @Override public void setValueAt(Object value, int row, int column) {
+        int address = getLocationAt(row);
+        if (address < 0 || !columns[column].getClassType().isInstance(value)) return;
+        try { columns[column].setValue(address, value); }
+        catch (IllegalArgumentException ignored) { }
+    }
+
+    @Override public void memoryChanged(int from, int to) {
+        clearDecodedInstructions();
+        fireTableDataChanged();
+    }
+
+    @Override public int guessPreviousInstructionLocation() {
+        if (cpu == null) return 0;
+        refreshRevision();
+        int pc = cpuContext.getInstructionLocation();
+        List<Integer> previous = instructionsBefore(pc, 1);
+        return previous.isEmpty() ? pc : previous.get(0);
+    }
+
+    @Override public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
         this.columns = columns.toArray(new DebuggerColumn[0]);
         fireTableStructureChanged();
     }
 
-    private Object getEmptyValue(DebuggerColumn<?> column) {
-        return (column.getClassType() == Boolean.class) ? Boolean.FALSE : null;
+    static List<DebuggerColumn<?>> defaultColumns(Decoder decoder) {
+        return List.of(DebuggerColumn.address("%04X"), DebuggerColumn.mnemo(decoder), DebuggerColumn.opcode(decoder));
     }
 }

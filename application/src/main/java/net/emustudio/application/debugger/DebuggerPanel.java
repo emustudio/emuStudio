@@ -208,7 +208,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         historicalState = gui.textAreaReadOnly(50, 10);
         annotations.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         this.session = session;
-        if (session.memory != null && instructionModel instanceof DebugTableModelImpl)
+        if (instructionModel instanceof DebugTableModelImpl)
             ((DebugTableModelImpl) instructionModel).setDebuggerSession(session);
         this.sourceNavigator = sourceNavigator;
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);

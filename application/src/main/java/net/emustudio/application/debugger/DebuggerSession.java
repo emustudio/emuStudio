@@ -76,6 +76,10 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return observedFlow.instructionsBefore(address, count);
     }
 
+    public synchronized int nextObservedInstruction(int address) {
+        return observedFlow.nextInstruction(address);
+    }
+
     /** Called only after a successful explicit CPU reset; annotations are retained. */
     public synchronized void cpuReset() {
         observedFlow.reset();
