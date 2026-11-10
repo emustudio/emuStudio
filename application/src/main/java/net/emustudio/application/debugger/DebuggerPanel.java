@@ -113,7 +113,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final GraphPanel graph = new GraphPanel();
     private JButton goToFlowInstruction;
     private JToolBar flowAnnotations;
-    private final JLabel flowOrigin = new JLabel();
     private int flowAnalysisLimit = 1000;
     private final List<JButton> inspectionButtons = new ArrayList<>();
     private boolean flowFromPc;
@@ -1190,9 +1189,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         goToFlowInstruction = inspectionButton("go-to-instruction", "Go to instruction", () -> graph.followNode(graph.selectedNode));
         updateFlowNavigation();
         actions.add(goToFlowInstruction);
-        flowOrigin.getAccessibleContext().setAccessibleName("Analysis origin");
-        flowOrigin.setMinimumSize(new Dimension(0, 0));
-        actions.add(flowOrigin, "gapleft unrel, shrinkprio 110");
         actions.add(Box.createHorizontalGlue(), "pushx, growx");
         foldFlow.getAccessibleContext().setAccessibleName("Fold identical analysis repeats");
         foldFlow.setToolTipText("Group identical consecutive instructions; keep entry points, labels and PC separate");
@@ -1271,11 +1267,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             flowFromPc = fromPc;
             graph.start = address;
             graph.setFlow(flow);
-            String truncated = flow.truncated() ? " · View limited to " + limit + " instructions" : "";
-            flowOrigin.setText(String.format("%04X · %s", address, fromPc ? "PC" : "Selected") + truncated);
-            flowOrigin.setToolTipText(String.format("Observed execution flow from %s at %04X", fromPc ? "PC" : "selected instruction", address)
-                    + (flow.truncated() ? "; view limited to " + limit + " instructions (flowAnalysisLimit)" : ""));
-            flowOrigin.getAccessibleContext().setAccessibleDescription(flowOrigin.getToolTipText());
         });
     }
 
@@ -1379,8 +1370,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         goToFlowInstruction.setVisible(false);
         if (flowAnnotations != null) flowAnnotations.setVisible(false);
         annotationResults.setVisible(false);
-        flowOrigin.setText("Recorded execution");
-        flowOrigin.setToolTipText("Browse captured instructions without changing the live machine");
         updateFlowNavigation();
     }
 
