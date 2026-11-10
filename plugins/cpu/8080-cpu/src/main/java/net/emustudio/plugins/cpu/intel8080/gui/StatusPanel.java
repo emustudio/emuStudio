@@ -15,6 +15,8 @@ import javax.swing.*;
 import java.awt.*;
 
 import static net.emustudio.emulib.Numbers.formatHex;
+import static net.emustudio.emulib.ui.Constants.CPU_RUN_STATE_COLOR;
+import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED_BIG_BOLD;
 
 public class StatusPanel extends JPanel {
     private final GUI gui;
@@ -24,7 +26,7 @@ public class StatusPanel extends JPanel {
     private final FlagsModel flagModel;
 
     private final JLabel lblFrequency = new JLabel("0,0 kHz");
-    private final JLabel lblRun = new JLabel("Stopped");
+    private final JLabel lblRun = new JLabel(RunState.STATE_STOPPED_NORMAL.toString());
     private final JSpinner spnFrequency = new JSpinner();
     private final JTable tblFlags = new JTable();
     private final JTextField txtFlags = regField("00");
@@ -97,7 +99,7 @@ public class StatusPanel extends JPanel {
             txtRegPC.setText(formatHex(pc, 4));
             txtFlags.setText(formatHex(flags, 2));
             flagModel.update(flags);
-            lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString());
+            lblRun.setText(state.toString());
             spnFrequency.setEnabled(state != RunState.STATE_RUNNING);
         });
     }
@@ -149,12 +151,13 @@ public class StatusPanel extends JPanel {
         spFrequencyModel.setStepSize(100);
         spnFrequency.setModel(spFrequencyModel);
 
-        lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
-        lblRun.setForeground(new Color(0, 102, 0));
+        lblRun.setFont(FONT_MONOSPACED_BIG_BOLD);
+        lblRun.setForeground(CPU_RUN_STATE_COLOR);
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
 
         JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[grow]6[]", "[][][][]");
         panelRun.add(lblRun, "span, wrap");
+        panelRun.add(new JSeparator(), "span, growx, h 2!, wrap");
         panelRun.add(gui.label("CPU frequency:"));
         panelRun.add(spnFrequency, "growx");
         panelRun.add(gui.labelBold("kHz"), "wrap");
@@ -180,7 +183,7 @@ public class StatusPanel extends JPanel {
     private final class PanelUpdater implements CPUContext.CPUListener {
         public void runStateChanged(RunState state) {
             runState = state;
-            SwingUtilities.invokeLater(() -> lblRun.setText(state == RunState.STATE_STOPPED_BREAK ? "Paused" : state.toString()));
+            SwingUtilities.invokeLater(() -> lblRun.setText(state.toString()));
         }
 
         public void internalStateChanged() {

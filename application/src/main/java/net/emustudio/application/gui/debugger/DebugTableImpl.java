@@ -52,7 +52,7 @@ public class DebugTableImpl extends JTable {
         });
     }
 
-    private void setupColumnWidths() {
+    void setupColumnWidths() {
         int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
             int viewColumn;

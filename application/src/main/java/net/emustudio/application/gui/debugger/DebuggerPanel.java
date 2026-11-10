@@ -38,7 +38,6 @@ import java.util.function.Predicate;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
@@ -117,6 +116,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private JToggleButton followPc;
     private JButton refreshFlow;
     private UserAnnotations index;
+    private UserAnnotations cachedAnnotationIndex;
+    private long cachedAnnotationRevision = -1;
+    private List<UserAnnotations.Entry> cachedAnnotations = List.of();
+    private List<UserAnnotations.Entry> filteredAnnotations;
+    private String annotationQuery;
     private boolean navigating;
     private final Consumer<CPU.RunState> executionListener;
     private final MemoryContext.MemoryListener memoryListener = new MemoryContext.MemoryListener() {
@@ -156,8 +160,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             appliedExecutionState = nextState;
             appliedInstructionLocation = nextLocation;
             setExecutionRunning(nextState == CPU.RunState.STATE_RUNNING);
-            refreshDiagnostic();
-            refreshWatches();
+            requestRefresh();
             if (running) {
                 tasks.cancel();
                 updateRecordingControls(false);
@@ -323,9 +326,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public void setSourceMappingsCurrent(boolean current) {
+        if (sourceMappingsCurrent == current) return;
         sourceMappingsCurrent = current;
         graph.invalidateLabels();
-        configureInstructionColumns();
         table.repaint();
         graph.repaint();
     }
@@ -603,6 +606,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public void setExecutionRunning(boolean running) {
+        if (this.running == running) return;
         this.running = running;
         refreshDiagnostic();
         updateExecutionState();
@@ -632,8 +636,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         try {
             if (isInstructionView()) {
                 boolean selected = table.getSelectedRow() >= 0;
-                table.showInstructions(instructionRows);
-                configureInstructionColumns();
+                if (table.getModel() != instructionRows) {
+                    table.showInstructions(instructionRows);
+                    configureInstructionColumns();
+                }
                 inspectedAddress = lastInstructionAddress;
                 if (selected) selectInstructionAddress();
                 table.getAccessibleContext().setAccessibleName("Instruction listing");
@@ -647,17 +653,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void configureInstructionColumns() {
         if (table.getModel() != instructionRows) return;
-        for (int col = 0; col < table.getColumnCount(); col++) {
-            TableColumn column = table.getColumnModel().getColumn(col);
-            int width = Math.max(column.getPreferredWidth(),
-                    table.getTableHeader().getFontMetrics(table.getTableHeader().getFont())
-                            .stringWidth(column.getHeaderValue().toString()) + 16);
-            for (int row = 0; row < table.getRowCount(); row++) {
-                width = Math.max(width, table.prepareRenderer(table.getCellRenderer(row, col), row, col)
-                        .getPreferredSize().width + 8);
-            }
-            column.setMinWidth(width);
-        }
+        table.setupColumnWidths();
+        table.getColumnModel().getColumn(table.convertColumnIndexToView(0)).setPreferredWidth(140);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     }
 
@@ -733,7 +730,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 if (visit && target == NavigationTarget.LISTING) showInstructions();
                 lastInstructionAddress = at;
                 inspectedAddress = at;
-                instructionModel.showAddress(at);
+                if (target != NavigationTarget.PC) instructionModel.showAddress(at);
                 if (select) selectInstructionAddress();
             }
         } finally {
@@ -1658,14 +1655,34 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 });
     }
 
+    private List<UserAnnotations.Entry> annotationEntries() {
+        long revision = session.annotationEngine.revision();
+        if (index != cachedAnnotationIndex || revision != cachedAnnotationRevision) {
+            cachedAnnotationIndex = index;
+            cachedAnnotationRevision = revision;
+            cachedAnnotations = index == null ? List.of() : index.entries();
+        }
+        return cachedAnnotations;
+    }
+
     private void refreshAnnotations(String filter) {
+        List<UserAnnotations.Entry> all = annotationEntries();
+        if (filteredAnnotations == all && filter.equals(annotationQuery)) {
+            updateAnnotationActions();
+            return;
+        }
+        filteredAnnotations = all;
+        annotationQuery = filter;
         UserAnnotations.Entry selected = annotations.getSelectedValue();
-        List<UserAnnotations.Entry> entries = index == null ? List.of() : index.search(filter);
+        String needle = filter.toLowerCase(Locale.ROOT);
+        List<UserAnnotations.Entry> entries = all.stream()
+                .filter(entry -> entry.label.toLowerCase(Locale.ROOT).contains(needle))
+                .collect(java.util.stream.Collectors.toList());
         updateRows(annotationRows, entries);
         annotations.clearSelection();
         if (selected != null) annotations.setSelectedIndex(rowOf(annotationRows, entry -> entry.id == selected.id));
         updateAnnotationActions();
-        annotationEmpty.setText(index == null || index.entries().isEmpty()
+        annotationEmpty.setText(all.isEmpty()
                 ? "<html>No annotations yet.<br>Select an address and create an annotation.</html>"
                 : "<html>No matching annotations.<br>Change Search annotations.</html>");
         ((CardLayout) annotationList.getLayout()).show(annotationList, entries.isEmpty() ? "empty" : "list");
@@ -1677,7 +1694,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (address < 0 || address >= size)
             return List.of();
         List<UserAnnotations.Entry> result = new ArrayList<>();
-        for (UserAnnotations.Entry entry : index.entries())
+        for (UserAnnotations.Entry entry : annotationEntries())
             if (entry.address <= address && address < entry.end) result.add(entry);
         return result;
     }
@@ -1804,7 +1821,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             return;
         }
         updateRecordingControls(true);
-        try { refreshHistory(); } catch (IllegalArgumentException failure) {
+        try { if (browsingRecording) refreshHistory(); } catch (IllegalArgumentException failure) {
             showFailure(failure);
         }
         table.repaint();
@@ -1901,11 +1918,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             boolean selected = table.getSelectedRow() >= 0;
             if (event.getFirstRow() == TableModelEvent.HEADER_ROW) {
                 fireTableStructureChanged();
-                SwingUtilities.invokeLater(() -> { if (!disposed) configureInstructionColumns(); });
+                configureInstructionColumns();
             }
             else {
                 fireTableDataChanged();
-                SwingUtilities.invokeLater(() -> { if (!disposed) configureInstructionColumns(); });
             }
             if (selected) selectInstructionAddress();
         }
@@ -2270,7 +2286,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             Set<Integer> boundaries = new HashSet<>(List.of(start, layoutPc, selection));
             refreshNodeLabels();
             boundaries.addAll(nodeLabelCache.keySet());
-            if (index != null) for (UserAnnotations.Entry annotation : index.entries()) {
+            if (index != null) for (UserAnnotations.Entry annotation : annotationEntries()) {
                 instructions.forEach((at, instruction) -> {
                     if ((at <= annotation.address && annotation.address < instruction.cells().end)
                             || (at < annotation.end && annotation.end <= instruction.cells().end))
@@ -2291,7 +2307,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             }
             if (index != null) {
                 List<UserAnnotations.Entry> visible = new ArrayList<>();
-                for (UserAnnotations.Entry annotation : index.entries()) {
+                for (UserAnnotations.Entry annotation : annotationEntries()) {
                     if (boxes.keySet().stream().anyMatch(at -> coversInstruction(annotation, at))) visible.add(annotation);
                 }
                 int nodeX = 30 + visible.size() * 110;
@@ -2334,7 +2350,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (nodeLabelCache != null && labelSession == currentSession
                     && labelContentRevision == content && labelMemoryRevision == memory) return;
             Map<Integer, LinkedHashSet<String>> annotations = new HashMap<>(), symbols = new HashMap<>();
-            if (index != null) for (UserAnnotations.Entry entry : index.entries()) {
+            if (index != null) for (UserAnnotations.Entry entry : annotationEntries()) {
                 String label = entry.label.trim();
                 if (!label.isEmpty()) annotations.computeIfAbsent(entry.address, ignored -> new LinkedHashSet<>()).add(label);
             }

@@ -47,6 +47,72 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void stepDoesNotRenderCellsForSizingOrResetUserColumnWidths() throws Exception {
+        AtomicInteger pc = new AtomicInteger();
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
+            when(net.emustudio.application.TestCpu.context(session.cpu).getInstructionLocation())
+                    .thenAnswer(call -> pc.get());
+            when(session.cpu.step()).thenAnswer(call -> {
+                pc.incrementAndGet();
+                return CPU.RunState.STATE_STOPPED_BREAK;
+            });
+        })) {
+            AtomicInteger rendered = new AtomicInteger();
+            AtomicInteger updates = new AtomicInteger();
+            SwingUtilities.invokeAndWait(() -> {
+                flushUiEvents();
+                workspace.table.instructionModel().addTableModelListener(event -> updates.incrementAndGet());
+                workspace.table.setDefaultRenderer(String.class, new javax.swing.table.DefaultTableCellRenderer() {
+                    @Override public Component getTableCellRendererComponent(JTable table, Object value,
+                            boolean selected, boolean focus, int row, int column) {
+                        rendered.incrementAndGet();
+                        return super.getTableCellRendererComponent(table, value, selected, focus, row, column);
+                    }
+                });
+                workspace.table.getColumnModel().getColumn(2).setPreferredWidth(350);
+            });
+
+            workspace.session.execution().step().join();
+
+            SwingUtilities.invokeAndWait(() -> {
+                flushUiEvents();
+                assertEquals("Steps must not measure table cells", 0, rendered.get());
+                assertEquals("One table update per completed step", 1, updates.get());
+                assertEquals(350, workspace.table.getColumnModel().getColumn(2).getPreferredWidth());
+                assertTrue(workspace.table.instructionModel().isRowAtCurrentInstruction(1));
+                assertEquals(-1, workspace.table.getSelectedRow());
+            });
+        }
+    }
+
+    @Test
+    public void refreshingUnchangedAnnotationsDoesNotRebuildListOrClearSelection() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session ->
+                session.annotations().add(new UserAnnotations.Entry(0, "start", "CODE")))) {
+            AtomicInteger changes = new AtomicInteger();
+            SwingUtilities.invokeAndWait(() -> {
+                JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
+                JList<?> list = component(search.getComponentPopupMenu(), JList.class, "Annotations");
+                list.setSelectedIndex(0);
+                list.getModel().addListDataListener(new javax.swing.event.ListDataListener() {
+                    public void intervalAdded(javax.swing.event.ListDataEvent event) { changes.incrementAndGet(); }
+                    public void intervalRemoved(javax.swing.event.ListDataEvent event) { changes.incrementAndGet(); }
+                    public void contentsChanged(javax.swing.event.ListDataEvent event) { changes.incrementAndGet(); }
+                });
+                workspace.panel.stepCompleted();
+                flushUiEvents();
+                assertEquals(0, changes.get());
+                assertEquals(0, list.getSelectedIndex());
+                workspace.session.annotations().add(new UserAnnotations.Entry(1, "next", "CODE"));
+                workspace.panel.stepCompleted();
+                flushUiEvents();
+                assertEquals(2, list.getModel().getSize());
+                assertTrue(changes.get() > 0);
+            });
+        }
+    }
+
+    @Test
     public void defaultInstructionSelectionStaysEmptyThroughTabsRefreshAndStepping() throws Exception {
         AtomicInteger pc = new AtomicInteger();
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session ->
@@ -1450,7 +1516,7 @@ public class DebuggerPanelTest {
                     String name = workspace.table.getColumnName(col);
                     assertFalse(List.of("bp", "Label", "Comment").contains(name));
                     assertTrue(workspace.table.getColumnModel().getColumn(col).getMinWidth()
-                            >= workspace.table.getColumnModel().getColumn(col).getPreferredWidth());
+                            < workspace.table.getColumnModel().getColumn(col).getPreferredWidth());
                 }
                 assertEquals(JTable.AUTO_RESIZE_OFF, workspace.table.getAutoResizeMode());
                 java.awt.Rectangle cell = workspace.table.getCellRect(1, 0, true);
