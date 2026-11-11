@@ -8,8 +8,6 @@ import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.device.Device;
 import net.emustudio.emulib.plugin.memory.Memory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.List;
@@ -19,10 +17,8 @@ import java.util.function.Consumer;
 
 /** Two host-owned threads: commands publish lifecycle state; the worker executes machine operations. */
 public final class EmulationController implements Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmulationController.class);
     private final ScheduledThreadPoolExecutor commands = new ScheduledThreadPoolExecutor(1,
             task -> new Thread(task, "machine-commands"));
-    public boolean isWorkerThread() { return Thread.currentThread() == workerThread; }
     private volatile Thread workerThread;
     private final ExecutorService worker = Executors.newSingleThreadExecutor(task -> new Thread(() -> {
         workerThread = Thread.currentThread();
@@ -49,16 +45,23 @@ public final class EmulationController implements Closeable {
 
     private enum Stop { PAUSE, STOP, RESET }
 
+    private enum Operation {
+        CONTINUOUS, SINGLE_STEP, MUTATION, COMPILATION;
+
+        boolean isMutation() { return this == MUTATION || this == COMPILATION; }
+    }
+
     private static final class Task {
-        final boolean continuous, mutation;
+        final Operation operation;
         final CompletableFuture<CPU.RunState> result;
         private Thread runner;
         private boolean interrupted;
-        Task(boolean continuous, boolean mutation, CompletableFuture<CPU.RunState> result) {
-            this.continuous = continuous; this.mutation = mutation; this.result = result;
+        Task(Operation operation, CompletableFuture<CPU.RunState> result) {
+            this.operation = operation;
+            this.result = result;
         }
         synchronized void requestStop() {
-            if (mutation) return;
+            if (operation.isMutation()) return;
             interrupted = true;
             if (runner != null) runner.interrupt();
         }
@@ -75,7 +78,10 @@ public final class EmulationController implements Closeable {
         final boolean executing;
         final CompletableFuture<CPU.RunState> result;
         Pending(Stop kind, Integer location, CompletableFuture<CPU.RunState> result, boolean executing) {
-            this.kind = kind; this.location = location; this.result = result; this.executing = executing;
+            this.kind = kind;
+            this.location = location;
+            this.result = result;
+            this.executing = executing;
         }
     }
 
@@ -98,6 +104,7 @@ public final class EmulationController implements Closeable {
     }
 
     public CPU.RunState getRunState() { return state; }
+    public boolean isWorkerThread() { return Thread.currentThread() == workerThread; }
     public int getInstructionLocation() { return cpuContext == null ? -1 : cpuContext.getInstructionLocation(); }
     /** Whether an application command or cooperative close is pending or executing. */
     public boolean isBusy() { return busy || closing; }
@@ -133,38 +140,53 @@ public final class EmulationController implements Closeable {
             if (state != CPU.RunState.STATE_STOPPED_BREAK) throw new IllegalStateException("Reset CPU first");
             cancelTimer();
             runCompletion = new CompletableFuture<>();
-            launch(true, runCompletion, cpu::execute, false);
+            launch(Operation.CONTINUOUS, runCompletion, cpu::execute);
             result.complete(CPU.RunState.STATE_RUNNING);
         });
     }
 
     public CompletableFuture<CPU.RunState> step() {
-        return command(result -> { requirePaused(); cancelTimer(); launchStep(result, -1, 0); });
+        return command(result -> {
+            requirePaused();
+            cancelTimer();
+            launchStep(result, -1, 0);
+        });
     }
 
     public CompletableFuture<CPU.RunState> step(long delay, TimeUnit unit) {
         long nanos = Math.max(1, unit.toNanos(delay));
         return command(result -> {
-            requireCpu();
-            if (pending != null || (busy && !timedRunning)) throw new IllegalStateException("Machine command is pending");
-            if (active != null && active.continuous) throw new IllegalStateException("Pause CPU first");
-            if (state != CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) throw new IllegalStateException("Reset CPU first");
+            requireTimedStepAvailable();
             cancelTimer();
             timedRunning = true;
             long generation = timerGeneration;
             if (active == null) scheduleStep(generation, nanos, 0);
             else active.result.whenComplete((ignored, failure) -> {
-                if (generation == timerGeneration && timedRunning && !closing) scheduleStep(generation, nanos, nanos);
+                if (isTimerCurrent(generation)) scheduleStep(generation, nanos, nanos);
             });
             publish(state);
             result.complete(state);
         });
     }
 
+    private void requireTimedStepAvailable() {
+        requireCpu();
+        if (pending != null || (busy && !timedRunning)) throw new IllegalStateException("Machine command is pending");
+        if (active != null && active.operation == Operation.CONTINUOUS) throw new IllegalStateException("Pause CPU first");
+        if (state != CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) throw new IllegalStateException("Reset CPU first");
+    }
+
+    private boolean isTimerCurrent(long generation) {
+        return generation == timerGeneration && timedRunning && !closing;
+    }
+
     private void scheduleStep(long generation, long delay, long initialDelay) {
         tick = commands.schedule(() -> {
-            if (generation != timerGeneration || !timedRunning || closing) return;
-            if (state != CPU.RunState.STATE_STOPPED_BREAK || active != null) { cancelTimer(); return; }
+            if (!isTimerCurrent(generation)) return;
+            if (state != CPU.RunState.STATE_STOPPED_BREAK || active != null) {
+                cancelTimer();
+                return;
+            }
             launchStep(new CompletableFuture<>(), generation, delay);
         }, initialDelay, TimeUnit.NANOSECONDS);
     }
@@ -173,9 +195,9 @@ public final class EmulationController implements Closeable {
         requireCpu();
         if (state != CPU.RunState.STATE_STOPPED_BREAK) throw new IllegalStateException("Reset CPU first");
         if (debugger != null) debugger.prepareManualStep();
-        launch(false, result, cpu::step, false);
+        launch(Operation.SINGLE_STEP, result, cpu::step);
         if (generation >= 0) result.whenComplete((value, failure) -> {
-            if (generation == timerGeneration && timedRunning && !closing) {
+            if (isTimerCurrent(generation)) {
                 if (failure == null && value == CPU.RunState.STATE_STOPPED_BREAK) scheduleStep(generation, delay, delay);
                 else cancelTimer();
             }
@@ -184,7 +206,8 @@ public final class EmulationController implements Closeable {
 
     private void cancelTimer() {
         boolean changed = timedRunning;
-        timerGeneration++; timedRunning = false;
+        timerGeneration++;
+        timedRunning = false;
         if (tick != null) tick.cancel(false);
         tick = null;
         if (changed) publish(state);
@@ -201,9 +224,12 @@ public final class EmulationController implements Closeable {
 
     private CompletableFuture<CPU.RunState> stop(Stop kind, Integer location) {
         return command(result -> {
-            if (pending != null || (busy && (active == null || active.mutation)))
+            if (pending != null || (busy && (active == null || active.operation.isMutation())))
                 throw new IllegalStateException("Machine command is pending");
-            cancelTimer(); pending = new Pending(kind, location, result, active != null); busy = true; mutationGeneration++;
+            cancelTimer();
+            pending = new Pending(kind, location, result, active != null);
+            busy = true;
+            mutationGeneration++;
             publish(state);
             if (active != null) active.requestStop(); else finishPending();
         });
@@ -211,20 +237,29 @@ public final class EmulationController implements Closeable {
 
     private void finishPending() {
         Pending operation = pending;
-        if (operation == null) { finishClose(); return; }
+        if (operation == null) {
+            finishClose();
+            return;
+        }
         if (operation.kind == Stop.RESET) {
-            launch(false, operation.result, () -> {
-                if (compiler != null) compiler.reset();
-                if (memory != null) memory.reset();
-                for (Device device : devices) device.reset();
-                resetCpu(operation.location);
-                return CPU.RunState.STATE_STOPPED_BREAK;
-            }, true);
+            launch(Operation.MUTATION, operation.result, () -> resetMachine(operation.location));
         } else {
             if (operation.kind == Stop.STOP && !operation.executing && state == CPU.RunState.STATE_STOPPED_BREAK)
                 state = CPU.RunState.STATE_STOPPED_NORMAL;
-            pending = null; busy = false; publish(state); operation.result.complete(state); finishClose();
+            pending = null;
+            busy = false;
+            publish(state);
+            operation.result.complete(state);
+            finishClose();
         }
+    }
+
+    private CPU.RunState resetMachine(Integer location) {
+        if (compiler != null) compiler.reset();
+        if (memory != null) memory.reset();
+        for (Device device : devices) device.reset();
+        resetCpu(location);
+        return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     public CompletableFuture<Void> mutate(Runnable mutation) {
@@ -234,7 +269,10 @@ public final class EmulationController implements Closeable {
             requirePaused();
             if (expectedGeneration != mutationGeneration) throw new IllegalStateException("Machine edit is stale");
             CPU.RunState previous = state;
-            launch(false, result, () -> { mutation.run(); return previous; }, true);
+            launch(Operation.MUTATION, result, () -> {
+                mutation.run();
+                return previous;
+            });
         }).thenApply(ignored -> null);
     }
 
@@ -248,11 +286,11 @@ public final class EmulationController implements Closeable {
         return command(result -> {
             requirePaused();
             cancelTimer();
-            launch(false, result, () -> {
+            launch(Operation.COMPILATION, result, () -> {
                 compilation.run();
                 resetCpu(location);
                 return CPU.RunState.STATE_STOPPED_BREAK;
-            }, true, true);
+            });
         });
     }
 
@@ -263,56 +301,67 @@ public final class EmulationController implements Closeable {
         if (debugger != null) debugger.cpuReset();
     }
 
-    private void launch(boolean continuous, CompletableFuture<CPU.RunState> result,
-                        Callable<CPU.RunState> operation, boolean mutation) {
-        launch(continuous, result, operation, mutation, false);
+    private void launch(Operation kind, CompletableFuture<CPU.RunState> result, Callable<CPU.RunState> operation) {
+        CPU.RunState previousState = state;
+        Task task = new Task(kind, result);
+        active = task;
+        busy = kind != Operation.CONTINUOUS || pending != null || closing;
+        mutationGeneration++;
+        stepping = kind == Operation.SINGLE_STEP;
+        publish(kind.isMutation() ? state : CPU.RunState.STATE_RUNNING);
+        worker.execute(() -> executeTask(task, operation, previousState));
     }
 
-    private void launch(boolean continuous, CompletableFuture<CPU.RunState> result,
-                        Callable<CPU.RunState> operation, boolean mutation, boolean compilation) {
-        CPU.RunState previousState = state;
-        Task task = new Task(continuous, mutation, result);
-        active = task; busy = !continuous || pending != null || closing; mutationGeneration++;
-        stepping = !continuous && !mutation;
-        publish(mutation ? state : CPU.RunState.STATE_RUNNING);
-        worker.execute(() -> {
-            task.enter();
-            CPU.RunState[] returned = {CPU.RunState.STATE_STOPPED_BAD_INSTR};
-            Throwable failure = null;
-            try {
-                Runnable action = () -> {
-                    try { returned[0] = Objects.requireNonNull(operation.call()); }
-                    catch (Exception problem) { throw new CompletionException(problem); }
-                };
-                if (debugger == null) action.run();
-                else if (compilation) debugger.runCompilation(action);
-                else if (mutation) debugger.runMutation(action);
-                else debugger.runExecution(action);
-            } catch (Throwable problem) {
-                failure = problem instanceof CompletionException && problem.getCause() != null ? problem.getCause() : problem;
-                if (mutation) returned[0] = previousState;
-                else if (failure instanceof IndexOutOfBoundsException || failure.getCause() instanceof IndexOutOfBoundsException)
-                    returned[0] = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                else returned[0] = CPU.RunState.STATE_STOPPED_BAD_INSTR;
-            } finally {
-                task.exit();
-                Thread.interrupted();
-            }
-            CPU.RunState value = returned[0];
-            Throwable error = failure;
-            commands.execute(() -> finished(task, value, error));
-        });
+    private void executeTask(Task task, Callable<CPU.RunState> operation, CPU.RunState previousState) {
+        task.enter();
+        CPU.RunState returned;
+        Throwable failure = null;
+        try {
+            returned = invokeOperation(task.operation, operation);
+        } catch (Throwable problem) {
+            failure = problem instanceof CompletionException && problem.getCause() != null ? problem.getCause() : problem;
+            returned = task.operation.isMutation() ? previousState : failureState(failure);
+        } finally {
+            task.exit();
+            Thread.interrupted();
+        }
+        CPU.RunState value = returned;
+        Throwable error = failure;
+        commands.execute(() -> finished(task, value, error));
+    }
+
+    private CPU.RunState invokeOperation(Operation kind, Callable<CPU.RunState> operation) {
+        CPU.RunState[] returned = {CPU.RunState.STATE_STOPPED_BAD_INSTR};
+        Runnable action = () -> {
+            try { returned[0] = Objects.requireNonNull(operation.call()); }
+            catch (Exception problem) { throw new CompletionException(problem); }
+        };
+        if (debugger == null) action.run();
+        else if (kind == Operation.COMPILATION) debugger.runCompilation(action);
+        else if (kind.isMutation()) debugger.runMutation(action);
+        else debugger.runExecution(action);
+        return returned[0];
+    }
+
+    private CPU.RunState failureState(Throwable failure) {
+        return failure instanceof IndexOutOfBoundsException || failure.getCause() instanceof IndexOutOfBoundsException
+                ? CPU.RunState.STATE_STOPPED_ADDR_FALLOUT : CPU.RunState.STATE_STOPPED_BAD_INSTR;
     }
 
     private void finished(Task task, CPU.RunState returned, Throwable failure) {
         if (active != task) return;
         active = null;
-        if (!task.continuous && !task.mutation && debugger != null) debugger.completeManualStep();
+        if (task.operation == Operation.SINGLE_STEP && debugger != null) debugger.completeManualStep();
         if (returned == CPU.RunState.STATE_RUNNING) returned = (pending != null && pending.kind == Stop.STOP) || closing
                 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
-        state = returned; busy = pending != null || closing; mutationGeneration++;
+        state = returned;
+        busy = pending != null || closing;
+        mutationGeneration++;
         stepping = false;
-        if (pending != null && task.result == pending.result) { pending = null; busy = closing; }
+        if (pending != null && task.result == pending.result) {
+            pending = null;
+            busy = closing;
+        }
         publish(state, true);
         if (debugger != null) debugger.completeSourceCapture();
         if (failure == null) task.result.complete(state); else task.result.completeExceptionally(failure);
@@ -335,7 +384,10 @@ public final class EmulationController implements Closeable {
         try {
             commands.execute(() -> {
                 if (closing) return;
-                closing = true; busy = true; cancelTimer(); publish(state);
+                closing = true;
+                busy = true;
+                cancelTimer();
+                publish(state);
                 if (active != null) active.requestStop(); else if (pending == null) finishClose();
             });
         } catch (RejectedExecutionException failure) { if (!closed.isDone()) closed.completeExceptionally(failure); }
@@ -345,7 +397,9 @@ public final class EmulationController implements Closeable {
     private void finishClose() {
         if (!closing || active != null || pending != null || shutDown) return;
         shutDown = true;
-        worker.shutdown(); commands.shutdown(); closed.complete(null);
+        worker.shutdown();
+        commands.shutdown();
+        closed.complete(null);
     }
 
     /** Blocking lifecycle hook for non-UI callers. UI callers use closeAsync(). */

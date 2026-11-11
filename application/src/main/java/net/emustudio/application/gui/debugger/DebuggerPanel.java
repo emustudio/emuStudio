@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -323,12 +324,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private boolean inspectBreakpointHit() {
-        DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
-        if (hit == null) return false;
+        OptionalInt hit = session.takeBreakpointHit();
+        if (hit.isEmpty()) return false;
         instructionModel.currentPage();
         lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
         showInstructions();
-        guard(() -> navigate(hit.address));
+        guard(() -> navigate(hit.getAsInt()));
         return true;
     }
 

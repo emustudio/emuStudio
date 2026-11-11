@@ -4,6 +4,7 @@ package net.emustudio.application.emulation.debugger;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -16,7 +17,7 @@ public final class FlowGraph {
     public static final class Instruction {
         private final Range cells;
         public Instruction(Range cells) {
-            this.cells = java.util.Objects.requireNonNull(cells);
+            this.cells = Objects.requireNonNull(cells);
         }
         public Range cells() { return cells; }
     }
@@ -37,56 +38,65 @@ public final class FlowGraph {
         }
         @Override public boolean equals(Object other) {
             if (!(other instanceof Range)) return false;
-            Range r = (Range) other;
-            return start == r.start && end == r.end;
+            Range range = (Range) other;
+            return start == range.start && end == range.end;
         }
         @Override public int hashCode() { return 31 * start + end; }
     }
 
     private final int[] addresses, outgoingOffsets, outgoing;
-    private final FlowGraph.Instruction[] instructions;
+    private final Instruction[] instructions;
 
-    public FlowGraph(Map<Integer, FlowGraph.Instruction> decoded, Set<Edge> edges) {
+    public FlowGraph(Map<Integer, Instruction> decoded, Set<Edge> edges) {
         Set<Integer> keys = new TreeSet<>(decoded.keySet());
-        for (Edge e : edges) {
-            if (!decoded.containsKey(e.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
-            keys.add(e.to);
+        for (Edge edge : edges) {
+            if (!decoded.containsKey(edge.from)) throw new IllegalArgumentException("Edge source is not an instruction start");
+            keys.add(edge.to);
         }
         addresses = new int[keys.size()];
-        instructions = new FlowGraph.Instruction[keys.size()];
-        Map<Integer, Integer> ids = new TreeMap<>();
-        int i = 0;
+        instructions = new Instruction[keys.size()];
+        Map<Integer, Integer> indexes = new TreeMap<>();
+        int index = 0;
         for (int key : keys) {
-            addresses[i] = key;
-            instructions[i] = decoded.get(key);
-            ids.put(key, ++i);
+            addresses[index] = key;
+            instructions[index] = decoded.get(key);
+            indexes.put(key, index++);
         }
-        outgoingOffsets = new int[keys.size() + 1];
-        for (Edge e : edges) {
-            outgoingOffsets[ids.get(e.from)]++;
-        }
-        for (i = 1; i < outgoingOffsets.length; i++) {
-            outgoingOffsets[i] += outgoingOffsets[i - 1];
-        }
-        outgoing = new int[edges.size()];
-        int[] outCursor = outgoingOffsets.clone();
-        for (Edge e : edges) {
-            int from = ids.get(e.from) - 1, to = ids.get(e.to) - 1;
-            int outAt = outCursor[from]++;
-            outgoing[outAt] = to;
-        }
+        outgoingOffsets = successorOffsets(indexes, edges);
+        outgoing = successorIndexes(indexes, edges);
     }
 
-    public FlowGraph.Instruction instructionAt(int address) {
+    private static int[] successorOffsets(Map<Integer, Integer> indexes, Set<Edge> edges) {
+        int[] offsets = new int[indexes.size() + 1];
+        for (Edge edge : edges) {
+            offsets[indexes.get(edge.from) + 1]++;
+        }
+        for (int index = 1; index < offsets.length; index++) {
+            offsets[index] += offsets[index - 1];
+        }
+        return offsets;
+    }
+
+    private int[] successorIndexes(Map<Integer, Integer> indexes, Set<Edge> edges) {
+        int[] successors = new int[edges.size()];
+        int[] cursor = outgoingOffsets.clone();
+        for (Edge edge : edges) {
+            int from = indexes.get(edge.from);
+            successors[cursor[from]++] = indexes.get(edge.to);
+        }
+        return successors;
+    }
+
+    public Instruction instructionAt(int address) {
         int id = Arrays.binarySearch(addresses, address);
         return id < 0 ? null : instructions[id];
     }
 
-    public void instructions(Consumer<? super FlowGraph.Instruction> visitor) {
-        for (FlowGraph.Instruction instruction : instructions) if (instruction != null) visitor.accept(instruction);
+    public void instructions(Consumer<? super Instruction> visitor) {
+        for (Instruction instruction : instructions) if (instruction != null) visitor.accept(instruction);
     }
 
-    public void successors(int address, FlowGraph.EdgeVisitor visitor) {
+    public void successors(int address, EdgeVisitor visitor) {
         int id = Arrays.binarySearch(addresses, address);
         if (id < 0) return;
         for (int at = outgoingOffsets[id]; at < outgoingOffsets[id + 1]; at++) {

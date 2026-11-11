@@ -117,7 +117,7 @@ public class DebuggerSessionTest {
             machine.state(CPU.RunState.STATE_RUNNING);
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
 
-            assertNull(session.takeBreakpointHit());
+            assertTrue(session.takeBreakpointHit().isEmpty());
         }
     }
 
@@ -204,8 +204,7 @@ public class DebuggerSessionTest {
             assertFalse(machine.beforeStep(6));
             assertTrue(machine.beforeStep(7));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
-            DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
-            assertEquals(7, hit.address);
+            assertEquals(7, session.takeBreakpointHit().getAsInt());
             machine.state(CPU.RunState.STATE_RUNNING);
             assertFalse(machine.beforeStep(7));
             assertTrue(machine.beforeStep(7));
@@ -543,8 +542,7 @@ public class DebuggerSessionTest {
             assertEquals(Set.of(1), session.config.breakpoints);
             assertTrue(session.isBreakpointSet(1));
             assertTrue(machine.beforeStep(1));
-            DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
-            assertEquals(1, hit.address);
+            assertEquals(1, session.takeBreakpointHit().getAsInt());
             assertTrue(session.status.isEmpty());
 
             session.setBreakpoint(1, false).join();
@@ -565,13 +563,12 @@ public class DebuggerSessionTest {
             assertTrue(machine.beforeStep(1));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
 
-            DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
-            assertEquals(1, hit.address);
+            assertEquals(1, session.takeBreakpointHit().getAsInt());
 
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             machine.state(CPU.RunState.STATE_RUNNING);
             machine.state(CPU.RunState.STATE_STOPPED_NORMAL);
-            assertNull(session.takeBreakpointHit());
+            assertTrue(session.takeBreakpointHit().isEmpty());
         }
     }
 
