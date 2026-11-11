@@ -88,7 +88,9 @@ final class SourceNavigation implements AutoCloseable {
                 publishCurrent(current, false);
                 return;
             }
-            guard.whenReady().thenRun(() -> SwingUtilities.invokeLater(() -> {
+            // Install mappings on the completion thread before the next machine command can run.
+            // Only Swing presentation waits for the event queue.
+            guard.whenReady().thenRun(() -> {
                 synchronized (SourceNavigation.this) {
                     if (closed || failed || current != compilation) return;
                 }
@@ -114,10 +116,15 @@ final class SourceNavigation implements AutoCloseable {
                     if (closed || failed || current != compilation) return;
                     mappings = captured;
                 }
-                debugger.setSymbols(captured::symbols);
-                debugger.setSourceMappingsCurrent(!captured.sourceFiles().isEmpty());
-                editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
-            }));
+                SwingUtilities.invokeLater(() -> {
+                    synchronized (SourceNavigation.this) {
+                        if (closed || failed || current != compilation || mappings != captured) return;
+                    }
+                    debugger.setSymbols(captured::symbols);
+                    debugger.setSourceMappingsCurrent(!captured.sourceFiles().isEmpty());
+                    editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
+                });
+            });
         }
     };
 

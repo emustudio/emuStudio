@@ -115,6 +115,36 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
+    public void stepBeforeQueuedSwingUpdatesKeepsCompiledSourceMappings() throws Exception {
+        try (Fixture f = new Fixture()) {
+            when(f.cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
+            runOnEdt(() -> {
+                f.session.execution().compile(() -> f.publishCompilation(false, () -> {})).join();
+                f.session.execution().step().join();
+
+                assertTrue("Compilation must publish mappings before a later step can overtake them",
+                        f.session.sourceAt(2).isPresent());
+            });
+            f.sourceLine(2);
+            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void runBeforeQueuedSwingUpdatesKeepsCompiledSourceMappings() throws Exception {
+        try (Fixture f = new Fixture()) {
+            runOnEdt(() -> {
+                f.session.execution().compile(() -> f.publishCompilation(false, () -> {})).join();
+                f.session.execution().start().join();
+
+                assertTrue("Compilation must publish mappings before Run can overtake them",
+                        f.session.sourceAt(2).isPresent());
+            });
+            f.session.execution().pause().join();
+        }
+    }
+
+    @Test(timeout = 10000)
     public void mutationBeforeDeferredCompilerCaptureCannotPublishOldSourceAsCurrent() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false, () -> f.session.runMutation(() -> {}));
