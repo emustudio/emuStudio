@@ -212,10 +212,11 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                     execution = new EmulationController(getCPU().get(),
                             contextPool.get(0, CPUContext.class),
                             getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
-                    debugger = new DebuggerSession(execution, getCPU().get(), memory,
+                    debugger = new DebuggerSession(getCPU().get(), execution.cpuContext(), memory,
                             path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
                             applicationApi == null ? new MemoryAnnotations()
                                     : applicationApi.getAnnotations());
+                    execution.attachDebugger(debugger);
 
                 } catch (IOException e) {
                     throw new PluginInitializationException("Could not load debugger settings", e);

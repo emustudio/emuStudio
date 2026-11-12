@@ -122,7 +122,7 @@ public class DebuggerPanelTest {
                 workspace.table.getColumnModel().getColumn(2).setPreferredWidth(350);
             });
 
-            workspace.session.execution().step().join();
+            workspace.machine.execution.step().join();
 
             SwingUtilities.invokeAndWait(() -> {
                 flushUiEvents();
@@ -279,14 +279,14 @@ public class DebuggerPanelTest {
                 button(workspace.panel.watchesPanel(), "Refresh").doClick(0);
                 flushUiEvents();
                 assertNull(findComponent(workspace.panel, JLabel.class, "Debugger diagnostic"));
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().getRunState());
-                SwingUtilities.invokeLater(() -> button(activeRecordingDialog(), "Start").doClick(0));
+                assertEquals(CPU.RunState.STATE_RUNNING, workspace.machine.execution.getRunState());
+                SwingUtilities.invokeLater(() -> button(activeRecordingDialog(), "Start recording").doClick(0));
                 recordingControl(workspace).doClick(0);
                 flushUiEvents();
 
                 assertTrue(workspace.session.recording.isRecording());
                 assertTrue(workspace.session.recording.error().isBlank());
-                assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().getRunState());
+                assertEquals(CPU.RunState.STATE_RUNNING, workspace.machine.execution.getRunState());
             });
         }
     }
@@ -486,7 +486,8 @@ public class DebuggerPanelTest {
                     RecordingDialog dialog = activeRecordingDialog();
                     assertFalse(workspace.session.recording.isRecording());
                     assertFalse(dialog.isResizable());
-                    button(dialog, "Start").doClick(0);
+                    component(dialog, JTextField.class, "Instructions").setText("10h");
+                    button(dialog, "Start recording").doClick(0);
                     flushUiEvents();
                 });
                 recordingControl(workspace).doClick(0);
@@ -530,32 +531,44 @@ public class DebuggerPanelTest {
                 RecordingDialog dialog = new RecordingDialog(null, new EmuStudioGui(),
                         workspace.session, () -> {});
                 try {
-                    JComboBox<?> mode = component(dialog, JComboBox.class, "Capture");
+                    assertEquals("Start recording", dialog.getTitle());
+                    JRadioButton keep = component(dialog, JRadioButton.class, "Keep");
+                    JRadioButton range = component(dialog, JRadioButton.class, "Specific address range:");
+                    JRadioButton unlimited = component(dialog, JRadioButton.class, "Unlimited");
+                    JComboBox<?> order = component(dialog, JComboBox.class, "Instruction order");
                     JTextField count = component(dialog, JTextField.class, "Instructions");
                     JTextField from = component(dialog, JTextField.class, "From");
                     JTextField to = component(dialog, JTextField.class, "To");
-                    for (int i = 0; i < 4; i++) {
-                        mode.setSelectedIndex(i);
-                        assertEquals(i < 2, count.isEnabled());
-                        assertEquals(i == 2, from.isEnabled());
-                        assertEquals(i == 2, to.isEnabled());
+                    assertTrue(keep.isSelected());
+                    assertEquals("1000", count.getText());
+                    assertEquals("first", order.getSelectedItem());
+                    assertEquals("0x0000", from.getText());
+                    JRadioButton[] choices = {keep, range, unlimited, keep};
+                    for (JRadioButton choice : choices) {
+                        choice.doClick(0);
+                        assertEquals(choice == keep, keep.isSelected());
+                        assertEquals(choice == range, range.isSelected());
+                        assertEquals(choice == unlimited, unlimited.isSelected());
+                        assertEquals(choice == keep, count.isEnabled());
+                        assertEquals(choice == keep, order.isEnabled());
+                        assertEquals(choice == range, from.isEnabled());
+                        assertEquals(choice == range, to.isEnabled());
                     }
-                    mode.setSelectedIndex(0);
                     count.setText("0");
-                    button(dialog, "Start").doClick(0);
+                    button(dialog, "Start recording").doClick(0);
                     flushUiEvents();
                     assertFalse(workspace.session.recording.isRecording());
-                    assertTrue(button(dialog, "Start").isEnabled());
+                    assertTrue(button(dialog, "Start recording").isEnabled());
                     assertTrue(logs.contains("Recording limit must be 1..1000000"));
-                    mode.setSelectedIndex(2);
+                    range.doClick(0);
                     from.setText("3");
                     to.setText("1");
-                    button(dialog, "Start").doClick(0);
+                    button(dialog, "Start recording").doClick(0);
                     flushUiEvents();
                     assertFalse(workspace.session.recording.isRecording());
-                    from.setText("0x1");
-                    to.setText("2");
-                    button(dialog, "Start").doClick(0);
+                    from.setText("1h");
+                    to.setText("10b");
+                    button(dialog, "Start recording").doClick(0);
                     flushUiEvents();
 
                     assertTrue(workspace.session.recording.isRecording());
@@ -976,7 +989,7 @@ public class DebuggerPanelTest {
                     });
                 }
             });
-            workspace.session.execution().step(500, TimeUnit.MILLISECONDS).get(2, TimeUnit.SECONDS);
+            workspace.machine.execution.step(500, TimeUnit.MILLISECONDS).get(2, TimeUnit.SECONDS);
             assertTrue("Both timed steps should update graph selection", followed.await(5, TimeUnit.SECONDS));
             assertEquals(java.util.Set.of("0001", "0002"), selections);
             assertNull(workspace.session.flowAnalysis().instructionAt(2));
@@ -1413,7 +1426,7 @@ public class DebuggerPanelTest {
             });
             assertEquals("updated live", workspace.session.config.annotations().get(2).label);
             assertEquals(4, workspace.session.config.annotations().get(2).end);
-            assertEquals(CPU.RunState.STATE_RUNNING, workspace.session.execution().getRunState());
+            assertEquals(CPU.RunState.STATE_RUNNING, workspace.machine.execution.getRunState());
         }
     }
 
@@ -1597,7 +1610,7 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 JTable values = component(workspace.panel.watchesPanel(), JTable.class, "Watch expressions and values");
                 values.getModel().addTableModelListener(event -> changes.incrementAndGet());
-                for (int i = 0; i < 100; i++) workspace.session.execution().step().join();
+                for (int i = 0; i < 100; i++) workspace.machine.execution.step().join();
             });
             SwingUtilities.invokeAndWait(() -> {});
             SwingUtilities.invokeAndWait(() -> {
@@ -1859,7 +1872,7 @@ public class DebuggerPanelTest {
                 workspace.panel.close();
             });
             clearInvocations(workspace.machine.debug);
-            workspace.session.execution().step().join();
+            workspace.machine.execution.step().join();
             SwingUtilities.invokeAndWait(() -> {});
             verify(workspace.machine.debug, never()).compile(anyString());
             workspace.session.requirePaused();
@@ -2350,7 +2363,7 @@ public class DebuggerPanelTest {
                 JScrollPane scroll = new JScrollPane(workspace.table);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                workspace.panel = new DebuggerPanel(workspace.session, workspace.table, instructions,
+                workspace.panel = new DebuggerPanel(workspace.session, workspace.machine.execution, workspace.table, instructions,
                         workspace.sourcePosition::set, workspace.breakpointChanges::incrementAndGet,
                         new EmuStudioGui());
                 workspace.panel.setInspectionReadyListener(ready::countDown);
@@ -2424,7 +2437,7 @@ public class DebuggerPanelTest {
 
         @Override public void close() throws Exception {
             if (panel != null) SwingUtilities.invokeAndWait(panel::close);
-            if (session != null) { session.execution().close(); session.close(); }
+            if (session != null) { machine.execution.close(); session.close(); }
         }
     }
 }

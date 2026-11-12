@@ -186,7 +186,7 @@ final class RecordingPanel extends JPanel {
         boolean available = !disposed && session.debug != null;
         recordingControl.setEnabled(available);
         emptyRecord.setEnabled(available);
-        boolean paused = !disposed && session.execution().getRunState() != CPU.RunState.STATE_RUNNING;
+        boolean paused = !disposed && !session.isRunning();
         origin.setEnabled(paused);
         history.setEnabled(paused);
     }

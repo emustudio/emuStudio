@@ -181,7 +181,7 @@ final class FlowGraphPanel extends JPanel {
     }
 
     private boolean paused() {
-        return session.execution().getRunState() != CPU.RunState.STATE_RUNNING;
+        return !session.isRunning();
     }
 
     private List<MemoryAnnotations.Entry> annotations() {
@@ -410,7 +410,7 @@ final class FlowGraphPanel extends JPanel {
             }
             pending.addAll(successors.getOrDefault(at, List.of()));
         }
-        layoutPc = session.execution().cpuContext().getInstructionLocation();
+        layoutPc = session.cpuContext.getInstructionLocation();
         Set<Integer> boundaries = new HashSet<>(List.of(start, layoutPc, selectedAddress));
         Map<Integer, String> labels = labels();
         boundaries.addAll(labels.keySet());
@@ -677,7 +677,7 @@ final class FlowGraphPanel extends JPanel {
             Rectangle box = node.box;
             if (clip != null && !clip.intersects(box)) continue;
             boolean selected = address == selectedNode;
-            boolean pc = paused() && address == session.execution().cpuContext().getInstructionLocation();
+            boolean pc = paused() && address == session.cpuContext.getInstructionLocation();
             g.setColor(selected && selectionBackground != null ? selectionBackground : surface != null ? surface : getBackground());
             g.fillRoundRect(box.x, box.y, box.width, box.height, 10, 10);
             g.setColor(selected && selectionForeground != null ? selectionForeground : foreground != null ? foreground : getForeground());

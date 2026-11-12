@@ -52,8 +52,8 @@ public class VirtualComputerTest {
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebuggerSession seed = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, memory, debuggerPath);
-             net.emustudio.application.emulation.EmulationController machineExecution = seed.execution()) {
+        try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(seed)) {
             seed.config.annotations().add(new UserAnnotations.Entry(3, "saved label", "CODE"));
             seed.config.save();
         }

@@ -31,6 +31,13 @@ public final class TestCpu {
         return new net.emustudio.application.emulation.EmulationController(cpu, context(cpu), null, java.util.List.of());
     }
 
+    public static net.emustudio.application.emulation.EmulationController execution(
+            net.emustudio.application.emulation.debugger.DebuggerSession session) {
+        net.emustudio.application.emulation.EmulationController execution = execution(session.cpu);
+        execution.attachDebugger(session);
+        return execution;
+    }
+
     public static void publish(CPU cpu, CPU.RunState state) {
         ((Context) context(cpu)).publish(state, context(cpu).getInstructionLocation());
     }

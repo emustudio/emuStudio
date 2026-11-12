@@ -134,7 +134,7 @@ public class EmulatorPanel extends JPanel {
         debuggerPanel.add(panelPages, "growx");
 
         this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
-                session, (DebugTableImpl) debugTable, debuggerPanel,
+                session, execution, (DebugTableImpl) debugTable, debuggerPanel,
                 sourceNavigator, this::refreshDebugTable, gui)).orElse(null);
         this.breakpointAction = new BreakpointAction(() -> {
             if (inspection != null) inspection.showBreakpointDialog(parent);
@@ -287,7 +287,7 @@ public class EmulatorPanel extends JPanel {
             execution.cpuContext().addCPUListener(executionListener);
             if (session != null) {
                 hostExecutionListener = state -> runOnEdt(this::refreshExecutionState);
-                session.execution().addExecutionListener(hostExecutionListener);
+                execution.addExecutionListener(hostExecutionListener);
             }
             runState = execution.getRunState();
         }
@@ -341,7 +341,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
-        if (hostExecutionListener != null) session.execution().removeExecutionListener(hostExecutionListener);
+        if (hostExecutionListener != null) execution.removeExecutionListener(hostExecutionListener);
         if (executionListener != null) execution.cpuContext().removeCPUListener(executionListener);
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }

@@ -23,7 +23,7 @@ public class LiveDebuggingTest {
     public void memoryValueWatchesNeedOnlyInstructionCaptureUnlessRecording() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
 
             session.update(() -> session.config.watches.add("mem[0]")).join();
@@ -45,7 +45,7 @@ public class LiveDebuggingTest {
         StepView view = new StepView(text, "wide", OptionalInt.of(0), List.of(
                 new ViewRow("State", "Value", text, text, false, List.of(), List.of())));
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.startNewRecording(1000, InstructionRecording.Mode.FIRST, 0, 0)).join();
 
             for (int i = 0; i < 1001; i++)
@@ -62,7 +62,7 @@ public class LiveDebuggingTest {
     public void watchesAreNotEvaluatedWhileRunning() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("A")).join();
             assertEquals("0", session.watchValues().get("A").text);
             verify(machine.debug).observe(any(), eq(Debugging.Capture.INSTRUCTION));
@@ -82,7 +82,7 @@ public class LiveDebuggingTest {
         byte[] memory = {17};
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {memory}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("mem[0x0000]")).join();
             assertEquals("17", session.watchValues().get("mem[0x0000]").text);
             when(machine.cpu.step()).thenAnswer(call -> {
@@ -92,7 +92,7 @@ public class LiveDebuggingTest {
                 return CPU.RunState.STATE_STOPPED_BREAK;
             });
 
-            session.execution().step().get(2, TimeUnit.SECONDS);
+            machineExecution.step().get(2, TimeUnit.SECONDS);
 
             assertEquals("42", session.watchValues().get("mem[0x0000]").text);
             assertTrue(session.watchValues().get("mem[0x0000]").changed);
@@ -104,7 +104,7 @@ public class LiveDebuggingTest {
     public void pausedWatchShowsValueFromCompletedFastStep() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("A")).join();
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.beforeStep();
@@ -113,7 +113,7 @@ public class LiveDebuggingTest {
                 return CPU.RunState.STATE_STOPPED_BREAK;
             });
 
-            session.execution().step().get(2, TimeUnit.SECONDS);
+            machineExecution.step().get(2, TimeUnit.SECONDS);
 
             assertEquals("7", session.watchValues().get("A").text);
             assertTrue(session.watchValues().get("A").changed);
@@ -124,7 +124,7 @@ public class LiveDebuggingTest {
     public void newExecutionClearsPriorWatchChangeIndication() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("A")).join();
             session.update(() -> machine.values.put("A", 7L)).join();
             assertTrue(session.watchValues().get("A").changed);
@@ -140,7 +140,7 @@ public class LiveDebuggingTest {
     public void unrelatedUpdatesDoNotReactivateFailedWatch() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("1 / A")).join();
             assertTrue(session.watchErrors().containsKey("1 / A"));
 
@@ -156,7 +156,7 @@ public class LiveDebuggingTest {
     public void watchChangeIndicatorSurvivesRefreshAndUnrelatedRuleEdits() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("A")).join();
             assertFalse(session.watchValues().get("A").changed);
 
@@ -174,15 +174,15 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         java.util.concurrent.atomic.AtomicInteger executed = new java.util.concurrent.atomic.AtomicInteger();
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(0, true).join();
             when(machine.cpu.step()).thenAnswer(call -> {
-                session.runMutation(() -> machine.values.put("A", 9L));
+                session.runMutation(() -> machine.values.put("A", 9L), java.util.concurrent.CompletableFuture.completedFuture(null));
                 if (!machine.beforeStep(0)) executed.incrementAndGet();
                 return CPU.RunState.STATE_STOPPED_BREAK;
             });
 
-            session.execution().step().get(2, TimeUnit.SECONDS);
+            machineExecution.step().get(2, TimeUnit.SECONDS);
 
             assertEquals(1, executed.get());
             assertEquals(9L, ((Number) machine.values.get("A")).longValue());
@@ -193,7 +193,7 @@ public class LiveDebuggingTest {
     public void liveChangesApplyOnCallingThreadWithoutPauseOrRestart() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             machine.state(CPU.RunState.STATE_RUNNING);
             AtomicReference<String> thread = new AtomicReference<>();
 
@@ -207,7 +207,7 @@ public class LiveDebuggingTest {
 
             assertEquals(Thread.currentThread().getName(), thread.get());
             assertEquals("7", displayed.get().text);
-            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
+            assertEquals(CPU.RunState.STATE_RUNNING, machineExecution.getRunState());
             verify(machine.cpu, times(1)).execute();
             verify(machine.cpu, never()).step();
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -218,7 +218,7 @@ public class LiveDebuggingTest {
     public void correctionReplacesInvalidWatchAndClearsItsDiagnostic() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("unknown")).join();
             session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
             assertTrue(session.watchErrors().containsKey("unknown"));
@@ -235,7 +235,7 @@ public class LiveDebuggingTest {
     public void directMachineEditDoesNotChangeBreakpointContinuation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(0, true).join();
             assertTrue(machine.beforeStep(0));
 

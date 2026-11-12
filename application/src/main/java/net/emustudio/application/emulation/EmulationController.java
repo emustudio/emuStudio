@@ -53,6 +53,7 @@ public final class EmulationController implements Closeable {
     private static final class Task {
         final Operation operation;
         final CompletableFuture<CPU.RunState> result;
+        final CompletableFuture<Void> published = new CompletableFuture<>();
         private Thread runner;
         private boolean interrupted;
 
@@ -115,7 +116,7 @@ public final class EmulationController implements Closeable {
         this.<Void>command(result -> {
             requirePaused();
             if (debugger != null) throw new IllegalStateException("Debugger already attached");
-            if (session.cpu != cpu || session.execution() != this)
+            if (session.cpu != cpu || session.cpuContext != cpuContext)
                 throw new IllegalArgumentException("Debugger belongs to another machine");
             debugger = session;
             result.complete(null);
@@ -136,12 +137,6 @@ public final class EmulationController implements Closeable {
 
     public boolean isWorkerThread() {
         return Thread.currentThread() == workerThread;
-    }
-
-    /** Verifies that debugger resources can be released without racing machine work. */
-    public void requireIdle() {
-        if (active != null || pending != null || timedRunning || state == CPU.RunState.STATE_RUNNING)
-            throw new IllegalStateException("Machine work must finish before closing debugger resources");
     }
 
     public int getInstructionLocation() {
@@ -394,7 +389,7 @@ public final class EmulationController implements Closeable {
         CPU.RunState returned;
         Throwable failure = null;
         try {
-            returned = invokeOperation(task.operation, operation);
+            returned = invokeOperation(task, operation);
         } catch (Throwable problem) {
             failure = problem instanceof CompletionException && problem.getCause() != null ? problem.getCause() : problem;
             returned = task.operation.isMutation() ? previousState : failureState(failure);
@@ -407,7 +402,7 @@ public final class EmulationController implements Closeable {
         commands.execute(() -> finished(task, value, error));
     }
 
-    private CPU.RunState invokeOperation(Operation kind, Callable<CPU.RunState> operation) {
+    private CPU.RunState invokeOperation(Task task, Callable<CPU.RunState> operation) {
         CPU.RunState[] returned = {CPU.RunState.STATE_STOPPED_BAD_INSTR};
         Runnable action = () -> {
             try {
@@ -417,10 +412,10 @@ public final class EmulationController implements Closeable {
             }
         };
         if (debugger == null) action.run();
-        else if (kind == Operation.COMPILATION) debugger.runCompilation(action);
-        else if (kind.isMutation()) debugger.runMutation(action);
-        else if (kind == Operation.SINGLE_STEP) debugger.runStep(action);
-        else debugger.runExecution(action);
+        else if (task.operation == Operation.COMPILATION) debugger.runCompilation(action, task.published);
+        else if (task.operation.isMutation()) debugger.runMutation(action, task.published);
+        else if (task.operation == Operation.SINGLE_STEP) debugger.runStep(action, task.published);
+        else debugger.runExecution(action, task.published);
         return returned[0];
     }
 
@@ -439,7 +434,7 @@ public final class EmulationController implements Closeable {
             pending = null;
         }
         publish(returned, true);
-        if (debugger != null) debugger.completeSourceCapture();
+        task.published.complete(null);
         if (failure == null) task.result.complete(state);
         else task.result.completeExceptionally(failure);
         if (pending != null) finishPending();

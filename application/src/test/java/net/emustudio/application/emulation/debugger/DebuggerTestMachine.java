@@ -40,6 +40,7 @@ public final class DebuggerTestMachine {
     final AtomicReference<Debugging.Capture> captureMode = new AtomicReference<>();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
     private DebuggerSession session;
+    public net.emustudio.application.emulation.EmulationController execution;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
 
@@ -132,14 +133,14 @@ public final class DebuggerTestMachine {
         if (state == CPU.RunState.STATE_RUNNING) {
             result.set(CPU.RunState.STATE_RUNNING);
             entered = new CountDownLatch(1);
-            session.execution().start().join();
+            execution.start().join();
             try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
-        } else if (session.execution().getRunState() == CPU.RunState.STATE_RUNNING) {
+        } else if (execution.getRunState() == CPU.RunState.STATE_RUNNING) {
             result.set(state);
-            session.execution().pause().join();
+            execution.pause().join();
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
-            session.execution().step().join();
+            execution.step().join();
         }
         net.emustudio.application.TestCpu.publish(cpu, state);
     }
@@ -147,7 +148,8 @@ public final class DebuggerTestMachine {
     public DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
 
     public DebuggerSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, withMemory ? memory : null, settings);
+        session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
+        execution = net.emustudio.application.TestCpu.execution(session);
         return session;
     }
 

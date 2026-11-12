@@ -3,11 +3,11 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.application.settings.DebuggerConfig;
-import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
@@ -20,6 +20,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -28,8 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class DebuggerSession implements AutoCloseable, Debugging.Observer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DebuggerSession.class);
 
-    private final EmulationController execution;
     public final CPU cpu;
+    public final CPUContext cpuContext;
     public final Debugging debug;
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
@@ -46,6 +47,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
     private long generation;
     private boolean closed;
+    // Inspection eligibility follows host notifications; command scheduling remains outside this module.
+    private boolean running;
     private int activeMutations;
     private SourceCaptureGuard activeSourceCapture;
     private SourceCaptureGuard completedSourceCapture;
@@ -103,13 +106,13 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public DebuggerSession(EmulationController execution, CPU cpu, MemoryContext<?> memory, Path settings) throws IOException {
-        this(execution, cpu, memory, settings, new MemoryAnnotations());
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
+        this(cpu, cpuContext, memory, settings, new MemoryAnnotations());
     }
 
-    public DebuggerSession(EmulationController execution, CPU cpu, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
-        this.execution = Objects.requireNonNull(execution);
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
+        this.cpuContext = Objects.requireNonNull(cpuContext);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
         watches = new WatchExpressions(debug);
@@ -120,7 +123,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         try {
             if (this.memory != null) this.memory.addMemoryListener(memoryListener);
             update(() -> {}).join();
-            execution.attachDebugger(this);
         } catch (RuntimeException | Error failure) {
             if (this.memory != null) this.memory.removeMemoryListener(memoryListener);
             detachObservation();
@@ -133,8 +135,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         updateProbe();
     }
 
-    public EmulationController execution() {
-        return execution;
+    /** Inspection eligibility follows host notifications, even before the CPU context updates. */
+    public synchronized boolean isRunning() {
+        return running;
     }
 
     /**
@@ -250,6 +253,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     public synchronized void executionChanged(CPU.RunState previous, CPU.RunState current) {
         boolean starting = previous != CPU.RunState.STATE_RUNNING && current == CPU.RunState.STATE_RUNNING;
         advanceHostGeneration();
+        running = current == CPU.RunState.STATE_RUNNING;
         if (starting) {
             watches.clearChanges();
             pendingHit = OptionalInt.empty();
@@ -260,19 +264,17 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     public synchronized void requirePaused() {
         if (closed) throw new IllegalStateException("Debugger session closed");
-        if (execution.getRunState() == CPU.RunState.STATE_RUNNING) throw new IllegalStateException("Pause CPU first");
+        if (running) throw new IllegalStateException("Pause CPU first");
     }
 
     /**
-     * Called by the command scheduler after final lifecycle publication.
+     * Releases only the capture associated with the completed lifecycle publication.
      */
-    public void completeSourceCapture() {
-        SourceCaptureGuard guard;
+    private void completeSourceCapture(SourceCaptureGuard guard) {
         synchronized (this) {
-            guard = completedSourceCapture;
-            completedSourceCapture = null;
+            if (completedSourceCapture == guard) completedSourceCapture = null;
         }
-        if (guard != null) guard.ready.complete(null);
+        guard.ready.complete(null);
     }
 
     /**
@@ -302,7 +304,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         if (!guard.captured) throw new IllegalStateException("Compilation mutation has not finished");
         // An execution boundary or memory write after compilation makes the mappings stale.
         synchronized (programLock) {
-            if (closed || execution.getRunState() == CPU.RunState.STATE_RUNNING || activeMutations != 0 || !guard.matches(this))
+            if (closed || running || activeMutations != 0 || !guard.matches(this))
                 throw new IllegalStateException("Source mappings discarded: machine or metadata changed after compilation");
             apply.run();
         }
@@ -368,7 +370,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     @Override
     public synchronized boolean beforeStep() {
-        int address = execution.cpuContext().getInstructionLocation();
+        int address = cpuContext.getInstructionLocation();
         boolean stop = false;
         if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;
         else stop = checkBreakpoints(address);
@@ -413,7 +415,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public synchronized OptionalInt takeBreakpointHit() {
-        if (closed || execution.getRunState() == CPU.RunState.STATE_RUNNING) return OptionalInt.empty();
+        if (closed || running) return OptionalInt.empty();
         OptionalInt hit = pendingHit;
         pendingHit = OptionalInt.empty();
         return hit;
@@ -424,7 +426,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         // The machine owner stops execution before releasing debugger resources.
         synchronized (this) {
             if (closed) return;
-            execution.requireIdle();
+            if (running || activeMutations != 0 || completedSourceCapture != null)
+                throw new IllegalStateException("Machine work must finish before closing debugger resources");
             closed = true;
         }
         try {
@@ -451,14 +454,14 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     /**
      * Invalidates analysis before and after a machine edit, even if the CPU emits no event.
      */
-    public void runMutation(Runnable mutation) {
+    public void runMutation(Runnable mutation, CompletionStage<Void> published) {
         memoryImageRevision.incrementAndGet();
         synchronized (this) {
             stoppedAddress = -1;
             watches.clearChanges();
         }
         try {
-            runExecution(mutation);
+            runExecution(mutation, published);
         } finally {
             memoryImageRevision.incrementAndGet();
         }
@@ -467,12 +470,12 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     /**
      * Manual steps skip a breakpoint at the current PC without changing subsequent breakpoint policy.
      */
-    public void runStep(Runnable step) {
+    public void runStep(Runnable step, CompletionStage<Void> published) {
         synchronized (this) {
             skipBeforeStep = true;
         }
         try {
-            runExecution(step);
+            runExecution(step, published);
         } finally {
             synchronized (this) {
                 skipBeforeStep = false;
@@ -480,9 +483,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public void runExecution(Runnable execution) {
+    public void runExecution(Runnable execution, CompletionStage<Void> published) {
         try {
-            runMachineOperation(execution, true);
+            runMachineOperation(execution, true, published);
         } finally {
             // A paused view must show the final machine value, even after a very short step.
             synchronized (this) {
@@ -494,7 +497,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     /**
      * Compilers report memory writes through the memory listener while execution is paused.
      */
-    public void runCompilation(Runnable compilation) {
+    public void runCompilation(Runnable compilation, CompletionStage<Void> published) {
         synchronized (this) {
             stoppedAddress = -1;
             skipBeforeStep = false;
@@ -502,7 +505,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         boolean restoreNotifications = memory != null && !memory.areMemoryNotificationsEnabled();
         if (restoreNotifications) memory.setMemoryNotificationsEnabled(true);
         try {
-            runMachineOperation(compilation, false);
+            runMachineOperation(compilation, false, published);
         } finally {
             if (restoreNotifications) memory.setMemoryNotificationsEnabled(false);
         }
@@ -516,8 +519,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return List.copyOf(config.breakpoints);
     }
 
-    private void runMachineOperation(Runnable mutation, boolean invalidateMemory) {
+    private void runMachineOperation(Runnable mutation, boolean invalidateMemory, CompletionStage<Void> published) {
         Objects.requireNonNull(mutation);
+        Objects.requireNonNull(published);
         SourceCaptureGuard operation = new SourceCaptureGuard(this);
         synchronized (this) {
             if (closed) throw new IllegalStateException("Debugger session closed");
@@ -539,7 +543,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
-            if (!execution.isBusy()) operation.ready.complete(null);
+            published.thenRun(() -> completeSourceCapture(operation));
         }
     }
 
@@ -577,7 +581,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             // An I/O failure after editing settings must not leave hidden old runtime behavior.
             updateProbe();
             // Watches are evaluated only at execution boundaries, never while the CPU runs.
-            if (execution.getRunState() != CPU.RunState.STATE_RUNNING) watches.refresh(config.watches);
+            if (!running) watches.refresh(config.watches);
             watches.retain(config.watches);
         }
     }

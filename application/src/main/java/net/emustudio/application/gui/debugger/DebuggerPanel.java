@@ -3,6 +3,7 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.emulation.debugger.FlowAnalysis;
 import net.emustudio.application.emulation.debugger.InstructionRecording;
 import net.emustudio.application.emulation.debugger.SourceAddressMap;
@@ -57,6 +58,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebuggerSession session;
+    private final EmulationController execution;
     private final EmuStudioGui gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
     private final Runnable breakpointsChanged;
@@ -93,19 +95,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public DebuggerPanel(
             DebuggerSession session,
+            EmulationController execution,
             DebugTableImpl table,
             JComponent instructionView,
             Consumer<SourceCodePosition> sourceNavigator,
             Runnable breakpointsChanged,
             EmuStudioGui gui) {
         this.session = Objects.requireNonNull(session);
+        this.execution = Objects.requireNonNull(execution);
         this.gui = Objects.requireNonNull(gui);
         this.table = Objects.requireNonNull(table);
         this.instructionView = Objects.requireNonNull(instructionView);
         this.sourceNavigator = sourceNavigator;
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         instructionModel = table.instructionModel();
-        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
+        lastInstructionAddress = execution.cpuContext().getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         instructionModel.setDebuggerSession(session);
         graph = new FlowGraphPanel(session, annotationSelection,
@@ -119,7 +123,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         recordingPanel = new RecordingPanel(gui, session);
         annotationEditor = new AnnotationEditor(gui, this, session);
         instructionModel.setPresentation(this::sourceLabelsAt, () -> !disposed && !running,
-                () -> !disposed && !running && !session.execution().isBusy());
+                () -> !disposed && !running && !execution.isBusy());
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setInstructionRowPresentation(row -> {
             if (disposed || running) return false;
@@ -138,8 +142,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(event -> activateView());
         activateView();
-        session.execution().cpuContext().addCPUListener(stateListener);
-        session.execution().addExecutionListener(executionListener);
+        execution.cpuContext().addCPUListener(stateListener);
+        execution.addExecutionListener(executionListener);
         session.annotationEngine.addListener(annotationListener);
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
@@ -258,8 +262,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         disposed = true;
         recordingPanel.close();
         if (search != null) search.close();
-        session.execution().cpuContext().removeCPUListener(stateListener);
-        session.execution().removeExecutionListener(executionListener);
+        execution.cpuContext().removeCPUListener(stateListener);
+        execution.removeExecutionListener(executionListener);
         session.annotationEngine.removeListener(annotationListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
     }
@@ -283,9 +287,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (search != null) search.refresh();
             repaintLabels();
         }
-        if (session.execution().isStepping()) return;
-        CPU.RunState state = session.execution().getRunState();
-        int pc = session.execution().cpuContext().getInstructionLocation();
+        if (execution.isStepping()) return;
+        CPU.RunState state = execution.getRunState();
+        int pc = execution.cpuContext().getInstructionLocation();
         pcMoved |= state != appliedState || pc != appliedPc;
         appliedState = state;
         appliedPc = pc;
@@ -293,7 +297,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             running = !running;
             updateActions();
         }
-        if (running || session.execution().isBusy() || !isPaused()) return;
+        if (running || execution.isBusy() || !isPaused()) return;
         if (!inspectBreakpointHit() && pcMoved) followPc(pc);
         pcMoved = false;
         recordingPanel.updateControls();
@@ -326,7 +330,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         OptionalInt hit = session.takeBreakpointHit();
         if (hit.isEmpty()) return false;
         instructionModel.currentPage();
-        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
+        lastInstructionAddress = execution.cpuContext().getInstructionLocation();
         showInstructions();
         guard(() -> navigate(hit.getAsInt()));
         return true;
@@ -343,7 +347,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     /** Runs a user action that needs a paused CPU; failures are reported. */
     private void guard(Operation operation) {
-        if (disposed || session.execution().isBusy()) return;
+        if (disposed || execution.isBusy()) return;
         try {
             session.requirePaused();
             operation.run();
@@ -517,7 +521,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         followPc.addActionListener(event -> {
             updateActions();
             if (followPc.isSelected()) guard(() -> {
-                int pc = session.execution().cpuContext().getInstructionLocation();
+                int pc = execution.cpuContext().getInstructionLocation();
                 analyzeFlow(pc, true, pc);
             });
         });

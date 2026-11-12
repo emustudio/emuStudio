@@ -30,8 +30,8 @@ public class SparseDebuggerSessionTest {
         when(memory.getSize()).thenAnswer(call -> occupancy.get());
         doAnswer(call -> { listener.set(call.getArgument(0)); return null; }).when(memory).addMemoryListener(any());
 
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, memory, null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             assertEquals(0, memory.getSize());
             assertEquals(Integer.MAX_VALUE, session.addressSpaceSize());
             int address = Integer.MAX_VALUE - 1;

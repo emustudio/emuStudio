@@ -35,18 +35,18 @@ public class DebuggerSessionTest {
     public void sourceCaptureBecomesReadyAfterListenersObservePausedState() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             java.util.concurrent.atomic.AtomicReference<DebuggerSession.SourceCaptureGuard> guard =
                     new java.util.concurrent.atomic.AtomicReference<>();
             List<String> order = new java.util.concurrent.CopyOnWriteArrayList<>();
-            session.execution().addExecutionListener(state -> {
+            machineExecution.addExecutionListener(state -> {
                 assertEquals(CPU.RunState.STATE_STOPPED_BREAK, state);
                 session.requirePaused();
                 assertFalse(guard.get().whenReady().isDone());
                 order.add("published");
             });
 
-            session.execution().compile(() -> {
+            machineExecution.compile(() -> {
                 guard.set(session.captureSourceGuard());
                 guard.get().whenReady().thenRun(() -> {
                     session.applySourceCapture(guard.get(), () -> order.add("ready"));
@@ -61,13 +61,13 @@ public class DebuggerSessionTest {
     public void failedManualStepDoesNotLeaveBreakpointSuppressionEnabled() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(0, true).join();
             IllegalStateException failure = new IllegalStateException("Step failed before the instruction hook");
             when(machine.cpu.step()).thenThrow(failure);
 
             assertSame(failure, assertThrows(java.util.concurrent.CompletionException.class,
-                    () -> session.execution().step().join()).getCause());
+                    () -> machineExecution.step().join()).getCause());
 
             assertTrue(machine.beforeStep(0));
             assertEquals(0, session.takeBreakpointHit().getAsInt());
@@ -78,7 +78,7 @@ public class DebuggerSessionTest {
     public void hostNotificationInvalidatesPausedWorkWithoutCpuStateChange() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             DebuggerSession.SourceCaptureGuard guard = session.captureSourceGuard();
 
             session.executionChanged(CPU.RunState.STATE_STOPPED_BREAK, CPU.RunState.STATE_STOPPED_BREAK);
@@ -92,7 +92,7 @@ public class DebuggerSessionTest {
     public void breakpointAndAnnotationEditsPreserveObservedFlow() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "NOP", OptionalInt.of(1));
             session.analyzeFlow(0);
             session.setBreakpoint(1, true).join();
@@ -110,7 +110,7 @@ public class DebuggerSessionTest {
     public void newObservedInstructionDoesNotMutateCapturedView() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "FIRST", OptionalInt.of(1));
             FlowAnalysis first = session.analyzeFlow(0);
 
@@ -132,7 +132,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine first = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         DebuggerTestMachine second = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession owner = first.session(null); DebuggerSession other = second.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = owner.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = first.execution) {
             DebuggerSession.SourceCaptureGuard guard = owner.captureSourceGuard();
             assertThrows(IllegalStateException.class,
                     () -> other.applySourceCapture(guard, () -> fail("Applied to wrong session")));
@@ -145,7 +145,7 @@ public class DebuggerSessionTest {
     public void cpuWithoutExecutionHooksRejectsBreakpointChanges() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2, false);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             IllegalStateException rejected = assertThrows(IllegalStateException.class,
                     () -> session.setBreakpoint(1, true));
 
@@ -160,7 +160,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(1, true).join();
 
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -174,10 +174,10 @@ public class DebuggerSessionTest {
     public void compilationWithoutWritesPreservesMemoryRevision() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             long before = session.memoryRevision();
 
-            session.runCompilation(() -> {});
+            session.runCompilation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
 
             assertEquals(before, session.memoryRevision());
         }
@@ -187,10 +187,10 @@ public class DebuggerSessionTest {
     public void compilationWritesInvalidateMemoryRevision() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             long before = session.memoryRevision();
 
-            session.runCompilation(() -> machine.memoryChanged(1));
+            session.runCompilation(() -> machine.memoryChanged(1), java.util.concurrent.CompletableFuture.completedFuture(null));
 
             assertTrue(session.memoryRevision() > before);
         }
@@ -201,11 +201,11 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         when(machine.memory.areMemoryNotificationsEnabled()).thenReturn(false);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             IllegalStateException failure = new IllegalStateException("compile failed");
 
             assertSame(failure, assertThrows(IllegalStateException.class,
-                    () -> session.runCompilation(() -> { throw failure; })));
+                    () -> session.runCompilation(() -> { throw failure; }, java.util.concurrent.CompletableFuture.completedFuture(null))));
 
             org.mockito.InOrder notifications = inOrder(machine.memory);
             notifications.verify(machine.memory).setMemoryNotificationsEnabled(true);
@@ -217,7 +217,7 @@ public class DebuggerSessionTest {
     public void uncapturedSourceMappingIsNotUsedAfterMemoryChanges() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
             session.annotationEngine.put(new MemoryAnnotations.Entry(7, 0, 1, 2, "source", "", position));
             assertEquals(Optional.of(position), session.sourceAt(1));
@@ -233,7 +233,7 @@ public class DebuggerSessionTest {
     public void executionInvalidatesUncapturedSourceEvenWithoutMemoryNotifications() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             SourceCodePosition position = SourceCodePosition.of(1, 0, "program.asm");
             session.annotationEngine.put(new MemoryAnnotations.Entry(7, 0, 1, 2, "source", "", position));
             assertEquals(Optional.of(position), session.sourceAt(1));
@@ -250,7 +250,7 @@ public class DebuggerSessionTest {
     public void memorylessPortableCpuUsesIndexedAddressBreakpointsAndResumeSkipping() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[32]}, 32);
         try (DebuggerSession session = machine.session(null, false);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertNull(session.memory);
             assertEquals(32, session.addressSpaceSize());
             session.setBreakpoint(7, true).join();
@@ -274,7 +274,7 @@ public class DebuggerSessionTest {
     public void executionUsesApplicationBreakpointStore() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(1, true).join();
             machine.state(CPU.RunState.STATE_RUNNING);
             assertTrue(session.isBreakpointSet(1));
@@ -290,17 +290,17 @@ public class DebuggerSessionTest {
     public void deferredSourceCaptureBelongsToCompletedCompileMutationOnly() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             java.util.concurrent.atomic.AtomicReference<DebuggerSession.SourceCaptureGuard> guard = new java.util.concurrent.atomic.AtomicReference<>();
             session.runMutation(() -> {
                 guard.set(session.captureSourceGuard());
                 assertThrows(IllegalStateException.class, () -> session.applySourceCapture(guard.get(), () -> fail("unfinished")));
                 machine.memoryChanged(0);
-            });
+            }, java.util.concurrent.CompletableFuture.completedFuture(null));
             AtomicBoolean applied = new AtomicBoolean();
             session.applySourceCapture(guard.get(), () -> applied.set(true));
             assertTrue(applied.get());
-            session.runMutation(() -> {});
+            session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
             assertThrows(IllegalStateException.class, () -> session.applySourceCapture(guard.get(), () -> fail("stale")));
         }
     }
@@ -309,10 +309,10 @@ public class DebuggerSessionTest {
     public void executionAndMemoryChangesRetainObservedFlowAndItsCapturedSnapshot() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
             FlowAnalysis old = session.analyzeFlow(0);
-            session.runExecution(() -> machine.state(CPU.RunState.STATE_RUNNING));
+            session.runExecution(() -> machine.state(CPU.RunState.STATE_RUNNING), java.util.concurrent.CompletableFuture.completedFuture(null));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             machine.memoryChanged(1);
 
@@ -325,7 +325,7 @@ public class DebuggerSessionTest {
     public void annotationsUseSharedMetadataIndexWithoutReadingMemory() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             UserAnnotations initial = session.config.annotations();
             assertEquals(2, initial.addressSpaceSize());
             session.config.annotations().add(new UserAnnotations.Entry(1, "user", "DATA"));
@@ -343,7 +343,7 @@ public class DebuggerSessionTest {
         Decoder decoder = mock(Decoder.class);
         when(machine.cpu.getDecoder()).thenReturn(decoder);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
 
             assertEquals("CAPTURED", session.analyzeFlow(0).mnemonic(0));
@@ -355,10 +355,10 @@ public class DebuggerSessionTest {
     public void memoryChangesDoNotRewritePreviouslyExecutedInstructionFacts() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{7, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "VALUE 7", OptionalInt.of(1));
             machine.memoryChanged(0);
-            session.runMutation(() -> {});
+            session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
 
             assertEquals("VALUE 7", session.analyzeFlow(0).mnemonic(0));
         }
@@ -368,7 +368,7 @@ public class DebuggerSessionTest {
     public void defaultObserverRetainsBothBranchOutcomesUntilCpuReset() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[256]}, 256);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertEquals(net.emustudio.emulib.plugin.debugger.Debugging.Capture.INSTRUCTION, machine.captureMode.get());
             assertNull(session.analyzeFlow(100).instructionAt(100));
             machine.observedStep(DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(103), true);
@@ -385,7 +385,7 @@ public class DebuggerSessionTest {
             assertEquals(Set.of("100->103", "100->200"), edges);
             assertNull(retained.instructionAt(201));
 
-            session.execution().reset().get(2, TimeUnit.SECONDS);
+            machineExecution.reset().get(2, TimeUnit.SECONDS);
 
             assertNull(session.analyzeFlow(100).instructionAt(100));
             assertEquals("entry", session.config.annotations().get(100).label);
@@ -397,7 +397,7 @@ public class DebuggerSessionTest {
     public void failedOrUncapturedStepsDoNotInventExecutedInstructions() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.afterStep(false, Optional.of(DecodedInstruction.of(0, 1, "FAILED", "00")),
                     OptionalInt.of(1), Optional.empty());
             session.afterStep(true, Optional.empty(), OptionalInt.of(1), Optional.empty());
@@ -418,7 +418,7 @@ public class DebuggerSessionTest {
     public void runningSessionRejectsPausedOperationsAndResumesAfterStop() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             machine.state(CPU.RunState.STATE_RUNNING);
             assertThrows(IllegalStateException.class, session::requirePaused);
             session.update(() -> session.record(2)).join();
@@ -433,7 +433,7 @@ public class DebuggerSessionTest {
     public void resumeAndPauseDiscardAnEarlierPausedGeneration() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             DebuggerSession.SourceCaptureGuard guard = session.captureSourceGuard();
             AtomicBoolean applied = new AtomicBoolean();
             machine.state(CPU.RunState.STATE_RUNNING);
@@ -449,13 +449,13 @@ public class DebuggerSessionTest {
     public void failedMutationStillInvalidatesAnalysisAndReleasesMutationGuard() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             DebuggerSession.SourceCaptureGuard before = session.captureSourceGuard();
             assertThrows(IllegalArgumentException.class, () -> session.runMutation(() -> {
                 DebuggerSession.SourceCaptureGuard during = session.captureSourceGuard();
                 assertThrows(IllegalStateException.class, () -> session.applySourceCapture(during, () -> {}));
                 throw new IllegalArgumentException("edit failed");
-            }));
+            }, java.util.concurrent.CompletableFuture.completedFuture(null)));
 
             assertThrows(IllegalStateException.class, () -> session.applySourceCapture(before, () -> {}));
             session.applySourceCapture(session.captureSourceGuard(), () -> {});
@@ -466,17 +466,18 @@ public class DebuggerSessionTest {
     public void ownerStopsExecutionBeforeClosingDebuggerResources() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         DebuggerSession session = machine.session(null);
+        net.emustudio.application.emulation.EmulationController machineExecution = machine.execution;
         session.update(() -> session.record(2)).join();
         machine.state(CPU.RunState.STATE_RUNNING);
 
         assertThrows(IllegalStateException.class, session::close);
-        assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
-        session.execution().close();
+        assertEquals(CPU.RunState.STATE_RUNNING, machineExecution.getRunState());
+        machineExecution.close();
 
         session.close();
 
         assertTrue(machine.detached.get() > 0);
-        assertTrue(session.execution().closeAsync().isDone());
+        assertTrue(machineExecution.closeAsync().isDone());
         assertTrue(machine.memoryListeners.isEmpty());
         assertThrows(IllegalStateException.class, session::requirePaused);
     }
@@ -488,7 +489,7 @@ public class DebuggerSessionTest {
         StepView second = instruction(2);
         StepView third = instruction(3);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.record(2)).join();
             capture(session, first);
             capture(session, second);
@@ -509,7 +510,7 @@ public class DebuggerSessionTest {
     public void historyRequiresDebuggerCapabilityAndValidLimit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1, false);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertThrows(IllegalStateException.class, () -> session.record(1));
             assertThrows(IllegalArgumentException.class, () -> session.record(-1));
             assertThrows(IllegalStateException.class,
@@ -522,7 +523,7 @@ public class DebuggerSessionTest {
     public void newRecordingClearsPreviousCaptureAfterLimitValidation() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.record(2)).join();
             capture(session, instruction(1));
             List<InstructionRecording.Event> previous = session.recording.events();
@@ -545,7 +546,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         StepView first = instruction(1), second = instruction(2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.startNewRecording(2, InstructionRecording.Mode.FIRST, 0, 0)).join();
 
             capture(session, first);
@@ -566,7 +567,7 @@ public class DebuggerSessionTest {
         StepView from = addressInstruction(2, 3), through = addressInstruction(3, 5),
                 latest = addressInstruction(4, 4);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.startNewRecording(2, InstructionRecording.Mode.ADDRESS_RANGE, 3, 5)).join();
 
             capture(session, addressInstruction(1, 2));
@@ -588,7 +589,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
         StepView first = addressInstruction(1, 0);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.startNewRecording(1, InstructionRecording.Mode.FIRST, 0, 0)).join();
             capture(session, first);
 
@@ -613,7 +614,7 @@ public class DebuggerSessionTest {
     public void portableBreakpointAddressesAreUniqueWhileInstructionObservationRemainsAttached() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(1, true).join();
             session.setBreakpoint(1, true).join();
             assertEquals(Set.of(1), session.config.breakpoints);
@@ -633,7 +634,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.setBreakpoint(1, true).join();
             machine.state(CPU.RunState.STATE_RUNNING);
 
@@ -653,8 +654,8 @@ public class DebuggerSessionTest {
     public void settingsRoundTripWatchesAndBreakpoints() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(original.cpu), original.cpu, original.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             session.config.watches.add("A + 1");
             session.config.watches.add("mem[0x0001]");
             session.setBreakpoint(2, true).join();
@@ -669,8 +670,8 @@ public class DebuggerSessionTest {
         expected.setProperty("breakpoint.0.address", "2");
         assertEquals(expected, saved);
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(reopened.cpu), reopened.cpu, reopened.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             assertEquals(List.of("A + 1", "mem[0x0001]"), session.config.watches);
             assertEquals(List.of(2), session.ordinaryBreakpoints());
             assertTrue(session.isBreakpointSet(2));
@@ -685,14 +686,14 @@ public class DebuggerSessionTest {
         Path settings = temporary.getRoot().toPath().resolve("portable.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = original.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = original.execution) {
             session.setBreakpoint(1, true).join();
             session.setBreakpoint(1, false).join();
             session.config.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = reopened.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = reopened.execution) {
             assertFalse(session.isBreakpointSet(1));
             assertTrue(session.config.breakpoints.isEmpty());
             assertThrows(IllegalArgumentException.class, () -> session.setBreakpoint(-1, true));
@@ -705,7 +706,7 @@ public class DebuggerSessionTest {
         Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
         try (DebuggerSession session = original.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = original.execution) {
             session.config.annotations().add(new UserAnnotations.Entry(1, "buffer", "DATA"));
             session.config.save();
 
@@ -724,7 +725,7 @@ public class DebuggerSessionTest {
 
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3);
         try (DebuggerSession session = reopened.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = reopened.execution) {
             UserAnnotations.Entry restored = session.config.annotations().get(1);
             assertEquals("buffer", restored.label);
             assertEquals(List.of("A + 1", "unknown + 1"), session.config.watches);
@@ -738,7 +739,7 @@ public class DebuggerSessionTest {
             session.update(() -> session.config.watches.add("A * 2")).get(2, TimeUnit.SECONDS);
             session.config.save();
 
-            assertEquals(CPU.RunState.STATE_RUNNING, session.execution().getRunState());
+            assertEquals(CPU.RunState.STATE_RUNNING, machineExecution.getRunState());
             assertEquals("A * 2", DebuggerConfig.loadProperties(settings).getProperty("watch.2"));
             verify(reopened.cpu, never()).step();
             reopened.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -754,7 +755,7 @@ public class DebuggerSessionTest {
 
         DebuggerTestMachine afterClear = new DebuggerTestMachine(new byte[][] {{6, 5, 4}}, 3);
         try (DebuggerSession session = afterClear.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = afterClear.execution) {
             assertTrue(session.config.annotations().entries().isEmpty());
             assertEquals(List.of("A + 1", "unknown + 1", "A * 2"), session.config.watches);
         }
@@ -768,7 +769,7 @@ public class DebuggerSessionTest {
         Path original = temporary.getRoot().toPath().resolve("computer.toml.debugger");
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(original);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.config.annotations().add(new UserAnnotations.Entry(1, "relocated", "DATA"));
             session.config.watches.add("A + 1");
             session.config.save();
@@ -778,7 +779,7 @@ public class DebuggerSessionTest {
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
 
         try (DebuggerSession session = reopened.session(moved);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = reopened.execution) {
             assertEquals(List.of("A + 1"), session.config.watches);
             assertEquals("relocated", session.config.annotations().get(1).label);
         }
@@ -789,7 +790,7 @@ public class DebuggerSessionTest {
         Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = original.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = original.execution) {
             session.config.annotations().add(new UserAnnotations.Entry(0, "valid first", "CODE"));
             session.config.annotations().add(new UserAnnotations.Entry(1, "invalid later", "DATA"));
             session.config.save();
@@ -802,8 +803,8 @@ public class DebuggerSessionTest {
         engine.put(compiler);
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
 
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(reopened.cpu), reopened.cpu, reopened.memory, settings, engine);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings, engine);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             assertEquals(List.of("valid first"), session.config.annotations().entries().stream()
                     .map(entry -> entry.label).collect(java.util.stream.Collectors.toList()));
             assertSame(compiler, engine.get(17, 1));
@@ -816,7 +817,7 @@ public class DebuggerSessionTest {
         Path settings = temporary.getRoot().toPath().resolve("computer.toml.debugger");
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.config.watches.add("A");
             UserAnnotations.Entry annotation = session.config.annotations().add(new UserAnnotations.Entry(1, "before", "DATA"));
             session.config.save();
@@ -844,7 +845,7 @@ public class DebuggerSessionTest {
     public void sessionWithoutConfigurationPathKeepsEditableMetadataInMemory() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             session.update(() -> session.config.watches.add("unknown + 1")).join();
             session.config.annotations().add(new UserAnnotations.Entry(0, "temporary", "DATA"));
 
@@ -863,20 +864,20 @@ public class DebuggerSessionTest {
     public void annotationsAreRestoredRegardlessOfProgramOrLayout() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2}}, 2);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(original.cpu), original.cpu, original.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             session.config.annotations().add(new UserAnnotations.Entry(1, "buffer", "DATA"));
             session.config.save();
         }
         DebuggerTestMachine reopened = new DebuggerTestMachine(new byte[][] {{9, 8}}, 2);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(reopened.cpu), reopened.cpu, reopened.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             assertEquals("buffer", session.config.annotations().get(1).label);
             verify(reopened.memory, never()).read(anyInt());
         }
         DebuggerTestMachine otherLayout = new DebuggerTestMachine(new byte[][] {{9, 8, 7}}, 3);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(otherLayout.cpu), otherLayout.cpu, otherLayout.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(otherLayout.cpu, net.emustudio.application.TestCpu.context(otherLayout.cpu), otherLayout.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             assertEquals("buffer", session.config.annotations().get(1).label);
         }
     }
@@ -885,8 +886,8 @@ public class DebuggerSessionTest {
     public void metadataLoadRetriesConcurrentChangesAndPreservesLiveUserEdits() throws Exception {
         Path settings = temporary.getRoot().toPath().resolve("concurrent-debug.properties");
         DebuggerTestMachine original = new DebuggerTestMachine(new byte[][] {{1, 2, 3}}, 3);
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(original.cpu), original.cpu, original.memory, settings);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(original.cpu, net.emustudio.application.TestCpu.context(original.cpu), original.memory, settings);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             session.config.annotations().add(new UserAnnotations.Entry(0, "disk old", "CODE"));
             session.config.annotations().add(new UserAnnotations.Entry(1, "disk retained", "DATA"));
             session.config.save();
@@ -906,8 +907,8 @@ public class DebuggerSessionTest {
             return revision;
         }).when(engine).revision();
 
-        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(reopened.cpu), reopened.cpu, reopened.memory, settings, engine);
-             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
+        try (DebuggerSession session = new DebuggerSession(reopened.cpu, net.emustudio.application.TestCpu.context(reopened.cpu), reopened.memory, settings, engine);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             UserAnnotations annotations = session.config.annotations();
 
             assertEquals(Set.of("live edit", "disk old", "disk retained"), annotations.entries().stream()
