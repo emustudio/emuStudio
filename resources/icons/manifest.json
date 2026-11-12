@@ -64,6 +64,10 @@
   "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui": {
     "goto-address.png": "plugins/byte-mem/go-to-address.svg"
   },
+  "application/src/main/resources/net/emustudio/application/gui/icons/emulation": {
+    "fold.png": "emulation/fold.svg",
+    "show.png": "emulation/show.svg"
+  },
   "application/src/main/resources/net/emustudio/application/gui/icons/inspection": {
     "follow-pc.png": "inspection/follow-pc.svg",
     "refresh-flow.png": "inspection/refresh-flow.svg",

@@ -56,7 +56,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     mock(Dialogs.class), mockExecution(), null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             assertFalse(onEdt(findButtonByTooltip(panel, "Set breakpoint...")::isEnabled));
-            assertFalse(onEdt(findToggleButtonByTooltip(panel, "Record instructions")::isEnabled));
+            assertFalse(onEdt(findButtonByTooltip(panel, "Start recording")::isEnabled));
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             assertFalse(manager.isBreakpointDialogSupported());
 
@@ -88,12 +88,16 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             showInFrame(panel);
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             JButton reset = findButtonByTooltip(panel, "Reset emulation");
-            JToggleButton recording = findToggleButtonByTooltip(panel, "Record instructions");
+            JButton recording = findButtonByTooltip(panel, "Start recording");
+            JButton stop = findButtonByTooltip(panel, "Stop recording");
+            JToggleButton pause = findToggleButtonByTooltip(panel, "Pause recording");
             JTabbedPane tabs = findComponent(manager, JTabbedPane.class,
                     component -> "debuggerViews".equals(component.getName()));
 
             runOnEdt(() -> {
                 tabs.setSelectedIndex(tabs.indexOfTab("Recording"));
+                assertFalse(stop.isEnabled());
+                assertFalse(pause.isEnabled());
                 SwingUtilities.invokeLater(() -> {
                     for (java.awt.Window window : java.awt.Window.getWindows()) {
                         if (window instanceof JDialog && window.isShowing()
@@ -116,24 +120,28 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 assertTrue(SwingUtilities.isDescendingFrom(recording, tabs.getSelectedComponent()));
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
                 assertNotNull(recording.getIcon());
-                assertTrue(recording.isSelected());
-                assertEquals("Stop recording", recording.getToolTipText());
-                assertEquals("Stop recording", recording.getAccessibleContext().getAccessibleName());
+                assertTrue(stop.getText() == null || stop.getText().isEmpty());
+                assertTrue(pause.getText() == null || pause.getText().isEmpty());
+                assertTrue(stop.isEnabled());
+                assertTrue(pause.isEnabled());
+                assertEquals("Start recording", recording.getToolTipText());
+                assertEquals("Start recording", recording.getAccessibleContext().getAccessibleName());
             });
 
             assertTrue(onEdt(recording::isEnabled));
             assertTrue(session.recording.isRecording());
 
-            triggerButton(recording);
+            triggerButton(stop);
             session.update(() -> {}).join();
             runOnEdt(() -> {});
 
             assertFalse(session.recording.isRecording());
             runOnEdt(() -> {
-                assertFalse(recording.isSelected());
+                assertFalse(stop.isEnabled());
+                assertFalse(pause.isEnabled());
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
-                assertEquals("Record instructions", recording.getToolTipText());
-                assertEquals("Record instructions", recording.getAccessibleContext().getAccessibleName());
+                assertEquals("Start recording", recording.getToolTipText());
+                assertEquals("Start recording", recording.getAccessibleContext().getAccessibleName());
                 panel.close();
             });
         }

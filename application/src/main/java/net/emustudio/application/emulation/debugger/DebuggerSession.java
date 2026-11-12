@@ -327,6 +327,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         updateProbe();
     }
 
+    public synchronized void setRecordingPaused(boolean paused) {
+        recording.setPaused(paused);
+        updateProbe();
+    }
+
     public synchronized void recordTo(Path path) throws IOException {
         try {
             recording.recordTo(path);

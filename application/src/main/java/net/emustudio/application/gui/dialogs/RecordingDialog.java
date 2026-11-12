@@ -13,14 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.Frame;
+import java.util.List;
 import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 
 /** Configures a new instruction recording without changing the current recording on cancellation. */
 public final class RecordingDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordingDialog.class);
     private final GUI gui;
     private final DebuggerSession session;
-    private final Runnable started;
+    private final Consumer<List<InstructionRecording.Event>> started;
     private final JRadioButton keep = new JRadioButton("Keep", true);
     private final JRadioButton range = new JRadioButton("Specific address range:");
     private final JRadioButton unlimited = new JRadioButton("Unlimited");
@@ -29,7 +31,8 @@ public final class RecordingDialog extends DialogBase {
     private final JTextField from = new JTextField("0x0000", 10);
     private final JTextField to = new JTextField(10);
 
-    public RecordingDialog(Frame owner, GUI gui, DebuggerSession session, Runnable started) {
+    public RecordingDialog(Frame owner, GUI gui, DebuggerSession session,
+                           Consumer<List<InstructionRecording.Event>> started) {
         super(owner, "Start recording", true);
         this.gui = gui;
         this.session = session;
@@ -95,8 +98,11 @@ public final class RecordingDialog extends DialogBase {
             int limit = count.isEnabled() ? Numbers.parseRadix(count.getText().strip()) : 0;
             int first = from.isEnabled() ? Numbers.parseRadix(from.getText().strip()) : 0;
             int last = to.isEnabled() ? Numbers.parseRadix(to.getText().strip()) : 0;
-            session.update(() -> session.startNewRecording(limit, selected, first, last)).join();
-            started.run();
+            session.update(() -> {
+                List<InstructionRecording.Event> previous = session.recording.events();
+                session.startNewRecording(limit, selected, first, last);
+                started.accept(previous);
+            }).join();
             dispose();
         } catch (RuntimeException failure) {
             Throwable cause = failure instanceof CompletionException && failure.getCause() != null

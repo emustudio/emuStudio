@@ -10,7 +10,9 @@ import net.emustudio.emulib.plugin.debugger.*;
 import java.util.*;
 import java.util.function.*;
 
-/** Machine-local expression and capture adapter. Never exposes machine data to the host. */
+/**
+ * Machine-local expression and capture adapter. Never exposes machine data to the host.
+ */
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final Decoder disassembler;
@@ -28,20 +30,33 @@ public final class MachineDebugging implements Debugging {
     MachineDebugging(String machine, Decoder disassembler) {
         this.machine = machine;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {});
+        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {
+        });
     }
 
     public void register(String name, LongSupplier read) {
         bindings.put(name, () -> read.getAsLong());
     }
 
-    void inspect(String name, Supplier<?> read) { bindings.put(name, read::get); }
+    void inspect(String name, Supplier<?> read) {
+        bindings.put(name, read::get);
+    }
 
-    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) { machineFunctions = Set.copyOf(names); machineFunction = functions; }
-    public boolean isActive() { return support.isActive(); }
-    public boolean requiresAccesses() { return support.requiresAccesses(); }
+    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) {
+        machineFunctions = Set.copyOf(names);
+        machineFunction = functions;
+    }
 
-    @Override public AutoCloseable observe(Observer observer, Capture capture) {
+    public boolean isActive() {
+        return support.isActive();
+    }
+
+    public boolean requiresAccesses() {
+        return support.requiresAccesses();
+    }
+
+    @Override
+    public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
@@ -61,7 +76,8 @@ public final class MachineDebugging implements Debugging {
         if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
     }
 
-    @Override public Expression compile(String source) {
+    @Override
+    public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
 
@@ -81,7 +97,8 @@ public final class MachineDebugging implements Debugging {
     }
 
     static int location(List<Object> args) {
-        if (args.size() != 1 || !(args.get(0) instanceof Number)) throw new IllegalArgumentException("Expected one numeric location");
+        if (args.size() != 1 || !(args.get(0) instanceof Number))
+            throw new IllegalArgumentException("Expected one numeric location");
         long value = ((Number) args.get(0)).longValue();
         if (value < 0 || value > Integer.MAX_VALUE) throw new IllegalArgumentException("Location outside machine");
         return (int) value;
@@ -115,13 +132,11 @@ public final class MachineDebugging implements Debugging {
         rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
         bindings.forEach((name, binding) -> {
             Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value),
-                    !Objects.equals(before.get(name), value), List.of(), List.of()));
+            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value), !Objects.equals(before.get(name), value), List.of(), List.of()));
         });
         for (Access access : accesses) {
             String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04d", access.address), "", String.valueOf(access.value),
-                    access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
+            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04d", access.address), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
         }
         return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, OptionalInt.of(address), rows);
     }
@@ -129,6 +144,11 @@ public final class MachineDebugging implements Debugging {
     private static final class Access {
         final int address, value;
         final boolean write;
-        Access(int address, int value, boolean write) { this.address = address; this.value = value; this.write = write; }
+
+        Access(int address, int value, boolean write) {
+            this.address = address;
+            this.value = value;
+            this.write = write;
+        }
     }
 }

@@ -252,8 +252,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!disposed) changed();
     }
 
-    void addRecording(List<InstructionRecording.Event> captured, String scope) {
-        recordingPanel.addRecording(captured, scope);
+    void addRecording(List<InstructionRecording.Event> captured) {
+        recordingPanel.addRecording(captured);
     }
 
     @Override

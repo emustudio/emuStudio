@@ -542,6 +542,43 @@ public class DebuggerSessionTest {
     }
 
     @Test
+    public void pausingRecordingPreservesRetentionAndResumesWithoutCapturingPausedSteps() throws Exception {
+        for (InstructionRecording.Mode mode : InstructionRecording.Mode.values()) {
+            DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+            try (DebuggerSession session = machine.session(null);
+                 net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+                StepView first = addressInstruction(1, 3), second = addressInstruction(2, 5);
+                session.startNewRecording(2, mode, 3, 5);
+                capture(session, first);
+                session.executionChanged(CPU.RunState.STATE_STOPPED_BREAK, CPU.RunState.STATE_RUNNING);
+
+                session.setRecordingPaused(true);
+                capture(session, addressInstruction(3, 4));
+
+                assertTrue(session.recording.isRecording());
+                assertTrue(session.recording.isPaused());
+                assertEquals(List.of(first), views(session));
+                assertEquals(mode, session.recording.mode());
+                verify(machine.debug, atLeastOnce()).observe(session, Debugging.Capture.INSTRUCTION);
+
+                session.setRecordingPaused(false);
+                capture(session, second);
+                capture(session, addressInstruction(4, 0));
+
+                assertFalse(session.recording.isPaused());
+                assertTrue(session.isRunning());
+                assertEquals(mode == InstructionRecording.Mode.UNLIMITED ? 3 : 2, views(session).size());
+                assertTrue(views(session).contains(second));
+                verify(machine.debug, atLeastOnce()).observe(session, Debugging.Capture.FULL);
+                session.record(0);
+                assertFalse(session.recording.isPaused());
+                assertThrows(IllegalStateException.class, () -> session.setRecordingPaused(true));
+                session.executionChanged(CPU.RunState.STATE_RUNNING, CPU.RunState.STATE_STOPPED_BREAK);
+            }
+        }
+    }
+
+    @Test
     public void firstInstructionsRemainWhenLaterExecutionExceedsLimit() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         StepView first = instruction(1), second = instruction(2);

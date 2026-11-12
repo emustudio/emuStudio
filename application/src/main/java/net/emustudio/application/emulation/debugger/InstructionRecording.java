@@ -35,6 +35,7 @@ public final class InstructionRecording implements AutoCloseable {
     private final IntSupplier addressSpaceSize;
     private long captured, nextSequence;
     private int limit;
+    private boolean paused;
     private Mode mode = Mode.LAST;
     private int from, through;
     private Writer writer;
@@ -51,6 +52,15 @@ public final class InstructionRecording implements AutoCloseable {
 
     public synchronized boolean isRecording() {
         return limit > 0;
+    }
+
+    public synchronized boolean isPaused() {
+        return paused;
+    }
+
+    synchronized void setPaused(boolean paused) {
+        if (!isRecording()) throw new IllegalStateException("Start recording first");
+        this.paused = paused;
     }
 
     public synchronized int limit() {
@@ -77,6 +87,7 @@ public final class InstructionRecording implements AutoCloseable {
         if (limit > 0) requireSupported();
         if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
         this.limit = limit;
+        paused = false;
         if (limit > 0) error = "";
         mode = Mode.LAST;
         trim();
@@ -99,7 +110,7 @@ public final class InstructionRecording implements AutoCloseable {
     }
 
     synchronized boolean requiresFullCapture() {
-        return limit > 0 || writer != null;
+        return (limit > 0 && !paused) || writer != null;
     }
 
     public synchronized Path path() { return path; }
@@ -157,11 +168,13 @@ public final class InstructionRecording implements AutoCloseable {
 
     synchronized void fail(String message) {
         limit = 0;
+        paused = false;
         failFile(message);
     }
 
     @Override public synchronized void close() throws IOException {
         limit = 0;
+        paused = false;
         stopFile();
     }
 
@@ -190,7 +203,7 @@ public final class InstructionRecording implements AutoCloseable {
     }
 
     private void retain(Event event) throws IOException {
-        if (!isRecording()) return;
+        if (!isRecording() || paused) return;
         int address = event.view.programLocation.orElse(-1);
         if (mode == Mode.ADDRESS_RANGE && (address < from || address > through)) return;
         if (mode == Mode.FIRST && captured >= limit) return;
