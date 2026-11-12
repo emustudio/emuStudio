@@ -49,7 +49,8 @@ public final class FlowAnalysis {
 
     /** Folding follows observed adjacency only; no opcode or transfer classification. */
     public List<List<Integer>> instructionRuns(Set<Integer> addresses, Set<Integer> boundaries) {
-        Map<Integer, List<Integer>> incoming = new HashMap<>(), outgoing = new HashMap<>();
+        Map<Integer, List<Integer>> incoming = new HashMap<>();
+        Map<Integer, List<Integer>> outgoing = new HashMap<>();
         forEachEdge((from, to) -> {
             incoming.computeIfAbsent(to, ignored -> new ArrayList<>()).add(from);
             outgoing.computeIfAbsent(from, ignored -> new ArrayList<>()).add(to);
@@ -62,13 +63,13 @@ public final class FlowAnalysis {
             DecodedInstruction before = previous == null ? null : instructions.get(previous);
             List<Integer> in = incoming.getOrDefault(address, List.of());
             List<Integer> out = outgoing.getOrDefault(previous, List.of());
-            boolean identical = before != null && next != null
+            boolean extendsRun = before != null && next != null
                     && (long) previous + before.length() == address && before.length() == next.length()
                     && !boundaries.contains(previous) && !boundaries.contains(address)
                     && in.equals(List.of(previous)) && out.equals(List.of(address))
                     && !next.mnemonic().isBlank() && before.mnemonic().equals(next.mnemonic())
                     && !next.encoding().isBlank() && before.encoding().equals(next.encoding());
-            if (!identical) {
+            if (!extendsRun) {
                 run = new ArrayList<>();
                 runs.add(run);
             }
@@ -122,32 +123,37 @@ public final class FlowAnalysis {
 
         FlowAnalysis view(int root, MemoryAnnotations annotations) {
             if (root < 0) throw new IllegalArgumentException("Invalid observed flow root");
+            Set<Integer> reachable = reachableFrom(root);
             Map<Integer, DecodedInstruction> selected = new TreeMap<>();
+            for (int address : reachable) {
+                DecodedInstruction instruction = instructions.get(address);
+                if (instruction != null) selected.put(address, instruction);
+            }
             Set<FlowGraph.Edge> edges = new TreeSet<>();
-            Set<Integer> visited = new HashSet<>();
-            Set<Integer> scheduled = new HashSet<>();
+            for (int address : selected.keySet()) {
+                for (int target : successors.getOrDefault(address, Set.of())) {
+                    if (reachable.contains(target)) edges.add(new FlowGraph.Edge(address, target));
+                }
+            }
+            return new FlowAnalysis(selected, edges, reachable, annotations);
+        }
+
+        private Set<Integer> reachableFrom(int root) {
+            Set<Integer> reachable = new HashSet<>();
             Deque<Integer> pending = new ArrayDeque<>();
             if (instructions.containsKey(root) || successors.values().stream().anyMatch(targets -> targets.contains(root))) {
                 pending.add(root);
-                scheduled.add(root);
+                reachable.add(root);
             }
             while (!pending.isEmpty()) {
                 if (Thread.currentThread().isInterrupted()) throw new CancellationException();
                 int address = pending.removeFirst();
-                visited.add(address);
-                DecodedInstruction instruction = instructions.get(address);
-                if (instruction == null) continue;
-                selected.put(address, instruction);
+                if (!instructions.containsKey(address)) continue;
                 for (int target : successors.getOrDefault(address, Set.of())) {
-                    if (scheduled.contains(target)) continue;
-                    scheduled.add(target);
-                    pending.addLast(target);
+                    if (reachable.add(target)) pending.addLast(target);
                 }
             }
-            for (int address : selected.keySet())
-                for (int target : successors.getOrDefault(address, Set.of()))
-                    if (visited.contains(target)) edges.add(new FlowGraph.Edge(address, target));
-            return new FlowAnalysis(selected, edges, visited, annotations);
+            return reachable;
         }
     }
 

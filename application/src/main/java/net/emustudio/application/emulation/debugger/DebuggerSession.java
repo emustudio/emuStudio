@@ -3,7 +3,6 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.application.settings.DebuggerConfig;
-import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
@@ -13,10 +12,7 @@ import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ValueView;
-import net.emustudio.emulib.plugin.device.Device;
-import net.emustudio.emulib.plugin.memory.Memory;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +20,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -34,14 +29,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class DebuggerSession implements AutoCloseable, Debugging.Observer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DebuggerSession.class);
 
-    private final EmulationController execution;
     public final CPU cpu;
-    private final CPUContext cpuContext;
+    public final CPUContext cpuContext;
     public final Debugging debug;
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
     public final DebuggerConfig config;
-    private final List<Consumer<CPU.RunState>> executionListeners = new CopyOnWriteArrayList<>();
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
     private int addressSpaceSize;
@@ -54,84 +47,62 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
     private long generation;
     private boolean closed;
+    // Inspection eligibility follows host notifications; command scheduling remains outside this module.
+    private boolean running;
     private int activeMutations;
     private SourceCaptureGuard activeSourceCapture;
     private SourceCaptureGuard completedSourceCapture;
-    private BreakpointHit pendingHit;
-    private final Deque<InstructionRecording.Event> history = new ArrayDeque<>();
-    private long historyCaptured, nextSequence;
-    private final Map<String, Debugging.Expression> expressions = new HashMap<>();
-    private volatile Map<String, ValueView> watchSnapshot = Map.of();
-    private volatile Map<String, String> watchFailures = Map.of();
+    private OptionalInt pendingHit = OptionalInt.empty();
+    public final InstructionRecording recording;
+    private final WatchExpressions watches;
     private AutoCloseable observation;
     private Debugging.Capture captureAttached;
     private boolean skipBeforeStep, observationDirty;
-    private int historyLimit;
-    private RecordingMode recordingMode = RecordingMode.LAST;
-    private int recordingFrom, recordingThrough;
-    private InstructionRecording.Writer recording;
-    private Path recordingPath;
-    private String recordingError = "";
     private int stoppedAddress = -1;
-    private int executionAddress = -1;
-    private long executionRevision;
-    public volatile String status = "";
-    private volatile CPU.RunState state = CPU.RunState.STATE_STOPPED_BREAK;
-    private final MemoryContext.MemoryListener memoryListener =
-            new MemoryContext.MemoryListener() {
-                @Override
-                public void memoryContentChanged(int from, int to) {
-                    invalidateAnalysis();
-                }
+    private final MemoryContext.MemoryListener memoryListener = new MemoryContext.MemoryListener() {
+        @Override
+        public void memoryContentChanged(int from, int to) {
+            invalidateAnalysis();
+        }
 
-                @Override
-                public void memorySizeChanged() {
-                    memoryImageRevision.incrementAndGet();
-                    invalidateAnalysis();
+        @Override
+        public void memorySizeChanged() {
+            memoryImageRevision.incrementAndGet();
+            invalidateAnalysis();
+        }
+    };
 
-                }
-            };
+    /**
+     * Machine provenance of a source capture; publication requires it to still match.
+     */
+    public static final class SourceCaptureGuard {
+        private final DebuggerSession session;
+        private final CompletableFuture<Void> ready = new CompletableFuture<>();
+        private int size;
+        private long generation, memoryRevision, annotationRevision;
+        private volatile boolean captured;
 
-    public enum RecordingMode {FIRST, LAST, ADDRESS_RANGE, UNLIMITED}
-
-    /** Machine provenance of a source capture; publication requires it to still match. */
-    private static final class Stamp {
-        final DebuggerSession session;
-        final int size;
-        final long generation, memoryRevision, annotationRevision;
-
-        private Stamp(DebuggerSession session) {
+        private SourceCaptureGuard(DebuggerSession session) {
             this.session = session;
+        }
+
+        // Read and refresh provenance only while holding the owning session's monitor.
+        private void capture() {
             size = session.addressSpaceSize;
             generation = session.generation;
             memoryRevision = session.memoryRevision();
             annotationRevision = session.annotationEngine.revision();
+            captured = true;
         }
 
         private boolean matches(DebuggerSession current) {
-            return current == session && current.cpu.getAddressSpaceSize() == size
-                    && current.memoryRevision() == memoryRevision
+            return current == session && current.generation == generation
+                    && current.cpu.getAddressSpaceSize() == size && current.memoryRevision() == memoryRevision
                     && current.annotationEngine.revision() == annotationRevision;
         }
-    }
-
-    public static final class SourceCaptureGuard {
-        private volatile Stamp stamp;
-        private final CompletableFuture<Void> ready = new CompletableFuture<>();
 
         public CompletableFuture<Void> whenReady() {
             return ready.copy();
-        }
-
-        private SourceCaptureGuard() {
-        }
-    }
-
-    public static final class BreakpointHit {
-        public final int address;
-
-        BreakpointHit(int address) {
-            this.address = address;
         }
     }
 
@@ -140,41 +111,33 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
-        this(cpu, cpuContext, memory, settings, annotationEngine, null, List.of(), null);
-    }
-
-    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine,
-                           Memory memoryPlugin,
-                           List<Device> devices,
-                           Compiler compiler) throws IOException {
         this.cpu = Objects.requireNonNull(cpu);
         this.cpuContext = Objects.requireNonNull(cpuContext);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
         this.debug = cpu instanceof Debugging ? (Debugging) cpu : null;
+        watches = new WatchExpressions(debug);
+        recording = new InstructionRecording(debug != null, cpu::getTitle, cpu::getAddressSpaceSize);
         this.memory = memory;
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) addressSpaceSize();
         config = new DebuggerConfig(settings, cpu::getAddressSpaceSize, annotationEngine);
-        if (this.memory != null) this.memory.addMemoryListener(memoryListener);
-        execution = new EmulationController(cpu, cpuContext, memoryPlugin, devices, this, compiler);
-        update(() -> {
-        }).join();
+        try {
+            if (this.memory != null) this.memory.addMemoryListener(memoryListener);
+            update(() -> {}).join();
+        } catch (RuntimeException | Error failure) {
+            if (this.memory != null) this.memory.removeMemoryListener(memoryListener);
+            detachObservation();
+            throw failure;
+        }
     }
 
     public synchronized void record(int limit) {
-        if (limit > 0 && debug == null)
-            throw new IllegalStateException("Instruction recording unsupported by this CPU");
-        if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
-        historyLimit = limit;
-        if (limit > 0) {
-            clearRecordingError();
-        }
-        recordingMode = RecordingMode.LAST;
-        trimHistory();
+        recording.record(limit);
         updateProbe();
     }
 
-    public EmulationController execution() {
-        return execution;
+    /** Inspection eligibility follows host notifications, even before the CPU context updates. */
+    public synchronized boolean isRunning() {
+        return running;
     }
 
     /**
@@ -237,11 +200,34 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     public synchronized void setSourceMappings(SourceAddressMap mappings) {
         requirePaused();
-        if (mappings.session() != this)
+        if (mappings.session() != this && !(memory == null && mappings.session() == null))
             throw new IllegalStateException("Source mappings belong to another memory image");
         sourceMappings = mappings;
         sourceMappingsCleared = false;
+    }
 
+    public synchronized Optional<SourceAddressMap> sourceMappings() {
+        return Optional.ofNullable(sourceMappings);
+    }
+
+    /** Captures and installs the active mapping under the same provenance check. */
+    public synchronized SourceAddressMap captureSources(SourceCaptureGuard guard, Compiler compiler,
+                                                        SourceInputs inputs) throws IOException {
+        SourceAddressMap[] captured = new SourceAddressMap[1];
+        try {
+            applySourceCapture(guard, () -> {
+                try {
+                    captured[0] = SourceAddressMap.capture(compiler, memory, inputs,
+                            memory == null ? null : this, annotationEngine);
+                } catch (IOException failure) {
+                    throw new UncheckedIOException(failure);
+                }
+                setSourceMappings(captured[0]);
+            });
+        } catch (UncheckedIOException failure) {
+            throw failure.getCause();
+        }
+        return captured[0];
     }
 
     /**
@@ -253,60 +239,42 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             return sourceMappings.sourceAt(address).map(location -> location.position);
         }
         if (sourceMappingsCleared) return Optional.empty();
-        return annotationEngine.at(address).stream().filter(entry -> entry.source != null)
-                .min(Comparator.comparingLong(entry -> entry.ownerId)).map(entry -> entry.source);
+        return annotationEngine.at(address).stream().filter(entry -> entry.source != null).min(Comparator.comparingLong(entry -> entry.ownerId)).map(entry -> entry.source);
     }
 
     public synchronized void clearSourceMappings() {
-        addressSpaceSize();
         sourceMappings = null;
         sourceMappingsCleared = true;
-
-    }
-
-    public void addExecutionListener(Consumer<CPU.RunState> listener) {
-        executionListeners.add(Objects.requireNonNull(listener));
-    }
-
-    public void removeExecutionListener(Consumer<CPU.RunState> listener) {
-        executionListeners.remove(listener);
     }
 
     /**
      * Host reports execution transitions and completed machine work.
      */
-    public synchronized void executionChanged(CPU.RunState value, long machineRevision) {
-        boolean starting = state != CPU.RunState.STATE_RUNNING && value == CPU.RunState.STATE_RUNNING;
-        int address = cpuContext.getInstructionLocation();
-        if (state != value || executionAddress != address || executionRevision != machineRevision)
-            advanceHostGeneration();
-        executionAddress = address;
-        executionRevision = machineRevision;
-        state = value;
+    public synchronized void executionChanged(CPU.RunState previous, CPU.RunState current) {
+        boolean starting = previous != CPU.RunState.STATE_RUNNING && current == CPU.RunState.STATE_RUNNING;
+        advanceHostGeneration();
+        running = current == CPU.RunState.STATE_RUNNING;
         if (starting) {
-            clearWatchChanges();
-            pendingHit = null;
+            watches.clearChanges();
+            pendingHit = OptionalInt.empty();
             if (sourceMappings == null) sourceMappingsCleared = true;
             invalidateProgram();
         }
-        executionListeners.forEach(listener -> listener.accept(value));
     }
 
     public synchronized void requirePaused() {
         if (closed) throw new IllegalStateException("Debugger session closed");
-        if (state == CPU.RunState.STATE_RUNNING) throw new IllegalStateException("Pause CPU first");
+        if (running) throw new IllegalStateException("Pause CPU first");
     }
 
     /**
-     * Called by the command scheduler after final lifecycle publication.
+     * Releases only the capture associated with the completed lifecycle publication.
      */
-    public void completeSourceCapture() {
-        SourceCaptureGuard guard;
+    private void completeSourceCapture(SourceCaptureGuard guard) {
         synchronized (this) {
-            guard = completedSourceCapture;
-            completedSourceCapture = null;
+            if (completedSourceCapture == guard) completedSourceCapture = null;
         }
-        if (guard != null) guard.ready.complete(null);
+        guard.ready.complete(null);
     }
 
     /**
@@ -325,20 +293,18 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         requirePaused();
         if (activeMutations > 1) throw new IllegalStateException("Concurrent machine mutations prevent source capture");
         if (activeMutations == 1) return activeSourceCapture;
-        SourceCaptureGuard guard = new SourceCaptureGuard();
-        guard.stamp = new Stamp(this);
+        SourceCaptureGuard guard = new SourceCaptureGuard(this);
+        guard.capture();
         guard.ready.complete(null);
         return guard;
     }
 
     public synchronized void applySourceCapture(SourceCaptureGuard guard, Runnable apply) {
         Objects.requireNonNull(guard);
-        Stamp stamp = guard.stamp;
-        if (stamp == null) throw new IllegalStateException("Compilation mutation has not finished");
+        if (!guard.captured) throw new IllegalStateException("Compilation mutation has not finished");
         // An execution boundary or memory write after compilation makes the mappings stale.
         synchronized (programLock) {
-            if (closed || state == CPU.RunState.STATE_RUNNING || activeMutations != 0
-                    || generation != stamp.generation || !stamp.matches(this))
+            if (closed || running || activeMutations != 0 || !guard.matches(this))
                 throw new IllegalStateException("Source mappings discarded: machine or metadata changed after compilation");
             apply.run();
         }
@@ -356,101 +322,36 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public synchronized void prepareManualStep() {
-        skipBeforeStep = true;
-    }
-
-    public synchronized void completeManualStep() {
-        skipBeforeStep = false;
-    }
-
-    public synchronized void startNewRecording(int limit, RecordingMode mode, int from, int through) {
-        Objects.requireNonNull(mode);
-        boolean bounded = mode == RecordingMode.FIRST || mode == RecordingMode.LAST;
-        if (bounded && (limit <= 0 || limit > 1_000_000))
-            throw new IllegalArgumentException("Recording limit must be 1..1000000");
-        if (mode == RecordingMode.ADDRESS_RANGE && (from < 0 || through < from || through >= cpu.getAddressSpaceSize()))
-            throw new IllegalArgumentException("Recording range must be within CPU addresses, with From ≤ To");
-        record(bounded ? limit : 1);
-        historyLimit = bounded ? limit : Integer.MAX_VALUE;
-        history.clear();
-        historyCaptured = 0;
-        recordingMode = mode;
-        recordingFrom = from;
-        recordingThrough = through;
-    }
-
-    public synchronized boolean isRecording() {
-        return historyLimit > 0;
-    }
-
-    public synchronized RecordingMode recordingMode() {
-        return recordingMode;
-    }
-
-    public synchronized int recordingLimit() {
-        return historyLimit;
-    }
-
-    public synchronized int recordingFrom() {
-        return recordingFrom;
-    }
-
-    public synchronized int recordingThrough() {
-        return recordingThrough;
-    }
-
-    public synchronized List<InstructionRecording.Event> history() {
-        return List.copyOf(history);
-    }
-
-    public synchronized void recordTo(Path path) throws IOException {
-        if (recording != null) throw new IllegalStateException("Stop the current file recording first");
-        try {
-            recording = new InstructionRecording.Writer(path, recordingHeader());
-        } catch (IOException failure) {
-            stopFailedRecorder("Could not start recording: " + failure.getMessage());
-            throw failure;
-        }
-        recordingPath = path.toAbsolutePath().normalize();
-        clearRecordingError();
+    public synchronized void startNewRecording(int limit, InstructionRecording.Mode mode, int from, int through) {
+        recording.start(limit, mode, from, through);
         updateProbe();
     }
 
-    public synchronized void stopRecordingFile() throws IOException {
-        InstructionRecording.Writer writer = recording;
-        recording = null;
-        recordingPath = null;
+    public synchronized void setRecordingPaused(boolean paused) {
+        recording.setPaused(paused);
+        updateProbe();
+    }
+
+    public synchronized void recordTo(Path path) throws IOException {
         try {
-            if (writer != null) writer.close();
-        } catch (IOException failure) {
-            recordingError = "Incomplete recording: " + failure.getMessage();
-            status = recordingError;
-            throw failure;
+            recording.recordTo(path);
         } finally {
             updateProbe();
         }
     }
 
-    public synchronized Path recordingPath() {
-        return recordingPath;
-    }
-
-    public synchronized String recordingError() {
-        return recordingError;
-    }
-
-    public void saveHistory(Path path, boolean text) throws IOException {
-        InstructionRecording.Header header = recordingHeader();
-        List<InstructionRecording.Event> events = history();
-        if (text) InstructionRecording.exportText(path, header, events);
-        else InstructionRecording.write(path, header, events);
+    public synchronized void stopRecordingFile() throws IOException {
+        try {
+            recording.stopFile();
+        } finally {
+            updateProbe();
+        }
     }
 
     public synchronized void updateProbe() {
         observationDirty = false;
-        Debugging.Capture capture = recording != null || historyLimit > 0 ? Debugging.Capture.FULL
-                : Debugging.Capture.INSTRUCTION;
+        if (closed) return;
+        Debugging.Capture capture = recording.requiresFullCapture() ? Debugging.Capture.FULL : Debugging.Capture.INSTRUCTION;
         if (debug == null) return;
         if (observation != null && capture != captureAttached) detachObservation();
         if (observation == null) {
@@ -460,11 +361,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public Map<String, ValueView> watchValues() {
-        return watchSnapshot;
+        return watches.values();
     }
 
     public Map<String, String> watchErrors() {
-        return watchFailures;
+        return watches.errors();
     }
 
     public CompletableFuture<Void> refreshWatches() {
@@ -474,7 +375,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     @Override
     public synchronized boolean beforeStep() {
-        int address = execution.cpuContext().getInstructionLocation();
+        int address = cpuContext.getInstructionLocation();
         boolean stop = false;
         if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;
         else stop = checkBreakpoints(address);
@@ -485,33 +386,23 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     @Override
-    public synchronized boolean afterStep(boolean completed, Optional<DecodedInstruction> instruction,
-                                          OptionalInt nextAddress, Optional<StepView> captured) {
+    public synchronized boolean afterStep(boolean completed, Optional<DecodedInstruction> instruction, OptionalInt nextAddress, Optional<StepView> captured) {
         if (completed && instruction.isPresent()) {
             observedFlow.executed(instruction.get(), nextAddress);
             flow = null;
         }
-        long sequence = ++nextSequence;
-        if (captured.isPresent()) {
-            InstructionRecording.Event event = new InstructionRecording.Event(sequence, completed, captured.get());
-            retainHistory(event);
-            if (recording != null) {
-                try {
-                    recording.append(event);
-                } catch (IOException failure) {
-                    stopFailedRecorder("Incomplete recording: " + failure.getMessage());
-                }
-            }
-        }
+        boolean fullCapture = recording.requiresFullCapture();
+        recording.capture(completed, captured);
+        if (fullCapture != recording.requiresFullCapture()) observationDirty = true;
         if (observationDirty) updateProbe();
         return false;
     }
 
     @Override
     public synchronized void failed(String message) {
-        historyLimit = 0;
+        recording.fail(message);
         captureAttached = null;
-        stopFailedRecorder(message);
+        observationDirty = true;
     }
 
     public boolean isBreakpointSet(int address) {
@@ -528,19 +419,24 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         });
     }
 
-    public synchronized BreakpointHit takeBreakpointHit() {
-        if (closed || state == CPU.RunState.STATE_RUNNING) return null;
-        BreakpointHit hit = pendingHit;
-        pendingHit = null;
+    public synchronized OptionalInt takeBreakpointHit() {
+        if (closed || running) return OptionalInt.empty();
+        OptionalInt hit = pendingHit;
+        pendingHit = OptionalInt.empty();
         return hit;
     }
 
     @Override
     public void close() {
-        // Probe listeners and execution memory may only be changed at a paused boundary.
-        execution.close();
+        // The machine owner stops execution before releasing debugger resources.
+        synchronized (this) {
+            if (closed) return;
+            if (running || activeMutations != 0 || completedSourceCapture != null)
+                throw new IllegalStateException("Machine work must finish before closing debugger resources");
+            closed = true;
+        }
         try {
-            stopRecordingFile();
+            recording.close();
         } catch (IOException e) {
             LOGGER.error("Could not finish instruction recording", e);
         }
@@ -553,10 +449,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         if (memory != null) memory.removeMemoryListener(memoryListener);
         detachObservation();
         synchronized (this) {
-            closed = true;
             memoryImageRevision.incrementAndGet();
             invalidateProgram();
-            pendingHit = null;
+            pendingHit = OptionalInt.empty();
             generation++;
         }
     }
@@ -564,26 +459,42 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     /**
      * Invalidates analysis before and after a machine edit, even if the CPU emits no event.
      */
-    public void runMutation(Runnable mutation) {
+    public void runMutation(Runnable mutation, CompletionStage<Void> published) {
         memoryImageRevision.incrementAndGet();
         synchronized (this) {
             stoppedAddress = -1;
-            clearWatchChanges();
+            watches.clearChanges();
         }
         try {
-            runExecution(mutation);
+            runExecution(mutation, published);
         } finally {
             memoryImageRevision.incrementAndGet();
         }
     }
 
-    public void runExecution(Runnable execution) {
+    /**
+     * Manual steps skip a breakpoint at the current PC without changing subsequent breakpoint policy.
+     */
+    public void runStep(Runnable step, CompletionStage<Void> published) {
+        synchronized (this) {
+            skipBeforeStep = true;
+        }
         try {
-            runMachineOperation(execution, true);
+            runExecution(step, published);
+        } finally {
+            synchronized (this) {
+                skipBeforeStep = false;
+            }
+        }
+    }
+
+    public void runExecution(Runnable execution, CompletionStage<Void> published) {
+        try {
+            runMachineOperation(execution, true, published);
         } finally {
             // A paused view must show the final machine value, even after a very short step.
             synchronized (this) {
-                if (!closed) refreshWatchesNow();
+                if (!closed) watches.refresh(config.watches);
             }
         }
     }
@@ -591,7 +502,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     /**
      * Compilers report memory writes through the memory listener while execution is paused.
      */
-    public void runCompilation(Runnable compilation) {
+    public void runCompilation(Runnable compilation, CompletionStage<Void> published) {
         synchronized (this) {
             stoppedAddress = -1;
             skipBeforeStep = false;
@@ -599,7 +510,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         boolean restoreNotifications = memory != null && !memory.areMemoryNotificationsEnabled();
         if (restoreNotifications) memory.setMemoryNotificationsEnabled(true);
         try {
-            runMachineOperation(compilation, false);
+            runMachineOperation(compilation, false, published);
         } finally {
             if (restoreNotifications) memory.setMemoryNotificationsEnabled(false);
         }
@@ -613,12 +524,13 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return List.copyOf(config.breakpoints);
     }
 
-    private void runMachineOperation(Runnable mutation, boolean invalidateMemory) {
+    private void runMachineOperation(Runnable mutation, boolean invalidateMemory, CompletionStage<Void> published) {
         Objects.requireNonNull(mutation);
-        SourceCaptureGuard operation = new SourceCaptureGuard();
+        Objects.requireNonNull(published);
+        SourceCaptureGuard operation = new SourceCaptureGuard(this);
         synchronized (this) {
             if (closed) throw new IllegalStateException("Debugger session closed");
-            pendingHit = null;
+            pendingHit = OptionalInt.empty();
             generation++;
             if (invalidateMemory) invalidateProgram();
             activeMutations++;
@@ -632,11 +544,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
                 generation++;
                 if (invalidateMemory) invalidateProgram();
                 if (memory != null && !closed) addressSpaceSize();
-                operation.stamp = new Stamp(this);
+                operation.capture();
                 completedSourceCapture = operation;
                 if (activeMutations == 0) activeSourceCapture = null;
             }
-            if (!execution.isBusy()) operation.ready.complete(null);
+            published.thenRun(() -> completeSourceCapture(operation));
         }
     }
 
@@ -645,10 +557,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
      */
     private void advanceHostGeneration() {
         SourceCaptureGuard guard = completedSourceCapture;
-        boolean current = guard != null && !guard.ready.isDone() && guard.stamp != null
-                && guard.stamp.generation == generation && guard.stamp.matches(this);
+        boolean current = guard != null && !guard.ready.isDone() && guard.captured && guard.matches(this);
         generation++;
-        if (current) guard.stamp = new Stamp(this);
+        if (current) guard.capture();
     }
 
     private void invalidateAnalysis() {
@@ -675,19 +586,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             // An I/O failure after editing settings must not leave hidden old runtime behavior.
             updateProbe();
             // Watches are evaluated only at execution boundaries, never while the CPU runs.
-            if (state != CPU.RunState.STATE_RUNNING) refreshWatchesNow();
-            expressions.keySet().retainAll(new HashSet<>(config.watches));
+            if (!running) watches.refresh(config.watches);
+            watches.retain(config.watches);
         }
-    }
-
-    private synchronized InstructionRecording.Header recordingHeader() {
-        if (debug == null) throw new IllegalStateException("Instruction recording unsupported by this CPU");
-        return new InstructionRecording.Header(cpu.getTitle());
-    }
-
-    private void clearRecordingError() {
-        if (status.equals(recordingError)) status = "";
-        recordingError = "";
     }
 
     private void detachObservation() {
@@ -697,86 +598,15 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             try {
                 current.close();
             } catch (Exception failure) {
-                status = "Debugger detach failed: " + failure.getMessage();
-                LOGGER.warn(status, failure);
+                LOGGER.warn("Debugger detach failed: " + failure.getMessage(), failure);
             }
-        }
-    }
-
-    private void trimHistory() {
-        while (historyLimit > 0 && history.size() > historyLimit) history.removeFirst();
-    }
-
-    private synchronized Debugging.Expression expression(String source) {
-        if (debug == null) throw new IllegalStateException("Expressions unsupported by this CPU");
-        return expressions.computeIfAbsent(source, debug::compile);
-    }
-
-    private void refreshWatchesNow() {
-        Map<String, ValueView> values = new LinkedHashMap<>();
-        Map<String, String> errors = new LinkedHashMap<>();
-        for (String watch : config.watches) {
-            String error = watchFailures.get(watch);
-            if (error != null) {
-                errors.put(watch, error);
-                continue;
-            }
-            try {
-                ValueView current = expression(watch).display();
-                ValueView previous = watchSnapshot.get(watch);
-                values.put(watch, new ValueView(current.text, current.formats,
-                        current.changed || previous != null && previous.changed));
-            } catch (RuntimeException failure) {
-                errors.put(watch, Objects.toString(failure.getMessage(), "Watch evaluation failed"));
-            }
-        }
-        watchSnapshot = Map.copyOf(values);
-        watchFailures = Map.copyOf(errors);
-    }
-
-    private void clearWatchChanges() {
-        Map<String, ValueView> cleared = new LinkedHashMap<>();
-        watchSnapshot.forEach((source, value) -> cleared.put(source, new ValueView(value.text, value.formats, false)));
-        watchSnapshot = Map.copyOf(cleared);
-    }
-
-    private void retainHistory(InstructionRecording.Event event) {
-        if (historyLimit <= 0) return;
-        int address = event.view.programLocation.orElse(-1);
-        if (recordingMode == RecordingMode.ADDRESS_RANGE && (address < recordingFrom || address > recordingThrough))
-            return;
-        if (recordingMode == RecordingMode.FIRST && historyCaptured >= historyLimit) return;
-        try {
-            InstructionRecording.sizeOf(event); // rejects steps the recording format cannot encode
-            historyCaptured++;
-            history.addLast(event);
-            trimHistory();
-        } catch (IOException failure) {
-            failed("History capture failed: " + failure.getMessage());
         }
     }
 
     private boolean checkBreakpoints(int address) {
         if (!config.breakpoints.contains(address)) return false;
-        pendingHit = new BreakpointHit(address);
+        pendingHit = OptionalInt.of(address);
         return true;
-    }
-
-    private void stopFailedRecorder(String message) {
-        observationDirty = true;
-        recordingError = message;
-        status = message;
-        InstructionRecording.Writer current = recording;
-        recording = null;
-        recordingPath = null;
-        if (current != null) {
-            try {
-                current.abort();
-            } catch (IOException failure) {
-                LOGGER.warn("Could not close failed recording", failure);
-            }
-        }
-        LOGGER.warn(message);
     }
 
 }

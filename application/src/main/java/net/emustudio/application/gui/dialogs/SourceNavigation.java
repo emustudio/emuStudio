@@ -16,7 +16,6 @@ import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -28,7 +27,6 @@ final class SourceNavigation implements AutoCloseable {
     private final DebuggerSession session;
     private final TabbedEditor editor;
     private final DebuggerPanel debugger;
-    private volatile SourceAddressMap mappings = SourceAddressMap.empty();
     private volatile boolean closed;
     private boolean synchronizing;
     private volatile long compilation;
@@ -88,23 +86,15 @@ final class SourceNavigation implements AutoCloseable {
                 publishCurrent(current, false);
                 return;
             }
-            guard.whenReady().thenRun(() -> SwingUtilities.invokeLater(() -> {
+            // Install mappings on the completion thread before the next machine command can run.
+            // Only Swing presentation waits for the event queue.
+            guard.whenReady().thenRun(() -> {
                 synchronized (SourceNavigation.this) {
                     if (closed || failed || current != compilation) return;
                 }
                 final SourceAddressMap captured;
                 try {
-                    SourceAddressMap[] result = new SourceAddressMap[1];
-                    session.applySourceCapture(guard, () -> {
-                        try {
-                            result[0] = SourceAddressMap.capture(compiler, session.memory, sourceInputs,
-                                    session.memory == null ? null : session, session.annotationEngine);
-                        } catch (java.io.IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                        if (session.memory != null) session.setSourceMappings(result[0]);
-                    });
-                    captured = result[0];
+                    captured = session.captureSources(guard, compiler, sourceInputs);
                 } catch (Exception e) {
                     LOGGER.debug("Source navigation unavailable", e);
                     publishCurrent(current, false);
@@ -112,12 +102,16 @@ final class SourceNavigation implements AutoCloseable {
                 }
                 synchronized (SourceNavigation.this) {
                     if (closed || failed || current != compilation) return;
-                    mappings = captured;
                 }
-                debugger.setSymbols(captured::symbols);
-                debugger.setSourceMappingsCurrent(!captured.sourceFiles().isEmpty());
-                editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
-            }));
+                SwingUtilities.invokeLater(() -> {
+                    synchronized (SourceNavigation.this) {
+                        if (closed || failed || current != compilation
+                                || session.sourceMappings().orElse(null) != captured) return;
+                    }
+                    debugger.setSourceMappingsCurrent(!captured.sourceFiles().isEmpty());
+                    editor.currentSourcePosition().ifPresent(SourceNavigation.this::sourceSelected);
+                });
+            });
         }
     };
 
@@ -130,7 +124,7 @@ final class SourceNavigation implements AutoCloseable {
         editor.setSourcePositionChanged(this::sourceSelected);
         debugger.setAddressSelectionListener(this::addressSelected);
         debugger.setInspectionReadyListener(() -> editor.currentSourcePosition().ifPresent(this::sourceSelected));
-        debugger.setSymbols(java.util.List::of);
+        debugger.setSymbols(() -> session.sourceMappings().map(SourceAddressMap::symbols).orElseGet(java.util.List::of));
         debugger.setSourceMappingsCurrent(false);
         if (compiler != null) compiler.addCompilerListener(listener);
     }
@@ -142,8 +136,9 @@ final class SourceNavigation implements AutoCloseable {
     }
 
     private Optional<SourceAddressMap> current(SourceCodePosition position) {
-        SourceAddressMap snapshot = mappings;
+        SourceAddressMap snapshot = session.sourceMappings().orElse(null);
         if (compiling) return Optional.empty();
+        if (snapshot == null) return stale();
         if (snapshot.sourceFiles().isEmpty() || (session.memory != null && snapshot.session() != session))
             return stale();
         if (!snapshot.inputsUnchanged()) return stale();
@@ -152,7 +147,7 @@ final class SourceNavigation implements AutoCloseable {
         boolean mappedFile = snapshot.sourceFiles().contains(Path.of(position.fileName).toAbsolutePath().normalize());
         debugger.setSourceMappingsCurrent(true);
         if (!mappedFile) return Optional.empty();
-        return mappings == snapshot ? Optional.of(snapshot) : Optional.empty();
+        return session.sourceMappings().filter(current -> current == snapshot);
     }
 
     private Optional<SourceAddressMap> stale() {
@@ -182,7 +177,8 @@ final class SourceNavigation implements AutoCloseable {
 
     private void addressSelected(int address, boolean visit) {
         if (synchronizing || !paused()) return;
-        SourceAddressMap snapshot = mappings;
+        SourceAddressMap snapshot = session.sourceMappings().orElse(null);
+        if (snapshot == null) return;
         Optional<SourceAddressMap.Location> target = snapshot.sourceAt(address);
         if (target.isEmpty()) {
             editor.currentSourcePosition().flatMap(this::current).ifPresent(ignored ->

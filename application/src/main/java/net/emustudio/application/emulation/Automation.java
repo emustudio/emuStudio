@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 
 /**
  * This class manages the emuStudio automation process. In the process
@@ -38,23 +39,19 @@ public class Automation implements Runnable {
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final Integer programLocation;
-    private final EmulationProgress progress;
-    private volatile CPU.RunState resultState;
-    private boolean successful=true;
-    public boolean isSuccessful() { return successful; }
+    private BiConsumer<String, Boolean> progressListener;
+    private boolean successful = true;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation,
-                      EmulationProgress progress) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
         this.programLocation = programLocation;
-        this.progress = Objects.requireNonNull(progress);
 
         if (inputFile != null) {
-            this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
+            this.inputFile = inputFile.toFile();
             if (!this.inputFile.exists()) {
                 throw new AutomationException("Input file not found");
             }
@@ -63,17 +60,31 @@ public class Automation implements Runnable {
         }
     }
 
-    /**
-     * Executes automatic emulation.
-     * <p/>
-     * It assumes that the virtual computer is loaded.
-     * <p/>
-     * All output is saved into output file.
-     */
+    public boolean isSuccessful() { return successful; }
+
+    public void setProgressListener(BiConsumer<String, Boolean> listener) {
+        progressListener = Objects.requireNonNull(listener);
+    }
+
+    /** Executes automatic emulation on an already loaded virtual computer. */
     @Override
     public void run() {
-        progress.show();
+        logComputer();
 
+        try {
+            computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
+            computer.getCPU().ifPresent(cpu -> {
+                prepareCpu();
+                autoEmulate();
+            });
+        } catch (Exception failure) {
+            successful = false;
+            LOGGER.error("Error during automation", failure);
+            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
+        }
+    }
+
+    private void logComputer() {
         LOGGER.info("Starting emulation automation...");
         LOGGER.info("Emulating computer: {}", computer.getComputerConfig().getName());
 
@@ -85,31 +96,21 @@ public class Automation implements Runnable {
         computer.getDevices().forEach(
                 device -> LOGGER.info("Device: {}, version {}", device.getTitle(), device.getVersion())
         );
+    }
 
-        try {
-            computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
-
-            computer.getCPU().ifPresent(cpu -> {
-                setProgress("Resetting CPU...", false);
-                if (programLocation != null) {
-                    setProgress("Program start location: " + String.format("%04Xh", programLocation), false);
-                }
-                if (inputFile == null || computer.getCompiler().isEmpty())
-                    computer.getExecution().orElseThrow().compile(() -> {}, programLocation).join();
-                autoEmulate(cpu);
-            });
-        } catch (Exception e) {
-            successful=false;
-            LOGGER.error("Error during automation", e);
-            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
-        } finally {
-            progress.dispose();
+    private void prepareCpu() {
+        setProgress("Resetting CPU...", false);
+        if (programLocation != null) {
+            setProgress("Program start location: " + String.format("%04Xh", programLocation), false);
+        }
+        if (inputFile == null || computer.getCompiler().isEmpty()) {
+            computer.getExecution().orElseThrow().compile(() -> {}, programLocation).join();
         }
     }
 
     private void setProgress(String msg, boolean stopEnabled) {
         LOGGER.info(msg);
-        progress.setAction(msg, stopEnabled);
+        if (progressListener != null) progressListener.accept(msg, stopEnabled);
     }
 
     private void autoCompile(Compiler compiler) throws AutomationException {
@@ -118,43 +119,15 @@ public class Automation implements Runnable {
         }
         setProgress("Compiling input file: " + inputFile, false);
         AtomicInteger errors = new AtomicInteger();
-        CompilerListener reporter = new CompilerListener() {
-            @Override
-            public void onStart() {
-                LOGGER.info("Compiler started working.");
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-
-                switch (message.getType()) {
-                    case ERROR:
-                        errors.incrementAndGet();
-                        LOGGER.error(message.getFormattedMessage());
-                        break;
-                    case WARNING:
-                        LOGGER.warn(message.getFormattedMessage());
-                        break;
-                    default:
-                        LOGGER.info(message.getFormattedMessage());
-                        break;
-                }
-            }
-
-            @Override
-            public void onFinish() {
-                LOGGER.info("Compilation finished.");
-            }
-        };
-
-        // Initialize compiler
+        CompilerListener reporter = compilationReporter(errors);
         compiler.addCompilerListener(reporter);
         Runnable compilation = () -> {
             compiler.compile(inputFile.toPath(), Optional.empty());
             if (errors.get() > 0) throw new IllegalStateException("Compilation failed");
         };
         try {
-            computer.getExecution().ifPresentOrElse(execution -> execution.compile(compilation, programLocation).join(), compilation);
+            computer.getExecution().ifPresentOrElse(
+                    execution -> execution.compile(compilation, programLocation).join(), compilation);
         } finally {
             compiler.removeCompilerListener(reporter);
         }
@@ -164,32 +137,75 @@ public class Automation implements Runnable {
         }
     }
 
-    private void autoEmulate(CPU cpu) {
-        setProgress("Running emulation...", true);
+    private CompilerListener compilationReporter(AtomicInteger errors) {
+        return new CompilerListener() {
+            @Override
+            public void onStart() {
+                LOGGER.info("Compiler started working.");
+            }
 
-        // Show all devices if GUI is supported
+            @Override
+            public void onMessage(CompilerMessage message) {
+                reportCompilerMessage(message, errors);
+            }
+
+            @Override
+            public void onFinish() {
+                LOGGER.info("Compilation finished.");
+            }
+        };
+    }
+
+    private void reportCompilerMessage(CompilerMessage message, AtomicInteger errors) {
+        switch (message.getType()) {
+            case ERROR:
+                errors.incrementAndGet();
+                LOGGER.error(message.getFormattedMessage());
+                break;
+            case WARNING:
+                LOGGER.warn(message.getFormattedMessage());
+                break;
+            default:
+                LOGGER.info(message.getFormattedMessage());
+                break;
+        }
+    }
+
+    private void autoEmulate() {
+        setProgress("Running emulation...", true);
+        showDevices();
+        EmulationController execution = computer.getExecution().orElseThrow();
+        execution.start().join();
+        reportResult(awaitCompletion(execution));
+        LOGGER.info("Instruction location = {}", String.format("0x%04X", execution.cpuContext().getInstructionLocation()));
+        setProgress("Emulation completed", false);
+    }
+
+    private void showDevices() {
         for (Device device : computer.getDevices()) {
             if (!appSettings.noGUI && device.isGuiSupported()) {
                 device.showGUI(null);
             }
         }
+    }
 
-        resultState = CPU.RunState.STATE_RUNNING;
-        EmulationController execution = computer.getExecution().orElseThrow();
-        execution.start().join();
+    private CPU.RunState awaitCompletion(EmulationController execution) {
         CompletableFuture<CPU.RunState> completion = execution.runCompletion();
         try {
-            resultState = waitForFinishMillis == DONT_WAIT ? completion.get()
+            return waitForFinishMillis == DONT_WAIT ? completion.get()
                     : completion.get(waitForFinishMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException expected) {
             // CLI observation duration is independent of cooperative lifecycle completion.
-            resultState = execution.getRunState();
+            return execution.getRunState();
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
+            return CPU.RunState.STATE_RUNNING;
         } catch (ExecutionException failure) {
             throw new IllegalStateException("CPU execution failed", failure.getCause());
         }
+    }
 
+    private void reportResult(CPU.RunState resultState) {
         switch (resultState) {
             case STATE_STOPPED_ADDR_FALLOUT:
                 successful = false;
@@ -212,8 +228,5 @@ public class Automation implements Runnable {
                 LOGGER.error("Invalid state ({})", resultState);
                 break;
         }
-        LOGGER.info("Instruction location = {}", String.format("0x%04X", execution.cpuContext().getInstructionLocation()));
-
-        setProgress("Emulation completed", false);
     }
 }

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class DebugTableModelTest {
     private final List<DebuggerSession> sessions = new ArrayList<>();
 
-    @After public void closeSessions() { sessions.forEach(DebuggerSession::close); }
+    @After public void closeSessions() { sessions.forEach(session -> { session.close(); }); }
 
     private DebuggerSession session(int size, int pc) throws Exception {
         CPU cpu = TestCpu.mockCpu(withSettings().extraInterfaces(Debugging.class));
@@ -30,7 +30,7 @@ public class DebugTableModelTest {
         when(TestCpu.context(cpu).getInstructionLocation()).thenReturn(pc);
         when(((Debugging) cpu).observe(any(), any(Debugging.Capture.class))).thenReturn(() -> {});
         when(cpu.getDecoder()).thenReturn(address -> DecodedInstruction.of(address, 1, "NOP", "00"));
-        DebuggerSession session = new DebuggerSession(cpu, TestCpu.context(cpu), null, null);
+        DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
         sessions.add(session);
         return session;
     }
@@ -99,7 +99,7 @@ public class DebugTableModelTest {
         assertEquals(104, model.getLocationAt(3));
         assertTrue(model.isRowAtCurrentInstruction(3));
         assertEquals(105, model.getLocationAt(4));
-        session.runMutation(() -> {});
+        session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
         model.memoryChanged(1, 1);
         assertEquals(0, model.getLocationAt(0));
         assertEquals(3, model.getLocationAt(1));
@@ -300,7 +300,7 @@ public class DebugTableModelTest {
         }
         assertEquals(initial, calls.get());
         length.set(3);
-        session.runMutation(() -> {});
+        session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
         assertEquals(3, model.getLocationAt(2));
         assertEquals("LIVE 3", model.getValueAt(1, 2));
         assertTrue(calls.get() > initial);

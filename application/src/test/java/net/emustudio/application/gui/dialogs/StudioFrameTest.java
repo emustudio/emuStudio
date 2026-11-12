@@ -125,12 +125,13 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(net.emustudio.application.TestCpu.context(sessionCpu).getInstructionLocation()).thenReturn(12);
         when(memoryContext.getSize()).thenReturn(256);
         DebuggerSession session = new DebuggerSession(sessionCpu, net.emustudio.application.TestCpu.context(sessionCpu), memoryContext, null, annotations);
+        net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session);
 
         when(computerConfig.getName()).thenReturn("Demo computer");
         when(computer.getComputerConfig()).thenReturn(computerConfig);
         when(computer.getCompiler()).thenReturn(Optional.empty());
         when(computer.getCPU()).thenReturn(Optional.of(sessionCpu));
-        when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
+        when(computer.getExecution()).thenReturn(Optional.of(machineExecution));
         when(computer.getMemory()).thenReturn(Optional.empty());
         when(computer.getDevices()).thenReturn(List.of());
         when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -159,18 +160,20 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Source code editor", onEdt(() -> tabs.getTitleAt(0)));
         assertEquals("emuStudio [Demo computer] — linked.asm", onEdt(frame::getTitle));
         assertEquals(onEdt(() -> textEditor.getLineStartOffset(1)), onEdt(textEditor::getCaretPosition));
+        machineExecution.close();
         session.close();
     }
 
     private StudioFrame createFrame(Path fileName) {
-        return createFrame(fileName, null);
+        return createFrame(fileName, null, null);
     }
 
     @Test
     public void enteringEmulatorSelectsDebuggerTab() throws Exception {
         CPU cpu = mockCpu();
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
-            StudioFrame frame = createFrame(null, session);
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
+            StudioFrame frame = createFrame(null, session, machineExecution);
             showFrame(frame);
             JTabbedPane workspace = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
             JTabbedPane views = findComponent(frame.getContentPane(), JTabbedPane.class,
@@ -189,7 +192,8 @@ public class StudioFrameTest extends AbstractSwingTest {
         }
     }
 
-    private StudioFrame createFrame(Path fileName, DebuggerSession session) {
+    private StudioFrame createFrame(Path fileName, DebuggerSession session,
+                                    net.emustudio.application.emulation.EmulationController machineExecution) {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
 
@@ -202,7 +206,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getDebugger()).thenReturn(Optional.ofNullable(session));
         if (session != null) {
             when(computer.getCPU()).thenReturn(Optional.of(session.cpu));
-            when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
+            when(computer.getExecution()).thenReturn(Optional.of(machineExecution));
         }
 
         return onEdt(() -> new StudioFrame(

@@ -12,16 +12,210 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** Versioned execution recordings. Buffered writes apply backpressure; readers retain only one page. */
-public final class InstructionRecording {
+/**
+ * Retained execution events and their versioned file format. File readers retain only one page.
+ */
+public final class InstructionRecording implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(InstructionRecording.class);
     private static final int MAGIC = 0x454D5554, VERSION = 4;
     private static final int EVENT = 1, END = 0;
     private static final int MAX_TEXT = 65536, MAX_ROWS = 4096, MAX_ITEMS = 256;
     private static final int MAX_EVENT_BYTES = 8 * 1024 * 1024;
     private static final int MAX_PAGE_BYTES = 32 * 1024 * 1024;
 
-    private InstructionRecording() {}
+    // Retention is session-confined; file recording has an independent lifetime.
+    private final Deque<Event> events = new ArrayDeque<>();
+    private final boolean supported;
+    private final Supplier<String> processor;
+    private final IntSupplier addressSpaceSize;
+    private long captured, nextSequence;
+    private int limit;
+    private boolean paused;
+    private Mode mode = Mode.LAST;
+    private int from, through;
+    private Writer writer;
+    private Path path;
+    private String error = "";
+
+    public enum Mode { FIRST, LAST, ADDRESS_RANGE, UNLIMITED }
+
+    InstructionRecording(boolean supported, Supplier<String> processor, IntSupplier addressSpaceSize) {
+        this.supported = supported;
+        this.processor = processor;
+        this.addressSpaceSize = addressSpaceSize;
+    }
+
+    public synchronized boolean isRecording() {
+        return limit > 0;
+    }
+
+    public synchronized boolean isPaused() {
+        return paused;
+    }
+
+    synchronized void setPaused(boolean paused) {
+        if (!isRecording()) throw new IllegalStateException("Start recording first");
+        this.paused = paused;
+    }
+
+    public synchronized int limit() {
+        return limit;
+    }
+
+    public synchronized Mode mode() {
+        return mode;
+    }
+
+    public synchronized int from() {
+        return from;
+    }
+
+    public synchronized int through() {
+        return through;
+    }
+
+    public synchronized List<Event> events() {
+        return List.copyOf(events);
+    }
+
+    synchronized void record(int limit) {
+        if (limit > 0) requireSupported();
+        if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
+        this.limit = limit;
+        paused = false;
+        if (limit > 0) error = "";
+        mode = Mode.LAST;
+        trim();
+    }
+
+    synchronized void start(int limit, Mode mode, int from, int through) {
+        Objects.requireNonNull(mode);
+        boolean bounded = mode == Mode.FIRST || mode == Mode.LAST;
+        if (bounded && (limit <= 0 || limit > 1_000_000))
+            throw new IllegalArgumentException("Recording limit must be 1..1000000");
+        if (mode == Mode.ADDRESS_RANGE && (from < 0 || through < from || through >= addressSpaceSize.getAsInt()))
+            throw new IllegalArgumentException("Recording range must be within CPU addresses, with From ≤ To");
+        record(bounded ? limit : 1);
+        this.limit = bounded ? limit : Integer.MAX_VALUE;
+        this.mode = mode;
+        this.from = from;
+        this.through = through;
+        events.clear();
+        captured = 0;
+    }
+
+    synchronized boolean requiresFullCapture() {
+        return (limit > 0 && !paused) || writer != null;
+    }
+
+    public synchronized Path path() { return path; }
+    public synchronized String error() { return error; }
+
+    synchronized void recordTo(Path path) throws IOException {
+        if (writer != null) throw new IllegalStateException("Stop the current file recording first");
+        try {
+            writer = new Writer(path, header());
+        } catch (IOException failure) {
+            failFile("Could not start recording: " + failure.getMessage());
+            throw failure;
+        }
+        this.path = path.toAbsolutePath().normalize();
+        error = "";
+    }
+
+    synchronized void stopFile() throws IOException {
+        Writer current = writer;
+        writer = null;
+        path = null;
+        try {
+            if (current != null) current.close();
+        } catch (IOException failure) {
+            error = "Incomplete recording: " + failure.getMessage();
+            throw failure;
+        }
+    }
+
+    public void saveHistory(Path path, boolean text) throws IOException {
+        Header header = header();
+        List<Event> captured = events();
+        if (text) exportText(path, header, captured);
+        else write(path, header, captured);
+    }
+
+    synchronized void capture(boolean completed, Optional<StepView> view) {
+        long sequence = ++nextSequence;
+        if (view.isEmpty()) return;
+        Event event = new Event(sequence, completed, view.get());
+        try {
+            retain(event);
+        } catch (IOException failure) {
+            fail("History capture failed: " + failure.getMessage());
+            return;
+        }
+        if (writer != null) {
+            try {
+                writer.append(event);
+            } catch (IOException failure) {
+                failFile("Incomplete recording: " + failure.getMessage());
+            }
+        }
+    }
+
+    synchronized void fail(String message) {
+        limit = 0;
+        paused = false;
+        failFile(message);
+    }
+
+    @Override public synchronized void close() throws IOException {
+        limit = 0;
+        paused = false;
+        stopFile();
+    }
+
+    private Header header() {
+        requireSupported();
+        return new Header(processor.get());
+    }
+
+    private void requireSupported() {
+        if (!supported) throw new IllegalStateException("Instruction recording unsupported by this CPU");
+    }
+
+    private void failFile(String message) {
+        error = message;
+        Writer current = writer;
+        writer = null;
+        path = null;
+        if (current != null) {
+            try {
+                current.abort();
+            } catch (IOException failure) {
+                LOGGER.warn("Could not close failed recording", failure);
+            }
+        }
+        LOGGER.warn(message);
+    }
+
+    private void retain(Event event) throws IOException {
+        if (!isRecording() || paused) return;
+        int address = event.view.programLocation.orElse(-1);
+        if (mode == Mode.ADDRESS_RANGE && (address < from || address > through)) return;
+        if (mode == Mode.FIRST && captured >= limit) return;
+        sizeOf(event); // Reject steps the recording format cannot encode.
+        captured++;
+        events.addLast(event);
+        trim();
+    }
+
+    private void trim() {
+        while (limit > 0 && events.size() > limit) events.removeFirst();
+    }
 
     public static final class Event {
         public final long sequence;
@@ -65,7 +259,11 @@ public final class InstructionRecording {
                 writeText(out, header.processor);
                 out.flush();
             } catch (IOException | RuntimeException e) {
-                try { out.close(); } catch (IOException closing) { e.addSuppressed(closing); }
+                try {
+                    out.close();
+                } catch (IOException closing) {
+                    e.addSuppressed(closing);
+                }
                 throw e;
             }
         }
@@ -101,7 +299,9 @@ public final class InstructionRecording {
             }
         }
 
-        /** Preserve the readable prefix without claiming a failed capture is complete. */
+        /**
+         * Preserve the readable prefix without claiming a failed capture is complete.
+         */
         public synchronized void abort() throws IOException {
             failed = true;
             close();
@@ -109,13 +309,14 @@ public final class InstructionRecording {
     }
 
     public static final class Reader implements AutoCloseable {
+        private static final String UNVERIFIED = "Recording completeness unverified until its end is read";
         private final RandomAccessFile in;
         private final Path path;
         private final long modified, length, firstEvent;
         private final Header header;
         private long count, lastSequence;
         private boolean complete, finished;
-        private String status = "Recording completeness unverified until its end is read";
+        private String status = UNVERIFIED;
 
         public Reader(Path path) throws IOException {
             this.path = path.toAbsolutePath().normalize();
@@ -128,7 +329,11 @@ public final class InstructionRecording {
                 header = new Header(readText(in));
                 firstEvent = in.getFilePointer();
             } catch (IOException | IllegalArgumentException e) {
-                try { in.close(); } catch (IOException closing) { e.addSuppressed(closing); }
+                try {
+                    in.close();
+                } catch (IOException closing) {
+                    e.addSuppressed(closing);
+                }
                 throw new IOException("Invalid or incomplete recording header", e);
             }
         }
@@ -136,6 +341,7 @@ public final class InstructionRecording {
         public static final class Cursor {
             private final Path path;
             private final long position, count, sequence, modified, length;
+
             private Cursor(Reader reader) throws IOException {
                 path = reader.path;
                 position = reader.in.getFilePointer();
@@ -146,23 +352,35 @@ public final class InstructionRecording {
             }
         }
 
-        public Cursor cursor() throws IOException { return new Cursor(this); }
+        public Cursor cursor() throws IOException {
+            return new Cursor(this);
+        }
 
         public void seek(Cursor cursor) throws IOException {
-            if (!path.equals(cursor.path) || length != cursor.length || modified != cursor.modified
-                    || cursor.position < firstEvent || cursor.position > length)
+            if (!path.equals(cursor.path) || length != cursor.length || modified != cursor.modified || cursor.position < firstEvent || cursor.position > length)
                 throw new IOException("Recording changed; reopen it from the first page");
             in.seek(cursor.position);
             count = cursor.count;
             lastSequence = cursor.sequence;
             finished = complete = false;
-            status = "Recording completeness unverified until its end is read";
+            status = UNVERIFIED;
         }
 
-        public Header header() { return header; }
-        public boolean complete() { return complete; }
-        public boolean finished() { return finished; }
-        public String status() { return status; }
+        public Header header() {
+            return header;
+        }
+
+        public boolean complete() {
+            return complete;
+        }
+
+        public boolean finished() {
+            return finished;
+        }
+
+        public String status() {
+            return status;
+        }
 
         public List<Event> nextPage(int limit) throws IOException {
             return nextPage(limit, event -> true);
@@ -174,34 +392,19 @@ public final class InstructionRecording {
             List<Event> page = new ArrayList<>();
             int pageBytes = 0;
             while (!finished) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Recording scan interrupted");
+                if (Thread.currentThread().isInterrupted())
+                    throw new InterruptedIOException("Recording scan interrupted");
                 try {
                     long position = in.getFilePointer();
                     int marker = in.readUnsignedByte();
                     if (marker == END) {
-                        if (in.readLong() != count || in.readLong() != lastSequence || in.read() != -1)
-                            throw new IOException("Recording footer does not match its events");
-                        complete = true;
-                        finished = true;
-                        status = "Complete recording: " + count + " instructions";
+                        readFooter();
                     } else if (marker == EVENT) {
                         long previousSequence = lastSequence;
-                        long sequence = in.readLong();
-                        int size = readCount(in, MAX_EVENT_BYTES, "event bytes");
-                        byte[] encoded = new byte[size];
-                        in.readFully(encoded);
-                        Event event;
-                        try (DataInputStream data = new DataInputStream(new ByteArrayInputStream(encoded))) {
-                            event = readEvent(data, sequence);
-                            event.encodedSize = size;
-                            if (data.read() != -1) throw new IOException("Unexpected event data");
-                        } catch (IllegalArgumentException failure) {
-                            throw new IOException("Invalid recorded presentation", failure);
-                        }
-                        if (sequence <= lastSequence)
-                            throw new IOException("Invalid recording sequence");
+                        Event event = readNextEvent();
+                        int size = event.encodedSize;
                         count++;
-                        lastSequence = sequence;
+                        lastSequence = event.sequence;
                         if (matches.test(event)) {
                             if (page.size() == limit || (!page.isEmpty() && pageBytes + size > MAX_PAGE_BYTES)) {
                                 // Skipped events belong to this page; the next match belongs to the next page.
@@ -226,7 +429,28 @@ public final class InstructionRecording {
             return List.copyOf(page);
         }
 
-        @Override public void close() throws IOException { in.close(); }
+        private Event readNextEvent() throws IOException {
+            long sequence = in.readLong();
+            int size = readCount(in, MAX_EVENT_BYTES, "event bytes");
+            byte[] encoded = new byte[size];
+            in.readFully(encoded);
+            Event event = decode(encoded, sequence);
+            if (sequence <= lastSequence) throw new IOException("Invalid recording sequence");
+            return event;
+        }
+
+        private void readFooter() throws IOException {
+            if (in.readLong() != count || in.readLong() != lastSequence || in.read() != -1)
+                throw new IOException("Recording footer does not match its events");
+            complete = true;
+            finished = true;
+            status = "Complete recording: " + count + " instructions";
+        }
+
+        @Override
+        public void close() throws IOException {
+            in.close();
+        }
     }
 
     public static void write(Path path, Header header, List<Event> events) throws IOException {
@@ -242,12 +466,15 @@ public final class InstructionRecording {
         }
     }
 
-    /** Export an entire saved recording using bounded pages, including its completeness status. */
+    /**
+     * Export an entire saved recording using bounded pages, including its completeness status.
+     */
     public static void exportText(Path destination, Path source) throws IOException {
         try (Reader reader = new Reader(source); BufferedWriter out = newTextFile(destination)) {
             writeTextHeader(out, reader.header());
             while (!reader.finished()) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Recording export cancelled");
+                if (Thread.currentThread().isInterrupted())
+                    throw new InterruptedIOException("Recording export cancelled");
                 writeTextEvents(out, reader.nextPage(1024));
             }
             out.write(reader.status());
@@ -256,8 +483,7 @@ public final class InstructionRecording {
     }
 
     private static BufferedWriter newTextFile(Path path) throws IOException {
-        return Files.newBufferedWriter(path, StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        return Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
     }
 
     private static void writeTextHeader(BufferedWriter out, Header header) throws IOException {
@@ -267,10 +493,7 @@ public final class InstructionRecording {
 
     private static void writeTextEvents(BufferedWriter out, List<Event> events) throws IOException {
         for (Event event : events) {
-            out.write("#" + event.sequence + " | "
-                    + (event.view.programLocation.isPresent()
-                    ? String.format(Locale.ROOT, "PC=%04X | ", event.view.programLocation.getAsInt()) : "")
-                    + event.view.summary + " | " + (event.completed ? "completed" : "failed"));
+            out.write("#" + event.sequence + " | " + (event.view.programLocation.isPresent() ? String.format(Locale.ROOT, "PC=%04X | ", event.view.programLocation.getAsInt()) : "") + event.view.summary + " | " + (event.completed ? "completed" : "failed"));
             out.newLine();
             String group = "";
             for (ViewRow row : event.view.rows) {
@@ -279,9 +502,7 @@ public final class InstructionRecording {
                     out.write("  " + group);
                     out.newLine();
                 }
-                out.write("    " + row.label + ": " + row.before
-                        + (row.before.equals(row.after) ? "" : " → " + row.after)
-                        + (row.changed ? " [changed]" : ""));
+                out.write("    " + row.label + ": " + row.before + (row.before.equals(row.after) ? "" : " → " + row.after) + (row.changed ? " [changed]" : ""));
                 out.newLine();
                 for (String tag : row.tags) {
                     out.write("      tag: " + tag);
@@ -295,18 +516,21 @@ public final class InstructionRecording {
         }
     }
 
-    /** Encoded presentation size; also validates the individual-record byte limit. */
+    /**
+     * Encoded presentation size; also validates the individual-record byte limit.
+     */
     public static int sizeOf(Event event) throws IOException {
         int size = event.encodedSize;
         return size >= 0 ? size : encode(event).length;
     }
 
-    /** Resolve a recorded link using only retained passive presentation, without loading a plugin. */
+    /**
+     * Resolve a recorded link using only retained passive presentation, without loading a plugin.
+     */
     public static OptionalLong resolveEvent(List<Event> history, long ownerOrdinal, NavLink link) {
         for (int i = history.size() - 1; i >= 0; i--) {
             Event event = history.get(i);
-            if (event.sequence < ownerOrdinal
-                    && event.view.rows.stream().anyMatch(row -> row.tags.contains(link.tag)))
+            if (event.sequence < ownerOrdinal && event.view.rows.stream().anyMatch(row -> row.tags.contains(link.tag)))
                 return OptionalLong.of(event.sequence);
         }
         return OptionalLong.empty();
@@ -316,68 +540,90 @@ public final class InstructionRecording {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         OutputStream bounded = new FilterOutputStream(bytes) {
             private int size;
-            @Override public void write(int value) throws IOException {
+
+            @Override
+            public void write(int value) throws IOException {
                 if (++size > MAX_EVENT_BYTES) throw new IOException("Recording event exceeds byte limit");
                 out.write(value);
             }
-            @Override public void write(byte[] values, int offset, int length) throws IOException {
+
+            @Override
+            public void write(byte[] values, int offset, int length) throws IOException {
                 if (length > MAX_EVENT_BYTES - size) throw new IOException("Recording event exceeds byte limit");
                 size += length;
                 out.write(values, offset, length);
             }
         };
         try (DataOutputStream data = new DataOutputStream(bounded)) {
-            data.writeBoolean(event.completed);
-            writeText(data, event.view.summary);
-            writeText(data, event.view.foldKey);
-            if (event.view.programLocation == null
-                    || (event.view.programLocation.isPresent() && event.view.programLocation.getAsInt() < 0))
-                throw new IOException("Invalid program location");
-            data.writeInt(event.view.programLocation.orElse(-1));
-            writeCount(data, event.view.rows.size(), MAX_ROWS, "presentation rows");
-            for (ViewRow row : event.view.rows) {
-                writeText(data, row.group);
-                writeText(data, row.label);
-                writeText(data, row.before);
-                writeText(data, row.after);
-                data.writeBoolean(row.changed);
-                writeCount(data, row.tags.size(), MAX_ITEMS, "search tags");
-                for (String tag : row.tags) writeText(data, tag);
-                writeCount(data, row.links.size(), MAX_ITEMS, "navigation links");
-                for (NavLink link : row.links) {
-                    writeText(data, link.label);
-                    writeText(data, link.tag);
-                }
-            }
+            writeEvent(data, event);
         }
         byte[] encoded = bytes.toByteArray();
         event.encodedSize = encoded.length;
         return encoded;
     }
 
+    private static void writeEvent(DataOutput out, Event event) throws IOException {
+        out.writeBoolean(event.completed);
+        writeText(out, event.view.summary);
+        writeText(out, event.view.foldKey);
+        if (event.view.programLocation == null || (event.view.programLocation.isPresent() && event.view.programLocation.getAsInt() < 0))
+            throw new IOException("Invalid program location");
+        out.writeInt(event.view.programLocation.orElse(-1));
+        writeCount(out, event.view.rows.size(), MAX_ROWS, "presentation rows");
+        for (ViewRow row : event.view.rows) writeRow(out, row);
+    }
+
+    private static void writeRow(DataOutput out, ViewRow row) throws IOException {
+        writeText(out, row.group);
+        writeText(out, row.label);
+        writeText(out, row.before);
+        writeText(out, row.after);
+        out.writeBoolean(row.changed);
+        writeCount(out, row.tags.size(), MAX_ITEMS, "search tags");
+        for (String tag : row.tags) writeText(out, tag);
+        writeCount(out, row.links.size(), MAX_ITEMS, "navigation links");
+        for (NavLink link : row.links) {
+            writeText(out, link.label);
+            writeText(out, link.tag);
+        }
+    }
+
+    private static Event decode(byte[] encoded, long sequence) throws IOException {
+        try (DataInputStream data = new DataInputStream(new ByteArrayInputStream(encoded))) {
+            Event event = readEvent(data, sequence);
+            event.encodedSize = encoded.length;
+            if (data.read() != -1) throw new IOException("Unexpected event data");
+            return event;
+        } catch (IllegalArgumentException failure) {
+            throw new IOException("Invalid recorded presentation", failure);
+        }
+    }
+
     private static Event readEvent(DataInputStream in, long sequence) throws IOException {
         boolean completed = in.readBoolean();
-        String summary = readText(in), foldKey = readText(in);
+        String summary = readText(in);
+        String foldKey = readText(in);
         int location = in.readInt();
         if (location < -1) throw new IOException("Invalid program location");
         int size = readCount(in, MAX_ROWS, "presentation rows");
         List<ViewRow> rows = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            String group = readText(in), label = readText(in),
-                    before = readText(in), after = readText(in);
-            boolean changed = in.readBoolean();
-            int tagsCount = readCount(in, MAX_ITEMS, "search tags");
-            List<String> tags = new ArrayList<>();
-            for (int j = 0; j < tagsCount; j++) tags.add(readText(in));
-            int linksCount = readCount(in, MAX_ITEMS, "navigation links");
-            List<NavLink> links = new ArrayList<>();
-            for (int j = 0; j < linksCount; j++) {
-                links.add(new NavLink(readText(in), readText(in)));
-            }
-            rows.add(new ViewRow(group, label, before, after, changed, tags, links));
-        }
-        return new Event(sequence, completed,
-                new StepView(summary, foldKey, location < 0 ? OptionalInt.empty() : OptionalInt.of(location), rows));
+        for (int i = 0; i < size; i++) rows.add(readRow(in));
+        return new Event(sequence, completed, new StepView(summary, foldKey, location < 0 ? OptionalInt.empty() : OptionalInt.of(location), rows));
+    }
+
+    private static ViewRow readRow(DataInput in) throws IOException {
+        String group = readText(in);
+        String label = readText(in);
+        String before = readText(in);
+        String after = readText(in);
+        boolean changed = in.readBoolean();
+        int tagsCount = readCount(in, MAX_ITEMS, "search tags");
+        List<String> tags = new ArrayList<>();
+        for (int i = 0; i < tagsCount; i++) tags.add(readText(in));
+        int linksCount = readCount(in, MAX_ITEMS, "navigation links");
+        List<NavLink> links = new ArrayList<>();
+        for (int i = 0; i < linksCount; i++) links.add(new NavLink(readText(in), readText(in)));
+        return new ViewRow(group, label, before, after, changed, tags, links);
     }
 
     private static void writeText(DataOutput out, String text) throws IOException {

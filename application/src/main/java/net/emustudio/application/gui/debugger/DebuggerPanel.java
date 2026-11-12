@@ -3,6 +3,7 @@ SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.emulation.debugger.FlowAnalysis;
 import net.emustudio.application.emulation.debugger.InstructionRecording;
 import net.emustudio.application.emulation.debugger.SourceAddressMap;
@@ -29,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -37,7 +39,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.ICON_SNAPSHOT;
 
 /**
  * Unified debugger workspace over CPU-visible addresses; browsing never changes PC.
@@ -57,6 +58,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebuggerSession session;
+    private final EmulationController execution;
     private final EmuStudioGui gui;
     private final Consumer<SourceCodePosition> sourceNavigator;
     private final Runnable breakpointsChanged;
@@ -93,19 +95,21 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public DebuggerPanel(
             DebuggerSession session,
+            EmulationController execution,
             DebugTableImpl table,
             JComponent instructionView,
             Consumer<SourceCodePosition> sourceNavigator,
             Runnable breakpointsChanged,
             EmuStudioGui gui) {
         this.session = Objects.requireNonNull(session);
+        this.execution = Objects.requireNonNull(execution);
         this.gui = Objects.requireNonNull(gui);
         this.table = Objects.requireNonNull(table);
         this.instructionView = Objects.requireNonNull(instructionView);
         this.sourceNavigator = sourceNavigator;
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         instructionModel = table.instructionModel();
-        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
+        lastInstructionAddress = execution.cpuContext().getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         instructionModel.setDebuggerSession(session);
         graph = new FlowGraphPanel(session, annotationSelection,
@@ -119,7 +123,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         recordingPanel = new RecordingPanel(gui, session);
         annotationEditor = new AnnotationEditor(gui, this, session);
         instructionModel.setPresentation(this::sourceLabelsAt, () -> !disposed && !running,
-                () -> !disposed && !running && !session.execution().isBusy());
+                () -> !disposed && !running && !execution.isBusy());
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setInstructionRowPresentation(row -> {
             if (disposed || running) return false;
@@ -134,12 +138,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
         tabs.addTab("Inspection", flowPanel());
-        tabs.addTab("Recording", EmuStudioGui.loadIcon(ICON_SNAPSHOT, DebuggerPanel.class), recordingPanel);
+        tabs.addTab("Recording", recordingPanel);
         add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(event -> activateView());
         activateView();
-        session.execution().cpuContext().addCPUListener(stateListener);
-        session.addExecutionListener(executionListener);
+        execution.cpuContext().addCPUListener(stateListener);
+        execution.addExecutionListener(executionListener);
         session.annotationEngine.addListener(annotationListener);
         if (session.memory != null) session.memory.addMemoryListener(memoryListener);
         setMinimumSize(new Dimension(300, 160));
@@ -248,8 +252,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!disposed) changed();
     }
 
-    void addRecording(List<InstructionRecording.Event> captured, String scope) {
-        recordingPanel.addRecording(captured, scope);
+    void addRecording(List<InstructionRecording.Event> captured) {
+        recordingPanel.addRecording(captured);
     }
 
     @Override
@@ -258,8 +262,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         disposed = true;
         recordingPanel.close();
         if (search != null) search.close();
-        session.execution().cpuContext().removeCPUListener(stateListener);
-        session.removeExecutionListener(executionListener);
+        execution.cpuContext().removeCPUListener(stateListener);
+        execution.removeExecutionListener(executionListener);
         session.annotationEngine.removeListener(annotationListener);
         if (session.memory != null) session.memory.removeMemoryListener(memoryListener);
     }
@@ -283,9 +287,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             if (search != null) search.refresh();
             repaintLabels();
         }
-        if (session.execution().isStepping()) return;
-        CPU.RunState state = session.execution().getRunState();
-        int pc = session.execution().cpuContext().getInstructionLocation();
+        if (execution.isStepping()) return;
+        CPU.RunState state = execution.getRunState();
+        int pc = execution.cpuContext().getInstructionLocation();
         pcMoved |= state != appliedState || pc != appliedPc;
         appliedState = state;
         appliedPc = pc;
@@ -293,7 +297,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             running = !running;
             updateActions();
         }
-        if (running || session.execution().isBusy() || !isPaused()) return;
+        if (running || execution.isBusy() || !isPaused()) return;
         if (!inspectBreakpointHit() && pcMoved) followPc(pc);
         pcMoved = false;
         recordingPanel.updateControls();
@@ -323,12 +327,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private boolean inspectBreakpointHit() {
-        DebuggerSession.BreakpointHit hit = session.takeBreakpointHit();
-        if (hit == null) return false;
+        OptionalInt hit = session.takeBreakpointHit();
+        if (hit.isEmpty()) return false;
         instructionModel.currentPage();
-        lastInstructionAddress = session.execution().cpuContext().getInstructionLocation();
+        lastInstructionAddress = execution.cpuContext().getInstructionLocation();
         showInstructions();
-        guard(() -> navigate(hit.address));
+        guard(() -> navigate(hit.getAsInt()));
         return true;
     }
 
@@ -343,7 +347,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     /** Runs a user action that needs a paused CPU; failures are reported. */
     private void guard(Operation operation) {
-        if (disposed || session.execution().isBusy()) return;
+        if (disposed || execution.isBusy()) return;
         try {
             session.requirePaused();
             operation.run();
@@ -517,7 +521,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         followPc.addActionListener(event -> {
             updateActions();
             if (followPc.isSelected()) guard(() -> {
-                int pc = session.execution().cpuContext().getInstructionLocation();
+                int pc = execution.cpuContext().getInstructionLocation();
                 analyzeFlow(pc, true, pc);
             });
         });

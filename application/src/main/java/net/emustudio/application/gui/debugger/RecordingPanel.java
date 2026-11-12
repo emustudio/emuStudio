@@ -9,17 +9,20 @@ import net.emustudio.application.gui.dialogs.RecordingDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.plugin.debugger.NavLink;
 import net.emustudio.emulib.plugin.debugger.ViewRow;
-import net.emustudio.emulib.plugin.cpu.CPU;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
 import static net.emustudio.emulib.ui.StandardIcons.*;
@@ -29,6 +32,7 @@ import static net.emustudio.emulib.ui.StandardIcons.*;
  */
 final class RecordingPanel extends JPanel {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordingPanel.class);
+    private static final Pattern MEMORY_ACCESS = Pattern.compile("(?i)(read|write)\\s+@(?:0x)?([0-9a-f]+)");
 
     private final EmuStudioGui gui;
     private final DebuggerSession session;
@@ -37,36 +41,31 @@ final class RecordingPanel extends JPanel {
     private final HistoryModel model = new HistoryModel();
     private final JTable history = new JTable(model);
     private final JComboBox<Link> navigation = new JComboBox<>();
-    private final JCheckBox fold = new JCheckBox("Fold identical repeats", true);
-    private final JComboBox<String> origin = new JComboBox<>(new String[]{"Current recording"});
-    // Completed captures are kept until the panel is disposed.
-    private final List<List<InstructionRecording.Event>> recordings = new ArrayList<>();
+    private final JToggleButton fold;
+    private final JComboBox<Recording> origin = new JComboBox<>();
+    private Recording activeRecording;
     private int recordingsCreated;
     private boolean updatingOrigin, disposed;
-    private final JPanel body = new JPanel(new CardLayout());
-    private final JLabel emptyTitle, emptyHint;
-    private final JButton emptyRecord;
-    private final JCheckBox showUnchangedValues = new JCheckBox("Show unchanged values");
-    private final JTextArea state;
-    private final JToggleButton recordingControl;
+    private final JToggleButton showUnchangedValues;
+    private final JTextPane state = new JTextPane();
+    private final JButton start, stop, rename, delete, earlierWrite;
+    private final JToggleButton pause;
 
     RecordingPanel(EmuStudioGui gui, DebuggerSession session) {
         super(new BorderLayout(0, 0));
         this.gui = Objects.requireNonNull(gui);
         this.session = Objects.requireNonNull(session);
-        emptyTitle = gui.labelBold("");
-        emptyHint = gui.label("");
-        state = gui.textAreaReadOnly(50, 10);
         history.getAccessibleContext().setAccessibleName("Recorded instructions");
         history.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         history.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         gui.styleTable(history);
-        history.setFont(EmuStudioGui.monospaced(history));
-        int[] widths = {170, 120, 250, 300};
+        history.setFont(EmuStudioGui.monospaced(history).deriveFont(13f));
+        int[] widths = {200, 200, 200, 200};
         for (int column = 0; column < widths.length; column++)
             history.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
-        JPanel tools = gui.panel("insets 4, fillx, hidemode 3", "[grow,fill]", "");
-        JPanel capture = gui.panel("insets 0, fillx, hidemode 3", "[][grow,fill][]", "");
+        JPanel tools = gui.toolbarPanel();
+        JToolBar capture = gui.toolBar();
+        capture.setLayout(new net.miginfocom.swing.MigLayout("insets 0, gapx 2, fillx", "[][][][][][grow,fill][][]", ""));
         origin.getAccessibleContext().setAccessibleName("Recording");
         origin.addActionListener(event -> {
             if (!disposed && !updatingOrigin) {
@@ -74,22 +73,35 @@ final class RecordingPanel extends JPanel {
                 refresh();
             }
         });
-        capture.add(gui.label("Recording", origin));
-        capture.add(origin);
-        recordingControl = gui.toolbarToggleButton(event -> {}, ICON_RECORD, "Record instructions");
-        recordingControl.setName("recordInstructions");
-        recordingControl.addActionListener(event -> {
-            run(this::toggleRecording);
-            updateControls();
-        });
-        capture.add(recordingControl);
-        tools.add(capture, "growx, wrap");
-        tools.add(fold, "alignx right, wrap");
+        start = gui.toolbarButton(event -> run(this::startRecording), ICON_RECORD, "Start recording");
+        start.setName("recordInstructions");
+        pause = gui.toolbarToggleButton(event -> run(() -> {
+            session.update(() -> session.setRecordingPaused(!session.recording.isPaused())).join();
+            refresh();
+        }), ICON_PAUSE, "Pause recording");
+        stop = gui.toolbarButton(event -> run(this::stopRecording), ICON_STOP, "Stop recording");
+        fold = gui.toolbarToggleButton(event -> {}, "/net/emustudio/application/gui/icons/emulation/fold.png", "Fold identical repeats");
+        fold.setSelected(true);
+        rename = gui.toolbarButton(event -> renameRecording(), ICON_RENAME, "Rename recording");
+        delete = gui.toolbarButton(event -> deleteRecording(), ICON_DELETE, "Delete recording");
+        capture.add(start);
+        capture.add(pause);
+        capture.add(stop);
+        capture.add(new JSeparator(SwingConstants.VERTICAL), "h 22!");
+        capture.add(fold);
+        capture.add(origin, "growx, wmin 80");
+        capture.add(rename);
+        capture.add(delete);
+        tools.add(capture, "growx");
         fold.addActionListener(event -> {
             if (!disposed) refresh();
         });
-        showUnchangedValues.addActionListener(event -> showState(history.getSelectedRow()));
-        state.setFont(EmuStudioGui.monospaced(state));
+        showUnchangedValues = gui.toolbarToggleButton(event -> showState(history.getSelectedRow()),
+                "/net/emustudio/application/gui/icons/emulation/show.png", "Show unchanged values");
+        state.setEditable(false);
+        state.setFont(EmuStudioGui.monospaced(state).deriveFont(13f));
+        state.setBackground(getBackground());
+        state.setBorder(BorderFactory.createEmptyBorder(8, 10, 10, 10));
         state.getAccessibleContext().setAccessibleName("Recorded instruction state");
         history.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) showState(history.getSelectedRow());
@@ -97,29 +109,27 @@ final class RecordingPanel extends JPanel {
         add(gui.toolbarScrollPane(tools), BorderLayout.NORTH);
         JPanel detail = gui.section("Recorded state", "", "", "");
         detail.setLayout(new BorderLayout(4, 4));
-        JPanel detailTools = gui.panel("insets 4, fillx", "[grow,fill][]", "");
-        detailTools.add(showUnchangedValues, "cell 1 0");
-        detail.add(detailTools, BorderLayout.NORTH);
-        detail.add(gui.scrollPane(state));
-        JButton followLink = gui.toolbarTextButton(event -> run(this::followLink), ICON_FIND, "Follow link");
-        followLink.setToolTipText("Follow the selected recorded navigation link");
-        JPanel memoryActions = gui.panel("insets 4, fillx", "[][grow,fill][]", "");
-        memoryActions.add(gui.label("Navigation", navigation));
-        memoryActions.add(navigation);
-        memoryActions.add(followLink);
-        detail.add(memoryActions, BorderLayout.SOUTH);
-        JSplitPane split = gui.splitPane(JSplitPane.VERTICAL_SPLIT, gui.scrollPane(history), detail, .6);
+        JPanel detailTools = gui.toolbarPanel();
+        earlierWrite = gui.toolbarButton(event -> run(this::followLink), ICON_STEP, "Find earlier write");
+        navigation.addActionListener(event -> updateNavigation());
+        JToolBar memoryActions = gui.toolbarRow(detailTools, showUnchangedValues);
+        memoryActions.add(new JSeparator(SwingConstants.VERTICAL), "h 22!");
+        memoryActions.add(gui.label("Memory:", navigation));
+        navigation.getAccessibleContext().setAccessibleName("Memory navigation");
+        memoryActions.add(navigation, "w 280, wmin 80");
+        memoryActions.add(earlierWrite);
+        detail.add(gui.toolbarScrollPane(detailTools), BorderLayout.NORTH);
+        JScrollPane stateScroll = gui.scrollPane(state);
+        stateScroll.getViewport().setBackground(getBackground());
+        detail.add(stateScroll);
+        JPanel recording = gui.section("Recording", "insets 8, fill", "[grow,fill]", "[grow,fill]");
+        JScrollPane historyScroll = new JScrollPane(history);
+        recording.add(historyScroll, "grow");
+        JSplitPane split = gui.splitPane(JSplitPane.VERTICAL_SPLIT, recording, detail, .6);
         split.setOneTouchExpandable(false);
-        body.add(split, "results");
-        JPanel empty = gui.panel("insets 24, fillx, aligny center, hidemode 3", "[grow,center]", "");
-        emptyTitle.getAccessibleContext().setAccessibleName("History empty state");
-        empty.add(emptyTitle, "wrap");
-        empty.add(emptyHint, "wrap");
-        emptyRecord = gui.toolbarTextButton(event -> run(this::toggleRecording), ICON_RECORD, "Record instructions");
-        empty.add(emptyRecord, "wrap");
-        body.add(empty, "empty");
-        add(body);
-        updateControls();
+        split.setDividerLocation(.6);
+        add(split);
+        refresh();
     }
 
     void close() {
@@ -132,63 +142,91 @@ final class RecordingPanel extends JPanel {
         try { operation.run(); } catch (Exception failure) { logFailure(LOGGER, failure); }
     }
 
-    private void toggleRecording() {
-        if (session.isRecording()) {
-            String scope = recordingScope();
-            try {
-                session.update(() -> session.record(0)).join();
-                List<InstructionRecording.Event> captured = session.history();
-                if (!captured.isEmpty()) addRecording(captured, scope);
-            } finally {
-                refresh();
-            }
-        } else {
-            RecordingDialog dialog = new RecordingDialog(
-                    (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this), gui, session,
-                    () -> {
-                        origin.setSelectedIndex(0);
-                        refresh();
-                    });
-            dialog.setVisible(true);
-        }
-        updateControls();
+    private void startRecording() {
+        RecordingDialog dialog = new RecordingDialog(
+                (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this), gui, session, previous -> {
+                    if (activeRecording != null) activeRecording.events = previous;
+                    activeRecording = null;
+                    refresh();
+                });
+        dialog.setVisible(true);
     }
 
-    private String recordingScope() {
-        DebuggerSession.RecordingMode mode = session.recordingMode();
-        if (mode == DebuggerSession.RecordingMode.ADDRESS_RANGE)
-            return String.format("From 0x%04X to 0x%04X", session.recordingFrom(), session.recordingThrough());
-        if (mode == DebuggerSession.RecordingMode.UNLIMITED) return "";
-        return (mode == DebuggerSession.RecordingMode.FIRST ? "First " : "Last ")
-                + session.recordingLimit() + " instructions";
+    private void stopRecording() {
+        retainActiveRecording();
+        session.update(() -> session.record(0)).join();
+        if (activeRecording != null) activeRecording.events = session.recording.events();
+        activeRecording = null;
+        refresh();
     }
 
-    void addRecording(List<InstructionRecording.Event> captured, String scope) {
-        if (captured.isEmpty()) return;
+    void addRecording(List<InstructionRecording.Event> captured) {
+        addRecording(new Recording(++recordingsCreated, List.copyOf(captured)));
+        refresh();
+    }
+
+    private void addRecording(Recording recording) {
         updatingOrigin = true;
         try {
-            recordings.add(List.copyOf(captured));
-            origin.addItem("Recording " + (++recordingsCreated) + (scope.isEmpty() ? "" : " · " + scope));
-            origin.setSelectedIndex(recordings.size());
+            origin.addItem(recording);
+            origin.setSelectedItem(recording);
+            history.clearSelection();
         } finally {
             updatingOrigin = false;
         }
+    }
+
+    private void retainActiveRecording() {
+        if (session.recording.isRecording() && activeRecording == null) {
+            activeRecording = new Recording(++recordingsCreated, List.of());
+            addRecording(activeRecording);
+        }
+        if (activeRecording != null) activeRecording.events = session.recording.events();
+    }
+
+    private void renameRecording() {
+        Recording selected = (Recording) origin.getSelectedItem();
+        if (selected == null || disposed) return;
+        String name = (String) JOptionPane.showInputDialog(this, "Recording name:", "Rename recording",
+                JOptionPane.PLAIN_MESSAGE, null, null, selected.name);
+        if (name != null && !name.isBlank()) {
+            selected.name = name.strip();
+            origin.repaint();
+        }
+    }
+
+    private void deleteRecording() {
+        Recording selected = (Recording) origin.getSelectedItem();
+        if (selected == null || selected == activeRecording || disposed) return;
+        origin.removeItem(selected);
         refresh();
     }
 
     void updateControls() {
-        boolean recording = session.isRecording();
-        String action = recording ? "Stop recording" : "Record instructions";
-        recordingControl.setSelected(recording);
-        EmuStudioGui.toolbarIcon(recordingControl, recording ? ICON_STOP : ICON_RECORD);
-        recordingControl.setToolTipText(action);
-        recordingControl.getAccessibleContext().setAccessibleName(action);
+        boolean recording = session.recording.isRecording();
         boolean available = !disposed && session.debug != null;
-        recordingControl.setEnabled(available);
-        emptyRecord.setEnabled(available);
-        boolean paused = !disposed && session.execution().getRunState() != CPU.RunState.STATE_RUNNING;
-        origin.setEnabled(paused);
-        history.setEnabled(paused);
+        start.setEnabled(available);
+        pause.setEnabled(available && recording);
+        stop.setEnabled(available && recording);
+        boolean paused = recording && session.recording.isPaused();
+        pause.setSelected(paused);
+        EmuStudioGui.toolbarIcon(pause, paused ? ICON_RUN : ICON_PAUSE);
+        String action = paused ? "Continue recording" : "Pause recording";
+        pause.setToolTipText(action);
+        pause.getAccessibleContext().setAccessibleName(action);
+        origin.setEnabled(!disposed && origin.getItemCount() > 0);
+        history.setEnabled(!disposed);
+        fold.setEnabled(!disposed);
+        rename.setEnabled(!disposed && origin.getSelectedItem() != null);
+        delete.setEnabled(!disposed && origin.getSelectedItem() != null && origin.getSelectedItem() != activeRecording);
+        showUnchangedValues.setEnabled(!disposed);
+        navigation.setEnabled(!disposed && navigation.getItemCount() > 0);
+        updateNavigation();
+    }
+
+    private void updateNavigation() {
+        Link selected = (Link) navigation.getSelectedItem();
+        earlierWrite.setEnabled(!disposed && selected != null);
     }
 
     private void followLink() {
@@ -213,11 +251,13 @@ final class RecordingPanel extends JPanel {
 
     void refresh() {
         if (disposed) return;
+        retainActiveRecording();
         int selected = history.getSelectedRow();
         InstructionRecording.Event selectedEvent = selected >= 0 && selected < steps.size()
                 ? steps.get(selected).first() : null;
-        int source = origin.getSelectedIndex();
-        displayed = source <= 0 ? session.history() : recordings.get(source - 1);
+        Recording source = (Recording) origin.getSelectedItem();
+        displayed = source == null ? List.of() : source.events;
+        if (!session.recording.isRecording()) activeRecording = null;
         steps.clear();
         for (int i = 0; i < displayed.size(); i++) {
             int last = i;
@@ -228,19 +268,7 @@ final class RecordingPanel extends JPanel {
         }
         model.fireTableDataChanged();
         if (selectedEvent != null) selectRow(step -> step.events().contains(selectedEvent), false);
-        if (displayed.isEmpty()) {
-            navigation.removeAllItems();
-            emptyTitle.setText(session.debug == null ? "Recording unavailable for this CPU"
-                    : session.isRecording() ? "Ready to capture instructions" : "No instructions recorded");
-            emptyHint.setText(session.isRecording()
-                    ? "Step or run your program, then pause to inspect its instructions."
-                    : "Start recording, then step or run your program.");
-            emptyRecord.setVisible(session.debug != null && !session.isRecording());
-            setState("");
-        } else if (history.getSelectedRow() < 0) {
-            setState("Select a step to inspect its captured details.");
-        }
-        ((CardLayout) body.getLayout()).show(body, displayed.isEmpty() ? "empty" : "results");
+        if (history.getSelectedRow() < 0) showState(-1);
         updateControls();
     }
 
@@ -256,6 +284,19 @@ final class RecordingPanel extends JPanel {
 
     private static boolean navigational(ViewRow row) {
         return !row.tags.isEmpty() || !row.links.isEmpty();
+    }
+
+    private static final class Recording {
+        final int number;
+        String name = "Unnamed";
+        List<InstructionRecording.Event> events;
+
+        Recording(int number, List<InstructionRecording.Event> events) {
+            this.number = number;
+            this.events = events;
+        }
+
+        @Override public String toString() { return number + " | " + name; }
     }
 
     /** Run of displayed events shown as one history row; identical repeats fold into one step. */
@@ -332,7 +373,7 @@ final class RecordingPanel extends JPanel {
     }
 
     private final class HistoryModel extends AbstractTableModel {
-        private final String[] columns = {"Sequence", "Location", "Step", "Changes"};
+        private final String[] columns = {"Sequence", "Address", "Step", "Changes"};
 
         @Override
         public int getRowCount() {
@@ -372,7 +413,11 @@ final class RecordingPanel extends JPanel {
     private void showState(int selected) {
         navigation.removeAllItems();
         navigation.setEnabled(false);
-        if (selected < 0 || selected >= steps.size()) return;
+        earlierWrite.setEnabled(false);
+        if (selected < 0 || selected >= steps.size()) {
+            setState("");
+            return;
+        }
         Step step = steps.get(selected);
         boolean folded = step.folded();
         StringBuilder text = new StringBuilder("Sequence " + step.sequences() + " · " + step.location() + " · "
@@ -380,10 +425,11 @@ final class RecordingPanel extends JPanel {
         if (folded) text.append(step.size())
                 .append(" matching steps; unfold to inspect each event.\n");
         String section = null;
+        List<int[]> headings = new ArrayList<>();
         for (ViewRow row : step.rows()) {
             if (folded && navigational(row)) continue;
             if (!row.changed && !navigational(row) && !showUnchangedValues.isSelected()) continue;
-            section = appendSection(text, section, row.group);
+            section = appendSection(text, section, row.group, headings);
             text.append(row.label).append("    ").append(row.before);
             if (row.changed || !row.before.equals(row.after)) text.append(" → ").append(row.after);
             if (folded && row.changed && row.before.equals(row.after)) text.append(" (changed within run)");
@@ -393,7 +439,7 @@ final class RecordingPanel extends JPanel {
         for (InstructionRecording.Event instruction : step.events()) {
             for (ViewRow row : instruction.view.rows) {
                 if (folded && navigational(row)) {
-                    section = appendSection(text, section, row.group);
+                    section = appendSection(text, section, row.group, headings);
                     text.append("#").append(instruction.sequence).append(" · ")
                             .append(row.label).append(" = ");
                     if (!row.before.isEmpty() && !row.before.equals(row.after)) text.append(row.before).append(" → ");
@@ -401,15 +447,31 @@ final class RecordingPanel extends JPanel {
                 }
                 for (NavLink link : row.links)
                     navigation.addItem(new Link(instruction.sequence, link, (folded ? "#" + instruction.sequence + " · " : "")
-                            + row.label + " · " + link.label));
+                            + navigationLabel(row.label)));
             }
         }
         navigation.setEnabled(navigation.getItemCount() > 0);
         setState(text.toString());
+        SimpleAttributeSet bold = new SimpleAttributeSet();
+        StyleConstants.setBold(bold, true);
+        for (int[] heading : headings)
+            state.getStyledDocument().setCharacterAttributes(heading[0], heading[1], bold, false);
+        updateNavigation();
     }
 
-    private static String appendSection(StringBuilder text, String current, String section) {
-        if (!section.equals(current)) text.append("\n").append(section).append("\n");
+    private static String navigationLabel(String label) {
+        Matcher access = MEMORY_ACCESS.matcher(label);
+        if (!access.matches()) return label;
+        return access.group(1).substring(0, 1).toUpperCase(Locale.ROOT)
+                + access.group(1).substring(1).toLowerCase(Locale.ROOT) + " 0x" + access.group(2);
+    }
+
+    private static String appendSection(StringBuilder text, String current, String section, List<int[]> headings) {
+        if (!section.equals(current)) {
+            text.append("\n");
+            headings.add(new int[]{text.length(), section.length()});
+            text.append(section).append("\n");
+        }
         return section;
     }
 }
