@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 
 /**
  * This class manages the emuStudio automation process. In the process
@@ -38,18 +39,16 @@ public class Automation implements Runnable {
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final Integer programLocation;
-    private final EmulationProgress progress;
+    private BiConsumer<String, Boolean> progressListener;
     private boolean successful = true;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation,
-                      EmulationProgress progress) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
         this.programLocation = programLocation;
-        this.progress = Objects.requireNonNull(progress);
 
         if (inputFile != null) {
             this.inputFile = inputFile.toFile();
@@ -63,10 +62,13 @@ public class Automation implements Runnable {
 
     public boolean isSuccessful() { return successful; }
 
+    public void setProgressListener(BiConsumer<String, Boolean> listener) {
+        progressListener = Objects.requireNonNull(listener);
+    }
+
     /** Executes automatic emulation on an already loaded virtual computer. */
     @Override
     public void run() {
-        progress.show();
         logComputer();
 
         try {
@@ -79,8 +81,6 @@ public class Automation implements Runnable {
             successful = false;
             LOGGER.error("Error during automation", failure);
             dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
-        } finally {
-            progress.dispose();
         }
     }
 
@@ -110,7 +110,7 @@ public class Automation implements Runnable {
 
     private void setProgress(String msg, boolean stopEnabled) {
         LOGGER.info(msg);
-        progress.setAction(msg, stopEnabled);
+        if (progressListener != null) progressListener.accept(msg, stopEnabled);
     }
 
     private void autoCompile(Compiler compiler) throws AutomationException {

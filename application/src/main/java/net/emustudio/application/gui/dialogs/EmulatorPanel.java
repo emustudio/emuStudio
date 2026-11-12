@@ -287,7 +287,7 @@ public class EmulatorPanel extends JPanel {
             execution.cpuContext().addCPUListener(executionListener);
             if (session != null) {
                 hostExecutionListener = state -> runOnEdt(this::refreshExecutionState);
-                session.addExecutionListener(hostExecutionListener);
+                session.execution().addExecutionListener(hostExecutionListener);
             }
             runState = execution.getRunState();
         }
@@ -341,7 +341,7 @@ public class EmulatorPanel extends JPanel {
         if (closed) return;
         closed = true;
         if (inspection != null) inspection.close();
-        if (hostExecutionListener != null) session.removeExecutionListener(hostExecutionListener);
+        if (hostExecutionListener != null) session.execution().removeExecutionListener(hostExecutionListener);
         if (executionListener != null) execution.cpuContext().removeCPUListener(executionListener);
         if (memoryContext != null) memoryContext.removeMemoryListener(memoryListener);
     }

@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.InstructionRecording;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
 
@@ -20,7 +21,7 @@ public final class RecordingDialog extends DialogBase {
     private final DebuggerSession session;
     private final Runnable started;
     private final JComboBox<String> mode = new JComboBox<>(new String[] {
-            "Keep first N instructions", "Keep last N instructions", "Custom Range", "Unlimited"});
+            "Keep first N", "Keep last N", "Custom Range", "Unlimited"});
     private JButton start;
     private final JTextField count = new JTextField("1024", 10);
     private final JTextField from = new JTextField("0x0", 10);
@@ -73,7 +74,7 @@ public final class RecordingDialog extends DialogBase {
 
     private void start() {
         try {
-            DebuggerSession.RecordingMode selected = DebuggerSession.RecordingMode.values()[mode.getSelectedIndex()];
+            InstructionRecording.Mode selected = InstructionRecording.Mode.values()[mode.getSelectedIndex()];
             int limit = count.isEnabled() ? Integer.parseInt(count.getText().strip()) : 0;
             int first = from.isEnabled() ? address(from) : 0;
             int last = to.isEnabled() ? address(to) : 0;

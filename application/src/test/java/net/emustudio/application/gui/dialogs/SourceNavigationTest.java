@@ -43,6 +43,26 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
+    public void clearingSessionMappingsAlsoClearsNavigationAndCompiledLabels() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            assertTrue(f.session.sourceMappings().isPresent());
+            assertEquals("first", onEdt(() -> f.table.getValueAt(0, 0)));
+
+            runOnEdt(() -> {
+                f.session.clearSourceMappings();
+                f.table.clearSelection();
+            });
+            f.sourceLine(2);
+
+            assertTrue(f.session.sourceMappings().isEmpty());
+            assertTrue(f.session.sourceAt(2).isEmpty());
+            assertEquals(-1, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals("", onEdt(() -> f.table.getValueAt(0, 0)));
+        }
+    }
+
+    @Test(timeout = 10000)
     public void compilerLabelsAppearInFirstColumnAndDisappearWhenSourceChanges() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -417,7 +437,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 if (opcode >= 0 && opcode < end) tokens.add(new SourceToken(Token.RESERVED, opcode, "nop", null, null, null));
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
-            session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null, annotations);
+            session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, memory, null, annotations);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler));
             assertTrue(onEdt(() -> editor.openFile(path)));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
@@ -505,6 +525,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
 
         @Override public void close() {
             runOnEdt(() -> { navigation.close(); debugger.close(); });
+            session.execution().close();
             session.close();
         }
 

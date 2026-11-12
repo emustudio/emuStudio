@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class DebugTableModelTest {
     private final List<DebuggerSession> sessions = new ArrayList<>();
 
-    @After public void closeSessions() { sessions.forEach(DebuggerSession::close); }
+    @After public void closeSessions() { sessions.forEach(session -> { session.execution().close(); session.close(); }); }
 
     private DebuggerSession session(int size, int pc) throws Exception {
         CPU cpu = TestCpu.mockCpu(withSettings().extraInterfaces(Debugging.class));
@@ -30,7 +30,7 @@ public class DebugTableModelTest {
         when(TestCpu.context(cpu).getInstructionLocation()).thenReturn(pc);
         when(((Debugging) cpu).observe(any(), any(Debugging.Capture.class))).thenReturn(() -> {});
         when(cpu.getDecoder()).thenReturn(address -> DecodedInstruction.of(address, 1, "NOP", "00"));
-        DebuggerSession session = new DebuggerSession(cpu, TestCpu.context(cpu), null, null);
+        DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, null);
         sessions.add(session);
         return session;
     }

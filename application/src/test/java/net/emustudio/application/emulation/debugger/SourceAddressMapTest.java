@@ -159,7 +159,8 @@ public class SourceAddressMapTest {
         String text = "NOP\nNOP\nHALT\n";
         Path source = source("stepping.asm", text);
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
-        try (DebuggerSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             replaceSources(session.annotationEngine, Map.of(0, Set.of(annotation(source, 1, 0)),
                     1, Set.of(annotation(source, 2, 0)), 2, Set.of(annotation(source, 3, 0))));
             SourceAddressMap map = SourceAddressMap.capture(compiler(), machine.memory,
@@ -532,14 +533,14 @@ public class SourceAddressMapTest {
     private static final List<DebuggerSession> SESSIONS = new ArrayList<>();
 
     @After public void closeSessions() {
-        for (DebuggerSession session : SESSIONS) session.close();
+        for (DebuggerSession session : SESSIONS) { session.execution().close(); session.close(); }
         SESSIONS.clear();
     }
 
     private static DebuggerSession session(int size, MemoryAnnotations annotations) throws IOException {
         CPU cpu = net.emustudio.application.TestCpu.mockCpu();
         when(cpu.getAddressSpaceSize()).thenReturn(size);
-        DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null, annotations);
+        DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, null, annotations);
         SESSIONS.add(session);
         return session;
     }

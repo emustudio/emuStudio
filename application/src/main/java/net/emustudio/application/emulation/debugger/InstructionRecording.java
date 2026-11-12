@@ -12,13 +12,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
-
-import static net.emustudio.application.emulation.debugger.DebuggerSession.RecordingMode;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retained execution events and their versioned file format. File readers retain only one page.
  */
-public final class InstructionRecording {
+public final class InstructionRecording implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(InstructionRecording.class);
     private static final int MAGIC = 0x454D5554, VERSION = 4;
     private static final int EVENT = 1, END = 0;
     private static final int MAX_TEXT = 65536, MAX_ROWS = 4096, MAX_ITEMS = 256;
@@ -27,46 +30,67 @@ public final class InstructionRecording {
 
     // Retention is session-confined; file recording has an independent lifetime.
     private final Deque<Event> events = new ArrayDeque<>();
-    private long captured;
+    private final boolean supported;
+    private final Supplier<String> processor;
+    private final IntSupplier addressSpaceSize;
+    private long captured, nextSequence;
     private int limit;
-    private RecordingMode mode = RecordingMode.LAST;
+    private Mode mode = Mode.LAST;
     private int from, through;
+    private Writer writer;
+    private Path path;
+    private String error = "";
 
-    InstructionRecording() {
+    public enum Mode { FIRST, LAST, ADDRESS_RANGE, UNLIMITED }
+
+    InstructionRecording(boolean supported, Supplier<String> processor, IntSupplier addressSpaceSize) {
+        this.supported = supported;
+        this.processor = processor;
+        this.addressSpaceSize = addressSpaceSize;
     }
 
-    boolean isRecording() {
+    public synchronized boolean isRecording() {
         return limit > 0;
     }
 
-    int limit() {
+    public synchronized int limit() {
         return limit;
     }
 
-    RecordingMode mode() {
+    public synchronized Mode mode() {
         return mode;
     }
 
-    int from() {
+    public synchronized int from() {
         return from;
     }
 
-    int through() {
+    public synchronized int through() {
         return through;
     }
 
-    List<Event> events() {
+    public synchronized List<Event> events() {
         return List.copyOf(events);
     }
 
-    void setLimit(int limit) {
+    synchronized void record(int limit) {
+        if (limit > 0) requireSupported();
+        if (limit < 0 || limit > 1_000_000) throw new IllegalArgumentException("History limit must be 0..1000000");
         this.limit = limit;
-        mode = RecordingMode.LAST;
+        if (limit > 0) error = "";
+        mode = Mode.LAST;
         trim();
     }
 
-    void start(int limit, RecordingMode mode, int from, int through) {
-        this.limit = limit;
+    synchronized void start(int limit, Mode mode, int from, int through) {
+        Objects.requireNonNull(mode);
+        boolean bounded = mode == Mode.FIRST || mode == Mode.LAST;
+        if (bounded && (limit <= 0 || limit > 1_000_000))
+            throw new IllegalArgumentException("Recording limit must be 1..1000000");
+        if (mode == Mode.ADDRESS_RANGE && (from < 0 || through < from || through >= addressSpaceSize.getAsInt()))
+            throw new IllegalArgumentException("Recording range must be within CPU addresses, with From ≤ To");
+        record(bounded ? limit : 1);
+        this.limit = bounded ? limit : Integer.MAX_VALUE;
         this.mode = mode;
         this.from = from;
         this.through = through;
@@ -74,15 +98,102 @@ public final class InstructionRecording {
         captured = 0;
     }
 
-    void stop() {
-        limit = 0;
+    synchronized boolean requiresFullCapture() {
+        return limit > 0 || writer != null;
     }
 
-    void retain(Event event) throws IOException {
+    public synchronized Path path() { return path; }
+    public synchronized String error() { return error; }
+
+    synchronized void recordTo(Path path) throws IOException {
+        if (writer != null) throw new IllegalStateException("Stop the current file recording first");
+        try {
+            writer = new Writer(path, header());
+        } catch (IOException failure) {
+            failFile("Could not start recording: " + failure.getMessage());
+            throw failure;
+        }
+        this.path = path.toAbsolutePath().normalize();
+        error = "";
+    }
+
+    synchronized void stopFile() throws IOException {
+        Writer current = writer;
+        writer = null;
+        path = null;
+        try {
+            if (current != null) current.close();
+        } catch (IOException failure) {
+            error = "Incomplete recording: " + failure.getMessage();
+            throw failure;
+        }
+    }
+
+    public void saveHistory(Path path, boolean text) throws IOException {
+        Header header = header();
+        List<Event> captured = events();
+        if (text) exportText(path, header, captured);
+        else write(path, header, captured);
+    }
+
+    synchronized void capture(boolean completed, Optional<StepView> view) {
+        long sequence = ++nextSequence;
+        if (view.isEmpty()) return;
+        Event event = new Event(sequence, completed, view.get());
+        try {
+            retain(event);
+        } catch (IOException failure) {
+            fail("History capture failed: " + failure.getMessage());
+            return;
+        }
+        if (writer != null) {
+            try {
+                writer.append(event);
+            } catch (IOException failure) {
+                failFile("Incomplete recording: " + failure.getMessage());
+            }
+        }
+    }
+
+    synchronized void fail(String message) {
+        limit = 0;
+        failFile(message);
+    }
+
+    @Override public synchronized void close() throws IOException {
+        limit = 0;
+        stopFile();
+    }
+
+    private Header header() {
+        requireSupported();
+        return new Header(processor.get());
+    }
+
+    private void requireSupported() {
+        if (!supported) throw new IllegalStateException("Instruction recording unsupported by this CPU");
+    }
+
+    private void failFile(String message) {
+        error = message;
+        Writer current = writer;
+        writer = null;
+        path = null;
+        if (current != null) {
+            try {
+                current.abort();
+            } catch (IOException failure) {
+                LOGGER.warn("Could not close failed recording", failure);
+            }
+        }
+        LOGGER.warn(message);
+    }
+
+    private void retain(Event event) throws IOException {
         if (!isRecording()) return;
         int address = event.view.programLocation.orElse(-1);
-        if (mode == RecordingMode.ADDRESS_RANGE && (address < from || address > through)) return;
-        if (mode == RecordingMode.FIRST && captured >= limit) return;
+        if (mode == Mode.ADDRESS_RANGE && (address < from || address > through)) return;
+        if (mode == Mode.FIRST && captured >= limit) return;
         sizeOf(event); // Reject steps the recording format cannot encode.
         captured++;
         events.addLast(event);

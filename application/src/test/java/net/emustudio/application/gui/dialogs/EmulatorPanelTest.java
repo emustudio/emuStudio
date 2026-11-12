@@ -48,7 +48,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
@@ -78,7 +79,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), mockExecution(),
@@ -107,7 +109,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             session.update(() -> {}).join();
             runOnEdt(() -> {});
 
-            assertTrue(session.isRecording());
+            assertTrue(session.recording.isRecording());
             runOnEdt(() -> {
                 JToolBar toolbar = (JToolBar) reset.getParent();
                 assertFalse(SwingUtilities.isDescendingFrom(recording, toolbar));
@@ -120,13 +122,13 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             });
 
             assertTrue(onEdt(recording::isEnabled));
-            assertTrue(session.isRecording());
+            assertTrue(session.recording.isRecording());
 
             triggerButton(recording);
             session.update(() -> {}).join();
             runOnEdt(() -> {});
 
-            assertFalse(session.isRecording());
+            assertFalse(session.recording.isRecording());
             runOnEdt(() -> {
                 assertFalse(recording.isSelected());
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
@@ -148,7 +150,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         DebugTableModel model = createDebugTableModel();
         when(model.getLocationAt(anyInt())).thenAnswer(c -> 2 + 2 * (Integer) c.getArgument(0));
         AtomicReference<SourceCodePosition> source = new AtomicReference<>();
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, model,
                     mock(Dialogs.class), mockExecution(), null, source::set, new EmuStudioGui()));
@@ -183,7 +186,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
 
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             session.setBreakpoint(42, true).join();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
@@ -216,7 +220,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             session.config.breakpoints.add(12);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -313,7 +318,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             fixture.publish(CPU.RunState.STATE_RUNNING);
             return completed;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), fixture.controller,
@@ -362,7 +368,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
             return CPU.RunState.STATE_STOPPED_BREAK;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), session.execution(),
@@ -372,7 +379,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 JButton run = findButtonByTooltip(panel, "Run emulation");
                 JToggleButton follow = findToggleButtonByTooltip(panel, "Show instructions from PC");
                 java.util.concurrent.atomic.AtomicInteger disabled = new java.util.concurrent.atomic.AtomicInteger();
-                session.addExecutionListener(state -> {
+                session.execution().addExecutionListener(state -> {
                     if (state == CPU.RunState.STATE_STOPPED_BREAK) completed.countDown();
                 });
                 runOnEdt(() -> {
@@ -415,7 +422,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
             return CPU.RunState.STATE_STOPPED_BREAK;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), session.execution(),
@@ -518,7 +526,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         CPU sessionCpu = mockCpu();
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
         when(memoryContext.getSize()).thenReturn(256);
-        DebuggerSession session = new DebuggerSession(sessionCpu, net.emustudio.application.TestCpu.context(sessionCpu), memoryContext, null, annotations);
+        DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(sessionCpu), sessionCpu, memoryContext, null, annotations);
         AtomicReference<SourceCodePosition> navigated = new AtomicReference<>();
 
         when(computer.getCPU()).thenReturn(Optional.empty());
@@ -541,6 +549,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
         assertEquals(position, navigated.get());
         runOnEdt(panel::close);
+        session.execution().close();
         session.close();
     }
 

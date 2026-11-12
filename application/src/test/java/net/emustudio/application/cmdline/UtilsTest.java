@@ -82,7 +82,8 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
+        try (DebuggerSession session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, memory, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = session.execution()) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
             java.util.concurrent.Callable<Void> start = () -> {

@@ -147,7 +147,7 @@ public final class DebuggerTestMachine {
     public DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
 
     public DebuggerSession session(Path settings, boolean withMemory) throws IOException {
-        session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
+        session = new DebuggerSession(net.emustudio.application.TestCpu.execution(cpu), cpu, withMemory ? memory : null, settings);
         return session;
     }
 

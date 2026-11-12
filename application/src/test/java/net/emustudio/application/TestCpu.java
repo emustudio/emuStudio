@@ -27,6 +27,10 @@ public final class TestCpu {
 
     public static CPUContext context(CPU cpu) { return Objects.requireNonNull(contexts.get(cpu)); }
 
+    public static net.emustudio.application.emulation.EmulationController execution(CPU cpu) {
+        return new net.emustudio.application.emulation.EmulationController(cpu, context(cpu), null, java.util.List.of());
+    }
+
     public static void publish(CPU cpu, CPU.RunState state) {
         ((Context) context(cpu)).publish(state, context(cpu).getInstructionLocation());
     }

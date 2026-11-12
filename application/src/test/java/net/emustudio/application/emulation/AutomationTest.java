@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.eq;
@@ -61,7 +62,7 @@ public class AutomationTest {
     public void constructorRejectsMissingInputFile() throws Exception {
         new Automation(
                 mockComputer(), Path.of("missing-" + System.nanoTime() + ".asm"),
-                NO_GUI_SETTINGS, dialogs, 10, null, EmulationProgress.NONE
+                NO_GUI_SETTINGS, dialogs, 10, null
         );
     }
 
@@ -69,7 +70,7 @@ public class AutomationTest {
     public void runReportsCompilationFailureAndSkipsCpuExecution() throws Exception {
         stubCompilation(CompilerMessage.Type.ERROR, "Broken source");
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 50, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 50, null).run();
 
         verify(cpu, never()).reset();
         verify(cpu, never()).execute();
@@ -85,7 +86,7 @@ public class AutomationTest {
 
         new Automation(
                 mockComputer(compiler, cpu, mock(Memory.class), Collections.singletonList(device)),
-                input, NO_GUI_SETTINGS, dialogs, 200, 0x20, EmulationProgress.NONE
+                input, NO_GUI_SETTINGS, dialogs, 200, 0x20
         ).run();
 
         verify(cpu).reset(0x20);
@@ -100,7 +101,7 @@ public class AutomationTest {
         stubCpuExecution(CPU.RunState.STATE_STOPPED_BREAK);
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0088);
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 200, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 200, null).run();
 
         verify(cpu).reset();
         verify(cpu, never()).reset(anyInt());
@@ -114,7 +115,7 @@ public class AutomationTest {
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
         Compiler unusedCompiler = mock(Compiler.class);
 
-        new Automation(mockComputer(unusedCompiler, cpu), null, NO_GUI_SETTINGS, dialogs, 20, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(unusedCompiler, cpu), null, NO_GUI_SETTINGS, dialogs, 20, null).run();
 
         verify(cpu).reset();
         verify(cpu).execute();
@@ -129,7 +130,7 @@ public class AutomationTest {
         when(cpu.execute()).thenAnswer(inv -> gate.run());
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0);
 
-        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE);
+        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null);
 
         Thread thread = new Thread(() -> {
             automation.run();
@@ -149,19 +150,20 @@ public class AutomationTest {
     }
 
     @Test
-    public void runUsesProgressDialogWhenPresent() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void runReportsProgressToListenerWhenAttached() throws Exception {
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0010);
-        EmulationProgress progress = mock(EmulationProgress.class);
+        BiConsumer<String, Boolean> progress = mock(BiConsumer.class);
 
-        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, 10, null, progress);
+        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, 10, null);
+        automation.setProgressListener(progress);
 
         automation.run();
 
-        verify(progress).show();
-        verify(progress).setAction("Resetting CPU...", false);
-        verify(progress).setAction("Running emulation...", true);
-        verify(progress).setAction("Emulation completed", false);
-        verify(progress).dispose();
+        verify(progress).accept("Resetting CPU...", false);
+        verify(progress).accept("Running emulation...", true);
+        verify(progress).accept("Emulation completed", false);
+        verifyNoMoreInteractions(progress);
     }
 
     @Test
@@ -170,7 +172,7 @@ public class AutomationTest {
         stubCpuExecutionImmediately(CPU.RunState.STATE_STOPPED_NORMAL);
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null).run();
 
         verify(cpu).execute();
         verify(dialogs, never()).showError(anyString(), anyString());

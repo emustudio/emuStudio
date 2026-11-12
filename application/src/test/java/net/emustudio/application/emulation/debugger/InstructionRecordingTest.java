@@ -17,12 +17,70 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
 public class InstructionRecordingTest {
     @Rule
     public final TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    public void fileCaptureContinuesAfterHistoryStopsAndKeepsObserverSequenceNumbers() throws Exception {
+        Path path = temporary.getRoot().toPath().resolve("independent-lifetimes.emutrace");
+        try (InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256)) {
+            recording.record(2);
+            recording.capture(true, Optional.empty());
+            recording.capture(true, Optional.of(instruction(1, 0x10).view));
+            recording.recordTo(path);
+            recording.capture(false, Optional.of(instruction(1, 0x20).view));
+            recording.record(0);
+            recording.capture(true, Optional.of(instruction(1, 0x30).view));
+            assertTrue(recording.requiresFullCapture());
+
+            recording.stopFile();
+
+            assertFalse(recording.requiresFullCapture());
+            assertNull(recording.path());
+            assertEquals(List.of(2L, 3L), recording.events().stream()
+                    .map(event -> event.sequence).collect(java.util.stream.Collectors.toList()));
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            List<InstructionRecording.Event> saved = reader.nextPage(10);
+            assertEquals(2, saved.size());
+            assertEquals(3, saved.get(0).sequence);
+            assertFalse(saved.get(0).completed);
+            assertEquals(4, saved.get(1).sequence);
+            assertEquals(0x30, saved.get(1).view.programLocation.getAsInt());
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void failedFileStartPreservesHistoryAndFreshCaptureClearsItsError() throws Exception {
+        Path existing = temporary.newFile("keep.emutrace").toPath();
+        Files.writeString(existing, "keep existing recording");
+        try (InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256)) {
+            recording.record(2);
+            recording.capture(true, Optional.of(instruction(1, 0x10).view));
+
+            assertThrows(IOException.class, () -> recording.recordTo(existing));
+
+            assertTrue(recording.isRecording());
+            assertNull(recording.path());
+            assertTrue(recording.error().startsWith("Could not start recording:"));
+            assertEquals("keep existing recording", Files.readString(existing));
+            recording.capture(true, Optional.of(instruction(1, 0x20).view));
+            assertEquals(2, recording.events().size());
+
+            recording.start(1, InstructionRecording.Mode.FIRST, 0, 0);
+            recording.capture(true, Optional.of(instruction(1, 0x30).view));
+
+            assertEquals("", recording.error());
+            assertEquals(1, recording.events().size());
+            assertEquals(3, recording.events().get(0).sequence);
+        }
+    }
 
     @Test
     public void savedStepRetainsSymbolicValuesGroupsChangesNavigationAndFailureState() throws Exception {

@@ -44,10 +44,6 @@ public final class SourceAddressMap {
         revision = annotations == null ? 0 : annotations.revision();
     }
 
-    public static SourceAddressMap empty() {
-        return new SourceAddressMap(null, null, null, SourceCodePosition.ColumnUnit.UNKNOWN);
-    }
-
     public DebuggerSession session() { return session; }
 
     /** Unsupported compiler positions are excluded from bindings, with their reason retained here. */

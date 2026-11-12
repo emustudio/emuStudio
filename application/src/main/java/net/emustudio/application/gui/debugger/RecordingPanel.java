@@ -133,11 +133,11 @@ final class RecordingPanel extends JPanel {
     }
 
     private void toggleRecording() {
-        if (session.isRecording()) {
+        if (session.recording.isRecording()) {
             String scope = recordingScope();
             try {
                 session.update(() -> session.record(0)).join();
-                List<InstructionRecording.Event> captured = session.history();
+                List<InstructionRecording.Event> captured = session.recording.events();
                 if (!captured.isEmpty()) addRecording(captured, scope);
             } finally {
                 refresh();
@@ -155,12 +155,12 @@ final class RecordingPanel extends JPanel {
     }
 
     private String recordingScope() {
-        DebuggerSession.RecordingMode mode = session.recordingMode();
-        if (mode == DebuggerSession.RecordingMode.ADDRESS_RANGE)
-            return String.format("From 0x%04X to 0x%04X", session.recordingFrom(), session.recordingThrough());
-        if (mode == DebuggerSession.RecordingMode.UNLIMITED) return "";
-        return (mode == DebuggerSession.RecordingMode.FIRST ? "First " : "Last ")
-                + session.recordingLimit() + " instructions";
+        InstructionRecording.Mode mode = session.recording.mode();
+        if (mode == InstructionRecording.Mode.ADDRESS_RANGE)
+            return String.format("From 0x%04X to 0x%04X", session.recording.from(), session.recording.through());
+        if (mode == InstructionRecording.Mode.UNLIMITED) return "";
+        return (mode == InstructionRecording.Mode.FIRST ? "First " : "Last ")
+                + session.recording.limit() + " instructions";
     }
 
     void addRecording(List<InstructionRecording.Event> captured, String scope) {
@@ -177,7 +177,7 @@ final class RecordingPanel extends JPanel {
     }
 
     void updateControls() {
-        boolean recording = session.isRecording();
+        boolean recording = session.recording.isRecording();
         String action = recording ? "Stop recording" : "Record instructions";
         recordingControl.setSelected(recording);
         EmuStudioGui.toolbarIcon(recordingControl, recording ? ICON_STOP : ICON_RECORD);
@@ -217,7 +217,7 @@ final class RecordingPanel extends JPanel {
         InstructionRecording.Event selectedEvent = selected >= 0 && selected < steps.size()
                 ? steps.get(selected).first() : null;
         int source = origin.getSelectedIndex();
-        displayed = source <= 0 ? session.history() : recordings.get(source - 1);
+        displayed = source <= 0 ? session.recording.events() : recordings.get(source - 1);
         steps.clear();
         for (int i = 0; i < displayed.size(); i++) {
             int last = i;
@@ -231,11 +231,11 @@ final class RecordingPanel extends JPanel {
         if (displayed.isEmpty()) {
             navigation.removeAllItems();
             emptyTitle.setText(session.debug == null ? "Recording unavailable for this CPU"
-                    : session.isRecording() ? "Ready to capture instructions" : "No instructions recorded");
-            emptyHint.setText(session.isRecording()
+                    : session.recording.isRecording() ? "Ready to capture instructions" : "No instructions recorded");
+            emptyHint.setText(session.recording.isRecording()
                     ? "Step or run your program, then pause to inspect its instructions."
                     : "Start recording, then step or run your program.");
-            emptyRecord.setVisible(session.debug != null && !session.isRecording());
+            emptyRecord.setVisible(session.debug != null && !session.recording.isRecording());
             setState("");
         } else if (history.getSelectedRow() < 0) {
             setState("Select a step to inspect its captured details.");
