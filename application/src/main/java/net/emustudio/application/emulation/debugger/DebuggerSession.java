@@ -10,6 +10,7 @@ import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ValueView;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
@@ -392,6 +393,25 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     public CompletableFuture<Void> refreshWatches() {
         return update(() -> {
         });
+    }
+
+    @Override
+    public synchronized boolean canBatchInstructions() {
+        return !closed && config.breakpoints.isEmpty() && !recording.requiresFullCapture();
+    }
+
+    @Override
+    public synchronized void afterBlock(ExecutedBlock block) {
+        Objects.requireNonNull(block);
+        inObservationCallback = true;
+        try {
+            // The block was authorized before its effects; changed settings apply at this boundary.
+            observedFlow.executed(block);
+            flow = null;
+            if (observationDirty) updateProbe();
+        } finally {
+            inObservationCallback = false;
+        }
     }
 
     @Override

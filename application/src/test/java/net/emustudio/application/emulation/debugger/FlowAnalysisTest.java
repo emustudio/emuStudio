@@ -4,6 +4,7 @@ package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 import org.junit.Test;
 
 import java.util.*;
@@ -15,6 +16,94 @@ import static org.junit.Assert.*;
 public class FlowAnalysisTest {
     private final FlowAnalysis.Observations observations = new FlowAnalysis.Observations();
     private final MemoryAnnotations annotations = new MemoryAnnotations();
+
+    @Test
+    public void compactBlockMatchesIndividualExecutionIncludingLoopsAndFinalAddress() {
+        DecodedInstruction first = DecodedInstruction.of(100, 1, "FIRST", "01");
+        DecodedInstruction loop = DecodedInstruction.of(101, 1, "LOOP", "02");
+        DecodedInstruction last = DecodedInstruction.of(200, 1, "LAST", "03");
+        observations.executed(first, OptionalInt.of(101));
+        observations.executed(loop, OptionalInt.of(100));
+        observations.executed(first, OptionalInt.of(101));
+        observations.executed(loop, OptionalInt.of(200));
+        observations.executed(last, OptionalInt.of(300));
+        FlowAnalysis expected = view(100);
+        FlowAnalysis.Observations compact = new FlowAnalysis.Observations();
+
+        compact.executed(new ExecutedBlock(List.of(last, first, loop), List.of(
+                new ExecutedBlock.Transition(100, 101), new ExecutedBlock.Transition(101, 100),
+                new ExecutedBlock.Transition(101, 200), new ExecutedBlock.Transition(200, 300)), 200, 300));
+
+        FlowAnalysis actual = compact.view(100, annotations);
+        assertEquals(addresses(expected), addresses(actual));
+        assertEquals(edges(expected), edges(actual));
+        assertEquals(expected.unknown(), actual.unknown());
+        assertEquals("FIRST", actual.mnemonic(100));
+        assertEquals("LOOP", actual.mnemonic(101));
+        assertEquals("LAST", actual.mnemonic(200));
+        assertEquals(200, compact.lastExecutedAddress());
+        assertEquals(1, compact.revision());
+    }
+
+    @Test
+    public void repeatedBlockAdvancesRevisionAndLastAddressWhilePreservingNewSingleStepEdges() {
+        DecodedInstruction first = DecodedInstruction.of(100, 1, "FIRST", "01");
+        DecodedInstruction last = DecodedInstruction.of(101, 1, "LAST", "02");
+        ExecutedBlock block = new ExecutedBlock(List.of(first, last), List.of(
+                new ExecutedBlock.Transition(100, 101), new ExecutedBlock.Transition(101, 200)), 101, 200);
+        observations.executed(block);
+        FlowAnalysis before = view(100);
+        observations.executed(DecodedInstruction.of(100, 1, "FIRST", "01"), OptionalInt.of(300));
+
+        observations.executed(block);
+
+        assertEquals(3, observations.revision());
+        assertEquals(101, observations.lastExecutedAddress());
+        assertEquals(Set.of("100:101", "100:300", "101:200"), edges(view(100)));
+        assertEquals(Set.of("100:101", "101:200"), edges(before));
+    }
+
+    @Test
+    public void repeatedBlockRestoresFactsAfterLengthMnemonicOrEncodingChanges() {
+        DecodedInstruction first = DecodedInstruction.of(100, 1, "NOP", "00");
+        DecodedInstruction last = DecodedInstruction.of(101, 1, "NOP", "00");
+        ExecutedBlock block = new ExecutedBlock(List.of(first, last), List.of(
+                new ExecutedBlock.Transition(100, 101), new ExecutedBlock.Transition(101, 102)), 101, 102);
+        List<DecodedInstruction> changes = List.of(
+                DecodedInstruction.of(100, 2, "NOP", "00"),
+                DecodedInstruction.of(100, 1, "CHANGED", "00"),
+                DecodedInstruction.of(100, 1, "NOP", "FF"));
+        observations.executed(block);
+
+        for (DecodedInstruction changed : changes) {
+            observations.executed(changed, OptionalInt.of(101));
+            assertEquals(List.of(List.of(100), List.of(101)), observations.instructionRuns());
+
+            observations.executed(block);
+
+            assertEquals(List.of(List.of(100, 101)), observations.instructionRuns());
+            assertEquals("NOP", view(100).mnemonic(100));
+            assertEquals(101, view(100).nextAddress(100));
+        }
+        assertEquals(7, observations.revision());
+    }
+
+    @Test
+    public void resetAllowsPreviouslyMergedBlockToRestoreAllObservations() {
+        ExecutedBlock block = new ExecutedBlock(List.of(DecodedInstruction.of(100, 1, "NOP", "00")),
+                List.of(new ExecutedBlock.Transition(100, 200)), 100, 200);
+        observations.executed(block);
+        observations.reset();
+        assertTrue(addresses(view(100)).isEmpty());
+        assertTrue(edges(view(100)).isEmpty());
+
+        observations.executed(block);
+
+        assertEquals(List.of(100), addresses(view(100)));
+        assertEquals(Set.of("100:200"), edges(view(100)));
+        assertEquals(100, observations.lastExecutedAddress());
+        assertEquals(3, observations.revision());
+    }
 
     @Test
     public void incidentEdgesIncludeIncomingOutgoingAndSelfLoopOnceInAddressOrder() {

@@ -10,6 +10,7 @@ import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.DebuggingSupport;
+import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
@@ -33,6 +34,84 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class DebuggerSessionTest {
+    @Test
+    public void compactBlocksRetainExistingHistoryAndInvalidateOnlyThePublishedView() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            observed(session, 0, 1, "BEFORE", OptionalInt.of(1));
+            FlowAnalysis before = session.analyzeFlow(0);
+            long revision = session.observedFlowRevision();
+            session.afterBlock(new ExecutedBlock(List.of(
+                    DecodedInstruction.of(2, 1, "LAST", "02"), DecodedInstruction.of(1, 1, "NEXT", "01")),
+                    List.of(new ExecutedBlock.Transition(1, 2), new ExecutedBlock.Transition(2, 3)), 2, 3));
+
+            assertNull(session.flowAnalysis());
+            assertNull(before.instructionAt(1));
+            assertEquals(revision + 1, session.observedFlowRevision());
+            assertEquals(2, session.lastExecutedAddress());
+            assertEquals(List.of(0, 1, 2), session.observedInstructionsBefore(3, 8));
+            FlowAnalysis after = session.analyzeFlow(0);
+            assertEquals("BEFORE", after.mnemonic(0));
+            assertEquals("NEXT", after.mnemonic(1));
+            assertEquals("LAST", after.mnemonic(2));
+            assertTrue(after.unknown().containsKey(3));
+            assertTrue(session.recording.events().isEmpty());
+        }
+    }
+
+    @Test
+    public void batchingRequiresNoBreakpointsAndNoDetailedOrFileCapture() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            assertTrue(session.canBatchInstructions());
+            session.setBreakpoint(3, true).join();
+            assertFalse(session.canBatchInstructions());
+            session.setBreakpoint(3, false).join();
+            assertTrue(session.canBatchInstructions());
+            session.record(2);
+            assertFalse(session.canBatchInstructions());
+            session.setRecordingPaused(true);
+            assertTrue(session.canBatchInstructions());
+            session.recordTo(temporary.newFolder().toPath().resolve("batch.emutrace"));
+            assertFalse(session.canBatchInstructions());
+            session.stopRecordingFile();
+            assertTrue(session.canBatchInstructions());
+            session.setRecordingPaused(false);
+            assertFalse(session.canBatchInstructions());
+            session.record(0);
+            assertTrue(session.canBatchInstructions());
+        }
+    }
+
+    @Test
+    public void alreadyAuthorizedBlockFinishesBeforePendingFullCaptureBegins() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            machine.state(CPU.RunState.STATE_RUNNING);
+            assertTrue(session.canBatchInstructions());
+            session.startNewRecording(2, InstructionRecording.Mode.LAST, 0, 0);
+            assertFalse(session.canBatchInstructions());
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+
+            session.afterBlock(new ExecutedBlock(List.of(DecodedInstruction.of(0, 1, "NOP", "00")),
+                    List.of(new ExecutedBlock.Transition(0, 1)), 0, 1));
+
+            assertEquals(List.of(0), session.observedInstructionsBefore(1, 8));
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+            assertTrue(session.recording.events().isEmpty());
+            StepView captured = addressInstruction(1, 1);
+            session.afterStep(true, Optional.of(DecodedInstruction.of(1, 1, "NOP", "00")),
+                    OptionalInt.of(2), Optional.of(captured));
+            assertEquals(List.of(0, 1), session.observedInstructionsBefore(2, 8));
+            assertEquals(List.of(captured), views(session));
+            assertEquals(1, session.recording.events().get(0).sequence);
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+        }
+    }
+
     @Test
     public void ordinaryRunAlwaysObservesInstructionsThroughExitOrFailure() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);

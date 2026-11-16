@@ -51,6 +51,13 @@ public final class MachineDebugging implements Debugging {
         return support.requiresAccesses();
     }
 
+    public boolean canBatchInstructions() { return support.canBatchInstructions(); }
+
+    public void endBlock(ExecutedBlock block) {
+        inStep = false;
+        support.endBlock(block);
+    }
+
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);

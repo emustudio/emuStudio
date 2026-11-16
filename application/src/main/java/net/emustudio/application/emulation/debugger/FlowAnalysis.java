@@ -4,6 +4,7 @@ package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
+import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -98,21 +99,51 @@ public final class FlowAnalysis {
 
     /** Session-confined accumulation; only an explicit successful CPU reset clears observations. */
     static final class Observations {
+        private static final int MAX_CACHED_BLOCKS = 4096;
         private final NavigableMap<Integer, DecodedInstruction> instructions = new TreeMap<>();
         private final Map<Integer, Set<Integer>> successors = new TreeMap<>();
         private final Map<Integer, Set<Integer>> predecessors = new TreeMap<>();
+        // Reuse immutable block facts until any executed instruction changes the current code facts.
+        private final Map<ExecutedBlock, Long> mergedBlocks = new IdentityHashMap<>();
         private int lastExecutedAddress = -1;
         private long revision;
+        private long instructionFactsGeneration;
 
         void executed(DecodedInstruction instruction, OptionalInt nextAddress) {
             revision++;
             lastExecutedAddress = instruction.address();
-            instructions.put(instruction.address(), instruction);
+            putInstruction(instruction);
             if (nextAddress.isPresent() && nextAddress.getAsInt() >= 0) {
-                int target = nextAddress.getAsInt();
-                successors.computeIfAbsent(instruction.address(), ignored -> new TreeSet<>()).add(target);
-                predecessors.computeIfAbsent(target, ignored -> new TreeSet<>()).add(instruction.address());
+                addEdge(instruction.address(), nextAddress.getAsInt());
             }
+        }
+
+        /** A compact block supplies executed facts, not an instruction ordering to infer edges from. */
+        void executed(ExecutedBlock block) {
+            revision++;
+            lastExecutedAddress = block.lastAddress();
+            Long mergedGeneration = mergedBlocks.get(block);
+            if (mergedGeneration != null && mergedGeneration == instructionFactsGeneration) return;
+
+            for (DecodedInstruction instruction : block.instructions()) putInstruction(instruction);
+            for (ExecutedBlock.Transition transition : block.transitions()) addEdge(transition.from(), transition.to());
+            if (mergedBlocks.size() >= MAX_CACHED_BLOCKS && !mergedBlocks.containsKey(block)) mergedBlocks.clear();
+            mergedBlocks.put(block, instructionFactsGeneration);
+        }
+
+        private void putInstruction(DecodedInstruction instruction) {
+            DecodedInstruction previous = instructions.get(instruction.address());
+            if (previous == null || previous.length() != instruction.length()
+                    || !previous.mnemonic().equals(instruction.mnemonic())
+                    || !previous.encoding().equals(instruction.encoding())) {
+                instructions.put(instruction.address(), instruction);
+                instructionFactsGeneration++;
+            }
+        }
+
+        private void addEdge(int from, int to) {
+            successors.computeIfAbsent(from, ignored -> new TreeSet<>()).add(to);
+            predecessors.computeIfAbsent(to, ignored -> new TreeSet<>()).add(from);
         }
 
         void reset() {
@@ -120,6 +151,8 @@ public final class FlowAnalysis {
             instructions.clear();
             successors.clear();
             predecessors.clear();
+            mergedBlocks.clear();
+            instructionFactsGeneration = 0;
             lastExecutedAddress = -1;
         }
 
