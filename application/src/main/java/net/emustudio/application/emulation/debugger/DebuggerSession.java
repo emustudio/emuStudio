@@ -190,6 +190,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return observedFlow.nextInstruction(address);
     }
 
+    /** Direct incoming and outgoing observations, ordered by source then target; leaves Inspection unchanged. */
+    public synchronized List<FlowAnalysis.Edge> observedEdges(int address) {
+        return observedFlow.edgesAt(address);
+    }
+
     /**
      * Called only after a successful explicit CPU reset; annotations are retained.
      */

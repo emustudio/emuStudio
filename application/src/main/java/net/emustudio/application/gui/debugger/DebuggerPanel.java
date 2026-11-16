@@ -112,6 +112,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         lastInstructionAddress = execution.cpuContext().getInstructionLocation();
         inspectedAddress = lastInstructionAddress;
         instructionModel.setDebuggerSession(session);
+        table.setFlowNavigation(address -> guard(() -> navigate(address)));
         graph = new FlowGraphPanel(session, annotationSelection,
                 () -> sourceMappingsCurrent ? compiledSymbols.get() : List.of(),
                 (address, navigate) -> guard(() -> {

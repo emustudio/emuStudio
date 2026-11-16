@@ -48,6 +48,44 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void flowArrowClicksFollowOutgoingAndIncomingAddressesWithoutMovingPc() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
+            observed(session, 0, OptionalInt.of(1));
+            observed(session, 1, OptionalInt.of(3));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                DebugTableImpl table = workspace.table;
+                table.setSize(table.getPreferredSize().width, 78);
+                table.doLayout();
+                workspace.panel.navigate(0);
+                clickFlowEndpoint(table, 1);
+                assertEquals(1, table.instructionModel().getLocationAt(table.getSelectedRow()));
+                clickFlowEndpoint(table, 0);
+                assertEquals(0, table.instructionModel().getLocationAt(table.getSelectedRow()));
+                assertTrue(workspace.panel.isInstructionView());
+                assertNull(workspace.session.flowAnalysis());
+                assertNull(workspace.sourcePosition.get());
+            });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    private static void clickFlowEndpoint(DebugTableImpl table, int address) {
+        for (int row = 0; row < table.getRowCount(); row++) {
+            if (table.instructionModel().getLocationAt(row) != address) continue;
+            int column = table.convertColumnIndexToView(table.instructionModel().flowColumnIndex());
+            java.awt.Rectangle cell = table.getCellRect(row, column, true);
+            for (int type : new int[] {java.awt.event.MouseEvent.MOUSE_PRESSED,
+                    java.awt.event.MouseEvent.MOUSE_RELEASED, java.awt.event.MouseEvent.MOUSE_CLICKED}) {
+                table.dispatchEvent(new java.awt.event.MouseEvent(table, type, System.currentTimeMillis(), 0,
+                        cell.x + 11, (int) cell.getCenterY(), 1, false, java.awt.event.MouseEvent.BUTTON1));
+            }
+            return;
+        }
+        throw new AssertionError("Missing flow endpoint " + address);
+    }
+
+    @Test
     public void annotationsAndBreakpointNavigationUseCpuAddressesRegardlessOfMemoryCellType() throws Exception {
         for (Class<?> cellType : List.of(Integer.class, Byte.class)) {
             try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {
@@ -1911,7 +1949,7 @@ public class DebuggerPanelTest {
         })) {
             SwingUtilities.invokeAndWait(() -> {
                 assertEquals(workspace.table.getColumnCount(), workspace.table.getModel().getColumnCount());
-                assertEquals(List.of("label", "address", "instruction", "opcode"),
+                assertEquals(List.of("label", "address", "instruction", "opcode", "flow"),
                         java.util.stream.IntStream.range(0, workspace.table.getColumnCount())
                                 .mapToObj(workspace.table::getColumnName).collect(java.util.stream.Collectors.toList()));
                 assertEquals("", workspace.table.getValueAt(0, 0));

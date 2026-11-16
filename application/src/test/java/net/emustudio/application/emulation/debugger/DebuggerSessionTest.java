@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -352,6 +353,31 @@ public class DebuggerSessionTest {
     }
 
     @Test
+    public void incidentEdgesNeedNoAnalysisAndPreserveInspectionSelectionAndMemoryHistory() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[4]}, 4);
+        Decoder decoder = mock(Decoder.class);
+        when(machine.cpu.getDecoder()).thenReturn(decoder);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            observed(session, 0, 1, "INCOMING", OptionalInt.of(1));
+            observed(session, 1, 1, "OUTGOING", OptionalInt.of(2));
+
+            assertEquals(2, session.observedEdges(1).size());
+            assertNull(session.flowAnalysis());
+            FlowAnalysis selected = session.analyzeFlow(1);
+            assertNull(selected.instructionAt(0));
+
+            machine.memoryChanged(1);
+            List<FlowAnalysis.Edge> edges = session.observedEdges(1);
+
+            assertEquals(List.of("0:1", "1:2"),
+                    edges.stream().map(edge -> edge.from + ":" + edge.to).collect(Collectors.toList()));
+            assertSame(selected, session.flowAnalysis());
+            verifyNoInteractions(decoder);
+        }
+    }
+
+    @Test
     public void memoryChangesDoNotRewritePreviouslyExecutedInstructionFacts() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{7, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
@@ -388,6 +414,9 @@ public class DebuggerSessionTest {
             machineExecution.reset().get(2, TimeUnit.SECONDS);
 
             assertNull(session.analyzeFlow(100).instructionAt(100));
+            assertTrue(session.observedEdges(100).isEmpty());
+            assertTrue(session.observedEdges(103).isEmpty());
+            assertTrue(session.observedEdges(200).isEmpty());
             assertEquals("entry", session.config.annotations().get(100).label);
         }
     }

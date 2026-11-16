@@ -54,11 +54,14 @@ public class DebugTableModelTest {
         assertNull(empty.getValueAt(0, 0));
         DebuggerSession session = session(8, 0);
         DebugTableModel model = model(session, 5);
-        assertEquals(4, model.getColumnCount());
+        assertEquals(5, model.getColumnCount());
         assertEquals("label", model.getColumnName(0));
         assertEquals("address", model.getColumnName(1));
         assertEquals("instruction", model.getColumnName(2));
         assertEquals("opcode", model.getColumnName(3));
+        assertEquals("flow", model.getColumnName(4));
+        assertFalse(model.isCellEditable(2, 4));
+        assertEquals("", model.getValueAt(2, 4));
         assertEquals(String.class, model.getColumnClass(1));
         assertEquals("", model.getValueAt(0, 0));
         assertFalse(model.isCellEditable(0, 0));
@@ -66,6 +69,7 @@ public class DebugTableModelTest {
         when(session.cpu.getDebuggerColumns(any(Decoder.class))).thenReturn(List.of(custom));
         model.setCPU(session.cpu, TestCpu.context(session.cpu));
         assertSame(custom, model.getColumnAt(1));
+        assertEquals("flow", model.getColumnName(2));
         assertEquals("label-0", model.getValueAt(2, 1));
     }
 

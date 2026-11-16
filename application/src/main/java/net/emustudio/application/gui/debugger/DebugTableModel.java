@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.FlowAnalysis;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
@@ -15,13 +16,16 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
 
-/** Centered live listing; preceding addresses come from the shared execution observations. */
+/**
+ * Centered live listing; preceding addresses come from the shared execution observations.
+ */
 public class DebugTableModel extends AbstractTableModel {
     // Titles of columns created by DebuggerColumn.address/mnemo/opcode factories
     static final String TITLE_LABEL = "label";
     static final String TITLE_ADDRESS = "address";
     static final String TITLE_MNEMO = "instruction";
     static final String TITLE_OPCODE = "opcode";
+    static final String TITLE_FLOW = "flow";
 
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
     private IntFunction<String> labels = address -> "";
@@ -71,11 +75,39 @@ public class DebugTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    @Override public int getRowCount() { return cpu == null ? 0 : maxRows; }
-    @Override public int getColumnCount() { return columns.length; }
-    public DebuggerColumn<?> getColumnAt(int index) { return columns[index]; }
-    @Override public String getColumnName(int column) { return columns[column].getTitle(); }
-    @Override public Class<?> getColumnClass(int column) { return columns[column].getClassType(); }
+    @Override
+    public int getRowCount() {
+        return cpu == null ? 0 : maxRows;
+    }
+
+    @Override
+    public int getColumnCount() {
+        return columns.length;
+    }
+
+    public DebuggerColumn<?> getColumnAt(int index) {
+        return columns[index];
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        return columns[column].getTitle();
+    }
+
+    @Override
+    public Class<?> getColumnClass(int column) {
+        return columns[column].getClassType();
+    }
+
+    int flowColumnIndex() {
+        return columns.length - 1;
+    }
+
+    List<FlowAnalysis.Edge> observedEdges(int row) {
+        if (session == null || !valuesVisible.getAsBoolean()) return List.of();
+        int address = getLocationAt(row);
+        return address < 0 ? List.of() : session.observedEdges(address);
+    }
 
     private int viewLocation() {
         return inspectedLocation == null ? cpuContext.getInstructionLocation() : inspectedLocation;
@@ -154,8 +186,9 @@ public class DebugTableModel extends AbstractTableModel {
 
     private int nextAddress(int address) {
         int length = 1;
-        try { length = decode(address).length(); }
-        catch (InvalidInstructionException invalid) { /* Invalid cells remain individually browsable. */ }
+        try {
+            length = decode(address).length();
+        } catch (InvalidInstructionException invalid) { /* Invalid cells remain individually browsable. */ }
         return (int) Math.min(cpu.getAddressSpaceSize(), (long) address + length);
     }
 
@@ -168,8 +201,13 @@ public class DebugTableModel extends AbstractTableModel {
         return nextAddress(address);
     }
 
-    public void previousPage() { seekBackwardPage(1); }
-    public void nextPage() { seekForwardPage(1); }
+    public void previousPage() {
+        seekBackwardPage(1);
+    }
+
+    public void nextPage() {
+        seekForwardPage(1);
+    }
 
     public void seekBackwardPage(int pages) {
         seekPages(pages, -1);
@@ -230,7 +268,8 @@ public class DebugTableModel extends AbstractTableModel {
                 && getLocationAt(row) == cpuContext.getInstructionLocation();
     }
 
-    @Override public Object getValueAt(int row, int column) {
+    @Override
+    public Object getValueAt(int row, int column) {
         if (cpu == null || !valuesVisible.getAsBoolean()) return null;
         int address = getLocationAt(row);
         if (address < 0) return column == 0 ? ""
@@ -238,17 +277,21 @@ public class DebugTableModel extends AbstractTableModel {
         return columns[column].getValue(address);
     }
 
-    @Override public boolean isCellEditable(int row, int column) {
+    @Override
+    public boolean isCellEditable(int row, int column) {
         return cpu != null && editingAllowed.getAsBoolean()
                 && columns[column].isEditable() && getLocationAt(row) >= 0;
     }
 
-    @Override public void setValueAt(Object value, int row, int column) {
+    @Override
+    public void setValueAt(Object value, int row, int column) {
         if (!isCellEditable(row, column)) return;
         int address = getLocationAt(row);
         if (address < 0 || !columns[column].getClassType().isInstance(value)) return;
-        try { columns[column].setValue(address, value); }
-        catch (IllegalArgumentException ignored) { }
+        try {
+            columns[column].setValue(address, value);
+        } catch (IllegalArgumentException ignored) {
+        }
     }
 
     public void memoryChanged(int from, int to) {
@@ -268,12 +311,13 @@ public class DebugTableModel extends AbstractTableModel {
         List<DebuggerColumn<?>> displayed = new ArrayList<>();
         displayed.add(DebuggerColumn.text(TITLE_LABEL, address -> labels.apply(address)));
         displayed.addAll(columns);
+        displayed.add(DebuggerColumn.text(TITLE_FLOW, address -> ""));
         this.columns = displayed.toArray(new DebuggerColumn[0]);
         fireTableStructureChanged();
     }
 
     public void setPresentation(IntFunction<String> labels, BooleanSupplier valuesVisible,
-                                          BooleanSupplier editingAllowed) {
+                                BooleanSupplier editingAllowed) {
         this.labels = Objects.requireNonNull(labels);
         this.valuesVisible = Objects.requireNonNull(valuesVisible);
         this.editingAllowed = Objects.requireNonNull(editingAllowed);

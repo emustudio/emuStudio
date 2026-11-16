@@ -8,12 +8,47 @@ import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
 public class FlowAnalysisTest {
     private final FlowAnalysis.Observations observations = new FlowAnalysis.Observations();
     private final MemoryAnnotations annotations = new MemoryAnnotations();
+
+    @Test
+    public void incidentEdgesIncludeIncomingOutgoingAndSelfLoopOnceInAddressOrder() {
+        observed(200, 1, "INCOMING", "00", 100);
+        observed(100, 1, "OUTGOING", "00", 300);
+        observed(100, 1, "LOOP", "00", 100);
+        observed(100, 1, "LOOP", "00", 100);
+        observed(10, 1, "INCOMING", "00", 100);
+        observed(100, 1, "NEXT", "00", 101);
+        observed(101, 1, "UNRELATED", "00", 102);
+
+        List<FlowAnalysis.Edge> edges = observations.edgesAt(100);
+
+        assertEquals(List.of("10:100", "100:100", "100:101", "100:300", "200:100"),
+                edges.stream().map(edge -> edge.from + ":" + edge.to).collect(Collectors.toList()));
+        assertTrue(observations.edgesAt(999).isEmpty());
+    }
+
+    @Test
+    public void incidentEdgeSnapshotsAreImmutableAndResetClearsBothDirections() {
+        observed(100, 1, "FIRST", "00", 200);
+        List<FlowAnalysis.Edge> captured = observations.edgesAt(200);
+        assertThrows(UnsupportedOperationException.class, () -> captured.clear());
+
+        observed(200, 1, "SECOND", "00", 300);
+        observations.reset();
+
+        assertEquals(1, captured.size());
+        assertEquals(100, captured.get(0).from);
+        assertEquals(200, captured.get(0).to);
+        assertTrue(observations.edgesAt(100).isEmpty());
+        assertTrue(observations.edgesAt(200).isEmpty());
+        assertTrue(observations.edgesAt(300).isEmpty());
+    }
 
     @Test
     public void lastExecutedAddressFollowsExecutionOrderAndReset() {

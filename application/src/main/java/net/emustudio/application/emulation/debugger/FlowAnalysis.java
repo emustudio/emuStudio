@@ -89,22 +89,37 @@ public final class FlowAnalysis {
     static final class Observations {
         private final NavigableMap<Integer, DecodedInstruction> instructions = new TreeMap<>();
         private final Map<Integer, Set<Integer>> successors = new TreeMap<>();
+        private final Map<Integer, Set<Integer>> predecessors = new TreeMap<>();
         private int lastExecutedAddress = -1;
 
         void executed(DecodedInstruction instruction, OptionalInt nextAddress) {
             lastExecutedAddress = instruction.address();
             instructions.put(instruction.address(), instruction);
-            if (nextAddress.isPresent() && nextAddress.getAsInt() >= 0)
-                successors.computeIfAbsent(instruction.address(), ignored -> new TreeSet<>()).add(nextAddress.getAsInt());
+            if (nextAddress.isPresent() && nextAddress.getAsInt() >= 0) {
+                int target = nextAddress.getAsInt();
+                successors.computeIfAbsent(instruction.address(), ignored -> new TreeSet<>()).add(target);
+                predecessors.computeIfAbsent(target, ignored -> new TreeSet<>()).add(instruction.address());
+            }
         }
 
         void reset() {
             instructions.clear();
             successors.clear();
+            predecessors.clear();
             lastExecutedAddress = -1;
         }
 
         int lastExecutedAddress() { return lastExecutedAddress; }
+
+        List<Edge> edgesAt(int address) {
+            List<Edge> edges = new ArrayList<>();
+            for (int from : predecessors.getOrDefault(address, Set.of())) {
+                if (from != address) edges.add(new Edge(from, address));
+            }
+            for (int to : successors.getOrDefault(address, Set.of())) edges.add(new Edge(address, to));
+            edges.sort(Comparator.comparingInt((Edge edge) -> edge.from).thenComparingInt(edge -> edge.to));
+            return List.copyOf(edges);
+        }
 
         List<Integer> instructionsBefore(int address, int count) {
             List<Integer> previous = new ArrayList<>();
