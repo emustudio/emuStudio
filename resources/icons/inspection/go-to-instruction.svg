@@ -2,7 +2,13 @@
 <!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
      SPDX-License-Identifier: GPL-3.0-or-later -->
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
-  <g fill="none" stroke="#2e3436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 4h7v14h-7 M3 11h11 M10 7l4 4-4 4"/>
-  </g>
+  <defs>
+    <linearGradient id="frame" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#babdb6"/></linearGradient>
+    <linearGradient id="arrow" x2="0" y2="1"><stop stop-color="#8ae234"/><stop offset="1" stop-color="#73d216"/></linearGradient>
+  </defs>
+  <ellipse cx="12" cy="19.2" rx="8" ry="1" fill="#2e3436" opacity=".17"/>
+  <path d="M12.5 3.5 H19.5 V18.5 H12.5 V15.5 H16.5 V6.5 H12.5 Z" fill="url(#frame)" stroke="#888a85" stroke-linejoin="round"/>
+  <path d="M13.5 4.5 H18.5 V17.5 H13.5 M17.5 6 V16" fill="none" stroke="#ffffff" stroke-width=".65" opacity=".85"/>
+  <path d="M2.5 9.5 H9.5 V6.5 L15.5 11.5 L9.5 16.5 V13.5 H2.5 Z" fill="url(#arrow)" stroke="#4e9a06" stroke-linejoin="round"/>
+  <path d="M3.5 10.5 H10.5 V8.7 L14 11.5 L10.5 14.3 V12.5 H3.5 Z" fill="none" stroke="#ffffff" stroke-width=".65" stroke-linejoin="round" opacity=".6"/>
 </svg>

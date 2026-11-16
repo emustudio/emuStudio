@@ -2,7 +2,18 @@
 <!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
      SPDX-License-Identifier: GPL-3.0-or-later -->
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
-  <g fill="none" stroke="#2e3436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M11 3H3v16h13v-6 M6 7h3 M6 11h2 M10 14l2-5 6-6 3 3-6 6z M16 5l3 3"/>
-  </g>
+<defs>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d3d7cf"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#8ae234"/><stop offset="1" stop-color="#73d216"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ef2929"/><stop offset="1" stop-color="#cc0000"/></linearGradient>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#729fcf"/><stop offset="1" stop-color="#3465a4"/></linearGradient>
+<linearGradient id="glass" x2="0.7" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#729fcf"/></linearGradient>
+<linearGradient id="pencil" x2="1" y2="1"><stop stop-color="#fce94f"/><stop offset=".55" stop-color="#edd400"/><stop offset="1" stop-color="#c4a000"/></linearGradient>
+</defs>
+<ellipse cx="10" cy="19.1" rx="7.1" ry="1.1" fill="#2e3436" opacity=".17"/>
+<path d="M3.5 2.5 H12.5 L16.5 6.5 V18.5 H3.5 Z" fill="url(#paper)" stroke="#888a85" stroke-linejoin="round"/>
+<path d="M4.5 3.5 H12 L15.5 7 V17.5 H4.5 Z" fill="none" stroke="#ffffff" stroke-width=".8" opacity=".85"/>
+<path d="M12.5 2.5 V6.5 H16.5" fill="#eeeeec" stroke="#888a85" stroke-linejoin="round"/>
+<path d="M6 8.5 H12 M6 11.5 H13 M6 14.5 H10" fill="none" stroke="#888a85" stroke-linecap="round"/>
+<path d="M9.5 19.5 L11 14.8 L18 7.8 Q18.7 7.1 19.4 7.8 L20.7 9.1 Q21.4 9.8 20.7 10.5 L13.7 17.5 Z" fill="url(#pencil)" stroke="#8f5902" stroke-linejoin="round"/><path d="M10 19 L11 15 L13.5 17.5 Z" fill="#e9b96e"/><path d="M9.5 19.5 L10.2 17.1 L11.9 18.8 Z" fill="#2e3436"/><path d="M17.6 8.2 L20.3 10.9 L21 10.2 Q21.2 9.8 20.7 9.1 L19.4 7.8 Q18.7 7.1 18 7.8 Z" fill="#efb5b5" stroke="#a40000" stroke-width=".65"/><path d="M16.6 9.2 L19.3 11.9" stroke="#888a85" stroke-width="1.6"/><path d="M12 15.4 L17.5 9.9" stroke="#ffffff" stroke-width=".7" opacity=".7"/>
 </svg>
