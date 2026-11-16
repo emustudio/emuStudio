@@ -12,9 +12,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Cross-row geometry and hit testing for the listing's observed-flow column.
@@ -94,15 +92,6 @@ final class InstructionFlowColumn {
         return bounds.intersection(table.getVisibleRect());
     }
 
-    private Map<Integer, Integer> rowLocations() {
-        Map<Integer, Integer> rows = new HashMap<>();
-        for (int row = 0; row < table.getRowCount(); row++) {
-            int address = model.getLocationAt(table.convertRowIndexToModel(row));
-            if (address >= 0) rows.put(address, row);
-        }
-        return rows;
-    }
-
     private List<Arrow> layout() {
         int selected = table.getSelectedRow();
         Rectangle visible = columnBounds();
@@ -110,22 +99,22 @@ final class InstructionFlowColumn {
                 || visible == null || visible.isEmpty()) return List.of();
         List<FlowAnalysis.Edge> edges = model.observedEdges(table.convertRowIndexToModel(selected));
         if (edges.isEmpty()) return List.of();
-        int selectedAddress = model.getLocationAt(table.convertRowIndexToModel(selected));
+        int selectedRow = table.convertRowIndexToModel(selected);
+        int selectedAddress = model.getLocationAt(selectedRow);
         Rectangle cell = table.getCellRect(selected, flowViewColumn(), true);
         // Geometry uses the full column, not its horizontally clipped part.
         double startX = cell.x + 10;
         double laneStart = startX + 16;
         double laneWidth = Math.max(1, cell.width - 40);
-        Map<Integer, Integer> rows = rowLocations();
         List<Arrow> arrows = new ArrayList<>();
         for (int i = 0; i < edges.size(); i++) {
             FlowAnalysis.Edge edge = edges.get(i);
-            boolean outgoing = edge.from == selectedAddress;
+            boolean outgoing = model.rowContains(selectedRow, edge.from);
             int other = outgoing ? edge.to : edge.from;
             double lane = laneStart + laneWidth * (i + 1) / (edges.size() + 1);
             double selectedY = cell.getCenterY() + (outgoing ? 4 : -4);
-            Integer otherRow = rows.get(other);
-            Rectangle otherCell = otherRow == null ? null : table.getCellRect(otherRow, flowViewColumn(), true);
+            int otherRow = model.rowForAddress(other);
+            Rectangle otherCell = otherRow < 0 ? null : table.getCellRect(table.convertRowIndexToView(otherRow), flowViewColumn(), true);
             boolean onPage = otherCell != null && visible.intersects(otherCell);
             Point2D.Double selectedPoint = new Point2D.Double(startX, selectedY);
             Point2D.Double otherPoint;

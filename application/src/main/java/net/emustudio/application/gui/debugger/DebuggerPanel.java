@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -125,6 +126,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         annotationEditor = new AnnotationEditor(gui, this, session);
         instructionModel.setPresentation(this::sourceLabelsAt, () -> !disposed && !running,
                 () -> !disposed && !running && !execution.isBusy());
+        instructionModel.setFoldBoundaries(() -> sourceMappingsCurrent ? compiledSymbols.get().stream()
+                .flatMap(symbol -> symbol.location.stream()).map(location -> location.address).collect(Collectors.toSet()) : Set.of());
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setInstructionRowPresentation(row -> {
             if (disposed || running) return false;
@@ -176,7 +179,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         selectionMenu.add(toggleBreakpoint);
         selectionMenu.addPopupMenuListener(new PopupMenuListener() {
             public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
-                boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running;
+                boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running
+                        && !instructionModel.isFolded(table.convertRowIndexToModel(table.getSelectedRow()));
                 inspect.setEnabled(enabled);
                 goToSource.setEnabled(enabled);
                 int address = enabled ? selectedRowAddress() : -1;
@@ -230,6 +234,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void repaintLabels() {
         graph.labelsChanged();
+        instructionModel.refreshFolding();
         table.repaint();
     }
 
@@ -305,6 +310,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (tabs.getSelectedComponent() == recordingPanel) {
             try { recordingPanel.refresh(); } catch (IllegalArgumentException failure) { logFailure(LOGGER, failure); }
         }
+        instructionModel.refreshFolding();
         table.repaint();
         if (followPc.isSelected() && graph.hasFlow()) {
             if (!graph.current() || graph.selectedNode() != pc) {
@@ -437,6 +443,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public void showBreakpointDialog(JFrame parent) {
         if (!isBreakpointDialogSupported()) return;
+        if (table.getSelectedRow() >= 0 && instructionModel.isFolded(table.convertRowIndexToModel(table.getSelectedRow())))
+            navigate(selectedRowAddress());
         BreakpointDialog dialog = new BreakpointDialog(parent, gui, inspectedAddress,
                 session.cpu.getAddressSpaceSize(), session::isBreakpointSet,
                 this::applyBreakpointRequest);
@@ -461,6 +469,11 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     /** Follows a listing selection made outside the panel. */
     public void followAddress(int at) {
+        int row = table.getSelectedRow();
+        if (row >= 0 && instructionModel.isFolded(table.convertRowIndexToModel(row)) && selectedRowAddress() == at) {
+            inspectedAddress = lastInstructionAddress = at;
+            return;
+        }
         if (at != inspectedAddress) guard(() -> navigate(at));
     }
 
@@ -481,12 +494,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void selectInstructionAddress() {
         if (running || disposed) return;
-        for (int row = 0; row < instructionModel.getRowCount(); row++) {
-            if (instructionModel.getLocationAt(row) == lastInstructionAddress) {
-                table.setRowSelectionInterval(row, row);
-                return;
-            }
-        }
+        int row = instructionModel.rowForAddress(lastInstructionAddress);
+        if (row >= 0) table.setRowSelectionInterval(table.convertRowIndexToView(row), table.convertRowIndexToView(row));
     }
 
     /** Moves inspection to the address, lets the views follow, then notifies listeners (visit = user navigation). */

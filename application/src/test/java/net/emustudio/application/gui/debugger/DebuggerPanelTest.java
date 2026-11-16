@@ -48,6 +48,45 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void foldedListingSelectionKeepsSummaryAndDisablesAmbiguousPopupActions() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {
+            for (int at = 0; at < 12; at++) observed(session, at, OptionalInt.of(at + 1));
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                DebugTableModel model = workspace.table.instructionModel();
+                model.setMaxRows(7);
+                workspace.panel.navigate(0);
+                model.setFoldRepeats(true);
+                assertTrue(button(workspace.panel, "Fold identical analysis repeats").isSelected());
+                workspace.table.getSelectionModel().addListSelectionListener(event -> {
+                    if (!event.getValueIsAdjusting() && workspace.table.getSelectedRow() >= 0)
+                        workspace.panel.followAddress(model.getLocationAt(workspace.table.getSelectedRow()));
+                });
+                int row = model.rowForAddress(6);
+                workspace.table.setRowSelectionInterval(row, row);
+                assertTrue(model.isFolded(workspace.table.getSelectedRow()));
+                assertEquals("NOP × 11", model.getValueAt(row, 2));
+                JPopupMenu popup = workspace.table.getComponentPopupMenu();
+                for (javax.swing.event.PopupMenuListener listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new javax.swing.event.PopupMenuEvent(popup));
+                assertFalse(popup.getComponent(0).isEnabled());
+                assertFalse(popup.getComponent(1).isEnabled());
+                assertFalse(popup.getComponent(3).isEnabled());
+                assertFalse(workspace.session.isBreakpointSet(1));
+
+                workspace.panel.navigate(6);
+                assertEquals(6, model.getLocationAt(workspace.table.getSelectedRow()));
+                assertFalse(model.isFolded(workspace.table.getSelectedRow()));
+                workspace.table.clearSelection();
+                model.refreshFolding();
+                assertEquals(-1, workspace.table.getSelectedRow());
+                assertNull(workspace.session.flowAnalysis());
+            });
+            verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
+        }
+    }
+
+    @Test
     public void flowArrowClicksFollowOutgoingAndIncomingAddressesWithoutMovingPc() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[8]}, 8, session -> {
             observed(session, 0, OptionalInt.of(1));

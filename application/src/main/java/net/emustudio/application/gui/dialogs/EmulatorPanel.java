@@ -315,6 +315,7 @@ public class EmulatorPanel extends JPanel {
 
     private void navigateToSource(int viewRow, Consumer<SourceCodePosition> sourceNavigator) {
         if (memoryContext == null) return;
+        if (((DebugTableImpl) debugTable).expandFoldedRow(viewRow)) return;
         int address = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(viewRow));
         if (address < 0) return;
         if (session != null) session.sourceAt(address).ifPresent(sourceNavigator);

@@ -195,6 +195,15 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return observedFlow.edgesAt(address);
     }
 
+    /** Repeat candidates from all observations; never changes the selected Inspection graph. */
+    public synchronized List<List<Integer>> observedInstructionRuns() {
+        return observedFlow.instructionRuns();
+    }
+
+    public synchronized long observedFlowRevision() {
+        return observedFlow.revision();
+    }
+
     /**
      * Called only after a successful explicit CPU reset; annotations are retained.
      */

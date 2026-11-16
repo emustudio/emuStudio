@@ -20,12 +20,115 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class InstructionFlowColumnTest {
+    @Test public void foldedEndpointKeepsExactTargetAndSummaryShowsOnlyExternalEdges() throws Exception {
+        try (Fixture fixture = new Fixture()) {
+            for (int at = 94; at < 100; at++) fixture.executed(at, at + 1);
+            fixture.executed(93, 94);
+            SwingUtilities.invokeAndWait(() -> {
+                fixture.model.setFoldRepeats(true);
+                fixture.select(100);
+                int row = fixture.model.rowForAddress(99);
+                assertTrue(fixture.model.isFolded(row));
+                Rectangle cell = fixture.table.getCellRect(row, fixture.flowViewColumn(), true);
+                Point endpoint = new Point(cell.x + 11, (int) cell.getCenterY());
+                assertEquals(99, fixture.flow.targetAt(endpoint));
+                assertFalse(fixture.flow.tooltipAt(endpoint).contains("not on this page"));
+                AtomicInteger navigated = new AtomicInteger(-1);
+                fixture.table.setFlowNavigation(navigated::set);
+                fixture.click(endpoint, 1);
+                assertEquals(99, navigated.get());
+
+                fixture.table.setRowSelectionInterval(row, row);
+                List<net.emustudio.application.emulation.debugger.FlowAnalysis.Edge> edges = fixture.model.observedEdges(row);
+                assertEquals(1, edges.size());
+                assertEquals(99, edges.get(0).from);
+                assertEquals(100, edges.get(0).to);
+                assertTrue(fixture.paintedPixels() > 0);
+            });
+        }
+    }
+
+    @Test public void selfLoopRemainsVisibleAtFoldBoundary() throws Exception {
+        try (Fixture fixture = new Fixture()) {
+            for (int at = 94; at < 99; at++) fixture.executed(at, at + 1);
+            fixture.executed(99, 99);
+            SwingUtilities.invokeAndWait(() -> {
+                fixture.model.setFoldRepeats(true);
+                int row = fixture.model.rowForAddress(99);
+                assertFalse(fixture.model.isFolded(row));
+                assertTrue(fixture.model.isFolded(fixture.model.rowForAddress(98)));
+                fixture.table.setRowSelectionInterval(row, row);
+                assertTrue(fixture.model.observedEdges(row).stream().anyMatch(edge -> edge.from == 99 && edge.to == 99));
+                assertTrue(fixture.paintedPixels() > 0);
+            });
+        }
+    }
+
+    @Test public void disclosureAndKeyboardToggleRunsWithoutSourceClickOrPcChange() throws Exception {
+        try (Fixture fixture = new Fixture()) {
+            for (int at = 100; at < 110; at++) fixture.executed(at, at + 1);
+            SwingUtilities.invokeAndWait(() -> {
+                fixture.model.setFoldRepeats(true);
+                int row = fixture.model.rowForAddress(101);
+                assertTrue(fixture.model.isFolded(row));
+                AtomicInteger sourceClicks = new AtomicInteger();
+                fixture.table.addMouseListener(new MouseAdapter() {
+                    @Override public void mouseClicked(MouseEvent event) { sourceClicks.incrementAndGet(); }
+                });
+                int addressColumn = fixture.table.convertColumnIndexToView(1);
+                Rectangle cell = fixture.table.getCellRect(row, addressColumn, true);
+                Point disclosure = new Point(cell.x + 7, (int) cell.getCenterY());
+                fixture.click(disclosure, 1);
+                assertFalse(fixture.model.isFolded(row));
+                assertEquals(0, sourceClicks.get());
+                fixture.table.setRowSelectionInterval(row, row);
+                fixture.table.getActionMap().get("collapseRepeats").actionPerformed(
+                        new java.awt.event.ActionEvent(fixture.table, 0, ""));
+                assertTrue(fixture.model.isFolded(row));
+                fixture.table.setRowSelectionInterval(row, row);
+                fixture.table.getActionMap().get("expandRepeats").actionPerformed(
+                        new java.awt.event.ActionEvent(fixture.table, 0, ""));
+                assertFalse(fixture.model.isFolded(row));
+                verify(fixture.cpu, never()).setInstructionLocation(anyInt());
+            });
+        }
+    }
+
+    @Test public void hiddenRunningValuesNeverDecodeDuringPaintingOrFoldGestures() throws Exception {
+        try (Fixture fixture = new Fixture()) {
+            AtomicBoolean visible = new AtomicBoolean(true);
+            AtomicInteger decodes = new AtomicInteger();
+            when(fixture.cpu.getDecoder()).thenReturn(at -> {
+                decodes.incrementAndGet();
+                return DecodedInstruction.of(at, 1, "NOP", "00");
+            });
+            for (int at = 90; at < 110; at++) fixture.executed(at, at + 1);
+            SwingUtilities.invokeAndWait(() -> {
+                fixture.model.setPresentation(at -> "", visible::get, visible::get);
+                fixture.model.setFoldRepeats(true);
+                fixture.model.memoryChanged(0, 256);
+                visible.set(false);
+                fixture.table.setEnabled(false);
+                when(TestCpu.context(fixture.cpu).getInstructionLocation()).thenReturn(101);
+                int prepared = decodes.get();
+                fixture.table.paint(new BufferedImage(fixture.table.getWidth(), fixture.table.getHeight(),
+                        BufferedImage.TYPE_INT_RGB).getGraphics());
+                fixture.model.toggleFoldAt(3);
+                fixture.model.refreshFolding();
+                fixture.model.setFoldRepeats(false);
+                assertTrue(fixture.model.isFoldRepeats());
+                assertEquals(prepared, decodes.get());
+            });
+        }
+    }
+
     @Test public void selectionShowsBothDirectionsAndSelfLoopWithoutInspection() throws Exception {
         try (Fixture fixture = new Fixture()) {
             fixture.executed(99, 100);

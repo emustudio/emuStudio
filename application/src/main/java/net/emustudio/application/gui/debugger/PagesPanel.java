@@ -39,14 +39,23 @@ public class PagesPanel extends JPanel {
         JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
         JButton btnSeekBackward = gui.toolbarButton(evt -> seek("backward", debugTableModel::seekBackwardPage), ICON_PAGE_SEEK_BACKWARD, "Seek pages backward");
         JButton btnSeekForward = gui.toolbarButton(evt -> seek("forward", debugTableModel::seekForwardPage), ICON_PAGE_SEEK_FORWARD, "Seek pages forward");
+        JToggleButton fold = gui.toolbarToggleButton(evt -> {},
+                "/net/emustudio/application/gui/icons/emulation/fold.png", "Fold identical repeats");
+        fold.setSelected(debugTableModel.isFoldRepeats());
+        fold.addActionListener(evt -> {
+            debugTableModel.setFoldRepeats(fold.isSelected());
+            fold.setSelected(debugTableModel.isFoldRepeats());
+        });
+        debugTableModel.addTableModelListener(evt -> fold.setSelected(debugTableModel.isFoldRepeats()));
 
-        JPanel buttonPanel = gui.panel("insets 0, center", "[]0[]0[]0[]0[]0[]", "[]");
+        JPanel buttonPanel = gui.panel("insets 0, center", "[]0[]0[]0[]0[]0[]0[]", "[]");
         buttonPanel.add(btnFirst);
         buttonPanel.add(btnSeekBackward);
         buttonPanel.add(btnBackward);
         buttonPanel.add(btnCurrentPage);
         buttonPanel.add(btnForward);
         buttonPanel.add(btnSeekForward);
+        buttonPanel.add(fold);
 
         setLayout(new MigLayout("insets 0, fillx", "[grow]", "[]"));
         add(buttonPanel, "center");

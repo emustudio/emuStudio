@@ -55,20 +55,23 @@ public final class FlowAnalysis {
             incoming.computeIfAbsent(to, ignored -> new ArrayList<>()).add(from);
             outgoing.computeIfAbsent(from, ignored -> new ArrayList<>()).add(to);
         });
+        return instructionRuns(instructions, incoming, outgoing, addresses, boundaries);
+    }
+
+    private static List<List<Integer>> instructionRuns(Map<Integer, DecodedInstruction> instructions,
+            Map<Integer, ? extends Collection<Integer>> incoming,
+            Map<Integer, ? extends Collection<Integer>> outgoing, Set<Integer> addresses, Set<Integer> boundaries) {
         List<List<Integer>> runs = new ArrayList<>();
         Integer previous = null;
         List<Integer> run = null;
         for (int address : new TreeSet<>(addresses)) {
             DecodedInstruction next = instructions.get(address);
             DecodedInstruction before = previous == null ? null : instructions.get(previous);
-            List<Integer> in = incoming.getOrDefault(address, List.of());
-            List<Integer> out = outgoing.getOrDefault(previous, List.of());
-            boolean extendsRun = before != null && next != null
-                    && (long) previous + before.length() == address && before.length() == next.length()
+            Collection<Integer> in = incoming.get(address), out = previous == null ? null : outgoing.get(previous);
+            boolean extendsRun = identicalAdjacentInstructions(before, next)
                     && !boundaries.contains(previous) && !boundaries.contains(address)
-                    && in.equals(List.of(previous)) && out.equals(List.of(address))
-                    && !next.mnemonic().isBlank() && before.mnemonic().equals(next.mnemonic())
-                    && !next.encoding().isBlank() && before.encoding().equals(next.encoding());
+                    && in != null && in.size() == 1 && in.contains(previous)
+                    && out != null && out.size() == 1 && out.contains(address);
             if (!extendsRun) {
                 run = new ArrayList<>();
                 runs.add(run);
@@ -77,6 +80,14 @@ public final class FlowAnalysis {
             previous = address;
         }
         return runs;
+    }
+
+    /** Presentation equality, independent of CPU opcodes or instruction classifications. */
+    public static boolean identicalAdjacentInstructions(DecodedInstruction before, DecodedInstruction next) {
+        return before != null && next != null
+                && (long) before.address() + before.length() == next.address() && before.length() == next.length()
+                && !next.mnemonic().isBlank() && before.mnemonic().equals(next.mnemonic())
+                && !next.encoding().isBlank() && before.encoding().equals(next.encoding());
     }
 
     public void forEachInstruction(Consumer<? super FlowGraph.Instruction> visitor) { graph.instructions(visitor); }
@@ -91,8 +102,10 @@ public final class FlowAnalysis {
         private final Map<Integer, Set<Integer>> successors = new TreeMap<>();
         private final Map<Integer, Set<Integer>> predecessors = new TreeMap<>();
         private int lastExecutedAddress = -1;
+        private long revision;
 
         void executed(DecodedInstruction instruction, OptionalInt nextAddress) {
+            revision++;
             lastExecutedAddress = instruction.address();
             instructions.put(instruction.address(), instruction);
             if (nextAddress.isPresent() && nextAddress.getAsInt() >= 0) {
@@ -103,6 +116,7 @@ public final class FlowAnalysis {
         }
 
         void reset() {
+            revision++;
             instructions.clear();
             successors.clear();
             predecessors.clear();
@@ -110,6 +124,12 @@ public final class FlowAnalysis {
         }
 
         int lastExecutedAddress() { return lastExecutedAddress; }
+
+        long revision() { return revision; }
+
+        List<List<Integer>> instructionRuns() {
+            return FlowAnalysis.instructionRuns(instructions, predecessors, successors, instructions.keySet(), Set.of());
+        }
 
         List<Edge> edgesAt(int address) {
             List<Edge> edges = new ArrayList<>();

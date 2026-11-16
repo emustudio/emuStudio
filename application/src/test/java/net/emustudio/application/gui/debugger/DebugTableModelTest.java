@@ -202,6 +202,229 @@ public class DebugTableModelTest {
         return result;
     }
 
+    @Test public void foldsObservedRepeatsWithoutInspectionAndRevealsExactNavigationTargets() throws Exception {
+        DebuggerSession session = session(32, 12);
+        for (int at = 0; at < 12; at++) executed(session, at, 1, at + 1);
+        DebugTableModel model = model(session, 7);
+
+        model.setFoldRepeats(true);
+        assertEquals(List.of(-1, -1, 0, 12, 13, 14, 15), locations(model));
+        assertEquals("0000–000B", model.getValueAt(2, 1));
+        assertEquals("NOP × 12", model.getValueAt(2, 2));
+        assertEquals("00", model.getValueAt(2, 3));
+        assertEquals(2, model.rowForAddress(8));
+        assertTrue(model.isRowAtCurrentInstruction(3));
+        assertNull(session.flowAnalysis());
+
+        model.showAddress(7);
+        assertEquals(7, model.getLocationAt(3));
+        assertFalse(model.isFolded(3));
+        assertEquals("NOP × 7", model.getValueAt(2, 2));
+        assertEquals("NOP × 4", model.getValueAt(4, 2));
+        model.setFoldRepeats(false);
+        assertEquals(List.of(4, 5, 6, 7, 8, 9, 10), locations(model));
+        verify(session.cpu, never()).setInstructionLocation(anyInt());
+    }
+
+    @Test public void individualRunsExpandAndCollapseWhileOtherRunsStayFolded() throws Exception {
+        DebuggerSession session = session(32, 0);
+        for (int at = 0; at < 20; at++) executed(session, at, 1, at + 1);
+        when(session.cpu.getDecoder()).thenReturn(at -> DecodedInstruction.of(at, 1, at == 8 ? "OTHER" : "NOP", "00"));
+        DebugTableModel model = model(session, 7);
+        model.setFoldRepeats(true);
+        assertEquals("NOP × 7", model.getValueAt(4, 2));
+        assertEquals("NOP × 11", model.getValueAt(6, 2));
+
+        model.toggleFoldAt(4);
+        assertEquals(List.of(-1, -1, -1, 0, 1, 2, 3), locations(model));
+        assertTrue(model.hasFoldControl(4));
+        assertFalse(model.isFolded(4));
+        model.toggleFoldAt(4);
+        assertEquals("NOP × 7", model.getValueAt(4, 2));
+        assertEquals("NOP × 11", model.getValueAt(6, 2));
+    }
+
+    @Test public void foldBoundariesKeepPcBreakpointsLabelsSymbolsAndAnnotationEdgesVisible() throws Exception {
+        DebuggerSession session = session(40, 30);
+        for (int at = 0; at < 30; at++) executed(session, at, 1, at + 1);
+        session.setBreakpoint(12, true).join();
+        session.config.annotations().add(new net.emustudio.application.emulation.debugger.UserAnnotations.Entry(
+                -1, 18, 22, "region", "CODE"));
+        DebugTableModel model = model(session, 41);
+        model.setPresentation(at -> at == 5 ? "label" : "", () -> true, () -> true);
+        model.setFoldBoundaries(() -> Set.of(25));
+        model.showAddress(0);
+        model.setFoldRepeats(true);
+        for (int at : List.of(0, 5, 12, 18, 22, 25, 30)) {
+            int row = model.rowForAddress(at);
+            assertTrue("Missing protected address " + at, row >= 0);
+            assertFalse("Folded protected address " + at, model.isFolded(row));
+        }
+        assertTrue(model.isFolded(model.rowForAddress(2)));
+        assertTrue(model.isRowAtCurrentInstruction(model.rowForAddress(30)));
+    }
+
+    @Test public void foldedPagesCountDisplayedRunsAndRoundTripAcrossBothEnds() throws Exception {
+        DebuggerSession session = session(25, 20);
+        for (int at = 0; at < 20; at++) executed(session, at, 1, at + 1);
+        when(session.cpu.getDecoder()).thenReturn(at -> DecodedInstruction.of(at, 1, at % 4 == 3 ? "OTHER" : "NOP", "00"));
+        DebugTableModel model = model(session, 5);
+        model.setFoldRepeats(true);
+        List<Integer> current = locations(model);
+        assertEquals(List.of(16, 19, 20, 21, 22), current);
+        model.previousPage();
+        List<Integer> previous = locations(model);
+        assertEquals(List.of(8, 11, 12, 15, 16), previous);
+        model.nextPage();
+        assertEquals(current, locations(model));
+        model.firstPage();
+        assertEquals(List.of(0, 3, 4, 7, 8), locations(model));
+        model.nextPage();
+        assertEquals(previous, locations(model));
+        model.nextPage();
+        model.nextPage();
+        assertEquals(List.of(22, 23, 24, -1, -1), locations(model));
+        model.nextPage();
+        assertEquals(List.of(22, 23, 24, -1, -1), locations(model));
+        model.previousPage();
+        assertEquals(current, locations(model));
+    }
+
+    @Test public void expandingLongRunBeforePcKeepsItsStartVisibleAndPagingReversible() throws Exception {
+        DebuggerSession session = session(128, 100);
+        for (int at = 0; at < 100; at++) executed(session, at, 1, at + 1);
+        DebugTableModel model = model(session, 7);
+        model.setFoldRepeats(true);
+        int row = model.rowForAddress(0);
+        assertEquals(2, row);
+        model.toggleFoldAt(row);
+        assertEquals(0, model.getLocationAt(row));
+        assertEquals(1, model.getLocationAt(row + 1));
+        List<Integer> expanded = locations(model);
+        model.nextPage();
+        model.previousPage();
+        assertEquals(expanded, locations(model));
+        model.toggleFoldAt(row);
+        assertEquals(0, model.getLocationAt(row));
+        assertTrue(model.isFolded(row));
+        assertTrue(model.isRowAtCurrentInstruction(row + 1));
+    }
+
+    @Test public void foldingRechecksLiveEncodingAndLengthAfterWritesAndClearsAfterReset() throws Exception {
+        DebuggerSession session = session(32, 0);
+        for (int at = 0; at < 16; at++) executed(session, at, 1, at + 1);
+        AtomicInteger changed = new AtomicInteger(-1);
+        when(session.cpu.getDecoder()).thenReturn(at -> DecodedInstruction.of(at,
+                at == changed.get() ? 2 : 1, "NOP", at == changed.get() ? "00 01" : "00"));
+        DebugTableModel model = model(session, 7);
+        model.setFoldRepeats(true);
+        assertEquals("NOP × 15", model.getValueAt(4, 2));
+        changed.set(5);
+        model.memoryChanged(5, 7);
+        assertEquals("NOP × 4", model.getValueAt(4, 2));
+        assertEquals(5, model.getLocationAt(5));
+        assertFalse(model.isFolded(5));
+        assertEquals(7, model.getLocationAt(6));
+        assertEquals("NOP × 9", model.getValueAt(6, 2));
+
+        session.cpuReset();
+        model.currentPage();
+        assertEquals(List.of(-1, -1, -1, 0, 1, 2, 3), locations(model));
+        assertFalse(model.isFolded(4));
+    }
+
+    @Test public void unobservedInstructionsStaySeparateAndReadsReusePreparedFolds() throws Exception {
+        DebuggerSession session = session(32, 0);
+        AtomicInteger calls = new AtomicInteger(), boundaries = new AtomicInteger();
+        when(session.cpu.getDecoder()).thenReturn(at -> {
+            calls.incrementAndGet();
+            return DecodedInstruction.of(at, 1, "NOP", "00");
+        });
+        DebugTableModel model = model(session, 5);
+        model.setFoldBoundaries(() -> { boundaries.incrementAndGet(); return Set.of(); });
+        model.setFoldRepeats(true);
+        assertEquals(List.of(-1, -1, 0, 1, 2), locations(model));
+        for (int at = 0; at < 10; at++) executed(session, at, 1, at + 1);
+        model.currentPage();
+        assertEquals("NOP × 9", model.getValueAt(3, 2));
+        int decoded = calls.get(), prepared = boundaries.get();
+        for (int i = 0; i < 20; i++) {
+            locations(model);
+            model.getValueAt(3, 2);
+        }
+        assertEquals(decoded, calls.get());
+        assertEquals(prepared, boundaries.get());
+        assertNull(session.flowAnalysis());
+    }
+
+    @Test public void sourceLineMappingsDoNotPreventFoldingAndNewBranchesRefreshIt() throws Exception {
+        DebuggerSession session = session(16, 0);
+        for (int at = 0; at < 8; at++) {
+            executed(session, at, 1, at + 1);
+            session.annotationEngine.put(new net.emustudio.emulib.application.annotations.MemoryAnnotations.Entry(
+                    10, at, at, at + 1, "source", "", null));
+        }
+        DebugTableModel model = model(session, 7);
+        model.setFoldRepeats(true);
+        assertEquals("NOP × 7", model.getValueAt(4, 2));
+        executed(session, 4, 1, 12);
+        assertEquals("NOP × 4", model.getValueAt(4, 2));
+        assertEquals("NOP × 3", model.getValueAt(5, 2));
+        assertNull(session.flowAnalysis());
+    }
+
+    @Test public void foldedSummaryCannotEditAnyMemberUntilExpanded() throws Exception {
+        DebuggerSession session = session(16, 0);
+        for (int at = 0; at < 8; at++) executed(session, at, 1, at + 1);
+        AtomicInteger edited = new AtomicInteger(-1);
+        DebuggerColumn<String> editable = new DebuggerColumn<>() {
+            public String getTitle() { return "Editable"; }
+            public Class<String> getClassType() { return String.class; }
+            public boolean isEditable() { return true; }
+            public String getValue(int address) { return "value-" + address; }
+            public void setValue(int address, Object value) { edited.set(address); }
+        };
+        DebugTableModel model = model(session, 5);
+        model.setDebuggerColumns(List.of(editable));
+        model.setFoldRepeats(true);
+        assertTrue(model.isFolded(3));
+        assertFalse(model.isCellEditable(3, 1));
+        model.setValueAt("blocked", 3, 1);
+        assertEquals(-1, edited.get());
+        model.toggleFoldAt(3);
+        assertTrue(model.isCellEditable(3, 1));
+        model.setValueAt("edit", 3, 1);
+        assertEquals(1, edited.get());
+    }
+
+    @Test public void hiddenValuesMakePagingAndFoldingSafeWithoutDecoding() throws Exception {
+        DebuggerSession session = session(32, 0);
+        AtomicInteger decodes = new AtomicInteger();
+        when(session.cpu.getDecoder()).thenReturn(at -> {
+            decodes.incrementAndGet();
+            return DecodedInstruction.of(at, 1, "NOP", "00");
+        });
+        DebugTableModel model = model(session, 5);
+        model.setFoldRepeats(true);
+        AtomicBoolean visible = new AtomicBoolean(true);
+        model.setPresentation(at -> "", visible::get, visible::get);
+        visible.set(false);
+        int prepared = decodes.get();
+        model.nextPage();
+        model.previousPage();
+        model.seekForwardPage(3);
+        model.seekBackwardPage(3);
+        model.firstPage();
+        model.currentPage();
+        model.showAddress(10);
+        model.setMaxRows(7);
+        model.toggleFoldAt(3);
+        model.setFoldRepeats(false);
+        assertNull(model.getValueAt(3, 2));
+        assertEquals(prepared, decodes.get());
+        assertTrue(model.isFoldRepeats());
+    }
+
     @Test public void forwardPagesReplaceBothHalvesAndPreviousReturnsTheExactPage() throws Exception {
         DebuggerSession session = session(64, 20);
         for (int at = 0; at < 20; at++) executed(session, at, 1, at + 1);
