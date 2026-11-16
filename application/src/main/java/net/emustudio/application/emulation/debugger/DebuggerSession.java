@@ -49,6 +49,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private boolean closed;
     // Inspection eligibility follows host notifications; command scheduling remains outside this module.
     private boolean running;
+    private boolean inObservationCallback;
     private int activeMutations;
     private SourceCaptureGuard activeSourceCapture;
     private SourceCaptureGuard completedSourceCapture;
@@ -274,6 +275,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             if (sourceMappings == null) sourceMappingsCleared = true;
             invalidateProgram();
         }
+        if (!running && observationDirty) updateProbe();
     }
 
     public synchronized void requirePaused() {
@@ -363,6 +365,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public synchronized void updateProbe() {
+        // Keep the observer attached throughout guest effects; rebind only at an instruction boundary.
+        if (running && !inObservationCallback) {
+            observationDirty = true;
+            return;
+        }
         observationDirty = false;
         if (closed) return;
         Debugging.Capture capture = recording.requiresFullCapture() ? Debugging.Capture.FULL : Debugging.Capture.INSTRUCTION;
@@ -389,27 +396,37 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
 
     @Override
     public synchronized boolean beforeStep() {
-        int address = cpuContext.getInstructionLocation();
-        boolean stop = false;
-        if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;
-        else stop = checkBreakpoints(address);
-        stoppedAddress = -1;
-        if (stop) stoppedAddress = address;
-        if (observationDirty) updateProbe();
-        return stop;
+        inObservationCallback = true;
+        try {
+            int address = cpuContext.getInstructionLocation();
+            boolean stop = false;
+            if (skipBeforeStep || stoppedAddress == address) skipBeforeStep = false;
+            else stop = checkBreakpoints(address);
+            stoppedAddress = -1;
+            if (stop) stoppedAddress = address;
+            if (observationDirty) updateProbe();
+            return stop;
+        } finally {
+            inObservationCallback = false;
+        }
     }
 
     @Override
     public synchronized boolean afterStep(boolean completed, Optional<DecodedInstruction> instruction, OptionalInt nextAddress, Optional<StepView> captured) {
-        if (completed && instruction.isPresent()) {
-            observedFlow.executed(instruction.get(), nextAddress);
-            flow = null;
+        inObservationCallback = true;
+        try {
+            if (completed && instruction.isPresent()) {
+                observedFlow.executed(instruction.get(), nextAddress);
+                flow = null;
+            }
+            boolean fullCapture = recording.requiresFullCapture();
+            recording.capture(completed, captured);
+            if (fullCapture != recording.requiresFullCapture()) observationDirty = true;
+            if (observationDirty) updateProbe();
+            return false;
+        } finally {
+            inObservationCallback = false;
         }
-        boolean fullCapture = recording.requiresFullCapture();
-        recording.capture(completed, captured);
-        if (fullCapture != recording.requiresFullCapture()) observationDirty = true;
-        if (observationDirty) updateProbe();
-        return false;
     }
 
     @Override

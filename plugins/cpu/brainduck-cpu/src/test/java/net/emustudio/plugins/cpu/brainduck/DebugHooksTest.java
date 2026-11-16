@@ -12,6 +12,29 @@ import static org.junit.Assert.*;
 
 public class DebugHooksTest {
     @Test
+    public void detachingExactObservationRestoresCachedOperations() throws Exception {
+        MemoryStub memory = new MemoryStub();
+        memory.setProgram(new byte[] {3, 3, 3, 3, 0});
+        BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
+        replay(context);
+        EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.reset(0);
+        AutoCloseable observation = engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) { return false; }
+        }, Debugging.Capture.INSTRUCTION);
+        engine.step(true);
+        assertEquals(1, engine.IP);
+        observation.close();
+        engine.IP = 0;
+        engine.step(true);
+        assertEquals(4, engine.IP);
+        assertEquals(5, memory.read(engine.P).intValue());
+    }
+
+    @Test
     public void lightObservationPreservesSingleGuestStepWithoutFullCapture() {
         MemoryStub memory = new MemoryStub();
         memory.setProgram(new byte[] {3, 3, 0});

@@ -9,6 +9,7 @@ import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.Debugging;
+import net.emustudio.emulib.plugin.debugger.DebuggingSupport;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.junit.Rule;
@@ -32,6 +33,166 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class DebuggerSessionTest {
+    @Test
+    public void ordinaryRunAlwaysObservesInstructionsThroughExitOrFailure() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.state(CPU.RunState.STATE_RUNNING);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.observedStep(DecodedInstruction.of(0, 1, "NOP", "00"), OptionalInt.of(1), true);
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            assertEquals(List.of(0), session.observedInstructionsBefore(1, 8));
+
+            IllegalStateException failed = new IllegalStateException("CPU failed");
+            assertSame(failed, assertThrows(IllegalStateException.class, () -> session.runExecution(() -> {
+                assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+                throw failed;
+            }, java.util.concurrent.CompletableFuture.completedFuture(null))));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+        }
+    }
+
+    @Test
+    public void manualAndTimedStepsRetainExactInstructionObservation() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            java.util.concurrent.atomic.AtomicInteger steps = new java.util.concurrent.atomic.AtomicInteger();
+            CountDownLatch finished = new CountDownLatch(1);
+            machineExecution.addExecutionListener(state -> {
+                if (state == CPU.RunState.STATE_STOPPED_NORMAL) finished.countDown();
+            });
+            when(machine.cpu.step()).thenAnswer(call -> {
+                assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+                int at = steps.getAndIncrement();
+                machine.observedStep(DecodedInstruction.of(at, 1, "NOP", "00"), OptionalInt.of(at + 1), true);
+                return at >= 2 ? CPU.RunState.STATE_STOPPED_NORMAL : CPU.RunState.STATE_STOPPED_BREAK;
+            });
+            machineExecution.step().join();
+            machineExecution.step(1, TimeUnit.MILLISECONDS).join();
+            await(finished);
+            machineExecution.runCompletion().join();
+            assertEquals(List.of(0, 1, 2), session.observedInstructionsBefore(3, 8));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+        }
+    }
+
+    @Test
+    public void breakpointEditsKeepOrdinaryRunTraced() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            machine.state(CPU.RunState.STATE_RUNNING);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.observedStep(DecodedInstruction.of(0, 1, "NOP", "00"), OptionalInt.of(1), true);
+            session.setBreakpoint(1, true).join();
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            assertTrue(machine.beforeStep(1));
+            session.setBreakpoint(1, false).join();
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            assertEquals(List.of(0), session.observedInstructionsBefore(1, 8));
+        }
+    }
+
+    @Test
+    public void recordingChangesRetainInstructionTracingDuringRun() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            machine.state(CPU.RunState.STATE_RUNNING);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            session.startNewRecording(1, InstructionRecording.Mode.FIRST, 0, 0);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+            session.setRecordingPaused(true);
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.observedStep(DecodedInstruction.of(0, 1, "NOP", "00"), OptionalInt.of(1), true);
+            session.setRecordingPaused(false);
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+            StepView first = instruction(1);
+            capture(session, first);
+            assertEquals(List.of(first), views(session));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.observedStep(DecodedInstruction.of(1, 1, "NOP", "00"), OptionalInt.of(2), true);
+            session.record(2);
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+            session.record(0);
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            assertEquals(List.of(0, 1), session.observedInstructionsBefore(2, 8));
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+        }
+    }
+
+    @Test
+    public void fileRecordingKeepsExactCaptureAfterFirstBufferIsFull() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            Path file = temporary.newFolder().toPath().resolve("run.emutrace");
+            machine.state(CPU.RunState.STATE_RUNNING);
+            session.startNewRecording(1, InstructionRecording.Mode.FIRST, 0, 0);
+            session.recordTo(file);
+            capture(session, instruction(1));
+            capture(session, instruction(2));
+            assertEquals(Debugging.Capture.FULL, machine.captureMode.get());
+            assertEquals(1, session.recording.events().size());
+            session.stopRecordingFile();
+            assertFalse(machine.beforeStep(0));
+            assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+            try (InstructionRecording.Reader reader = new InstructionRecording.Reader(file)) {
+                assertEquals(2, reader.nextPage(10).size());
+            }
+        }
+    }
+
+    @Test
+    public void recordingModeHandoffsNeverDropExecutedInstructionFlow() throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
+        java.util.concurrent.atomic.AtomicInteger before = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.concurrent.atomic.AtomicInteger after = new java.util.concurrent.atomic.AtomicInteger();
+        DebuggingSupport support = new DebuggingSupport(() -> {}, before::incrementAndGet,
+                () -> { after.incrementAndGet(); return addressInstruction(1, 1); }, active -> {});
+        doAnswer(call -> support.observe(call.getArgument(0), call.getArgument(1)))
+                .when(machine.debug).observe(any(), any(Debugging.Capture.class));
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
+            machine.state(CPU.RunState.STATE_RUNNING);
+            assertTrue(support.begin());
+            session.startNewRecording(2, InstructionRecording.Mode.LAST, 0, 0);
+            assertFalse(support.isCapturing());
+            support.end(true, Optional.of(DecodedInstruction.of(0, 1, "NOP", "00")), OptionalInt.of(1));
+            assertEquals(1, session.observedEdges(0).size());
+            assertTrue(session.recording.events().isEmpty());
+            assertEquals(0, after.get());
+
+            assertTrue(support.begin());
+            support.end(true, Optional.of(DecodedInstruction.of(1, 1, "NOP", "00")), OptionalInt.of(2));
+            assertEquals(1, session.recording.events().size());
+            assertEquals(1, before.get());
+            assertEquals(1, after.get());
+
+            assertTrue(support.begin());
+            session.setRecordingPaused(true);
+            support.end(true, Optional.of(DecodedInstruction.of(2, 1, "NOP", "00")), OptionalInt.of(3));
+            assertEquals(List.of(0, 1, 2), session.observedInstructionsBefore(3, 8));
+            assertEquals(1, session.recording.events().size());
+            assertEquals(2, before.get());
+            assertEquals(2, after.get());
+            machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+        }
+    }
+
     @Test(timeout = 5000)
     public void sourceCaptureBecomesReadyAfterListenersObservePausedState() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);

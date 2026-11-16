@@ -48,6 +48,20 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerPanelTest {
     @Test
+    public void instructionTracingHasNoSeparateRunControl() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {})) {
+            SwingUtilities.invokeAndWait(() -> {
+                assertNull(findComponent(workspace.panel, AbstractButton.class, "Trace instructions during Run"));
+            });
+            workspace.machine.state(CPU.RunState.STATE_RUNNING);
+            SwingUtilities.invokeAndWait(() -> {
+                assertNull(findComponent(workspace.panel, AbstractButton.class, "Trace instructions during Run"));
+            });
+            workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
+        }
+    }
+
+    @Test
     public void foldedListingSelectionKeepsSummaryAndDisablesAmbiguousPopupActions() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[16]}, 16, session -> {
             for (int at = 0; at < 12; at++) observed(session, at, OptionalInt.of(at + 1));

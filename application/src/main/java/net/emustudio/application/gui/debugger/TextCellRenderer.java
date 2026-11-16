@@ -76,7 +76,7 @@ class TextCellRenderer extends DefaultTableCellRenderer {
     private static final class FoldMarker implements Icon {
         private final boolean expanded;
         private FoldMarker(boolean expanded) { this.expanded = expanded; }
-        @Override public int getIconWidth() { return 10; }
+        @Override public int getIconWidth() { return 12; }
         @Override public int getIconHeight() { return 10; }
         @Override public void paintIcon(Component component, Graphics graphics, int x, int y) {
             graphics.setColor(component.getForeground());
@@ -89,12 +89,12 @@ class TextCellRenderer extends DefaultTableCellRenderer {
     private static final class Marker implements Icon {
         private final boolean current;
         private Marker(boolean current) { this.current = current; }
-        @Override public int getIconWidth() { return 10; }
-        @Override public int getIconHeight() { return 10; }
+        @Override public int getIconWidth() { return 12; }
+        @Override public int getIconHeight() { return 14; }
         @Override public void paintIcon(Component component, Graphics graphics, int x, int y) {
             if (current) {
                 graphics.setColor(component.getForeground());
-                graphics.fillPolygon(new int[] {x + 1, x + 8, x + 1}, new int[] {y + 1, y + 5, y + 9}, 3);
+                graphics.fillPolygon(new int[] {x + 1, x + 11, x + 1}, new int[] {y + 1, y + 7, y + 13}, 3);
             }
         }
     }

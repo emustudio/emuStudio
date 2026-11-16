@@ -110,7 +110,7 @@ public final class InstructionRecording implements AutoCloseable {
     }
 
     synchronized boolean requiresFullCapture() {
-        return (limit > 0 && !paused) || writer != null;
+        return (limit > 0 && !paused && (mode != Mode.FIRST || captured < limit)) || writer != null;
     }
 
     public synchronized Path path() { return path; }
