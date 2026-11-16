@@ -420,8 +420,7 @@ final class RecordingPanel extends JPanel {
         }
         Step step = steps.get(selected);
         boolean folded = step.folded();
-        StringBuilder text = new StringBuilder("Sequence " + step.sequences() + " · " + step.location() + " · "
-                + step.summary() + "\n");
+        StringBuilder text = new StringBuilder(step.location() + " · " + step.summary() + "\n");
         if (folded) text.append(step.size())
                 .append(" matching steps; unfold to inspect each event.\n");
         String section = null;

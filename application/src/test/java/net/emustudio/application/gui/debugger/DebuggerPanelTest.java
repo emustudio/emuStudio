@@ -757,7 +757,7 @@ public class DebuggerPanelTest {
                 assertEquals("2FBB", timeline.getValueAt(1, 1));
                 timeline.setRowSelectionInterval(1, 1);
                 assertTrue(component(workspace.panel, JTextPane.class, "Recorded instruction state")
-                        .getText().contains("Sequence 3617235"));
+                        .getText().startsWith("2FBB · nop\n"));
                 assertTrue(workspace.session.recording.events().isEmpty());
             });
         }
@@ -828,7 +828,7 @@ public class DebuggerPanelTest {
 
                 assertEquals(2, timeline.getRowCount());
                 assertEquals(0, timeline.getSelectedRow());
-                assertTrue(detail.getText().contains("Sequence 1 ·"));
+                assertTrue(detail.getText().startsWith("0000 · INC (HL)\n"));
             });
             verify(workspace.session.cpu, never()).setInstructionLocation(anyInt());
         }
