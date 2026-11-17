@@ -100,21 +100,41 @@ public final class FlowAnalysis {
     /** Session-confined accumulation; only an explicit successful CPU reset clears observations. */
     static final class Observations {
         private static final int MAX_CACHED_BLOCKS = 4096;
+        private static final int MAX_CACHED_STEPS = 16384;
         private final NavigableMap<Integer, DecodedInstruction> instructions = new TreeMap<>();
         private final Map<Integer, Set<Integer>> successors = new TreeMap<>();
         private final Map<Integer, Set<Integer>> predecessors = new TreeMap<>();
         // Reuse immutable block facts until any executed instruction changes the current code facts.
         private final Map<ExecutedBlock, Long> mergedBlocks = new IdentityHashMap<>();
+        private final Map<DecodedInstruction, MergedStep> mergedSteps = new IdentityHashMap<>();
         private int lastExecutedAddress = -1;
         private long revision;
         private long instructionFactsGeneration;
 
+        private static final class MergedStep {
+            long generation;
+            int nextAddress;
+
+            MergedStep(long generation, int nextAddress) {
+                this.generation = generation;
+                this.nextAddress = nextAddress;
+            }
+        }
+
         void executed(DecodedInstruction instruction, OptionalInt nextAddress) {
             revision++;
             lastExecutedAddress = instruction.address();
+            int next = nextAddress.orElse(-1);
+            MergedStep merged = mergedSteps.get(instruction);
+            if (merged != null && merged.generation == instructionFactsGeneration && merged.nextAddress == next) return;
             putInstruction(instruction);
-            if (nextAddress.isPresent() && nextAddress.getAsInt() >= 0) {
-                addEdge(instruction.address(), nextAddress.getAsInt());
+            if (next >= 0) addEdge(instruction.address(), next);
+            if (merged == null) {
+                if (mergedSteps.size() >= MAX_CACHED_STEPS) mergedSteps.clear();
+                mergedSteps.put(instruction, new MergedStep(instructionFactsGeneration, next));
+            } else {
+                merged.generation = instructionFactsGeneration;
+                merged.nextAddress = next;
             }
         }
 
@@ -152,6 +172,7 @@ public final class FlowAnalysis {
             successors.clear();
             predecessors.clear();
             mergedBlocks.clear();
+            mergedSteps.clear();
             instructionFactsGeneration = 0;
             lastExecutedAddress = -1;
         }

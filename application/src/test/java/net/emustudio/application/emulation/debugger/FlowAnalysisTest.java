@@ -18,6 +18,59 @@ public class FlowAnalysisTest {
     private final MemoryAnnotations annotations = new MemoryAnnotations();
 
     @Test
+    public void repeatedSingleStepsKeepEveryExecutionAndNewBranchDestination() {
+        DecodedInstruction first = DecodedInstruction.of(100, 1, "FIRST", "01");
+        DecodedInstruction branch = DecodedInstruction.of(101, 1, "BRANCH", "02");
+        observations.executed(first, OptionalInt.of(101));
+        observations.executed(branch, OptionalInt.of(100));
+        observations.executed(first, OptionalInt.of(101));
+        FlowAnalysis before = view(100);
+        observations.executed(branch, OptionalInt.of(100));
+        observations.executed(first, OptionalInt.of(101));
+        observations.executed(branch, OptionalInt.of(200));
+        observations.executed(branch, OptionalInt.empty());
+        observations.executed(branch, OptionalInt.empty());
+
+        assertEquals(8, observations.revision());
+        assertEquals(101, observations.lastExecutedAddress());
+        assertEquals(Set.of("100:101", "101:100", "101:200"), edges(view(100)));
+        assertEquals(Set.of("100:101", "101:100"), edges(before));
+        assertEquals(Map.of(200, "Observed next PC; not executed yet"), view(100).unknown());
+    }
+
+    @Test
+    public void previouslyMergedSingleStepRestoresFactsChangedByBlockExecution() {
+        DecodedInstruction original = DecodedInstruction.of(100, 1, "ORIGINAL", "00");
+        observations.executed(original, OptionalInt.of(101));
+        List<DecodedInstruction> changes = List.of(
+                DecodedInstruction.of(100, 2, "ORIGINAL", "00"),
+                DecodedInstruction.of(100, 1, "CHANGED", "00"),
+                DecodedInstruction.of(100, 1, "ORIGINAL", "FF"));
+        for (DecodedInstruction changed : changes) {
+            observations.executed(new ExecutedBlock(List.of(changed),
+                    List.of(new ExecutedBlock.Transition(100, 200)), 100, 200));
+            observations.executed(original, OptionalInt.of(101));
+            assertEquals("ORIGINAL", view(100).mnemonic(100));
+            assertEquals(101, view(100).nextAddress(100));
+        }
+        assertEquals(Set.of("100:101", "100:200"), edges(view(100)));
+    }
+
+    @Test
+    public void resetAllowsPreviouslyMergedSingleStepToRestoreAllObservations() {
+        DecodedInstruction instruction = DecodedInstruction.of(100, 1, "NOP", "00");
+        observations.executed(instruction, OptionalInt.of(200));
+        observations.executed(instruction, OptionalInt.of(200));
+        observations.reset();
+        observations.executed(instruction, OptionalInt.of(200));
+
+        assertEquals(List.of(100), addresses(view(100)));
+        assertEquals(Set.of("100:200"), edges(view(100)));
+        assertEquals(100, observations.lastExecutedAddress());
+        assertEquals(4, observations.revision());
+    }
+
+    @Test
     public void compactBlockMatchesIndividualExecutionIncludingLoopsAndFinalAddress() {
         DecodedInstruction first = DecodedInstruction.of(100, 1, "FIRST", "01");
         DecodedInstruction loop = DecodedInstruction.of(101, 1, "LOOP", "02");
