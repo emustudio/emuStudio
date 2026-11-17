@@ -18,6 +18,7 @@ final class OptimizedBlock {
     final int start, end, minPointer, maxPointer;
     final ExecutedBlock once, repeated, skipped, continuing;
     private final byte[] encoding;
+    private final long[] observedEpoch = new long[4];
 
     private OptimizedBlock(int start, Profiler.CachedOperation operation, Byte[] memory, Decoder decoder)
             throws InvalidInstructionException {
@@ -74,6 +75,13 @@ final class OptimizedBlock {
 
     boolean pointerInBounds(int pointer, int size) {
         return (long) pointer + minPointer >= 0 && (long) pointer + maxPointer < size;
+    }
+
+    boolean firstObservation(ExecutedBlock path, long epoch) {
+        int index = path == once ? 0 : path == repeated ? 1 : path == skipped ? 2 : 3;
+        if (observedEpoch[index] == epoch) return false;
+        observedEpoch[index] = epoch;
+        return true;
     }
 
     private ExecutedBlock path(List<DecodedInstruction> instructions, List<ExecutedBlock.Transition> prefix, int next) {

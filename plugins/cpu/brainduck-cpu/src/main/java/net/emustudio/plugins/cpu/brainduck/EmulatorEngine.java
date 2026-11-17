@@ -5,6 +5,7 @@ package net.emustudio.plugins.cpu.brainduck;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.plugin.memory.AbstractMemoryContext;
@@ -16,6 +17,8 @@ import java.util.Deque;
 import java.util.Objects;
 
 public class EmulatorEngine {
+    private static final int MAX_BATCH_OPERATIONS = 4096;
+    private static final long BATCH_NANOS = 2_000_000L;
     final static byte I_STOP = 0; // ;
     final static byte I_INC = 1; // >
     final static byte I_DEC = 2; // <
@@ -37,6 +40,8 @@ public class EmulatorEngine {
     private final Profiler profiler;
     private final Decoder decoder;
     private final OptimizedBlock[] optimizedBlocks;
+    private final ExecutionBatch executionBatch;
+    private long observedVersion = -1;
     private int programLimit;
 
     public volatile int IP, P; // registers of the CPU
@@ -84,6 +89,7 @@ public class EmulatorEngine {
         this.profiler = Objects.requireNonNull(profiler);
         decoder = recordingDecoder(rawBankZero(rawMemory));
         optimizedBlocks = new OptimizedBlock[rawMemory.length];
+        executionBatch = new ExecutionBatch(rawMemory.length);
         debugger = new MachineDebugging("BrainDuck", rawBankZero(rawMemory), decoder);
         debugger.register("IP", () -> Integer.toUnsignedLong(IP));
         debugger.register("P", () -> Integer.toUnsignedLong(P));
@@ -95,6 +101,7 @@ public class EmulatorEngine {
         IP = adr; // initialize program counter
         loopPointers.clear();
         profiler.reset();
+        executionBatch.reset();
 
         // find closest "free" address which does not contain a program
         try {
@@ -120,6 +127,7 @@ public class EmulatorEngine {
 
     CPU.RunState step(boolean optimize) {
         debugStopped = false;
+        long beforeBeginVersion = debugger.observationVersion();
         if (!debugger.begin(IP)) {
             debugStopped = true;
             return CPU.RunState.STATE_STOPPED_BREAK;
@@ -127,37 +135,81 @@ public class EmulatorEngine {
         boolean completed = false;
         CPU.RunState result = CPU.RunState.STATE_STOPPED_BAD_INSTR;
         ExecutedBlock block = null;
+        boolean batching = false;
         recording = debugger.requiresAccesses();
         try {
-            if (optimize && IP >= 0 && IP < optimizedBlocks.length && optimizedBlocks[IP] != null
-                    && debugger.canBatchInstructions()) block = executeObservedBlock();
-            result = block == null ? stepInstruction(!debugger.isActive() && optimize)
-                    : CPU.RunState.STATE_STOPPED_BREAK;
+            if (optimize && debugger.canBatchInstructions()) {
+                batching = true;
+                if (observedVersion != beforeBeginVersion || debugger.observationVersion() != beforeBeginVersion)
+                    executionBatch.reset();
+                observedVersion = beforeBeginVersion;
+                executionBatch.begin();
+                try { result = executeObservedBatch(); }
+                finally { block = executionBatch.finish(); }
+            }
+            if (!batching || (block == null && result == CPU.RunState.STATE_STOPPED_BREAK))
+                result = stepInstruction(!debugger.isActive() && optimize);
             completed = result != CPU.RunState.STATE_STOPPED_BAD_INSTR
                     && result != CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
         } finally {
             recording = false;
             if (block != null) debugger.endBlock(block);
-            else debugStopped = debugger.end(completed, IP) && completed
+            else {
+                debugStopped = debugger.end(completed, IP) && completed
                         && result == CPU.RunState.STATE_STOPPED_BREAK;
+                executionBatch.reset();
+            }
         }
         return result;
     }
 
+    private CPU.RunState executeObservedBatch() {
+        Thread thread = Thread.currentThread();
+        long started = System.nanoTime();
+        // Bound pause/settings latency. I/O, stop and failing instructions retain individual callbacks.
+        for (int count = 0; count < MAX_BATCH_OPERATIONS && !thread.isInterrupted(); count++) {
+            if ((count & 63) == 63 && System.nanoTime() - started >= BATCH_NANOS) break;
+            int address = IP;
+            int pointer = P;
+            if (!canExecuteInBatch(address, pointer)) break;
+            OptimizedBlock optimized = optimizedBlocks[address];
+            ExecutedBlock operation = optimized == null ? null : executeObservedBlock(optimized, pointer);
+            if (operation != null) executionBatch.executed(optimizedBlocks[address], operation);
+            else {
+                DecodedInstruction instruction;
+                try { instruction = decoder.decode(address); }
+                catch (InvalidInstructionException failure) { break; }
+                CPU.RunState state = stepInstruction(false);
+                if (state != CPU.RunState.STATE_STOPPED_BREAK) return state;
+                executionBatch.executed(instruction, IP);
+            }
+        }
+        return CPU.RunState.STATE_STOPPED_BREAK;
+    }
+
+    private boolean canExecuteInBatch(int address, int pointer) {
+        if (address < 0 || address >= rawMemory.length) return false;
+        byte opcode = rawMemory[address];
+        if (opcode == I_INC) return pointer < rawMemory.length;
+        if (opcode == I_DEC) return pointer > 0;
+        if (pointer < 0 || pointer >= rawMemory.length) return false;
+        if (opcode == I_INCV || opcode == I_DECV) return true;
+        if (opcode == I_LOOP_START) return rawMemory[pointer] != 0 || profiler.findLoopEnd(address) >= 0;
+        return opcode == I_LOOP_END && !loopPointers.isEmpty();
+    }
+
     /** Null means no guest effects occurred: execute the original instruction instead. */
-    private ExecutedBlock executeObservedBlock() {
-        if (IP < 0 || IP >= optimizedBlocks.length || P < 0 || P >= rawMemory.length) return null;
-        OptimizedBlock block = optimizedBlocks[IP];
-        if (block == null || !block.isCurrent(rawMemory)) return null;
+    private ExecutedBlock executeObservedBlock(OptimizedBlock block, int pointer) {
+        if (pointer < 0 || pointer >= rawMemory.length || !block.isCurrent(rawMemory)) return null;
         Profiler.CachedOperation operation = block.operation;
         if (operation.type == Profiler.CachedOperation.TYPE.SCANLOOP) return executeObservedScan(block);
-        if (!block.pointerInBounds(P, rawMemory.length)) return null;
+        if (!block.pointerInBounds(pointer, rawMemory.length)) return null;
         // Do not bulk-write program memory, including another cached operation's source instructions.
         if (operation.type == Profiler.CachedOperation.TYPE.COPYLOOP
                 || operation.operation == I_INCV || operation.operation == I_DECV) {
-            if ((long) P + block.minPointer < programLimit) return null;
+            if ((long) pointer + block.minPointer < programLimit) return null;
         }
-        int iterations = operation.type == Profiler.CachedOperation.TYPE.COPYLOOP ? rawMemory[P] & 255 : 1;
+        int iterations = operation.type == Profiler.CachedOperation.TYPE.COPYLOOP ? rawMemory[pointer] & 255 : 1;
         if (iterations == 0) {
             IP = block.end;
             return block.skipped;

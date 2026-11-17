@@ -10,6 +10,7 @@ import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Machine-local expression and capture adapter. Never exposes machine data to the host.
@@ -21,6 +22,7 @@ public final class MachineDebugging implements Debugging {
     private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
+    private final AtomicLong observationVersion = new AtomicLong();
     private Map<String, Object> before;
     private String mnemonic = "", opcodes = "";
     private DecodedInstruction instruction;
@@ -53,6 +55,8 @@ public final class MachineDebugging implements Debugging {
 
     public boolean canBatchInstructions() { return support.canBatchInstructions(); }
 
+    long observationVersion() { return observationVersion.get(); }
+
     public void endBlock(ExecutedBlock block) {
         inStep = false;
         support.endBlock(block);
@@ -60,6 +64,7 @@ public final class MachineDebugging implements Debugging {
 
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) {
+        observationVersion.incrementAndGet();
         return support.observe(observer, capture);
     }
 

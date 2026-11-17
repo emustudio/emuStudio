@@ -33,7 +33,7 @@ public class EmulatorPanel extends JPanel {
     private final EmuStudioGui gui;
     private final JPanel statusWindow;
     private final JToolBar toolDebug;
-    private final JPanel panelPages;
+    private final PagesPanel panelPages;
     private final JScrollPane paneDebug;
 
     private final JList<String> lstDevices = new JList<>();
@@ -131,11 +131,12 @@ public class EmulatorPanel extends JPanel {
         panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
         JPanel debuggerPanel = gui.panel("insets 0, fill", "[grow]", "[grow][]");
         debuggerPanel.add(paneDebug, "grow, wrap, hmin 0");
-        debuggerPanel.add(panelPages, "growx");
+        debuggerPanel.add(gui.toolbarScrollPane(panelPages), "growx, hmin pref");
 
         this.inspection = computer.getDebugger().map(session -> new DebuggerPanel(
                 session, execution, (DebugTableImpl) debugTable, debuggerPanel,
                 sourceNavigator, this::refreshDebugTable, gui)).orElse(null);
+        if (inspection != null) inspection.addInstructionAnnotations(panelPages.toolbar());
         this.breakpointAction = new BreakpointAction(() -> {
             if (inspection != null) inspection.showBreakpointDialog(parent);
         });

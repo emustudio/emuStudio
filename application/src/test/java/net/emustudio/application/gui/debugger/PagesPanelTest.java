@@ -87,6 +87,7 @@ public class PagesPanelTest {
             return button;
         }).when(gui).toolbarButton(org.mockito.ArgumentMatchers.<Consumer<ActionEvent>>any(), anyString(), anyString());
         when(gui.panel(anyString(), anyString(), anyString())).thenReturn(new JPanel());
+        when(gui.toolBar()).thenAnswer(invocation -> new JToolBar());
     }
 
     @Test

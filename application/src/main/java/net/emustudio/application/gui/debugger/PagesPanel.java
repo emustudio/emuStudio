@@ -16,12 +16,15 @@ public class PagesPanel extends JPanel {
     private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
     private final EmuStudioGui gui;
+    private final JToolBar tools;
     private int pageSeekLastValue = 10;
 
     private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = Objects.requireNonNull(gui);
+        this.tools = gui.toolBar();
+        tools.setLayout(new MigLayout("insets 0, hidemode 3, gapx 2", "", ""));
     }
 
     public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
@@ -29,6 +32,10 @@ public class PagesPanel extends JPanel {
         pagesPanel.initComponents();
 
         return pagesPanel;
+    }
+
+    public JToolBar toolbar() {
+        return tools;
     }
 
     private void initComponents() {
@@ -47,17 +54,17 @@ public class PagesPanel extends JPanel {
         });
         debugTableModel.addTableModelListener(evt -> fold.setSelected(debugTableModel.isFoldRepeats()));
 
-        JPanel buttonPanel = gui.panel("insets 0, center", "[]0[]0[]0[]0[]0[]0[]", "[]");
-        buttonPanel.add(btnFirst);
-        buttonPanel.add(btnSeekBackward);
-        buttonPanel.add(btnBackward);
-        buttonPanel.add(btnCurrentPage);
-        buttonPanel.add(btnForward);
-        buttonPanel.add(btnSeekForward);
-        buttonPanel.add(fold);
+        tools.add(btnFirst);
+        tools.add(btnSeekBackward);
+        tools.add(btnBackward);
+        tools.add(btnCurrentPage);
+        tools.add(btnForward);
+        tools.add(btnSeekForward);
+        tools.addSeparator();
+        tools.add(fold);
 
         setLayout(new MigLayout("insets 0, fillx", "[grow]", "[]"));
-        add(buttonPanel, "center");
+        add(tools, "growx");
     }
 
     private void seek(String direction, IntConsumer seekPages) {

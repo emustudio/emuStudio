@@ -9,6 +9,7 @@ import static net.emustudio.application.TestCpu.mockCpu;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.UserAnnotations;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugger.DebugTableModel;
@@ -39,6 +40,70 @@ import static org.mockito.Mockito.*;
 
 public class EmulatorPanelTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
+
+    @Test
+    public void listingAnnotationToolbarNavigatesAndSharesUpdatesWithInspection() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = debuggingCpu();
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        DebugTableModel model = createDebugTableModel();
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null,
+                files.newFolder().toPath().resolve("computer.debugger"));
+             EmulationController execution = net.emustudio.application.TestCpu.execution(session)) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            session.config.annotations().add(new UserAnnotations.Entry(42, "buffer", "DATA"));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer, model,
+                    mock(Dialogs.class), execution, null, position -> {}, new EmuStudioGui()));
+            JFrame frame = showInFrame(panel);
+            runOnEdt(() -> frame.setVisible(true));
+            JTabbedPane tabs = findComponent(panel, JTabbedPane.class,
+                    component -> "debuggerViews".equals(component.getName()));
+            JComponent listing = (JComponent) tabs.getComponentAt(tabs.indexOfTab("Debugger"));
+            JComponent inspection = (JComponent) tabs.getComponentAt(tabs.indexOfTab("Inspection"));
+            JTextField search = findComponent(listing, JTextField.class,
+                    component -> "Search annotations".equals(component.getToolTipText()));
+            JTextField inspectionSearch = findComponent(inspection, JTextField.class,
+                    component -> "Search annotations".equals(component.getToolTipText()));
+            int pc = execution.cpuContext().getInstructionLocation();
+
+            runOnEdt(() -> {
+                JToggleButton fold = findToggleButtonByTooltip(listing, "Fold identical repeats");
+                assertSame(fold.getParent(), search.getParent());
+                assertTrue(search.isShowing());
+                assertNotNull(search.getClientProperty("JTextField.leadingIcon"));
+                for (String tooltip : List.of("Annotate inspected address", "Edit selected annotation",
+                        "Delete selected annotation", "Import annotations", "Export annotations")) {
+                    JButton button = findButtonByTooltip(listing, tooltip);
+                    assertSame(search.getParent(), button.getParent());
+                    assertNotNull(button.getIcon());
+                }
+                search.setText("buffer");
+                search.postActionEvent();
+                assertSame(listing, tabs.getSelectedComponent());
+                assertTrue(findButtonByTooltip(listing, "Edit selected annotation").isEnabled());
+                tabs.setSelectedComponent(inspection);
+                assertTrue(findButtonByTooltip(inspection, "Edit selected annotation").isEnabled());
+            });
+            verify(model).showAddress(42);
+            assertEquals(pc, execution.cpuContext().getInstructionLocation());
+
+            session.config.annotations().replace(List.of(new UserAnnotations.Entry(42, "updated", "DATA")));
+            runOnEdt(() -> {
+                search.setText("");
+                JList<?> listingResults = findComponent(search.getComponentPopupMenu(), JList.class, component -> true);
+                JList<?> inspectionResults = findComponent(inspectionSearch.getComponentPopupMenu(), JList.class, component -> true);
+                assertEquals("updated", ((MemoryAnnotations.Entry) listingResults.getModel().getElementAt(0)).text);
+                assertEquals("updated", ((MemoryAnnotations.Entry) inspectionResults.getModel().getElementAt(0)).text);
+                panel.close();
+                assertFalse(search.isEnabled());
+                assertFalse(inspectionSearch.isEnabled());
+                assertNull(search.getComponentPopupMenu());
+                assertNull(inspectionSearch.getComponentPopupMenu());
+            });
+        }
+    }
 
     @Test
     public void unsupportedBreakpointsDisableToolbarAndCannotOpenDialog() throws Exception {

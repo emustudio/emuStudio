@@ -16,6 +16,100 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class OptimizedFlowTest {
+    @Test public void oneBatchIncludesMixedInstructionsAndBothLoopOutcomes() {
+        compare("++[>+<-]>", run -> {}, true);
+        compare("+>[<+>-]<[>+<-]", run -> {}, true);
+    }
+
+    @Test public void batchesStopBeforeDeviceEffectsAndKeepTheirFlow() {
+        Run run = new Run("+>+<-.>.", true, Debugging.Capture.INSTRUCTION);
+        run.engine.step(true);
+        assertEquals(5, run.engine.IP);
+        assertTrue(run.output.isEmpty());
+        run.engine.step(true);
+        assertEquals(List.of((byte) 0), run.output);
+        compare("+>+<-.>.", ignored -> {}, true);
+    }
+
+    @Test public void infiniteLoopsReturnAtBoundedGuestBoundaries() {
+        Run run = new Run("[><]", true, Debugging.Capture.INSTRUCTION);
+        run.memory.write(run.engine.P, (byte) 1);
+        run.engine.step(true);
+        assertEquals(1, run.trace.blocks);
+        assertTrue(run.engine.IP >= 0 && run.engine.IP < 4);
+        assertEquals(Set.of("0:1", "1:2", "2:3", "3:0"), run.trace.edges);
+    }
+
+    @Test public void newObserverReceivesCompleteFactsAfterPreviouslyCompressedBatches() throws Exception {
+        Run run = new Run("[><]", true, Debugging.Capture.INSTRUCTION);
+        run.memory.write(run.engine.P, (byte) 1);
+        run.engine.step(true);
+        run.engine.step(true);
+        run.observation.close();
+        Trace replacement = new Trace(true);
+        run.observation = run.engine.debugger.observe(replacement, Debugging.Capture.INSTRUCTION);
+
+        run.engine.step(true);
+
+        assertEquals(run.trace.instructions, replacement.instructions);
+        assertEquals(run.trace.edges, replacement.edges);
+        assertEquals(run.engine.IP, Integer.parseInt(replacement.edges.stream()
+                .filter(edge -> edge.startsWith(replacement.last + ":"))
+                .findFirst().orElseThrow().split(":")[1]));
+    }
+
+    @Test public void resetRepublishesPreviouslyReportedGraphFacts() {
+        Run run = new Run("[><]", true, Debugging.Capture.INSTRUCTION);
+        run.memory.write(run.engine.P, (byte) 1);
+        run.engine.step(true);
+        Set<String> before = new TreeSet<>(run.trace.edges);
+        run.engine.reset(0);
+        run.trace.instructions.clear();
+        run.trace.edges.clear();
+        run.engine.step(true);
+
+        assertEquals(before, run.trace.edges);
+        assertEquals(Set.of(0, 1, 2, 3), run.trace.instructions.keySet());
+    }
+
+    @Test public void newObserverReceivesPreviouslyCompressedOptimizedPaths() throws Exception {
+        Run run = new Run("+[-]", true, Debugging.Capture.INSTRUCTION);
+        run.engine.step(true);
+        run.observation.close();
+        Trace replacement = new Trace(true);
+        run.observation = run.engine.debugger.observe(replacement, Debugging.Capture.INSTRUCTION);
+        run.engine.IP = 0;
+
+        run.engine.step(true);
+
+        assertEquals(run.trace.instructions, replacement.instructions);
+        assertEquals(run.trace.edges, replacement.edges);
+        assertEquals(3, replacement.last);
+    }
+
+    @Test public void recordingAndCodeChangesCannotLeaveCompressedFactsStale() throws Exception {
+        Run run = new Run("+[-]", true, Debugging.Capture.INSTRUCTION);
+        run.engine.step(true);
+        run.observation.close();
+        run.observation = run.engine.debugger.observe(run.trace, Debugging.Capture.FULL);
+        run.memory.write(0, (byte) 4);
+        run.engine.IP = 0;
+        run.engine.step(true);
+        assertTrue(run.trace.instructions.get(0).endsWith(":04"));
+        assertEquals(1, run.trace.captures);
+        run.observation.close();
+        run.observation = run.engine.debugger.observe(run.trace, Debugging.Capture.INSTRUCTION);
+        run.memory.write(0, (byte) 3);
+        run.engine.IP = 0;
+
+        run.engine.step(true);
+
+        assertTrue(run.trace.instructions.get(0).endsWith(":03"));
+        assertEquals(1, run.trace.last); // 255 + 1 wraps to zero, so the loop body is skipped.
+        assertTrue(run.trace.edges.contains("1:4"));
+        assertEquals(1, run.trace.captures);
+    }
+
     @Test public void repeatsPreserveWrappingStateAndEveryInstructionEdge() {
         compare("+++++>>>---<<<----", run -> run.memory.write(run.engine.P, (byte) 254), true);
     }
@@ -66,16 +160,17 @@ public class OptimizedFlowTest {
         Run run = new Run("++++", true, Debugging.Capture.INSTRUCTION);
         run.engine.P = 0;
         run.engine.step(true);
-        assertEquals(0, run.trace.blocks);
-        assertEquals(1, run.engine.IP);
-        assertEquals(4, run.memory.read(0).intValue());
+        assertEquals(1, run.trace.blocks);
+        assertEquals(4, run.engine.IP);
+        assertEquals(7, run.memory.read(0).intValue());
+        assertTrue(run.trace.instructions.get(0).endsWith(":03"));
     }
 
     @Test public void instructionFactsFollowChangedBytesWithoutReset() {
         Run run = new Run("++++", true, Debugging.Capture.INSTRUCTION);
         run.memory.write(0, (byte) 4);
         run.engine.step(true);
-        assertEquals(1, run.engine.IP);
+        assertEquals(4, run.engine.IP);
         assertTrue(run.trace.instructions.get(0).endsWith(":04"));
         run.memory.write(0, (byte) 3);
         run.engine.IP = 0;
@@ -100,11 +195,11 @@ public class OptimizedFlowTest {
         compare("+++[->+.<]>>,,..", run -> {}, true);
     }
 
-    @Test public void zeroStrideScanRemainsInterruptibleAtOriginalBoundaries() {
+    @Test public void zeroStrideScanRemainsBoundedWithoutSkippingItsLoop() {
         Run run = new Run("[><]", true, Debugging.Capture.INSTRUCTION);
         run.memory.write(run.engine.P, (byte) 1);
         for (int i = 0; i < 20; i++) run.engine.step(true);
-        assertEquals(0, run.trace.blocks);
+        assertTrue(run.engine.IP >= 0 && run.engine.IP < 4);
     }
 
     private static void compare(String code, Consumer<Run> prepare, boolean expectBatch) {
@@ -132,6 +227,7 @@ public class OptimizedFlowTest {
         final List<Byte> output = new ArrayList<>();
         final Trace trace;
         final EmulatorEngine engine;
+        AutoCloseable observation;
 
         Run(String code, boolean batching, Debugging.Capture capture) {
             byte[] program = new byte[code.length() + 1];
@@ -146,7 +242,7 @@ public class OptimizedFlowTest {
             engine = new EmulatorEngine(memory, context, new Profiler(memory));
             engine.reset(0);
             trace = new Trace(batching);
-            engine.debugger.observe(trace, capture);
+            observation = engine.debugger.observe(trace, capture);
         }
 
         CPU.RunState finish(boolean optimized) {

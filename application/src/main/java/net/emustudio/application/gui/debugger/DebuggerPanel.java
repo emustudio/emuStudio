@@ -26,6 +26,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +73,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final WatchesPanel watchesPanel;
     private final RecordingPanel recordingPanel;
     private final AnnotationEditor annotationEditor;
-    private AnnotationSearchPanel search;
+    private final List<AnnotationSearchPanel> searches = new ArrayList<>();
     private final JTabbedPane tabs = new JTabbedPane();
     private final Map<JComponent, BooleanSupplier> enablers = new LinkedHashMap<>();
     private JToggleButton followPc;
@@ -213,6 +214,13 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         return watchesPanel;
     }
 
+    public void addInstructionAnnotations(JToolBar tools) {
+        if (session.cpu.getAddressSpaceSize() < 1) return;
+        tools.addSeparator();
+        searches.add(new AnnotationSearchPanel(gui, session, annotationEditor, annotationSelection, tools,
+                () -> inspectedAddress, entry -> guard(() -> navigate(entry.start))));
+    }
+
     public void setAddressSelectionListener(AddressSelectionListener listener) {
         addressSelectionListener = Objects.requireNonNull(listener);
     }
@@ -267,7 +275,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (disposed) return;
         disposed = true;
         recordingPanel.close();
-        if (search != null) search.close();
+        searches.forEach(AnnotationSearchPanel::close);
         execution.cpuContext().removeCPUListener(stateListener);
         execution.removeExecutionListener(executionListener);
         session.annotationEngine.removeListener(annotationListener);
@@ -290,7 +298,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         long annotationRevision = session.annotationEngine.revision();
         if (annotationRevision != appliedAnnotationRevision) {
             appliedAnnotationRevision = annotationRevision;
-            if (search != null) search.refresh();
+            searches.forEach(AnnotationSearchPanel::refresh);
             repaintLabels();
         }
         if (execution.isStepping()) return;
@@ -387,7 +395,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateActions() {
         enablers.forEach((component, enabled) -> component.setEnabled(enabled.getAsBoolean()));
-        if (search != null) search.updateState();
+        searches.forEach(AnnotationSearchPanel::updateState);
         recordingPanel.updateControls();
         annotationEditor.updateState();
         graph.repaint();
@@ -424,7 +432,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void activateView() {
         int previous = inspectedAddress;
-        if (search != null) search.hideResults();
+        searches.forEach(AnnotationSearchPanel::hideResults);
         if (tabs.getSelectedComponent() == recordingPanel) recordingPanel.refresh();
         if (isInstructionView()) {
             inspectedAddress = lastInstructionAddress;
@@ -546,8 +554,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         actions.add(graph.zoomControl());
         if (session.cpu.getAddressSpaceSize() > 0) {
             JToolBar flowAnnotations = gui.toolbarRow(tools);
-            search = new AnnotationSearchPanel(gui, session, annotationEditor, annotationSelection, flowAnnotations,
-                    () -> inspectedAddress, entry -> inspectAddress(entry.start, true, () -> graph.reveal(entry.start)));
+            searches.add(new AnnotationSearchPanel(gui, session, annotationEditor, annotationSelection, flowAnnotations,
+                    () -> inspectedAddress, entry -> inspectAddress(entry.start, true, () -> graph.reveal(entry.start))));
         }
         panel.add(gui.toolbarScrollPane(tools), BorderLayout.NORTH);
         panel.add(graph.scrollPane(gui), BorderLayout.CENTER);
