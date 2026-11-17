@@ -6,7 +6,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_BREAKPOINTS;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
@@ -15,7 +14,7 @@ public class BreakpointAction extends AbstractAction {
     private final Runnable showDialog;
 
     public BreakpointAction(Runnable showDialog) {
-        super("Set breakpoint...", loadIcon(ICON_BREAKPOINTS));
+        super("Set breakpoint...", loadIcon("/net/emustudio/application/gui/icons/breakpoints.png"));
         putValue(SHORT_DESCRIPTION, "Set breakpoint...");
 
         this.showDialog = Objects.requireNonNull(showDialog);

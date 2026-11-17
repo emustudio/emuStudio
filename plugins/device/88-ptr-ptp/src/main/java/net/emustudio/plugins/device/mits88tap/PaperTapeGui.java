@@ -5,7 +5,6 @@ package net.emustudio.plugins.device.mits88tap;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -48,16 +47,16 @@ final class PaperTapeGui extends DialogBase {
         this.gui = gui;
         readerStatus = gui.labelBold("No tape loaded");
         punchStatus = gui.labelBold("No output tape");
-        load = button(StandardIcons.ICON_LOAD, "Load");
+        load = button("/net/emustudio/plugins/device/mits88tap/icons/load.png", "Load");
         load.addActionListener(event -> {
             Path selected = tapeList.getSelectedValue();
             if (selected != null) { loadReader(selected); }
         });
-        rewind = button(StandardIcons.ICON_RESET, "Rewind");
+        rewind = button("/net/emustudio/plugins/device/mits88tap/icons/reset.png", "Rewind");
         rewind.addActionListener(event -> { tape.rewindReader(); refresh(); });
-        eject = button(StandardIcons.ICON_EJECT, "Eject");
+        eject = button("/net/emustudio/plugins/device/mits88tap/icons/eject.png", "Eject");
         eject.addActionListener(event -> { tape.detachReader(); refresh(); });
-        closeOutput = button(StandardIcons.ICON_STOP, "Close output");
+        closeOutput = button("/net/emustudio/plugins/device/mits88tap/icons/stop.png", "Close output");
         closeOutput.addActionListener(event -> { tape.detachPunch(); refresh(); });
         tapeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tapeList.addListSelectionListener(event -> load.setEnabled(tapeList.getSelectedValue() != null));
@@ -87,7 +86,7 @@ final class PaperTapeGui extends DialogBase {
         browse.addActionListener(event -> dialogs
                 .chooseDirectory("Select tape directory", "Select", directory)
                 .ifPresent(this::selectDirectory));
-        browse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE, PaperTapeGui.class));
+        browse.setIcon(GUI.loadIcon("/net/emustudio/plugins/device/mits88tap/icons/open-file.png", PaperTapeGui.class));
         browse.setText("");
         browse.setToolTipText("Select directory");
         JToolBar directoryToolbar = gui.toolBar();
@@ -96,7 +95,7 @@ final class PaperTapeGui extends DialogBase {
         directories.add(directoryName, "growx");
         directories.add(directoryToolbar);
         JToolBar availableToolbar = gui.toolBar();
-        JButton refreshTapes = button(StandardIcons.ICON_REFRESH, "Refresh");
+        JButton refreshTapes = button("/net/emustudio/plugins/device/mits88tap/icons/reset.png", "Refresh");
         refreshTapes.addActionListener(event -> refreshTapes());
         availableToolbar.add(refreshTapes);
         availableToolbar.add(Box.createHorizontalGlue());
@@ -119,7 +118,7 @@ final class PaperTapeGui extends DialogBase {
         punch.add(tapeInfo(punchFile, punchStatus), "growx, wrap");
         punch.add(gui.label("<html>Guest software writes tape through CPU port 13h.<br>Opening an output tape replaces its existing contents."), "growx, wrap");
         JToolBar punchToolbar = gui.toolBar();
-        JButton savePunch = button(StandardIcons.ICON_SAVE, "Save tape");
+        JButton savePunch = button("/net/emustudio/plugins/device/mits88tap/icons/save.png", "Save tape");
         savePunch.addActionListener(event -> choosePunch());
         punchToolbar.add(savePunch);
         punchToolbar.add(Box.createHorizontalGlue());

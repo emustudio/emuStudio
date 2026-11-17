@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /**
  * Watch expressions with their current values; edits are applied through the debugger session.
@@ -93,7 +92,7 @@ final class WatchesPanel extends JPanel {
                 session.config.save();
             });
             expression.setText("");
-        }), ICON_ADD, "Add");
+        }), "/net/emustudio/application/gui/icons/add.png", "Add");
         expression.addActionListener(e -> add.doClick());
         format.addActionListener(e -> {
             if (!updatingFormats) refresh();
@@ -114,9 +113,9 @@ final class WatchesPanel extends JPanel {
                         session.config.watches.remove(selected);
                         session.config.save();
                     });
-                }), ICON_REMOVE, "Remove"),
-                gui.toolbarButton(event -> live.accept(() -> edit(watches.getSelectedRow())), ICON_RENAME, "Edit watch"),
-                gui.toolbarButton(event -> live.accept(() -> update.accept(() -> {})), ICON_REFRESH, "Refresh"));
+                }), "/net/emustudio/application/gui/icons/remove.png", "Remove"),
+                gui.toolbarButton(event -> live.accept(() -> edit(watches.getSelectedRow())), "/net/emustudio/application/gui/icons/rename.png", "Edit watch"),
+                gui.toolbarButton(event -> live.accept(() -> update.accept(() -> {})), "/net/emustudio/application/gui/icons/reset.png", "Refresh"));
         watchTools.addSeparator();
         watchTools.add(format);
         add(gui.toolbarScrollPane(tools), BorderLayout.NORTH);

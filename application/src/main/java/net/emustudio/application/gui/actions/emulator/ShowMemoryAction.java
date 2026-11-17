@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_GRID;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class ShowMemoryAction extends AbstractAction {
@@ -20,7 +19,7 @@ public class ShowMemoryAction extends AbstractAction {
     private final Dialogs dialogs;
 
     public ShowMemoryAction(JFrame parent, VirtualComputer computer, Dialogs dialogs) {
-        super("Show memory...", loadIcon(ICON_GRID));
+        super("Show memory...", loadIcon("/net/emustudio/application/gui/icons/grid.png"));
         putValue(SHORT_DESCRIPTION, "Show operating memory");
         this.parent = Objects.requireNonNull(parent);
         this.computer = Objects.requireNonNull(computer);

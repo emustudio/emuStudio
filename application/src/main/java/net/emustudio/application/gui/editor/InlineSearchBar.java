@@ -11,7 +11,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /** Inline search scoped to the active source view or a captured selection. */
 public final class InlineSearchBar extends JPanel {
@@ -35,7 +34,7 @@ public final class InlineSearchBar extends JPanel {
         find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
         JToolBar navigation = gui.toolBar();
         replacementToggle = gui.toolbarToggleButton(e -> setReplacementVisible(
-                ((JToggleButton) e.getSource()).isSelected()), ICON_REPLACE, "Show replacement controls");
+                ((JToggleButton) e.getSource()).isSelected()), "/net/emustudio/application/gui/icons/replace.png", "Show replacement controls");
         replacementToggle.setIcon(new ArrowIcon(true, true));
         replacementToggle.setFocusable(true);
         replacementToggle.getAccessibleContext().setAccessibleName("Show replacement controls");
@@ -43,12 +42,12 @@ public final class InlineSearchBar extends JPanel {
         JPanel matching = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         for (JToggleButton option : new JToggleButton[]{matchCase, word, regex, selection}) matching.add(option);
         JToolBar navigationMatches = gui.toolBar();
-        JButton previous = button(gui, navigationMatches, ICON_MOVE_UP, "Previous match", () -> next(false));
+        JButton previous = button(gui, navigationMatches, "/net/emustudio/application/gui/icons/move-up.png", "Previous match", () -> next(false));
         previous.setIcon(new ArrowIcon(false, true));
-        JButton next = button(gui, navigationMatches, ICON_MOVE_DOWN, "Next match", () -> next(true));
+        JButton next = button(gui, navigationMatches, "/net/emustudio/application/gui/icons/move-down.png", "Next match", () -> next(true));
         next.setIcon(new ArrowIcon(false, false));
         JToolBar closing = gui.toolBar();
-        JButton close = button(gui, closing, ICON_REMOVE, "Close search", () -> { setVisible(false); active.get().grabFocus(); });
+        JButton close = button(gui, closing, "/net/emustudio/application/gui/icons/remove.png", "Close search", () -> { setVisible(false); active.get().grabFocus(); });
         close.setIcon(new CloseIcon());
         add(navigation); add(find); add(matching); add(navigationMatches); add(closing, "wrap");
         add(count, "skip 1, span, wrap");

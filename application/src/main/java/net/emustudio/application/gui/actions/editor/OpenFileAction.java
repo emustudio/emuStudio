@@ -11,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_OPEN_FILE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class OpenFileAction extends AbstractAction {
@@ -21,7 +20,7 @@ public class OpenFileAction extends AbstractAction {
     private final Runnable updateTitle;
 
     public OpenFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
-        super("Open...", loadIcon(ICON_OPEN_FILE));
+        super("Open...", loadIcon("/net/emustudio/application/gui/icons/open-file.png"));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);

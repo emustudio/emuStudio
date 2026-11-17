@@ -7,7 +7,6 @@ import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class LoadingDialog extends DialogBase {
@@ -25,7 +24,7 @@ public class LoadingDialog extends DialogBase {
         JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblLoading = gui.labelBold("Loading computer, please wait...");
-        lblLoading.setIcon(loadIcon(ICON_MOTHERBOARD));
+        lblLoading.setIcon(loadIcon("/net/emustudio/application/gui/icons/motherboard.png"));
 
         panel.add(lblLoading, "wrap, gapbottom 10");
         panel.add(gui.label("If you see some errors, please see the log file."), "wrap");

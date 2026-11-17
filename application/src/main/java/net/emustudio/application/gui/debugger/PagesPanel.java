@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.IntConsumer;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 public class PagesPanel extends JPanel {
 
@@ -33,12 +32,12 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
-        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
-        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
-        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
-        JButton btnSeekBackward = gui.toolbarButton(evt -> seek("backward", debugTableModel::seekBackwardPage), ICON_PAGE_SEEK_BACKWARD, "Seek pages backward");
-        JButton btnSeekForward = gui.toolbarButton(evt -> seek("forward", debugTableModel::seekForwardPage), ICON_PAGE_SEEK_FORWARD, "Seek pages forward");
+        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), "/net/emustudio/application/gui/icons/page-first.png", "Go to the first page");
+        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), "/net/emustudio/application/gui/icons/page-back.png", "Go to the previous page");
+        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), "/net/emustudio/application/gui/icons/page-current.png", "Go to the current page");
+        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), "/net/emustudio/application/gui/icons/run.png", "Go to the next page");
+        JButton btnSeekBackward = gui.toolbarButton(evt -> seek("backward", debugTableModel::seekBackwardPage), "/net/emustudio/application/gui/icons/page-seek-backward.png", "Seek pages backward");
+        JButton btnSeekForward = gui.toolbarButton(evt -> seek("forward", debugTableModel::seekForwardPage), "/net/emustudio/application/gui/icons/page-seek-forward.png", "Seek pages forward");
         JToggleButton fold = gui.toolbarToggleButton(evt -> {},
                 "/net/emustudio/application/gui/icons/emulation/fold.png", "Fold identical repeats");
         fold.setSelected(debugTableModel.isFoldRepeats());

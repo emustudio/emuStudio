@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
@@ -23,7 +22,7 @@ import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
-    private final static String ICON_FILE = StandardIcons.ICON_OPEN_FILE;
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/icons/open-file.png";
     private final Dialogs dialogs;
     private final MemoryContextImpl context;
     private final Runnable repaint;

@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
@@ -12,7 +11,7 @@ import java.util.Objects;
 import static net.emustudio.emulib.application.ui.GUI.loadIcon;
 
 public class AsciiModeAction extends AbstractAction {
-    private final static String ICON_FILE = StandardIcons.ICON_ASCII;
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/icons/ascii.png";
     private final MemoryTableModel tableModel;
     private final JToggleButton btnAsciiMode;
 

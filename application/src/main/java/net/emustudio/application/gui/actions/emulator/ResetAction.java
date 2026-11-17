@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_RESET;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class ResetAction extends AbstractAction {
@@ -16,7 +15,7 @@ public class ResetAction extends AbstractAction {
     private final EmulationController emulationController;
 
     public ResetAction(EmulationController emulationController) {
-        super("Reset", loadIcon(ICON_RESET));
+        super("Reset", loadIcon("/net/emustudio/application/gui/icons/reset.png"));
         putValue(SHORT_DESCRIPTION, "Reset emulation");
         this.emulationController = emulationController;
     }

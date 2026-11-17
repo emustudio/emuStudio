@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /**
  * Browses the current instruction recording and completed captures.
@@ -73,17 +72,17 @@ final class RecordingPanel extends JPanel {
                 refresh();
             }
         });
-        start = gui.toolbarButton(event -> run(this::startRecording), ICON_RECORD, "Start recording");
+        start = gui.toolbarButton(event -> run(this::startRecording), "/net/emustudio/application/gui/icons/record.png", "Start recording");
         start.setName("recordInstructions");
         pause = gui.toolbarToggleButton(event -> run(() -> {
             session.update(() -> session.setRecordingPaused(!session.recording.isPaused())).join();
             refresh();
-        }), ICON_PAUSE, "Pause recording");
-        stop = gui.toolbarButton(event -> run(this::stopRecording), ICON_STOP, "Stop recording");
+        }), "/net/emustudio/application/gui/icons/pause.png", "Pause recording");
+        stop = gui.toolbarButton(event -> run(this::stopRecording), "/net/emustudio/application/gui/icons/stop.png", "Stop recording");
         fold = gui.toolbarToggleButton(event -> {}, "/net/emustudio/application/gui/icons/emulation/fold.png", "Fold identical repeats");
         fold.setSelected(true);
-        rename = gui.toolbarButton(event -> renameRecording(), ICON_RENAME, "Rename recording");
-        delete = gui.toolbarButton(event -> deleteRecording(), ICON_DELETE, "Delete recording");
+        rename = gui.toolbarButton(event -> renameRecording(), "/net/emustudio/application/gui/icons/rename.png", "Rename recording");
+        delete = gui.toolbarButton(event -> deleteRecording(), "/net/emustudio/application/gui/icons/delete.png", "Delete recording");
         capture.add(start);
         capture.add(pause);
         capture.add(stop);
@@ -110,7 +109,7 @@ final class RecordingPanel extends JPanel {
         JPanel detail = gui.section("Recorded state", "", "", "");
         detail.setLayout(new BorderLayout(4, 4));
         JPanel detailTools = gui.toolbarPanel();
-        earlierWrite = gui.toolbarButton(event -> run(this::followLink), ICON_STEP, "Find earlier write");
+        earlierWrite = gui.toolbarButton(event -> run(this::followLink), "/net/emustudio/application/gui/icons/step.png", "Find earlier write");
         navigation.addActionListener(event -> updateNavigation());
         JToolBar memoryActions = gui.toolbarRow(detailTools, showUnchangedValues);
         memoryActions.add(new JSeparator(SwingConstants.VERTICAL), "h 22!");
@@ -210,7 +209,7 @@ final class RecordingPanel extends JPanel {
         stop.setEnabled(available && recording);
         boolean paused = recording && session.recording.isPaused();
         pause.setSelected(paused);
-        EmuStudioGui.toolbarIcon(pause, paused ? ICON_RUN : ICON_PAUSE);
+        EmuStudioGui.toolbarIcon(pause, paused ? "/net/emustudio/application/gui/icons/run.png" : "/net/emustudio/application/gui/icons/pause.png");
         String action = paused ? "Continue recording" : "Pause recording";
         pause.setToolTipText(action);
         pause.getAccessibleContext().setAccessibleName(action);
