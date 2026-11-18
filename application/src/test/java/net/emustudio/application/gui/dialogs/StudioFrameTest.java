@@ -179,12 +179,12 @@ public class StudioFrameTest extends AbstractSwingTest {
             JTabbedPane views = findComponent(frame.getContentPane(), JTabbedPane.class,
                     pane -> "debuggerViews".equals(pane.getName()));
             runOnEdt(() -> {
-                views.setSelectedIndex(views.indexOfTab("Inspection"));
+                views.setSelectedIndex(views.indexOfTab("Recording"));
                 workspace.setSelectedIndex(1);
             });
             assertEquals("Debugger", onEdt(() -> views.getTitleAt(views.getSelectedIndex())));
             runOnEdt(() -> {
-                views.setSelectedIndex(views.indexOfTab("Inspection"));
+                views.setSelectedIndex(views.indexOfTab("Recording"));
                 workspace.setSelectedIndex(0);
                 workspace.setSelectedIndex(1);
             });

@@ -4,7 +4,6 @@ package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.gui.debugger.DebuggerWidgets.Operation;
-import net.emustudio.application.gui.debugger.DebuggerWidgets.Selection;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import org.slf4j.Logger;
@@ -27,14 +26,13 @@ import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
 
 /**
  * Annotation search field with a popup result list, plus the annotation toolbar actions.
- * Activating a result publishes it to the shared annotation selection; previewing with arrow keys does not.
+ * Activating a result navigates to its address; previewing with arrow keys does not.
  */
 final class AnnotationSearchPanel {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationSearchPanel.class);
 
     private final DebuggerSession session;
     private final AnnotationEditor editor;
-    private final Selection<MemoryAnnotations.Entry> selection;
     private final IntSupplier inspectedAddress;
     private final Consumer<MemoryAnnotations.Entry> showAnnotation;
     private final JTextField filter;
@@ -47,11 +45,10 @@ final class AnnotationSearchPanel {
     private boolean closed;
 
     AnnotationSearchPanel(EmuStudioGui gui, DebuggerSession session, AnnotationEditor editor,
-                          Selection<MemoryAnnotations.Entry> selection, JToolBar tools,
+                          JToolBar tools,
                           IntSupplier inspectedAddress, Consumer<MemoryAnnotations.Entry> showAnnotation) {
         this.session = Objects.requireNonNull(session);
         this.editor = Objects.requireNonNull(editor);
-        this.selection = Objects.requireNonNull(selection);
         this.inspectedAddress = Objects.requireNonNull(inspectedAddress);
         this.showAnnotation = Objects.requireNonNull(showAnnotation);
         filter = gui.searchField("Search annotations", 14,
@@ -95,7 +92,6 @@ final class AnnotationSearchPanel {
             results.setVisible(false);
             filter.requestFocusInWindow();
         });
-        selection.listen(this::select);
 
         add = button(gui, "add-annotation", "Annotate inspected address", () -> {
             editor.showDialog(inspectedAddress.getAsInt(), "New annotation", null);
@@ -171,7 +167,7 @@ final class AnnotationSearchPanel {
         filter.setComponentPopupMenu(null);
     }
 
-    /** Re-reads user annotations, keeping the previewed row and refreshing the shared selection. */
+    /** Re-reads user annotations, keeping the previewed row. */
     void refresh() {
         List<MemoryAnnotations.Entry> all = AnnotationEditor.userAnnotations(session.annotationEngine.all());
         MemoryAnnotations.Entry previewed = list.getSelectedValue();
@@ -181,27 +177,11 @@ final class AnnotationSearchPanel {
                 .collect(Collectors.toList());
         EmuStudioGui.updateRows(rows, entries);
         if (previewed != null) list.setSelectedIndex(EmuStudioGui.rowOf(rows, entry -> entry.entryId == previewed.entryId));
-        MemoryAnnotations.Entry selected = selection.get();
-        if (selected != null)
-            selection.set(all.stream().filter(entry -> entry.entryId == selected.entryId).findFirst().orElse(null));
         updateState();
         empty.setText(all.isEmpty()
                 ? "<html>No annotations yet.<br>Select an address and create an annotation.</html>"
                 : "<html>No matching annotations.<br>Change Search annotations.</html>");
         ((CardLayout) resultCards.getLayout()).show(resultCards, entries.isEmpty() ? "empty" : "list");
-    }
-
-    private void select(MemoryAnnotations.Entry annotation) {
-        if (annotation == null) {
-            list.clearSelection();
-            return;
-        }
-        int row = EmuStudioGui.rowOf(rows, entry -> entry.entryId == annotation.entryId);
-        if (row < 0 && !filter.getText().isEmpty()) {
-            filter.setText("");
-            row = EmuStudioGui.rowOf(rows, entry -> entry.entryId == annotation.entryId);
-        }
-        if (row >= 0) list.setSelectedIndex(row);
     }
 
     private void showResults() {
@@ -227,7 +207,6 @@ final class AnnotationSearchPanel {
         MemoryAnnotations.Entry entry = list.getSelectedValue();
         if (entry == null) return;
         editor.loadEntry(AnnotationEditor.editable(entry));
-        selection.set(entry);
         results.setVisible(false);
         showAnnotation.accept(entry);
     }

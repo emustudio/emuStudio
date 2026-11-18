@@ -4,12 +4,9 @@ package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.emulation.debugger.FlowAnalysis;
 import net.emustudio.application.emulation.debugger.InstructionRecording;
 import net.emustudio.application.emulation.debugger.SourceAddressMap;
-import net.emustudio.application.emulation.debugger.UserAnnotations;
 import net.emustudio.application.gui.debugger.DebuggerWidgets.Operation;
-import net.emustudio.application.gui.debugger.DebuggerWidgets.Selection;
 import net.emustudio.application.gui.dialogs.BreakpointDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
@@ -26,7 +23,6 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +52,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private AddressSelectionListener addressSelectionListener = (address, visit) -> {};
-    private Runnable inspectionReadyListener = () -> {};
     private Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebuggerSession session;
@@ -67,18 +62,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private final DebugTableImpl table;
     private final DebugTableModel instructionModel;
     private final JComponent instructionView;
-    private final Selection<MemoryAnnotations.Entry> annotationSelection =
-            new Selection<>((first, second) -> first.entryId == second.entryId);
-    private final FlowGraphPanel graph;
     private final WatchesPanel watchesPanel;
     private final RecordingPanel recordingPanel;
     private final AnnotationEditor annotationEditor;
-    private final List<AnnotationSearchPanel> searches = new ArrayList<>();
+    private AnnotationSearchPanel search;
     private final JTabbedPane tabs = new JTabbedPane();
     private final Map<JComponent, BooleanSupplier> enablers = new LinkedHashMap<>();
-    private JToggleButton followPc;
-    private boolean disposed, running, pcMoved, readyPending = true;
-    private int inspectedAddress, lastInstructionAddress;
+    private boolean disposed, running, pcMoved;
+    private int selectedAddress, lastInstructionAddress;
     private CPU.RunState appliedState;
     private int appliedPc;
     private long appliedAnnotationRevision = -1;
@@ -112,16 +103,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         this.breakpointsChanged = Objects.requireNonNull(breakpointsChanged);
         instructionModel = table.instructionModel();
         lastInstructionAddress = execution.cpuContext().getInstructionLocation();
-        inspectedAddress = lastInstructionAddress;
+        selectedAddress = lastInstructionAddress;
         instructionModel.setDebuggerSession(session);
         table.setFlowNavigation(address -> guard(() -> navigate(address)));
-        graph = new FlowGraphPanel(session, annotationSelection,
-                () -> sourceMappingsCurrent ? compiledSymbols.get() : List.of(),
-                (address, navigate) -> guard(() -> {
-                    if (navigate) navigate(address);
-                    else inspectAddress(address, false, () -> selectListingInstruction(address));
-                }), this::editAnnotation);
-        graph.addPropertyChangeListener("selectedNode", event -> updateActions());
         watchesPanel = new WatchesPanel(gui, session, this::live, this::submitUpdate);
         recordingPanel = new RecordingPanel(gui, session);
         annotationEditor = new AnnotationEditor(gui, this, session);
@@ -142,7 +126,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.setName("debuggerViews");
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
-        tabs.addTab("Inspection", flowPanel());
         tabs.addTab("Recording", recordingPanel);
         add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(event -> activateView());
@@ -158,16 +141,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void installSelectionMenu() {
         JPopupMenu selectionMenu = new JPopupMenu();
-        JMenuItem inspect = new JMenuItem("Inspect");
-        inspect.addActionListener(event -> guard(() -> {
-            int address = selectedInstructionAddress();
-            navigate(address);
-            tabs.setSelectedIndex(tabs.indexOfTab("Inspection"));
-            analyzeFlow(address);
-        }));
         JMenuItem goToSource = new JMenuItem("Go to source");
         goToSource.addActionListener(event -> guard(() -> showSource(selectedInstructionAddress())));
-        selectionMenu.add(inspect);
         selectionMenu.add(goToSource);
         selectionMenu.addSeparator();
         JMenuItem toggleBreakpoint = new JMenuItem("Set breakpoint");
@@ -182,7 +157,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
                 boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running
                         && !instructionModel.isFolded(table.convertRowIndexToModel(table.getSelectedRow()));
-                inspect.setEnabled(enabled);
                 goToSource.setEnabled(enabled);
                 int address = enabled ? selectedRowAddress() : -1;
                 toggleBreakpoint.setEnabled(address >= 0 && isBreakpointDialogSupported());
@@ -217,16 +191,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void addInstructionAnnotations(JToolBar tools) {
         if (session.cpu.getAddressSpaceSize() < 1) return;
         tools.addSeparator();
-        searches.add(new AnnotationSearchPanel(gui, session, annotationEditor, annotationSelection, tools,
-                () -> inspectedAddress, entry -> guard(() -> navigate(entry.start))));
+        search = new AnnotationSearchPanel(gui, session, annotationEditor, tools,
+                () -> selectedAddress, entry -> guard(() -> navigate(entry.start)));
     }
 
     public void setAddressSelectionListener(AddressSelectionListener listener) {
         addressSelectionListener = Objects.requireNonNull(listener);
-    }
-
-    public void setInspectionReadyListener(Runnable listener) {
-        inspectionReadyListener = Objects.requireNonNull(listener);
     }
 
     public void setSourceMappingsCurrent(boolean current) {
@@ -241,17 +211,15 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void repaintLabels() {
-        graph.labelsChanged();
         instructionModel.refreshFolding();
         table.repaint();
     }
 
-    /** Automatic source following keeps the active analysis tab. */
+    /** Automatic source following keeps the active debugger view. */
     public void synchronizeSourceAddress(SourceAddressMap.Location location) {
         if (!location.instruction) return;
         alignInstructionAddress(location.address);
         inspectAddress(location.address, true, () -> {
-            graph.reveal(location.address);
             selectListingInstruction(location.address);
         });
     }
@@ -275,7 +243,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (disposed) return;
         disposed = true;
         recordingPanel.close();
-        searches.forEach(AnnotationSearchPanel::close);
+        if (search != null) search.close();
         execution.cpuContext().removeCPUListener(stateListener);
         execution.removeExecutionListener(executionListener);
         session.annotationEngine.removeListener(annotationListener);
@@ -293,12 +261,12 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     /** Brings all views up to date with the emulator state; runs on the EDT. */
     private void sync() {
         if (disposed) return;
-        annotations();
+        if (session.cpu.getAddressSpaceSize() > 0) session.config.annotations();
         watchesPanel.refresh();
         long annotationRevision = session.annotationEngine.revision();
         if (annotationRevision != appliedAnnotationRevision) {
             appliedAnnotationRevision = annotationRevision;
-            searches.forEach(AnnotationSearchPanel::refresh);
+            if (search != null) search.refresh();
             repaintLabels();
         }
         if (execution.isStepping()) return;
@@ -320,17 +288,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         }
         instructionModel.refreshFolding();
         table.repaint();
-        if (followPc.isSelected() && graph.hasFlow()) {
-            if (!graph.current() || graph.selectedNode() != pc) {
-                guard(() -> analyzeFlow(graph.start(), true, pc));
-            } else if (graph.foldControl().isSelected() && graph.layoutPc() != pc) graph.relayout();
-        }
-        if (readyPending) ready();
-    }
-
-    private void ready() {
-        readyPending = false;
-        inspectionReadyListener.run();
     }
 
     private void followPc(int pc) {
@@ -395,15 +352,9 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void updateActions() {
         enablers.forEach((component, enabled) -> component.setEnabled(enabled.getAsBoolean()));
-        searches.forEach(AnnotationSearchPanel::updateState);
+        if (search != null) search.updateState();
         recordingPanel.updateControls();
         annotationEditor.updateState();
-        graph.repaint();
-    }
-
-    private JButton inspectionButton(String icon, String tooltip, Operation operation) {
-        return gui.toolbarButton(event -> guard(operation),
-                "/net/emustudio/application/gui/icons/inspection/" + icon + ".png", tooltip);
     }
 
     public void showInstructions() {
@@ -412,10 +363,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     public boolean isInstructionView() {
         return tabs.getSelectedComponent() == instructionView;
-    }
-
-    public void showSelectedSource() {
-        guard(() -> showSource(inspectedAddress));
     }
 
     private int selectedInstructionAddress() {
@@ -431,18 +378,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void activateView() {
-        int previous = inspectedAddress;
-        searches.forEach(AnnotationSearchPanel::hideResults);
+        int previous = selectedAddress;
+        if (search != null) search.hideResults();
         if (tabs.getSelectedComponent() == recordingPanel) recordingPanel.refresh();
         if (isInstructionView()) {
-            inspectedAddress = lastInstructionAddress;
+            selectedAddress = lastInstructionAddress;
             if (table.getSelectedRow() >= 0) selectInstructionAddress();
             table.getAccessibleContext().setAccessibleName("Instruction listing");
         }
         updateActions();
         revalidate();
         repaint();
-        if (inspectedAddress != previous) notifyAddressSelection(false);
+        if (selectedAddress != previous) notifyAddressSelection(false);
     }
 
     public boolean isBreakpointDialogSupported() {
@@ -453,7 +400,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (!isBreakpointDialogSupported()) return;
         if (table.getSelectedRow() >= 0 && instructionModel.isFolded(table.convertRowIndexToModel(table.getSelectedRow())))
             navigate(selectedRowAddress());
-        BreakpointDialog dialog = new BreakpointDialog(parent, gui, inspectedAddress,
+        BreakpointDialog dialog = new BreakpointDialog(parent, gui, selectedAddress,
                 session.cpu.getAddressSpaceSize(), session::isBreakpointSet,
                 this::applyBreakpointRequest);
         dialog.setLocationRelativeTo(parent);
@@ -479,15 +426,14 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void followAddress(int at) {
         int row = table.getSelectedRow();
         if (row >= 0 && instructionModel.isFolded(table.convertRowIndexToModel(row)) && selectedRowAddress() == at) {
-            inspectedAddress = lastInstructionAddress = at;
+            selectedAddress = lastInstructionAddress = at;
             return;
         }
-        if (at != inspectedAddress) guard(() -> navigate(at));
+        if (at != selectedAddress) guard(() -> navigate(at));
     }
 
     public void navigate(int at) {
         inspectAddress(at, true, () -> {
-            graph.reveal(at);
             selectListingInstruction(at);
             showInstructions();
         });
@@ -495,7 +441,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
 
     private void selectListingInstruction(int at) {
         lastInstructionAddress = at;
-        inspectedAddress = at;
+        selectedAddress = at;
         instructionModel.showAddress(at);
         selectInstructionAddress();
     }
@@ -506,19 +452,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (row >= 0) table.setRowSelectionInterval(table.convertRowIndexToView(row), table.convertRowIndexToView(row));
     }
 
-    /** Moves inspection to the address, lets the views follow, then notifies listeners (visit = user navigation). */
+    /** Selects the address, lets the views follow, then notifies listeners (visit = user navigation). */
     private void inspectAddress(int at, boolean visit, Runnable updateViews) {
         session.requirePaused();
         if (at < 0 || at >= session.cpu.getAddressSpaceSize())
             throw new IllegalArgumentException("Address outside memory");
-        inspectedAddress = at;
+        selectedAddress = at;
         updateViews.run();
         notifyAddressSelection(visit);
     }
 
     private void notifyAddressSelection(boolean visit) {
-        graph.repaint();
-        if (!disposed && !running) addressSelectionListener.selected(inspectedAddress, visit);
+        if (!disposed && !running) addressSelectionListener.selected(selectedAddress, visit);
     }
 
     private void showSource(int at) {
@@ -526,65 +471,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 .ifPresentOrElse(sourceNavigator, () -> {
                     throw new IllegalStateException("No current source mapping at this address");
                 });
-    }
-
-    private JPanel flowPanel() {
-        JPanel panel = gui.panel("", "", "");
-        panel.setLayout(new BorderLayout());
-        JPanel tools = gui.toolbarPanel();
-        JToolBar actions = gui.toolbarRow(tools);
-        String followTooltip = "Show instructions from PC";
-        followPc = enabledWhen(gui.toolbarToggleButton(event -> {},
-                "/net/emustudio/application/gui/icons/inspection/follow-pc.png", followTooltip), () -> !running);
-        followPc.addActionListener(event -> {
-            updateActions();
-            if (followPc.isSelected()) guard(() -> {
-                int pc = execution.cpuContext().getInstructionLocation();
-                analyzeFlow(pc, true, pc);
-            });
-        });
-        actions.add(followPc);
-        actions.add(enabledWhen(inspectionButton("refresh-flow", "Refresh instruction flow", this::refreshFlowFromSelection),
-                () -> !running && !followPc.isSelected()));
-        actions.addSeparator();
-        actions.add(enabledWhen(inspectionButton("go-to-instruction", "Go to instruction", graph::followSelectedNode),
-                () -> !running && graph.hasSelectedNode()));
-        actions.add(Box.createHorizontalGlue(), "pushx, growx");
-        actions.add(enabledWhen(graph.foldControl(), () -> !running));
-        actions.add(graph.zoomControl());
-        if (session.cpu.getAddressSpaceSize() > 0) {
-            JToolBar flowAnnotations = gui.toolbarRow(tools);
-            searches.add(new AnnotationSearchPanel(gui, session, annotationEditor, annotationSelection, flowAnnotations,
-                    () -> inspectedAddress, entry -> inspectAddress(entry.start, true, () -> graph.reveal(entry.start))));
-        }
-        panel.add(gui.toolbarScrollPane(tools), BorderLayout.NORTH);
-        panel.add(graph.scrollPane(gui), BorderLayout.CENTER);
-        return panel;
-    }
-
-    private void refreshFlowFromSelection() {
-        int address = table.getSelectedRow() >= 0 ? selectedRowAddress()
-                : graph.selectedNode() >= 0 ? graph.selectedNode() : lastInstructionAddress;
-        analyzeFlow(address);
-    }
-
-    private void analyzeFlow(int address) {
-        followPc.setSelected(false);
-        updateActions();
-        analyzeFlow(address, false, address);
-    }
-
-    private void analyzeFlow(int address, boolean fromPc, int selection) {
-        FlowAnalysis flow = session.analyzeFlow(address);
-        graph.setFlow(flow, address, selection);
-        updateActions();
-        if (fromPc) graph.selectNode(selection);
-        ready();
-    }
-
-    /** User annotations, or null when the CPU has no address space; recreated after a memory size change. */
-    private UserAnnotations annotations() {
-        return session.cpu.getAddressSpaceSize() > 0 ? session.config.annotations() : null;
     }
 
     private List<MemoryAnnotations.Entry> annotationsCovering(int address) {
@@ -604,10 +490,10 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private Color annotationBackground(int address) {
         List<MemoryAnnotations.Entry> entries = annotationsCovering(address);
         if (entries.isEmpty()) return null;
-        Color background = graph.getBackground();
-        if (background == null) background = table.getBackground();
+        Color background = table.getBackground();
         for (MemoryAnnotations.Entry entry : entries) {
-            Color lane = FlowGraphPanel.laneColor(entry);
+            int hue = Math.floorMod((entry.start * 31 + entry.end) * 0x9E3779B9, 360);
+            Color lane = Color.getHSBColor(hue / 360f, .55f, .78f);
             background = new Color((lane.getRed() * 28 + background.getRed() * 227 + 127) / 255,
                     (lane.getGreen() * 28 + background.getGreen() * 227 + 127) / 255,
                     (lane.getBlue() * 28 + background.getBlue() * 227 + 127) / 255);
@@ -622,11 +508,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 .filter(entry -> entry.kind.equals("label"))
                 .map(entry -> entry.text.trim()).filter(label -> !label.isEmpty()).distinct()
                 .collect(Collectors.joining(", "));
-    }
-
-    private void editAnnotation(UserAnnotations.Entry entry) {
-        live(() -> annotationEditor.showDialog(entry.address,
-                entry.id < 0 ? "New annotation" : "Edit annotation", entry));
     }
 
 }

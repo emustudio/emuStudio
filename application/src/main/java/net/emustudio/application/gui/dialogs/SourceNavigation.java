@@ -123,7 +123,6 @@ final class SourceNavigation implements AutoCloseable {
         activeSource = editor.getCurrentFile().map(java.io.File::toPath).orElse(null);
         editor.setSourcePositionChanged(this::sourceSelected);
         debugger.setAddressSelectionListener(this::addressSelected);
-        debugger.setInspectionReadyListener(() -> editor.currentSourcePosition().ifPresent(this::sourceSelected));
         debugger.setSymbols(() -> session.sourceMappings().map(SourceAddressMap::symbols).orElseGet(java.util.List::of));
         debugger.setSourceMappingsCurrent(false);
         if (compiler != null) compiler.addCompilerListener(listener);
@@ -201,6 +200,5 @@ final class SourceNavigation implements AutoCloseable {
         if (compiler != null) compiler.removeCompilerListener(listener);
         editor.setSourcePositionChanged(position -> {});
         debugger.setAddressSelectionListener((address, visit) -> {});
-        debugger.setInspectionReadyListener(() -> {});
     }
 }

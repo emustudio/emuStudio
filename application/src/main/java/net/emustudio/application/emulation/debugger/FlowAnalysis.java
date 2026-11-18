@@ -3,74 +3,25 @@
 package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
-import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugin.debugger.ExecutedBlock;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.function.Consumer;
 
-/** Immutable view of instructions and transitions actually observed during execution. */
+/** Observed instruction adjacency used by the listing and repeated-instruction folding. */
 public final class FlowAnalysis {
-    private final FlowGraph graph;
-    private final Map<Integer, DecodedInstruction> instructions;
-    private final Map<Integer, String> unknown;
-    private final MemoryAnnotations annotations;
-
-    private FlowAnalysis(Map<Integer, DecodedInstruction> captured, Set<FlowGraph.Edge> edges,
-                         Set<Integer> destinations, MemoryAnnotations annotations) {
-        instructions = Map.copyOf(captured);
-        Map<Integer, FlowGraph.Instruction> geometry = new TreeMap<>();
-        captured.forEach((address, instruction) -> geometry.put(address, new FlowGraph.Instruction(
-                new FlowGraph.Range(address, (int) Math.min(Integer.MAX_VALUE, (long) address + instruction.length())))));
-        graph = new FlowGraph(geometry, edges);
-        Map<Integer, String> pending = new TreeMap<>();
-        for (int address : destinations) if (!captured.containsKey(address))
-            pending.put(address, "Observed next PC; not executed yet");
-        unknown = Map.copyOf(pending);
-        this.annotations = annotations;
-    }
-
-    public boolean isCurrent(DebuggerSession session) { return session.flowAnalysis() == this; }
-    public FlowGraph.Instruction instructionAt(int address) { return graph.instructionAt(address); }
-    public int nextAddress(int address) {
-        FlowGraph.Instruction instruction = instructionAt(address);
-        return instruction == null ? -1 : instruction.cells().end;
-    }
-    public String mnemonic(int address) {
-        DecodedInstruction instruction = instructions.get(address);
-        return instruction == null ? "" : instruction.mnemonic();
-    }
-    public Map<Integer, String> unknown() { return unknown; }
-    public boolean isData(int address) {
-        return annotations.at(address).stream().anyMatch(annotation ->
-                (annotation.ownerId == UserAnnotations.OWNER && annotation.kind.equals("DATA"))
-                        || annotation.kind.equals("data"));
-    }
-
-    /** Folding follows observed adjacency only; no opcode or transfer classification. */
-    public List<List<Integer>> instructionRuns(Set<Integer> addresses, Set<Integer> boundaries) {
-        Map<Integer, List<Integer>> incoming = new HashMap<>();
-        Map<Integer, List<Integer>> outgoing = new HashMap<>();
-        forEachEdge((from, to) -> {
-            incoming.computeIfAbsent(to, ignored -> new ArrayList<>()).add(from);
-            outgoing.computeIfAbsent(from, ignored -> new ArrayList<>()).add(to);
-        });
-        return instructionRuns(instructions, incoming, outgoing, addresses, boundaries);
-    }
+    private FlowAnalysis() { }
 
     private static List<List<Integer>> instructionRuns(Map<Integer, DecodedInstruction> instructions,
             Map<Integer, ? extends Collection<Integer>> incoming,
-            Map<Integer, ? extends Collection<Integer>> outgoing, Set<Integer> addresses, Set<Integer> boundaries) {
+            Map<Integer, ? extends Collection<Integer>> outgoing) {
         List<List<Integer>> runs = new ArrayList<>();
         Integer previous = null;
         List<Integer> run = null;
-        for (int address : new TreeSet<>(addresses)) {
+        for (int address : instructions.keySet()) {
             DecodedInstruction next = instructions.get(address);
             DecodedInstruction before = previous == null ? null : instructions.get(previous);
             Collection<Integer> in = incoming.get(address), out = previous == null ? null : outgoing.get(previous);
             boolean extendsRun = identicalAdjacentInstructions(before, next)
-                    && !boundaries.contains(previous) && !boundaries.contains(address)
                     && in != null && in.size() == 1 && in.contains(previous)
                     && out != null && out.size() == 1 && out.contains(address);
             if (!extendsRun) {
@@ -89,12 +40,6 @@ public final class FlowAnalysis {
                 && (long) before.address() + before.length() == next.address() && before.length() == next.length()
                 && !next.mnemonic().isBlank() && before.mnemonic().equals(next.mnemonic())
                 && !next.encoding().isBlank() && before.encoding().equals(next.encoding());
-    }
-
-    public void forEachInstruction(Consumer<? super FlowGraph.Instruction> visitor) { graph.instructions(visitor); }
-    public void forEachEdge(FlowGraph.EdgeVisitor visitor) {
-        Objects.requireNonNull(visitor);
-        graph.instructions(instruction -> graph.successors(instruction.cells().start, visitor));
     }
 
     /** Session-confined accumulation; only an explicit successful CPU reset clears observations. */
@@ -182,7 +127,7 @@ public final class FlowAnalysis {
         long revision() { return revision; }
 
         List<List<Integer>> instructionRuns() {
-            return FlowAnalysis.instructionRuns(instructions, predecessors, successors, instructions.keySet(), Set.of());
+            return FlowAnalysis.instructionRuns(instructions, predecessors, successors);
         }
 
         List<Edge> edgesAt(int address) {
@@ -210,40 +155,6 @@ public final class FlowAnalysis {
             return next == null ? -1 : next;
         }
 
-        FlowAnalysis view(int root, MemoryAnnotations annotations) {
-            if (root < 0) throw new IllegalArgumentException("Invalid observed flow root");
-            Set<Integer> reachable = reachableFrom(root);
-            Map<Integer, DecodedInstruction> selected = new TreeMap<>();
-            for (int address : reachable) {
-                DecodedInstruction instruction = instructions.get(address);
-                if (instruction != null) selected.put(address, instruction);
-            }
-            Set<FlowGraph.Edge> edges = new TreeSet<>();
-            for (int address : selected.keySet()) {
-                for (int target : successors.getOrDefault(address, Set.of())) {
-                    if (reachable.contains(target)) edges.add(new FlowGraph.Edge(address, target));
-                }
-            }
-            return new FlowAnalysis(selected, edges, reachable, annotations);
-        }
-
-        private Set<Integer> reachableFrom(int root) {
-            Set<Integer> reachable = new HashSet<>();
-            Deque<Integer> pending = new ArrayDeque<>();
-            if (instructions.containsKey(root) || successors.values().stream().anyMatch(targets -> targets.contains(root))) {
-                pending.add(root);
-                reachable.add(root);
-            }
-            while (!pending.isEmpty()) {
-                if (Thread.currentThread().isInterrupted()) throw new CancellationException();
-                int address = pending.removeFirst();
-                if (!instructions.containsKey(address)) continue;
-                for (int target : successors.getOrDefault(address, Set.of())) {
-                    if (reachable.add(target)) pending.addLast(target);
-                }
-            }
-            return reachable;
-        }
     }
 
     public static final class Edge {

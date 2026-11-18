@@ -96,10 +96,7 @@ public class UtilsTest extends AbstractSwingTest {
             StudioFrame frame = waitForWindow(StudioFrame.class, window -> "emuStudio [Startup test]".equals(window.getTitle()));
             DebuggerPanel debugger = findComponent(frame, DebuggerPanel.class, panel -> true);
             try {
-                JToggleButton find = findToggleButtonByTooltip(debugger, "Show instructions from PC");
-                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-                while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-                assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));
+                assertTrue(onEdt(debugger::isInstructionView));
                 verify(cpu).getDebuggerColumns(any());
                 verify(memory, never()).read(anyInt());
                 verify(dialogs, never()).showError(anyString(), anyString());

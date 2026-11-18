@@ -42,7 +42,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test
-    public void listingAnnotationToolbarNavigatesAndSharesUpdatesWithInspection() throws Exception {
+    public void listingAnnotationToolbarNavigatesAndRefreshesUpdates() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = debuggingCpu();
         when(cpu.getAddressSpaceSize()).thenReturn(256);
@@ -61,10 +61,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             JTabbedPane tabs = findComponent(panel, JTabbedPane.class,
                     component -> "debuggerViews".equals(component.getName()));
             JComponent listing = (JComponent) tabs.getComponentAt(tabs.indexOfTab("Debugger"));
-            JComponent inspection = (JComponent) tabs.getComponentAt(tabs.indexOfTab("Inspection"));
+            assertEquals(-1, tabs.indexOfTab("Inspection"));
             JTextField search = findComponent(listing, JTextField.class,
-                    component -> "Search annotations".equals(component.getToolTipText()));
-            JTextField inspectionSearch = findComponent(inspection, JTextField.class,
                     component -> "Search annotations".equals(component.getToolTipText()));
             int pc = execution.cpuContext().getInstructionLocation();
 
@@ -83,8 +81,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 search.postActionEvent();
                 assertSame(listing, tabs.getSelectedComponent());
                 assertTrue(findButtonByTooltip(listing, "Edit selected annotation").isEnabled());
-                tabs.setSelectedComponent(inspection);
-                assertTrue(findButtonByTooltip(inspection, "Edit selected annotation").isEnabled());
             });
             verify(model).showAddress(42);
             assertEquals(pc, execution.cpuContext().getInstructionLocation());
@@ -93,14 +89,10 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             runOnEdt(() -> {
                 search.setText("");
                 JList<?> listingResults = findComponent(search.getComponentPopupMenu(), JList.class, component -> true);
-                JList<?> inspectionResults = findComponent(inspectionSearch.getComponentPopupMenu(), JList.class, component -> true);
                 assertEquals("updated", ((MemoryAnnotations.Entry) listingResults.getModel().getElementAt(0)).text);
-                assertEquals("updated", ((MemoryAnnotations.Entry) inspectionResults.getModel().getElementAt(0)).text);
                 panel.close();
                 assertFalse(search.isEnabled());
-                assertFalse(inspectionSearch.isEnabled());
                 assertNull(search.getComponentPopupMenu());
-                assertNull(inspectionSearch.getComponentPopupMenu());
             });
         }
     }
@@ -450,13 +442,12 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             try {
                 JButton step = findButtonByTooltip(panel, "Step forward");
                 JButton run = findButtonByTooltip(panel, "Run emulation");
-                JToggleButton follow = findToggleButtonByTooltip(panel, "Show instructions from PC");
                 java.util.concurrent.atomic.AtomicInteger disabled = new java.util.concurrent.atomic.AtomicInteger();
                 machineExecution.addExecutionListener(state -> {
                     if (state == CPU.RunState.STATE_STOPPED_BREAK) completed.countDown();
                 });
                 runOnEdt(() -> {
-                    for (AbstractButton button : List.of(step, run, follow)) {
+                    for (AbstractButton button : List.of(step, run)) {
                         button.addPropertyChangeListener("enabled", event -> {
                             if (Boolean.FALSE.equals(event.getNewValue())) disabled.incrementAndGet();
                         });
@@ -468,7 +459,6 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 runOnEdt(() -> {
                     assertTrue(step.isEnabled());
                     assertTrue(run.isEnabled());
-                    assertTrue(follow.isEnabled());
                 });
                 release.countDown();
                 assertTrue(completed.await(2, java.util.concurrent.TimeUnit.SECONDS));

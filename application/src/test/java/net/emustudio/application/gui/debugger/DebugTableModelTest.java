@@ -4,7 +4,6 @@ package net.emustudio.application.gui.debugger;
 
 import net.emustudio.application.TestCpu;
 import net.emustudio.application.emulation.debugger.DebuggerSession;
-import net.emustudio.application.emulation.debugger.FlowAnalysis;
 import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.emulib.plugin.cpu.*;
 import net.emustudio.emulib.plugin.debugger.Debugging;
@@ -109,11 +108,9 @@ public class DebugTableModelTest {
         assertEquals(3, model.getLocationAt(1));
         assertEquals(100, model.getLocationAt(2));
         assertEquals(100, model.guessPreviousInstructionLocation());
-        session.analyzeFlow(0);
-        assertNotNull(session.flowAnalysis().instructionAt(100));
     }
 
-    @Test public void steppingRetainsHistoryWithoutRequiringInspectionAnalysis() throws Exception {
+    @Test public void steppingRetainsObservedHistory() throws Exception {
         DebuggerSession session = session(32, 0);
         DebugTableModel model = model(session, 5);
         assertEquals(0, model.getLocationAt(2));
@@ -128,7 +125,6 @@ public class DebugTableModelTest {
         assertEquals(0, model.getLocationAt(0));
         assertEquals(3, model.getLocationAt(1));
         assertEquals(5, model.getLocationAt(2));
-        assertNull(session.flowAnalysis());
     }
 
     @Test public void historyHasNoViewportOrAnalysisSizeLimit() throws Exception {
@@ -159,24 +155,6 @@ public class DebugTableModelTest {
         assertEquals(4, model.getLocationAt(2));
     }
 
-    @Test public void inspectionRootDoesNotAffectListingOrTriggerDecode() throws Exception {
-        DebuggerSession session = session(16, 4);
-        for (int at = 0; at < 8; at++) executed(session, at, 1, at + 1);
-        FlowAnalysis inspection = session.analyzeFlow(0);
-        AtomicInteger calls = new AtomicInteger();
-        when(session.cpu.getDecoder()).thenReturn(at -> {
-            calls.incrementAndGet();
-            return DecodedInstruction.of(at, 1, "NOP", "00");
-        });
-        DebugTableModel model = model(session, 5);
-        assertEquals(2, model.getLocationAt(0));
-        assertSame(inspection, session.flowAnalysis());
-        int initial = calls.get();
-        session.analyzeFlow(6);
-        assertEquals(2, model.getLocationAt(0));
-        assertEquals(initial, calls.get());
-    }
-
     @Test public void browsingPagingAndResizeLeaveCpuAndMarkerIndependent() throws Exception {
         DebuggerSession session = session(64, 20);
         for (int at = 0; at < 20; at++) executed(session, at, 1, at + 1);
@@ -202,7 +180,7 @@ public class DebugTableModelTest {
         return result;
     }
 
-    @Test public void foldsObservedRepeatsWithoutInspectionAndRevealsExactNavigationTargets() throws Exception {
+    @Test public void foldsObservedRepeatsAndRevealsExactNavigationTargets() throws Exception {
         DebuggerSession session = session(32, 12);
         for (int at = 0; at < 12; at++) executed(session, at, 1, at + 1);
         DebugTableModel model = model(session, 7);
@@ -214,7 +192,6 @@ public class DebugTableModelTest {
         assertEquals("00", model.getValueAt(2, 3));
         assertEquals(2, model.rowForAddress(8));
         assertTrue(model.isRowAtCurrentInstruction(3));
-        assertNull(session.flowAnalysis());
 
         model.showAddress(7);
         assertEquals(7, model.getLocationAt(3));
@@ -354,7 +331,6 @@ public class DebugTableModelTest {
         }
         assertEquals(decoded, calls.get());
         assertEquals(prepared, boundaries.get());
-        assertNull(session.flowAnalysis());
     }
 
     @Test public void sourceLineMappingsDoNotPreventFoldingAndNewBranchesRefreshIt() throws Exception {
@@ -370,7 +346,6 @@ public class DebugTableModelTest {
         executed(session, 4, 1, 12);
         assertEquals("NOP × 4", model.getValueAt(4, 2));
         assertEquals("NOP × 3", model.getValueAt(5, 2));
-        assertNull(session.flowAnalysis());
     }
 
     @Test public void foldedSummaryCannotEditAnyMemberUntilExpanded() throws Exception {
@@ -505,8 +480,6 @@ public class DebugTableModelTest {
         DebugTableModel model = model(session, 3);
         assertEquals(0, model.getLocationAt(1));
         assertEquals(1, model.getLocationAt(2));
-        session.analyzeFlow(0);
-        assertEquals(2, session.flowAnalysis().nextAddress(0));
     }
 
     @Test public void columnsReuseUnboundedDecodedCacheUntilMemoryChanges() throws Exception {

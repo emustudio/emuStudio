@@ -129,7 +129,7 @@ public class InstructionFlowColumnTest {
         }
     }
 
-    @Test public void selectionShowsBothDirectionsAndSelfLoopWithoutInspection() throws Exception {
+    @Test public void selectionShowsBothDirectionsAndSelfLoop() throws Exception {
         try (Fixture fixture = new Fixture()) {
             fixture.executed(99, 100);
             fixture.executed(100, 101);
@@ -142,7 +142,6 @@ public class InstructionFlowColumnTest {
                 assertEquals(101, fixture.flow.targetAt(fixture.endpoint(101)));
                 assertTrue(fixture.flow.tooltipAt(fixture.endpoint(99)).contains("0063 → 0064"));
                 assertTrue(fixture.flow.tooltipAt(fixture.endpoint(101)).contains("0064 → 0065"));
-                assertNull(fixture.session.flowAnalysis());
                 fixture.table.clearSelection();
                 assertEquals(0, fixture.paintedPixels());
             });

@@ -69,9 +69,6 @@
     "show.png": "emulation/show.svg"
   },
   "application/src/main/resources/net/emustudio/application/gui/icons/inspection": {
-    "follow-pc.png": "inspection/follow-pc.svg",
-    "refresh-flow.png": "inspection/refresh-flow.svg",
-    "go-to-instruction.png": "inspection/go-to-instruction.svg",
     "search-annotations.png": "inspection/search-annotations.svg",
     "add-annotation.png": "inspection/add-annotation.svg",
     "edit-annotation.png": "inspection/edit-annotation.svg",

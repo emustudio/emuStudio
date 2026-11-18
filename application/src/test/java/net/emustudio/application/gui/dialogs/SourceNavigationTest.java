@@ -444,7 +444,14 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertTrue(onEdt(() -> editor.openFile(path)));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = onEdt(() -> {
-                DebugTableModel model = spy(new DebugTableModel());
+                DebugTableModel model = mock(DebugTableModel.class, withSettings()
+                        .spiedInstance(new DebugTableModel()).defaultAnswer(call -> {
+                            if (call.getMethod().getName().equals("rowForAddress")) {
+                                int address = call.getArgument(0);
+                                return address >= 0 && address < 8 && address % 2 == 0 ? address / 2 : -1;
+                            }
+                            return call.callRealMethod();
+                        }));
                 model.setCPU(cpu, net.emustudio.application.TestCpu.context(cpu));
                 doReturn(4).when(model).getRowCount();
                 doAnswer(c -> (Integer) c.getArgument(0) * 2).when(model).getLocationAt(anyInt());
@@ -468,9 +475,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();
             showInFrame(debugger);
-            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled));
         }
 
         void compile(boolean fail) {

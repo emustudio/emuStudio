@@ -44,7 +44,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private final AtomicLong memoryRevision = new AtomicLong();
     // Source addresses survive execution and its data writes, but not explicit machine edits.
     private final AtomicLong memoryImageRevision = new AtomicLong();
-    private volatile FlowAnalysis flow;
     private final FlowAnalysis.Observations observedFlow = new FlowAnalysis.Observations();
     private long generation;
     private boolean closed;
@@ -170,19 +169,12 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return memoryRevision.get() + annotationEngine.revision();
     }
 
-    /**
-     * Last selected immutable runtime-flow view; independent of current memory contents.
-     */
-    public synchronized FlowAnalysis flowAnalysis() {
-        return closed ? null : flow;
-    }
-
     public synchronized int lastExecutedAddress() {
         return observedFlow.lastExecutedAddress();
     }
 
     /**
-     * Address-ordered predecessors from the same observations used by Inspection.
+     * Address-ordered observed predecessors for the instruction listing.
      */
     public synchronized List<Integer> observedInstructionsBefore(int address, int count) {
         return observedFlow.instructionsBefore(address, count);
@@ -192,12 +184,12 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         return observedFlow.nextInstruction(address);
     }
 
-    /** Direct incoming and outgoing observations, ordered by source then target; leaves Inspection unchanged. */
+    /** Direct incoming and outgoing observations, ordered by source then target; does not change instruction selection. */
     public synchronized List<FlowAnalysis.Edge> observedEdges(int address) {
         return observedFlow.edgesAt(address);
     }
 
-    /** Repeat candidates from all observations; never changes the selected Inspection graph. */
+    /** Repeat candidates from all observations; does not change instruction selection. */
     public synchronized List<List<Integer>> observedInstructionRuns() {
         return observedFlow.instructionRuns();
     }
@@ -211,7 +203,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
      */
     public synchronized void cpuReset() {
         observedFlow.reset();
-        flow = null;
     }
 
     public synchronized void setSourceMappings(SourceAddressMap mappings) {
@@ -292,15 +283,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             if (completedSourceCapture == guard) completedSourceCapture = null;
         }
         guard.ready.complete(null);
-    }
-
-    /**
-     * Select an immutable view of completed runtime observations; never decode or execute memory.
-     */
-    public synchronized FlowAnalysis analyzeFlow(int start) {
-        requirePaused();
-        flow = observedFlow.view(start, annotationEngine);
-        return flow;
     }
 
     /**
@@ -407,7 +389,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         try {
             // The block was authorized before its effects; changed settings apply at this boundary.
             observedFlow.executed(block);
-            flow = null;
             if (observationDirty) updateProbe();
         } finally {
             inObservationCallback = false;
@@ -437,7 +418,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         try {
             if (completed && instruction.isPresent()) {
                 observedFlow.executed(instruction.get(), nextAddress);
-                flow = null;
             }
             boolean fullCapture = recording.requiresFullCapture();
             recording.capture(completed, captured);

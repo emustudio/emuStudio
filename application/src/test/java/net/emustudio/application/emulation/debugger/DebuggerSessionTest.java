@@ -35,27 +35,23 @@ import static org.mockito.Mockito.*;
 
 public class DebuggerSessionTest {
     @Test
-    public void compactBlocksRetainExistingHistoryAndInvalidateOnlyThePublishedView() throws Exception {
+    public void compactBlocksRetainExistingHistoryAndAdvanceRevision() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "BEFORE", OptionalInt.of(1));
-            FlowAnalysis before = session.analyzeFlow(0);
+            List<Integer> before = session.observedInstructionsBefore(3, 8);
             long revision = session.observedFlowRevision();
             session.afterBlock(new ExecutedBlock(List.of(
                     DecodedInstruction.of(2, 1, "LAST", "02"), DecodedInstruction.of(1, 1, "NEXT", "01")),
                     List.of(new ExecutedBlock.Transition(1, 2), new ExecutedBlock.Transition(2, 3)), 2, 3));
 
-            assertNull(session.flowAnalysis());
-            assertNull(before.instructionAt(1));
+            assertEquals(List.of(0), before);
             assertEquals(revision + 1, session.observedFlowRevision());
             assertEquals(2, session.lastExecutedAddress());
             assertEquals(List.of(0, 1, 2), session.observedInstructionsBefore(3, 8));
-            FlowAnalysis after = session.analyzeFlow(0);
-            assertEquals("BEFORE", after.mnemonic(0));
-            assertEquals("NEXT", after.mnemonic(1));
-            assertEquals("LAST", after.mnemonic(2));
-            assertTrue(after.unknown().containsKey(3));
+            assertEquals(List.of("1:2", "2:3"), session.observedEdges(2).stream()
+                    .map(edge -> edge.from + ":" + edge.to).collect(Collectors.toList()));
             assertTrue(session.recording.events().isEmpty());
         }
     }
@@ -335,36 +331,13 @@ public class DebuggerSessionTest {
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "NOP", OptionalInt.of(1));
-            session.analyzeFlow(0);
             session.setBreakpoint(1, true).join();
             session.config.annotations().add(new UserAnnotations.Entry(0, "code", "DATA"));
 
-            FlowAnalysis retained = session.analyzeFlow(0);
-            assertNotNull(retained.instructionAt(0));
-            assertEquals(1, retained.nextAddress(0));
-            assertTrue(retained.isData(0));
+            assertEquals(List.of(0), session.observedInstructionsBefore(2, 8));
+            assertEquals(1, session.observedEdges(0).get(0).to);
+            assertEquals("code", session.config.annotations().get(0).label);
             assertTrue(session.isBreakpointSet(1));
-        }
-    }
-
-    @Test
-    public void newObservedInstructionDoesNotMutateCapturedView() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0, 0}}, 3);
-        try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            observed(session, 0, 1, "FIRST", OptionalInt.of(1));
-            FlowAnalysis first = session.analyzeFlow(0);
-
-            observed(session, 0, 2, "SECOND", OptionalInt.of(2));
-            FlowAnalysis second = session.analyzeFlow(0);
-
-            assertEquals(1, first.nextAddress(0));
-            assertEquals("FIRST", first.mnemonic(0));
-            assertEquals(2, second.nextAddress(0));
-            assertEquals("SECOND", second.mnemonic(0));
-            machine.memoryChanged(1);
-            assertNotNull(session.analyzeFlow(0).instructionAt(0));
-            assertEquals(2, second.nextAddress(0));
         }
     }
 
@@ -547,18 +520,18 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void executionAndMemoryChangesRetainObservedFlowAndItsCapturedSnapshot() throws Exception {
+    public void executionAndMemoryChangesRetainObservedFlow() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
-            FlowAnalysis old = session.analyzeFlow(0);
+            List<FlowAnalysis.Edge> old = session.observedEdges(0);
             session.runExecution(() -> machine.state(CPU.RunState.STATE_RUNNING), java.util.concurrent.CompletableFuture.completedFuture(null));
             machine.state(CPU.RunState.STATE_STOPPED_BREAK);
             machine.memoryChanged(1);
 
-            assertNotNull(session.analyzeFlow(0).instructionAt(0));
-            assertEquals("CAPTURED", old.mnemonic(0));
+            assertEquals(List.of(0), session.observedInstructionsBefore(2, 8));
+            assertEquals(1, old.get(0).to);
         }
     }
 
@@ -579,7 +552,7 @@ public class DebuggerSessionTest {
     }
 
     @Test
-    public void observedFlowFilteringNeverCallsTheLiveDecoder() throws Exception {
+    public void observedFlowQueriesNeverCallTheLiveDecoder() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0, 0}}, 2);
         Decoder decoder = mock(Decoder.class);
         when(machine.cpu.getDecoder()).thenReturn(decoder);
@@ -587,13 +560,14 @@ public class DebuggerSessionTest {
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             observed(session, 0, 1, "CAPTURED", OptionalInt.of(1));
 
-            assertEquals("CAPTURED", session.analyzeFlow(0).mnemonic(0));
+            assertEquals(List.of(0), session.observedInstructionsBefore(2, 8));
+            assertEquals(1, session.observedEdges(0).get(0).to);
             verifyNoInteractions(decoder);
         }
     }
 
     @Test
-    public void incidentEdgesNeedNoAnalysisAndPreserveInspectionSelectionAndMemoryHistory() throws Exception {
+    public void incidentEdgesRetainMemoryHistoryWithoutDecoding() throws Exception {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[4]}, 4);
         Decoder decoder = mock(Decoder.class);
         when(machine.cpu.getDecoder()).thenReturn(decoder);
@@ -603,30 +577,13 @@ public class DebuggerSessionTest {
             observed(session, 1, 1, "OUTGOING", OptionalInt.of(2));
 
             assertEquals(2, session.observedEdges(1).size());
-            assertNull(session.flowAnalysis());
-            FlowAnalysis selected = session.analyzeFlow(1);
-            assertNull(selected.instructionAt(0));
 
             machine.memoryChanged(1);
             List<FlowAnalysis.Edge> edges = session.observedEdges(1);
 
             assertEquals(List.of("0:1", "1:2"),
                     edges.stream().map(edge -> edge.from + ":" + edge.to).collect(Collectors.toList()));
-            assertSame(selected, session.flowAnalysis());
             verifyNoInteractions(decoder);
-        }
-    }
-
-    @Test
-    public void memoryChangesDoNotRewritePreviouslyExecutedInstructionFacts() throws Exception {
-        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{7, 0}}, 2);
-        try (DebuggerSession session = machine.session(null);
-             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            observed(session, 0, 1, "VALUE 7", OptionalInt.of(1));
-            machine.memoryChanged(0);
-            session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
-
-            assertEquals("VALUE 7", session.analyzeFlow(0).mnemonic(0));
         }
     }
 
@@ -636,24 +593,21 @@ public class DebuggerSessionTest {
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertEquals(net.emustudio.emulib.plugin.debugger.Debugging.Capture.INSTRUCTION, machine.captureMode.get());
-            assertNull(session.analyzeFlow(100).instructionAt(100));
+            assertTrue(session.observedInstructionsBefore(256, 256).isEmpty());
             machine.observedStep(DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(103), true);
             machine.observedStep(DecodedInstruction.of(100, 3, "BRANCH", "00 00 00"), OptionalInt.of(200), true);
             machine.observedStep(DecodedInstruction.of(201, 1, "FAILED", "00"), OptionalInt.of(202), false);
             machine.observedStep(null, OptionalInt.of(203), true);
             session.config.annotations().add(new UserAnnotations.Entry(100, "entry", "CODE"));
             machine.memoryChanged(100);
-            session.analyzeFlow(200);
 
-            FlowAnalysis retained = session.analyzeFlow(100);
-            java.util.Set<String> edges = new java.util.HashSet<>();
-            retained.forEachEdge((from, to) -> edges.add(from + "->" + to));
-            assertEquals(Set.of("100->103", "100->200"), edges);
-            assertNull(retained.instructionAt(201));
+            assertEquals(List.of(100), session.observedInstructionsBefore(256, 256));
+            assertEquals(Set.of("100->103", "100->200"), session.observedEdges(100).stream()
+                    .map(edge -> edge.from + "->" + edge.to).collect(Collectors.toSet()));
 
             machineExecution.reset().get(2, TimeUnit.SECONDS);
 
-            assertNull(session.analyzeFlow(100).instructionAt(100));
+            assertTrue(session.observedInstructionsBefore(256, 256).isEmpty());
             assertTrue(session.observedEdges(100).isEmpty());
             assertTrue(session.observedEdges(103).isEmpty());
             assertTrue(session.observedEdges(200).isEmpty());
@@ -671,10 +625,11 @@ public class DebuggerSessionTest {
                     OptionalInt.of(1), Optional.empty());
             session.afterStep(true, Optional.empty(), OptionalInt.of(1), Optional.empty());
 
-            assertNull(session.analyzeFlow(0).instructionAt(0));
+            assertTrue(session.observedInstructionsBefore(2, 8).isEmpty());
 
             observed(session, 0, 1, "DONE", OptionalInt.empty());
-            assertEquals("DONE", session.analyzeFlow(0).mnemonic(0));
+            assertEquals(List.of(0), session.observedInstructionsBefore(2, 8));
+            assertEquals(0, session.lastExecutedAddress());
         }
     }
 
