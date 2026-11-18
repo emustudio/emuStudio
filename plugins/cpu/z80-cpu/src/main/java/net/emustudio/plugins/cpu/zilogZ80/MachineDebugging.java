@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
@@ -20,10 +21,10 @@ public final class MachineDebugging implements Debugging {
     private final String machine;
     private final MemoryContext<?> memory;
     private final Decoder disassembler;
-    private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
+    private final Map<String, LongSupplier> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
-    private Map<String, Object> before;
+    private long[] before = new long[0];
     private String mnemonic = "", opcodes = "";
     private DecodedInstruction instruction;
     private int address, depth;
@@ -33,11 +34,12 @@ public final class MachineDebugging implements Debugging {
         this.machine = machine;
         this.memory = memory;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> activityChanged.accept(active));
+        support = new DebuggingSupport(() -> captureInstruction(address, ""), this::captureBefore, this::captureAfter, active -> activityChanged.accept(active));
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        bindings.put(name, read);
+        before = new long[bindings.size()];
     }
 
     public void onActivityChanged(Consumer<Boolean> callback) {
@@ -163,31 +165,27 @@ public final class MachineDebugging implements Debugging {
     }
 
     private Supplier<Object> binding(String name) {
-        Supplier<Object> binding = bindings.get(name.toUpperCase(Locale.ROOT));
+        LongSupplier binding = bindings.get(name.toUpperCase(Locale.ROOT));
         if (binding == null) throw new IllegalArgumentException("Unknown " + machine + " value: " + name);
-        return binding;
-    }
-
-    private void captureInstruction() {
-        captureInstruction(address, "");
+        return binding::getAsLong;
     }
 
     private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
-
+        int index = 0;
+        for (LongSupplier binding : bindings.values()) before[index++] = binding.getAsLong();
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
+        List<ViewRow> rows = new ArrayList<>(1 + bindings.size() + accesses.size());
         rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value), !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
+        int index = 0;
+        for (Map.Entry<String, LongSupplier> binding : bindings.entrySet()) {
+            long previous = before[index++], value = binding.getValue().getAsLong();
+            rows.add(new ViewRow("State", binding.getKey(), Long.toString(previous), Long.toString(value), previous != value, List.of(), List.of()));
+        }
         for (Access access : accesses) {
             String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04X", access.address), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
+            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + Numbers.formatHex(access.address, 4), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
         }
         return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, hasProgramLocation ? OptionalInt.of(address) : OptionalInt.empty(), rows);
     }

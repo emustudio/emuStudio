@@ -21,8 +21,7 @@ public final class MachineDebugging implements Debugging {
     private final DebuggingSupport support;
     private BiFunction<String, List<Object>, Object> machineFunction;
     private Set<String> machineFunctions = Set.of();
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
+    private Object[] before = new Object[0];
     private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
@@ -35,11 +34,12 @@ public final class MachineDebugging implements Debugging {
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        inspect(name, () -> read.getAsLong());
     }
 
     void inspect(String name, Supplier<?> read) {
         bindings.put(name, read::get);
+        before = new Object[bindings.size()];
     }
 
     void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) {
@@ -115,29 +115,28 @@ public final class MachineDebugging implements Debugging {
     }
 
     private void captureInstruction() {
-        instruction = null;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
     }
 
     private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
+        int index = 0;
+        for (Supplier<Object> binding : bindings.values()) before[index++] = binding.get();
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
+        String mnemonic = instruction == null ? "<invalid instruction>" : instruction.mnemonic();
+        String opcodes = instruction == null ? "<unavailable>" : instruction.encoding();
+        List<ViewRow> rows = new ArrayList<>(1 + bindings.size() + accesses.size());
         rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value), !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
+        int index = 0;
+        for (Map.Entry<String, Supplier<Object>> binding : bindings.entrySet()) {
+            Object previous = before[index++], value = binding.getValue().get();
+            rows.add(new ViewRow("State", binding.getKey(), String.valueOf(previous), String.valueOf(value), !Objects.equals(previous, value), List.of(), List.of()));
+        }
         for (TapeAccess access : accesses) {
             String tag = "RAM/" + access.tape + "/write/" + access.address;
             rows.add(new ViewRow("Tape", (access.write ? "Write " : "Read ") + access.tape + "[" + access.address + "]", String.valueOf(access.before), String.valueOf(access.value), access.write && !Objects.equals(access.before, access.value), access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));

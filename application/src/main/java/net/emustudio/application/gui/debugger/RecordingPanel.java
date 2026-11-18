@@ -17,6 +17,8 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.TabSet;
+import javax.swing.text.TabStop;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -424,11 +426,14 @@ final class RecordingPanel extends JPanel {
                 .append(" matching steps; unfold to inspect each event.\n");
         String section = null;
         List<int[]> headings = new ArrayList<>();
+        FontMetrics metrics = state.getFontMetrics(state.getFont());
+        int labelWidth = 0;
         for (ViewRow row : step.rows()) {
             if (folded && navigational(row)) continue;
             if (!row.changed && !navigational(row) && !showUnchangedValues.isSelected()) continue;
             section = appendSection(text, section, row.group, headings);
-            text.append(row.label).append("    ").append(row.before);
+            labelWidth = Math.max(labelWidth, metrics.stringWidth(row.label));
+            text.append(row.label).append('\t').append(row.before);
             if (row.changed || !row.before.equals(row.after)) text.append(" → ").append(row.after);
             if (folded && row.changed && row.before.equals(row.after)) text.append(" (changed within run)");
             text.append("\n");
@@ -438,8 +443,9 @@ final class RecordingPanel extends JPanel {
             for (ViewRow row : instruction.view.rows) {
                 if (folded && navigational(row)) {
                     section = appendSection(text, section, row.group, headings);
-                    text.append("#").append(instruction.sequence).append(" · ")
-                            .append(row.label).append(" = ");
+                    String label = "#" + instruction.sequence + " · " + row.label;
+                    labelWidth = Math.max(labelWidth, metrics.stringWidth(label));
+                    text.append(label).append("\t= ");
                     if (!row.before.isEmpty() && !row.before.equals(row.after)) text.append(row.before).append(" → ");
                     text.append(row.after).append("\n");
                 }
@@ -450,6 +456,11 @@ final class RecordingPanel extends JPanel {
         }
         navigation.setEnabled(navigation.getItemCount() > 0);
         setState(text.toString());
+        SimpleAttributeSet columns = new SimpleAttributeSet();
+        StyleConstants.setTabSet(columns, new TabSet(new TabStop[]{
+                new TabStop(labelWidth + metrics.stringWidth("    "))
+        }));
+        state.getStyledDocument().setParagraphAttributes(0, text.length(), columns, false);
         SimpleAttributeSet bold = new SimpleAttributeSet();
         StyleConstants.setBold(bold, true);
         for (int[] heading : headings)

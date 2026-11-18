@@ -637,11 +637,12 @@ public class DebuggerPanelTest {
         ViewRow read = new ViewRow("Memory", "Read @0010", "", "1", false, List.of(),
                 List.of(new NavLink("Find earlier write", "memory/write/16")));
         ViewRow unchanged = new ViewRow("State", "A", "0", "0", false, List.of(), List.of());
+        ViewRow pc = new ViewRow("State", "PC", "1135", "1137", true, List.of(), List.of());
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
             SwingUtilities.invokeAndWait(() -> {
                 showRecording(workspace, List.of(
                         event(1, 0, "WRITE", "01", List.of(write), true),
-                        event(2, 1, "READ", "02", List.of(unchanged, read), true)));
+                        event(2, 1, "READ", "02", List.of(pc, unchanged, read), true)));
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 timeline.setRowSelectionInterval(1, 1);
                 JTextPane detail = component(workspace.panel, JTextPane.class, "Recorded instruction state");
@@ -649,9 +650,18 @@ public class DebuggerPanelTest {
                 assertEquals("Read 0x0010", memory.getSelectedItem().toString());
                 assertEquals(java.awt.Font.MONOSPACED, detail.getFont().getFamily());
                 assertEquals(13, timeline.getFont().getSize());
-                assertFalse(detail.getText().contains("A    0"));
+                assertFalse(detail.getText().contains("A\t0"));
                 button(workspace.panel, "Show unchanged values").doClick(0);
-                assertTrue(detail.getText().contains("A    0"));
+                assertTrue(detail.getText().contains("A\t0"));
+                detail.setSize(600, 400);
+                try {
+                    double valueX = detail.modelToView2D(detail.getText().indexOf("1135")).getX();
+                    assertEquals(valueX, detail.modelToView2D(detail.getText().indexOf("A\t0") + 2).getX(), 0.01);
+                    assertEquals(valueX, detail.modelToView2D(detail.getText().indexOf("Read @0010\t")
+                            + "Read @0010\t".length()).getX(), 0.01);
+                } catch (javax.swing.text.BadLocationException failure) {
+                    throw new AssertionError(failure);
+                }
                 for (String section : List.of("State", "Memory")) {
                     int offset = detail.getText().indexOf("\n" + section + "\n") + 1;
                     assertTrue(offset > 0);
@@ -790,8 +800,8 @@ public class DebuggerPanelTest {
                 assertEquals("PC=2FBA→2FBD R=5A→5D", timeline.getValueAt(0, 3));
                 timeline.setRowSelectionInterval(0, 0);
                 String detail = component(workspace.panel, JTextPane.class, "Recorded instruction state").getText();
-                assertTrue(detail.contains("PC    2FBA → 2FBD"));
-                assertTrue(detail.contains("R    5A → 5D"));
+                assertTrue(detail.contains("PC\t2FBA → 2FBD"));
+                assertTrue(detail.contains("R\t5A → 5D"));
                 button(recordingPanel(workspace), "Fold identical repeats").doClick(0);
 
                 assertEquals(3, timeline.getRowCount());
@@ -837,8 +847,8 @@ public class DebuggerPanelTest {
                 timeline.setRowSelectionInterval(0, 0);
                 String detail = component(workspace.panel, JTextPane.class, "Recorded instruction state").getText();
 
-                assertTrue(detail.contains("READ 0003    03"));
-                assertTrue(detail.contains("WRITE 0003    03 → 04"));
+                assertTrue(detail.contains("READ 0003\t03"));
+                assertTrue(detail.contains("WRITE 0003\t03 → 04"));
                 assertEquals(2, component(workspace.panel, JComboBox.class, "Memory navigation").getItemCount());
             });
         }
@@ -859,11 +869,11 @@ public class DebuggerPanelTest {
 
                 assertEquals("A=0→0 WRITE 0003=00→01 WRITE 0003=01→02", timeline.getValueAt(0, 3));
                 assertTrue(detail.getText().contains("0 → 0 (changed within run)"));
-                assertTrue(detail.getText().contains("#1 · WRITE 0003 = 00 → 01"));
-                assertTrue(detail.getText().contains("#2 · WRITE 0003 = 01 → 02"));
+                assertTrue(detail.getText().contains("#1 · WRITE 0003\t= 00 → 01"));
+                assertTrue(detail.getText().contains("#2 · WRITE 0003\t= 01 → 02"));
                 assertEquals(4, access.getItemCount());
-                assertTrue(detail.getText().contains("#1 · READ 0003 = 00"));
-                assertTrue(detail.getText().contains("#2 · READ 0003 = 01"));
+                assertTrue(detail.getText().contains("#1 · READ 0003\t= 00"));
+                assertTrue(detail.getText().contains("#2 · READ 0003\t= 01"));
                 access.setSelectedIndex(2);
                 button(workspace.panel, "Find earlier write").doClick(0);
 
@@ -949,7 +959,7 @@ public class DebuggerPanelTest {
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 timeline.setRowSelectionInterval(0, 0);
                 assertTrue(component(workspace.panel, JTextPane.class, "Recorded instruction state")
-                        .getText().contains("A    1 → 2"));
+                        .getText().contains("A\t1 → 2"));
 
                 workspace.session.startNewRecording(1024, InstructionRecording.Mode.LAST, 0, 0);
                 capture(workspace.session, second);

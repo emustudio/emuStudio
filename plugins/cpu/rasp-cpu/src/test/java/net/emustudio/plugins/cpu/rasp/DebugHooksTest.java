@@ -15,6 +15,70 @@ import static org.junit.Assert.*;
 
 public class DebugHooksTest {
     @Test
+    public void decimalAccessLabelsPreservePaddingSignsAndLargeAddresses() {
+        MachineDebugging debug = new MachineDebugging("RASP",
+                address -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "step", "0"));
+        List<String> labels = new ArrayList<>();
+        debug.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) {
+                capture.orElseThrow().rows.stream().filter(row -> row.group.equals("Memory"))
+                        .forEach(row -> labels.add(row.label));
+                return false;
+            }
+        }, Debugging.Capture.FULL);
+        for (int address : new int[] {0, 9, 10, 999, 1000, 65536, -1, -12, Integer.MIN_VALUE}) {
+            assertTrue(debug.begin(0));
+            debug.access(address, 42, true);
+            debug.end(true, 1);
+        }
+        assertEquals(List.of("Write @0000", "Write @0009", "Write @0010", "Write @0999",
+                "Write @1000", "Write @65536", "Write @-001", "Write @-012", "Write @-2147483648"), labels);
+    }
+
+
+    @Test
+    public void reusedSnapshotsKeepEarlierValuesAndSupportNewBindings() {
+        MachineDebugging debug = new MachineDebugging("rasp", address -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "step", "00"));
+        java.util.concurrent.atomic.AtomicLong value = new java.util.concurrent.atomic.AtomicLong(Long.MIN_VALUE);
+        debug.register("CUSTOM", value::get);
+        java.util.concurrent.atomic.AtomicReference<Object> symbol = new java.util.concurrent.atomic.AtomicReference<>(List.of("before"));
+        debug.inspect("SYMBOL", symbol::get);
+        List<StepView> events = new ArrayList<>();
+        debug.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) {
+                events.add(capture.orElseThrow());
+                return false;
+            }
+        }, Debugging.Capture.FULL);
+        assertTrue(debug.begin(0));
+        value.set(Long.MAX_VALUE);
+        symbol.set("after");
+        debug.end(true, 1);
+        debug.register("ADDED", () -> 42);
+        assertTrue(debug.begin(0));
+        value.set(0);
+        symbol.set("last");
+        debug.end(true, 1);
+
+        assertEquals(Long.valueOf(Long.MIN_VALUE), state(events.get(0), "CUSTOM", true));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(0), "CUSTOM", false));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(1), "CUSTOM", true));
+        assertEquals(Long.valueOf(0), state(events.get(1), "CUSTOM", false));
+        assertEquals(Long.valueOf(42), state(events.get(1), "ADDED", false));
+        assertTrue(debug.compile("CUSTOM == 0").test());
+        net.emustudio.emulib.plugin.debugger.ViewRow first = events.get(0).rows.stream()
+                .filter(row -> row.label.equals("SYMBOL")).findFirst().orElseThrow();
+        assertEquals("[before]", first.before);
+        assertEquals("after", first.after);
+        assertTrue(debug.compile("SYMBOL == \"last\"").test());
+    }
+    @Test
     public void lightObservationCapturesIntegerInstructionAndActualNextAddress() throws Exception {
         MemoryStub memory = new MemoryStub();
         memory.write(5, 4);

@@ -272,11 +272,11 @@ public final class InstructionRecording implements AutoCloseable {
             if (closed || failed) throw new IOException("Recording is closed or failed");
             try {
                 if (event.sequence <= lastSequence) throw new IOException("Recording sequence is not increasing");
-                byte[] encoded = encode(event);
+                int size = sizeOf(event);
                 out.writeByte(EVENT);
                 out.writeLong(event.sequence);
-                out.writeInt(encoded.length);
-                out.write(encoded);
+                out.writeInt(size);
+                writeEvent(out, event);
                 count++;
                 lastSequence = event.sequence;
             } catch (IOException | RuntimeException failure) {
@@ -520,8 +520,22 @@ public final class InstructionRecording implements AutoCloseable {
      * Encoded presentation size; also validates the individual-record byte limit.
      */
     public static int sizeOf(Event event) throws IOException {
-        int size = event.encodedSize;
-        return size >= 0 ? size : encode(event).length;
+        if (event.encodedSize >= 0) return event.encodedSize;
+        StepView view = event.view;
+        if (view.programLocation == null || (view.programLocation.isPresent() && view.programLocation.getAsInt() < 0))
+            throw new IOException("Invalid program location");
+        long size = 5L + textSize(view.summary) + textSize(view.foldKey)
+                + countSize(view.rows.size(), MAX_ROWS, "presentation rows");
+        for (ViewRow row : view.rows) {
+            size += 1L + textSize(row.group) + textSize(row.label) + textSize(row.before) + textSize(row.after)
+                    + countSize(row.tags.size(), MAX_ITEMS, "search tags")
+                    + countSize(row.links.size(), MAX_ITEMS, "navigation links");
+            for (String tag : row.tags) size += textSize(tag);
+            for (NavLink link : row.links) size += textSize(link.label) + textSize(link.tag);
+            if (size > MAX_EVENT_BYTES) throw new IOException("Recording event exceeds byte limit");
+        }
+        event.encodedSize = (int) size;
+        return event.encodedSize;
     }
 
     /**
@@ -536,40 +550,12 @@ public final class InstructionRecording implements AutoCloseable {
         return OptionalLong.empty();
     }
 
-    private static byte[] encode(Event event) throws IOException {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        OutputStream bounded = new FilterOutputStream(bytes) {
-            private int size;
-
-            @Override
-            public void write(int value) throws IOException {
-                if (++size > MAX_EVENT_BYTES) throw new IOException("Recording event exceeds byte limit");
-                out.write(value);
-            }
-
-            @Override
-            public void write(byte[] values, int offset, int length) throws IOException {
-                if (length > MAX_EVENT_BYTES - size) throw new IOException("Recording event exceeds byte limit");
-                size += length;
-                out.write(values, offset, length);
-            }
-        };
-        try (DataOutputStream data = new DataOutputStream(bounded)) {
-            writeEvent(data, event);
-        }
-        byte[] encoded = bytes.toByteArray();
-        event.encodedSize = encoded.length;
-        return encoded;
-    }
-
     private static void writeEvent(DataOutput out, Event event) throws IOException {
         out.writeBoolean(event.completed);
         writeText(out, event.view.summary);
         writeText(out, event.view.foldKey);
-        if (event.view.programLocation == null || (event.view.programLocation.isPresent() && event.view.programLocation.getAsInt() < 0))
-            throw new IOException("Invalid program location");
         out.writeInt(event.view.programLocation.orElse(-1));
-        writeCount(out, event.view.rows.size(), MAX_ROWS, "presentation rows");
+        out.writeInt(event.view.rows.size());
         for (ViewRow row : event.view.rows) writeRow(out, row);
     }
 
@@ -579,9 +565,9 @@ public final class InstructionRecording implements AutoCloseable {
         writeText(out, row.before);
         writeText(out, row.after);
         out.writeBoolean(row.changed);
-        writeCount(out, row.tags.size(), MAX_ITEMS, "search tags");
+        out.writeInt(row.tags.size());
         for (String tag : row.tags) writeText(out, tag);
-        writeCount(out, row.links.size(), MAX_ITEMS, "navigation links");
+        out.writeInt(row.links.size());
         for (NavLink link : row.links) {
             writeText(out, link.label);
             writeText(out, link.tag);
@@ -627,7 +613,6 @@ public final class InstructionRecording implements AutoCloseable {
     }
 
     private static void writeText(DataOutput out, String text) throws IOException {
-        if (text == null || text.length() > MAX_TEXT) throw new IOException("Invalid or oversized recording text");
         byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
         out.writeInt(encoded.length);
         out.write(encoded);
@@ -642,14 +627,22 @@ public final class InstructionRecording implements AutoCloseable {
         return text;
     }
 
-    private static void writeCount(DataOutput out, int count, int maximum, String what) throws IOException {
-        if (count > maximum) throw new IOException("Invalid count of " + what);
-        out.writeInt(count);
+    private static int textSize(String text) throws IOException {
+        if (text == null || text.length() > MAX_TEXT) throw new IOException("Invalid or oversized recording text");
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) >= 128) return 4 + text.getBytes(StandardCharsets.UTF_8).length;
+        }
+        return 4 + text.length();
+    }
+
+    private static int countSize(int count, int maximum, String what) throws IOException {
+        if (count < 0 || count > maximum) throw new IOException("Invalid count of " + what);
+        return 4;
     }
 
     private static int readCount(DataInput in, int maximum, String what) throws IOException {
         int count = in.readInt();
-        if (count < 0 || count > maximum) throw new IOException("Invalid count of " + what);
+        countSize(count, maximum, what);
         return count;
     }
 }

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.intel8080;
 
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
@@ -20,15 +21,14 @@ public final class MachineDebugging implements Debugging {
     private final String machine;
     private final MemoryContext<?> memory;
     private final Decoder disassembler;
-    private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
+    private final Map<String, LongSupplier> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
-    private DecodedInstruction instruction;
+    private long[] before = new long[0];
+    private StepView description;
+    private DecodedInstruction instruction, describedInstruction;
     private int address;
     private boolean inStep;
-    private boolean hasProgramLocation;
 
     MachineDebugging(String machine, MemoryContext<?> memory, Decoder disassembler) {
         this.machine = machine;
@@ -38,7 +38,8 @@ public final class MachineDebugging implements Debugging {
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        bindings.put(name, read);
+        before = new long[bindings.size()];
     }
 
     public void onActivityChanged(Consumer<Boolean> callback) {
@@ -78,10 +79,8 @@ public final class MachineDebugging implements Debugging {
     }
 
     public void describeInterrupt(String text, String bytes) {
-        mnemonic = text;
-        opcodes = bytes;
-        hasProgramLocation = false;
         instruction = null;
+        describe(text, bytes, OptionalInt.empty());
     }
 
     @Override
@@ -125,41 +124,45 @@ public final class MachineDebugging implements Debugging {
     }
 
     private Supplier<Object> binding(String name) {
-        Supplier<Object> binding = bindings.get(name.toUpperCase(Locale.ROOT));
+        LongSupplier binding = bindings.get(name.toUpperCase(Locale.ROOT));
         if (binding == null) throw new IllegalArgumentException("Unknown " + machine + " value: " + name);
-        return binding;
+        return binding::getAsLong;
     }
 
     private void captureInstruction() {
-        instruction = null;
-        hasProgramLocation = true;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
+    }
+
+    private void describe(String text, String bytes, OptionalInt location) {
+        description = new StepView(text, machine + ":" + text + ":" + bytes, location,
+                List.of(new ViewRow("Instruction", "Encoding", "", bytes, false, List.of(), List.of())));
+        describedInstruction = instruction;
     }
 
     private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
+        if (instruction == null) describe("<invalid instruction>", "<unavailable>", OptionalInt.of(address));
+        else if (instruction != describedInstruction) describe(instruction.mnemonic(), instruction.encoding(), OptionalInt.of(address));
+        int index = 0;
+        for (LongSupplier binding : bindings.values()) before[index++] = binding.getAsLong();
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
-        rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value), !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
+        List<ViewRow> rows = new ArrayList<>(1 + bindings.size() + accesses.size());
+        rows.add(description.rows.get(0));
+        int index = 0;
+        for (Map.Entry<String, LongSupplier> binding : bindings.entrySet()) {
+            long previous = before[index++], value = binding.getValue().getAsLong();
+            rows.add(new ViewRow("State", binding.getKey(), Long.toString(previous), Long.toString(value), previous != value, List.of(), List.of()));
+        }
         for (Access access : accesses) {
             String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04X", access.address), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
+            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + Numbers.formatHex(access.address, 4), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
         }
-        return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, hasProgramLocation ? OptionalInt.of(address) : OptionalInt.empty(), rows);
+        return new StepView(description.summary, description.foldKey, description.programLocation, rows);
     }
 
     public static <T> MemoryContext<T> inspectionMemory(MemoryContext<T> memory) {

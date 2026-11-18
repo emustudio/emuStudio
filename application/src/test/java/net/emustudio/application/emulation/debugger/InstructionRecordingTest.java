@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -120,6 +121,29 @@ public class InstructionRecordingTest {
             assertTrue(reader.finished());
             assertEquals("Complete recording: 1 instructions", reader.status());
             assertTrue(reader.nextPage(10).isEmpty());
+        }
+    }
+
+    @Test
+    public void measuredSizesMatchFileFramesForAsciiUnicodeAndMalformedSurrogates() throws Exception {
+        for (String text : List.of("", "ASCII\0", "é", "€", "\uD83D\uDE42", "\uD800", "\uDC00", "A\uD800B")) {
+            ViewRow row = new ViewRow(text, text, text, text, true,
+                    List.of(text), List.of(new NavLink(text, text)));
+            InstructionRecording.Event event = new InstructionRecording.Event(1, true,
+                    new StepView(text, text, OptionalInt.of(0), List.of(row)));
+            int size = InstructionRecording.sizeOf(event);
+            Path file = temporary.newFolder().toPath().resolve("utf8.emutrace");
+
+            InstructionRecording.write(file, new InstructionRecording.Header("8080"), List.of(event));
+
+            // Header: 16 bytes; event framing: 13; completion footer: 17.
+            assertEquals(size + 46L, Files.size(file));
+            try (InstructionRecording.Reader reader = new InstructionRecording.Reader(file)) {
+                InstructionRecording.Event restored = reader.nextPage(1).get(0);
+                assertEquals(size, InstructionRecording.sizeOf(restored));
+                assertEquals(new String(text.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8), restored.view.summary);
+                assertTrue(reader.complete());
+            }
         }
     }
 
