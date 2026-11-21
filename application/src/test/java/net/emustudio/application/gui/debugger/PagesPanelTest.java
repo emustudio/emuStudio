@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -71,6 +71,12 @@ public class PagesPanelTest {
 
     private void stubGui(EmuStudioGui gui) {
         doAnswer(invocation -> {
+            JToggleButton button = new JToggleButton();
+            button.setToolTipText(invocation.getArgument(2));
+            button.putClientProperty("icon", invocation.getArgument(1));
+            return button;
+        }).when(gui).toolbarToggleButton(org.mockito.ArgumentMatchers.<Consumer<ActionEvent>>any(), anyString(), anyString());
+        doAnswer(invocation -> {
             Consumer<ActionEvent> action = invocation.getArgument(0);
             String icon = invocation.getArgument(1);
             String tooltip = invocation.getArgument(2);
@@ -81,6 +87,24 @@ public class PagesPanelTest {
             return button;
         }).when(gui).toolbarButton(org.mockito.ArgumentMatchers.<Consumer<ActionEvent>>any(), anyString(), anyString());
         when(gui.panel(anyString(), anyString(), anyString())).thenReturn(new JPanel());
+        when(gui.toolBar()).thenAnswer(invocation -> new JToolBar());
+    }
+
+    @Test
+    public void foldToggleIsRightmostAndUsesExistingIconAndModelState() {
+        DebugTableModel model = new DebugTableModel();
+        EmuStudioGui gui = mock(EmuStudioGui.class);
+        stubGui(gui);
+        PagesPanel panel = PagesPanel.create(model, mock(Dialogs.class), gui);
+        Container controls = (Container) panel.getComponent(0);
+        JToggleButton fold = (JToggleButton) controls.getComponent(controls.getComponentCount() - 1);
+        assertEquals("Fold identical repeats", fold.getToolTipText());
+        assertEquals("/net/emustudio/application/gui/icons/emulation/fold.png", fold.getClientProperty("icon"));
+        assertFalse(fold.isSelected());
+        fold.doClick(0);
+        assertTrue(model.isFoldRepeats());
+        model.setFoldRepeats(false);
+        assertFalse(fold.isSelected());
     }
 
     private List<JButton> collectButtons(Container container) {

@@ -35,15 +35,18 @@ public final class SourceInputs {
             files.put(path, source);
             // Resolve aliases only for cycle detection; retain compiler-visible paths as map keys.
             if (!visitedFiles.add(path.toRealPath())) continue;
-            for (Token token : source.tokens()) {
-                String included = token.getReferencedFile();
-                if (token.getType() == Token.INCLUDE_PATH && included != null) {
-                    Path include = Path.of(included.replace('\\', File.separatorChar).replace('/', File.separatorChar));
-                    pending.add(normalize(path.getParent().resolve(include)));
-                }
-            }
+            enqueueIncludes(source, pending);
         }
         return new SourceInputs(files);
+    }
+
+    private static void enqueueIncludes(SourceText source, Deque<Path> pending) {
+        for (Token token : source.tokens()) {
+            String included = token.getReferencedFile();
+            if (token.getType() != Token.INCLUDE_PATH || included == null) continue;
+            Path include = Path.of(included.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+            pending.add(normalize(source.path.getParent().resolve(include)));
+        }
     }
 
     /** Inputs supplied by a trusted source-metadata adapter instead of an include crawl. */

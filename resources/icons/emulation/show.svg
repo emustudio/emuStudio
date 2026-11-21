@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <title>Show all values</title>
+  <desc>A list panel with an overlapping blue visibility badge.</desc>
+  <g id="list">
+    <rect x="1" y="1" width="17.8" height="18" rx="2.5" fill="#555753"/>
+    <path d="M 2.3 5.7 H 17.5 V 16.5 Q 17.5 17.7 16.3 17.7 H 3.5
+             Q 2.3 17.7 2.3 16.5 Z" fill="#eeeeec"/>
+    <g fill="#555753">
+      <circle cx="5.1" cy="8.2" r="0.95"/>
+      <circle cx="5.1" cy="11.2" r="0.95"/>
+      <circle cx="5.1" cy="14.3" r="0.95"/>
+    </g>
+    <path d="M 8 8.2 H 14.8 M 8 11.2 H 11.2 M 8 14.3 H 9.3"
+          fill="none" stroke="#555753" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+  <g id="visibility">
+    <circle cx="15.6" cy="15.6" r="4.85" fill="#3465a4" stroke="#eeeeec" stroke-width="0.6"/>
+    <path d="M 11.9 15.6 Q 15.6 11.3 19.3 15.6 Q 15.6 19.9 11.9 15.6 Z" fill="#ffffff"/>
+    <circle cx="15.6" cy="15.6" r="1.15" fill="#204a87"/>
+  </g>
+</svg>

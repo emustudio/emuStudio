@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.audio.AudioSink;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.recording.RecordingSession;
@@ -31,9 +30,9 @@ import static javax.swing.Action.SMALL_ICON;
 
 public class DisplayWindow extends DialogBase {
     private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("keyboard.png", DisplayWindow.class);
-    private final static ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, DisplayWindow.class);
-    private final static ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD, DisplayWindow.class);
-    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon(StandardIcons.ICON_STOP, DisplayWindow.class);
+    private final static ImageIcon VOLUME_ICON = GUI.loadIcon("/net/emustudio/plugins/device/zxspectrum/ula/gui/icons/volume.png", DisplayWindow.class);
+    private final static ImageIcon RECORD_ICON = GUI.loadIcon("/net/emustudio/plugins/device/zxspectrum/ula/gui/icons/record.png", DisplayWindow.class);
+    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon("/net/emustudio/plugins/device/zxspectrum/ula/gui/icons/stop.png", DisplayWindow.class);
 
     public final static int MARGIN = 30;
 

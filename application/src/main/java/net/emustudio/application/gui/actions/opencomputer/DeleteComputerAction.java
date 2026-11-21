@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_REMOVE;
 import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
@@ -25,7 +24,7 @@ public class DeleteComputerAction extends AbstractAction {
     private final JList<ComputerConfig> lstConfig;
 
     public DeleteComputerAction(Dialogs dialogs, Runnable update, JList<ComputerConfig> lstConfig) {
-        super("Delete computer", loadIcon(ICON_REMOVE));
+        super("Delete computer", loadIcon("/net/emustudio/application/gui/icons/remove.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);

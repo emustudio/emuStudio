@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
@@ -10,8 +11,11 @@ import net.emustudio.emulib.plugin.memory.MemoryContext;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.concurrent.atomic.AtomicLong;
 
-/** Machine-local expression and capture adapter. Never exposes machine data to the host. */
+/**
+ * Machine-local expression and capture adapter. Never exposes machine data to the host.
+ */
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final MemoryContext<?> memory;
@@ -19,8 +23,8 @@ public final class MachineDebugging implements Debugging {
     private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
     private final List<Access> accesses = new ArrayList<>();
     private final DebuggingSupport support;
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
+    private final AtomicLong observationVersion = new AtomicLong();
+    private Object[] before = new Object[0];
     private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
@@ -29,19 +33,39 @@ public final class MachineDebugging implements Debugging {
         this.machine = machine;
         this.memory = memory;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {});
+        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {
+        });
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        inspect(name, () -> read.getAsLong());
     }
 
-    void inspect(String name, Supplier<?> read) { bindings.put(name, read::get); }
+    void inspect(String name, Supplier<?> read) {
+        bindings.put(name, read::get);
+        before = new Object[bindings.size()];
+    }
 
-    public boolean isActive() { return support.isActive(); }
-    public boolean requiresAccesses() { return support.requiresAccesses(); }
+    public boolean isActive() {
+        return support.isActive();
+    }
 
-    @Override public AutoCloseable observe(Observer observer, Capture capture) {
+    public boolean requiresAccesses() {
+        return support.requiresAccesses();
+    }
+
+    public boolean canBatchInstructions() { return support.canBatchInstructions(); }
+
+    long observationVersion() { return observationVersion.get(); }
+
+    public void endBlock(ExecutedBlock block) {
+        inStep = false;
+        support.endBlock(block);
+    }
+
+    @Override
+    public AutoCloseable observe(Observer observer, Capture capture) {
+        observationVersion.incrementAndGet();
         return support.observe(observer, capture);
     }
 
@@ -61,7 +85,8 @@ public final class MachineDebugging implements Debugging {
         if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
     }
 
-    @Override public Expression compile(String source) {
+    @Override
+    public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
 
@@ -86,13 +111,15 @@ public final class MachineDebugging implements Debugging {
             if (memory.getCellTypeClass() != Byte.class || at < 0 || at > memory.getSize() - width)
                 throw new IllegalArgumentException("Memory address outside byte memory");
             long value = 0;
-            for (int i = 0; i < width; i++) value |= ((Byte) memory.peek(at + i) & 255L) << (8 * (fn.endsWith("be") ? width - i - 1 : i));
+            for (int i = 0; i < width; i++)
+                value |= ((Byte) memory.peek(at + i) & 255L) << (8 * (fn.endsWith("be") ? width - i - 1 : i));
             return value;
         };
     }
 
     static int location(List<Object> args) {
-        if (args.size() != 1 || !(args.get(0) instanceof Number)) throw new IllegalArgumentException("Expected one numeric location");
+        if (args.size() != 1 || !(args.get(0) instanceof Number))
+            throw new IllegalArgumentException("Expected one numeric location");
         long value = ((Number) args.get(0)).longValue();
         if (value < 0 || value > Integer.MAX_VALUE) throw new IllegalArgumentException("Location outside machine");
         return (int) value;
@@ -105,34 +132,31 @@ public final class MachineDebugging implements Debugging {
     }
 
     private void captureInstruction() {
-        instruction = null;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
     }
 
     private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
+        int index = 0;
+        for (Supplier<Object> binding : bindings.values()) before[index++] = binding.get();
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
+        String mnemonic = instruction == null ? "<invalid instruction>" : instruction.mnemonic();
+        String opcodes = instruction == null ? "<unavailable>" : instruction.encoding();
+        List<ViewRow> rows = new ArrayList<>(1 + bindings.size() + accesses.size());
         rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value),
-                    !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
+        int index = 0;
+        for (Map.Entry<String, Supplier<Object>> binding : bindings.entrySet()) {
+            Object previous = before[index++], value = binding.getValue().get();
+            rows.add(new ViewRow("State", binding.getKey(), String.valueOf(previous), String.valueOf(value), !Objects.equals(previous, value), List.of(), List.of()));
+        }
         for (Access access : accesses) {
             String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04X", access.address), "", String.valueOf(access.value),
-                    access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
+            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + Numbers.formatHex(access.address, 4), "", String.valueOf(access.value), access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
         }
         return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, OptionalInt.of(address), rows);
     }
@@ -140,6 +164,11 @@ public final class MachineDebugging implements Debugging {
     private static final class Access {
         final int address, value;
         final boolean write;
-        Access(int address, int value, boolean write) { this.address = address; this.value = value; this.write = write; }
+
+        Access(int address, int value, boolean write) {
+            this.address = address;
+            this.value = value;
+            this.write = write;
+        }
     }
 }

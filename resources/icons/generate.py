@@ -69,6 +69,7 @@ def main():
     expected.update(str(Path(target).with_name(Path(target).stem + "@2x.png"))
                     for target in list(expected))
     backgrounds = {
+        "application/src/main/resources/net/emustudio/application/gui/icons/logo.png",
         "plugins/device/adm3A-terminal/src/main/resources/net/emustudio/plugins/device/adm3a/gui/display.png",
     }
     for module in [root / "application", *(root / "plugins").glob("*/*")]:

@@ -11,6 +11,75 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class DebugHooksTest {
+    private static Long state(StepView event, String name, boolean before) {
+        net.emustudio.emulib.plugin.debugger.ViewRow row = event.rows.stream()
+                .filter(value -> value.group.equals("State") && value.label.equals(name)).findFirst().orElseThrow();
+        return Long.valueOf(before ? row.before : row.after);
+    }
+
+
+    @Test
+    public void reusedSnapshotsKeepEarlierValuesAndSupportNewBindings() {
+        MachineDebugging debug = new MachineDebugging("brainduck", null, address -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "step", "00"));
+        java.util.concurrent.atomic.AtomicLong value = new java.util.concurrent.atomic.AtomicLong(Long.MIN_VALUE);
+        debug.register("CUSTOM", value::get);
+        java.util.concurrent.atomic.AtomicReference<Object> symbol = new java.util.concurrent.atomic.AtomicReference<>(List.of("before"));
+        debug.inspect("SYMBOL", symbol::get);
+        List<StepView> events = new ArrayList<>();
+        debug.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) {
+                events.add(capture.orElseThrow());
+                return false;
+            }
+        }, Debugging.Capture.FULL);
+        assertTrue(debug.begin(0));
+        value.set(Long.MAX_VALUE);
+        symbol.set("after");
+        debug.end(true, 1);
+        debug.register("ADDED", () -> 42);
+        assertTrue(debug.begin(0));
+        value.set(0);
+        symbol.set("last");
+        debug.end(true, 1);
+
+        assertEquals(Long.valueOf(Long.MIN_VALUE), state(events.get(0), "CUSTOM", true));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(0), "CUSTOM", false));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(1), "CUSTOM", true));
+        assertEquals(Long.valueOf(0), state(events.get(1), "CUSTOM", false));
+        assertEquals(Long.valueOf(42), state(events.get(1), "ADDED", false));
+        assertTrue(debug.compile("CUSTOM == 0").test());
+        net.emustudio.emulib.plugin.debugger.ViewRow first = events.get(0).rows.stream()
+                .filter(row -> row.label.equals("SYMBOL")).findFirst().orElseThrow();
+        assertEquals("[before]", first.before);
+        assertEquals("after", first.after);
+        assertTrue(debug.compile("SYMBOL == \"last\"").test());
+    }
+    @Test
+    public void detachingExactObservationRestoresCachedOperations() throws Exception {
+        MemoryStub memory = new MemoryStub();
+        memory.setProgram(new byte[] {3, 3, 3, 3, 0});
+        BrainCPUContextImpl context = createNiceMock(BrainCPUContextImpl.class);
+        replay(context);
+        EmulatorEngine engine = new EmulatorEngine(memory, context, new Profiler(memory));
+        engine.reset(0);
+        AutoCloseable observation = engine.debugger.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) { return false; }
+        }, Debugging.Capture.INSTRUCTION);
+        engine.step(true);
+        assertEquals(1, engine.IP);
+        observation.close();
+        engine.IP = 0;
+        engine.step(true);
+        assertEquals(4, engine.IP);
+        assertEquals(5, memory.read(engine.P).intValue());
+    }
+
     @Test
     public void lightObservationPreservesSingleGuestStepWithoutFullCapture() {
         MemoryStub memory = new MemoryStub();

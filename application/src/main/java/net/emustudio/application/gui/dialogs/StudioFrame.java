@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_FAVICON;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
@@ -145,7 +144,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        setIconImage(Optional.ofNullable(loadIcon(ICON_FAVICON))
+        setIconImage(Optional.ofNullable(loadIcon("/net/emustudio/application/gui/icons/favicon.png"))
                 .filter(ImageIcon.class::isInstance)
                 .map(ImageIcon.class::cast)
                 .map(ImageIcon::getImage)

@@ -7,7 +7,6 @@ import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,8 @@ import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 
 final class SettingsDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
-    private static final ImageIcon ICON_ON = GUI.loadIcon(StandardIcons.ICON_DISK_MOUNTED, SettingsDialog.class);
-    private static final ImageIcon ICON_OFF = GUI.loadIcon(StandardIcons.ICON_DISK_EMPTY, SettingsDialog.class);
+    private static final ImageIcon ICON_ON = GUI.loadIcon("/net/emustudio/plugins/device/mits88hdsk/icons/disk-mounted.png", SettingsDialog.class);
+    private static final ImageIcon ICON_OFF = GUI.loadIcon("/net/emustudio/plugins/device/mits88hdsk/icons/disk-empty.png", SettingsDialog.class);
     private static final FileType DISK_IMAGES = new FileType("Disk images", "dsk", "bin", "img");
     private final PluginSettings settings;
     private final Dialogs dialogs;

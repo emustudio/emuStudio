@@ -32,13 +32,13 @@ final class SourceText {
         }
         @Override public boolean equals(Object other) {
             if (!(other instanceof SourceSpan)) return false;
-            SourceSpan s = (SourceSpan) other;
-            return sourceRevision == s.sourceRevision && startOffset == s.startOffset
-                    && endOffset == s.endOffset && fileId.equals(s.fileId);
+            SourceSpan span = (SourceSpan) other;
+            return sourceRevision == span.sourceRevision && startOffset == span.startOffset
+                    && endOffset == span.endOffset && fileId.equals(span.fileId);
         }
         @Override public int hashCode() {
-            int h = 31 * fileId.hashCode() + Long.hashCode(sourceRevision);
-            return 31 * (31 * h + startOffset) + endOffset;
+            int hash = 31 * fileId.hashCode() + Long.hashCode(sourceRevision);
+            return 31 * (31 * hash + startOffset) + endOffset;
         }
     }
 
@@ -48,7 +48,7 @@ final class SourceText {
     final String fileId;
     private final String normalizedText;
     private final List<Token> tokens;
-    private final int[] starts;
+    private final int[] lineStarts;
 
     private SourceText(Path path, String text, List<Token> tokens) {
         this.path = path;
@@ -58,7 +58,7 @@ final class SourceText {
         List<Token> sorted = new ArrayList<>(tokens);
         sorted.sort(Comparator.comparingInt(Token::getOffset));
         this.tokens = List.copyOf(sorted);
-        starts = IntStream.concat(IntStream.of(0),
+        lineStarts = IntStream.concat(IntStream.of(0),
                 IntStream.range(0, text.length()).filter(i -> text.charAt(i) == '\n').map(i -> i + 1)).toArray();
     }
 
@@ -90,14 +90,14 @@ final class SourceText {
     }
 
     private int lineEnd(int line) {
-        int end = line == starts.length ? text.length() : starts[line] - 1;
-        if (end > starts[line - 1] && text.charAt(end - 1) == '\r') end--;
+        int end = line == lineStarts.length ? text.length() : lineStarts[line] - 1;
+        if (end > lineStarts[line - 1] && text.charAt(end - 1) == '\r') end--;
         return end;
     }
 
     int editorOffset(SourceCodePosition position) {
-        if (position.line < 1 || position.line > starts.length || position.column < 0) return -1;
-        int start = starts[position.line - 1];
+        if (!hasValidCoordinates(position)) return -1;
+        int start = lineStarts[position.line - 1];
         int end = lineEnd(position.line);
         return position.column < end - start ? start + position.column : -1;
     }
@@ -106,28 +106,33 @@ final class SourceText {
     int compilerOffset(SourceCodePosition position, SourceCodePosition.ColumnUnit unit) {
         if (unit == SourceCodePosition.ColumnUnit.UTF16) return editorOffset(position);
         if (unit != SourceCodePosition.ColumnUnit.CODE_POINT) return -1;
-        if (position.line < 1 || position.line > starts.length || position.column < 0) return -1;
-        int start = starts[position.line - 1], end = lineEnd(position.line);
+        if (!hasValidCoordinates(position)) return -1;
+        int start = lineStarts[position.line - 1];
+        int end = lineEnd(position.line);
         if (position.column >= text.codePointCount(start, end)) return -1;
         return text.offsetByCodePoints(start, position.column);
     }
 
-    SourceText.SourceSpan lineSpan(int line, long revision) {
-        if (line < 1 || line > starts.length || starts[line - 1] == lineEnd(line)) return null;
-        return new SourceText.SourceSpan(fileId, revision, starts[line - 1], lineEnd(line));
+    private boolean hasValidCoordinates(SourceCodePosition position) {
+        return position.line >= 1 && position.line <= lineStarts.length && position.column >= 0;
     }
 
-    SourceText.SourceSpan span(int offset, long revision) {
+    SourceSpan lineSpan(int line, long revision) {
+        if (line < 1 || line > lineStarts.length || lineStarts[line - 1] == lineEnd(line)) return null;
+        return new SourceSpan(fileId, revision, lineStarts[line - 1], lineEnd(line));
+    }
+
+    SourceSpan span(int offset, long revision) {
         Token token = tokenAt(offset);
         int end = token == null ? offset + 1 : offset + token.getText().length();
-        return new SourceText.SourceSpan(fileId, revision, offset, end);
+        return new SourceSpan(fileId, revision, offset, end);
     }
 
     SourceCodePosition position(int offset) {
         if (offset < 0 || offset >= text.length()) return null;
-        int line = Arrays.binarySearch(starts, offset);
+        int line = Arrays.binarySearch(lineStarts, offset);
         if (line < 0) line = -line - 2;
-        return SourceCodePosition.of(line + 1, offset - starts[line], path.toString());
+        return SourceCodePosition.of(line + 1, offset - lineStarts[line], path.toString());
     }
 
     boolean instructionAt(int offset) {

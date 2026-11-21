@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_RUN_TIMED;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
@@ -21,7 +20,7 @@ public class RunTimedAction extends AbstractAction {
     private final Dialogs dialogs;
 
     public RunTimedAction(EmulationController emulationController, Dialogs dialogs) {
-        super("Run timed...", loadIcon(ICON_RUN_TIMED));
+        super("Run timed...", loadIcon("/net/emustudio/application/gui/icons/run-timed.png"));
         putValue(SHORT_DESCRIPTION, "Run \"timed\" emulation");
         this.emulationController = emulationController;
         this.dialogs = Objects.requireNonNull(dialogs);

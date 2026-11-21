@@ -1,6 +1,6 @@
 # Annotation metadata
 
-In **Inspection**, use **Import annotations** to load annotation metadata for the
+In **Debugger**, use **Import annotations** to load annotation metadata for the
 current computer. **Export annotations** writes an annotation-only copy.
 
 The UTF-8 Java properties file contains format version `4`, `image.identity`, and

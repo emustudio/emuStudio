@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.plugin.cpu.CPUContext;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
@@ -103,7 +102,7 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, context, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class));
+                tableModel, context, loadIcon("/net/emustudio/plugins/memory/bytemem/gui/icons/erase-memory.png", MemoryGui.class));
         this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));

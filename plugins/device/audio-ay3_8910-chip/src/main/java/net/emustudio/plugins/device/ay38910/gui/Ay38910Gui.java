@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.ay38910.gui;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.ay38910.Ay38910Chip;
@@ -30,7 +29,7 @@ import static javax.swing.Action.SHORT_DESCRIPTION;
 import static javax.swing.Action.SMALL_ICON;
 
 public class Ay38910Gui extends DialogBase {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, Ay38910Gui.class);
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon("/net/emustudio/plugins/device/ay38910/gui/icons/volume.png", Ay38910Gui.class);
     private static final int REFRESH_MS = 33;
 
     private final GUI gui;

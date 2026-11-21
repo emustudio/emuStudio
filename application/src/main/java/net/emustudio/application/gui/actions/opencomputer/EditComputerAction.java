@@ -14,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_COMPUTER;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class EditComputerAction extends AbstractAction {
@@ -28,7 +27,7 @@ public class EditComputerAction extends AbstractAction {
 
     public EditComputerAction(Dialogs dialogs, AppSettings appSettings,
                               Runnable update, JDialog parent, JList<ComputerConfig> lstConfig, EmuStudioGui gui) {
-        super("Edit computer...", loadIcon(ICON_COMPUTER));
+        super("Edit computer...", loadIcon("/net/emustudio/application/gui/icons/computer.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);

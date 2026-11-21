@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 public class ViewComputerDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
@@ -134,7 +133,7 @@ public class ViewComputerDialog extends DialogBase {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showOptionalPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
-        }, ICON_COMPILER, "Compiler information");
+        }, "/net/emustudio/application/gui/icons/compiler.png", "Compiler information");
         btnCompiler.setEnabled(computer.getCompiler().isPresent());
         btnCompiler.setSelected(false);
 
@@ -146,7 +145,7 @@ public class ViewComputerDialog extends DialogBase {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showOptionalPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
-        }, ICON_CPU, "CPU information");
+        }, "/net/emustudio/application/gui/icons/cpu.png", "CPU information");
         btnCPU.setEnabled(computer.getCPU().isPresent());
         btnCPU.setSelected(true);
 
@@ -158,7 +157,7 @@ public class ViewComputerDialog extends DialogBase {
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
                     showOptionalPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
-                }, ICON_MEMORY, "Memory information");
+                }, "/net/emustudio/application/gui/icons/memory.png", "Memory information");
         btnMemory.setEnabled(computer.getMemory().isPresent());
         btnMemory.setSelected(false);
 
@@ -175,7 +174,7 @@ public class ViewComputerDialog extends DialogBase {
                         cmbDevice.setEnabled(false);
                         showPluginInfo(null, null);
                     }
-                }, ICON_DEVICE, "Devices information");
+                }, "/net/emustudio/application/gui/icons/device.png", "Devices information");
         btnDevice.setEnabled(!devices.isEmpty());
         btnDevice.setSelected(false);
 
@@ -208,7 +207,7 @@ public class ViewComputerDialog extends DialogBase {
         JToolBar schemaToolbar = gui.toolBar();
         schemaToolbar.setOrientation(SwingConstants.VERTICAL);
 
-        JButton btnSave = gui.toolbarButton(event -> panelSchema.saveSchemaImage(), ICON_SAVE, "Save schema image");
+        JButton btnSave = gui.toolbarButton(event -> panelSchema.saveSchemaImage(), "/net/emustudio/application/gui/icons/save.png", "Save schema image");
         btnSave.setFocusable(true);
         schemaToolbar.add(btnSave);
 

@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.gui;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
@@ -35,7 +34,7 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         });
         this.eraseMemoryAction = new EraseMemoryAction(
-                tableModel, memory, loadIcon(StandardIcons.ICON_ERASE_MEMORY, MemoryGui.class));
+                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ram/gui/icons/erase-memory.png", MemoryGui.class));
 
         buildContent();
     }

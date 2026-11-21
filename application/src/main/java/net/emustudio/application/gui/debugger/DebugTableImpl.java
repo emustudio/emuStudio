@@ -11,25 +11,35 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
+import java.util.function.IntConsumer;
 
 public class DebugTableImpl extends JTable {
     private static final Color TABLE_COLOR_TABLE_GRID = new Color(0xd9d9d9);
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
     private final TextCellRenderer textRenderer;
+    private final InstructionFlowColumn flowColumn;
+    private IntConsumer flowNavigation = address -> {
+    };
+    private boolean flowGesture;
+    private boolean foldGesture;
     private IntPredicate breakpointRow = row -> false;
     private IntFunction<String> rowTooltip = row -> null;
     private IntFunction<Color> rowBackground = row -> null;
-    private Runnable restoreSelection = () -> {};
+    private Runnable restoreSelection = () -> {
+    };
     private Color tooltipBackground;
 
     public DebugTableImpl(DebugTableModel tableModel) {
         super(Objects.requireNonNull(tableModel));
         this.tableModel = tableModel;
         this.textRenderer = new TextCellRenderer(tableModel);
+        this.flowColumn = new InstructionFlowColumn(this, tableModel);
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setGridColor(TABLE_COLOR_TABLE_GRID);
@@ -42,6 +52,10 @@ public class DebugTableImpl extends JTable {
 
         setupRenderers();
         setupColumnWidths();
+        getSelectionModel().addListSelectionListener(event -> repaint());
+        ToolTipManager.sharedInstance().registerComponent(this);
+        installFoldKey(KeyEvent.VK_RIGHT, true);
+        installFoldKey(KeyEvent.VK_LEFT, false);
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -56,16 +70,15 @@ public class DebugTableImpl extends JTable {
     void setupColumnWidths() {
         int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
-            int viewColumn;
-            try {
-                viewColumn = getColumnModel().getColumnIndex(tableModel.getColumnName(i));
-            } catch (IllegalArgumentException missingColumn) {
-                continue;
-            }
+            int viewColumn = convertColumnIndexToView(i);
+            if (viewColumn < 0) continue;
             TableColumn tableColumn = getColumnModel().getColumn(viewColumn);
             DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
-            if (debugColumn.getClassType() == Boolean.class) {
+            if (i == tableModel.flowColumnIndex()) {
+                tableColumn.setMinWidth(80);
+                tableColumn.setPreferredWidth(160);
+            } else if (debugColumn.getClassType() == Boolean.class) {
                 tableColumn.setMinWidth(32);
             }
             if (debugColumn.getDefaultWidth() != -1) {
@@ -89,7 +102,98 @@ public class DebugTableImpl extends JTable {
         return tableModel;
     }
 
-    @Override public void tableChanged(TableModelEvent event) {
+    public void setFlowNavigation(IntConsumer navigation) {
+        flowNavigation = Objects.requireNonNull(navigation);
+    }
+
+    private void installFoldKey(int key, boolean expand) {
+        KeyStroke stroke = KeyStroke.getKeyStroke(key, 0);
+        InputMap input = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        Action fallback = getActionMap().get(input.get(stroke));
+        String name = expand ? "expandRepeats" : "collapseRepeats";
+        input.put(stroke, name);
+        getActionMap().put(name, new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) {
+                int row = getSelectedRow();
+                int modelRow = row < 0 ? -1 : convertRowIndexToModel(row);
+                if (isEnabled() && tableModel.hasFoldControl(modelRow) && tableModel.isFolded(modelRow) == expand)
+                    tableModel.toggleFoldAt(modelRow);
+                else if (fallback != null) fallback.actionPerformed(event);
+            }
+        });
+    }
+
+    /** Source and edit actions must first reveal the individual instructions. */
+    public boolean expandFoldedRow(int viewRow) {
+        if (!isEnabled() || viewRow < 0) return false;
+        int row = convertRowIndexToModel(viewRow);
+        if (!tableModel.isFolded(row)) return false;
+        tableModel.toggleFoldAt(row);
+        return true;
+    }
+
+    private boolean foldControlAt(Point point) {
+        int row = rowAtPoint(point), column = columnAtPoint(point);
+        return row >= 0 && column >= 0 && tableModel.hasFoldControl(convertRowIndexToModel(row))
+                && DebugTableModel.TITLE_ADDRESS.equals(tableModel.getColumnName(convertColumnIndexToModel(column)))
+                && point.x - getCellRect(row, column, true).x < 18;
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        if (flowColumn != null) flowColumn.paint((Graphics2D) graphics);
+    }
+
+    @Override
+    protected void processMouseEvent(MouseEvent event) {
+        if (SwingUtilities.isLeftMouseButton(event)) {
+            int column = columnAtPoint(event.getPoint());
+            if (event.getID() == MouseEvent.MOUSE_PRESSED) {
+                boolean continuing = foldGesture && event.getClickCount() > 1;
+                int row = rowAtPoint(event.getPoint());
+                boolean expand = row >= 0 && event.getClickCount() == 2 && tableModel.isFolded(convertRowIndexToModel(row))
+                        && column >= 0 && convertColumnIndexToModel(column) != tableModel.flowColumnIndex();
+                foldGesture = continuing || (isEnabled() && (foldControlAt(event.getPoint()) || expand));
+                if (foldGesture && !continuing) {
+                    requestFocusInWindow();
+                    tableModel.toggleFoldAt(convertRowIndexToModel(row));
+                }
+            }
+            if (foldGesture && (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
+                    || event.getID() == MouseEvent.MOUSE_CLICKED)) {
+                event.consume();
+                return;
+            }
+            if (event.getID() == MouseEvent.MOUSE_PRESSED) {
+                boolean continuing = flowGesture && event.getClickCount() > 1 && column >= 0
+                        && convertColumnIndexToModel(column) == tableModel.flowColumnIndex();
+                int target = continuing || flowColumn == null ? -1 : flowColumn.targetAt(event.getPoint());
+                flowGesture = continuing || target >= 0;
+                if (target >= 0) {
+                    requestFocusInWindow();
+                    flowNavigation.accept(target);
+                }
+            }
+            if (flowGesture && (event.getID() == MouseEvent.MOUSE_PRESSED
+                    || event.getID() == MouseEvent.MOUSE_RELEASED || event.getID() == MouseEvent.MOUSE_CLICKED)) {
+                event.consume();
+                return;
+            }
+        }
+        super.processMouseEvent(event);
+    }
+
+    @Override
+    protected void processMouseMotionEvent(MouseEvent event) {
+        super.processMouseMotionEvent(event);
+        if (event.getID() == MouseEvent.MOUSE_MOVED && flowColumn != null)
+            setCursor(Cursor.getPredefinedCursor(foldControlAt(event.getPoint()) || flowColumn.targetAt(event.getPoint()) >= 0
+                    ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent event) {
         boolean selected = getSelectionModel() != null && getSelectedRow() >= 0;
         super.tableChanged(event);
         if (tableModel == null) return;
@@ -114,14 +218,22 @@ public class DebugTableImpl extends JTable {
 
     @Override
     public String getToolTipText(MouseEvent event) {
+        String flowTooltip = flowColumn == null ? null : flowColumn.tooltipAt(event.getPoint());
+        if (flowTooltip != null) {
+            tooltipBackground = null;
+            return flowTooltip;
+        }
         int row = rowAtPoint(event.getPoint());
         int modelRow = row < 0 ? -1 : convertRowIndexToModel(row);
+        if (modelRow >= 0 && (foldControlAt(event.getPoint()) || tableModel.isFolded(modelRow)))
+            return tableModel.foldTooltip(modelRow);
         String tooltip = modelRow < 0 ? null : rowTooltip.apply(modelRow);
         tooltipBackground = tooltip == null ? null : rowBackground.apply(modelRow);
         return tooltip != null ? tooltip : super.getToolTipText(event);
     }
 
-    @Override public JToolTip createToolTip() {
+    @Override
+    public JToolTip createToolTip() {
         JToolTip tooltip = super.createToolTip();
         if (tooltipBackground != null) tooltip.setBackground(tooltipBackground);
         return tooltip;

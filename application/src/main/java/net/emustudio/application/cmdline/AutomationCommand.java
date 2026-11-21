@@ -3,7 +3,6 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.emulation.EmulationProgress;
 import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
@@ -80,18 +79,26 @@ public class AutomationCommand implements Callable<Integer> {
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
                         ? null : Numbers.parseRadix(this.programLocation);
-                EmulationProgress progress = this.gui ? new AutoDialog(computer, gui) : EmulationProgress.NONE;
-
                 Automation automation = new Automation(
                         computer, runner.inputFile,
                         appConfig,
                         dialogs,
                         waitForFinishMillis,
-                        programLocation,
-                        progress
+                        programLocation
                 );
                 splash.ifPresent(Window::dispose);
-                automation.run();
+                if (this.gui) {
+                    AutoDialog progress = new AutoDialog(computer, gui);
+                    automation.setProgressListener(progress::setAction);
+                    try {
+                        progress.setVisible(true);
+                        automation.run();
+                    } finally {
+                        progress.dispose();
+                    }
+                } else {
+                    automation.run();
+                }
                 if (!automation.isSuccessful()) return 1;
             }
             return 0;

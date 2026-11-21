@@ -114,6 +114,28 @@ public class DebugHooksTest {
     }
 
     @Test
+    public void repeatedInstructionCapturesFreshValuesWithoutChangingEarlierEvents() throws Exception {
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
+        memory.write(0, (byte) 0);
+        EmulatorEngine engine = new EmulatorEngine(memory, new Context8080Impl());
+        java.util.concurrent.atomic.AtomicLong value = new java.util.concurrent.atomic.AtomicLong(Long.MIN_VALUE);
+        engine.debugger.register("CUSTOM", value::get);
+        List<StepView> events = collect(engine);
+        engine.step();
+        engine.reset(0);
+        value.set(Long.MAX_VALUE);
+        engine.step();
+
+        assertEquals(Long.valueOf(Long.MIN_VALUE), state(events.get(0), "CUSTOM", true));
+        assertEquals(Long.valueOf(Long.MIN_VALUE), state(events.get(0), "CUSTOM", false));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(1), "CUSTOM", true));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(1), "CUSTOM", false));
+        assertEquals(0, events.get(1).programLocation.orElseThrow());
+        assertEquals("00", encoding(events.get(0)).trim());
+        assertEquals("00", encoding(events.get(1)).trim());
+    }
+
+    @Test
     public void interruptRecordsInjectedInstructionInsteadOfOldPcCode() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         memory.write(0, (byte) 0x3c);

@@ -18,7 +18,6 @@ import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CompletableFuture;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_COMPILER;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 
@@ -32,7 +31,7 @@ public class CompileAction extends AbstractAction {
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
-        super("Compile", loadIcon(ICON_COMPILER));
+        super("Compile", loadIcon("/net/emustudio/application/gui/icons/compiler.png"));
 
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);

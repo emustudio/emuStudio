@@ -27,12 +27,16 @@ class TextCellRenderer extends DefaultTableCellRenderer {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         boolean current = model.isRowAtCurrentInstruction(table.convertRowIndexToModel(row));
         boolean address = DebugTableModel.TITLE_ADDRESS.equals(table.getColumnName(column));
-        setIcon(address ? (current ? CURRENT_INSTRUCTION : EMPTY_MARKER) : null);
+        int modelRow = table.convertRowIndexToModel(row);
+        boolean foldControl = address && model.hasFoldControl(modelRow);
+        setIcon(address ? (current ? CURRENT_INSTRUCTION : foldControl
+                ? (model.isFolded(modelRow) ? COLLAPSED : EXPANDED) : EMPTY_MARKER) : null);
         setIconTextGap(4);
         Font tableFont = table.getFont();
         setFont(EmuStudioGui.monospaced(tableFont));
-        setToolTipText(current ? "Current instruction (PC)" : null);
-        getAccessibleContext().setAccessibleDescription(current ? "Current instruction (PC)" : null);
+        String description = current ? "Current instruction (PC)" : foldControl ? model.foldTooltip(modelRow) : null;
+        setToolTipText(description);
+        getAccessibleContext().setAccessibleDescription(description);
         return this;
     }
 
@@ -66,17 +70,31 @@ class TextCellRenderer extends DefaultTableCellRenderer {
 
     private static final Icon EMPTY_MARKER = new Marker(false);
     private static final Icon CURRENT_INSTRUCTION = new Marker(true);
+    private static final Icon COLLAPSED = new FoldMarker(false);
+    private static final Icon EXPANDED = new FoldMarker(true);
+
+    private static final class FoldMarker implements Icon {
+        private final boolean expanded;
+        private FoldMarker(boolean expanded) { this.expanded = expanded; }
+        @Override public int getIconWidth() { return 12; }
+        @Override public int getIconHeight() { return 10; }
+        @Override public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            graphics.setColor(component.getForeground());
+            if (expanded) graphics.fillPolygon(new int[] {x + 1, x + 9, x + 5}, new int[] {y + 3, y + 3, y + 8}, 3);
+            else graphics.fillPolygon(new int[] {x + 3, x + 8, x + 3}, new int[] {y + 1, y + 5, y + 9}, 3);
+        }
+    }
 
     /** PC remains visible independently of the selected row and its keyboard focus border. */
     private static final class Marker implements Icon {
         private final boolean current;
         private Marker(boolean current) { this.current = current; }
-        @Override public int getIconWidth() { return 10; }
-        @Override public int getIconHeight() { return 10; }
+        @Override public int getIconWidth() { return 12; }
+        @Override public int getIconHeight() { return 14; }
         @Override public void paintIcon(Component component, Graphics graphics, int x, int y) {
             if (current) {
                 graphics.setColor(component.getForeground());
-                graphics.fillPolygon(new int[] {x + 1, x + 8, x + 1}, new int[] {y + 1, y + 5, y + 9}, 3);
+                graphics.fillPolygon(new int[] {x + 1, x + 11, x + 1}, new int[] {y + 1, y + 7, y + 13}, 3);
             }
         }
     }

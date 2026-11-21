@@ -30,7 +30,6 @@ import java.util.function.Predicate;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.ui.Constants.*;
-import static net.emustudio.emulib.ui.StandardIcons.LOGO_FILE;
 
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.
@@ -198,7 +197,7 @@ public class EmuStudioGui implements GUI {
      * @return JLabel containing the logo
      */
     public JLabel createLogoJLabel() {
-        JLabel lblLogo = new JLabel(loadIcon(LOGO_FILE));
+        JLabel lblLogo = new JLabel(loadIcon("/net/emustudio/application/gui/icons/logo.png"));
         lblLogo.setBackground(Color.WHITE);
         lblLogo.setBorder(new FadingBorder(10, Color.WHITE));
         lblLogo.setOpaque(false);

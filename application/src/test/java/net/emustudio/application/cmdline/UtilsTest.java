@@ -82,9 +82,10 @@ public class UtilsTest extends AbstractSwingTest {
         when(memory.getSize()).thenReturn(8);
         when(memory.read(anyInt())).thenThrow(new AssertionError("Startup must not copy memory cells"));
         doReturn(memory).when(contextPool).get(Utils.EMUSTUDIO_ID, MemoryContext.class);
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
-            when(computer.getExecution()).thenReturn(Optional.of(session.execution()));
+            when(computer.getExecution()).thenReturn(Optional.of(machineExecution));
             java.util.concurrent.Callable<Void> start = () -> {
                 Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), dialogs,
                         contextPool, null, new EmuStudioGui());
@@ -95,10 +96,7 @@ public class UtilsTest extends AbstractSwingTest {
             StudioFrame frame = waitForWindow(StudioFrame.class, window -> "emuStudio [Startup test]".equals(window.getTitle()));
             DebuggerPanel debugger = findComponent(frame, DebuggerPanel.class, panel -> true);
             try {
-                JToggleButton find = findToggleButtonByTooltip(debugger, "Show instructions from PC");
-                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-                while (!onEdt(find::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-                assertTrue("Initial metadata loading must finish", onEdt(find::isEnabled));
+                assertTrue(onEdt(debugger::isInstructionView));
                 verify(cpu).getDebuggerColumns(any());
                 verify(memory, never()).read(anyInt());
                 verify(dialogs, never()).showError(anyString(), anyString());

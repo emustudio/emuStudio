@@ -1,10 +1,10 @@
 {
-  "../emuLib/src/main/resources/net/emustudio/emulib/ui/icons": {
+  "application/src/main/resources/net/emustudio/application/gui/icons": {
     "add.png": "virtual-computer/add-plugin.svg",
     "ascii.png": "text/ascii-table.svg",
     "bidirection.png": "virtual-computer/bidirectional-connection.svg",
     "breakpoint.png": "inspection/breakpoint-marker.svg",
-    "breakpoints.png": "inspection/toggle-breakpoint.svg",
+    "breakpoints.png": "emulation/toggle-breakpoint.svg",
     "compiler.png": "virtual-computer/compiler.svg",
     "computer.png": "virtual-computer/computer.svg",
     "connection.png": "virtual-computer/connect-plugins.svg",
@@ -23,8 +23,8 @@
     "indicator-blue.png": "status/blue-indicator.svg",
     "indicator-green.png": "status/green-indicator.svg",
     "indicator-red.png": "status/red-indicator.svg",
-    "jump-to-beginning.png": "inspection/go-to-beginning.svg",
-    "jump.png": "inspection/go-to-address.svg",
+    "jump-to-beginning.png": "emulation/go-to-beginning.svg",
+    "jump.png": "emulation/go-to-address.svg",
     "load.png": "memory/load-image.svg",
     "memory.png": "virtual-computer/memory.svg",
     "motherboard.png": "virtual-computer/motherboard.svg",
@@ -64,16 +64,93 @@
   "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui": {
     "goto-address.png": "plugins/byte-mem/go-to-address.svg"
   },
+  "application/src/main/resources/net/emustudio/application/gui/icons/emulation": {
+    "fold.png": "emulation/fold.svg",
+    "show.png": "emulation/show.svg"
+  },
   "application/src/main/resources/net/emustudio/application/gui/icons/inspection": {
-    "follow-pc.png": "inspection/follow-pc.svg",
-    "refresh-flow.png": "inspection/refresh-flow.svg",
-    "analyze-program.png": "inspection/analyze-program.svg",
-    "go-to-instruction.png": "inspection/go-to-instruction.svg",
     "search-annotations.png": "inspection/search-annotations.svg",
     "add-annotation.png": "inspection/add-annotation.svg",
     "edit-annotation.png": "inspection/edit-annotation.svg",
     "remove-annotation.png": "inspection/remove-annotation.svg",
     "import-annotations.png": "inspection/import-annotations.svg",
     "export-annotations.png": "inspection/export-annotations.svg"
+  },
+  "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/icons": {
+    "erase-memory.png": "memory/erase-memory.svg",
+    "open-file.png": "text/open-file.svg"
+  },
+  "plugins/memory/rasp-mem/src/main/resources/net/emustudio/plugins/memory/rasp/gui/icons": {
+    "erase-memory.png": "memory/erase-memory.svg",
+    "open-file.png": "text/open-file.svg"
+  },
+  "plugins/memory/ram-mem/src/main/resources/net/emustudio/plugins/memory/ram/gui/icons": {
+    "erase-memory.png": "memory/erase-memory.svg",
+    "open-file.png": "text/open-file.svg"
+  },
+  "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui/icons": {
+    "erase-memory.png": "memory/erase-memory.svg",
+    "compiler.png": "virtual-computer/compiler.svg",
+    "move-down.png": "virtual-computer/move-plugin-down.svg",
+    "move-up.png": "virtual-computer/move-plugin-up.svg",
+    "open-file.png": "text/open-file.svg",
+    "find.png": "text/find.svg",
+    "ascii.png": "text/ascii-table.svg"
+  },
+  "plugins/device/spaceinvaders-display/src/main/resources/net/emustudio/plugins/device/spaceinvaders/icons": {
+    "record.png": "emulation/record-instructions.svg",
+    "stop.png": "emulation/stop-emulation.svg",
+    "volume.png": "audio/volume.svg"
+  },
+  "plugins/device/vt100-terminal/src/main/resources/net/emustudio/plugins/device/vt100/gui/icons": {
+    "ascii.png": "text/ascii-table.svg",
+    "indicator-blue.png": "status/blue-indicator.svg",
+    "indicator-red.png": "status/red-indicator.svg"
+  },
+  "plugins/device/88-ptr-ptp/src/main/resources/net/emustudio/plugins/device/mits88tap/icons": {
+    "eject.png": "memory/eject-media.svg",
+    "load.png": "memory/load-image.svg",
+    "open-file.png": "text/open-file.svg",
+    "reset.png": "emulation/reset-emulation.svg",
+    "save.png": "text/save-file.svg",
+    "stop.png": "emulation/stop-emulation.svg"
+  },
+  "plugins/device/abstract-tape/src/main/resources/net/emustudio/plugins/device/abstracttape/gui/icons": {
+    "move-down.png": "virtual-computer/move-plugin-down.svg",
+    "move-up.png": "virtual-computer/move-plugin-up.svg"
+  },
+  "plugins/device/audiotape-player/src/main/resources/net/emustudio/plugins/device/audiotapeplayer/gui/icons": {
+    "add.png": "virtual-computer/add-plugin.svg",
+    "copy.png": "text/copy.svg",
+    "eject.png": "memory/eject-media.svg",
+    "load.png": "memory/load-image.svg",
+    "move-down.png": "virtual-computer/move-plugin-down.svg",
+    "move-up.png": "virtual-computer/move-plugin-up.svg",
+    "open-file.png": "text/open-file.svg",
+    "remove.png": "virtual-computer/remove-plugin.svg",
+    "reset.png": "emulation/reset-emulation.svg",
+    "run.png": "emulation/run-emulation.svg",
+    "save.png": "text/save-file.svg",
+    "stop.png": "emulation/stop-emulation.svg"
+  },
+  "plugins/device/audio-ay3_8910-chip/src/main/resources/net/emustudio/plugins/device/ay38910/gui/icons": {
+    "volume.png": "audio/volume.svg"
+  },
+  "plugins/device/zxspectrum-ula/src/main/resources/net/emustudio/plugins/device/zxspectrum/ula/gui/icons": {
+    "record.png": "emulation/record-instructions.svg",
+    "stop.png": "emulation/stop-emulation.svg",
+    "volume.png": "audio/volume.svg"
+  },
+  "plugins/device/88-dcdd/src/main/resources/net/emustudio/plugins/device/mits88dcdd/gui/icons": {
+    "disk-empty.png": "memory/disk-empty.svg",
+    "disk-mounted.png": "memory/disk-mounted.svg",
+    "indicator-green.png": "status/green-indicator.svg",
+    "indicator-red.png": "status/red-indicator.svg"
+  },
+  "plugins/device/88-hdsk/src/main/resources/net/emustudio/plugins/device/mits88hdsk/icons": {
+    "disk-empty.png": "memory/disk-empty.svg",
+    "disk-mounted.png": "memory/disk-mounted.svg",
+    "indicator-green.png": "status/green-indicator.svg",
+    "indicator-red.png": "status/red-indicator.svg"
   }
 }

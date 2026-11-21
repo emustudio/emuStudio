@@ -22,7 +22,6 @@ import java.awt.event.HierarchyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.application.gui.editor.Editor.MIN_FONT_ZOOM;
 import static net.emustudio.application.gui.editor.Editor.MAX_FONT_ZOOM;
@@ -166,12 +165,12 @@ public class EditorPanel extends JPanel {
         mainToolBar.addSeparator();
         mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
-                ICON_UNDO,
+                "/net/emustudio/application/gui/icons/undo.png",
                 "Undo"
         ));
         mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.REDO_ACTION),
-                ICON_REDO,
+                "/net/emustudio/application/gui/icons/redo.png",
                 "Redo"
         ));
         mainToolBar.addSeparator();
