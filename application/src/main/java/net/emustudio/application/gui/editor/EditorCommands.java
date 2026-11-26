@@ -9,7 +9,6 @@ import org.fife.ui.rtextarea.*;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -22,22 +21,35 @@ import java.util.function.UnaryOperator;
  * Local editing commands. Knows generic token categories, never compiler keywords.
  */
 final class EditorCommands {
-    private final REditor editor;
+    private static final String COLUMN_SELECTION_MODE = "Column Selection Mode";
+
     private final TextEditorPane pane;
     private final RTextScrollPane scroll;
     private final Compiler compiler;
     private final MultipleSelection selections;
     private EditorState state = new EditorState(null);
-    private final Deque<int[]> selectionHistory = new ArrayDeque<>();
     private final Map<String, Action> actions = new LinkedHashMap<>();
 
-    EditorCommands(REditor editor, TextEditorPane pane, RTextScrollPane scroll, Compiler compiler) {
-        this.editor = editor;
+    EditorCommands(TextEditorPane pane, RTextScrollPane scroll, Compiler compiler) {
         this.pane = pane;
         this.scroll = scroll;
         this.compiler = compiler;
         selections = new MultipleSelection(pane);
-        add("Duplicate line / selection", KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::duplicate);
+        int shortcut = RTextArea.getDefaultModifier();
+        boolean mac = RTextArea.isOSX();
+        int ctrl = InputEvent.CTRL_DOWN_MASK;
+        int shift = InputEvent.SHIFT_DOWN_MASK;
+        int alt = InputEvent.ALT_DOWN_MASK;
+
+        InputMap input = pane.getInputMap();
+        input.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcut | shift), RTextAreaEditorKit.rtaRedoAction);
+        input.put(KeyStroke.getKeyStroke(mac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_Y, shortcut), RTextAreaEditorKit.rtaDeleteLineAction);
+        if (mac) {
+            input.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, alt | shift), RTextAreaEditorKit.rtaLineUpAction);
+            input.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, alt | shift), RTextAreaEditorKit.rtaLineDownAction);
+        }
+
+        add("Duplicate line / selection", KeyEvent.VK_D, shortcut, this::duplicate);
         for (String name : List.of("Sort lines", "Reverse lines", "Remove duplicate lines")) {
             add(name, 0, 0, () -> lines(text -> TextEdits.reorder(text, name), true));
         }
@@ -47,20 +59,24 @@ final class EditorCommands {
         add("Trim trailing whitespace", 0, 0, () -> lines(text -> text.replaceAll("(?m)[ \\t]+$", ""), true));
         add("Tabs to spaces", 0, 0, () -> lines(text -> TextEdits.spaces(text, pane.getTabSize()), true));
         add("Leading spaces to tabs", 0, 0, () -> lines(text -> TextEdits.tabs(text, pane.getTabSize()), true));
-        add("Reindent", 0, 0, () -> lines(this::reindent, true));
+        add("Reindent", KeyEvent.VK_I, ctrl | alt, () -> lines(this::reindent, true));
         add("Align columns", 0, 0, this::align);
-        add("Toggle comment", KeyEvent.VK_SLASH, InputEvent.CTRL_DOWN_MASK, () -> invoke(RSyntaxTextAreaEditorKit.rstaToggleCommentAction));
-        add("Select next occurrence", KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK, () -> selectOccurrences(false));
-        add("Select all occurrences", KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, () -> selectOccurrences(true));
-        add("Column selection", 0, 0, () -> selections.rectangle(pane.getSelectionStart(), pane.getSelectionEnd()));
-        add("Expand selection", KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::expand);
-        add("Shrink selection", KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, this::shrink);
-        add("Go to line / column", KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK, this::goTo);
-        add("Start recording", 0, 0, RTextArea::beginRecordingMacro);
-        add("Stop recording", 0, 0, RTextArea::endRecordingMacro);
-        add("Replay recording", KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, pane::playbackLastMacro);
-        add("Collapse all", 0, 0, () -> fold(true));
-        add("Expand all", 0, 0, () -> fold(false));
+        add("Toggle comment", KeyEvent.VK_SLASH, shortcut, () -> invoke(RSyntaxTextAreaEditorKit.rstaToggleCommentAction));
+        pane.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent event) {
+                // X11 also sends a typed slash, and Swing ignores modifiers for typed bindings.
+                if (event.getKeyChar() == '/' && event.getModifiersEx() == shortcut) {
+                    event.consume();
+                }
+            }
+        });
+        add(COLUMN_SELECTION_MODE, mac ? KeyEvent.VK_8 : KeyEvent.VK_INSERT, (mac ? shortcut : alt) | shift,
+                () -> actions.get(COLUMN_SELECTION_MODE).putValue(Action.SELECTED_KEY, selections.toggleColumnSelectionMode()));
+        actions.get(COLUMN_SELECTION_MODE).putValue(Action.SELECTED_KEY, false);
+        add("Go to line / column", mac ? KeyEvent.VK_L : KeyEvent.VK_G, shortcut, this::goTo);
+        add("Collapse all", KeyEvent.VK_SUBTRACT, shortcut | shift, () -> fold(true));
+        add("Expand all", KeyEvent.VK_ADD, shortcut | shift, () -> fold(false));
         add("Indentation settings", 0, 0, this::indentationSettings);
         add("Token colors", 0, 0, this::tokenColors);
     }
@@ -70,7 +86,6 @@ final class EditorCommands {
         pane.setTabSize(Math.max(1, Math.min(16, state.number("TabSize", 4))));
         pane.setTabsEmulated(state.flag("Spaces", true));
         pane.setWhitespaceVisible(state.flag("Whitespace", false));
-        pane.setEOLMarkersVisible(state.flag("EndOfLine", false));
         pane.setPaintTabLines(state.flag("IndentGuides", false));
         pane.setLineWrap(state.flag("Wrap", false));
         pane.setCodeFoldingEnabled(state.flag("Folding", true));
@@ -81,41 +96,16 @@ final class EditorCommands {
         return state;
     }
 
-    List<JMenu> menus() {
+    List<JMenuItem> editMenuItems() {
         JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Uppercase", "Lowercase", "Invert case", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
-        JMenu select = menu("Selection", "Select next occurrence", "Select all occurrences", "Column selection", "Expand selection", "Shrink selection");
-        JMenu navigate = menu("Navigate", "Go to line / column");
-        JMenu macros = menu("Editing macros", "Start recording", "Stop recording", "Replay recording");
+        JCheckBoxMenuItem columnSelection = new JCheckBoxMenuItem(actions.get(COLUMN_SELECTION_MODE));
+        JMenuItem goTo = new JMenuItem(actions.get("Go to line / column"));
         JMenu view = menu("Editor display", "Collapse all", "Expand all", "Indentation settings", "Token colors");
-        view.add(syntaxMenu());
         toggle(view, "Whitespace", "Visible whitespace", pane::isWhitespaceVisible, pane::setWhitespaceVisible);
-        toggle(view, "EndOfLine", "End-of-line markers", pane::getEOLMarkersVisible, pane::setEOLMarkersVisible);
         toggle(view, "IndentGuides", "Indentation guides", pane::getPaintTabLines, pane::setPaintTabLines);
         toggle(view, "Wrap", "Soft wrap", pane::getLineWrap, pane::setLineWrap);
         toggle(view, "Folding", "Code folding", pane::isCodeFoldingEnabled, pane::setCodeFoldingEnabled);
-        return List.of(edit, select, navigate, macros, view);
-    }
-
-    private JMenu syntaxMenu() {
-        JMenu menu = new JMenu("Syntax highlighting");
-        ButtonGroup group = new ButtonGroup();
-        String[][] choices = {
-                {compiler == null ? "Default (plain text)" : "Default (selected compiler)", SourceFoldParser.COMPILER_STYLE},
-                {"Plain text", SyntaxConstants.SYNTAX_STYLE_NONE},
-                {"C", SyntaxConstants.SYNTAX_STYLE_C}, {"C++", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS},
-                {"HTML", SyntaxConstants.SYNTAX_STYLE_HTML}, {"INI", SyntaxConstants.SYNTAX_STYLE_INI},
-                {"Java", SyntaxConstants.SYNTAX_STYLE_JAVA}, {"JavaScript", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT},
-                {"JSON", SyntaxConstants.SYNTAX_STYLE_JSON}, {"Markdown", SyntaxConstants.SYNTAX_STYLE_MARKDOWN},
-                {"Python", SyntaxConstants.SYNTAX_STYLE_PYTHON}, {"Shell", SyntaxConstants.SYNTAX_STYLE_UNIX_SHELL},
-                {"XML", SyntaxConstants.SYNTAX_STYLE_XML}, {"YAML", SyntaxConstants.SYNTAX_STYLE_YAML}
-        };
-        for (String[] choice : choices) {
-            JRadioButtonMenuItem item = new JRadioButtonMenuItem(choice[0], choice[1].equals(pane.getSyntaxEditingStyle()));
-            item.addActionListener(e -> editor.setSyntaxStyle(choice[1]));
-            group.add(item);
-            menu.add(item);
-        }
-        return menu;
+        return List.of(edit, columnSelection, goTo, view);
     }
 
     private JMenu menu(String title, String... names) {
@@ -252,94 +242,6 @@ final class EditorCommands {
             }
             return String.join("\n", result);
         }, true);
-    }
-
-    private void selectOccurrences(boolean all) {
-        String selected = pane.getSelectedText();
-        if (selected == null || selected.isEmpty()) {
-            pane.select(pane.getSelectionStart(), pane.getSelectionEnd());
-            try {
-                pane.select(Utilities.getWordStart(pane, pane.getCaretPosition()), Utilities.getWordEnd(pane, pane.getCaretPosition()));
-            } catch (BadLocationException e) {
-                return;
-            }
-            selected = pane.getSelectedText();
-        }
-        if (selected == null || selected.isBlank()) return;
-        List<EditorSearch.Match> matches = EditorSearch.find(pane.getText(), selected, "", false, true, false, false, 0, pane.getDocument().getLength());
-        List<MultipleSelection.Range> next = new ArrayList<>(selections.ranges());
-        if (next.isEmpty()) next.add(new MultipleSelection.Range(pane.getSelectionStart(), pane.getSelectionEnd()));
-        int last = next.stream().mapToInt(r -> r.end).max().orElse(0);
-        if (all) next.clear();
-        for (int i = 0; i < matches.size(); i++) {
-            EditorSearch.Match match = matches.get(i);
-            if (all || match.start >= last) {
-                next.add(new MultipleSelection.Range(match.start, match.end));
-                if (!all) break;
-            }
-        }
-        selections.set(next);
-    }
-
-    private void expand() {
-        int start = pane.getSelectionStart(), end = pane.getSelectionEnd();
-        selectionHistory.push(new int[]{start, end});
-        selections.clear();
-        try {
-            if (start == end) {
-                pane.select(Utilities.getWordStart(pane, start), Utilities.getWordEnd(pane, end));
-                return;
-            }
-            int[] bracket = enclosingBrackets(start, end);
-            if (bracket != null) {
-                pane.select(bracket[0], bracket[1]);
-                return;
-            }
-            int firstLine = pane.getLineOfOffset(start), lastLine = pane.getLineOfOffset(Math.max(start, end - 1));
-            int lineStart = pane.getLineStartOffset(firstLine), lineEnd = Math.min(pane.getDocument().getLength(), pane.getLineEndOffset(lastLine));
-            if (start != lineStart || end != lineEnd) {
-                pane.select(lineStart, lineEnd);
-                return;
-            }
-            Fold fold = pane.getFoldManager().getDeepestFoldContaining(start);
-            if (fold != null && fold.getEndOffset() >= end) {
-                pane.select(fold.getStartOffset(), fold.getEndOffset() + 1);
-                return;
-            }
-            pane.selectAll();
-        } catch (BadLocationException e) {
-            selectionHistory.pop();
-        }
-    }
-
-    private int[] enclosingBrackets(int start, int end) {
-        Deque<int[]> stack = new ArrayDeque<>();
-        int[] smallest = null;
-        for (int line = 0; line < pane.getLineCount(); line++) {
-            for (Token token = pane.getTokenListForLine(line); token != null && token.isPaintable(); token = token.getNextToken()) {
-                if (token.isComment() || token.getType() >= Token.LITERAL_BOOLEAN && token.getType() <= Token.LITERAL_BACKQUOTE)
-                    continue;
-                for (int i = 0; i < token.length(); i++) {
-                    char ch = token.charAt(i);
-                    int offset = token.getOffset() + i;
-                    int opening = "([{".indexOf(ch), closing = ")]}".indexOf(ch);
-                    if (opening >= 0 && opening < 3) stack.push(new int[]{offset, opening});
-                    else if (closing >= 0 && !stack.isEmpty()) {
-                        int[] match = stack.pop();
-                        if (match[1] == closing && match[0] <= start && offset + 1 >= end && (match[0] < start || offset + 1 > end) && (smallest == null || offset + 1 - match[0] < smallest[1] - smallest[0]))
-                            smallest = new int[]{match[0], offset + 1};
-                    }
-                }
-            }
-        }
-        return smallest;
-    }
-
-    private void shrink() {
-        if (!selectionHistory.isEmpty()) {
-            int[] previous = selectionHistory.pop();
-            pane.select(Math.min(previous[0], pane.getDocument().getLength()), Math.min(previous[1], pane.getDocument().getLength()));
-        }
     }
 
     private void goTo() {

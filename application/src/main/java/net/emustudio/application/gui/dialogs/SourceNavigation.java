@@ -174,7 +174,7 @@ final class SourceNavigation implements AutoCloseable {
         });
     }
 
-    private void addressSelected(int address, boolean visit) {
+    private void addressSelected(int address) {
         if (synchronizing || !paused()) return;
         SourceAddressMap snapshot = session.sourceMappings().orElse(null);
         if (snapshot == null) return;
@@ -189,8 +189,7 @@ final class SourceNavigation implements AutoCloseable {
             try {
                 if (location.instruction)
                     debugger.alignInstructionAddress(location.address);
-                if (visit) editor.visitPosition(location.position);
-                else editor.synchronizePosition(location.position);
+                editor.synchronizePosition(location.position);
             } finally { synchronizing = false; }
         });
     }
@@ -199,6 +198,6 @@ final class SourceNavigation implements AutoCloseable {
         closed = true;
         if (compiler != null) compiler.removeCompilerListener(listener);
         editor.setSourcePositionChanged(position -> {});
-        debugger.setAddressSelectionListener((address, visit) -> {});
+        debugger.setAddressSelectionListener(address -> {});
     }
 }

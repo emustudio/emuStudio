@@ -6,6 +6,7 @@ import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugin.compiler.SourceToken;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.rsta.ui.search.SearchEvent;
@@ -354,6 +355,29 @@ public class REditorTest extends AbstractSwingTest {
 
         assertTrue(onEdt(() -> editor.openFile(source)));
         runOnEdt(() -> editor.openIncludeAt("include \"".length()));
+
+        assertEquals(include, opened.get());
+    }
+
+    @Test
+    public void ctrlClickResolvesBackslashesInCompilerIncludePath() throws Exception {
+        Path directory = Files.createTempDirectory("reditor-include");
+        Path include = Files.writeString(Files.createDirectory(directory.resolve("include")).resolve("library.inc"), "NOP");
+        String directive = "include ";
+        String reference = "include\\library.inc";
+        String quotedPath = "'" + reference + "'";
+        Path source = Files.writeString(directory.resolve("main.asm"), directive + quotedPath);
+        SourceToken includeToken = new SourceToken(net.emustudio.emulib.plugin.compiler.Token.INCLUDE_PATH,
+                directive.length(), quotedPath, null, null, null, reference);
+        Compiler compiler = mock(Compiler.class);
+        when(compiler.createLexer()).thenAnswer(invocation -> lexerFor());
+        REditor editor = createEditor(mock(Dialogs.class), compiler);
+        AtomicReference<Path> opened = new AtomicReference<>();
+        editor.setOpenFileHandler(opened::set);
+
+        assertTrue(onEdt(() -> editor.openFile(source)));
+        when(compiler.createLexer()).thenAnswer(invocation -> lexerFor(includeToken));
+        runOnEdt(() -> editor.openIncludeAt(directive.length() + 1));
 
         assertEquals(include, opened.get());
     }

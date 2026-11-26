@@ -8,19 +8,20 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.plugin.compiler.*;
 import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.folding.Fold;
+import org.fife.ui.rtextarea.RTextArea;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import javax.swing.*;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.*;
 
 public class EditingFeaturesTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
@@ -30,15 +31,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     }
     private void command(REditor editor, String name) {
         runOnEdt(() -> editor.commands().action(name).actionPerformed(new ActionEvent(editor.textPane(), 0, name)));
-    }
-    private JRadioButtonMenuItem syntaxChoice(REditor editor, String label) {
-        return onEdt(() -> {
-            JMenu display = editor.commands().menus().stream().filter(menu -> "Editor display".equals(menu.getText())).findFirst().orElseThrow();
-            JMenu syntax = Arrays.stream(display.getMenuComponents()).filter(JMenu.class::isInstance).map(JMenu.class::cast)
-                    .filter(menu -> "Syntax highlighting".equals(menu.getText())).findFirst().orElseThrow();
-            return Arrays.stream(syntax.getMenuComponents()).map(JRadioButtonMenuItem.class::cast)
-                    .filter(item -> label.equals(item.getText())).findFirst().orElseThrow();
-        });
     }
     @Test public void caseCommandsChangeOnlyTheSelectionAndUndoTogether() {
         String[][] cases = {{"Uppercase", "MIXED"}, {"Lowercase", "mixed"}, {"Invert case", "mIxEd"}};
@@ -68,49 +60,23 @@ public class EditingFeaturesTest extends AbstractSwingTest {
             assertEquals("aß keep éB", onEdt(editor.textPane()::getText));
         }
     }
-    @Test public void syntaxChoiceIsPerFileAndRestoredFromSettings() throws Exception {
-        Path source = Files.writeString(files.newFile("source.txt").toPath(), "public class Sample {}\n");
-        Path other = Files.writeString(files.newFile("other.txt").toPath(), "plain\n");
+    @Test public void compilerSyntaxProvidesCommentRulesAndFoldsWithOldSyntaxOverride() throws Exception {
+        Path source = Files.writeString(files.newFile("program.asm").toPath(), "block\n  body\nend\n");
+        String encodedPath = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(source.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8));
         AppSettings settings = new AppSettings(Config.inMemory(), false);
-        REditor editor = editor("");
-        runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.openFile(source); syntaxChoice(editor, "Java").doClick(); });
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(editor.textPane()::getSyntaxEditingStyle));
-        assertEquals(org.fife.ui.rsyntaxtextarea.Token.RESERVED_WORD, onEdt(() -> editor.textPane().getTokenListForLine(0).getType()).intValue());
-        assertFalse(onEdt(editor::isDirty));
-        REditor reopened = editor("");
-        runOnEdt(() -> { reopened.configure(new EditorState(settings)); reopened.openFile(source); });
-        assertTrue(onEdt(() -> syntaxChoice(reopened, "Java").isSelected()));
-        runOnEdt(() -> reopened.openFile(other));
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(reopened.textPane()::getSyntaxEditingStyle));
-        runOnEdt(() -> reopened.openFile(source));
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(reopened.textPane()::getSyntaxEditingStyle));
-        runOnEdt(reopened::newFile);
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(reopened.textPane()::getSyntaxEditingStyle));
-    }
-    @Test public void syntaxChoiceFollowsBothSplitViewsAndSurvivesClosingTheSplit() {
-        REditor editor = editor("public class Sample {}\n");
-        runOnEdt(() -> syntaxChoice(editor, "Java").doClick());
-        REditor mirror = onEdt(editor::mirror);
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(mirror.textPane()::getSyntaxEditingStyle));
-        runOnEdt(() -> syntaxChoice(mirror, "JSON").doClick());
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_JSON, onEdt(editor.textPane()::getSyntaxEditingStyle));
-        runOnEdt(() -> syntaxChoice(editor, "XML").doClick());
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_XML, onEdt(mirror.textPane()::getSyntaxEditingStyle));
-        runOnEdt(() -> { mirror.dispose(); syntaxChoice(editor, "Java").doClick(); });
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(editor.textPane()::getSyntaxEditingStyle));
-    }
-    @Test public void returningToCompilerSyntaxRestoresItsCommentRulesAndFolds() {
+        settings.set("editorSyntax" + encodedPath, "text/plain");
         LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "block", null, null, null),
                 new SourceToken(Token.BLOCK_END, 13, "end", null, null, null))) {
             public String[] getLineCommentStartAndEnd() { return new String[]{"##", null}; }
         };
         REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(lexer)));
         runOnEdt(() -> {
-            editor.textPane().setText("block\n  body\nend\n");
-            syntaxChoice(editor, "Plain text").doClick();
+            editor.configure(new EditorState(settings));
+            assertTrue(editor.openFile(source));
+            editor.textPane().getFoldManager().reparse();
         });
-        assertEquals(SyntaxConstants.SYNTAX_STYLE_NONE, onEdt(editor.textPane()::getSyntaxEditingStyle));
-        runOnEdt(() -> { syntaxChoice(editor, "Default (selected compiler)").doClick(); editor.textPane().getFoldManager().reparse(); });
+        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(editor.textPane()::getSyntaxEditingStyle));
         assertEquals(1, onEdt(() -> editor.textPane().getFoldManager().getFoldCount()).intValue());
         runOnEdt(() -> editor.textPane().select(0, 5)); command(editor, "Toggle comment");
         assertTrue(onEdt(editor.textPane()::getText).startsWith("##block\n"));
@@ -135,23 +101,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         runOnEdt(() -> { comment.textPane().setText("()"); comment.textPane().setCaretPosition(1); });
         assertEquals(-1, onEdt(() -> org.fife.ui.rsyntaxtextarea.RSyntaxUtilities
                 .getMatchingBracketPosition(comment.textPane(), null).y).intValue());
-    }
-    @Test public void savingUntitledSourceAndSaveAsKeepItsSyntaxChoice() throws Exception {
-        Path first = files.newFile("first.txt").toPath(), second = files.newFile("second.txt").toPath();
-        Dialogs dialogs = mock(Dialogs.class);
-        when(dialogs.chooseFile(eq("Save file"), eq("Save"), any(Path.class), eq(true), anyList()))
-                .thenReturn(Optional.of(first), Optional.of(second));
-        AppSettings settings = new AppSettings(Config.inMemory(), false);
-        REditor editor = onEdt(() -> new REditor(dialogs));
-        runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.textPane().setText("{}"); syntaxChoice(editor, "JSON").doClick(); });
-        assertTrue(onEdt(editor::saveFile));
-        assertTrue(onEdt(editor::saveFileAs));
-        REditor reopened = editor("");
-        runOnEdt(() -> reopened.configure(new EditorState(settings)));
-        for (Path path : List.of(first, second)) {
-            runOnEdt(() -> reopened.openFile(path));
-            assertEquals(SyntaxConstants.SYNTAX_STYLE_JSON, onEdt(reopened.textPane()::getSyntaxEditingStyle));
-        }
     }
     @Test public void multipleSelectionsTypeAndUndoTogether() {
         REditor editor = editor("one two one"); TextEditorPane pane = editor.textPane();
@@ -186,13 +135,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         runOnEdt(() -> { editor.commands().selections().rectangle(3, 10); editor.textPane().replaceSelection("!"); });
         assertEquals("abc!d\na  !\nabc!d", onEdt(editor.textPane()::getText));
     }
-    @Test public void selectionExpandsThroughBracketsAndShrinksBack() {
-        REditor editor = editor("outer(inner(word))");
-        runOnEdt(() -> editor.textPane().select(12, 16));
-        command(editor, "Expand selection"); assertEquals("(word)", onEdt(editor::getSelectedText));
-        command(editor, "Expand selection"); assertEquals("(inner(word))", onEdt(editor::getSelectedText));
-        command(editor, "Shrink selection"); assertEquals("(word)", onEdt(editor::getSelectedText));
-    }
     @Test public void workspaceSearchShortcutsUseTheInlineQueryAndWrap() {
         TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
         runOnEdt(() -> { tabs.activeEditor().textPane().setText("one two one"); tabs.searchBar().find.setText("one"); });
@@ -208,31 +150,75 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         runOnEdt(() -> {
             editor.commands().selections().set(List.of(new MultipleSelection.Range(1, 1), new MultipleSelection.Range(3, 3)));
             java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection("X\nY"), null);
-            pane.getActionMap().get(pane.getInputMap().get(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK)))
+            pane.getActionMap().get(pane.getInputMap().get(KeyStroke.getKeyStroke(KeyEvent.VK_V, RTextArea.getDefaultModifier())))
                     .actionPerformed(new ActionEvent(pane, 0, ""));
         });
         assertEquals("aX\nbY", onEdt(pane::getText));
     }
-    @Test public void recordedTypingCanBeReplayed() {
-        REditor editor = editor(""); TextEditorPane pane = editor.textPane();
-        command(editor, "Start recording");
-        try {
-            runOnEdt(() -> pane.getActionMap().get(javax.swing.text.DefaultEditorKit.defaultKeyTypedAction)
-                    .actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, "x")));
-        } finally { command(editor, "Stop recording"); }
-        command(editor, "Replay recording");
-        assertEquals("xx", onEdt(pane::getText));
-    }
     @Test public void rectangularSelectionClampsShortLinesAndEditsRows() {
         REditor editor = editor("abc\na\nabc"); TextEditorPane pane = editor.textPane();
-        runOnEdt(() -> { editor.commands().selections().rectangle(1, 8); pane.replaceSelection("!"); });
+        runOnEdt(() -> pane.select(1, 8));
+        command(editor, "Column Selection Mode");
+        runOnEdt(() -> pane.replaceSelection("!"));
         assertEquals("a!c\na!\na!c", onEdt(pane::getText));
     }
-    @Test public void selectingAllOccurrencesCreatesEditableSelections() {
-        REditor editor = editor("same same same");
-        runOnEdt(() -> editor.textPane().select(0, 4)); command(editor, "Select all occurrences");
-        runOnEdt(() -> editor.textPane().replaceSelection("x"));
-        assertEquals("x x x", onEdt(editor.textPane()::getText));
+    @Test public void columnSelectionModeRestoresTheOriginalKeyboardBindingWhenDisabled() {
+        REditor editor = editor("abcd\na\nabcd");
+        REditor other = editor("other");
+        TextEditorPane pane = editor.textPane();
+        runOnEdt(() -> {
+            JCheckBoxMenuItem mode = columnSelectionItem(editor);
+            pane.setSize(400, 180);
+            pane.setCaretPosition(3);
+            assertFalse(mode.isSelected());
+            KeyStroke down = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK);
+            Object linearSelection = pane.getInputMap().get(down);
+            mode.doClick(0);
+            assertTrue(mode.isSelected());
+            assertFalse(columnSelectionItem(other).isSelected());
+
+            editorKey(pane, down);
+            editorKey(pane, down);
+            editorKey(pane, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.SHIFT_DOWN_MASK));
+            pane.replaceSelection("!");
+            assertEquals("abc!\na  !\nabc!", pane.getText());
+
+            editorKey(pane, mode.getAccelerator());
+            assertFalse(mode.isSelected());
+            assertEquals(linearSelection, pane.getInputMap().get(down));
+            assertTrue(editor.commands().selections().ranges().isEmpty());
+        });
+    }
+    @Test public void columnSelectionModeMakesPlainMouseDragRectangular() {
+        REditor editor = editor("abc\ndef\nghi");
+        TextEditorPane pane = editor.textPane();
+        onEdt(() -> {
+            pane.setSize(400, 180);
+            columnSelectionItem(editor).doClick(0);
+            Rectangle start = pane.modelToView2D(1).getBounds();
+            Rectangle end = pane.modelToView2D(10).getBounds();
+            long time = System.currentTimeMillis();
+            pane.dispatchEvent(new MouseEvent(pane, MouseEvent.MOUSE_PRESSED, time, InputEvent.BUTTON1_DOWN_MASK,
+                    start.x, start.y + start.height / 2, 1, false, MouseEvent.BUTTON1));
+            pane.dispatchEvent(new MouseEvent(pane, MouseEvent.MOUSE_DRAGGED, time, InputEvent.BUTTON1_DOWN_MASK,
+                    end.x, end.y + end.height / 2, 0, false, MouseEvent.NOBUTTON));
+            pane.dispatchEvent(new MouseEvent(pane, MouseEvent.MOUSE_RELEASED, time, 0,
+                    end.x, end.y + end.height / 2, 1, false, MouseEvent.BUTTON1));
+            pane.replaceSelection("!");
+            assertEquals("a!c\nd!f\ng!i", pane.getText());
+            return null;
+        });
+    }
+    private JCheckBoxMenuItem columnSelectionItem(REditor editor) {
+        return editor.commands().editMenuItems().stream()
+                .filter(JCheckBoxMenuItem.class::isInstance)
+                .map(JCheckBoxMenuItem.class::cast)
+                .filter(item -> "Column Selection Mode".equals(item.getText()))
+                .findFirst().orElseThrow();
+    }
+    private void editorKey(TextEditorPane pane, KeyStroke key) {
+        Action action = pane.getActionMap().get(pane.getInputMap().get(key));
+        action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, ""));
     }
     @Test public void transformsOnlySelectedLinesAndPreservesFinalNewline() {
         REditor editor = editor("z\nb\na\nz\n");
@@ -309,6 +295,37 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         command(editor, "Toggle comment");
         assertEquals("first\nsecond\n", onEdt(editor.textPane()::getText));
     }
+    @Test public void commentShortcutDoesNotInsertTheSlashFromTheTypedEvent() {
+        LexicalAnalyzer lexer = new TokenLexer(List.of()) {
+            public String[] getLineCommentStartAndEnd() { return new String[]{";", null}; }
+        };
+        REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(lexer)));
+        TextEditorPane pane = editor.textPane();
+        String line = "dcx sp        ; stack initialization (0FFFFh)";
+        int shortcut = RTextArea.getDefaultModifier();
+
+        runOnEdt(() -> {
+            pane.setText(line);
+            pane.setCaretPosition(0);
+            typeSlash(pane, shortcut);
+            assertEquals(";" + line, pane.getText());
+            typeSlash(pane, shortcut);
+            assertEquals(line, pane.getText());
+
+            pane.setCaretPosition(0);
+            typeSlash(pane, 0);
+            assertEquals("/" + line, pane.getText());
+        });
+    }
+
+    private void typeSlash(TextEditorPane pane, int modifiers) {
+        KeyboardFocusManager keyboard = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        long time = System.currentTimeMillis();
+        keyboard.redispatchEvent(pane, new KeyEvent(pane, KeyEvent.KEY_PRESSED, time, modifiers, KeyEvent.VK_SLASH, '/'));
+        keyboard.redispatchEvent(pane, new KeyEvent(pane, KeyEvent.KEY_TYPED, time, modifiers, KeyEvent.VK_UNDEFINED, '/'));
+        keyboard.redispatchEvent(pane, new KeyEvent(pane, KeyEvent.KEY_RELEASED, time, modifiers, KeyEvent.VK_SLASH, '/'));
+    }
+
     @Test public void foldingFallsBackToIndentationWhenAPluginRejectsIncompleteSource() {
         LexicalAnalyzer lexer = new TokenLexer(List.of()) {
             public void reset(char[] chars, int offset, int length) { throw new IllegalArgumentException("incomplete"); }

@@ -209,7 +209,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void sourceMemorySymbolsAndEditorHistoryStaySynchronized() throws Exception {
+    public void sourceAndInstructionListingStaySynchronized() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
@@ -217,13 +217,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.sourceLine(3);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            f.sourceHistory("Back");
-            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
-            assertEquals(2, f.line());
-            f.sourceHistory("Forward");
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-
-            assertEquals(3, f.line());
 
             runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
             assertEquals(1, f.line());
@@ -510,18 +503,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         int line() { return onEdt(() -> editor.currentSourcePosition().orElseThrow().line); }
-
-        void sourceHistory(String name) {
-            runOnEdt(() -> {
-                JMenu menu = new JMenu("Edit");
-                editor.extendEditingMenu(menu);
-                JMenu navigate = (JMenu) java.util.Arrays.stream(menu.getMenuComponents())
-                        .filter(c -> c instanceof JMenu && "Navigate".equals(((JMenu) c).getText())).findFirst().orElseThrow();
-                for (java.awt.Component component : navigate.getMenuComponents())
-                    if (component instanceof JMenuItem && name.equals(((JMenuItem) component).getText()))
-                        ((JMenuItem) component).doClick(0);
-            });
-        }
 
         void running(boolean value) {
             if (value) execution.start().join();

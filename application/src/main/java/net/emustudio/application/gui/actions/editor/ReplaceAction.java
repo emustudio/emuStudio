@@ -4,6 +4,7 @@ package net.emustudio.application.gui.actions.editor;
 
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
+import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -22,7 +23,7 @@ public class ReplaceAction extends AbstractAction {
         this.replaceDialog = Objects.requireNonNull(replaceDialog);
 
         putValue(SHORT_DESCRIPTION, "Find/replace text...");
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, RTextArea.getDefaultModifier()));
         putValue(MNEMONIC_KEY, KeyEvent.VK_R);
     }
 

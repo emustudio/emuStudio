@@ -33,6 +33,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -47,11 +48,7 @@ import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
 public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DebuggerPanel.class);
 
-    @FunctionalInterface public interface AddressSelectionListener {
-        void selected(int address, boolean visit);
-    }
-
-    private AddressSelectionListener addressSelectionListener = (address, visit) -> {};
+    private IntConsumer addressSelectionListener = address -> {};
     private Supplier<List<SourceAddressMap.Symbol>> compiledSymbols = List::of;
     private boolean sourceMappingsCurrent;
     private final DebuggerSession session;
@@ -195,7 +192,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 () -> selectedAddress, entry -> guard(() -> navigate(entry.start)));
     }
 
-    public void setAddressSelectionListener(AddressSelectionListener listener) {
+    public void setAddressSelectionListener(IntConsumer listener) {
         addressSelectionListener = Objects.requireNonNull(listener);
     }
 
@@ -219,7 +216,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     public void synchronizeSourceAddress(SourceAddressMap.Location location) {
         if (!location.instruction) return;
         alignInstructionAddress(location.address);
-        inspectAddress(location.address, true, () -> {
+        inspectAddress(location.address, () -> {
             selectListingInstruction(location.address);
         });
     }
@@ -292,7 +289,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     private void followPc(int pc) {
         lastInstructionAddress = pc;
         instructionModel.currentPage();
-        if (pc >= 0) guard(() -> inspectAddress(pc, false, () -> {
+        if (pc >= 0) guard(() -> inspectAddress(pc, () -> {
             if (table.getSelectedRow() >= 0) selectInstructionAddress();
         }));
     }
@@ -388,7 +385,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         updateActions();
         revalidate();
         repaint();
-        if (selectedAddress != previous) notifyAddressSelection(false);
+        if (selectedAddress != previous) notifyAddressSelection();
     }
 
     public boolean isBreakpointDialogSupported() {
@@ -431,7 +428,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     public void navigate(int at) {
-        inspectAddress(at, true, () -> {
+        inspectAddress(at, () -> {
             selectListingInstruction(at);
             showInstructions();
         });
@@ -450,18 +447,18 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         if (row >= 0) table.setRowSelectionInterval(table.convertRowIndexToView(row), table.convertRowIndexToView(row));
     }
 
-    /** Selects the address, lets the views follow, then notifies listeners (visit = user navigation). */
-    private void inspectAddress(int at, boolean visit, Runnable updateViews) {
+    /** Selects the address, lets the views follow, then notifies listeners. */
+    private void inspectAddress(int at, Runnable updateViews) {
         session.requirePaused();
         if (at < 0 || at >= session.cpu.getAddressSpaceSize())
             throw new IllegalArgumentException("Address outside memory");
         selectedAddress = at;
         updateViews.run();
-        notifyAddressSelection(visit);
+        notifyAddressSelection();
     }
 
-    private void notifyAddressSelection(boolean visit) {
-        if (!disposed && !running) addressSelectionListener.selected(selectedAddress, visit);
+    private void notifyAddressSelection() {
+        if (!disposed && !running) addressSelectionListener.accept(selectedAddress);
     }
 
     private void showSource(int at) {

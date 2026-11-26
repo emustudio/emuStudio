@@ -55,7 +55,6 @@ public class REditor implements Editor {
     private final Compiler compiler;
     private final EditorCommands commands;
     private REditor sharedWith;
-    private REditor splitView;
     private Consumer<Path> openFileHandler = path -> {
     };
     private boolean isnew = true;
@@ -145,7 +144,7 @@ public class REditor implements Editor {
             fileTypes = Collections.emptyList();
         }
         textPane.setDirty(false);
-        commands = new EditorCommands(this, textPane, scrollPane, compiler);
+        commands = new EditorCommands(textPane, scrollPane, compiler);
     }
 
     TextEditorPane textPane() {
@@ -166,30 +165,11 @@ public class REditor implements Editor {
 
     void configure(EditorState state) {
         commands.configure(state);
-        if (sharedWith == null) restoreSyntaxStyle();
-    }
-
-    void setSyntaxStyle(String style) {
-        REditor source = sourceEditor();
-        source.textPane.setSyntaxEditingStyle(style);
-        if (source.splitView != null) source.splitView.textPane.setSyntaxEditingStyle(style);
-        source.persistSyntaxStyle();
-    }
-
-    private void restoreSyntaxStyle() {
-        String style = getCurrentFile().map(File::toPath).map(commands.state()::syntax)
-                .orElse(SourceFoldParser.COMPILER_STYLE);
-        setSyntaxStyle(style);
-    }
-
-    private void persistSyntaxStyle() {
-        getCurrentFile().ifPresent(file -> commands.state().syntax(file.toPath(), textPane.getSyntaxEditingStyle()));
     }
 
     REditor mirror() {
         REditor mirror = new REditor(dialogs, compiler);
         mirror.sharedWith = this;
-        splitView = mirror;
         mirror.textPane.setDocument(textPane.getDocument());
         mirror.commands.selections().installFilter();
         mirror.configure(commands.state());
@@ -271,7 +251,6 @@ public class REditor implements Editor {
         } else {
             try {
                 textPane.save();
-                persistSyntaxStyle();
                 isnew = false;
                 return true;
             } catch (IOException e) {
@@ -296,7 +275,6 @@ public class REditor implements Editor {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
-                persistSyntaxStyle();
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
@@ -343,7 +321,6 @@ public class REditor implements Editor {
     }
 
     void dispose() {
-        if (sharedWith != null) sharedWith.splitView = null;
         changeListeners.forEach(textPane.getDocument()::removeDocumentListener);
         changeListeners.clear();
         commands.selections().clear();
@@ -379,7 +356,7 @@ public class REditor implements Editor {
                 net.emustudio.emulib.plugin.compiler.Token token = lexer.next();
                 if (token.getReferencedFile() != null && offset >= token.getOffset()
                         && offset < token.getOffset() + token.getText().length()) {
-                    filename = token.getReferencedFile();
+                    filename = token.getReferencedFile().replace('\\', File.separatorChar).replace('/', File.separatorChar);
                     break;
                 }
             }
@@ -406,7 +383,6 @@ public class REditor implements Editor {
             textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
-            restoreSyntaxStyle();
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
@@ -421,7 +397,6 @@ public class REditor implements Editor {
         textPane.discardAllEdits();
         textPane.setDirty(false);
         isnew = true;
-        restoreSyntaxStyle();
     }
 
     @Override

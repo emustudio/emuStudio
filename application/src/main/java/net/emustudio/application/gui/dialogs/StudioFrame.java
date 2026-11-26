@@ -199,7 +199,10 @@ public class StudioFrame extends JFrame {
 
         mnuEdit.setText("Edit");
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
-        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
+        Action redo = RTextArea.getAction(RTextArea.REDO_ACTION);
+        redo.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
+                RTextArea.getDefaultModifier() | KeyEvent.SHIFT_DOWN_MASK));
+        mnuEdit.add(new JMenuItem(redo));
         mnuEdit.addSeparator();
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));

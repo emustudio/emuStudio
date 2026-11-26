@@ -147,6 +147,13 @@ public class Runner implements Callable<Integer> {
         }
 
         try {
+            // XRender mask uploads can stall Swing repaints on ARM Linux under XWayland.
+            if ("Linux".equals(System.getProperty("os.name"))
+                    && "aarch64".equals(System.getProperty("os.arch"))
+                    && System.getenv("WAYLAND_DISPLAY") != null
+                    && System.getProperty("sun.java2d.xrender") == null) {
+                System.setProperty("sun.java2d.xrender", "false");
+            }
             AppSettings appConfig = AppSettings.load(true);
             EmuStudioGui gui = new EmuStudioGui();
             gui.initialize(appConfig);

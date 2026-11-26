@@ -1338,7 +1338,7 @@ public class DebuggerPanelTest {
                     frame.setVisible(true);
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
-                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    workspace.panel.setAddressSelectionListener(visits::add);
                     JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
                     JPopupMenu popup = search.getComponentPopupMenu();
                     JList<?> results = component(popup, JList.class, "Annotations");
@@ -1389,7 +1389,7 @@ public class DebuggerPanelTest {
                     frame.setVisible(true);
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
-                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    workspace.panel.setAddressSelectionListener(visits::add);
                     JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
                     JPopupMenu popup = search.getComponentPopupMenu();
 
@@ -1535,7 +1535,7 @@ public class DebuggerPanelTest {
             List<Integer> visits = new ArrayList<>();
             java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                workspace.panel.setAddressSelectionListener(visits::add);
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
                 Container annotations = (Container) tabs.getSelectedComponent();
@@ -1688,17 +1688,16 @@ public class DebuggerPanelTest {
     @Test
     public void browsingAnAddressChangesSelectionWithoutMovingCpu() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2, 3}, {4, 5, 3}}, 2, session -> {})) {
-            List<String> selections = new ArrayList<>();
+            List<Integer> selections = new ArrayList<>();
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.setAddressSelectionListener((address, visit) ->
-                        selections.add(address + ":" + visit));
+                workspace.panel.setAddressSelectionListener(selections::add);
                 workspace.panel.navigate(1);
 
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals("Instruction listing", workspace.table.getAccessibleContext().getAccessibleName());
             });
 
-            assertEquals(List.of("1:true"), selections);
+            assertEquals(List.of(1), selections);
             verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
         }
     }

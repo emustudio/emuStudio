@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.actions.editor;
 
 import net.emustudio.application.gui.editor.TabbedEditor;
+import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,6 +11,9 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 public class CloseTabAction extends AbstractAction {
+    public static final KeyStroke SHORTCUT = KeyStroke.getKeyStroke(
+            RTextArea.isOSX() ? KeyEvent.VK_W : KeyEvent.VK_F4, RTextArea.getDefaultModifier());
+
     private final TabbedEditor editor;
     private final Runnable updateTitle;
 
@@ -17,7 +21,7 @@ public class CloseTabAction extends AbstractAction {
         super("Close tab");
         this.editor = Objects.requireNonNull(editor);
         this.updateTitle = Objects.requireNonNull(updateTitle);
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK));
+        putValue(ACCELERATOR_KEY, SHORTCUT);
         putValue(SHORT_DESCRIPTION, "Close current editor tab");
     }
 
