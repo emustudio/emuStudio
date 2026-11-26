@@ -154,8 +154,8 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
             public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
                 boolean enabled = isInstructionView() && table.getSelectedRow() >= 0 && !running
                         && !instructionModel.isFolded(table.convertRowIndexToModel(table.getSelectedRow()));
-                goToSource.setEnabled(enabled);
                 int address = enabled ? selectedRowAddress() : -1;
+                goToSource.setEnabled(address >= 0 && session.sourceAt(address).isPresent());
                 toggleBreakpoint.setEnabled(address >= 0 && isBreakpointDialogSupported());
                 toggleBreakpoint.setText(address >= 0 && session.isBreakpointSet(address)
                         ? "Unset breakpoint" : "Set breakpoint");
@@ -462,10 +462,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     }
 
     private void showSource(int at) {
-        session.sourceAt(at)
-                .ifPresentOrElse(sourceNavigator, () -> {
-                    throw new IllegalStateException("No current source mapping at this address");
-                });
+        session.sourceAt(at).ifPresent(sourceNavigator);
     }
 
     private List<MemoryAnnotations.Entry> annotationsCovering(int address) {
