@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+<defs>
+<linearGradient id="white" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d3d7cf"/></linearGradient>
+<linearGradient id="folder" x2="0" y2="1"><stop stop-color="#8ab4df"/><stop offset="1" stop-color="#4e81b5"/></linearGradient>
+</defs>
+<circle cx="8.5" cy="8.5" r="6.5" fill="url(#white)" stroke="#888a85"/>
+<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="#ffffff" stroke-width=".8"/>
+<path d="M10.5 20.5 V12.5 H13.5 L14.5 13.5 H20 V19 Z" fill="#729fcf" stroke="#3465a4" stroke-linejoin="round"/>
+<path d="M13.5 9.5 H17.5 L19.5 11.5 V17 H13.5 Z" fill="url(#white)" stroke="#888a85" stroke-linejoin="round"/>
+<path d="M17.5 9.5 V11.5 H19.5 M15 13.5 H18" fill="none" stroke="#888a85" stroke-width=".8" stroke-linejoin="round"/>
+<path d="M10.5 20.5 L12.5 15.5 H21 L19 20.5 Z" fill="url(#folder)" stroke="#3465a4" stroke-linejoin="round"/>
+<path d="M13 16.5 H19.5" stroke="#ffffff" stroke-width=".7" opacity=".65"/>
+</svg>

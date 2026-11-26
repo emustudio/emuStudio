@@ -43,6 +43,26 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test(timeout = 10000)
+    public void clearingSessionMappingsAlsoClearsNavigationAndCompiledLabels() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.compile(false);
+            assertTrue(f.session.sourceMappings().isPresent());
+            assertEquals("first", onEdt(() -> f.table.getValueAt(0, 0)));
+
+            runOnEdt(() -> {
+                f.session.clearSourceMappings();
+                f.table.clearSelection();
+            });
+            f.sourceLine(2);
+
+            assertTrue(f.session.sourceMappings().isEmpty());
+            assertTrue(f.session.sourceAt(2).isEmpty());
+            assertEquals(-1, onEdt(f.table::getSelectedRow).intValue());
+            assertEquals("", onEdt(() -> f.table.getValueAt(0, 0)));
+        }
+    }
+
+    @Test(timeout = 10000)
     public void compilerLabelsAppearInFirstColumnAndDisappearWhenSourceChanges() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
@@ -95,7 +115,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false);
             assertTrue(f.session.sourceAt(2).isPresent());
 
-            f.session.runMutation(() -> {});
+            f.session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
 
             assertTrue(f.annotations.at(2).stream().anyMatch(entry -> entry.source != null));
             assertTrue(f.session.sourceAt(2).isEmpty());
@@ -108,7 +128,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.compile(false);
             assertTrue(f.session.sourceAt(2).isPresent());
 
-            f.session.runCompilation(() -> f.compile(true));
+            f.session.runCompilation(() -> f.compile(true), java.util.concurrent.CompletableFuture.completedFuture(null));
 
             assertTrue(f.session.sourceAt(2).isPresent());
         }
@@ -117,13 +137,14 @@ public class SourceNavigationTest extends AbstractSwingTest {
     @Test(timeout = 10000)
     public void stepBeforeQueuedSwingUpdatesKeepsCompiledSourceMappings() throws Exception {
         try (Fixture f = new Fixture()) {
-            when(f.cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
-            runOnEdt(() -> {
-                f.session.execution().compile(() -> f.publishCompilation(false, () -> {})).join();
-                f.session.execution().step().join();
+            onEdt(() -> {
+                when(f.cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
+                f.execution.compile(() -> f.publishCompilation(false, () -> {})).join();
+                f.execution.step().join();
 
                 assertTrue("Compilation must publish mappings before a later step can overtake them",
                         f.session.sourceAt(2).isPresent());
+                return null;
             });
             f.sourceLine(2);
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
@@ -134,20 +155,20 @@ public class SourceNavigationTest extends AbstractSwingTest {
     public void runBeforeQueuedSwingUpdatesKeepsCompiledSourceMappings() throws Exception {
         try (Fixture f = new Fixture()) {
             runOnEdt(() -> {
-                f.session.execution().compile(() -> f.publishCompilation(false, () -> {})).join();
-                f.session.execution().start().join();
+                f.execution.compile(() -> f.publishCompilation(false, () -> {})).join();
+                f.execution.start().join();
 
                 assertTrue("Compilation must publish mappings before Run can overtake them",
                         f.session.sourceAt(2).isPresent());
             });
-            f.session.execution().pause().join();
+            f.execution.pause().join();
         }
     }
 
     @Test(timeout = 10000)
     public void mutationBeforeDeferredCompilerCaptureCannotPublishOldSourceAsCurrent() throws Exception {
         try (Fixture f = new Fixture()) {
-            f.compile(false, () -> f.session.runMutation(() -> {}));
+            f.compile(false, () -> f.session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null)));
 
             runOnEdt(() -> { f.debugger.showInstructions(); f.table.setRowSelectionInterval(0, 0); });
             f.sourceLine(2);
@@ -265,7 +286,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
             CountDownLatch callbacksFinished = new CountDownLatch(1);
             CountDownLatch release = new CountDownLatch(1);
             AtomicReference<DebuggerSession.SourceCaptureGuard> captured = new AtomicReference<>();
-            CompletableFuture<CPU.RunState> compilation = f.session.execution().compile(() ->
+            CompletableFuture<CPU.RunState> compilation = f.execution.compile(() ->
                     f.publishCompilation(false, () -> {
                         captured.set(f.session.captureSourceGuard());
                         callbacksFinished.countDown();
@@ -375,6 +396,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final MemoryAnnotations annotations = new MemoryAnnotations();
         final AtomicInteger bank = new AtomicInteger();
         final DebuggerSession session;
+        final net.emustudio.application.emulation.EmulationController execution;
         final TabbedEditor editor;
         final DebuggerPanel debugger;
         final JTable table;
@@ -418,11 +440,19 @@ public class SourceNavigationTest extends AbstractSwingTest {
             }
             when(lexer.analyze(anyString())).thenReturn(tokens);
             session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, null, annotations);
+            execution = net.emustudio.application.TestCpu.execution(session);
             editor = onEdt(() -> new TabbedEditor(mock(Dialogs.class), compiler));
             assertTrue(onEdt(() -> editor.openFile(path)));
             pane = findComponent((java.awt.Container) editor.getView(), TextEditorPane.class, p -> true);
             original = onEdt(() -> {
-                DebugTableModel model = spy(new DebugTableModel());
+                DebugTableModel model = mock(DebugTableModel.class, withSettings()
+                        .spiedInstance(new DebugTableModel()).defaultAnswer(call -> {
+                            if (call.getMethod().getName().equals("rowForAddress")) {
+                                int address = call.getArgument(0);
+                                return address >= 0 && address < 8 && address % 2 == 0 ? address / 2 : -1;
+                            }
+                            return call.callRealMethod();
+                        }));
                 model.setCPU(cpu, net.emustudio.application.TestCpu.context(cpu));
                 doReturn(4).when(model).getRowCount();
                 doAnswer(c -> (Integer) c.getArgument(0) * 2).when(model).getLocationAt(anyInt());
@@ -434,7 +464,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 JScrollPane scroll = gui.scrollPane(listing);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                return new DebuggerPanel(session, listing, instructions, p -> {}, () -> {}, gui);
+                return new DebuggerPanel(session, execution, listing, instructions, p -> {}, () -> {}, gui);
             });
             table = findComponent(debugger, JTable.class, t -> true);
             runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {
@@ -446,9 +476,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();
             showInFrame(debugger);
-            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
-            while (!onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled) && System.nanoTime() < deadline) Thread.sleep(10);
-            assertTrue(onEdt(findToggleButtonByTooltip(debugger, "Show instructions from PC")::isEnabled));
         }
 
         void compile(boolean fail) {
@@ -497,14 +524,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         void running(boolean value) {
-            if (value) session.execution().start().join();
-            else session.execution().pause().join();
+            if (value) execution.start().join();
+            else execution.pause().join();
             net.emustudio.application.TestCpu.publish(cpu, value ? CPU.RunState.STATE_RUNNING : CPU.RunState.STATE_STOPPED_BREAK);
             runOnEdt(() -> {});
         }
 
         @Override public void close() {
             runOnEdt(() -> { navigation.close(); debugger.close(); });
+            execution.close();
             session.close();
         }
 

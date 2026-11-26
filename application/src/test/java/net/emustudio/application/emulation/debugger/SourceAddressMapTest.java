@@ -159,7 +159,8 @@ public class SourceAddressMapTest {
         String text = "NOP\nNOP\nHALT\n";
         Path source = source("stepping.asm", text);
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {new byte[8]}, 8);
-        try (DebuggerSession session = machine.session(null)) {
+        try (DebuggerSession session = machine.session(null);
+             net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             replaceSources(session.annotationEngine, Map.of(0, Set.of(annotation(source, 1, 0)),
                     1, Set.of(annotation(source, 2, 0)), 2, Set.of(annotation(source, 3, 0))));
             SourceAddressMap map = SourceAddressMap.capture(compiler(), machine.memory,
@@ -173,7 +174,7 @@ public class SourceAddressMapTest {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 });
                 when(net.emustudio.application.TestCpu.context(machine.cpu).getInstructionLocation()).thenReturn(address);
-                session.execution().step().join();
+                machineExecution.step().join();
                 assertEquals(annotation(source, address + 1, 0), session.sourceAt(address).orElseThrow());
                 assertEquals(address, map.addressOf(annotation(source, address + 1, 0)).orElseThrow().address);
             }
@@ -184,7 +185,7 @@ public class SourceAddressMapTest {
             assertEquals(annotation(source, 3, 0), session.sourceAt(2).orElseThrow());
             assertEquals(2, map.addressOf(annotation(source, 3, 0)).orElseThrow().address);
 
-            session.runMutation(() -> {});
+            session.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
             assertTrue(session.sourceAt(2).isEmpty());
         }
     }
@@ -196,7 +197,7 @@ public class SourceAddressMapTest {
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"));
 
         when(memory.getSize()).thenReturn(8);
-        map.session().runMutation(() -> {});
+        map.session().runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
@@ -335,7 +336,7 @@ public class SourceAddressMapTest {
         DebuggerSession index = session(4, ENGINES.get(memory));
         SourceAddressMap map = capture(compiler(), memory, Map.of(source, "NOP\n"), index);
 
-        index.runMutation(() -> {});
+        index.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
 
         assertTrue(map.sourceAt(0).isEmpty());
         assertTrue(map.addressOf(SourceCodePosition.of(1, 0, source.toString())).isEmpty());
@@ -382,7 +383,7 @@ public class SourceAddressMapTest {
         MemoryAnnotations engine = spy(ENGINES.get(memory));
         ENGINES.put(memory, engine);
         doAnswer(call -> {
-            index.runMutation(() -> {});
+            index.runMutation(() -> {}, java.util.concurrent.CompletableFuture.completedFuture(null));
             return call.callRealMethod();
         }).when(engine).all();
 
@@ -532,7 +533,7 @@ public class SourceAddressMapTest {
     private static final List<DebuggerSession> SESSIONS = new ArrayList<>();
 
     @After public void closeSessions() {
-        for (DebuggerSession session : SESSIONS) session.close();
+        for (DebuggerSession session : SESSIONS) { session.close(); }
         SESSIONS.clear();
     }
 

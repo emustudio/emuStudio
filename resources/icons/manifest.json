@@ -35,6 +35,7 @@
     "page-back.png": "emulation/run-emulation.svg flop",
     "page-current.png": "pagination/current-page.svg",
     "page-first.png": "pagination/first-page.svg",
+    "page-last.png": "pagination/first-page.svg flop",
     "page-seek-backward.png": "pagination/seek-backward.svg",
     "page-seek-forward.png": "pagination/seek-forward.svg",
     "paste.png": "text/paste.svg",
@@ -64,16 +65,22 @@
   "plugins/memory/byte-mem/src/main/resources/net/emustudio/plugins/memory/bytemem/gui": {
     "goto-address.png": "plugins/byte-mem/go-to-address.svg"
   },
+  "application/src/main/resources/net/emustudio/application/gui/icons/emulation": {
+    "fold.png": "emulation/fold.svg",
+    "show.png": "emulation/show.svg",
+    "new-recording.png": "emulation/new-recording.svg",
+    "open-recording.png": "emulation/open-recording.svg",
+    "save-recording.png": "emulation/save-recording.svg",
+    "edit-recording.png": "emulation/edit-recording.svg",
+    "delete-recording.png": "emulation/delete-recording.svg"
+  },
   "application/src/main/resources/net/emustudio/application/gui/icons/inspection": {
-    "follow-pc.png": "inspection/follow-pc.svg",
-    "refresh-flow.png": "inspection/refresh-flow.svg",
-    "go-to-instruction.png": "inspection/go-to-instruction.svg",
     "search-annotations.png": "inspection/search-annotations.svg",
     "add-annotation.png": "inspection/add-annotation.svg",
     "edit-annotation.png": "inspection/edit-annotation.svg",
     "remove-annotation.png": "inspection/remove-annotation.svg",
-    "import-annotations.png": "inspection/import-annotations.svg",
-    "export-annotations.png": "inspection/export-annotations.svg"
+    "open-annotations.png": "inspection/open-annotations.svg",
+    "save-annotations.png": "inspection/save-annotations.svg"
   },
   "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/icons": {
     "erase-memory.png": "memory/erase-memory.svg",

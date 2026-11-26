@@ -23,6 +23,28 @@ import static org.mockito.Mockito.*;
 public class EmulationControllerTest {
 
     @Test(timeout = 5000)
+    public void executionListenersObservePublishedStateWithoutADebuggerAndCanUnsubscribe() throws Exception {
+        CPU cpu = mockCpu();
+        when(cpu.step()).thenReturn(STATE_STOPPED_BREAK);
+        try (EmulationController controller = controller(cpu)) {
+            List<CPU.RunState> observed = new CopyOnWriteArrayList<>();
+            java.util.function.Consumer<CPU.RunState> listener = state -> {
+                assertEquals(state, controller.getRunState());
+                if (state == STATE_STOPPED_BREAK) assertFalse(controller.isBusy());
+                observed.add(state);
+            };
+            controller.addExecutionListener(listener);
+
+            await(controller.step());
+
+            assertEquals(List.of(STATE_RUNNING, STATE_STOPPED_BREAK), observed);
+            controller.removeExecutionListener(listener);
+            await(controller.step());
+            assertEquals(List.of(STATE_RUNNING, STATE_STOPPED_BREAK), observed);
+        }
+    }
+
+    @Test(timeout = 5000)
     public void startAcknowledgesRunningBeforeExecutionExits() throws Exception {
         CPU cpu = mockCpu();
         RunGate gate = new RunGate(STATE_STOPPED_NORMAL);
@@ -35,6 +57,7 @@ public class EmulationControllerTest {
 
             assertFalse(controller.runCompletion().isDone());
             assertEquals(STATE_RUNNING, controller.getRunState());
+            assertFalse(controller.isBusy());
         } finally {
             gate.release.countDown();
             await(controller.closeAsync());
@@ -168,6 +191,7 @@ public class EmulationControllerTest {
         try {
             CompletableFuture<CPU.RunState> step = controller.step();
             gate.awaitEntered();
+            assertTrue(controller.isBusy());
             CompletableFuture<CPU.RunState> reset = controller.reset();
             gate.awaitInterrupted();
             reset.cancel(true);

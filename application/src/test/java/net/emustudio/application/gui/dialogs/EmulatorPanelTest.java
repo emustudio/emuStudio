@@ -9,6 +9,7 @@ import static net.emustudio.application.TestCpu.mockCpu;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.UserAnnotations;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugger.DebugTableModel;
@@ -41,6 +42,67 @@ public class EmulatorPanelTest extends AbstractSwingTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test
+    public void listingAnnotationToolbarNavigatesAndRefreshesUpdates() throws Exception {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = debuggingCpu();
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        DebugTableModel model = createDebugTableModel();
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null,
+                files.newFolder().toPath().resolve("computer.debugger"));
+             EmulationController execution = net.emustudio.application.TestCpu.execution(session)) {
+            when(computer.getDebugger()).thenReturn(Optional.of(session));
+            session.config.annotations().add(new UserAnnotations.Entry(42, "buffer", "DATA"));
+            EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer, model,
+                    mock(Dialogs.class), execution, null, position -> {}, new EmuStudioGui()));
+            JFrame frame = showInFrame(panel);
+            runOnEdt(() -> frame.setVisible(true));
+            JTabbedPane tabs = findComponent(panel, JTabbedPane.class,
+                    component -> "debuggerViews".equals(component.getName()));
+            JComponent listing = (JComponent) tabs.getComponentAt(tabs.indexOfTab("Debugger"));
+            assertEquals(-1, tabs.indexOfTab("Inspection"));
+            JTextField search = findComponent(listing, JTextField.class,
+                    component -> "Search annotations".equals(component.getToolTipText()));
+            int pc = execution.cpuContext().getInstructionLocation();
+
+            runOnEdt(() -> {
+                JToggleButton fold = findToggleButtonByTooltip(listing, "Fold identical repeats");
+                JToolBar toolbar = (JToolBar) fold.getParent();
+                assertSame(toolbar, search.getParent());
+                int foldIndex = toolbar.getComponentIndex(fold);
+                assertEquals(foldIndex + 2, toolbar.getComponentIndex(search));
+                JToolBar.Separator separator = (JToolBar.Separator) toolbar.getComponentAtIndex(foldIndex + 1);
+                assertTrue(separator.getHeight() >= search.getHeight());
+                assertTrue(search.isShowing());
+                assertNotNull(search.getClientProperty("JTextField.leadingIcon"));
+                for (String tooltip : List.of("Annotate inspected address", "Edit selected annotation",
+                        "Delete selected annotation", "Open annotations", "Save annotations")) {
+                    JButton button = findButtonByTooltip(listing, tooltip);
+                    assertSame(search.getParent(), button.getParent());
+                    assertNotNull(button.getIcon());
+                }
+                search.setText("buffer");
+                search.postActionEvent();
+                assertSame(listing, tabs.getSelectedComponent());
+                assertTrue(findButtonByTooltip(listing, "Edit selected annotation").isEnabled());
+            });
+            verify(model).showAddress(42);
+            assertEquals(pc, execution.cpuContext().getInstructionLocation());
+
+            session.config.annotations().replace(List.of(new UserAnnotations.Entry(42, "updated", "DATA")));
+            runOnEdt(() -> {
+                search.setText("");
+                JList<?> listingResults = findComponent(search.getComponentPopupMenu(), JList.class, component -> true);
+                assertEquals("updated", ((MemoryAnnotations.Entry) listingResults.getModel().getElementAt(0)).text);
+                panel.close();
+                assertFalse(search.isEnabled());
+                assertNull(search.getComponentPopupMenu());
+            });
+        }
+    }
+
+    @Test
     public void unsupportedBreakpointsDisableToolbarAndCannotOpenDialog() throws Exception {
         VirtualComputer computer = mock(VirtualComputer.class);
         CPU cpu = mockCpu();
@@ -48,14 +110,16 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(parent, computer, createDebugTableModel(),
                     mock(Dialogs.class), mockExecution(), null, position -> {}, new EmuStudioGui()));
             showInFrame(panel);
             assertFalse(onEdt(findButtonByTooltip(panel, "Set breakpoint...")::isEnabled));
-            assertFalse(onEdt(findToggleButtonByTooltip(panel, "Record instructions")::isEnabled));
+            JButton recording = findComponent(panel, JButton.class, button -> "recordInstructions".equals(button.getName()));
+            assertFalse(onEdt(recording::isEnabled));
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             assertFalse(manager.isBreakpointDialogSupported());
 
@@ -78,7 +142,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), mockExecution(),
@@ -86,52 +151,79 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             showInFrame(panel);
             DebuggerPanel manager = findComponent(panel, DebuggerPanel.class, component -> true);
             JButton reset = findButtonByTooltip(panel, "Reset emulation");
-            JToggleButton recording = findToggleButtonByTooltip(panel, "Record instructions");
+            JButton recording = findComponent(panel, JButton.class, button -> "recordInstructions".equals(button.getName()));
+            JButton stop = findButtonByTooltip(panel, "Stop recording");
+            JToggleButton pause = findToggleButtonByTooltip(panel, "Pause recording");
             JTabbedPane tabs = findComponent(manager, JTabbedPane.class,
                     component -> "debuggerViews".equals(component.getName()));
 
             runOnEdt(() -> {
                 tabs.setSelectedIndex(tabs.indexOfTab("Recording"));
-                SwingUtilities.invokeLater(() -> {
-                    for (java.awt.Window window : java.awt.Window.getWindows()) {
-                        if (window instanceof JDialog && window.isShowing()
-                                && "Record instructions".equals(((JDialog) window).getTitle())) {
-                            findButton((JDialog) window, "Start").doClick(0);
-                            return;
-                        }
-                    }
-                    throw new AssertionError("Recording dialog missing");
-                });
+                assertFalse(stop.isEnabled());
+                assertFalse(pause.isEnabled());
                 recording.doClick(0);
             });
             session.update(() -> {}).join();
             runOnEdt(() -> {});
 
-            assertTrue(session.isRecording());
+            assertTrue(session.recording.isRecording());
             runOnEdt(() -> {
                 JToolBar toolbar = (JToolBar) reset.getParent();
                 assertFalse(SwingUtilities.isDescendingFrom(recording, toolbar));
                 assertTrue(SwingUtilities.isDescendingFrom(recording, tabs.getSelectedComponent()));
+                JToolBar capture = (JToolBar) recording.getParent();
+                int index = 0;
+                for (String label : List.of("New recording", "Open recording", "Save recording", "|",
+                        "Start recording", "Pause recording", "Stop recording", "|", "Fold identical repeats", "|",
+                        "Recording", "Edit recording", "Delete recording")) {
+                    JComponent control = (JComponent) capture.getComponentAtIndex(index++);
+                    if (label.equals("|")) {
+                        assertTrue(control instanceof JToolBar.Separator);
+                        assertTrue(control.getHeight() > 4);
+                    } else {
+                        assertEquals(label, control.getAccessibleContext().getAccessibleName());
+                        if (control instanceof AbstractButton) assertNotNull(((AbstractButton) control).getIcon());
+                    }
+                }
+                assertEquals(index, capture.getComponentCount());
+                JButton previousPage = findButtonByTooltip(panel, "Previous recording page");
+                JPanel pagingRow = (JPanel) previousPage.getParent().getParent();
+                JPanel historyPanel = (JPanel) pagingRow.getParent();
+                JScrollPane historyScroll = findComponent(historyPanel, JScrollPane.class,
+                        scroll -> scroll.getViewport().getView() instanceof JTable);
+                int originalHistoryHeight = historyScroll.getHeight();
+                java.awt.Dimension originalSize = historyPanel.getSize();
+                historyPanel.setSize(originalSize.width, originalSize.height + 250);
+                historyPanel.doLayout();
+                assertTrue(pagingRow.getHeight() > 0);
+                assertEquals(historyPanel.getHeight() - historyPanel.getInsets().bottom, pagingRow.getY() + pagingRow.getHeight());
+                assertEquals(originalHistoryHeight + 250, historyScroll.getHeight());
+                historyPanel.setSize(originalSize);
+                historyPanel.doLayout();
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
                 assertNotNull(recording.getIcon());
-                assertTrue(recording.isSelected());
-                assertEquals("Stop recording", recording.getToolTipText());
-                assertEquals("Stop recording", recording.getAccessibleContext().getAccessibleName());
+                assertTrue(stop.getText() == null || stop.getText().isEmpty());
+                assertTrue(pause.getText() == null || pause.getText().isEmpty());
+                assertTrue(stop.isEnabled());
+                assertTrue(pause.isEnabled());
+                assertEquals("Start recording (last 1000 instructions)", recording.getToolTipText());
+                assertEquals("Start recording", recording.getAccessibleContext().getAccessibleName());
             });
 
             assertTrue(onEdt(recording::isEnabled));
-            assertTrue(session.isRecording());
+            assertTrue(session.recording.isRecording());
 
-            triggerButton(recording);
+            triggerButton(stop);
             session.update(() -> {}).join();
             runOnEdt(() -> {});
 
-            assertFalse(session.isRecording());
+            assertFalse(session.recording.isRecording());
             runOnEdt(() -> {
-                assertFalse(recording.isSelected());
+                assertFalse(stop.isEnabled());
+                assertFalse(pause.isEnabled());
                 assertTrue(recording.getText() == null || recording.getText().isEmpty());
-                assertEquals("Record instructions", recording.getToolTipText());
-                assertEquals("Record instructions", recording.getAccessibleContext().getAccessibleName());
+                assertEquals("Start recording (last 1000 instructions)", recording.getToolTipText());
+                assertEquals("Start recording", recording.getAccessibleContext().getAccessibleName());
                 panel.close();
             });
         }
@@ -148,7 +240,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         DebugTableModel model = createDebugTableModel();
         when(model.getLocationAt(anyInt())).thenAnswer(c -> 2 + 2 * (Integer) c.getArgument(0));
         AtomicReference<SourceCodePosition> source = new AtomicReference<>();
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, model,
                     mock(Dialogs.class), mockExecution(), null, source::set, new EmuStudioGui()));
@@ -183,7 +276,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
 
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             session.setBreakpoint(42, true).join();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             JFrame parent = showFrame(onEdt(JFrame::new));
@@ -216,7 +310,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
         when(computer.getDevices()).thenReturn(List.of());
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"))) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, files.newFolder().toPath().resolve("computer.debugger"));
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             session.config.breakpoints.add(12);
             session.updateProbe();
             when(computer.getDebugger()).thenReturn(Optional.of(session));
@@ -313,7 +408,8 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             fixture.publish(CPU.RunState.STATE_RUNNING);
             return completed;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
                     createDebugTableModel(), mock(Dialogs.class), fixture.controller,
@@ -362,21 +458,21 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
             return CPU.RunState.STATE_STOPPED_BREAK;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
-                    createDebugTableModel(), mock(Dialogs.class), session.execution(),
+                    createDebugTableModel(), mock(Dialogs.class), machineExecution,
                     null, position -> {}, new EmuStudioGui()));
             try {
                 JButton step = findButtonByTooltip(panel, "Step forward");
                 JButton run = findButtonByTooltip(panel, "Run emulation");
-                JToggleButton follow = findToggleButtonByTooltip(panel, "Show instructions from PC");
                 java.util.concurrent.atomic.AtomicInteger disabled = new java.util.concurrent.atomic.AtomicInteger();
-                session.addExecutionListener(state -> {
+                machineExecution.addExecutionListener(state -> {
                     if (state == CPU.RunState.STATE_STOPPED_BREAK) completed.countDown();
                 });
                 runOnEdt(() -> {
-                    for (AbstractButton button : List.of(step, run, follow)) {
+                    for (AbstractButton button : List.of(step, run)) {
                         button.addPropertyChangeListener("enabled", event -> {
                             if (Boolean.FALSE.equals(event.getNewValue())) disabled.incrementAndGet();
                         });
@@ -384,15 +480,14 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     step.doClick(0);
                 });
                 assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS));
-                assertTrue(session.execution().isStepping());
+                assertTrue(machineExecution.isStepping());
                 runOnEdt(() -> {
                     assertTrue(step.isEnabled());
                     assertTrue(run.isEnabled());
-                    assertTrue(follow.isEnabled());
                 });
                 release.countDown();
                 assertTrue(completed.await(2, java.util.concurrent.TimeUnit.SECONDS));
-                assertFalse(session.execution().isStepping());
+                assertFalse(machineExecution.isStepping());
                 runOnEdt(() -> {});
                 assertEquals(0, disabled.get());
             } finally {
@@ -415,10 +510,11 @@ public class EmulatorPanelTest extends AbstractSwingTest {
             net.emustudio.application.TestCpu.publish(cpu, CPU.RunState.STATE_STOPPED_BREAK);
             return CPU.RunState.STATE_STOPPED_BREAK;
         });
-        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null)) {
+        try (DebuggerSession session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), null, null);
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session)) {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             EmulatorPanel panel = onEdt(() -> new EmulatorPanel(showFrame(new JFrame()), computer,
-                    createDebugTableModel(), mock(Dialogs.class), session.execution(),
+                    createDebugTableModel(), mock(Dialogs.class), machineExecution,
                     null, position -> {}, new EmuStudioGui()));
             try {
                 JFrame frame = showInFrame(panel);
@@ -430,9 +526,9 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                     table.addComponentListener(new java.awt.event.ComponentAdapter() {
                         @Override public void componentHidden(java.awt.event.ComponentEvent event) { hidden.incrementAndGet(); }
                     });
-                    try { session.execution().step().get(2, java.util.concurrent.TimeUnit.SECONDS); }
+                    try { machineExecution.step().get(2, java.util.concurrent.TimeUnit.SECONDS); }
                     catch (Exception failure) { throw new RuntimeException(failure); }
-                    assertFalse(session.execution().isBusy());
+                    assertFalse(machineExecution.isBusy());
                 });
                 runOnEdt(() -> {});
                 runOnEdt(() -> {
@@ -519,6 +615,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(sessionCpu.getAddressSpaceSize()).thenReturn(256);
         when(memoryContext.getSize()).thenReturn(256);
         DebuggerSession session = new DebuggerSession(sessionCpu, net.emustudio.application.TestCpu.context(sessionCpu), memoryContext, null, annotations);
+        net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(session);
         AtomicReference<SourceCodePosition> navigated = new AtomicReference<>();
 
         when(computer.getCPU()).thenReturn(Optional.empty());
@@ -528,7 +625,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(model.getLocationAt(0)).thenReturn(42);
 
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(
-                new JFrame(), computer, model, mock(Dialogs.class), null, memoryContext,
+                new JFrame(), computer, model, mock(Dialogs.class), machineExecution, memoryContext,
                 navigated::set, new EmuStudioGui()
         ));
         showInFrame(panel);
@@ -541,6 +638,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
         assertEquals(position, navigated.get());
         runOnEdt(panel::close);
+        machineExecution.close();
         session.close();
     }
 

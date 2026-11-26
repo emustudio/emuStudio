@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <title>Fold repeated instructions</title>
+  <desc>Two blue arrows converge on one gray bar to consolidate repeats.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#729fcf"/>
+      <stop offset="1" stop-color="#5b8fc7"/>
+    </linearGradient>
+    <linearGradient id="blue-border" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#204a87"/>
+      <stop offset="1" stop-color="#3465a4"/>
+    </linearGradient>
+    <linearGradient id="gray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#babdb6"/>
+      <stop offset="1" stop-color="#92969c"/>
+    </linearGradient>
+  </defs>
+  <g id="down-arrow">
+    <path d="M 9 1.4 H 12.7 Q 13.3 1.4 13.3 2 V 5.4 H 14.7
+             Q 15.35 5.4 14.9 5.9 L 11.3 9.5 Q 10.85 9.95 10.4 9.5
+             L 6.8 5.9 Q 6.35 5.4 7 5.4 H 8.4 V 2 Q 8.4 1.4 9 1.4 Z"
+          fill="url(#blue)" stroke="url(#blue-border)" stroke-width="0.7"
+          stroke-linejoin="round"/>
+    <path d="M 8.95 5.55 V 2.2 Q 8.95 2 9.2 2 H 12.5 Q 12.75 2 12.75 2.2 V 5.55
+             M 7.05 5.75 L 10.85 9.2 L 14.65 5.75"
+          fill="none" stroke="#a9cbed" stroke-width="0.22" stroke-linejoin="round"/>
+    <rect x="9" y="2.1" width="3.7" height="0.65" rx="0.2" fill="#b4d5f1"/>
+  </g>
+  <g id="consolidated-instructions">
+    <rect x="5.4" y="10.3" width="10.9" height="1.95" rx="0.65"
+          fill="url(#gray)" stroke="#555b63" stroke-width="0.6"/>
+    <rect x="5.95" y="10.6" width="9.8" height="0.45" rx="0.15" fill="#d3d5d2"/>
+  </g>
+  <g id="up-arrow">
+    <path d="M 10.4 13.25 Q 10.85 12.8 11.3 13.25 L 14.9 16.85
+             Q 15.35 17.35 14.7 17.35 H 13.3 V 20.05 Q 13.3 20.65 12.7 20.65
+             H 9 Q 8.4 20.65 8.4 20.05 V 17.35 H 7 Q 6.35 17.35 6.8 16.85 Z"
+          fill="url(#blue)" stroke="url(#blue-border)" stroke-width="0.7"
+          stroke-linejoin="round"/>
+    <path d="M 7.05 16.75 L 10.85 13.35 L 14.65 16.75
+             M 8.95 17.2 V 19.9 Q 8.95 20.1 9.2 20.1 H 12.5 Q 12.75 20.1 12.75 19.9 V 17.2"
+          fill="none" stroke="#a9cbed" stroke-width="0.22" stroke-linejoin="round"/>
+    <path d="M 7.35 16.65 L 10.85 13.55 L 14.35 16.65 L 10.85 14.25 Z" fill="#a1c6eb"/>
+  </g>
+</svg>

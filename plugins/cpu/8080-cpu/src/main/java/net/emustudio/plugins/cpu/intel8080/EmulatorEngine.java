@@ -70,16 +70,15 @@ public class EmulatorEngine {
         for (int i = 0; i < names.length; i++) {
             if (i == 6) continue;
             final int index = i;
-            debugger.register(names[i], () -> regs[index]);
+            debugger.register(names[i], 1, () -> regs[index]);
         }
-        debugger.register("INTE", () -> INTE ? 1 : 0);
-        debugger.register("PC", () -> PC);
-        debugger.register("SP", () -> SP);
-        debugger.register("F", () -> flags & 255);
-        for (int i = 0; i < 3; i++) {
-            final int index = i * 2;
-            debugger.register(new String[] {"BC", "DE", "HL"}[i], () -> (regs[index] << 8) | regs[index + 1]);
-        }
+        debugger.register("INTE", 1, () -> INTE ? 1 : 0);
+        debugger.register("PC", 2, () -> PC);
+        debugger.register("SP", 2, () -> SP);
+        debugger.register("F", 1, () -> flags & 255);
+        debugger.registerPair("BC", "B", "C");
+        debugger.registerPair("DE", "D", "E");
+        debugger.registerPair("HL", "H", "L");
         this.context = context;
     }
 

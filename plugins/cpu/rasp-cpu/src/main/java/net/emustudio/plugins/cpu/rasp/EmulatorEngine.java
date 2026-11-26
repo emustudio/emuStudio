@@ -48,7 +48,7 @@ public class EmulatorEngine {
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
         debugger = new MachineDebugging("RASP", new RaspDecoder(memory));
-        debugger.register("IP", () -> Integer.toUnsignedLong(IP.get()));
+        debugger.register("IP", 4, () -> Integer.toUnsignedLong(IP.get()));
         debugger.inspect("ACC", () -> memory.peek(0));
         debugger.inspect("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()));
         debugger.inspect("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)));
