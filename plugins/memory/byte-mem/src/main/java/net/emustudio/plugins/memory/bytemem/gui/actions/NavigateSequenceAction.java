@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.ui.StandardIcons;
 
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
@@ -18,7 +17,7 @@ public final class NavigateSequenceAction extends AbstractAction {
 
     public NavigateSequenceAction(MemorySearch search, boolean previous) {
         super(previous ? "Find previous" : "Find next",
-                loadIcon(previous ? StandardIcons.ICON_MOVE_UP : StandardIcons.ICON_MOVE_DOWN, NavigateSequenceAction.class));
+                loadIcon(previous ? "/net/emustudio/plugins/memory/bytemem/gui/icons/move-up.png" : "/net/emustudio/plugins/memory/bytemem/gui/icons/move-down.png", NavigateSequenceAction.class));
         Objects.requireNonNull(search);
         navigate = previous ? search::previous : search::next;
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(

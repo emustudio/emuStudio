@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_ADD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class OpenComputerAction extends AbstractAction {
@@ -23,7 +22,7 @@ public class OpenComputerAction extends AbstractAction {
 
     public OpenComputerAction(Dialogs dialogs, JDialog parent, JList<ComputerConfig> lstConfig,
                               Consumer<ComputerConfig> selectComputer) {
-        super("Create new computer...", loadIcon(ICON_ADD));
+        super("Create new computer...", loadIcon("/net/emustudio/application/gui/icons/add.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.parent = Objects.requireNonNull(parent);

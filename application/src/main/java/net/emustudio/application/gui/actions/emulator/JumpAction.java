@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_JUMP;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class JumpAction extends AbstractAction {
@@ -19,7 +18,7 @@ public class JumpAction extends AbstractAction {
     private final Runnable refreshDebugTable;
 
     public JumpAction(VirtualComputer computer, Dialogs dialogs, Runnable refreshDebugTable) {
-        super("Jump...", loadIcon(ICON_JUMP));
+        super("Jump...", loadIcon("/net/emustudio/application/gui/icons/jump.png"));
         putValue(SHORT_DESCRIPTION, "Jump to address");
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);

@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_STEP_BACK;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class StepBackAction extends AbstractAction {
@@ -19,7 +18,7 @@ public class StepBackAction extends AbstractAction {
     private final Runnable refreshDebugTable;
 
     public StepBackAction(VirtualComputer computer, DebugTableModel debugTableModel, Runnable refreshDebugTable) {
-        super("Move PC Back", loadIcon(ICON_STEP_BACK));
+        super("Move PC Back", loadIcon("/net/emustudio/application/gui/icons/step-back.png"));
         putValue(SHORT_DESCRIPTION, "Move program counter backward (registers and memory remain unchanged)");
         this.computer = Objects.requireNonNull(computer);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);

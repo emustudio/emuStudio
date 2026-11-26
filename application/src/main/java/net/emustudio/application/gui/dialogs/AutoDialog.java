@@ -10,7 +10,6 @@ import net.emustudio.emulib.ui.components.DialogBase;
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 /**
@@ -39,7 +38,7 @@ public class AutoDialog extends DialogBase implements EmulationProgress {
         JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
-        lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
+        lblPerforming.setIcon(loadIcon("/net/emustudio/application/gui/icons/motherboard.png"));
 
         btnStop.addActionListener(e -> computer.getExecution().ifPresent(execution -> {
             btnStop.setEnabled(false);

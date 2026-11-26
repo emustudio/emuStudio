@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_STOP;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class StopAction extends AbstractAction {
@@ -16,7 +15,7 @@ public class StopAction extends AbstractAction {
     private final EmulationController emulationController;
 
     public StopAction(EmulationController emulationController) {
-        super("Stop", loadIcon(ICON_STOP));
+        super("Stop", loadIcon("/net/emustudio/application/gui/icons/stop.png"));
         putValue(SHORT_DESCRIPTION, "Stop emulation");
         this.emulationController = emulationController;
     }

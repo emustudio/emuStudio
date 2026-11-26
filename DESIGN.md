@@ -254,8 +254,8 @@ action text, use tooltips and the FlatLaf toolbar-button type, and are deliberat
 non-focusable in the existing implementation. Keep associated menu actions usable.
 
 Icons use the existing Tango-style pipeline: 22×22 with 44×44 `@2x` variants.
-Shared application/plugin icons belong to emuLib and are referenced through
-`StandardIcons`; `resources/icons/README.md` explains source and attribution.
+Application and plugin icons belong to their owning modules and are referenced by resource path.
+`resources/icons/README.md` explains generation, source and attribution.
 
 ### Inputs and titled sections
 

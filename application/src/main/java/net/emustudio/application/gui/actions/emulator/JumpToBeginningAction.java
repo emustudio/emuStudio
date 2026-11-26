@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_JUMP_TO_BEGINNING;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class JumpToBeginningAction extends AbstractAction {
@@ -17,7 +16,7 @@ public class JumpToBeginningAction extends AbstractAction {
     private final Runnable refreshDebugTable;
 
     public JumpToBeginningAction(VirtualComputer computer, Runnable refreshDebugTable) {
-        super("Jump to beginning", loadIcon(ICON_JUMP_TO_BEGINNING));
+        super("Jump to beginning", loadIcon("/net/emustudio/application/gui/icons/jump-to-beginning.png"));
         putValue(SHORT_DESCRIPTION, "Jump to beginning");
         this.computer = Objects.requireNonNull(computer);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

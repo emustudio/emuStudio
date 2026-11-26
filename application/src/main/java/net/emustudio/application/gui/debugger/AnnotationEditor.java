@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.ICON_SAVE;
 
 /** Edits and persists one user annotation independently of CPU execution. */
 final class AnnotationEditor extends JPanel {
@@ -56,7 +55,7 @@ final class AnnotationEditor extends JPanel {
         add(kind, "wmin 100, alignx left, growx 0, wrap");
         save = gui.button("Save");
         save.getAccessibleContext().setAccessibleName("Save annotation");
-        save.setIcon(EmuStudioGui.loadIcon(ICON_SAVE, AnnotationEditor.class));
+        save.setIcon(EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/save.png", AnnotationEditor.class));
         save.setToolTipText("Save annotation");
         save.addActionListener(event -> {
             try {

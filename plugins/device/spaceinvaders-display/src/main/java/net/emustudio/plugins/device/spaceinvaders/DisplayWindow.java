@@ -8,7 +8,6 @@ import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.recording.RecordingSession;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -22,9 +21,9 @@ import java.util.List;
 import java.util.Optional;
 
 final class DisplayWindow extends DialogBase {
-    private static final ImageIcon VOLUME_ICON = GUI.loadIcon(StandardIcons.ICON_VOLUME, DisplayWindow.class);
-    private static final ImageIcon RECORD_ICON = GUI.loadIcon(StandardIcons.ICON_RECORD, DisplayWindow.class);
-    private static final ImageIcon STOP_ICON = GUI.loadIcon(StandardIcons.ICON_STOP, DisplayWindow.class);
+    private static final ImageIcon VOLUME_ICON = GUI.loadIcon("/net/emustudio/plugins/device/spaceinvaders/icons/volume.png", DisplayWindow.class);
+    private static final ImageIcon RECORD_ICON = GUI.loadIcon("/net/emustudio/plugins/device/spaceinvaders/icons/record.png", DisplayWindow.class);
+    private static final ImageIcon STOP_ICON = GUI.loadIcon("/net/emustudio/plugins/device/spaceinvaders/icons/stop.png", DisplayWindow.class);
     private static final FileType MP4_FILE = new FileType("MP4 video", "mp4");
     private static final System.Logger LOGGER = System.getLogger(DisplayWindow.class.getName());
     private static final int FRAME_RATE = 60;

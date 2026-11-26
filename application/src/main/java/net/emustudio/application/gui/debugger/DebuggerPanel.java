@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.ICON_SNAPSHOT;
 
 /**
  * Unified debugger workspace over CPU-visible addresses; browsing never changes PC.
@@ -134,7 +133,7 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addTab("Debugger", instructionView);
         tabs.addTab("Inspection", flowPanel());
-        tabs.addTab("Recording", EmuStudioGui.loadIcon(ICON_SNAPSHOT, DebuggerPanel.class), recordingPanel);
+        tabs.addTab("Recording", EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/snapshot.png", DebuggerPanel.class), recordingPanel);
         add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(event -> activateView());
         activateView();

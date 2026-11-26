@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 /**
  * Browses the current instruction recording and completed captures.
@@ -76,7 +75,7 @@ final class RecordingPanel extends JPanel {
         });
         capture.add(gui.label("Recording", origin));
         capture.add(origin);
-        recordingControl = gui.toolbarToggleButton(event -> {}, ICON_RECORD, "Record instructions");
+        recordingControl = gui.toolbarToggleButton(event -> {}, "/net/emustudio/application/gui/icons/record.png", "Record instructions");
         recordingControl.setName("recordInstructions");
         recordingControl.addActionListener(event -> {
             run(this::toggleRecording);
@@ -101,7 +100,7 @@ final class RecordingPanel extends JPanel {
         detailTools.add(showUnchangedValues, "cell 1 0");
         detail.add(detailTools, BorderLayout.NORTH);
         detail.add(gui.scrollPane(state));
-        JButton followLink = gui.toolbarTextButton(event -> run(this::followLink), ICON_FIND, "Follow link");
+        JButton followLink = gui.toolbarTextButton(event -> run(this::followLink), "/net/emustudio/application/gui/icons/find.png", "Follow link");
         followLink.setToolTipText("Follow the selected recorded navigation link");
         JPanel memoryActions = gui.panel("insets 4, fillx", "[][grow,fill][]", "");
         memoryActions.add(gui.label("Navigation", navigation));
@@ -115,7 +114,7 @@ final class RecordingPanel extends JPanel {
         emptyTitle.getAccessibleContext().setAccessibleName("History empty state");
         empty.add(emptyTitle, "wrap");
         empty.add(emptyHint, "wrap");
-        emptyRecord = gui.toolbarTextButton(event -> run(this::toggleRecording), ICON_RECORD, "Record instructions");
+        emptyRecord = gui.toolbarTextButton(event -> run(this::toggleRecording), "/net/emustudio/application/gui/icons/record.png", "Record instructions");
         empty.add(emptyRecord, "wrap");
         body.add(empty, "empty");
         add(body);
@@ -180,7 +179,7 @@ final class RecordingPanel extends JPanel {
         boolean recording = session.isRecording();
         String action = recording ? "Stop recording" : "Record instructions";
         recordingControl.setSelected(recording);
-        EmuStudioGui.toolbarIcon(recordingControl, recording ? ICON_STOP : ICON_RECORD);
+        EmuStudioGui.toolbarIcon(recordingControl, recording ? "/net/emustudio/application/gui/icons/stop.png" : "/net/emustudio/application/gui/icons/record.png");
         recordingControl.setToolTipText(action);
         recordingControl.getAccessibleContext().setAccessibleName(action);
         boolean available = !disposed && session.debug != null;

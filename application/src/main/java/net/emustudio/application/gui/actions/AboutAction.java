@@ -10,7 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_FAVICON;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class AboutAction extends AbstractAction {
@@ -18,7 +17,7 @@ public class AboutAction extends AbstractAction {
     private final EmuStudioGui gui;
 
     public AboutAction(JFrame parent, EmuStudioGui gui) {
-        super("About...", loadIcon(ICON_FAVICON));
+        super("About...", loadIcon("/net/emustudio/application/gui/icons/favicon.png"));
         this.parent = Objects.requireNonNull(parent);
         this.gui = Objects.requireNonNull(gui);
         putValue(MNEMONIC_KEY, KeyEvent.VK_A);

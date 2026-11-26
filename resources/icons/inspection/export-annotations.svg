@@ -2,7 +2,18 @@
 <!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
      SPDX-License-Identifier: GPL-3.0-or-later -->
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
-  <g fill="none" stroke="#2e3436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M13 3H3v16h10 M9 11h11 M16 7l4 4-4 4"/>
-  </g>
+<defs>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d3d7cf"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#8ae234"/><stop offset="1" stop-color="#73d216"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ef2929"/><stop offset="1" stop-color="#cc0000"/></linearGradient>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#729fcf"/><stop offset="1" stop-color="#3465a4"/></linearGradient>
+<linearGradient id="glass" x2="0.7" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#729fcf"/></linearGradient>
+<linearGradient id="pencil" x2="1" y2="1"><stop stop-color="#fce94f"/><stop offset=".55" stop-color="#edd400"/><stop offset="1" stop-color="#c4a000"/></linearGradient>
+</defs>
+<ellipse cx="10" cy="19.1" rx="7.1" ry="1.1" fill="#2e3436" opacity=".17"/>
+<path d="M3.5 2.5 H12.5 L16.5 6.5 V18.5 H3.5 Z" fill="url(#paper)" stroke="#888a85" stroke-linejoin="round"/>
+<path d="M4.5 3.5 H12 L15.5 7 V17.5 H4.5 Z" fill="none" stroke="#ffffff" stroke-width=".8" opacity=".85"/>
+<path d="M12.5 2.5 V6.5 H16.5" fill="#eeeeec" stroke="#888a85" stroke-linejoin="round"/>
+<path d="M6 8.5 H12 M6 11.5 H13 M6 14.5 H10" fill="none" stroke="#888a85" stroke-linecap="round"/>
+<path d="M15 20.5 H18 V15.5 H21 L16.5 10.5 L12 15.5 H15 Z" fill="url(#blue)" stroke="#204a87" stroke-linejoin="round"/><path d="M16 19.5 H17 V14.5 H18.8 L16.5 12 L14.2 14.5 H16 Z" fill="none" stroke="#ffffff" stroke-width=".6" opacity=".55"/>
 </svg>
