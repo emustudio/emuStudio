@@ -81,9 +81,8 @@ final class RecordingPanel extends JPanel {
         history.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         gui.styleTable(history);
         history.setFont(EmuStudioGui.monospaced(history).deriveFont(13f));
-        int[] widths = {200, 200, 200, 200};
-        for (int column = 0; column < widths.length; column++)
-            history.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
+        for (int column = 0; column < history.getColumnCount(); column++)
+            history.getColumnModel().getColumn(column).setPreferredWidth(200);
         JPanel tools = gui.toolbarPanel();
         JToolBar capture = gui.toolBar();
         capture.setLayout(new net.miginfocom.swing.MigLayout("insets 0, gapx 2, fillx", "", ""));
@@ -172,7 +171,7 @@ final class RecordingPanel extends JPanel {
         next = gui.toolbarButton(event -> showPage(page.next), "/net/emustudio/application/gui/icons/run.png", "Next recording page");
         latest = gui.toolbarButton(event -> showPage(InstructionRecording.LATEST_PAGE), "/net/emustudio/application/gui/icons/page-last.png", "Latest recording page");
         JPanel paging = gui.toolbarPanel();
-        gui.toolbarRow(paging, previous, next, latest, pageLabel);
+        gui.toolbarRow(paging, previous, next, latest).add(pageLabel, "pushx, alignx right");
         recording.add(paging, BorderLayout.SOUTH);
         JSplitPane split = gui.splitPane(JSplitPane.VERTICAL_SPLIT, recording, detail, .6);
         split.setOneTouchExpandable(false);
@@ -509,7 +508,7 @@ final class RecordingPanel extends JPanel {
         List<InstructionRecording.Event> events = upcoming == null ? List.of() : upcoming.events;
         boolean rebuild = !sameEvents(events, displayed) || foldedPage != fold.isSelected();
         page = upcoming;
-        String range = events.isEmpty() ? "" : "#" + events.get(0).sequence + " – #" + events.get(events.size() - 1).sequence;
+        String range = pageAddressRange(events);
         String status = pageSource == null ? "" : pageSource.error();
         if (pageSource != null && pageSource.isPending()) status = "Ready to start";
         if (status.isEmpty() && pageSource != null && pageSource.isComplete()) status = "Complete";
@@ -536,6 +535,14 @@ final class RecordingPanel extends JPanel {
         else if (selectedSequence >= 0) selectSequence(selectedSequence, false);
         if (history.getSelectedRow() < 0) showState(-1);
         updateControls();
+    }
+
+    private static String pageAddressRange(List<InstructionRecording.Event> events) {
+        if (events.isEmpty()) return "";
+        OptionalInt first = events.get(0).view.programLocation;
+        OptionalInt last = events.get(events.size() - 1).view.programLocation;
+        return first.isPresent() && last.isPresent()
+                ? String.format("%04X – %04X", first.getAsInt(), last.getAsInt()) : "";
     }
 
     private boolean selectSequence(long sequence, boolean scroll) {
@@ -579,7 +586,6 @@ final class RecordingPanel extends JPanel {
         int size() { return to - from + 1; }
         boolean folded() { return from != to; }
         List<InstructionRecording.Event> events() { return displayed.subList(from, to + 1); }
-        String sequences() { return first().sequence + (folded() ? "–" + last().sequence : ""); }
         String summary() { return first().view.summary + (first().completed ? "" : " (failed)"); }
 
         String location() {
@@ -638,7 +644,7 @@ final class RecordingPanel extends JPanel {
     }
 
     private final class HistoryModel extends AbstractTableModel {
-        private final String[] columns = {"Sequence", "Address", "Step", "Changes"};
+        private final String[] columns = {"Address", "Step", "Changes"};
 
         @Override
         public int getRowCount() {
@@ -660,10 +666,8 @@ final class RecordingPanel extends JPanel {
             Step step = steps.get(row);
             switch (column) {
                 case 0:
-                    return step.sequences() + (step.folded() ? " (" + step.size() + ")" : "");
-                case 1:
                     return step.location();
-                case 2:
+                case 1:
                     return step.summary() + (step.folded() ? " × " + step.size() : "");
                 default: {
                     List<String> values = new ArrayList<>();
