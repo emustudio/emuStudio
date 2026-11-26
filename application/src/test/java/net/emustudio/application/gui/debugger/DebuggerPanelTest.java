@@ -26,7 +26,9 @@ import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -361,15 +363,13 @@ public class DebuggerPanelTest {
     }
 
     @Test
-    public void watchEditsKeepInvalidTextInactiveAndRestoreSupportedFormatsWhenCorrected() throws Exception {
+    public void watchEditsKeepInvalidTextInactiveUntilCorrected() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {new byte[4]}, 4, session -> {})) {
             workspace.machine.values.put("A", 65L);
             SwingUtilities.invokeAndWait(() -> {
                 Container watches = workspace.panel.watchesPanel();
-                JTextField expression = component(watches, JTextField.class, "Expression");
-                expression.setText("A ==");
-                assertTrue(button(watches, "Add").isEnabled());
-                button(watches, "Add").doClick(0);
+                assertNull(findComponent(watches, JTextField.class, "Expression"));
+                addWatch(watches, "A ==");
                 flushUiEvents();
 
                 assertEquals(List.of("A =="), workspace.session.config.getWatches());
@@ -377,8 +377,7 @@ public class DebuggerPanelTest {
                 assertTrue(renderedRowTooltip(values, 0).contains("Inactive"));
                 assertTrue(workspace.session.watchErrors().containsKey("A =="));
                 values.setRowSelectionInterval(0, 0);
-                button(watches, "Edit watch").doClick(0);
-                assertTrue(values.isEditing());
+                assertTrue(values.editCellAt(0, 0));
                 JTextField editor = (JTextField) values.getEditorComponent();
                 assertEquals("A ==", editor.getText());
                 editor.setText("A");
@@ -388,8 +387,6 @@ public class DebuggerPanelTest {
                 assertEquals(List.of("A"), workspace.session.config.getWatches());
                 assertTrue(workspace.session.watchErrors().isEmpty());
                 values.setRowSelectionInterval(0, 0);
-                JComboBox<?> format = component(watches, JComboBox.class, "Watch value format");
-                format.setSelectedItem("Hexadecimal");
                 assertTrue(renderedRowTooltip(values, 0).contains("0x41"));
                 assertEquals(0, values.getSelectedRow());
                 assertNull(findComponent(watches, AbstractButton.class, "Edit register"));
@@ -439,7 +436,7 @@ public class DebuggerPanelTest {
                     assertFalse(values.isEditing());
                     assertEquals(List.of("A"), workspace.session.config.getWatches());
                     assertEquals("A", values.getValueAt(0, 0));
-                    assertTrue(values.getValueAt(0, 1).toString(), values.getValueAt(0, 1).toString().startsWith("7"));
+                    assertTrue(values.getValueAt(0, 1).toString(), values.getValueAt(0, 1).toString().startsWith("0x7"));
                 } finally { frame.dispose(); }
             });
         }
@@ -453,19 +450,113 @@ public class DebuggerPanelTest {
                 Container watches = workspace.panel.watchesPanel();
                 assertNull(findComponent(watches, JTabbedPane.class, null));
                 assertNull(findComponent(watches, JList.class, "Memory access watches"));
-                JTextField expression = component(watches, JTextField.class, "Expression");
-                expression.setText("mem[0x0001]");
-                button(watches, "Add").doClick(0);
+                addWatch(watches, "mem[0x0001]");
                 flushUiEvents();
                 JTable values = component(watches, JTable.class, "Watch expressions and values");
+                assertNull(values.getTableHeader());
                 assertEquals(List.of("mem[0x0001]"), workspace.session.config.getWatches());
-                assertEquals("mem[0x0001] = 17", renderedRowTooltip(values, 0));
+                assertEquals("mem[0x0001] = 0x11", renderedRowTooltip(values, 0));
                 memory[1] = 42;
                 button(watches, "Refresh").doClick(0);
                 flushUiEvents();
-                assertTrue(renderedRowTooltip(values, 0).contains("mem[0x0001] = 42"));
+                assertTrue(renderedRowTooltip(values, 0).contains("mem[0x0001] = 0x2A"));
             });
         }
+    }
+
+    @Test
+    public void watchHelpShowsTheReferenceSuppliedByTheCpu() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{0}}, 1, session -> {})) {
+            String reference = "Test CPU\nUse A for the accumulator.";
+            when(workspace.machine.debug.getExpressionsHelp()).thenReturn(reference);
+            SwingUtilities.invokeAndWait(() -> {
+                AtomicReference<String> displayed = new AtomicReference<>();
+                SwingUtilities.invokeLater(() -> {
+                    for (Window window : Window.getWindows()) {
+                        if (window instanceof JDialog && window.isShowing()
+                                && ((JDialog) window).getTitle().equals("Watch expression help")) {
+                            try {
+                                displayed.set(component(window, JTextArea.class, "Watch expression reference").getText());
+                            } finally {
+                                window.dispose();
+                            }
+                            return;
+                        }
+                    }
+                });
+                button(workspace.panel.watchesPanel(), "Show watch help").doClick(0);
+                assertEquals(reference, displayed.get());
+            });
+        }
+    }
+
+    @Test
+    public void watchValueMenuFormatsOnlyTheClickedRowAndKeepsItsChoiceOnRefresh() throws Exception {
+        try (Workspace workspace = workspace(new byte[][] {{65, 0}}, 2, session -> {
+            session.editWatches(expressions -> expressions.addAll(List.of("mem[0]", "mem[0]")));
+            session.refreshWatches().join();
+        })) {
+            SwingUtilities.invokeAndWait(() -> {
+                JFrame frame = new JFrame();
+                try {
+                    frame.setContentPane(workspace.panel.watchesPanel());
+                    frame.setSize(320, 260);
+                    frame.setVisible(true);
+                    JTable values = component(frame, JTable.class, "Watch expressions and values");
+                    Rectangle expressionCell = values.getCellRect(1, 0, true);
+                    rightClick(values, expressionCell);
+                    assertEquals(0, MenuSelectionManager.defaultManager().getSelectedPath().length);
+                    List<String> formats = List.of("Decimal", "Hexadecimal", "Octal", "Binary", "ASCII");
+                    List<String> expected = List.of("65", "0x41", "0o101", "1000001", "A");
+                    for (int index = 0; index < formats.size(); index++) {
+                        rightClick(values, values.getCellRect(1, 1, true));
+                        JPopupMenu menu = (JPopupMenu) MenuSelectionManager.defaultManager().getSelectedPath()[0];
+                        assertEquals(formats.size(), menu.getComponentCount());
+                        JRadioButtonMenuItem format = (JRadioButtonMenuItem) menu.getComponent(index);
+                        assertEquals(formats.get(index), format.getText());
+                        assertTrue(format.isEnabled());
+                        format.doClick(0);
+                        menu.setVisible(false);
+                        assertEquals(expected.get(index), values.getValueAt(1, 1));
+                        assertEquals("0x41", values.getValueAt(0, 1));
+                    }
+                    values.setRowSelectionInterval(0, 0);
+                    button(frame, "Remove watch").doClick(0);
+                    button(frame, "Refresh").doClick(0);
+                    assertEquals(1, values.getRowCount());
+                    assertEquals("A", values.getValueAt(0, 1));
+                } finally {
+                    frame.dispose();
+                }
+            });
+        }
+    }
+
+    private static void rightClick(JTable table, Rectangle cell) {
+        table.dispatchEvent(new MouseEvent(table, MouseEvent.MOUSE_RELEASED, 0, 0,
+                cell.x + 4, cell.y + 4, 1, true, MouseEvent.BUTTON3));
+    }
+
+    private static void addWatch(Container watches, String source) {
+        AtomicBoolean opened = new AtomicBoolean();
+        SwingUtilities.invokeLater(() -> {
+            for (Window window : Window.getWindows()) {
+                if (window instanceof JDialog && window.isShowing() && ((JDialog) window).getTitle().equals("Add watch")) {
+                    JDialog dialog = (JDialog) window;
+                    try {
+                        component(dialog, JTextField.class, "Expression").setText(source);
+                        JButton add = dialog.getRootPane().getDefaultButton();
+                        opened.set(add.getText().equals("Add"));
+                        add.doClick(0);
+                    } finally {
+                        dialog.dispose();
+                    }
+                    return;
+                }
+            }
+        });
+        button(watches, "Add watch").doClick(0);
+        assertTrue(opened.get());
     }
 
     @Test
@@ -1586,7 +1677,7 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 JTable values = component(workspace.panel.watchesPanel(), JTable.class, "Watch expressions and values");
                 assertEquals(1, values.getRowCount());
-                assertEquals("A = 0", renderedRowTooltip(values, 0));
+                assertEquals("A = 0x0", renderedRowTooltip(values, 0));
                 assertEquals(0, changes.get());
             });
         }

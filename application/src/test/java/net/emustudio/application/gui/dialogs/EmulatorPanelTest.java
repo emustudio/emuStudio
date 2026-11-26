@@ -648,14 +648,25 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         when(computer.getDevices()).thenReturn(List.of());
         EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, createDebugTableModel(),
                 mock(Dialogs.class), execution, memory, position -> {}, new EmuStudioGui()));
-        showInFrame(panel);
+        JFrame frame = showInFrame(panel);
         JSplitPane split = findComponent(panel, JSplitPane.class, item -> "debuggerColumns".equals(item.getName()));
+        JSplitPane sidebar = findComponent(panel, JSplitPane.class, item -> "debuggerSidebar".equals(item.getName()));
+        JSplitPane cpuWatches = (JSplitPane) sidebar.getTopComponent();
         runOnEdt(() -> {
-            panel.resizeComponents(768);
+            frame.setVisible(true);
+            panel.resizeComponents(frame.getHeight());
+            frame.validate();
+            int cpuHeight = cpuWatches.getTopComponent().getHeight();
+            int watchHeight = cpuWatches.getBottomComponent().getHeight();
+            int deviceHeight = sidebar.getBottomComponent().getHeight();
+            assertEquals(watchHeight, deviceHeight, 2.0);
+            assertEquals(cpuHeight, 2 * watchHeight, 4.0);
             split.setDividerLocation(240);
+            cpuWatches.setDividerLocation(210);
             panel.resizeComponents(900);
         });
         assertEquals(240, onEdt(split::getDividerLocation).intValue());
+        assertEquals(210, onEdt(cpuWatches::getDividerLocation).intValue());
         runOnEdt(panel::close);
         runOnEdt(panel::close);
         verify(fixture.context, times(1)).removeCPUListener(fixture.listener.get());

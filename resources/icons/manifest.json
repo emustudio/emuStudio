@@ -80,7 +80,11 @@
     "edit-annotation.png": "inspection/edit-annotation.svg",
     "remove-annotation.png": "inspection/remove-annotation.svg",
     "open-annotations.png": "inspection/open-annotations.svg",
-    "save-annotations.png": "inspection/save-annotations.svg"
+    "save-annotations.png": "inspection/save-annotations.svg",
+    "add-watch.png": "inspection/add-watch.svg",
+    "remove-watch.png": "inspection/remove-watch.svg",
+    "refresh-watch.png": "inspection/refresh-watch.svg",
+    "watch-help.png": "inspection/watch-help.svg"
   },
   "plugins/memory/ssem-mem/src/main/resources/net/emustudio/plugins/memory/ssem/gui/icons": {
     "erase-memory.png": "memory/erase-memory.svg",

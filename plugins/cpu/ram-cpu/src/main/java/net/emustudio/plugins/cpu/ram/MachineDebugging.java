@@ -98,6 +98,31 @@ public final class MachineDebugging implements Debugging {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
 
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Random Access Machine (RAM)",
+                "",
+                "Values: IP (instruction pointer), R0 (storage cell 0),",
+                "INPUT (current input symbol), OUTPUT (last output symbol),",
+                "INPUT_POSITION, OUTPUT_POSITION.",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "storage[index]         Inspect a storage cell.",
+                "input[index]           Inspect an input symbol.",
+                "output[index]          Inspect an output symbol.",
+                "read_storage[index]    Was this storage cell read by the tracked instruction?",
+                "write_storage[index]   Was it written by the tracked instruction?",
+                "read_input[index]      Was this input symbol read by the tracked instruction?",
+                "write_output[index]    Was this output symbol written by the tracked instruction?",
+                "",
+                "Example: storage[0] == 42",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
+    }
+
     private Function<List<Object>, Object> function(String name) {
         String fn = name.toLowerCase(Locale.ROOT);
         if (machineFunctions.contains(fn)) return args -> machineFunction.apply(fn, args);

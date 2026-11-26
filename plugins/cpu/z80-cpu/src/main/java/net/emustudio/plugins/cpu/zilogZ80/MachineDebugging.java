@@ -134,6 +134,30 @@ public final class MachineDebugging implements Debugging {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
 
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Z80",
+                "",
+                "Registers: A, B, C, D, E, H, L, F, BC, DE, HL, PC, SP,",
+                "IX, IY, I, R, IFF1, IFF2, IM, MEMPTR.",
+                "Alternate registers: A2, B2, C2, D2, E2, H2, L2, F2.",
+                "Example: mem16[SP]",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "mem[address]           Read one byte.",
+                "mem16[address]         Read two bytes, little-endian.",
+                "mem16be[address]       Read two bytes, big-endian.",
+                "mem32[address]         Read four bytes, little-endian.",
+                "mem32be[address]       Read four bytes, big-endian.",
+                "read[address]          Was this address read by the tracked instruction?",
+                "write[address]         Was this address written by the tracked instruction?",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
+    }
+
     private Function<List<Object>, Object> function(String name) {
         String fn = name.toLowerCase(Locale.ROOT);
         if (fn.equals("reg")) return args -> {

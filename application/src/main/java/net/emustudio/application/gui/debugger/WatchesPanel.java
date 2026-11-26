@@ -6,6 +6,7 @@ import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.gui.debugger.DebuggerWidgets.Operation;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.plugin.debugger.ValueView;
+import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -20,33 +21,46 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.gui.debugger.DebuggerWidgets.*;
-
 /**
  * Watch expressions with their current values; edits are applied through the debugger session.
  */
 final class WatchesPanel extends JPanel {
+    private static final String ICONS = "/net/emustudio/application/gui/icons/inspection/";
+    private static final String DEFAULT_FORMAT = "Hexadecimal";
+    private static final List<String> VALUE_FORMATS = List.of("Decimal", DEFAULT_FORMAT, "Octal", "Binary", "ASCII");
+
     private final DebuggerSession session;
     private final Consumer<Operation> update;
     private final WatchTableModel model = new WatchTableModel();
     private final JTable watches = new JTable(model);
-    private final JComboBox<String> format = new JComboBox<>();
-    private boolean updatingFormats;
+    private final List<String> rowFormats = new ArrayList<>();
 
     /**
      * @param live   runs toolbar actions (skipping them after disposal and reporting failures)
-     * @param update applies a configuration change asynchronously and refreshes the views afterwards
+     * @param update applies a configuration change and refreshes the views afterwards
      */
     WatchesPanel(EmuStudioGui gui, DebuggerSession session, Consumer<Operation> live, Consumer<Operation> update) {
-        super(new BorderLayout(4, 4));
+        super(new BorderLayout());
         this.session = Objects.requireNonNull(session);
         this.update = Objects.requireNonNull(update);
         watches.setTableHeader(null);
-        watches.setFont(EmuStudioGui.monospaced(watches));
+        watches.setFillsViewportHeight(true);
+        watches.setShowGrid(false);
+        watches.setRowHeight(Math.max(watches.getRowHeight(), watches.getFontMetrics(watches.getFont()).getHeight() + 4));
         watches.getAccessibleContext().setAccessibleName("Watch expressions and values");
         watches.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         watches.putClientProperty("terminateEditOnFocusLost", true);
         watches.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                showFormatMenu(event);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                showFormatMenu(event);
+            }
+
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() == 2
@@ -83,82 +97,136 @@ final class WatchesPanel extends JPanel {
         });
         add(gui.scrollPane(watches));
 
-        JTextField expression = gui.textField("", 16);
-        expression.setToolTipText("Machine expression, e.g. A or mem[0x1234]; invalid text is saved and shown inactive until corrected.");
-        JButton add = gui.toolbarButton(event -> live.accept(() -> {
-            String text = expression.getText();
-            update.accept(() -> session.editWatches(expressions -> expressions.add(text)));
-            expression.setText("");
-        }), "/net/emustudio/application/gui/icons/add.png", "Add");
-        expression.addActionListener(e -> add.doClick());
-        format.addActionListener(e -> {
-            if (!updatingFormats) refresh();
-        });
-        format.setToolTipText("Watch value format");
-        format.getAccessibleContext().setAccessibleName("Watch value format");
-        JPanel entry = gui.panel("insets 4, fillx", "[][grow][]", "");
-        entry.add(gui.label("Expression", expression));
-        entry.add(expression, "growx");
-        JToolBar entryActions = gui.toolBar();
-        entryActions.add(add);
-        entry.add(entryActions);
-        JPanel tools = gui.panel("insets 4, fillx, hidemode 3", "[grow]", "");
-        tools.add(entry, "span, growx, wrap");
-        JToolBar watchTools = gui.toolbarRow(tools, gui.toolbarButton(event -> live.accept(() -> {
-                    String selected = selected();
-                    if (selected != null) update.accept(() -> session.editWatches(expressions -> expressions.remove(selected)));
-                }), "/net/emustudio/application/gui/icons/remove.png", "Remove"),
-                gui.toolbarButton(event -> live.accept(() -> edit(watches.getSelectedRow())), "/net/emustudio/application/gui/icons/rename.png", "Edit watch"),
-                gui.toolbarButton(event -> live.accept(() -> update.accept(() -> {})), "/net/emustudio/application/gui/icons/reset.png", "Refresh"));
-        watchTools.addSeparator();
-        watchTools.add(format);
+        JToolBar tools = gui.toolBar();
+        tools.add(gui.toolbarButton(event -> live.accept(() -> showAddDialog(gui)), ICONS + "add-watch.png", "Add watch"));
+        JButton remove = gui.toolbarButton(event -> live.accept(this::removeSelected), ICONS + "remove-watch.png", "Remove watch");
+        remove.setEnabled(false);
+        watches.getSelectionModel().addListSelectionListener(event -> remove.setEnabled(watches.getSelectedRow() >= 0));
+        tools.add(remove);
+        tools.add(gui.toolbarButton(event -> live.accept(() -> update.accept(() -> {})), ICONS + "refresh-watch.png", "Refresh"));
+        tools.addSeparator();
+        tools.add(gui.toolbarButton(event -> live.accept(() -> WatchHelp.show(this, gui, session.debug)),
+                ICONS + "watch-help.png", "Show watch help"));
         add(gui.toolbarScrollPane(tools), BorderLayout.NORTH);
-        setPreferredSize(new Dimension(280, 230));
+        setPreferredSize(new Dimension(280, 150));
+    }
+
+    private void showAddDialog(EmuStudioGui gui) {
+        new DialogBase(SwingUtilities.getWindowAncestor(this), "Add watch", true) {
+            {
+                setResizable(false);
+                buildContent();
+            }
+
+            @Override
+            protected JComponent initializeComponents() {
+                JPanel content = gui.panel("insets dialog, fillx", "[][grow]", "");
+                JTextField expression = gui.textField("", 24);
+                content.add(gui.label("Expression", expression));
+                content.add(expression, "growx, wrap");
+                JButton add = gui.button("Add");
+                add.addActionListener(event -> {
+                    String text = expression.getText().strip();
+                    if (text.isEmpty()) {
+                        expression.requestFocusInWindow();
+                        return;
+                    }
+                    update.accept(() -> session.editWatches(expressions -> expressions.add(text)));
+                    dispose();
+                });
+                content.add(add, "span, align right");
+                getRootPane().setDefaultButton(add);
+                SwingUtilities.invokeLater(expression::requestFocusInWindow);
+                return content;
+            }
+        }.setVisible(true);
+    }
+
+    private void removeSelected() {
+        int row = watches.getSelectedRow();
+        if (row < 0) return;
+        if (watches.isEditing()) watches.getCellEditor().cancelCellEditing();
+        update.accept(() -> {
+            session.editWatches(expressions -> expressions.remove(row));
+            rowFormats.remove(row);
+        });
+    }
+
+    private void showFormatMenu(MouseEvent event) {
+        if (!event.isPopupTrigger() || watches.columnAtPoint(event.getPoint()) != 1) return;
+        if (watches.isEditing() && !watches.getCellEditor().stopCellEditing()) return;
+        int row = watches.rowAtPoint(event.getPoint());
+        if (row < 0) return;
+        watches.setRowSelectionInterval(row, row);
+        String expression = model.rows.get(row).getKey();
+        ValueView view = session.watchValues().get(expression);
+        JPopupMenu menu = new JPopupMenu();
+        ButtonGroup group = new ButtonGroup();
+        for (String format : VALUE_FORMATS) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(format, format.equals(rowFormats.get(row)));
+            item.setEnabled(formatValue(view, format) != null);
+            item.addActionListener(action -> {
+                if (row < model.getRowCount() && expression.equals(model.rows.get(row).getKey())) {
+                    rowFormats.set(row, format);
+                    refresh();
+                }
+            });
+            group.add(item);
+            menu.add(item);
+        }
+        menu.show(watches, event.getX(), event.getY());
+    }
+
+    private static String formatValue(ValueView view, String format) {
+        if (view == null) return null;
+        for (ValueView.Format option : view.formats) {
+            if (option.label.equals(format)) return option.text;
+        }
+        if (format.equals("Octal")) {
+            String decimal = formatValue(view, "Decimal");
+            if (decimal == null) return null;
+            try {
+                return "0o" + Long.toOctalString(Long.parseLong(decimal));
+            } catch (NumberFormatException ignored) {
+                // Custom decimal presentations may not have a corresponding octal value.
+            }
+        }
+        return null;
     }
 
     void refresh() {
         if (watches.isEditing()) return;
+        int selectedRow = watches.getSelectedRow();
         String selectedExpression = selected();
         Map<String, ValueView> values = session.watchValues();
         Map<String, String> errors = session.watchErrors();
-        String selectedFormat = (String) format.getSelectedItem();
-        Set<String> formats = new LinkedHashSet<>();
-        formats.add("Default");
-        values.values().forEach(value -> value.formats.forEach(item -> formats.add(item.label)));
-        List<String> displayedFormats = new ArrayList<>();
-        for (int i = 0; i < format.getItemCount(); i++) displayedFormats.add(format.getItemAt(i));
-        if (!displayedFormats.equals(new ArrayList<>(formats))) {
-            updatingFormats = true;
-            try {
-                format.removeAllItems();
-                formats.forEach(format::addItem);
-                if (formats.contains(selectedFormat)) format.setSelectedItem(selectedFormat);
-            } finally {
-                updatingFormats = false;
-            }
-        }
+        List<String> expressions = session.config.getWatches();
+        while (rowFormats.size() < expressions.size()) rowFormats.add(DEFAULT_FORMAT);
+        rowFormats.subList(expressions.size(), rowFormats.size()).clear();
         List<Map.Entry<String, String>> watchText = new ArrayList<>();
-        for (String expression : session.config.getWatches()) {
+        for (int row = 0; row < expressions.size(); row++) {
+            String expression = expressions.get(row);
             ValueView view = values.get(expression);
             if (errors.containsKey(expression))
                 watchText.add(Map.entry(expression, "Inactive: " + errors.get(expression)));
             else if (view == null) watchText.add(Map.entry(expression, "Pending"));
             else {
-                String formatted = view.text;
-                for (ValueView.Format item : view.formats)
-                    if (item.label.equals(selectedFormat)) formatted = item.text;
+                String formatted = Objects.requireNonNullElse(formatValue(view, rowFormats.get(row)), view.text);
                 watchText.add(Map.entry(expression, formatted + (view.changed ? "  * changed" : "")));
             }
         }
         if (model.rows.equals(watchText)) return;
         model.rows = watchText;
         model.fireTableDataChanged();
-        if (selectedExpression != null)
+        if (selectedRow >= 0 && selectedRow < watchText.size() && watchText.get(selectedRow).getKey().equals(selectedExpression)) {
+            watches.setRowSelectionInterval(selectedRow, selectedRow);
+        } else if (selectedExpression != null) {
             for (int row = 0; row < watchText.size(); row++)
                 if (watchText.get(row).getKey().equals(selectedExpression)) {
                     watches.setRowSelectionInterval(row, row);
                     break;
                 }
+        }
     }
 
     private void edit(int row) {

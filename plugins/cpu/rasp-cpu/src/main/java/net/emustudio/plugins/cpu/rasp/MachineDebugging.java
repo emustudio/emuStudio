@@ -83,6 +83,27 @@ public final class MachineDebugging implements Debugging {
         return ExpressionParser.parse(source, this::binding, this::function);
     }
 
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Random Access Stored Program (RASP)",
+                "",
+                "Values: IP (instruction pointer), ACC (accumulator),",
+                "INPUT (current input symbol), OUTPUT (last output symbol),",
+                "INPUT_POSITION, OUTPUT_POSITION.",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "mem[address]           Read one memory word.",
+                "read[address]          Was this word read by the tracked instruction?",
+                "write[address]         Was this word written by the tracked instruction?",
+                "",
+                "Example: mem[IP]",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
+    }
+
     private Function<List<Object>, Object> function(String name) {
         String fn = name.toLowerCase(Locale.ROOT);
         if (machineFunctions.contains(fn)) return args -> machineFunction.apply(fn, args);

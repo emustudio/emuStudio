@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
-    private static final int PERIPHERAL_PANEL_HEIGHT = 200;
+    private static final int SIDEBAR_SECONDARY_MIN_HEIGHT = 110;
 
     private final EmuStudioGui gui;
     private final JPanel statusWindow;
@@ -220,11 +220,11 @@ public class EmulatorPanel extends JPanel {
         statusScroll.setMinimumSize(new Dimension(280, 140));
         JPanel watches = gui.section("Watches", "insets 0, fill", "[grow]", "[grow]");
         watches.add(debugger != null ? debugger.watchesPanel() : gui.label("Watches need a CPU."), "grow");
-        watches.setMinimumSize(new Dimension(280, 170));
-        cpuWatches = gui.splitPane(JSplitPane.VERTICAL_SPLIT, statusScroll, watches, 0.55);
+        watches.setMinimumSize(new Dimension(280, SIDEBAR_SECONDARY_MIN_HEIGHT));
+        cpuWatches = gui.splitPane(JSplitPane.VERTICAL_SPLIT, statusScroll, watches, 2.0 / 3);
         cpuWatches.setName("debuggerCpuWatches");
-        peripheralPanel.setMinimumSize(new Dimension(280, 110));
-        sidebar = gui.splitPane(JSplitPane.VERTICAL_SPLIT, cpuWatches, peripheralPanel, 1.0);
+        peripheralPanel.setMinimumSize(new Dimension(280, SIDEBAR_SECONDARY_MIN_HEIGHT));
+        sidebar = gui.splitPane(JSplitPane.VERTICAL_SPLIT, cpuWatches, peripheralPanel, 0.75);
         sidebar.setName("debuggerSidebar");
         sidebar.setPreferredSize(new Dimension(360, 650));
         sidebar.setMinimumSize(new Dimension(280, 420));
@@ -302,13 +302,12 @@ public class EmulatorPanel extends JPanel {
 
     public void resizeComponents(int height) {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
-        if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0) {
+        if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0 && splitLeftRight.getHeight() > 0) {
             splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
-            sidebar.setDividerLocation(Math.max(310, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT));
-            JScrollPane status = (JScrollPane) cpuWatches.getTopComponent();
-            int preferredStatusHeight = status.getViewport().getView().getPreferredSize().height + 12;
-            int available = Math.max(140, splitLeftRight.getHeight() - PERIPHERAL_PANEL_HEIGHT - 170);
-            cpuWatches.setDividerLocation(Math.min(Math.max(220, preferredStatusHeight), available));
+            int contentHeight = splitLeftRight.getHeight() - sidebar.getDividerSize() - cpuWatches.getDividerSize();
+            int secondaryHeight = Math.max(SIDEBAR_SECONDARY_MIN_HEIGHT, contentHeight / 4);
+            sidebar.setDividerLocation(contentHeight - secondaryHeight + cpuWatches.getDividerSize());
+            cpuWatches.setDividerLocation(contentHeight - 2 * secondaryHeight);
             dividersInitialized = true;
         }
     }
