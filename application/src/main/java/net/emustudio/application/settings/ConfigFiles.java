@@ -65,6 +65,10 @@ public class ConfigFiles {
         try (Stream<Path> configFiles = Files.list(basePath.resolve(DIR_CONFIG))) {
             return configFiles
                     .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        return !name.endsWith(".new.tmp") && !name.contains(".new.tmp.");
+                    })
                     .flatMap(p -> {
                         try {
                             return Stream.of(ComputerConfig.load(p));

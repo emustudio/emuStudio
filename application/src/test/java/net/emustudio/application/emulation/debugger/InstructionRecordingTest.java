@@ -3,6 +3,8 @@
 package net.emustudio.application.emulation.debugger;
 
 import net.emustudio.emulib.plugin.debugger.NavLink;
+import net.emustudio.emulib.plugin.debugger.PackedCapture;
+import net.emustudio.emulib.plugin.debugger.PackedStep;
 import net.emustudio.emulib.plugin.debugger.StepView;
 import net.emustudio.emulib.plugin.debugger.ViewRow;
 import org.junit.Rule;
@@ -13,16 +15,252 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
 public class InstructionRecordingTest {
     @Rule
     public final TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test
+    public void packedFramesRoundTripWithDerivedRegistersAndOrderedAccesses() throws Exception {
+        PackedCapture capture = new PackedCapture("8080", PackedStep.AccessFormat.BYTE);
+        AtomicInteger b = new AtomicInteger(1);
+        capture.register("B", 1, b::get);
+        capture.register("C", 1, () -> 2);
+        capture.registerPair("BC", "B", "C");
+        capture.register("SP", 2, () -> 0xFFFF);
+        capture.before();
+        b.set(2);
+        capture.access(0x1234, 0xFF, true);
+        capture.access(0x1234, 0xFF, false);
+        StepView view = capture.after(0x100, true, "INR B", "04");
+        capture.clearAccesses();
+        capture.access(0, 0, false);
+        b.set(0);
+        for (int i = 0; i < 2000; i++) {
+            capture.before();
+            capture.after(0x100, true, "INR B", "04");
+        }
+        assertEquals("258", view.rows.get(3).before);
+        InstructionRecording.Event first = new InstructionRecording.Event(1, true, view);
+        InstructionRecording.Event second = new InstructionRecording.Event(2, false, view);
+        Path path = temporary.getRoot().toPath().resolve("packed.emutrace");
+        InstructionRecording.write(path, new InstructionRecording.Header("8080"), List.of(first, second));
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            List<InstructionRecording.Event> events = reader.nextPage(10);
+            assertTrue(reader.complete());
+            StepView restored = events.get(0).view;
+            assertNotNull(restored.packed());
+            assertEquals("INR B", restored.summary);
+            assertEquals(view.foldKey, restored.foldKey);
+            assertEquals(OptionalInt.of(0x100), restored.programLocation);
+            assertEquals("258", restored.rows.get(3).before);
+            assertEquals("514", restored.rows.get(3).after);
+            assertEquals("65535", restored.rows.get(4).after);
+            assertEquals("Write @1234", restored.rows.get(5).label);
+            assertEquals("255", restored.rows.get(5).after);
+            assertEquals("Read @1234", restored.rows.get(6).label);
+            assertEquals(1L, InstructionRecording.resolveEvent(events, 2, restored.rows.get(6).links.get(0)).orElseThrow());
+            assertFalse(events.get(1).completed);
+        }
+    }
+
+    @Test
+    public void packedFramesPreserveWideAddressesSignedWordsAndTapeValues() throws Exception {
+        PackedCapture bytes = new PackedCapture("BrainDuck", PackedStep.AccessFormat.WIDE_BYTE);
+        bytes.before();
+        bytes.access(0x10002, 255, true);
+        StepView wide = bytes.after(null, 0x10000);
+
+        PackedCapture words = new PackedCapture("RASP", PackedStep.AccessFormat.WORD);
+        words.before();
+        words.access(-4, Integer.MIN_VALUE, true);
+        StepView word = words.after(null, 0);
+
+        PackedCapture tapes = new PackedCapture("RAM", List.of("input", "storage"));
+        AtomicReference<Object> symbol = new AtomicReference<>(25);
+        tapes.inspect("R0", symbol::get);
+        tapes.before();
+        symbol.set("25");
+        String text = "λ".repeat(9_000);
+        tapes.tapeAccess("storage", 2, -12, text, true, true);
+        tapes.tapeAccess("input", 2, text, text, false, false);
+        StepView tape = tapes.after(null, 1);
+
+        Path path = temporary.getRoot().toPath().resolve("packed-values.emutrace");
+        InstructionRecording.write(path, new InstructionRecording.Header("test"),
+                List.of(new InstructionRecording.Event(1, true, wide), new InstructionRecording.Event(2, true, word),
+                        new InstructionRecording.Event(3, true, tape)));
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            List<InstructionRecording.Event> events = reader.nextPage(10);
+            assertTrue(reader.complete());
+            assertEquals("Write @10002", events.get(0).view.rows.get(1).label);
+            assertEquals("255", events.get(0).view.rows.get(1).after);
+            assertEquals("Write @-004", events.get(1).view.rows.get(1).label);
+            assertEquals(Integer.toString(Integer.MIN_VALUE), events.get(1).view.rows.get(1).after);
+            assertEquals(1L, InstructionRecording.resolveEvent(events, 4,
+                    new NavLink("Earlier", "BrainDuck/write/65538")).orElseThrow());
+            assertEquals(2L, InstructionRecording.resolveEvent(events, 4,
+                    new NavLink("Earlier", "RASP/write/-4")).orElseThrow());
+            List<ViewRow> rows = events.get(2).view.rows;
+            assertEquals("25", rows.get(1).before);
+            assertEquals("25", rows.get(1).after);
+            assertTrue(rows.get(1).changed);
+            assertEquals("Write storage[2]", rows.get(2).label);
+            assertEquals("-12", rows.get(2).before);
+            assertEquals(text, rows.get(2).after);
+            assertEquals("Read input[2]", rows.get(3).label);
+            assertEquals(text, rows.get(3).before);
+            assertFalse(rows.get(3).changed);
+            assertEquals(3L, InstructionRecording.resolveEvent(events, 4,
+                    new NavLink("Earlier", "RAM/storage/write/2")).orElseThrow());
+            assertTrue(InstructionRecording.resolveEvent(events, 4, rows.get(3).links.get(0)).isEmpty());
+        }
+    }
+
+    @Test
+    public void readsExistingVersionFourRecordings() throws Exception {
+        Path path = temporary.getRoot().toPath().resolve("version-four.emutrace");
+        InstructionRecording.Event event = instruction(1, 0x10);
+        InstructionRecording.write(path, new InstructionRecording.Header("RAM"), List.of(event));
+        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+            file.seek(Integer.BYTES);
+            file.writeInt(4);
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertEquals(event.view.summary, reader.nextPage(10).get(0).view.summary);
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void pagesPreserveRetainedOrderAfterWrapAndStartingAnotherRecording() throws Exception {
+        try (InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256)) {
+            recording.start(new InstructionRecording.Options(InstructionRecording.Mode.LAST, 300, null));
+            InstructionRecording.Recording first = recording.current();
+            for (int i = 0; i < 400; i++) recording.capture(true, Optional.of(instruction(i + 1, 0).view));
+
+            recording.start(new InstructionRecording.Options(InstructionRecording.Mode.FIRST, 1, null));
+            assertEquals(List.of(first, recording.current()), recording.recordings());
+            InstructionRecording.Page latest = recording.page(first, InstructionRecording.LATEST_PAGE);
+            InstructionRecording.Page older = recording.page(first, latest.previous);
+            assertEquals(101L, older.events.get(0).sequence);
+            assertEquals(250L, older.events.get(older.events.size() - 1).sequence);
+            assertEquals(251L, latest.events.get(0).sequence);
+            assertEquals(400L, latest.events.get(latest.events.size() - 1).sequence);
+            assertEquals(latest.start, older.next);
+            assertEquals(-1, older.previous);
+            assertEquals(-1, latest.next);
+        }
+    }
+
+    @Test
+    public void continuousRecordingPagesTheFileAndHonorsRangeAndPause() throws Exception {
+        Path path = temporary.getRoot().toPath().resolve("continuous.emutrace");
+        InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256);
+        InstructionRecording.Recording saved;
+        try (recording) {
+            recording.prepare(path, new InstructionRecording.AddressRange(10, 20));
+            saved = recording.recordings().get(0);
+            assertTrue(saved.isPending());
+            assertFalse(recording.isRecording());
+            assertFalse(Files.exists(path));
+            recording.startPrepared(saved);
+            assertSame(saved, recording.current());
+            recording.capture(true, Optional.of(instruction(1, 0).view));
+            recording.setPaused(true);
+            recording.capture(true, Optional.of(instruction(1, 10).view));
+            recording.setPaused(false);
+            for (int i = 0; i < 251; i++) recording.capture(true, Optional.of(instruction(1, 20).view));
+            assertTrue(recording.events().isEmpty());
+        }
+        assertTrue(saved.isComplete());
+        InstructionRecording.Page latest = recording.page(saved, InstructionRecording.LATEST_PAGE);
+        assertEquals(253L, latest.events.get(0).sequence);
+        assertEquals(3L, recording.page(saved, latest.previous).events.get(0).sequence);
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            assertEquals(251, reader.nextPage(1000).size());
+            assertTrue(reader.complete());
+        }
+        try (InstructionRecording library = new InstructionRecording(false, () -> "Other CPU", () -> 0)) {
+            library.open(path);
+            InstructionRecording.Recording reopened = library.recordings().get(0);
+            assertTrue(reopened.isComplete());
+            assertFalse(library.isRecording());
+            InstructionRecording.Page reopenedLatest = library.page(reopened, InstructionRecording.LATEST_PAGE);
+            assertEquals(253L, reopenedLatest.events.get(0).sequence);
+            assertEquals(3L, library.page(reopened, reopenedLatest.previous).events.get(0).sequence);
+            Path copy = path.resolveSibling("copy.emutrace");
+            library.save(reopened, copy, false);
+            assertArrayEquals(Files.readAllBytes(path), Files.readAllBytes(copy));
+        }
+    }
+
+    @Test
+    public void fileCaptureContinuesAfterHistoryStopsAndKeepsObserverSequenceNumbers() throws Exception {
+        Path path = temporary.getRoot().toPath().resolve("independent-lifetimes.emutrace");
+        try (InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256)) {
+            recording.start(new InstructionRecording.Options(InstructionRecording.Mode.LAST, 2, null));
+            recording.capture(true, Optional.empty());
+            recording.capture(true, Optional.of(instruction(1, 0x10).view));
+            recording.recordTo(path);
+            recording.capture(false, Optional.of(instruction(1, 0x20).view));
+            recording.stop();
+            recording.capture(true, Optional.of(instruction(1, 0x30).view));
+            assertTrue(recording.requiresFullCapture());
+
+            recording.stopFile();
+
+            assertFalse(recording.requiresFullCapture());
+            assertNull(recording.path());
+            assertEquals(List.of(2L, 3L), recording.events().stream()
+                    .map(event -> event.sequence).collect(java.util.stream.Collectors.toList()));
+        }
+        try (InstructionRecording.Reader reader = new InstructionRecording.Reader(path)) {
+            List<InstructionRecording.Event> saved = reader.nextPage(10);
+            assertEquals(2, saved.size());
+            assertEquals(3, saved.get(0).sequence);
+            assertFalse(saved.get(0).completed);
+            assertEquals(4, saved.get(1).sequence);
+            assertEquals(0x30, saved.get(1).view.programLocation.getAsInt());
+            assertTrue(reader.complete());
+        }
+    }
+
+    @Test
+    public void failedFileStartPreservesHistoryAndFreshCaptureClearsItsError() throws Exception {
+        Path existing = temporary.newFile("keep.emutrace").toPath();
+        Files.writeString(existing, "keep existing recording");
+        try (InstructionRecording recording = new InstructionRecording(true, () -> "RAM", () -> 256)) {
+            recording.start(new InstructionRecording.Options(InstructionRecording.Mode.LAST, 2, null));
+            recording.capture(true, Optional.of(instruction(1, 0x10).view));
+
+            assertThrows(IOException.class, () -> recording.recordTo(existing));
+
+            assertTrue(recording.isRecording());
+            assertNull(recording.path());
+            assertTrue(recording.error().startsWith("Could not start recording:"));
+            assertEquals("keep existing recording", Files.readString(existing));
+            recording.capture(true, Optional.of(instruction(1, 0x20).view));
+            assertEquals(2, recording.events().size());
+
+            recording.start(new InstructionRecording.Options(InstructionRecording.Mode.FIRST, 1, null));
+            recording.capture(true, Optional.of(instruction(1, 0x30).view));
+
+            assertEquals("", recording.error());
+            assertEquals(1, recording.events().size());
+            assertEquals(3, recording.events().get(0).sequence);
+        }
+    }
 
     @Test
     public void savedStepRetainsSymbolicValuesGroupsChangesNavigationAndFailureState() throws Exception {
@@ -62,6 +300,29 @@ public class InstructionRecordingTest {
             assertTrue(reader.finished());
             assertEquals("Complete recording: 1 instructions", reader.status());
             assertTrue(reader.nextPage(10).isEmpty());
+        }
+    }
+
+    @Test
+    public void measuredSizesMatchFileFramesForAsciiUnicodeAndMalformedSurrogates() throws Exception {
+        for (String text : List.of("", "ASCII\0", "é", "€", "\uD83D\uDE42", "\uD800", "\uDC00", "A\uD800B")) {
+            ViewRow row = new ViewRow(text, text, text, text, true,
+                    List.of(text), List.of(new NavLink(text, text)));
+            InstructionRecording.Event event = new InstructionRecording.Event(1, true,
+                    new StepView(text, text, OptionalInt.of(0), List.of(row)));
+            int size = InstructionRecording.sizeOf(event);
+            Path file = temporary.newFolder().toPath().resolve("utf8.emutrace");
+
+            InstructionRecording.write(file, new InstructionRecording.Header("8080"), List.of(event));
+
+            // Header: 16 bytes; event framing: 13; completion footer: 17.
+            assertEquals(size + 46L, Files.size(file));
+            try (InstructionRecording.Reader reader = new InstructionRecording.Reader(file)) {
+                InstructionRecording.Event restored = reader.nextPage(1).get(0);
+                assertEquals(size, InstructionRecording.sizeOf(restored));
+                assertEquals(new String(text.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8), restored.view.summary);
+                assertTrue(reader.complete());
+            }
         }
     }
 
@@ -324,7 +585,7 @@ public class InstructionRecordingTest {
         InstructionRecording.exportText(text, recording);
 
         String exported = Files.readString(text);
-        assertTrue(exported.contains("emuStudio instruction recording v4 | test-cpu"));
+        assertTrue(exported.contains("emuStudio instruction recording v5 | test-cpu"));
         assertTrue(exported.contains("#1 | PC=0020 | STORE | completed"));
         assertTrue(exported.contains("Tape"));
         assertTrue(exported.contains("Current cell: hello → world [changed]"));

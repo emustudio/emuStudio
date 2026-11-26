@@ -43,9 +43,7 @@ public class TapePlaybackImplTest {
      * to advance the playback clock gradually.
      */
     private void drainPulses(int callCount, int tstatesPerCall) throws InterruptedException {
-        Thread playThread = new Thread(() -> playback.onFileEnd());
-        playThread.start();
-        Thread.sleep(50);
+        Thread playThread = startPlaybackAsync();
 
         for (int i = 0; i < callCount; i++) {
             playback.passedCycles(tstatesPerCall);
@@ -61,10 +59,16 @@ public class TapePlaybackImplTest {
         playback.onPureData(ROM_ZERO_BIT_TSTATES, ROM_ONE_BIT_TSTATES, 8, data);
     }
 
-    private Thread startPlaybackAsync() throws InterruptedException {
-        Thread playThread = new Thread(() -> playback.onFileEnd());
+    private Thread startPlaybackAsync() {
+        playback.onFileEnd();
+        Thread playThread = new Thread(() -> {
+            try {
+                playback.awaitPlaybackEnd();
+            } catch (InterruptedException stopped) {
+                Thread.currentThread().interrupt();
+            }
+        });
         playThread.start();
-        Thread.sleep(50);
         return playThread;
     }
 

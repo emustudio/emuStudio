@@ -3,7 +3,6 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.emulation.EmulationProgress;
 import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
@@ -19,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+import javax.swing.JOptionPane;
 import java.awt.*;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -51,7 +51,7 @@ public class AutomationCommand implements Callable<Integer> {
         Dialogs dialogs = new DialogsNoGui();
         DialogsGui guiDialogs = null;
         try {
-            AppSettings appConfig = AppSettings.load(this.gui, true);
+            AppSettings appConfig = AppSettings.load(this.gui);
             EmuStudioGui gui = null;
             if (this.gui) {
                 gui = new EmuStudioGui();
@@ -80,25 +80,57 @@ public class AutomationCommand implements Callable<Integer> {
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
                         ? null : Numbers.parseRadix(this.programLocation);
-                EmulationProgress progress = this.gui ? new AutoDialog(computer, gui) : EmulationProgress.NONE;
-
                 Automation automation = new Automation(
                         computer, runner.inputFile,
                         appConfig,
                         dialogs,
                         waitForFinishMillis,
-                        programLocation,
-                        progress
+                        programLocation
                 );
                 splash.ifPresent(Window::dispose);
-                automation.run();
-                if (!automation.isSuccessful()) return 1;
+                if (this.gui) {
+                    AutoDialog progress = new AutoDialog(automation::cancel, gui);
+                    automation.setProgressListener((action, enableStop) ->
+                            EventQueue.invokeLater(() -> progress.setAction(action, enableStop)));
+                    try {
+                        progress.setVisible(true);
+                        automation.run();
+                    } finally {
+                        progress.dispose();
+                    }
+                } else {
+                    runHeadless(automation);
+                }
+                if (!automation.result().isSuccessful()) return 1;
+            } finally {
+                if (this.gui) {
+                    // All automation dialogs use Swing's shared owner when opened without a parent.
+                    EventQueue.invokeAndWait(() -> JOptionPane.getRootFrame().dispose());
+                }
             }
             return 0;
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation", e);
             dialogs.showError("Unexpected error during automation. Please see log file for details.", "Error");
             return 1;
+        }
+    }
+
+    private static void runHeadless(Automation automation) {
+        Runtime runtime = Runtime.getRuntime();
+        Thread shutdown = new Thread(() -> {
+            automation.cancel();
+            automation.result();
+        }, "automation-shutdown");
+        runtime.addShutdownHook(shutdown);
+        try {
+            automation.run();
+        } finally {
+            try {
+                runtime.removeShutdownHook(shutdown);
+            } catch (IllegalStateException shuttingDown) {
+                // The hook is already waiting for the session to finish.
+            }
         }
     }
 }

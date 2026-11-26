@@ -17,25 +17,22 @@ import net.emustudio.plugins.device.audiotapeplayer.gui.TapePlayerGui;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Audio Tape Player", description = "Audio Tape Player")
 public class DeviceImpl extends AbstractPlugin implements Device {
 
     private final boolean guiSupported;
-    private final boolean automaticEmulation;
-    private boolean guiIOset = false;
-
     private TapePlayerGui gui;
     private TapePlaybackController controller;
     private TapePlaybackImpl cassetteListener;
     private AutomationController automationController;
-    private JFrame parentFrame;
+    private CPUContext cpu;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
-        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false);
     }
 
     @Override
@@ -43,11 +40,12 @@ public class DeviceImpl extends AbstractPlugin implements Device {
         ContextPool contextPool = applicationApi.getContextPool();
 
         // a cassette player needs a device to which it will write at its own pace
-        CPUContext cpu = contextPool.get(pluginID, CPUContext.class);
+        cpu = contextPool.get(pluginID, CPUContext.class);
         DeviceContext<Byte> lineIn = contextPool.getDevice(pluginID, Byte.class);
         this.cassetteListener = new TapePlaybackImpl(lineIn, cpu::getCPUFrequency);
         cpu.addPassedCyclesListener(this.cassetteListener);
         this.controller = new TapePlaybackController(cassetteListener);
+        this.automationController = new AutomationController(controller);
 
         if (guiSupported && settings.getBoolean(SettingsDialog.SETTINGS_KEY_SHOW_GUI_AT_STARTUP).orElse(false)) {
             showGUI(null);
@@ -56,22 +54,40 @@ public class DeviceImpl extends AbstractPlugin implements Device {
 
     @Override
     public void reset() {
-        this.controller.reset();
-        if (automaticEmulation && !guiSupported) {
-            automationController = new AutomationController(controller);
-        }
+        automationController.reset();
+        controller.reset();
+    }
+
+    @Override
+    public CompletableFuture<Void> startAutomation() {
+        List<String> events = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
+        return automationController.play(AutomationEvent.deserializeAll(events));
+    }
+
+    @Override
+    public CompletableFuture<Void> stopAutomation() {
+        CompletableFuture<Void> eventsStopped = automationController.shutdown();
+        CompletableFuture<Void> playbackStopped = controller.shutdown();
+        return CompletableFuture.allOf(eventsStopped, playbackStopped);
     }
 
     @Override
     public void destroy() {
-        if (automationController != null) {
-            automationController.close();
-        }
-        this.controller.close();
-        if (guiIOset || gui != null) {
-            gui = null;
-            cassetteListener.setGui(null);
-            guiIOset = false;
+        try {
+            if (automationController != null) {
+                stopAutomation().handle((ignored, failure) -> null).join();
+            } else if (controller != null) {
+                controller.close();
+            }
+        } finally {
+            if (cassetteListener != null) {
+                cpu.removePassedCyclesListener(cassetteListener);
+                cassetteListener.setGui(null);
+            }
+            if (gui != null) {
+                gui.dispose();
+                gui = null;
+            }
         }
     }
 
@@ -90,26 +106,13 @@ public class DeviceImpl extends AbstractPlugin implements Device {
 
     @Override
     public void showGUI(JFrame parent) {
-        this.parentFrame = parent;
         if (guiSupported) {
-            if (!guiIOset) {
-                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller, settings, applicationApi.getGUI());
-                guiIOset = true;
+            if (gui == null) {
+                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller, automationController,
+                        settings, applicationApi.getGUI());
                 this.cassetteListener.setGui(gui);
             }
             this.gui.setVisible(true);
-
-            // Start automation if controller is ready
-            if (automationController != null && !automationController.isPlaying()) {
-                List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
-                List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
-                automationController.play(events);
-            }
-        } else if (automationController != null && !automationController.isPlaying()) {
-            // No GUI - just start automation
-            List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
-            List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
-            automationController.play(events);
         }
     }
 

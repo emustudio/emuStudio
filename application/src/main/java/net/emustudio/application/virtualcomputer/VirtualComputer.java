@@ -2,19 +2,25 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
+import net.emustudio.application.ApplicationApiImpl;
+import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginSettingsImpl;
+import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugin.Plugin;
 import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.device.Device;
 import net.emustudio.emulib.plugin.memory.Memory;
 import net.emustudio.emulib.application.ApplicationApi;
 import net.emustudio.emulib.application.settings.PluginSettings;
+import net.emustudio.emulib.plugin.memory.MemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,8 +82,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         LoadedPlugins loadedPlugins = loadPlugins(computerConfig, applicationApi, appSettings);
         try {
             VirtualComputer computer = new VirtualComputer(computerConfig, loadedPlugins.plugins, loadedPlugins.pluginClassLoader);
-            if (applicationApi instanceof net.emustudio.application.ApplicationApiImpl)
-                computer.applicationApi = (net.emustudio.application.ApplicationApiImpl) applicationApi;
+            if (applicationApi instanceof ApplicationApiImpl)
+                computer.applicationApi = (ApplicationApiImpl) applicationApi;
             return computer;
         } catch (RuntimeException | Error failure) {
             destroyPlugins(loadedPlugins.plugins.values());
@@ -198,24 +204,19 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 pluginMeta.pluginInstance.initialize();
             }
             if (getCPU().isPresent()) {
-                net.emustudio.emulib.plugin.memory.MemoryContext<?> memory = null;
-                try { memory = contextPool.get(0, net.emustudio.emulib.plugin.memory.MemoryContext.class); }
+                MemoryContext<?> memory = null;
+                try { memory = contextPool.get(0, MemoryContext.class); }
                 catch (net.emustudio.emulib.application.ContextNotFoundException ignored) { }
-                try {
-                    java.nio.file.Path path = computerConfig.getPath();
-                    debugger = new net.emustudio.application.emulation.debugger.DebuggerSession(getCPU().get(),
-                            contextPool.get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class), memory,
-                            path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new net.emustudio.emulib.application.annotations.MemoryAnnotations()
-                                    : applicationApi.getAnnotations(), getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
-                    execution = debugger.execution();
-
-                } catch (IOException e) {
-                    throw new PluginInitializationException("Could not load debugger settings", e);
-                }
+                execution = new EmulationController(getCPU().get(),
+                        contextPool.get(0, CPUContext.class),
+                        getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
+                debugger = new DebuggerSession(getCPU().get(), execution.cpuContext(), memory,
+                        computerConfig.getConfig(), applicationApi == null ? new MemoryAnnotations()
+                                : applicationApi.getAnnotations());
+                execution.attachDebugger(debugger);
             } else {
-                execution = new net.emustudio.application.emulation.EmulationController(null, null,
-                        getMemory().orElse(null), getDevices(), null, getCompiler().orElse(null));
+                execution = new EmulationController(null, null,
+                        getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
 
             }
         } catch (PluginInitializationException | RuntimeException | Error failure) {
@@ -224,9 +225,9 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
     }
 
-    public Optional<net.emustudio.application.emulation.debugger.DebuggerSession> getDebugger() { return Optional.ofNullable(debugger); }
+    public Optional<DebuggerSession> getDebugger() { return Optional.ofNullable(debugger); }
 
-    public Optional<net.emustudio.application.emulation.EmulationController> getExecution() {
+    public Optional<EmulationController> getExecution() {
         return Optional.ofNullable(execution);
     }
 
@@ -269,27 +270,35 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     @Override
     public void close() {
+        closeAndReportFailures().forEach(failure -> LOGGER.error("Could not close virtual computer", failure));
+    }
+
+    /** Closes the machine and returns the failures encountered while releasing its resources. */
+    public List<Throwable> closeAndReportFailures() {
         if (destroyed) {
-            return;
+            return List.of();
         }
         destroyed = true;
         if (execution != null) execution.close();
-
-        if (debugger != null) {
-            try {
-                debugger.close();
-            } catch (Throwable e) {
-                LOGGER.error("Debugger failed to close", e);
-            }
-        }
+        List<Throwable> failures = new ArrayList<>();
+        if (debugger != null) closeResource(failures, debugger::close);
         List<PluginMeta> devices = new ArrayList<>(pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList()));
         Collections.reverse(devices);
-        devices.forEach(meta -> safeDestroy(meta.pluginInstance));
-        getCPU().ifPresent(VirtualComputer::safeDestroy);
-        getMemory().ifPresent(VirtualComputer::safeDestroy);
-        getCompiler().ifPresent(VirtualComputer::safeDestroy);
-        safeCloseClassLoader();
-        computerConfig.close();
+        devices.forEach(meta -> closeResource(failures, meta.pluginInstance::destroy));
+        getCPU().ifPresent(cpu -> closeResource(failures, cpu::destroy));
+        getMemory().ifPresent(memory -> closeResource(failures, memory::destroy));
+        getCompiler().ifPresent(compiler -> closeResource(failures, compiler::destroy));
+        if (pluginClassLoader != null) closeResource(failures, pluginClassLoader);
+        closeResource(failures, computerConfig::close);
+        return failures;
+    }
+
+    private static void closeResource(List<Throwable> failures, AutoCloseable resource) {
+        try {
+            resource.close();
+        } catch (Throwable failure) {
+            failures.add(failure);
+        }
     }
 
     private static void closeAfterFailure(AutoCloseable resource, Throwable failure) {
@@ -314,16 +323,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
     }
 
-    private void safeCloseClassLoader() {
-        if (pluginClassLoader == null) {
-            return;
-        }
-        try {
-            pluginClassLoader.close();
-        } catch (Throwable e) {
-            LOGGER.error("Plugin class loader failed to close", e);
-        }
-    }
 
     private static final class LoadedPlugins {
         private final AutoCloseable pluginClassLoader;

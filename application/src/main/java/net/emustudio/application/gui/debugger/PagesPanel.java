@@ -10,19 +10,21 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.IntConsumer;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 
 public class PagesPanel extends JPanel {
 
     private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
     private final EmuStudioGui gui;
+    private final JToolBar tools;
     private int pageSeekLastValue = 10;
 
     private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = Objects.requireNonNull(gui);
+        this.tools = gui.toolBar();
+        tools.setLayout(new MigLayout("insets 0, hidemode 3, gapx 2", "", ""));
     }
 
     public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs, EmuStudioGui gui) {
@@ -32,24 +34,37 @@ public class PagesPanel extends JPanel {
         return pagesPanel;
     }
 
-    private void initComponents() {
-        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
-        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
-        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
-        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
-        JButton btnSeekBackward = gui.toolbarButton(evt -> seek("backward", debugTableModel::seekBackwardPage), ICON_PAGE_SEEK_BACKWARD, "Seek pages backward");
-        JButton btnSeekForward = gui.toolbarButton(evt -> seek("forward", debugTableModel::seekForwardPage), ICON_PAGE_SEEK_FORWARD, "Seek pages forward");
+    public JToolBar toolbar() {
+        return tools;
+    }
 
-        JPanel buttonPanel = gui.panel("insets 0, center", "[]0[]0[]0[]0[]0[]", "[]");
-        buttonPanel.add(btnFirst);
-        buttonPanel.add(btnSeekBackward);
-        buttonPanel.add(btnBackward);
-        buttonPanel.add(btnCurrentPage);
-        buttonPanel.add(btnForward);
-        buttonPanel.add(btnSeekForward);
+    private void initComponents() {
+        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), "/net/emustudio/application/gui/icons/page-first.png", "Go to the first page");
+        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), "/net/emustudio/application/gui/icons/page-back.png", "Go to the previous page");
+        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), "/net/emustudio/application/gui/icons/page-current.png", "Go to the current page");
+        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), "/net/emustudio/application/gui/icons/run.png", "Go to the next page");
+        JButton btnSeekBackward = gui.toolbarButton(evt -> seek("backward", debugTableModel::seekBackwardPage), "/net/emustudio/application/gui/icons/page-seek-backward.png", "Seek pages backward");
+        JButton btnSeekForward = gui.toolbarButton(evt -> seek("forward", debugTableModel::seekForwardPage), "/net/emustudio/application/gui/icons/page-seek-forward.png", "Seek pages forward");
+        JToggleButton fold = gui.toolbarToggleButton(evt -> {},
+                "/net/emustudio/application/gui/icons/emulation/fold.png", "Fold identical repeats");
+        fold.setSelected(debugTableModel.isFoldRepeats());
+        fold.addActionListener(evt -> {
+            debugTableModel.setFoldRepeats(fold.isSelected());
+            fold.setSelected(debugTableModel.isFoldRepeats());
+        });
+        debugTableModel.addTableModelListener(evt -> fold.setSelected(debugTableModel.isFoldRepeats()));
+
+        tools.add(btnFirst);
+        tools.add(btnSeekBackward);
+        tools.add(btnBackward);
+        tools.add(btnCurrentPage);
+        tools.add(btnForward);
+        tools.add(btnSeekForward);
+        tools.addSeparator();
+        tools.add(fold);
 
         setLayout(new MigLayout("insets 0, fillx", "[grow]", "[]"));
-        add(buttonPanel, "center");
+        add(tools, "growx");
     }
 
     private void seek(String direction, IntConsumer seekPages) {

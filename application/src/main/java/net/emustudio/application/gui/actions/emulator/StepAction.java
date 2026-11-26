@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_STEP;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class StepAction extends AbstractAction {
@@ -17,7 +16,7 @@ public class StepAction extends AbstractAction {
     private final Runnable completed;
 
     public StepAction(EmulationController emulationController, Runnable completed) {
-        super("Step", loadIcon(ICON_STEP));
+        super("Step", loadIcon("/net/emustudio/application/gui/icons/step.png"));
         putValue(SHORT_DESCRIPTION, "Step forward");
         this.emulationController = emulationController;
         this.completed = completed;

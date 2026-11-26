@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_RUN;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class RunAction extends AbstractAction {
@@ -18,7 +17,7 @@ public class RunAction extends AbstractAction {
     private final JTable debugTable;
 
     public RunAction(EmulationController emulationController, JTable debugTable) {
-        super("Run", loadIcon(ICON_RUN));
+        super("Run", loadIcon("/net/emustudio/application/gui/icons/run.png"));
         putValue(SHORT_DESCRIPTION, "Run emulation");
         this.emulationController = emulationController;
         this.debugTable = Objects.requireNonNull(debugTable);

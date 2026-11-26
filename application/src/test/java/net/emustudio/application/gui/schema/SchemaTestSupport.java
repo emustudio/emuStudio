@@ -27,7 +27,7 @@ public final class SchemaTestSupport {
     }
 
     public static AppSettings createAppSettings(boolean useGrid, int gridGap) {
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
         settings.setUseSchemaGrid(useGrid);
         settings.setSchemaGridGap(gridGap);
         return settings;

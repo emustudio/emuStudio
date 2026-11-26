@@ -61,6 +61,12 @@ public class DeviceImplTest {
         return memory;
     }
 
+    @Test public void exposesVersionAndCopyright() {
+        DeviceImpl device = new DeviceImpl(0, application(createStrictMock(ContextPool.class)), PluginSettings.UNAVAILABLE);
+        assertNotEquals("(unknown)", device.getVersion());
+        assertNotEquals("(unknown)", device.getCopyright());
+    }
+
     @Test public void defaultModePreservesSimhFdPortAndDmaMemoryConnection() throws Exception {
         ContextPool pool = createStrictMock(ContextPool.class);
         Context8080 cpu = createStrictMock(Context8080.class);

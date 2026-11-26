@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -63,5 +64,18 @@ public class ComputerConfigTest {
         SchemaPoint newSchemaPoint = SchemaPoint.of(20, 30);
         cpu.setSchemaPoint(newSchemaPoint);
         assertEquals(cpu.getSchemaPoint(), newSchemaPoint);
+    }
+
+    @Test
+    public void copyToPreservesDebuggerSettings() throws IOException {
+        config.getConfig().set("debugger.watches", List.of("A + 1"));
+        Path target = config.getPath().resolveSibling("renamed.toml");
+        try (ComputerConfig copy = ComputerConfig.create("Renamed", target)) {
+            config.copyTo(copy);
+        }
+        try (ComputerConfig copy = ComputerConfig.load(target)) {
+            assertEquals("Renamed", copy.getName());
+            assertEquals(List.of("A + 1"), copy.getConfig().get("debugger.watches"));
+        }
     }
 }

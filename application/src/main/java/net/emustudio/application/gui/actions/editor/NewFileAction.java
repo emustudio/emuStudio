@@ -10,7 +10,6 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_NEW_FILE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class NewFileAction extends AbstractAction {
@@ -20,7 +19,7 @@ public class NewFileAction extends AbstractAction {
     private final Runnable updateTitle;
 
     public NewFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
-        super("New tab", loadIcon(ICON_NEW_FILE));
+        super("New tab", loadIcon("/net/emustudio/application/gui/icons/new-file.png"));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);

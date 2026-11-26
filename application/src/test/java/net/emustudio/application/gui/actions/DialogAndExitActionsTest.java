@@ -68,7 +68,7 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
                     showFrame(onEdt(() -> new JFrame("parent"))),
                     computer,
                     mock(Dialogs.class),
-                    new AppSettings(Config.inMemory(), false, false),
+                    new AppSettings(Config.inMemory(), false),
                     new EmuStudioGui()
             );
 

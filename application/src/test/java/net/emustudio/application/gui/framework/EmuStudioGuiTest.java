@@ -7,7 +7,6 @@ import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.application.settings.AppSettings;
-import net.emustudio.emulib.ui.StandardIcons;
 import net.miginfocom.swing.MigLayout;
 import org.junit.After;
 import org.junit.Test;
@@ -18,12 +17,14 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.MultiResolutionImage;
-import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
-import static net.emustudio.emulib.ui.StandardIcons.ICON_GRID;
-import static net.emustudio.emulib.ui.StandardIcons.ICON_OPEN_FILE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.FONT_COMMON;
 import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static org.junit.Assert.*;
@@ -35,7 +36,20 @@ public class EmuStudioGuiTest {
     @After
     public void restoreLookAndFeel() throws Exception {
         UIManager.setLookAndFeel(originalLookAndFeel);
-        UIManager.put(EmuStudioGui.customKey(ICON_RUN), null);
+        UIManager.put(EmuStudioGui.customKey("/net/emustudio/application/gui/icons/run.png"), null);
+    }
+
+    private List<String> bundledIcons() throws Exception {
+        String prefix = "/net/emustudio/application/gui/icons/";
+        Path directory = Path.of(Objects.requireNonNull(getClass().getResource(prefix)).toURI());
+        try (Stream<Path> resources = Files.walk(directory)) {
+            return resources.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".png"))
+                    .filter(path -> !path.getFileName().toString().endsWith("@2x.png"))
+                    .filter(path -> !path.getFileName().toString().equals("logo.png"))
+                    .map(path -> prefix + directory.relativize(path).toString().replace('\\', '/'))
+                    .sorted().collect(Collectors.toList());
+        }
     }
 
     @Test
@@ -43,35 +57,30 @@ public class EmuStudioGuiTest {
         for (String theme : new String[]{UIManager.getCrossPlatformLookAndFeelClassName(),
                 "javax.swing.plaf.nimbus.NimbusLookAndFeel"}) {
             UIManager.setLookAndFeel(theme);
-            for (Field field : StandardIcons.class.getFields()) {
-                if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
-                    Icon icon = EmuStudioGui.loadIcon((String) field.get(null));
-                    assertNotNull(field.getName(), icon);
-                    assertEquals(field.getName(), 22, icon.getIconWidth());
-                    assertEquals(field.getName(), 22, icon.getIconHeight());
-                }
+            for (String resource : bundledIcons()) {
+                Icon icon = EmuStudioGui.loadIcon(resource);
+                assertNotNull(resource, icon);
+                assertEquals(resource, 22, icon.getIconWidth());
+                assertEquals(resource, 22, icon.getIconHeight());
             }
-            assertNotSame(UIManager.getIcon("Tree.openIcon"), EmuStudioGui.loadIcon(ICON_OPEN_FILE));
-            assertNotSame(UIManager.getIcon("InternalFrame.closeIcon"),
-                    EmuStudioGui.loadIcon(StandardIcons.ICON_REMOVE));
+            assertNotSame(UIManager.getIcon("Tree.openIcon"), EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/open-file.png"));
+            assertNotSame(UIManager.getIcon("InternalFrame.closeIcon"), EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/remove.png"));
         }
     }
 
     @Test
     public void bundledIconsUseHighResolutionArtworkWithoutChangingLayoutSize() throws Exception {
-        for (Field field : StandardIcons.class.getFields()) {
-            if (field.getName().startsWith("ICON_") && field.getType() == String.class) {
-                ImageIcon icon = (ImageIcon) EmuStudioGui.loadIcon((String) field.get(null));
-                assertNotNull(field.getName(), icon);
-                assertEquals(field.getName(), 22, icon.getIconWidth());
-                assertEquals(field.getName(), 22, icon.getIconHeight());
-                assertTrue(field.getName(), icon.getImage() instanceof MultiResolutionImage);
-                MultiResolutionImage image = (MultiResolutionImage) icon.getImage();
-                for (double scale : new double[]{1.25, 1.5, 2}) {
-                    Image variant = image.getResolutionVariant(22 * scale, 22 * scale);
-                    assertEquals(field.getName(), 44, variant.getWidth(null));
-                    assertEquals(field.getName(), 44, variant.getHeight(null));
-                }
+        for (String resource : bundledIcons()) {
+            ImageIcon icon = (ImageIcon) EmuStudioGui.loadIcon(resource);
+            assertNotNull(resource, icon);
+            assertEquals(resource, 22, icon.getIconWidth());
+            assertEquals(resource, 22, icon.getIconHeight());
+            assertTrue(resource, icon.getImage() instanceof MultiResolutionImage);
+            MultiResolutionImage image = (MultiResolutionImage) icon.getImage();
+            for (double scale : new double[]{1.25, 1.5, 2}) {
+                Image variant = image.getResolutionVariant(22 * scale, 22 * scale);
+                assertEquals(resource, 44, variant.getWidth(null));
+                assertEquals(resource, 44, variant.getHeight(null));
             }
         }
     }
@@ -79,9 +88,9 @@ public class EmuStudioGuiTest {
     @Test
     public void customIconCanBeOverriddenThroughUiManager() {
         Icon override = new ImageIcon(new byte[]{0});
-        UIManager.put(EmuStudioGui.customKey(ICON_RUN), override);
-        assertSame(override, EmuStudioGui.loadIcon(ICON_RUN));
-        assertNotNull(EmuStudioGui.loadIcon(ICON_OPEN_FILE));
+        UIManager.put(EmuStudioGui.customKey("/net/emustudio/application/gui/icons/run.png"), override);
+        assertSame(override, EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/run.png"));
+        assertNotNull(EmuStudioGui.loadIcon("/net/emustudio/application/gui/icons/open-file.png"));
     }
 
     @Test
@@ -96,7 +105,7 @@ public class EmuStudioGuiTest {
     @Test
     public void initializeAppliesThemeAndCustomUiDefaults() {
         for (AppSettings.Theme theme : AppSettings.Theme.values()) {
-            AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+            AppSettings settings = new AppSettings(Config.inMemory(), false);
             settings.set(AppSettings.KEY_THEME, theme.name());
 
             EmuStudioGui gui = new EmuStudioGui();
@@ -116,7 +125,7 @@ public class EmuStudioGuiTest {
         frame.add(new JButton("Button"));
         frame.pack();
 
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
         settings.set(AppSettings.KEY_THEME, AppSettings.Theme.DARK.name());
 
         EmuStudioGui gui = new EmuStudioGui();
@@ -136,21 +145,21 @@ public class EmuStudioGuiTest {
         AtomicInteger actionCount = new AtomicInteger();
         AtomicInteger itemCount = new AtomicInteger();
 
-        JButton consumerButton = gui.toolbarButton(e -> actionCount.incrementAndGet(), ICON_SAVE, "Save");
+        JButton consumerButton = gui.toolbarButton(e -> actionCount.incrementAndGet(), "/net/emustudio/application/gui/icons/save.png", "Save");
         Action action = new AbstractAction("Run") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 actionCount.incrementAndGet();
             }
         };
-        JButton actionButton = gui.toolbarButton(action, ICON_RUN, "Run");
+        JButton actionButton = gui.toolbarButton(action, "/net/emustudio/application/gui/icons/run.png", "Run");
         JToggleButton toggleButton = gui.toolbarToggleButton(
                 e -> actionCount.incrementAndGet(),
                 e -> itemCount.incrementAndGet(),
-                ICON_GRID,
+                "/net/emustudio/application/gui/icons/grid.png",
                 "Grid"
         );
-        JToggleButton simpleToggle = gui.toolbarToggleButton(e -> actionCount.incrementAndGet(), ICON_GRID, "Simple");
+        JToggleButton simpleToggle = gui.toolbarToggleButton(e -> actionCount.incrementAndGet(), "/net/emustudio/application/gui/icons/grid.png", "Simple");
 
         assertTrue(consumerButton instanceof ToolbarButton);
         assertEquals("Save", consumerButton.getToolTipText());
@@ -175,13 +184,13 @@ public class EmuStudioGuiTest {
     @Test
     public void toolbarAndSearchControlsKeepTheirStateAcrossThemeChanges() throws Exception {
         EmuStudioGui gui = new EmuStudioGui();
-        JButton button = gui.toolbarTextButton(event -> {}, ICON_FIND, "Follow link");
+        JButton button = gui.toolbarTextButton(event -> {}, "/net/emustudio/application/gui/icons/find.png", "Follow link");
         button.setToolTipText("Follow the selected link");
-        JToggleButton toggle = gui.toolbarToggleButton(event -> {}, ICON_RECORD, "Record instructions");
+        JToggleButton toggle = gui.toolbarToggleButton(event -> {}, "/net/emustudio/application/gui/icons/record.png", "Record instructions");
         toggle.setSelected(true);
         toggle.setEnabled(false);
-        EmuStudioGui.toolbarIcon(toggle, ICON_STOP);
-        JTextField search = gui.searchField("Search annotations", 14, ICON_FIND);
+        EmuStudioGui.toolbarIcon(toggle, "/net/emustudio/application/gui/icons/stop.png");
+        JTextField search = gui.searchField("Search annotations", 14, "/net/emustudio/application/gui/icons/find.png");
         search.setText("entry");
         JPanel panel = gui.toolbarPanel();
         gui.toolbarRow(panel, button, toggle, search);

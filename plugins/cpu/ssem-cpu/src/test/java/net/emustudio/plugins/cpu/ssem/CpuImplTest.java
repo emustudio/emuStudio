@@ -16,14 +16,22 @@ import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class CpuImplTest {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     private CpuImpl cpu;
     private CPUContext observedContext;
 
@@ -61,6 +69,34 @@ public class CpuImplTest {
     public void testGetDescription() {
         assertNotNull(cpu.getDescription());
         assertFalse(cpu.getDescription().isEmpty());
+    }
+
+    @Test
+    public void writesCurrentMachineStateWhenHostCollectsOutput() throws Exception {
+        CpuImpl initialized = createInitializedCpuWithMemory(new short[32 * 4]);
+        try {
+            initialized.getEngine().Acc.set(42);
+            initialized.getEngine().CI.set(8);
+            Path output = folder.getRoot().toPath().resolve("ssem.out");
+            initialized.writeAutomationSnapshot(output);
+
+            String content = Files.readString(output);
+            assertTrue(content.contains("ACC=0x2a"));
+            assertTrue(content.contains("CI=0x8"));
+            assertTrue(content.contains("31 "));
+        } finally {
+            initialized.destroy();
+        }
+    }
+
+    @Test(expected = IOException.class)
+    public void reportsUnwritableOutput() throws Exception {
+        CpuImpl initialized = createInitializedCpuWithMemory(new short[32 * 4]);
+        try {
+            initialized.writeAutomationSnapshot(folder.getRoot().toPath());
+        } finally {
+            initialized.destroy();
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -268,7 +304,6 @@ public class CpuImplTest {
     @Test
     public void testDestroyWithoutAutoEmulation() throws PluginInitializationException {
         CpuImpl initialized = createInitializedCpu();
-        // destroy should not throw even without automaticEmulation
         initialized.destroy();
     }
 

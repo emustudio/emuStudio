@@ -7,7 +7,6 @@ import net.emustudio.emulib.application.settings.PluginSettings;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.io.FileType;
 import net.emustudio.emulib.application.ui.GUI;
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.ui.components.CachedComboBoxModel;
 import net.emustudio.emulib.ui.components.DialogBase;
 import net.emustudio.plugins.device.audiotapeplayer.AutomationEvent;
@@ -40,8 +39,8 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
-    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(StandardIcons.ICON_REFRESH, TapePlayerGui.class));
-    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(StandardIcons.ICON_LOAD, TapePlayerGui.class));
+    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/reset.png", TapePlayerGui.class));
+    private final JButton btnLoad = new JButton("Load", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/load.png", TapePlayerGui.class));
     private final CachedComboBoxModel<Path> cmbDirsModel = new CachedComboBoxModel<>();
     private final JComboBox<Path> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
@@ -50,13 +49,13 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     private final AtomicReference<Path> loadedFileName = new AtomicReference<>();
 
-    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY, TapePlayerGui.class));
-    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP, TapePlayerGui.class));
-    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(StandardIcons.ICON_EJECT, TapePlayerGui.class));
-    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(StandardIcons.ICON_ADD, TapePlayerGui.class));
-    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(StandardIcons.ICON_REMOVE, TapePlayerGui.class));
-    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_UP, TapePlayerGui.class));
-    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(StandardIcons.ICON_MOVE_DOWN, TapePlayerGui.class));
+    private final JButton btnPlay = new JButton("Play", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/run.png", TapePlayerGui.class));
+    private final JButton btnStop = new JButton("Stop", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/stop.png", TapePlayerGui.class));
+    private final JButton btnEject = new JButton("Eject", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/eject.png", TapePlayerGui.class));
+    private final JButton btnAutoAdd = new JButton(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/add.png", TapePlayerGui.class));
+    private final JButton btnAutoRemove = new JButton(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/remove.png", TapePlayerGui.class));
+    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/move-up.png", TapePlayerGui.class));
+    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/move-down.png", TapePlayerGui.class));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
@@ -78,7 +77,8 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
     private JButton btnAutoStop;
     private JButton btnAutoReset;
 
-    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller, PluginSettings settings, GUI gui) {
+    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller,
+                         AutomationController automation, PluginSettings settings, GUI gui) {
         super(parent, "Audio Tape Player", false);
         this.gui = gui;
         this.panelTapeInfo = gui.panel("", "[][grow]", "[][][]");
@@ -88,7 +88,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         this.dialogs = Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
         this.settings = Objects.requireNonNull(settings);
-        this.automation = new AutomationController(controller);
+        this.automation = Objects.requireNonNull(automation);
         this.automation.setListener(this);
 
         this.timelinePanel = new TimelinePanel(automationEvents);
@@ -110,7 +110,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
                     cmbDirs.setSelectedIndex(0);
                     cmbDirs.setMinimumSize(new Dimension(0, 0));
                 }));
-        btnBrowse.setIcon(GUI.loadIcon(StandardIcons.ICON_OPEN_FILE, TapePlayerGui.class));
+        btnBrowse.setIcon(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/open-file.png", TapePlayerGui.class));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
@@ -513,7 +513,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbarTape.add(btnEject);
         toolbarTape.addSeparator();
 
-        JButton btnCopyLogs = new JButton(GUI.loadIcon(StandardIcons.ICON_COPY, TapePlayerGui.class));
+        JButton btnCopyLogs = new JButton(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/copy.png", TapePlayerGui.class));
         btnCopyLogs.setToolTipText("Copy selected rows");
         btnCopyLogs.setFocusPainted(false);
         btnCopyLogs.addActionListener(e -> copySelectedRows());
@@ -523,7 +523,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         btnSaveLogs.addActionListener(e -> dialogs.chooseFile("Save event logs", "Save", Path.of(System.getProperty("user.dir")), true,
                         List.of(new FileType("Tab-separated values", "tsv"), new FileType("Text file", "txt")))
                 .ifPresent(this::saveLogs));
-        btnSaveLogs.setIcon(GUI.loadIcon(StandardIcons.ICON_SAVE, TapePlayerGui.class));
+        btnSaveLogs.setIcon(GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/save.png", TapePlayerGui.class));
         btnSaveLogs.setText("");
         btnSaveLogs.setToolTipText("Save logs");
         btnSaveLogs.setFocusPainted(false);
@@ -603,16 +603,16 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         toolbar.addSeparator();
         toolbar.add(new JPanel(null)); // spacer
 
-        btnAutoPlay = new JButton("Play", GUI.loadIcon(StandardIcons.ICON_PLAY, TapePlayerGui.class));
+        btnAutoPlay = new JButton("Play", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/run.png", TapePlayerGui.class));
         btnAutoPlay.addActionListener(e -> startAutomation());
         toolbar.add(btnAutoPlay);
 
-        btnAutoStop = new JButton("Stop", GUI.loadIcon(StandardIcons.ICON_STOP, TapePlayerGui.class));
+        btnAutoStop = new JButton("Stop", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/stop.png", TapePlayerGui.class));
         btnAutoStop.setEnabled(false);
         btnAutoStop.addActionListener(e -> stopAutomation());
         toolbar.add(btnAutoStop);
 
-        btnAutoReset = new JButton("Reset", GUI.loadIcon(StandardIcons.ICON_RESET, TapePlayerGui.class));
+        btnAutoReset = new JButton("Reset", GUI.loadIcon("/net/emustudio/plugins/device/audiotapeplayer/gui/icons/reset.png", TapePlayerGui.class));
         btnAutoReset.addActionListener(e -> resetAutomation());
         toolbar.add(btnAutoReset);
 
@@ -622,9 +622,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     @Override
     public void stateChanged(AutomationController.State state) {
-        if (state == AutomationController.State.STOPPED || state == AutomationController.State.CLOSED) {
-            SwingUtilities.invokeLater(() -> updateAutoButtons(false));
-        }
+        SwingUtilities.invokeLater(() -> updateAutoButtons(state == AutomationController.State.PLAYING));
     }
 
     @Override

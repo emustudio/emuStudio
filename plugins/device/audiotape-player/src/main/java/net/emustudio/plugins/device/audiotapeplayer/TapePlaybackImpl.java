@@ -7,8 +7,7 @@ import net.emustudio.emulib.plugin.device.DeviceContext;
 import net.emustudio.plugins.device.audiotapeplayer.gui.TapePlayerGui;
 
 import java.util.*;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntSupplier;
 
@@ -56,7 +55,7 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     private long playingTstates;
     private volatile long totalPlayableTstates;
     private volatile int lastReportedProgress = -1;
-    private final CyclicBarrier barrier = new CyclicBarrier(2);
+    private CountDownLatch playbackEnded;
 
 
     /**
@@ -123,24 +122,26 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void onFileEnd() {
+    public synchronized void onFileEnd() {
         ensureClosingEdgeAtFileEnd();
         totalPlayableTstates = loaderSchedule.isEmpty() ? 0L : currentTstates;
-        barrier.reset();
+        playbackEnded = new CountDownLatch(1);
         playPulses();
+    }
+
+    @Override
+    public void awaitPlaybackEnd() throws InterruptedException {
         try {
-            barrier.await();
-        } catch (InterruptedException e) {
-            // cancel playing
-            playing = false;
-            Thread.currentThread().interrupt();
-        } catch (BrokenBarrierException e) {
-            throw new RuntimeException(e);
+            playbackEnded.await();
+        } finally {
+            synchronized (this) {
+                playing = false;
+            }
         }
     }
 
     @Override
-    public void onStateChange(TapePlaybackController.CassetteState state) {
+    public synchronized void onStateChange(TapePlaybackController.CassetteState state) {
         if (state == TapePlaybackController.CassetteState.STOPPED) {
             // Release the line only after the controller reports STOPPED so the final closing
             // edge remains visible through the end of playback without synthesizing an extra
@@ -300,7 +301,7 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
     }
 
     @Override
-    public void passedCycles(long tstates) {
+    public synchronized void passedCycles(long tstates) {
         if (playing) {
             playingTstates += tstates;
             updatePlaybackProgressFromCurrentPosition();
@@ -312,13 +313,7 @@ public class TapePlaybackImpl implements TapePlayback, CPUContext.PassedCyclesLi
             if (loaderSchedule.isEmpty() && playingTstates >= totalPlayableTstates) {
                 updatePlaybackProgress(100);
                 playing = false;
-                try {
-                    barrier.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (BrokenBarrierException ignored) {
-
-                }
+                playbackEnded.countDown();
             }
         }
     }

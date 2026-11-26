@@ -14,6 +14,7 @@ import net.emustudio.plugins.device.abstracttape.gui.TapeGui;
 
 import javax.swing.*;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
@@ -24,7 +25,6 @@ import java.util.Objects;
 public class AbstractTape extends AbstractPlugin implements Device {
     private final AbstractTapeContextImpl context;
     private final boolean guiSupported;
-    private final boolean automaticEmulation;
 
     private String guiTitle = Device.super.getTitle();
     private TapeGui gui;
@@ -33,7 +33,6 @@ public class AbstractTape extends AbstractPlugin implements Device {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
-        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false);
         this.context = new AbstractTapeContextImpl(this::setGUITitle);
 
         applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);
@@ -92,10 +91,14 @@ public class AbstractTape extends AbstractPlugin implements Device {
     @Override
     public void reset() {
         context.reset();
-        if (automaticEmulation && !guiSupported) {
-            context.stopLoggingSymbols();
+    }
+
+    @Override
+    public CompletableFuture<Void> startAutomation() {
+        if (!guiSupported) {
             context.startLoggingSymbols();
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

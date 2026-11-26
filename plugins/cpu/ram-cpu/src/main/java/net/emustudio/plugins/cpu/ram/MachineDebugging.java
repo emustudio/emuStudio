@@ -6,21 +6,21 @@ import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugin.debugger.*;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import java.util.*;
 import java.util.function.*;
 
-/** Machine-local expression and capture adapter. Never exposes machine data to the host. */
+/**
+ * Machine-local expression and capture adapter. Never exposes machine data to the host.
+ */
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final Decoder disassembler;
-    private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
-    private final List<TapeAccess> accesses = new ArrayList<>();
+    private final PackedCapture packed;
     private final DebuggingSupport support;
     private BiFunction<String, List<Object>, Object> machineFunction;
     private Set<String> machineFunctions = Set.of();
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
     private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
@@ -28,27 +28,48 @@ public final class MachineDebugging implements Debugging {
     MachineDebugging(String machine, Decoder disassembler) {
         this.machine = machine;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {});
+        packed = new PackedCapture(machine, List.of("input", "output", "storage"));
+        support = new DebuggingSupport(this::captureInstruction, packed::before, this::captureAfter, active -> {
+        });
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        register(name, 8, read);
     }
 
-    void inspect(String name, Supplier<?> read) { bindings.put(name, read::get); }
+    void register(String name, int width, LongSupplier read) {
+        packed.register(name, width, read);
+    }
 
-    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) { machineFunctions = Set.copyOf(names); machineFunction = functions; }
-    public boolean isActive() { return support.isActive(); }
-    public boolean requiresAccesses() { return support.requiresAccesses(); }
-    boolean isCapturing() { return support.isCapturing(); }
+    void inspect(String name, Supplier<?> read) {
+        packed.inspect(name, read);
+    }
 
-    @Override public AutoCloseable observe(Observer observer, Capture capture) {
+    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) {
+        machineFunctions = Set.copyOf(names);
+        machineFunction = functions;
+    }
+
+    public boolean isActive() {
+        return support.isActive();
+    }
+
+    public boolean requiresAccesses() {
+        return support.requiresAccesses();
+    }
+
+    boolean isCapturing() {
+        return support.isCapturing();
+    }
+
+    @Override
+    public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
     public boolean begin(int pc) {
         address = pc;
-        accesses.clear();
+        packed.clearAccesses();
         inStep = support.begin();
         return inStep;
     }
@@ -58,16 +79,48 @@ public final class MachineDebugging implements Debugging {
         return support.end(completed, Optional.ofNullable(instruction), OptionalInt.of(nextAddress));
     }
 
-    void tapeAccess(String tape, int at, Object before, Object value, boolean write) {
-        if (inStep && support.requiresAccesses()) accesses.add(new TapeAccess(tape, at, before, value, write));
+    void tapeAccess(String tape, int at, TapeSymbol before, TapeSymbol value, boolean write) {
+        if (inStep && support.requiresAccesses()) {
+            packed.tapeAccess(tape, at, symbolValue(before), symbolValue(value), write, write && !Objects.equals(before, value));
+        }
+    }
+
+    private static Object symbolValue(TapeSymbol symbol) {
+        return symbol.type == TapeSymbol.Type.NUMBER ? symbol.number : symbol.string;
     }
 
     boolean accessed(String tape, int at, boolean write) {
-        return accesses.stream().anyMatch(access -> access.tape.equals(tape) && access.address == at && access.write == write);
+        return packed.accessed(tape, at, write);
     }
 
-    @Override public Expression compile(String source) {
+    @Override
+    public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
+    }
+
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Random Access Machine (RAM)",
+                "",
+                "Values: IP (instruction pointer), R0 (storage cell 0),",
+                "INPUT (current input symbol), OUTPUT (last output symbol),",
+                "INPUT_POSITION, OUTPUT_POSITION.",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "storage[index]         Inspect a storage cell.",
+                "input[index]           Inspect an input symbol.",
+                "output[index]          Inspect an output symbol.",
+                "read_storage[index]    Was this storage cell read by the tracked instruction?",
+                "write_storage[index]   Was it written by the tracked instruction?",
+                "read_input[index]      Was this input symbol read by the tracked instruction?",
+                "write_output[index]    Was this output symbol written by the tracked instruction?",
+                "",
+                "Example: storage[0] == 42",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
     }
 
     private Function<List<Object>, Object> function(String name) {
@@ -82,59 +135,28 @@ public final class MachineDebugging implements Debugging {
     }
 
     static int location(List<Object> args) {
-        if (args.size() != 1 || !(args.get(0) instanceof Number)) throw new IllegalArgumentException("Expected one numeric location");
+        if (args.size() != 1 || !(args.get(0) instanceof Number))
+            throw new IllegalArgumentException("Expected one numeric location");
         long value = ((Number) args.get(0)).longValue();
         if (value < 0 || value > Integer.MAX_VALUE) throw new IllegalArgumentException("Location outside machine");
         return (int) value;
     }
 
     private Supplier<Object> binding(String name) {
-        Supplier<Object> binding = bindings.get(name.toUpperCase(Locale.ROOT));
+        Supplier<Object> binding = packed.binding(name.toUpperCase(Locale.ROOT));
         if (binding == null) throw new IllegalArgumentException("Unknown " + machine + " value: " + name);
         return binding;
     }
 
     private void captureInstruction() {
-        instruction = null;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
-    }
-
-    private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
-        rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value),
-                    !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
-        for (TapeAccess access : accesses) {
-            String tag = "RAM/" + access.tape + "/write/" + access.address;
-            rows.add(new ViewRow("Tape", (access.write ? "Write " : "Read ") + access.tape + "[" + access.address + "]",
-                    String.valueOf(access.before), String.valueOf(access.value), access.write && !Objects.equals(access.before, access.value),
-                    access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
-        }
-        return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, OptionalInt.of(address), rows);
-    }
-
-    private static final class TapeAccess {
-        final String tape;
-        final int address;
-        final Object before, value;
-        final boolean write;
-        TapeAccess(String tape, int address, Object before, Object value, boolean write) {
-            this.tape = tape; this.address = address; this.before = before; this.value = value; this.write = write;
-        }
+        return packed.after(instruction, address);
     }
 }

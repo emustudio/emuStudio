@@ -4,6 +4,7 @@ package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
+import com.electronwill.nightconfig.core.io.WritingMode;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 
 import java.io.Closeable;
@@ -25,7 +26,7 @@ public class ComputerConfig implements Closeable {
     }
 
     public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.builder(configurationFile).sync().autosave().build();
+        FileConfig config = autosavingConfig(configurationFile);
         config.load();
 
         return new ComputerConfig(config);
@@ -36,10 +37,14 @@ public class ComputerConfig implements Closeable {
             throw new IllegalArgumentException("Configuration already exists");
         }
         Files.createFile(configurationFile);
-        FileConfig config = FileConfig.builder(configurationFile).sync().autosave().build();
+        FileConfig config = autosavingConfig(configurationFile);
         config.set("name", computerName);
 
         return new ComputerConfig(config);
+    }
+
+    private static FileConfig autosavingConfig(Path path) {
+        return FileConfig.builder(path).sync().autosave().writingMode(WritingMode.REPLACE_ATOMIC).build();
     }
 
     public FileConfig getConfig() {
@@ -52,6 +57,8 @@ public class ComputerConfig implements Closeable {
         getMemory().ifPresent(other::setMemory);
         other.setDevices(getDevices());
         other.setConnections(getConnections());
+        Object debugger = config.get(DebuggerConfig.SECTION);
+        if (debugger instanceof Config) other.config.set(DebuggerConfig.SECTION, Config.copy((Config) debugger));
     }
 
     public Path getPath() {

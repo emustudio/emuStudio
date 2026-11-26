@@ -8,14 +8,13 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_SAVE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class SaveSchemaAction extends AbstractAction {
     private final SchemaPreviewPanel preview;
 
     public SaveSchemaAction(SchemaPreviewPanel preview) {
-        super("Save schema image...", loadIcon(ICON_SAVE));
+        super("Save schema image...", loadIcon("/net/emustudio/application/gui/icons/save.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.preview = Objects.requireNonNull(preview);
     }

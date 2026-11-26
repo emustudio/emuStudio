@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_RENAME;
 import static net.emustudio.application.settings.ConfigFiles.renameConfiguration;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
@@ -27,7 +26,7 @@ public class RenameComputerAction extends AbstractAction {
 
     public RenameComputerAction(Dialogs dialogs, Runnable update,
                                 JList<ComputerConfig> lstConfig) {
-        super("Rename computer...", loadIcon(ICON_RENAME));
+        super("Rename computer...", loadIcon("/net/emustudio/application/gui/icons/rename.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Peter Jakubčo
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+<defs>
+<linearGradient id="white" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d3d7cf"/></linearGradient>
+<linearGradient id="disk" x2="0" y2="1"><stop stop-color="#626e8b"/><stop offset="1" stop-color="#39425c"/></linearGradient>
+</defs>
+<circle cx="8.5" cy="8.5" r="6.5" fill="url(#white)" stroke="#888a85"/>
+<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="#ffffff" stroke-width=".8"/>
+<path d="M10.5 10.5 H18.5 L20.5 12.5 V20.5 H10.5 Z" fill="url(#disk)" stroke="#2e3445" stroke-linejoin="round"/>
+<path d="M12.5 11 H17.5 V14.5 H12.5 Z" fill="#babdb6"/>
+<path d="M16 11 V13.5" stroke="#2e3445"/>
+<path d="M12.5 20 V16.5 H18.5 V20 Z" fill="url(#white)"/>
+<path d="M13.5 18 H17.5" stroke="#888a85" stroke-width=".7"/>
+</svg>

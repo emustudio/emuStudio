@@ -3,12 +3,12 @@
 package net.emustudio.plugins.cpu.ssem;
 
 
-import net.emustudio.emulib.plugin.cpu.CPUContext;
-
+import net.emustudio.emulib.Numbers;
 import net.emustudio.emulib.plugin.PluginInitializationException;
 import net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugin.annotations.PluginRoot;
 import net.emustudio.emulib.plugin.cpu.AbstractCPU;
+import net.emustudio.emulib.plugin.cpu.CPUContext;
 import net.emustudio.emulib.plugin.cpu.Decoder;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.ApplicationApi;
@@ -17,7 +17,13 @@ import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
 
 import javax.swing.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -30,8 +36,8 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     private MemoryContext<Byte> memory;
     private Decoder disassembler;
     private EmulatorEngine engine;
-
-    private AutomaticEmulation automaticEmulation;
+    private CPUContext.CPUListener automationListener;
+    private boolean snapshotPending;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -44,16 +50,57 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
         disassembler = new DecoderImpl(memory);
         engine = new EmulatorEngine(memory);
         context.setEngine(engine);
+    }
 
-        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
-            automaticEmulation = new AutomaticEmulation(context, engine, memory);
-        }
+    @Override
+    public CompletableFuture<Void> startAutomation() {
+        automationListener = new CPUContext.CPUListener() {
+            private boolean running;
+
+            @Override
+            public void runStateChanged(RunState state) {
+                if (running && state != RunState.STATE_RUNNING) snapshotPending = true;
+                running = state == RunState.STATE_RUNNING;
+            }
+
+            @Override
+            public void internalStateChanged() {
+            }
+        };
+        context.addCPUListener(automationListener);
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     protected void destroyInternal() {
-        if (automaticEmulation != null) {
-            automaticEmulation.destroy();
+        if (automationListener != null) context.removeCPUListener(automationListener);
+        if (snapshotPending) {
+            // Machine teardown reaches the CPU after the devices stop and before memory is released.
+            try {
+                writeAutomationSnapshot(Path.of("ssem.out"));
+            } catch (IOException failure) {
+                throw new UncheckedIOException("Could not write SSEM snapshot", failure);
+            }
+        }
+    }
+
+    void writeAutomationSnapshot(Path output) throws IOException {
+        MemoryContext<Byte> snapshotMemory = MachineDebugging.inspectionMemory(memory);
+        try (BufferedWriter writer = Files.newBufferedWriter(output)) {
+            writer.write("ACC=0x" + Integer.toHexString(engine.Acc.get()));
+            writer.newLine();
+            writer.write("CI=0x" + Integer.toHexString(engine.CI.get()));
+            writer.newLine();
+            writer.newLine();
+            writer.write("   L L L L L 5 6 7 8 9 0 1 2 I I I 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1");
+            writer.newLine();
+            int words = snapshotMemory.getSize() / 4;
+            for (int i = 0; i < words; i++) {
+                int number = Numbers.readInt(snapshotMemory.read(i * 4, 4), Numbers.Strategy.BIG_ENDIAN);
+                String binary = Numbers.formatBinary(number, 32);
+                writer.write(String.format("%02d %s", i, binary.replace("0", "  ").replace("1", "* ")));
+                writer.newLine();
+            }
         }
     }
 
@@ -99,6 +146,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
 
     @Override
     public Expression compile(String source) { return engine.debugger.compile(source); }
+
+    @Override
+    public String getExpressionsHelp() { return engine.debugger.getExpressionsHelp(); }
 
     @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }

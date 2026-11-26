@@ -28,7 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.emulib.ui.StandardIcons.*;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
 public class SchemaEditorDialog extends DialogBase implements KeyListener {
@@ -118,51 +117,51 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         JToolBar toolDraw = gui.toolBar();
         JButton btnSave = gui.toolbarButton(
                 this::btnSaveActionPerformed,
-                ICON_SAVE,
+                "/net/emustudio/application/gui/icons/save.png",
                 "Save & Close"
         );
         JToolBar.Separator separator1 = new JToolBar.Separator();
         btnCompiler = gui.toolbarToggleButton(
                 this::btnCompilerActionPerformed,
                 this::btnCompilerItemStateChanged,
-                ICON_COMPILER,
+                "/net/emustudio/application/gui/icons/compiler.png",
                 "Set compiler"
         );
         btnCPU = gui.toolbarToggleButton(
                 this::btnCPUActionPerformed,
                 this::btnCPUItemStateChanged,
-                ICON_CPU,
+                "/net/emustudio/application/gui/icons/cpu.png",
                 "Set CPU"
         );
         btnRAM = gui.toolbarToggleButton(
                 this::btnRAMActionPerformed,
                 this::btnRAMItemStateChanged,
-                ICON_MEMORY,
+                "/net/emustudio/application/gui/icons/memory.png",
                 "Set operating memory"
         );
         btnDevice = gui.toolbarToggleButton(
                 this::btnDeviceActionPerformed,
                 this::btnDeviceItemStateChanged,
-                ICON_DEVICE,
+                "/net/emustudio/application/gui/icons/device.png",
                 "Add device"
         );
         JToolBar.Separator separator2 = new JToolBar.Separator();
         btnLine = gui.toolbarToggleButton(
                 this::btnLineActionPerformed,
                 this::btnLineItemStateChanged,
-                ICON_CONNECTION,
+                "/net/emustudio/application/gui/icons/connection.png",
                 "Add connection"
         );
         btnBidirection = gui.toolbarToggleButton(
                 this::btnBidirectionActionPerformed,
-                ICON_BIDIRECTION,
+                "/net/emustudio/application/gui/icons/bidirection.png",
                 "Bidirectional connection"
         );
         JToolBar.Separator separator3 = new JToolBar.Separator();
         btnDelete = gui.toolbarToggleButton(
                 this::btnDeleteActionPerformed,
                 this::btnDeleteItemStateChanged,
-                ICON_DELETE,
+                "/net/emustudio/application/gui/icons/delete.png",
                 "Delete component or connection"
         );
         JToolBar.Separator separator4 = new JToolBar.Separator();
@@ -176,7 +175,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         JToolBar.Separator separator5 = new JToolBar.Separator();
         btnUseGrid = gui.toolbarToggleButton(
                 this::btnUseGridActionPerformed,
-                ICON_GRID,
+                "/net/emustudio/application/gui/icons/grid.png",
                 "Set/unset using grid"
         );
         scrollScheme = new JScrollPane();

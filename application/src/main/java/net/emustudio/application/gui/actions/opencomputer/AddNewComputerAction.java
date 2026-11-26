@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_ADD;
 import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
 import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
@@ -33,7 +32,7 @@ public class AddNewComputerAction extends AbstractAction {
     private final EmuStudioGui gui;
 
     public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent, EmuStudioGui gui) {
-        super("Create new computer...", loadIcon(ICON_ADD));
+        super("Create new computer...", loadIcon("/net/emustudio/application/gui/icons/add.png"));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
 
         this.dialogs = Objects.requireNonNull(dialogs);

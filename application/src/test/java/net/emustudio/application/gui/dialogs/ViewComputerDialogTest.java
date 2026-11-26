@@ -118,7 +118,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
     }
 
     private DialogFixture createFixture(ComputerConfig computerConfig) {
-        AppSettings appSettings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings appSettings = new AppSettings(Config.inMemory(), false);
 
         computerConfig.setCPU(pluginConfig("cpu", PLUGIN_TYPE.CPU, "cpu.jar", 10, 10));
         computerConfig.setDevices(List.of(pluginConfig("device", PLUGIN_TYPE.DEVICE, "device.jar", 40, 40)));

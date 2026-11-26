@@ -46,15 +46,15 @@ public class VirtualComputerTest {
     @SuppressWarnings("unchecked")
     public void initializationLoadsUserAnnotationsIntoSharedEngineWithoutOpeningDebuggerOrReadingMemory() throws Exception {
         java.nio.file.Path computerPath = temporary.getRoot().toPath().resolve("computer.toml");
-        java.nio.file.Path debuggerPath = computerPath.resolveSibling(computerPath.getFileName() + ".debugger");
         CPU cpu = mockCpu();
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath)) {
-            seed.config.annotations().add(new UserAnnotations.Entry(3, "saved label", "CODE"));
-            seed.config.save();
+        try (ComputerConfig config = ComputerConfig.create("Test computer", computerPath);
+             DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, config.getConfig());
+             net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(seed)) {
+            seed.editAnnotations(annotations -> annotations.add(new UserAnnotations.Entry(3, "saved label", "CODE")));
         }
         clearInvocations(memory);
 
@@ -62,8 +62,7 @@ public class VirtualComputerTest {
         doReturn(memory).when(contextPool).get(0, MemoryContext.class);
         doReturn(net.emustudio.application.TestCpu.context(cpu)).when(contextPool).get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class);
         ApplicationApiImpl api = new ApplicationApiImpl(contextPool, mock(Dialogs.class), null);
-        ComputerConfig config = mock(ComputerConfig.class);
-        when(config.getPath()).thenReturn(computerPath);
+        ComputerConfig config = ComputerConfig.load(computerPath);
         VirtualComputer computer = new VirtualComputer(config, plugins(plugin(1, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu)));
         java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
         apiField.setAccessible(true);
@@ -248,7 +247,7 @@ public class VirtualComputerTest {
                         List.of((Class<Plugin>) (Class<?>) TestCompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
                 applicationApi,
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -267,7 +266,7 @@ public class VirtualComputerTest {
                         List.of((Class<Plugin>) (Class<?>) NotACompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         ));
     }
@@ -286,7 +285,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(compilerConfig, memoryConfig),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -306,7 +305,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(first, second),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -326,7 +325,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(compilerConfig),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         ));
     }
@@ -342,7 +341,7 @@ public class VirtualComputerTest {
                         (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
                         (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
                         (Class<Plugin>) (Class<?>) BrokenCompilerPlugin.class)), configs,
-                        mock(ApplicationApi.class), new AppSettings(Config.inMemory(), true, false), () -> {}));
+                        mock(ApplicationApi.class), new AppSettings(Config.inMemory(), true), () -> {}));
         assertEquals("Plug-in main class does not have proper constructor", failure.getMessage());
         assertEquals(List.of(2L, 1L), TestCompilerPlugin.destroyedIds);
     }
@@ -426,7 +425,8 @@ public class VirtualComputerTest {
         Device goodDevice = mock(Device.class);
         AutoCloseable classLoader = mock(AutoCloseable.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
-        doThrow(new RuntimeException("boom")).when(badDevice).destroy();
+        RuntimeException destroyFailure = new RuntimeException("boom");
+        doThrow(destroyFailure).when(badDevice).destroy();
 
         VirtualComputer vc = new VirtualComputer(computerConfig, plugins(
                 plugin(0L, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
@@ -436,8 +436,8 @@ public class VirtualComputerTest {
                 plugin(4L, pluginConfig("good-device", PLUGIN_TYPE.DEVICE), goodDevice)
         ), classLoader);
 
-        vc.close();
-        vc.close();
+        assertEquals(List.of(destroyFailure), vc.closeAndReportFailures());
+        assertTrue(vc.closeAndReportFailures().isEmpty());
 
         verify(goodDevice).destroy();
         verify(badDevice).destroy();

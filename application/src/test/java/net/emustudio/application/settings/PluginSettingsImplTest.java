@@ -24,7 +24,7 @@ public class PluginSettingsImplTest {
 
     @Before
     public void setUp() {
-        application = new AppSettings(Config.inMemory(), false, false);
+        application = new AppSettings(Config.inMemory(), false);
         pluginConfig = Config.inMemory();
     }
 
@@ -61,12 +61,11 @@ public class PluginSettingsImplTest {
     }
 
     @Test
-    public void prefixedNoGuiAndAutoAreReadFromApplication() {
-        application = new AppSettings(Config.inMemory(), true, false);
+    public void prefixedNoGuiIsReadFromApplication() {
+        application = new AppSettings(Config.inMemory(), true);
         PluginSettingsImpl settings = createSettings();
 
         assertEquals(Optional.of(true), settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI));
-        assertEquals(Optional.of(false), settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO));
     }
 
     @Test

@@ -284,25 +284,27 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     /**
-     * Set if changed symbols should be logged in a file.
+     * Starts a log with the current tape contents, then records symbol changes.
      * <p>
      * The log file name will be derived from a tape title: [tape-title].out
      */
     public void startLoggingSymbols() {
-        // should be called in a synchronized context
         String tmpTitle = title.get();
         String fileName = createValidFileName(tmpTitle.trim()) + ".out";
         File file = new File(fileName);
         LOGGER.info("Starting logging symbols changes to a file: {}", fileName);
-        try {
-            Writer w = new FileWriter(file);
-            Writer old = symbolWriter.getAndSet(w);
-            if (old != null) {
-                old.close();
+        writeSynchronized(() -> {
+            try {
+                Writer w = new FileWriter(file);
+                Writer old = symbolWriter.getAndSet(w);
+                if (old != null) {
+                    old.close();
+                }
+                content.forEach(this::logSymbol);
+            } catch (IOException e) {
+                LOGGER.error("Could not create the symbol log file", e);
             }
-        } catch (IOException e) {
-            LOGGER.error("Could not create the symbol log file", e);
-        }
+        });
     }
 
     public void stopLoggingSymbols() {

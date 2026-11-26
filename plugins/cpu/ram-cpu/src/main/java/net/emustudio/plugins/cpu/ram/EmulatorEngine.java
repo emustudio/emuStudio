@@ -32,7 +32,7 @@ public class EmulatorEngine {
         this.storageTape = Objects.requireNonNull(storageTape);
         this.memory = Objects.requireNonNull(memory);
         debugger = new MachineDebugging("RAM", new RamDecoder(memory));
-        debugger.register("IP", () -> Integer.toUnsignedLong(IP.get()));
+        debugger.register("IP", 4, () -> Integer.toUnsignedLong(IP.get()));
         debugger.inspect("R0", () -> inspect(storageTape, 0));
         debugger.inspect("INPUT", () -> inspect(inputTape, inputTape.getHeadPosition()));
         debugger.inspect("OUTPUT", () -> inspect(outputTape, Math.max(0, outputTape.getHeadPosition() - 1)));

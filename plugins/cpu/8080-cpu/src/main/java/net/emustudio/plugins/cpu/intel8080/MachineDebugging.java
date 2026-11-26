@@ -13,44 +13,64 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.*;
 
-/** Machine-local expression and capture adapter. Never exposes machine data to the host. */
+/**
+ * Machine-local expression and capture adapter. Never exposes machine data to the host.
+ */
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final MemoryContext<?> memory;
     private final Decoder disassembler;
-    private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
-    private final List<Access> accesses = new ArrayList<>();
+    private final PackedCapture packed;
     private final DebuggingSupport support;
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
+    private String interruptSummary, interruptEncoding;
     private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
-    private boolean hasProgramLocation;
 
     MachineDebugging(String machine, MemoryContext<?> memory, Decoder disassembler) {
         this.machine = machine;
         this.memory = memory;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> activityChanged.accept(active));
+        packed = new PackedCapture(machine, PackedStep.AccessFormat.BYTE);
+        support = new DebuggingSupport(this::captureInstruction, packed::before, this::captureAfter, active -> activityChanged.accept(active));
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        register(name, 8, read);
     }
 
-    public void onActivityChanged(Consumer<Boolean> callback) { activityChanged = callback; }
-    private Consumer<Boolean> activityChanged = active -> {};
-    public boolean isActive() { return support.isActive(); }
-    public boolean requiresAccesses() { return support.requiresAccesses(); }
+    void register(String name, int width, LongSupplier read) {
+        packed.register(name, width, read);
+    }
 
-    @Override public AutoCloseable observe(Observer observer, Capture capture) {
+    void registerPair(String name, String high, String low) {
+        packed.registerPair(name, high, low);
+    }
+
+    public void onActivityChanged(Consumer<Boolean> callback) {
+        activityChanged = callback;
+    }
+
+    private Consumer<Boolean> activityChanged = active -> {
+    };
+
+    public boolean isActive() {
+        return support.isActive();
+    }
+
+    public boolean requiresAccesses() {
+        return support.requiresAccesses();
+    }
+
+    @Override
+    public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
     public boolean begin(int pc) {
         address = pc;
-        accesses.clear();
+        packed.clearAccesses();
+        interruptSummary = null;
         inStep = support.begin();
         return inStep;
     }
@@ -61,12 +81,40 @@ public final class MachineDebugging implements Debugging {
     }
 
     public void access(int at, int value, boolean write) {
-        if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
+        if (inStep && support.requiresAccesses()) packed.access(at, value, write);
     }
 
-    public void describeInterrupt(String text, String bytes) { mnemonic = text; opcodes = bytes; hasProgramLocation = false; instruction = null; }
-    @Override public Expression compile(String source) {
+    public void describeInterrupt(String text, String bytes) {
+        instruction = null;
+        interruptSummary = text;
+        interruptEncoding = bytes;
+    }
+
+    @Override
+    public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
+    }
+
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Intel 8080",
+                "",
+                "Registers: A, B, C, D, E, H, L, F, BC, DE, HL, PC, SP, INTE.",
+                "Example: mem[HL]",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "mem[address]           Read one byte.",
+                "mem16[address]         Read two bytes, little-endian.",
+                "mem16be[address]       Read two bytes, big-endian.",
+                "mem32[address]         Read four bytes, little-endian.",
+                "mem32be[address]       Read four bytes, big-endian.",
+                "read[address]          Was this address read by the tracked instruction?",
+                "write[address]         Was this address written by the tracked instruction?",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
     }
 
     private Function<List<Object>, Object> function(String name) {
@@ -78,7 +126,7 @@ public final class MachineDebugging implements Debugging {
         };
         if (fn.equals("read") || fn.equals("write")) return args -> {
             int at = location(args);
-            return accesses.stream().anyMatch(a -> a.address == at && a.write == fn.equals("write"));
+            return packed.accessed(at, fn.equals("write"));
         };
         if (!Set.of("mem", "mem16", "mem16be", "mem32", "mem32be").contains(fn))
             throw new IllegalArgumentException("Unknown " + machine + " function: " + name);
@@ -90,73 +138,80 @@ public final class MachineDebugging implements Debugging {
             if (memory.getCellTypeClass() != Byte.class || at < 0 || at > memory.getSize() - width)
                 throw new IllegalArgumentException("Memory address outside byte memory");
             long value = 0;
-            for (int i = 0; i < width; i++) value |= ((Byte) memory.peek(at + i) & 255L) << (8 * (fn.endsWith("be") ? width - i - 1 : i));
+            for (int i = 0; i < width; i++)
+                value |= ((Byte) memory.peek(at + i) & 255L) << (8 * (fn.endsWith("be") ? width - i - 1 : i));
             return value;
         };
     }
 
     static int location(List<Object> args) {
-        if (args.size() != 1 || !(args.get(0) instanceof Number)) throw new IllegalArgumentException("Expected one numeric location");
+        if (args.size() != 1 || !(args.get(0) instanceof Number))
+            throw new IllegalArgumentException("Expected one numeric location");
         long value = ((Number) args.get(0)).longValue();
         if (value < 0 || value > Integer.MAX_VALUE) throw new IllegalArgumentException("Location outside machine");
         return (int) value;
     }
 
     private Supplier<Object> binding(String name) {
-        Supplier<Object> binding = bindings.get(name.toUpperCase(Locale.ROOT));
+        Supplier<Object> binding = packed.binding(name.toUpperCase(Locale.ROOT));
         if (binding == null) throw new IllegalArgumentException("Unknown " + machine + " value: " + name);
         return binding;
     }
 
     private void captureInstruction() {
-        instruction = null;
-        hasProgramLocation = true;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
-    }
-
-    private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
-        rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value),
-                    !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
-        for (Access access : accesses) {
-            String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04X", access.address), "", String.valueOf(access.value),
-                    access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
-        }
-        return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, hasProgramLocation ? OptionalInt.of(address) : OptionalInt.empty(), rows);
+        return interruptSummary == null ? packed.after(instruction, address)
+                : packed.after(address, false, interruptSummary, interruptEncoding);
     }
 
     public static <T> MemoryContext<T> inspectionMemory(MemoryContext<T> memory) {
         return new AbstractMemoryContext<T>() {
-            @Override public T read(int at) { return memory.peek(at & 0xFFFF); }
-            @Override @SuppressWarnings("unchecked") public T[] read(int at, int count) {
+            @Override
+            public T read(int at) {
+                return memory.peek(at & 0xFFFF);
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public T[] read(int at, int count) {
                 if (count < 0) throw new IndexOutOfBoundsException("Negative count");
                 int size = count;
                 T[] cells = (T[]) Array.newInstance(memory.getCellTypeClass(), size);
                 for (int i = 0; i < size; i++) cells[i] = read(at + i);
                 return cells;
             }
-            @Override public int getSize() { return memory.getSize(); }
-            @Override public Class<T> getCellTypeClass() { return memory.getCellTypeClass(); }
-            @Override public void write(int at, T value) { throw new UnsupportedOperationException("Read-only inspection"); }
-            @Override public void write(int at, T[] value, int count) { throw new UnsupportedOperationException("Read-only inspection"); }
-            @Override public void clear() { throw new UnsupportedOperationException("Read-only inspection"); }
+
+            @Override
+            public int getSize() {
+                return memory.getSize();
+            }
+
+            @Override
+            public Class<T> getCellTypeClass() {
+                return memory.getCellTypeClass();
+            }
+
+            @Override
+            public void write(int at, T value) {
+                throw new UnsupportedOperationException("Read-only inspection");
+            }
+
+            @Override
+            public void write(int at, T[] value, int count) {
+                throw new UnsupportedOperationException("Read-only inspection");
+            }
+
+            @Override
+            public void clear() {
+                throw new UnsupportedOperationException("Read-only inspection");
+            }
         };
     }
 
@@ -164,31 +219,72 @@ public final class MachineDebugging implements Debugging {
     public MemoryContext<Byte> instrumentedMemory() {
         MemoryContext<Byte> source = (MemoryContext<Byte>) memory;
         return new MemoryContext<Byte>() {
-            @Override public Byte read(int at) { Byte value = source.read(at); access(at, value & 255, false); return value; }
-            @Override public Byte peek(int at) { return source.peek(at); }
-            @Override public Byte[] read(int at, int count) {
+            @Override
+            public Byte read(int at) {
+                Byte value = source.read(at);
+                access(at, value & 255, false);
+                return value;
+            }
+
+            @Override
+            public Byte peek(int at) {
+                return source.peek(at);
+            }
+
+            @Override
+            public Byte[] read(int at, int count) {
                 Byte[] values = source.read(at, count);
                 for (int i = 0; i < values.length; i++) access(at + i, values[i] & 255, false);
                 return values;
             }
-            @Override public void write(int at, Byte value) { source.write(at, value); access(at, value & 255, true); }
-            @Override public void write(int at, Byte[] values, int count) {
+
+            @Override
+            public void write(int at, Byte value) {
+                source.write(at, value);
+                access(at, value & 255, true);
+            }
+
+            @Override
+            public void write(int at, Byte[] values, int count) {
                 source.write(at, values, count);
                 for (int i = 0; i < count; i++) access(at + i, values[i] & 255, true);
             }
-            @Override public Class<Byte> getCellTypeClass() { return source.getCellTypeClass(); }
-            @Override public int getSize() { return source.getSize(); }
-            @Override public void clear() { source.clear(); }
-            @Override public void addMemoryListener(MemoryListener listener) { source.addMemoryListener(listener); }
-            @Override public void removeMemoryListener(MemoryListener listener) { source.removeMemoryListener(listener); }
-            @Override public void setMemoryNotificationsEnabled(boolean enabled) { source.setMemoryNotificationsEnabled(enabled); }
-            @Override public boolean areMemoryNotificationsEnabled() { return source.areMemoryNotificationsEnabled(); }
+
+            @Override
+            public Class<Byte> getCellTypeClass() {
+                return source.getCellTypeClass();
+            }
+
+            @Override
+            public int getSize() {
+                return source.getSize();
+            }
+
+            @Override
+            public void clear() {
+                source.clear();
+            }
+
+            @Override
+            public void addMemoryListener(MemoryListener listener) {
+                source.addMemoryListener(listener);
+            }
+
+            @Override
+            public void removeMemoryListener(MemoryListener listener) {
+                source.removeMemoryListener(listener);
+            }
+
+            @Override
+            public void setMemoryNotificationsEnabled(boolean enabled) {
+                source.setMemoryNotificationsEnabled(enabled);
+            }
+
+            @Override
+            public boolean areMemoryNotificationsEnabled() {
+                return source.areMemoryNotificationsEnabled();
+            }
         };
     }
 
-    private static final class Access {
-        final int address, value;
-        final boolean write;
-        Access(int address, int value, boolean write) { this.address = address; this.value = value; this.write = write; }
-    }
 }

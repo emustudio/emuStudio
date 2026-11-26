@@ -117,6 +117,9 @@ public class CpuImpl extends AbstractCPU implements net.emustudio.emulib.plugin.
     public Expression compile(String source) { return engine.debugger.compile(source); }
 
     @Override
+    public String getExpressionsHelp() { return engine.debugger.getExpressionsHelp(); }
+
+    @Override
     public AutoCloseable observe(Observer observer, Capture capture) { return engine.debugger.observe(observer, capture); }
 
     @Override

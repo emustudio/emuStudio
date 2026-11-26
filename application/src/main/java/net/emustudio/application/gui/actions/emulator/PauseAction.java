@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_PAUSE;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class PauseAction extends AbstractAction {
@@ -18,7 +17,7 @@ public class PauseAction extends AbstractAction {
     private final Runnable updateStatus;
 
     public PauseAction(EmulationController emulationController, Runnable updateStatus) {
-        super("Pause", loadIcon(ICON_PAUSE));
+        super("Pause", loadIcon("/net/emustudio/application/gui/icons/pause.png"));
         putValue(SHORT_DESCRIPTION, "Pause emulation");
         this.emulationController = emulationController;
         this.updateStatus = Objects.requireNonNull(updateStatus);

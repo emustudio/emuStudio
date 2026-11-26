@@ -4,14 +4,13 @@ package net.emustudio.application.emulation.debugger;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.ExpressionParser;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +39,7 @@ public final class DebuggerTestMachine {
     final AtomicReference<Debugging.Capture> captureMode = new AtomicReference<>();
     private final AtomicReference<Debugging.Observer> observer = new AtomicReference<>();
     private DebuggerSession session;
+    public net.emustudio.application.emulation.EmulationController execution;
     private final AtomicReference<CPU.RunState> result = new AtomicReference<>(CPU.RunState.STATE_RUNNING);
     private CountDownLatch entered;
 
@@ -132,22 +132,23 @@ public final class DebuggerTestMachine {
         if (state == CPU.RunState.STATE_RUNNING) {
             result.set(CPU.RunState.STATE_RUNNING);
             entered = new CountDownLatch(1);
-            session.execution().start().join();
+            execution.start().join();
             try { if (!entered.await(2, TimeUnit.SECONDS)) throw new AssertionError("CPU did not enter execution"); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
-        } else if (session.execution().getRunState() == CPU.RunState.STATE_RUNNING) {
+        } else if (execution.getRunState() == CPU.RunState.STATE_RUNNING) {
             result.set(state);
-            session.execution().pause().join();
+            execution.pause().join();
         } else if (state == CPU.RunState.STATE_STOPPED_BREAK) {
-            session.execution().step().join();
+            execution.step().join();
         }
         net.emustudio.application.TestCpu.publish(cpu, state);
     }
 
-    public DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
+    public DebuggerSession session(Config settings) { return session(settings, true); }
 
-    public DebuggerSession session(Path settings, boolean withMemory) throws IOException {
+    public DebuggerSession session(Config settings, boolean withMemory) {
         session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
+        execution = net.emustudio.application.TestCpu.execution(session);
         return session;
     }
 

@@ -12,6 +12,38 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class DebugHooksTest {
+
+    @Test
+    public void reusedSnapshotsKeepEarlierValuesAndSupportNewBindings() {
+        MachineDebugging debug = new MachineDebugging("ssem", null, address -> net.emustudio.emulib.plugin.cpu.DecodedInstruction.of(address, 1, "step", "00"));
+        java.util.concurrent.atomic.AtomicLong value = new java.util.concurrent.atomic.AtomicLong(Long.MIN_VALUE);
+        debug.register("CUSTOM", value::get);
+        List<StepView> events = new ArrayList<>();
+        debug.observe(new Debugging.Observer() {
+            @Override public boolean beforeStep() { return false; }
+            @Override public boolean afterStep(boolean completed,
+                    Optional<net.emustudio.emulib.plugin.cpu.DecodedInstruction> instruction,
+                    OptionalInt nextAddress, Optional<StepView> capture) {
+                events.add(capture.orElseThrow());
+                return false;
+            }
+        }, Debugging.Capture.FULL);
+        assertTrue(debug.begin(0));
+        value.set(Long.MAX_VALUE);
+        debug.end(true, 1);
+        debug.register("ADDED", () -> 42);
+        assertTrue(debug.begin(0));
+        value.set(0);
+        debug.end(true, 1);
+
+        assertNotNull(events.get(0).packed());
+        assertEquals(Long.valueOf(Long.MIN_VALUE), state(events.get(0), "CUSTOM", true));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(0), "CUSTOM", false));
+        assertEquals(Long.valueOf(Long.MAX_VALUE), state(events.get(1), "CUSTOM", true));
+        assertEquals(Long.valueOf(0), state(events.get(1), "CUSTOM", false));
+        assertEquals(Long.valueOf(42), state(events.get(1), "ADDED", false));
+        assertTrue(debug.compile("CUSTOM == 0").test());
+    }
     @Test
     public void lightObservationReportsActualConditionalSkipWithoutFullCapture() {
         ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.REVERSE_BITS);

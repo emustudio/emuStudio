@@ -3,7 +3,6 @@
 package net.emustudio.application.gui.components;
 
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.emulib.ui.StandardIcons;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -43,8 +42,8 @@ public class GuiComponentPolishTest {
         SwingUtilities.invokeAndWait(() -> {
             EmuStudioGui gui = new EmuStudioGui();
             for (AbstractButton button : new AbstractButton[]{
-                    gui.toolbarButton(event -> {}, StandardIcons.ICON_MEMORY, "Inspect memory"),
-                    gui.toolbarToggleButton(event -> {}, StandardIcons.ICON_RECORD, "Record instructions")}) {
+                    gui.toolbarButton(event -> {}, "/net/emustudio/application/gui/icons/memory.png", "Inspect memory"),
+                    gui.toolbarToggleButton(event -> {}, "/net/emustudio/application/gui/icons/record.png", "Record instructions")}) {
                 assertEquals(button.getToolTipText(), button.getAccessibleContext().getAccessibleName());
                 assertTrue(button.isFocusable());
                 button.getAccessibleContext().setAccessibleName("Custom control");

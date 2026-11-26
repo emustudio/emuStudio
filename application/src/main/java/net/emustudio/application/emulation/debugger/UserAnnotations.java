@@ -14,6 +14,8 @@ public final class UserAnnotations {
     private final int addressSpaceSize;
     private final MemoryAnnotations engine;
 
+    private enum Edit { APPEND, UPDATE, REPLACE }
+
     public UserAnnotations(int addressSpaceSize, MemoryAnnotations engine) {
         if (addressSpaceSize < 1) throw new IllegalArgumentException("Invalid memory layout");
         this.addressSpaceSize = addressSpaceSize;
@@ -30,21 +32,20 @@ public final class UserAnnotations {
 
     /** Adds an independent annotation even when another starts at the same address. */
     public Entry add(Entry entry) {
-        Entry added = new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind);
-        edit(List.of(added), false, false);
+        Entry added = withFreshIdentity(entry);
+        edit(List.of(added), Edit.APPEND);
         return added;
     }
 
     /** Updates an existing annotation by identity. */
     public void update(Entry entry) {
         if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
-        edit(List.of(entry), false, true);
+        edit(List.of(entry), Edit.UPDATE);
     }
 
     public void remove(Entry entry) {
         if (entry.id < 0) throw new IllegalArgumentException("Unknown annotation");
         engine.remove(OWNER, entry.id);
-
     }
 
     private static void validateKind(String kind) {
@@ -57,16 +58,13 @@ public final class UserAnnotations {
             throw new IllegalArgumentException("Invalid annotation range");
     }
 
-    private void edit(List<Entry> entries, boolean clear, boolean requireExisting) {
-        for (Entry entry : entries) {
-            validateKind(entry.kind);
-            validateRange(addressSpaceSize, entry);
-        }
+    private void edit(List<Entry> entries, Edit operation) {
+        entries.forEach(this::validate);
         while (true) {
             long revision = engine.revision();
-            List<MemoryAnnotations.Entry> values = clear ? new ArrayList<>() : userEntries();
+            List<MemoryAnnotations.Entry> values = operation == Edit.REPLACE ? new ArrayList<>() : userEntries();
             for (Entry entry : entries) {
-                if (requireExisting && values.stream().noneMatch(existing -> existing.entryId == entry.id)) {
+                if (operation == Edit.UPDATE && values.stream().noneMatch(existing -> existing.entryId == entry.id)) {
                     if (engine.revision() != revision) break;
                     throw new IllegalArgumentException("Unknown annotation");
                 }
@@ -76,11 +74,10 @@ public final class UserAnnotations {
             }
             if (engine.compareAndReplaceOwner(revision, OWNER, values)) break;
         }
-
     }
 
     /** Replaces all user annotations, keeping the given identities. */
-    public void replace(List<Entry> entries) { edit(entries, true, false); }
+    public void replace(List<Entry> entries) { edit(entries, Edit.REPLACE); }
 
     public List<Entry> entries() {
         List<Entry> result = new ArrayList<>();
@@ -98,8 +95,8 @@ public final class UserAnnotations {
     public List<Entry> search(String text) {
         String needle = text.toLowerCase(Locale.ROOT);
         List<Entry> result = new ArrayList<>();
-        for (Entry e : entries())
-            if (e.label.toLowerCase(Locale.ROOT).contains(needle)) result.add(e);
+        for (Entry entry : entries())
+            if (entry.label.toLowerCase(Locale.ROOT).contains(needle)) result.add(entry);
         return result;
     }
 
@@ -111,17 +108,25 @@ public final class UserAnnotations {
         int skipped = 0;
         for (Entry entry : entries) {
             try {
-                validateKind(entry.kind);
-                validateRange(addressSpaceSize, entry);
+                validate(entry);
             } catch (RuntimeException invalid) {
                 skipped++;
                 continue;
             }
             if (known.add(key(entry)))
-                added.add(new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind));
+                added.add(withFreshIdentity(entry));
         }
-        edit(added, false, false);
+        edit(added, Edit.APPEND);
         return skipped;
+    }
+
+    private void validate(Entry entry) {
+        validateKind(entry.kind);
+        validateRange(addressSpaceSize, entry);
+    }
+
+    private static Entry withFreshIdentity(Entry entry) {
+        return new Entry(IDS.getAndAdd(2), entry.address, entry.end, entry.label, entry.kind);
     }
 
     private static List<Object> key(Entry entry) {

@@ -10,17 +10,16 @@ import net.emustudio.emulib.plugin.debugger.*;
 import java.util.*;
 import java.util.function.*;
 
-/** Machine-local expression and capture adapter. Never exposes machine data to the host. */
+/**
+ * Machine-local expression and capture adapter. Never exposes machine data to the host.
+ */
 public final class MachineDebugging implements Debugging {
     private final String machine;
     private final Decoder disassembler;
-    private final Map<String, Supplier<Object>> bindings = new LinkedHashMap<>();
-    private final List<Access> accesses = new ArrayList<>();
+    private final PackedCapture packed;
     private final DebuggingSupport support;
     private BiFunction<String, List<Object>, Object> machineFunction;
     private Set<String> machineFunctions = Set.of();
-    private Map<String, Object> before;
-    private String mnemonic = "", opcodes = "";
     private DecodedInstruction instruction;
     private int address;
     private boolean inStep;
@@ -28,26 +27,44 @@ public final class MachineDebugging implements Debugging {
     MachineDebugging(String machine, Decoder disassembler) {
         this.machine = machine;
         this.disassembler = disassembler;
-        support = new DebuggingSupport(this::captureInstruction, this::captureBefore, this::captureAfter, active -> {});
+        packed = new PackedCapture(machine, PackedStep.AccessFormat.WORD);
+        support = new DebuggingSupport(this::captureInstruction, packed::before, this::captureAfter, active -> {
+        });
     }
 
     public void register(String name, LongSupplier read) {
-        bindings.put(name, () -> read.getAsLong());
+        register(name, 8, read);
     }
 
-    void inspect(String name, Supplier<?> read) { bindings.put(name, read::get); }
+    void register(String name, int width, LongSupplier read) {
+        packed.register(name, width, read);
+    }
 
-    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) { machineFunctions = Set.copyOf(names); machineFunction = functions; }
-    public boolean isActive() { return support.isActive(); }
-    public boolean requiresAccesses() { return support.requiresAccesses(); }
+    void inspect(String name, Supplier<?> read) {
+        packed.inspect(name, read);
+    }
 
-    @Override public AutoCloseable observe(Observer observer, Capture capture) {
+    void functions(Set<String> names, BiFunction<String, List<Object>, Object> functions) {
+        machineFunctions = Set.copyOf(names);
+        machineFunction = functions;
+    }
+
+    public boolean isActive() {
+        return support.isActive();
+    }
+
+    public boolean requiresAccesses() {
+        return support.requiresAccesses();
+    }
+
+    @Override
+    public AutoCloseable observe(Observer observer, Capture capture) {
         return support.observe(observer, capture);
     }
 
     public boolean begin(int pc) {
         address = pc;
-        accesses.clear();
+        packed.clearAccesses();
         inStep = support.begin();
         return inStep;
     }
@@ -58,11 +75,33 @@ public final class MachineDebugging implements Debugging {
     }
 
     public void access(int at, int value, boolean write) {
-        if (inStep && support.requiresAccesses()) accesses.add(new Access(at, value, write));
+        if (inStep && support.requiresAccesses()) packed.access(at, value, write);
     }
 
-    @Override public Expression compile(String source) {
+    @Override
+    public Expression compile(String source) {
         return ExpressionParser.parse(source, this::binding, this::function);
+    }
+
+    @Override
+    public String getExpressionsHelp() {
+        return String.join("\n",
+                "Random Access Stored Program (RASP)",
+                "",
+                "Values: IP (instruction pointer), ACC (accumulator),",
+                "INPUT (current input symbol), OUTPUT (last output symbol),",
+                "INPUT_POSITION, OUTPUT_POSITION.",
+                "",
+                "reg(\"name\") returns a named value. Names are case-insensitive.",
+                "",
+                "mem[address]           Read one memory word.",
+                "read[address]          Was this word read by the tracked instruction?",
+                "write[address]         Was this word written by the tracked instruction?",
+                "",
+                "Example: mem[IP]",
+                "",
+                "",
+                ExpressionParser.syntaxHelp());
     }
 
     private Function<List<Object>, Object> function(String name) {
@@ -75,60 +114,34 @@ public final class MachineDebugging implements Debugging {
         };
         if (fn.equals("read") || fn.equals("write")) return args -> {
             int at = location(args);
-            return accesses.stream().anyMatch(a -> a.address == at && a.write == fn.equals("write"));
+            return packed.accessed(at, fn.equals("write"));
         };
         throw new IllegalArgumentException("Unknown " + machine + " function: " + name);
     }
 
     static int location(List<Object> args) {
-        if (args.size() != 1 || !(args.get(0) instanceof Number)) throw new IllegalArgumentException("Expected one numeric location");
+        if (args.size() != 1 || !(args.get(0) instanceof Number))
+            throw new IllegalArgumentException("Expected one numeric location");
         long value = ((Number) args.get(0)).longValue();
         if (value < 0 || value > Integer.MAX_VALUE) throw new IllegalArgumentException("Location outside machine");
         return (int) value;
     }
 
     private Supplier<Object> binding(String name) {
-        Supplier<Object> binding = bindings.get(name.toUpperCase(Locale.ROOT));
+        Supplier<Object> binding = packed.binding(name.toUpperCase(Locale.ROOT));
         if (binding == null) throw new IllegalArgumentException("Unknown " + machine + " value: " + name);
         return binding;
     }
 
     private void captureInstruction() {
-        instruction = null;
         try {
             instruction = disassembler.decode(address);
-            mnemonic = instruction.mnemonic();
-            opcodes = instruction.encoding();
         } catch (InvalidInstructionException | RuntimeException failure) {
-            mnemonic = "<invalid instruction>";
-            opcodes = "<unavailable>";
+            instruction = null;
         }
-    }
-
-    private void captureBefore() {
-        before = new LinkedHashMap<>();
-        bindings.forEach((name, binding) -> before.put(name, binding.get()));
     }
 
     private StepView captureAfter() {
-        List<ViewRow> rows = new ArrayList<>();
-        rows.add(new ViewRow("Instruction", "Encoding", "", opcodes, false, List.of(), List.of()));
-        bindings.forEach((name, binding) -> {
-            Object value = binding.get();
-            rows.add(new ViewRow("State", name, String.valueOf(before.get(name)), String.valueOf(value),
-                    !Objects.equals(before.get(name), value), List.of(), List.of()));
-        });
-        for (Access access : accesses) {
-            String tag = machine + "/write/" + access.address;
-            rows.add(new ViewRow("Memory", (access.write ? "Write @" : "Read @") + String.format(Locale.ROOT, "%04d", access.address), "", String.valueOf(access.value),
-                    access.write, access.write ? List.of(tag) : List.of(), access.write ? List.of() : List.of(new NavLink("Find earlier write", tag))));
-        }
-        return new StepView(mnemonic, machine + ":" + mnemonic + ":" + opcodes, OptionalInt.of(address), rows);
-    }
-
-    private static final class Access {
-        final int address, value;
-        final boolean write;
-        Access(int address, int value, boolean write) { this.address = address; this.value = value; this.write = write; }
+        return packed.after(instruction, address);
     }
 }

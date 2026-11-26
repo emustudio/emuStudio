@@ -3,7 +3,6 @@
 package net.emustudio.application.gui.components;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.emulib.ui.StandardIcons;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -49,7 +48,7 @@ public class ToolbarButtonTest extends AbstractSwingTest {
         };
 
         ToolbarButton button = onEdt(
-                () -> new ToolbarButton(action, StandardIcons.ICON_FAVICON, "Show About dialog", getClass())
+                () -> new ToolbarButton(action, "/net/emustudio/application/gui/icons/favicon.png", "Show About dialog", getClass())
         );
 
         showInFrame(button);
@@ -67,7 +66,7 @@ public class ToolbarButtonTest extends AbstractSwingTest {
         AtomicReference<ActionEvent> receivedEvent = new AtomicReference<>();
 
         ToolbarButton button = onEdt(
-                () -> new ToolbarButton(receivedEvent::set, StandardIcons.ICON_FAVICON, "Open", getClass())
+                () -> new ToolbarButton(receivedEvent::set, "/net/emustudio/application/gui/icons/favicon.png", "Open", getClass())
         );
 
         showInFrame(button);

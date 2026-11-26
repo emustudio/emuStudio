@@ -5,9 +5,13 @@ package net.emustudio.application.emulation;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import com.electronwill.nightconfig.core.Config;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.DebuggerTestMachine;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.DebuggerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugin.Plugin;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.CompilerListener;
 import net.emustudio.emulib.plugin.compiler.CompilerMessage;
@@ -19,22 +23,28 @@ import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
+import org.mockito.InOrder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class AutomationTest {
-    private static final AppSettings NO_GUI_SETTINGS = new AppSettings(Config.inMemory(), true, false);
+    private static final AppSettings NO_GUI_SETTINGS = new AppSettings(Config.inMemory(), true);
 
     private Compiler compiler;
     private CPU cpu;
@@ -61,7 +71,7 @@ public class AutomationTest {
     public void constructorRejectsMissingInputFile() throws Exception {
         new Automation(
                 mockComputer(), Path.of("missing-" + System.nanoTime() + ".asm"),
-                NO_GUI_SETTINGS, dialogs, 10, null, EmulationProgress.NONE
+                NO_GUI_SETTINGS, dialogs, 10, null
         );
     }
 
@@ -69,7 +79,7 @@ public class AutomationTest {
     public void runReportsCompilationFailureAndSkipsCpuExecution() throws Exception {
         stubCompilation(CompilerMessage.Type.ERROR, "Broken source");
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 50, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 50, null).run();
 
         verify(cpu, never()).reset();
         verify(cpu, never()).execute();
@@ -81,11 +91,11 @@ public class AutomationTest {
         stubCompilation(CompilerMessage.Type.INFO, "Compiled");
         stubCpuExecution(CPU.RunState.STATE_STOPPED_NORMAL);
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x1234);
-        Device device = mock(Device.class);
+        Device device = mockIdleDevice();
 
         new Automation(
                 mockComputer(compiler, cpu, mock(Memory.class), Collections.singletonList(device)),
-                input, NO_GUI_SETTINGS, dialogs, 200, 0x20, EmulationProgress.NONE
+                input, NO_GUI_SETTINGS, dialogs, 200, 0x20
         ).run();
 
         verify(cpu).reset(0x20);
@@ -100,7 +110,7 @@ public class AutomationTest {
         stubCpuExecution(CPU.RunState.STATE_STOPPED_BREAK);
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0088);
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 200, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, 200, null).run();
 
         verify(cpu).reset();
         verify(cpu, never()).reset(anyInt());
@@ -114,7 +124,7 @@ public class AutomationTest {
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
         Compiler unusedCompiler = mock(Compiler.class);
 
-        new Automation(mockComputer(unusedCompiler, cpu), null, NO_GUI_SETTINGS, dialogs, 20, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(unusedCompiler, cpu), null, NO_GUI_SETTINGS, dialogs, 20, null).run();
 
         verify(cpu).reset();
         verify(cpu).execute();
@@ -129,7 +139,7 @@ public class AutomationTest {
         when(cpu.execute()).thenAnswer(inv -> gate.run());
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0);
 
-        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE);
+        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null);
 
         Thread thread = new Thread(() -> {
             automation.run();
@@ -139,9 +149,14 @@ public class AutomationTest {
             thread.start();
             gate.awaitEntered();
             thread.interrupt();
+            gate.awaitInterrupted();
+            assertTrue(thread.isAlive());
+            gate.release.countDown();
             thread.join(1000);
 
+            assertFalse(thread.isAlive());
             assertTrue(interrupted.get());
+            assertEquals(Automation.Reason.CANCELLED, automation.result().reason);
         } finally {
             gate.release.countDown();
             thread.join(1000);
@@ -149,19 +164,103 @@ public class AutomationTest {
     }
 
     @Test
-    public void runUsesProgressDialogWhenPresent() throws Exception {
-        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0010);
-        EmulationProgress progress = mock(EmulationProgress.class);
+    public void cancellationDuringWindowSetupDoesNotStartCpu() throws Exception {
+        Device device = mockIdleDevice();
+        when(device.isGuiSupported()).thenReturn(true);
+        CountDownLatch showingWindow = new CountDownLatch(1);
+        CountDownLatch releaseWindow = new CountDownLatch(1);
+        doAnswer(inv -> {
+            showingWindow.countDown();
+            assertTrue(releaseWindow.await(2, TimeUnit.SECONDS));
+            return null;
+        }).when(device).showGUI(null);
+        Automation automation = new Automation(mockComputer(null, cpu, null, List.of(device)), null,
+                new AppSettings(Config.inMemory(), false), dialogs, Automation.DONT_WAIT, null);
+        CompletableFuture<Void> run = CompletableFuture.runAsync(automation);
 
-        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, 10, null, progress);
+        try {
+            assertTrue(showingWindow.await(2, TimeUnit.SECONDS));
+            automation.cancel();
+            assertFalse(run.isDone());
+        } finally {
+            releaseWindow.countDown();
+            run.get(2, TimeUnit.SECONDS);
+        }
+        assertEquals(Automation.Reason.CANCELLED, automation.result().reason);
+        verify(cpu, never()).execute();
+    }
+
+    @Test
+    public void headlessRunAwaitsDeviceReadinessAndClosesAfterBothWorkersStop() throws Exception {
+        Device device = mock(Device.class);
+        CountDownLatch starting = new CountDownLatch(1);
+        CountDownLatch stopping = new CountDownLatch(1);
+        CompletableFuture<Void> ready = new CompletableFuture<>();
+        CompletableFuture<Void> stopped = new CompletableFuture<>();
+        when(device.startAutomation()).thenAnswer(inv -> {
+            starting.countDown();
+            return ready;
+        });
+        when(device.stopAutomation()).thenAnswer(inv -> {
+            stopping.countDown();
+            return stopped;
+        });
+        EmulationControllerTest.RunGate cpuWorker = new EmulationControllerTest.RunGate(CPU.RunState.STATE_RUNNING);
+        when(cpu.execute()).thenAnswer(inv -> cpuWorker.run());
+        VirtualComputer computer = mockComputer(null, cpu, null, List.of(device));
+        RuntimeException stopFailure = new IllegalStateException("Device cleanup failed");
+        RuntimeException cleanupFailure = new IllegalStateException("Could not close computer");
+        when(computer.closeAndReportFailures()).thenAnswer(inv -> {
+            assertTrue(cpuWorker.exited.get());
+            assertTrue(stopped.isDone());
+            return List.of(cleanupFailure);
+        });
+        Automation automation = new Automation(computer, null, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null);
+        CompletableFuture<Void> run = CompletableFuture.runAsync(automation);
+
+        try {
+            assertTrue(starting.await(2, TimeUnit.SECONDS));
+            verify(cpu).reset();
+            verify(cpu, never()).execute();
+            verify(device, never()).showGUI(null);
+            ready.complete(null);
+            cpuWorker.awaitEntered();
+            automation.cancel();
+            cpuWorker.awaitInterrupted();
+            assertTrue(stopping.await(2, TimeUnit.SECONDS));
+            cpuWorker.release.countDown();
+            assertFalse(run.isDone());
+        } finally {
+            ready.complete(null);
+            cpuWorker.release.countDown();
+            stopped.completeExceptionally(stopFailure);
+            run.get(2, TimeUnit.SECONDS);
+        }
+        Automation.Result result = automation.result();
+        assertEquals(Automation.Reason.CANCELLED, result.reason);
+        assertEquals(List.of(stopFailure, cleanupFailure), result.failures);
+        InOrder cpuLifecycle = inOrder(cpu);
+        cpuLifecycle.verify(cpu).reset();
+        cpuLifecycle.verify(cpu).startAutomation();
+        cpuLifecycle.verify(cpu).execute();
+        cpuLifecycle.verify(cpu).stopAutomation();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void runReportsProgressToListenerWhenAttached() throws Exception {
+        when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0010);
+        BiConsumer<String, Boolean> progress = mock(BiConsumer.class);
+
+        Automation automation = new Automation(mockComputer(cpu), null, NO_GUI_SETTINGS, dialogs, 10, null);
+        automation.setProgressListener(progress);
 
         automation.run();
 
-        verify(progress).show();
-        verify(progress).setAction("Resetting CPU...", false);
-        verify(progress).setAction("Running emulation...", true);
-        verify(progress).setAction("Emulation completed", false);
-        verify(progress).dispose();
+        verify(progress).accept("Resetting CPU...", false);
+        verify(progress).accept("Running emulation...", true);
+        verify(progress).accept("Emulation completed", false);
+        verifyNoMoreInteractions(progress);
     }
 
     @Test
@@ -170,10 +269,43 @@ public class AutomationTest {
         stubCpuExecutionImmediately(CPU.RunState.STATE_STOPPED_NORMAL);
         when(net.emustudio.application.TestCpu.context(cpu).getInstructionLocation()).thenReturn(0x0042);
 
-        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null, EmulationProgress.NONE).run();
+        new Automation(mockComputer(compiler, cpu), input, NO_GUI_SETTINGS, dialogs, Automation.DONT_WAIT, null).run();
 
         verify(cpu).execute();
         verify(dialogs, never()).showError(anyString(), anyString());
+    }
+
+    @Test
+    public void headlessRunIgnoresSavedBreakpoints() throws Exception {
+        assertEquals(Automation.Reason.NORMAL_STOP, runAtSavedBreakpoint(NO_GUI_SETTINGS));
+    }
+
+    @Test
+    public void interactiveRunHonorsSavedBreakpoints() throws Exception {
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
+        assertEquals(Automation.Reason.BREAKPOINT, runAtSavedBreakpoint(settings));
+    }
+
+    private Automation.Reason runAtSavedBreakpoint(AppSettings settings) throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][16], 0);
+        Config config = Config.inMemory();
+        DebuggerConfig debuggerConfig = new DebuggerConfig(config);
+        debuggerConfig.setBreakpoints(List.of(0));
+        VirtualComputer computer = mockComputer(machine.cpu);
+        EmulationController execution = computer.getExecution().orElseThrow();
+        try (DebuggerSession debugger = new DebuggerSession(machine.cpu, execution.cpuContext(), machine.memory, config)) {
+            execution.attachDebugger(debugger);
+            when(computer.getDebugger()).thenReturn(Optional.of(debugger));
+            doAnswer(call -> debugger.beforeStep()
+                    ? CPU.RunState.STATE_STOPPED_BREAK : CPU.RunState.STATE_STOPPED_NORMAL).when(machine.cpu).execute();
+
+            Automation automation = new Automation(computer, null, settings, dialogs, Automation.DONT_WAIT, null);
+            automation.run();
+
+            assertTrue(automation.result().isSuccessful());
+            assertEquals(List.of(0), debuggerConfig.getBreakpoints());
+            return automation.result().reason;
+        }
     }
 
     private void stubCompilation(CompilerMessage.Type messageType, String message) throws Exception {
@@ -196,6 +328,17 @@ public class AutomationTest {
         when(cpu.execute()).thenReturn(stopState);
     }
 
+    private Device mockIdleDevice() {
+        Device device = mock(Device.class);
+        stubIdleAutomation(device);
+        return device;
+    }
+
+    private void stubIdleAutomation(Plugin plugin) {
+        when(plugin.startAutomation()).thenCallRealMethod();
+        when(plugin.stopAutomation()).thenCallRealMethod();
+    }
+
     private VirtualComputer mockComputer(Compiler compiler, CPU cpu, Memory memory, java.util.List<Device> devices) {
         VirtualComputer c = mock(VirtualComputer.class);
         ComputerConfig config = mock(ComputerConfig.class);
@@ -205,6 +348,9 @@ public class AutomationTest {
         when(c.getCPU()).thenReturn(Optional.ofNullable(cpu));
         when(c.getMemory()).thenReturn(Optional.ofNullable(memory));
         when(c.getDevices()).thenReturn(devices);
+        for (Plugin plugin : Arrays.asList(compiler, memory, cpu)) {
+            if (plugin != null) stubIdleAutomation(plugin);
+        }
         if (cpu == null) {
             when(c.getExecution()).thenReturn(Optional.empty());
         } else {

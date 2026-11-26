@@ -3,145 +3,134 @@
 package net.emustudio.plugins.device.audiotapeplayer;
 
 import net.emustudio.emulib.io.FileLoader;
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 
-@ThreadSafe
 public class TapePlaybackController implements AutoCloseable {
-    private final static Logger LOGGER = LoggerFactory.getLogger(TapePlaybackController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TapePlaybackController.class);
 
     public enum CassetteState {
-        UNLOADED,
-        PLAYING,
-        STOPPED,
-        CLOSED // terminal state
+        UNLOADED, PLAYING, STOPPED, CLOSED
     }
 
     private final TapePlayback listener;
-    private final ExecutorService playPool = Executors.newFixedThreadPool(1);
-
-    private final Object stateLock = new Object();
-    @GuardedBy("stateLock")
     private CassetteState state = CassetteState.UNLOADED;
-    @GuardedBy("stateLock")
     private FileLoader.Format format;
-    @GuardedBy("stateLock")
     private Path path;
-    @GuardedBy("stateLock")
-    private Future<?> playFuture;
-
-    private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
+    private TapeTask playback;
 
     public TapePlaybackController(TapePlayback listener) {
         this.listener = Objects.requireNonNull(listener);
     }
 
     public void reset() {
-        stop(true);
+        stop(true).handle((ignored, failure) -> null).join();
     }
 
     @Override
     public void close() {
-        synchronized (stateLock) {
-            this.state = CassetteState.CLOSED;
-            Future<?> tmpFuture = this.playFuture;
-            this.playFuture = null;
-            if (tmpFuture != null) {
-                tmpFuture.cancel(true);
-            }
-            playPool.shutdown();
-            stateNotifications.add(this.state);
-        }
-        notifyStateChange();
-        try {
-            if (!playPool.awaitTermination(5, TimeUnit.SECONDS)) {
-                playPool.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            playPool.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
+        shutdown().handle((ignored, failure) -> null).join();
     }
 
-    public void load(Path path) {
-        FileLoader.Format.fromPath(path).filter(FileLoader.Format::isTape).ifPresent(tmpFormat -> {
-            synchronized (stateLock) {
-                switch (state) {
-                    case UNLOADED:
-                    case STOPPED:
-                        this.format = tmpFormat;
-                        this.path = path;
-                        this.state = CassetteState.STOPPED;
+    synchronized CompletableFuture<Void> shutdown() {
+        if (state != CassetteState.CLOSED) {
+            state = CassetteState.CLOSED;
+            if (!isPlaying()) {
+                try {
+                    listener.onStateChange(state);
+                } catch (Throwable failure) {
+                    return CompletableFuture.failedFuture(failure);
                 }
-                stateNotifications.add(this.state);
+            } else {
+                playback.requestStop();
             }
+        }
+        return completion();
+    }
+
+    public synchronized void load(Path path) {
+        if (isPlaying() || state == CassetteState.CLOSED) return;
+        FileLoader.Format.fromPath(path).filter(FileLoader.Format::isTape).ifPresent(format -> {
+            this.format = format;
+            this.path = path;
+            state = CassetteState.STOPPED;
+            listener.onStateChange(state);
         });
-        notifyStateChange();
     }
 
-    public void play() {
-        synchronized (stateLock) {
-            if (this.state == CassetteState.STOPPED) {
-                FileLoader.Format tmpFormat = this.format;
-                Path tmpPath = this.path;
-                if (tmpFormat != null) {
-                    this.state = CassetteState.PLAYING;
-                    this.playFuture = playPool.submit(() -> {
-                        try {
-                            FileLoader.load(tmpPath, tmpFormat, listener);
-                            synchronized (stateLock) {
-                                this.state = CassetteState.STOPPED;
-                                stateNotifications.add(this.state);
-                            }
-                            notifyStateChange();
-                        } catch (IOException e) {
-                            LOGGER.error("Could not load cassette", e);
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-                }
-            }
-            stateNotifications.add(this.state);
+    public synchronized TapeTask play() {
+        if (state == CassetteState.CLOSED) return null;
+        if (isPlaying()) return playback;
+        if (state != CassetteState.STOPPED) return null;
+
+        TapeTask next = new TapeTask();
+        Path tape = path;
+        FileLoader.Format tapeFormat = format;
+        listener.onStateChange(CassetteState.PLAYING);
+        playback = next;
+        state = CassetteState.PLAYING;
+        next.start("tape-playback", () -> playTape(tape, tapeFormat, next));
+        return next;
+    }
+
+    private void playTape(Path tape, FileLoader.Format tapeFormat, TapeTask playback) {
+        Throwable failure = null;
+        try {
+            FileLoader.load(tape, tapeFormat, listener);
+            playback.ready.complete(null);
+            listener.awaitPlaybackEnd();
+        } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException stopped) {
+            // Cancellation acknowledges only after the cleanup below.
+        } catch (Throwable error) {
+            failure = error;
         }
-        notifyStateChange();
+        finishPlayback(playback, failure);
     }
 
-    public void stop(boolean unload) {
-        synchronized (stateLock) {
-            if (this.state == CassetteState.PLAYING) {
-                Future<?> tmpFuture = this.playFuture;
-                this.playFuture = null;
-                if (tmpFuture != null) {
-                    tmpFuture.cancel(true);
-                }
-                this.state = CassetteState.STOPPED;
-            }
-            if (unload && this.state == CassetteState.STOPPED) {
-                this.format = null;
-                this.path = null;
-                this.state = CassetteState.UNLOADED;
-            }
-            stateNotifications.add(this.state);
+    private synchronized void finishPlayback(TapeTask playback, Throwable failure) {
+        if (state != CassetteState.CLOSED) {
+            state = path == null ? CassetteState.UNLOADED : CassetteState.STOPPED;
         }
-        notifyStateChange();
-    }
-
-    public CassetteState getState() {
-        synchronized (stateLock) {
-            return this.state;
+        try {
+            listener.onStateChange(state);
+        } catch (Throwable cleanup) {
+            if (failure == null) failure = cleanup;
+            else if (failure != cleanup) failure.addSuppressed(cleanup);
         }
+        if (failure != null) LOGGER.error("Could not play cassette", failure);
+        playback.finish(failure);
     }
 
-    private void notifyStateChange() {
-        Optional.ofNullable(stateNotifications.poll()).ifPresent(listener::onStateChange);
+    public synchronized CompletableFuture<Void> stop(boolean unload) {
+        if (state != CassetteState.CLOSED) {
+            if (unload) {
+                format = null;
+                path = null;
+            }
+            if (isPlaying()) playback.requestStop();
+            else if (unload && state != CassetteState.UNLOADED) {
+                state = CassetteState.UNLOADED;
+                listener.onStateChange(state);
+            }
+        }
+        return completion();
+    }
+
+    private CompletableFuture<Void> completion() {
+        return playback == null ? CompletableFuture.completedFuture(null) : playback.completion.copy();
+    }
+
+    private boolean isPlaying() {
+        return playback != null && playback.isRunning();
+    }
+
+    public synchronized CassetteState getState() {
+        return state;
     }
 }

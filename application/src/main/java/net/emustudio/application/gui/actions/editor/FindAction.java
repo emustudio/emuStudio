@@ -10,7 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_FIND;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 public class FindAction extends AbstractAction {
@@ -18,7 +17,7 @@ public class FindAction extends AbstractAction {
     private final ReplaceDialog replaceDialog;
 
     public FindAction(FindDialog findDialog, ReplaceDialog replaceDialog) {
-        super("Find...", loadIcon(ICON_FIND));
+        super("Find...", loadIcon("/net/emustudio/application/gui/icons/find.png"));
         this.findDialog = Objects.requireNonNull(findDialog);
         this.replaceDialog = Objects.requireNonNull(replaceDialog);
 

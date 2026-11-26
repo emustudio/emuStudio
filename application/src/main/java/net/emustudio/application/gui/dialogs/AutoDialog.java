@@ -2,31 +2,28 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.emulation.EmulationProgress;
-import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.ui.StandardIcons.ICON_MOTHERBOARD;
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
 /**
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
  */
-public class AutoDialog extends DialogBase implements EmulationProgress {
-    private final VirtualComputer computer;
+public class AutoDialog extends DialogBase {
+    private final Runnable cancel;
     private final GUI gui;
 
     private final JLabel lblAction;
     private final JButton btnStop = new JButton("Stop");
 
-    public AutoDialog(VirtualComputer computer, GUI gui) {
+    public AutoDialog(Runnable cancel, GUI gui) {
         super((JFrame) null, "Automatic Emulation", false);
-        this.computer = Objects.requireNonNull(computer);
+        this.cancel = Objects.requireNonNull(cancel);
         this.gui = gui;
         this.lblAction = gui.label("Initializing...");
         setResizable(false);
@@ -39,12 +36,12 @@ public class AutoDialog extends DialogBase implements EmulationProgress {
         JPanel panel = gui.panel("insets dialog, filly", "[]", "[grow]");
 
         JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
-        lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
+        lblPerforming.setIcon(loadIcon("/net/emustudio/application/gui/icons/motherboard.png"));
 
-        btnStop.addActionListener(e -> computer.getExecution().ifPresent(execution -> {
-            btnStop.setEnabled(false);
-            execution.stop();
-        }));
+        btnStop.addActionListener(e -> {
+            setAction("Stopping emulation...", false);
+            cancel.run();
+        });
         btnStop.setEnabled(false);
 
         panel.add(lblPerforming, "wrap, gapbottom 10");
@@ -61,15 +58,10 @@ public class AutoDialog extends DialogBase implements EmulationProgress {
      * @param action           action to show in the dialog
      * @param enableStopButton whether to enable the "Stop" button
      */
-    @Override
     public void setAction(String action, boolean enableStopButton) {
         lblAction.setText(action);
         lblAction.repaint();
         btnStop.setEnabled(enableStopButton);
     }
 
-    @Override
-    public void show() {
-        setVisible(true);
-    }
 }

@@ -7,4 +7,6 @@ import net.emustudio.emulib.io.TapeListener;
 /** Plugin-owned cassette state in addition to shared tape callbacks. */
 public interface TapePlayback extends TapeListener {
     void onStateChange(TapePlaybackController.CassetteState state);
+
+    void awaitPlaybackEnd() throws InterruptedException;
 }

@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.abstracttape.gui;
 
-import net.emustudio.emulib.ui.StandardIcons;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
@@ -64,8 +63,8 @@ public class TapeGui extends DialogBase {
         lstTape.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
 
-        btnAddFirst = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_UP, TapeGui.class));
-        btnAddLast = new JButton("Add symbol", loadIcon(StandardIcons.ICON_MOVE_DOWN, TapeGui.class));
+        btnAddFirst = new JButton("Add symbol", loadIcon("/net/emustudio/plugins/device/abstracttape/gui/icons/move-up.png", TapeGui.class));
+        btnAddLast = new JButton("Add symbol", loadIcon("/net/emustudio/plugins/device/abstracttape/gui/icons/move-down.png", TapeGui.class));
         btnRemove = new JButton("Remove symbol");
         btnEdit = new JButton("Edit symbol");
         btnClear = new JButton("Clear tape");

@@ -6,8 +6,13 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,6 +94,23 @@ public class AbstractTapeContextImplTest {
     public void testSetTitle() {
         context.setTitle("My Tape");
         assertEquals("My Tape", lastTitle.get());
+    }
+
+    @Test
+    public void testSymbolLogIncludesContentsBeforeLoggingStarts() throws IOException {
+        String title = "tape-test-" + UUID.randomUUID();
+        context.setTitle(title);
+        Path log = Path.of(title + ".out");
+        context.setSymbolAt(0, new TapeSymbol(8));
+
+        try {
+            context.startLoggingSymbols();
+            context.setSymbolAt(1, new TapeSymbol(42));
+            assertEquals(List.of("0 8", "1 42"), Files.readAllLines(log));
+        } finally {
+            context.stopLoggingSymbols();
+            Files.deleteIfExists(log);
+        }
     }
 
     @Test
