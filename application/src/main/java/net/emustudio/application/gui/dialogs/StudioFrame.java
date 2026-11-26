@@ -88,7 +88,8 @@ public class StudioFrame extends JFrame {
         );
         this.sourceNavigation = emulatorPanel.getDebuggerPanel()
                 .flatMap(panel -> computer.getDebugger().map(session ->
-                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel)))
+                        new SourceNavigation(computer.getCompiler().orElse(null), session, editor, panel,
+                                editorPanel.getCompileAction()::getCompilingSource)))
                 .orElse(null);
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateWindowTitle);
@@ -199,7 +200,10 @@ public class StudioFrame extends JFrame {
 
         mnuEdit.setText("Edit");
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
-        mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
+        Action redo = RTextArea.getAction(RTextArea.REDO_ACTION);
+        redo.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
+                RTextArea.getDefaultModifier() | KeyEvent.SHIFT_DOWN_MASK));
+        mnuEdit.add(new JMenuItem(redo));
         mnuEdit.addSeparator();
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
         mnuEdit.add(new JMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
@@ -211,6 +215,9 @@ public class StudioFrame extends JFrame {
         mnuEdit.add(new JMenuItem(findNextAction));
         mnuEdit.add(new JMenuItem(findPreviousAction));
         editor.extendEditingMenu(mnuEdit);
+        mnuEdit.setEnabled(tabbedPane.getSelectedComponent() == editorPanel);
+        tabbedPane.addChangeListener(event ->
+                mnuEdit.setEnabled(tabbedPane.getSelectedComponent() == editorPanel));
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");

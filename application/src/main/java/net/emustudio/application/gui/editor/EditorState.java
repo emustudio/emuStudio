@@ -3,12 +3,13 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.settings.AppSettings;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.*;
+
+import java.util.Optional;
 
 /** Editor preferences use the existing application settings store. */
 final class EditorState {
+    private static final String TOKEN_COLOR_PREFIX = "tokenColor";
+
     private final AppSettings settings;
     EditorState(AppSettings settings) {
         this.settings = settings;
@@ -17,11 +18,12 @@ final class EditorState {
     void setFlag(String name, boolean value) { if (settings != null) settings.set("editor" + name, value); }
     int number(String name, int fallback) { return settings == null ? fallback : settings.getInt("editor" + name).orElse(fallback); }
     void setNumber(String name, int value) { if (settings != null) settings.set("editor" + name, value); }
-    String text(String name, String fallback) { return settings == null ? fallback : settings.getString("editor" + name).orElse(fallback); }
-    void setText(String name, String value) { if (settings != null) settings.set("editor" + name, value); }
-    private String key(Path path) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(path.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8));
+
+    Optional<Integer> tokenColor(String category) {
+        return settings == null ? Optional.empty() : settings.getInt(TOKEN_COLOR_PREFIX + category);
     }
-    String syntax(Path path) { return text("Syntax" + key(path), SourceFoldParser.COMPILER_STYLE); }
-    void syntax(Path path, String style) { setText("Syntax" + key(path), style); }
+
+    void setTokenColor(String category, int argb) {
+        if (settings != null) settings.set(TOKEN_COLOR_PREFIX + category, argb);
+    }
 }

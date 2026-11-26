@@ -12,6 +12,7 @@ import net.emustudio.emulib.application.ui.Dialogs;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -28,6 +29,7 @@ public class CompileAction extends AbstractAction {
     private final Supplier<CPU.RunState> runState;
     private final JTextArea compilerOutput;
     private final Runnable updateTitle;
+    private volatile Path compilingSource;
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
@@ -65,6 +67,10 @@ public class CompileAction extends AbstractAction {
         }));
     }
 
+    public Optional<Path> getCompilingSource() {
+        return Optional.ofNullable(compilingSource);
+    }
+
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCompiler().ifPresentOrElse(compiler -> {
@@ -76,6 +82,7 @@ public class CompileAction extends AbstractAction {
 
                 editor.getCurrentFile().ifPresent(file -> {
                     compilerOutput.setText("");
+                    Path source = file.toPath();
 
                     Runnable compile = () -> {
                         AtomicBoolean failed = new AtomicBoolean();
@@ -88,11 +95,13 @@ public class CompileAction extends AbstractAction {
                         };
                         compiler.addCompilerListener(result);
                         try {
-                            compiler.compile(file.toPath(), Optional.empty());
+                            compilingSource = source;
+                            compiler.compile(source, Optional.empty());
                             if (failed.get()) throw new IllegalStateException("Compilation failed");
                         } catch (Exception e) {
                             throw new IllegalStateException("Could not compile file: " + e, e);
                         } finally {
+                            compilingSource = null;
                             compiler.removeCompilerListener(result);
                         }
                     };

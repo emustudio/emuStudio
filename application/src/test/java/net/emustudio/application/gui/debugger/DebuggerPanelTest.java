@@ -685,7 +685,7 @@ public class DebuggerPanelTest {
                 recordings.setSelectedIndex(0);
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 assertEquals(2, timeline.getRowCount());
-                assertEquals("LAST OLD", timeline.getValueAt(1, 2));
+                assertEquals("LAST OLD", timeline.getValueAt(1, 1));
             });
             workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
         }
@@ -715,7 +715,7 @@ public class DebuggerPanelTest {
                 assertEquals(1, component(workspace.panel, JComboBox.class, "Recording").getItemCount());
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 assertEquals(2, timeline.getRowCount());
-                assertEquals("SECOND", timeline.getValueAt(1, 2));
+                assertEquals("SECOND", timeline.getValueAt(1, 1));
                 assertEquals(CPU.RunState.STATE_RUNNING, workspace.machine.execution.getRunState());
             });
             workspace.machine.state(CPU.RunState.STATE_STOPPED_BREAK);
@@ -747,7 +747,7 @@ public class DebuggerPanelTest {
                 assertEquals(1, recordings.getItemCount());
                 assertEquals("1 | Unnamed", recordings.getSelectedItem().toString());
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
-                assertEquals("FIRST", timeline.getValueAt(0, 2));
+                assertEquals("FIRST", timeline.getValueAt(0, 1));
                 button(workspace.panel, "Delete recording").doClick(0);
                 assertEquals(0, timeline.getRowCount());
                 assertFalse(button(workspace.panel, "Edit recording").isEnabled());
@@ -915,10 +915,23 @@ public class DebuggerPanelTest {
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
 
                 assertEquals(1, timeline.getRowCount());
-                assertEquals("3617234–3617236 (3)", timeline.getValueAt(0, 0));
-                assertEquals("2FBA → 2FBC", timeline.getValueAt(0, 1));
-                assertEquals("nop × 3", timeline.getValueAt(0, 2));
-                assertEquals("PC=2FBA→2FBD R=5A→5D", timeline.getValueAt(0, 3));
+                assertEquals(3, timeline.getColumnCount());
+                assertEquals("Address", timeline.getColumnName(0));
+                assertEquals("2FBA → 2FBC", timeline.getValueAt(0, 0));
+                assertEquals("nop × 3", timeline.getValueAt(0, 1));
+                assertEquals("PC=2FBA→2FBD R=5A→5D", timeline.getValueAt(0, 2));
+                AbstractButton previous = button(workspace.panel, "Previous recording page");
+                Container paging = previous.getParent();
+                JLabel range = component(paging, JLabel.class, null);
+                assertEquals("2FBA – 2FBC", range.getText());
+                paging.setSize(300, paging.getPreferredSize().height);
+                paging.doLayout();
+                int previousX = previous.getX();
+                int rangeX = range.getX();
+                paging.setSize(420, paging.getHeight());
+                paging.doLayout();
+                assertEquals(previousX, previous.getX());
+                assertEquals(rangeX + 120, range.getX());
                 timeline.setRowSelectionInterval(0, 0);
                 String detail = component(workspace.panel, JTextPane.class, "Recorded instruction state").getText();
                 assertTrue(detail.contains("PC\t2FBA → 2FBD"));
@@ -926,7 +939,7 @@ public class DebuggerPanelTest {
                 button(recordingPanel(workspace), "Fold identical repeats").doClick(0);
 
                 assertEquals(3, timeline.getRowCount());
-                assertEquals("2FBB", timeline.getValueAt(1, 1));
+                assertEquals("2FBB", timeline.getValueAt(1, 0));
                 timeline.setRowSelectionInterval(1, 1);
                 assertTrue(component(workspace.panel, JTextPane.class, "Recorded instruction state")
                         .getText().startsWith("2FBB · nop\n"));
@@ -948,11 +961,11 @@ public class DebuggerPanelTest {
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
 
                 assertEquals(7, timeline.getRowCount());
-                assertEquals("NOP × 2", timeline.getValueAt(0, 2));
-                assertEquals("NOP", timeline.getValueAt(1, 2));
-                assertEquals("6", timeline.getValueAt(3, 0));
-                assertEquals("INC A (failed)", timeline.getValueAt(4, 2));
-                assertEquals("INC A (failed)", timeline.getValueAt(5, 2));
+                assertEquals("NOP × 2", timeline.getValueAt(0, 1));
+                assertEquals("NOP", timeline.getValueAt(1, 1));
+                assertEquals("INC A", timeline.getValueAt(3, 1));
+                assertEquals("INC A (failed)", timeline.getValueAt(4, 1));
+                assertEquals("INC A (failed)", timeline.getValueAt(5, 1));
             });
         }
     }
@@ -988,7 +1001,7 @@ public class DebuggerPanelTest {
                 JTextPane detail = component(workspace.panel, JTextPane.class, "Recorded instruction state");
                 JComboBox<?> access = component(workspace.panel, JComboBox.class, "Memory navigation");
 
-                assertEquals("A=0→0 WRITE 0003=00→01 WRITE 0003=01→02", timeline.getValueAt(0, 3));
+                assertEquals("A=0→0 WRITE 0003=00→01 WRITE 0003=01→02", timeline.getValueAt(0, 2));
                 assertTrue(detail.getText().contains("0 → 0 (changed within run)"));
                 assertTrue(detail.getText().contains("#1 · WRITE 0003\t= 00 → 01"));
                 assertTrue(detail.getText().contains("#2 · WRITE 0003\t= 01 → 02"));
@@ -1034,7 +1047,7 @@ public class DebuggerPanelTest {
     @Test
     public void findEarlierWriteLoadsItsPage() throws Exception {
         List<InstructionRecording.Event> events = new ArrayList<>();
-        events.add(event(1, 0, "WRITE", "01", List.of(access(true, "00", "01")), true));
+        events.add(event(1, 0x042D, "WRITE", "01", List.of(access(true, "00", "01")), true));
         for (int i = 2; i <= InstructionRecording.PAGE_SIZE; i++) events.add(traceEvent(i, "NOP", "00", true));
         events.add(event(InstructionRecording.PAGE_SIZE + 1, 3, "READ", "02", List.of(access(false, "01", "01")), true));
         CountDownLatch found = new CountDownLatch(1);
@@ -1043,9 +1056,9 @@ public class DebuggerPanelTest {
                 showRecording(workspace, events);
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 assertEquals(1, timeline.getRowCount());
-                assertEquals("READ", timeline.getValueAt(0, 2));
+                assertEquals("READ", timeline.getValueAt(0, 1));
                 timeline.getModel().addTableModelListener(event -> {
-                    if (timeline.getRowCount() > 0 && "WRITE".equals(timeline.getValueAt(0, 2))) found.countDown();
+                    if (timeline.getRowCount() > 0 && "WRITE".equals(timeline.getValueAt(0, 1))) found.countDown();
                 });
                 timeline.setRowSelectionInterval(0, 0);
                 button(workspace.panel, "Find previous write").doClick(0);
@@ -1054,8 +1067,12 @@ public class DebuggerPanelTest {
             SwingUtilities.invokeAndWait(() -> {
                 JTable timeline = component(workspace.panel, JTable.class, "Recorded instructions");
                 assertEquals(0, timeline.getSelectedRow());
-                button(workspace.panel, "Next recording page").doClick(0);
-                assertEquals("READ", timeline.getValueAt(0, 2));
+                AbstractButton next = button(workspace.panel, "Next recording page");
+                JLabel range = component(next.getParent(), JLabel.class, null);
+                assertEquals("042D – 0000", range.getText());
+                next.doClick(0);
+                assertEquals("READ", timeline.getValueAt(0, 1));
+                assertEquals("0003 – 0003", range.getText());
             });
         }
     }
@@ -1144,11 +1161,11 @@ public class DebuggerPanelTest {
                 JComboBox<?> recordings = component(workspace.panel, JComboBox.class, "Recording");
                 assertEquals(2, recordings.getItemCount());
                 assertEquals(1, timeline.getRowCount());
-                assertEquals("NOP", timeline.getValueAt(0, 2));
+                assertEquals("NOP", timeline.getValueAt(0, 1));
                 recordings.setSelectedIndex(0);
 
                 assertEquals(1, timeline.getRowCount());
-                assertEquals("INC A", timeline.getValueAt(0, 2));
+                assertEquals("INC A", timeline.getValueAt(0, 1));
                 assertNull(findComponent(workspace.panel, AbstractButton.class, "Open recording…"));
                 assertNull(findComponent(workspace.panel, AbstractButton.class, "History filters"));
             });
@@ -1338,7 +1355,7 @@ public class DebuggerPanelTest {
                     frame.setVisible(true);
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
-                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    workspace.panel.setAddressSelectionListener(visits::add);
                     JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
                     JPopupMenu popup = search.getComponentPopupMenu();
                     JList<?> results = component(popup, JList.class, "Annotations");
@@ -1389,7 +1406,7 @@ public class DebuggerPanelTest {
                     frame.setVisible(true);
                     JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                     tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
-                    workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                    workspace.panel.setAddressSelectionListener(visits::add);
                     JTextField search = component(workspace.panel, JTextField.class, "Search annotations");
                     JPopupMenu popup = search.getComponentPopupMenu();
 
@@ -1535,7 +1552,7 @@ public class DebuggerPanelTest {
             List<Integer> visits = new ArrayList<>();
             java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.setAddressSelectionListener((address, visit) -> visits.add(address));
+                workspace.panel.setAddressSelectionListener(visits::add);
                 JTabbedPane tabs = component(workspace.panel, JTabbedPane.class, "debuggerViews");
                 tabs.setSelectedIndex(tabs.indexOfTab("Debugger"));
                 Container annotations = (Container) tabs.getSelectedComponent();
@@ -1688,17 +1705,16 @@ public class DebuggerPanelTest {
     @Test
     public void browsingAnAddressChangesSelectionWithoutMovingCpu() throws Exception {
         try (Workspace workspace = workspace(new byte[][] {{1, 2, 3}, {4, 5, 3}}, 2, session -> {})) {
-            List<String> selections = new ArrayList<>();
+            List<Integer> selections = new ArrayList<>();
             SwingUtilities.invokeAndWait(() -> {
-                workspace.panel.setAddressSelectionListener((address, visit) ->
-                        selections.add(address + ":" + visit));
+                workspace.panel.setAddressSelectionListener(selections::add);
                 workspace.panel.navigate(1);
 
                 assertTrue(workspace.panel.isInstructionView());
                 assertEquals("Instruction listing", workspace.table.getAccessibleContext().getAccessibleName());
             });
 
-            assertEquals(List.of("1:true"), selections);
+            assertEquals(List.of(1), selections);
             verify(workspace.machine.cpu, never()).setInstructionLocation(anyInt());
         }
     }

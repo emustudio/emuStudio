@@ -282,8 +282,8 @@ all custom renderers inherit standard selection or Dark-theme colors.
 
 ### Source editor and schema
 
-The source editor uses syntax highlighting, line numbers, folding and marker
-gutters, file tabs, and adjustable text size. Its fixed syntax colors are not a
+The source editor uses syntax highlighting, line numbers, marker gutters,
+file tabs, and adjustable text size. Its fixed syntax colors are not a
 complete Dark-theme palette contract. Preserve existing source navigation and zoom.
 
 The schema is a white technical canvas with a grid, square pastel plugin nodes,

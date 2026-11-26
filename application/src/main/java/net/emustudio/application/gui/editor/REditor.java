@@ -34,9 +34,11 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,6 +48,7 @@ import static net.emustudio.application.Constants.FONT_CODE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
+    private static final String COMPILER_STYLE = "text/emustudio";
     private final TextEditorPane textPane = new MultipleSelection.Pane();
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
     private final List<DocumentListener> changeListeners = new ArrayList<>();
@@ -55,7 +58,6 @@ public class REditor implements Editor {
     private final Compiler compiler;
     private final EditorCommands commands;
     private REditor sharedWith;
-    private REditor splitView;
     private Consumer<Path> openFileHandler = path -> {
     };
     private boolean isnew = true;
@@ -81,8 +83,7 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
-        SourceFoldParser.install(textPane, compiler);
-        scrollPane.setFoldIndicatorEnabled(true);
+        if (compiler != null) installCompilerSyntax();
 
         textPane.setCaretPosition(0);
         textPane.requestFocusInWindow();
@@ -145,7 +146,7 @@ public class REditor implements Editor {
             fileTypes = Collections.emptyList();
         }
         textPane.setDirty(false);
-        commands = new EditorCommands(this, textPane, scrollPane, compiler);
+        commands = new EditorCommands(textPane, scrollPane, compiler);
     }
 
     TextEditorPane textPane() {
@@ -166,30 +167,11 @@ public class REditor implements Editor {
 
     void configure(EditorState state) {
         commands.configure(state);
-        if (sharedWith == null) restoreSyntaxStyle();
-    }
-
-    void setSyntaxStyle(String style) {
-        REditor source = sourceEditor();
-        source.textPane.setSyntaxEditingStyle(style);
-        if (source.splitView != null) source.splitView.textPane.setSyntaxEditingStyle(style);
-        source.persistSyntaxStyle();
-    }
-
-    private void restoreSyntaxStyle() {
-        String style = getCurrentFile().map(File::toPath).map(commands.state()::syntax)
-                .orElse(SourceFoldParser.COMPILER_STYLE);
-        setSyntaxStyle(style);
-    }
-
-    private void persistSyntaxStyle() {
-        getCurrentFile().ifPresent(file -> commands.state().syntax(file.toPath(), textPane.getSyntaxEditingStyle()));
     }
 
     REditor mirror() {
         REditor mirror = new REditor(dialogs, compiler);
         mirror.sharedWith = this;
-        splitView = mirror;
         mirror.textPane.setDocument(textPane.getDocument());
         mirror.commands.selections().installFilter();
         mirror.configure(commands.state());
@@ -271,7 +253,6 @@ public class REditor implements Editor {
         } else {
             try {
                 textPane.save();
-                persistSyntaxStyle();
                 isnew = false;
                 return true;
             } catch (IOException e) {
@@ -296,7 +277,6 @@ public class REditor implements Editor {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
                 isnew = false;
-                persistSyntaxStyle();
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: {}", savedPath.get(), e);
@@ -343,7 +323,6 @@ public class REditor implements Editor {
     }
 
     void dispose() {
-        if (sharedWith != null) sharedWith.splitView = null;
         changeListeners.forEach(textPane.getDocument()::removeDocumentListener);
         changeListeners.clear();
         commands.selections().clear();
@@ -379,7 +358,7 @@ public class REditor implements Editor {
                 net.emustudio.emulib.plugin.compiler.Token token = lexer.next();
                 if (token.getReferencedFile() != null && offset >= token.getOffset()
                         && offset < token.getOffset() + token.getText().length()) {
-                    filename = token.getReferencedFile();
+                    filename = token.getReferencedFile().replace('\\', File.separatorChar).replace('/', File.separatorChar);
                     break;
                 }
             }
@@ -406,7 +385,6 @@ public class REditor implements Editor {
             textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
-            restoreSyntaxStyle();
             return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
@@ -421,7 +399,6 @@ public class REditor implements Editor {
         textPane.discardAllEdits();
         textPane.setDirty(false);
         isnew = true;
-        restoreSyntaxStyle();
     }
 
     @Override
@@ -498,6 +475,23 @@ public class REditor implements Editor {
             return Collections.emptyList();
         }
         return List.of(new FileType("All source files", sourceExtensions));
+    }
+
+    private void installCompilerSyntax() {
+        // Keep compiler tokenization with the document when two panes share it.
+        TokenMakerFactory fallback = TokenMakerFactory.getDefaultInstance();
+        ((RSyntaxDocument) textPane.getDocument()).setTokenMakerFactory(new TokenMakerFactory() {
+            @Override protected TokenMaker getTokenMakerImpl(String key) {
+                return COMPILER_STYLE.equals(key) ? new RTokenMaker(compiler) : fallback.getTokenMaker(key);
+            }
+
+            @Override public Set<String> keySet() {
+                Set<String> keys = new HashSet<>(fallback.keySet());
+                keys.add(COMPILER_STYLE);
+                return keys;
+            }
+        });
+        textPane.setSyntaxEditingStyle(COMPILER_STYLE);
     }
 
     private void setupSyntaxTheme() {

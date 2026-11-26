@@ -13,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static net.emustudio.emulib.application.settings.PluginSettings.*;
-
 
 @SuppressWarnings("unused")
 public class AppSettings extends PluginSettingsImpl {
@@ -23,7 +21,6 @@ public class AppSettings extends PluginSettingsImpl {
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
     public final static String KEY_THEME = "theme";
 
-    private final static String REMOVED_EDITOR_BOOKMARKS = "editorBookmarks";
     private final static int DEFAULT_GRID_GAP = 20;
     private final static Logger LOGGER = LoggerFactory.getLogger(AppSettings.class);
 
@@ -31,16 +28,12 @@ public class AppSettings extends PluginSettingsImpl {
 
     public enum Theme {
         LIGHT,
-        DARK,
-        INTELLIJ
+        DARK
     }
 
     public AppSettings(Config config, boolean nogui) {
         super(config, PluginSettings.UNAVAILABLE, () -> {});
         this.noGUI = nogui;
-        if (config.contains(REMOVED_EDITOR_BOOKMARKS)) {
-            config.remove(REMOVED_EDITOR_BOOKMARKS);
-        }
     }
 
     public static AppSettings load(boolean gui) throws IOException {
@@ -77,7 +70,11 @@ public class AppSettings extends PluginSettingsImpl {
     }
 
     public Optional<Theme> getTheme() {
-        return getString(KEY_THEME).map(Theme::valueOf);
+        try {
+            return getString(KEY_THEME).map(Theme::valueOf);
+        } catch (IllegalArgumentException invalidTheme) {
+            return Optional.empty();
+        }
     }
 
     @Override

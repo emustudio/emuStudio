@@ -4,6 +4,7 @@ package net.emustudio.application.gui.actions.editor;
 
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.emulib.application.ui.Dialogs;
+import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -22,7 +23,8 @@ public class FindPreviousAction extends AbstractAction {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.findAction = Objects.requireNonNull(findAction);
 
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F3, KeyEvent.SHIFT_DOWN_MASK));
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(RTextArea.isOSX() ? KeyEvent.VK_G : KeyEvent.VK_F3,
+                (RTextArea.isOSX() ? RTextArea.getDefaultModifier() : 0) | KeyEvent.SHIFT_DOWN_MASK));
         putValue(MNEMONIC_KEY, KeyEvent.VK_S);
     }
 

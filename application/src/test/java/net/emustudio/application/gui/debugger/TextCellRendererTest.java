@@ -37,7 +37,7 @@ public class TextCellRendererTest {
     }
 
     @Test
-    public void breakpointTextPaintsHeavierThanStandardBoldAtSameSize() {
+    public void breakpointTextPaintsLikeStandardBoldAtSameSize() {
         DebugTableModel model = mock(DebugTableModel.class);
         when(model.getRowCount()).thenReturn(1);
         when(model.getColumnCount()).thenReturn(1);
@@ -60,8 +60,9 @@ public class TextCellRendererTest {
             standard.setBackground(background);
             standard.setForeground(table.getForeground());
 
+            assertTrue(breakpoint.getFont().isBold());
             assertEquals(table.getFont().getSize2D(), breakpoint.getFont().getSize2D(), 0);
-            assertTrue(paintedInk(breakpoint) > paintedInk(standard));
+            assertArrayEquals(paintedCell(standard), paintedCell(breakpoint));
         }
 
         table.setInstructionRowPresentation(row -> false, row -> null, () -> {});
@@ -142,23 +143,13 @@ public class TextCellRendererTest {
         }
     }
 
-    private static long paintedInk(JLabel label) {
+    private static int[] paintedCell(JLabel label) {
         label.setSize(180, 30);
         BufferedImage image = new BufferedImage(180, 30, BufferedImage.TYPE_INT_RGB);
         Graphics graphics = image.createGraphics();
         label.paint(graphics);
         graphics.dispose();
-        Color background = label.getBackground();
-        long ink = 0;
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                Color pixel = new Color(image.getRGB(x, y));
-                ink += Math.abs(pixel.getRed() - background.getRed())
-                        + Math.abs(pixel.getGreen() - background.getGreen())
-                        + Math.abs(pixel.getBlue() - background.getBlue());
-            }
-        }
-        return ink;
+        return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
     }
 
     private static int paintedPixels(Icon icon, Component component) {

@@ -3,6 +3,11 @@
 package net.emustudio.application.gui.framework;
 
 import com.electronwill.nightconfig.core.Config;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.ui.FlatArrowButton;
+import com.formdev.flatlaf.ui.FlatSplitPaneUI;
+import com.formdev.flatlaf.util.UIScale;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
@@ -112,10 +117,73 @@ public class EmuStudioGuiTest {
             gui.initialize(settings);
 
             assertEquals(theme, gui.getCurrentTheme());
+            assertEquals(theme == AppSettings.Theme.LIGHT ? FlatLightLaf.class : FlatDarkLaf.class,
+                    UIManager.getLookAndFeel().getClass());
+            assertEquals("triangle", UIManager.get("Component.arrowType"));
+            assertEquals(2, UIManager.getInt("Component.focusWidth"));
+            assertEquals("filled", UIManager.get("CheckBox.icon.style"));
+            assertEquals("filled", UIManager.get("RadioButton.icon.style"));
+            assertTrue(UIManager.getBoolean("Button.default.boldText"));
+            assertNotEquals(UIManager.getColor("Button.background"), UIManager.getColor("Button.default.background"));
             assertEquals(Boolean.TRUE, UIManager.get("Button.opaque"));
             assertEquals(FONT_COMMON, UIManager.get("Button.font"));
             assertEquals(FONT_MONOSPACED, UIManager.get("TextField.font"));
             assertEquals(UIManager.get("Panel.background"), UIManager.get("TabbedPane.selected"));
+        }
+    }
+
+    @Test
+    public void initializeUsesLightWhenThemeIsMissingOrUnsupported() {
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
+        EmuStudioGui gui = new EmuStudioGui();
+
+        gui.initialize(settings);
+        assertEquals(AppSettings.Theme.LIGHT, gui.getCurrentTheme());
+        assertEquals(FlatLightLaf.class, UIManager.getLookAndFeel().getClass());
+
+        settings.set(AppSettings.KEY_THEME, AppSettings.Theme.DARK.name());
+        gui.initialize(settings);
+        settings.set(AppSettings.KEY_THEME, "unsupported");
+        gui.initialize(settings);
+        assertEquals(AppSettings.Theme.LIGHT, gui.getCurrentTheme());
+        assertEquals(FlatLightLaf.class, UIManager.getLookAndFeel().getClass());
+    }
+
+    @Test
+    public void splitPaneArrowsFitInBothThemesAfterUpdatingTheUi() {
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
+        EmuStudioGui gui = new EmuStudioGui();
+        gui.initialize(settings);
+
+        JSplitPane horizontal = gui.splitPane(JSplitPane.HORIZONTAL_SPLIT, new JPanel(), new JPanel(), 0.5);
+        JSplitPane vertical = gui.splitPane(JSplitPane.VERTICAL_SPLIT, new JPanel(), new JPanel(), 0.5);
+        assertSplitPaneArrowsFit(horizontal);
+        assertSplitPaneArrowsFit(vertical);
+
+        settings.set(AppSettings.KEY_THEME, AppSettings.Theme.DARK.name());
+        gui.initialize(settings);
+        horizontal.updateUI();
+        vertical.updateUI();
+        assertSplitPaneArrowsFit(horizontal);
+        assertSplitPaneArrowsFit(vertical);
+    }
+
+    private static void assertSplitPaneArrowsFit(JSplitPane splitPane) {
+        splitPane.setSize(200, 200);
+        splitPane.setDividerLocation(100);
+        splitPane.doLayout();
+        Container divider = ((FlatSplitPaneUI) splitPane.getUI()).getDivider();
+        divider.doLayout();
+
+        assertEquals(2, divider.getComponentCount());
+        for (Component component : divider.getComponents()) {
+            FlatArrowButton arrow = (FlatArrowButton) component;
+            assertEquals(15, arrow.getArrowWidth());
+            boolean horizontalSplit = splitPane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT;
+            int availableThickness = horizontalSplit ? arrow.getWidth() : arrow.getHeight();
+            int availableLength = horizontalSplit ? arrow.getHeight() : arrow.getWidth();
+            assertTrue(availableThickness >= UIScale.scale(8f));
+            assertTrue(availableLength >= UIScale.scale(15f));
         }
     }
 

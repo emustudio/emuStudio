@@ -197,11 +197,14 @@ public class TabbedEditorTest extends AbstractSwingTest {
     }
 
     @Test
-    public void ctrlClickingIncludeOpensItInNewTab() throws Exception {
-        Path include = source("library.asm", "NOP");
-        Path main = source("main.asm", "include \"library.asm\"");
-        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(main)));
+    public void ctrlClickingIncludeFromSecondTabOpensItInNewTab() throws Exception {
+        Path first = source("first.asm", "HLT");
+        Path project = temporaryFolder.newFolder("project").toPath();
+        Path include = Files.writeString(project.resolve("library.asm"), "NOP");
+        Path main = Files.writeString(project.resolve("main.asm"), "include \"library.asm\"");
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first, main)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
+        assertEquals(1, onEdt(tabs::getSelectedIndex).intValue());
         showInFrame(tabs);
         TextEditorPane textPane = findComponent(
                 (Container) onEdt(tabs::getSelectedComponent), TextEditorPane.class, pane -> true
@@ -221,32 +224,23 @@ public class TabbedEditorTest extends AbstractSwingTest {
                 MouseEvent.BUTTON1
         )));
 
-        assertEquals(2, onEdt(tabs::getTabCount).intValue());
-        assertEquals("library.asm", onEdt(() -> tabs.getTitleAt(1)));
+        assertEquals(3, onEdt(tabs::getTabCount).intValue());
+        assertEquals("library.asm", onEdt(() -> tabs.getTitleAt(2)));
         assertEquals(include, editor.getCurrentFile().orElseThrow().toPath());
     }
 
     @Test
-    public void tabVisitThenDebuggerVisitReturnsToTheSelectedFileInSourceHistory() throws Exception {
+    public void synchronizingPositionOpensMappedSourceInItsOwnTab() throws Exception {
         Path first = source("a.asm", "nop\nhlt\n");
-        Path second = source("b.asm", "nop\nret\n");
-        Path third = source("c.asm", "nop\ninr a\n");
-        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first, second)));
+        Path mapped = source("b.asm", "nop\nret\n");
+        TabbedEditor editor = onEdt(() -> editor(mock(Dialogs.class), null, List.of(first)));
         JTabbedPane tabs = (JTabbedPane) editor.getView();
-        runOnEdt(() -> {
-            tabs.setSelectedIndex(0);
-            editor.setPosition(SourceCodePosition.of(2, 0, first.toString()));
-            tabs.setSelectedIndex(1); // No native-focus event needed to remember this visit.
-            editor.visitPosition(SourceCodePosition.of(2, 0, third.toString()));
-            JMenu menu = new JMenu("Edit");
-            editor.extendEditingMenu(menu);
-            JMenu navigate = (JMenu) java.util.Arrays.stream(menu.getMenuComponents())
-                    .filter(c -> c instanceof JMenu && "Navigate".equals(((JMenu) c).getText())).findFirst().orElseThrow();
-            for (Component component : navigate.getMenuComponents())
-                if (component instanceof JMenuItem && "Back".equals(((JMenuItem) component).getText()))
-                    ((JMenuItem) component).doClick(0);
-        });
-        assertEquals(second, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+
+        assertTrue(onEdt(() -> editor.synchronizePosition(SourceCodePosition.of(2, 0, mapped.toString()))));
+
+        assertEquals(2, onEdt(tabs::getTabCount).intValue());
+        assertEquals(mapped, onEdt(() -> editor.getCurrentFile().orElseThrow().toPath()));
+        assertEquals(2, onEdt(() -> editor.currentSourcePosition().orElseThrow().line).intValue());
     }
 
     @Test
@@ -321,6 +315,8 @@ public class TabbedEditorTest extends AbstractSwingTest {
     }
 
     private JButton closeButton(JTabbedPane tabs, int index) {
-        return findButtonByTooltip((Container) onEdt(() -> tabs.getTabComponentAt(index)), "Close tab (Ctrl+W)");
+        Container header = (Container) onEdt(() -> tabs.getTabComponentAt(index));
+        String name = onEdt(() -> "Close " + tabs.getTitleAt(index));
+        return findComponent(header, JButton.class, button -> name.equals(button.getAccessibleContext().getAccessibleName()));
     }
 }

@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /** Coordinates view selections; execution state and source editing histories remain their owners'. */
 final class SourceNavigation implements AutoCloseable {
@@ -27,13 +28,13 @@ final class SourceNavigation implements AutoCloseable {
     private final DebuggerSession session;
     private final TabbedEditor editor;
     private final DebuggerPanel debugger;
+    private final Supplier<Optional<Path>> compilingSource;
     private volatile boolean closed;
     private boolean synchronizing;
     private volatile long compilation;
     private volatile boolean compiling;
     private boolean failed, inputCaptureFailed;
     private SourceInputs inputs = SourceInputs.empty();
-    private volatile Path activeSource;
     private final CompilerListener listener = new CompilerListener() {
         @Override public void onStart() {
             final long current;
@@ -50,8 +51,7 @@ final class SourceNavigation implements AutoCloseable {
                 }
             });
             try {
-                Path root = SwingUtilities.isEventDispatchThread()
-                        ? editor.getCurrentFile().map(java.io.File::toPath).orElse(null) : activeSource;
+                Path root = compilingSource.get().orElse(null);
                 SourceInputs captured = root == null ? SourceInputs.empty() : SourceInputs.capture(compiler, root);
                 synchronized (SourceNavigation.this) { if (current == compilation) inputs = captured; }
             } catch (Exception e) {
@@ -115,12 +115,13 @@ final class SourceNavigation implements AutoCloseable {
         }
     };
 
-    SourceNavigation(Compiler compiler, DebuggerSession session, TabbedEditor editor, DebuggerPanel debugger) {
+    SourceNavigation(Compiler compiler, DebuggerSession session, TabbedEditor editor, DebuggerPanel debugger,
+                     Supplier<Optional<Path>> compilingSource) {
         this.compiler = compiler;
         this.session = session;
         this.editor = editor;
         this.debugger = debugger;
-        activeSource = editor.getCurrentFile().map(java.io.File::toPath).orElse(null);
+        this.compilingSource = compilingSource;
         editor.setSourcePositionChanged(this::sourceSelected);
         debugger.setAddressSelectionListener(this::addressSelected);
         debugger.setSymbols(() -> session.sourceMappings().map(SourceAddressMap::symbols).orElseGet(java.util.List::of));
@@ -161,7 +162,6 @@ final class SourceNavigation implements AutoCloseable {
     }
 
     private void sourceSelected(SourceCodePosition position) {
-        activeSource = Path.of(position.fileName);
         if (synchronizing || closed) return;
         Optional<SourceAddressMap> snapshot = current(position);
         if (snapshot.isEmpty() || !paused()) return;
@@ -174,7 +174,7 @@ final class SourceNavigation implements AutoCloseable {
         });
     }
 
-    private void addressSelected(int address, boolean visit) {
+    private void addressSelected(int address) {
         if (synchronizing || !paused()) return;
         SourceAddressMap snapshot = session.sourceMappings().orElse(null);
         if (snapshot == null) return;
@@ -189,8 +189,7 @@ final class SourceNavigation implements AutoCloseable {
             try {
                 if (location.instruction)
                     debugger.alignInstructionAddress(location.address);
-                if (visit) editor.visitPosition(location.position);
-                else editor.synchronizePosition(location.position);
+                editor.synchronizePosition(location.position);
             } finally { synchronizing = false; }
         });
     }
@@ -199,6 +198,6 @@ final class SourceNavigation implements AutoCloseable {
         closed = true;
         if (compiler != null) compiler.removeCompilerListener(listener);
         editor.setSourcePositionChanged(position -> {});
-        debugger.setAddressSelectionListener((address, visit) -> {});
+        debugger.setAddressSelectionListener(address -> {});
     }
 }

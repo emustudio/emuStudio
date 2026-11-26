@@ -17,6 +17,7 @@ import net.emustudio.emulib.plugin.memory.MemoryContext;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rtextarea.RTextArea;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -25,15 +26,19 @@ import javax.swing.*;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class StudioFrameTest extends AbstractSwingTest {
@@ -89,9 +94,88 @@ public class StudioFrameTest extends AbstractSwingTest {
             }
             return labels;
         });
-        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Selection", "Navigate", "Editing macros",
-                "Editor display", "Refactor", "Split view")));
+        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Column Selection Mode", "Go to line...",
+                "Indentation...", "Token colors...", "Editor display", "Refactor", "Split view")));
+        org.junit.Assert.assertFalse(editingItems.contains("Selection"));
+        org.junit.Assert.assertFalse(editingItems.contains("Navigate"));
+        org.junit.Assert.assertFalse(editingItems.contains("Editing macros"));
         org.junit.Assert.assertFalse(editingItems.contains("Find / replace in files…"));
+        JPopupMenu editMenu = onEdt(() -> menuBar.getMenu(1).getPopupMenu());
+        JCheckBoxMenuItem columnSelection = findComponent(editMenu, JCheckBoxMenuItem.class,
+                item -> "Column Selection Mode".equals(item.getText()));
+        assertEquals(editMenu, onEdt(columnSelection::getParent));
+        JMenu editorDisplay = findComponent(editMenu, JMenu.class,
+                menu -> "Editor display".equals(menu.getText()));
+        assertTrue(onEdt(() -> Arrays.stream(editorDisplay.getMenuComponents())
+                .filter(JMenuItem.class::isInstance)
+                .map(JMenuItem.class::cast)
+                .map(JMenuItem::getText)
+                .noneMatch(label -> "Syntax highlighting".equals(label) || "End-of-line markers".equals(label)
+                        || "Indentation...".equals(label) || "Indentation settings".equals(label)
+                        || label.startsWith("Token colors"))));
+    }
+
+    @Test
+    public void editMenuAndFindShortcutFollowTheSelectedWorkspace() {
+        StudioFrame frame = createFrame(null);
+        showFrame(frame);
+        JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
+
+        runOnEdt(() -> {
+            frame.setVisible(true);
+            JMenu edit = frame.getJMenuBar().getMenu(1);
+            assertTrue(edit.isEnabled());
+
+            tabs.setSelectedIndex(1);
+            assertFalse(edit.isEnabled());
+            KeyEvent find = new KeyEvent(frame, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                    RTextArea.getDefaultModifier(), KeyEvent.VK_F, 'f');
+            assertFalse(SwingUtilities.processKeyBindings(find));
+
+            tabs.setSelectedIndex(0);
+            assertTrue(edit.isEnabled());
+            assertTrue(SwingUtilities.processKeyBindings(find));
+        });
+    }
+
+    @Test
+    public void editShortcutsResolveToEditorActions() {
+        JFrame frame = showFrame(createFrame(null));
+        TextEditorPane pane = findComponent(frame.getContentPane(), TextEditorPane.class, editor -> true);
+        JMenu edit = onEdt(() -> frame.getJMenuBar().getMenu(1));
+        JMenu text = findComponent(edit.getPopupMenu(), JMenu.class, item -> "Text".equals(item.getText()));
+        int shortcut = RTextArea.getDefaultModifier();
+        boolean mac = RTextArea.isOSX();
+        KeyStroke duplicateKey = KeyStroke.getKeyStroke(KeyEvent.VK_D, shortcut);
+        KeyStroke redoKey = KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcut | KeyEvent.SHIFT_DOWN_MASK);
+        KeyStroke deleteKey = KeyStroke.getKeyStroke(mac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_Y, shortcut);
+
+        runOnEdt(() -> {
+            assertEquals(duplicateKey, text.getItem(0).getAccelerator());
+            assertEquals(redoKey, edit.getItem(1).getAccelerator());
+            assertEquals(KeyStroke.getKeyStroke(mac ? KeyEvent.VK_W : KeyEvent.VK_F4, shortcut),
+                    frame.getJMenuBar().getMenu(0).getItem(2).getAccelerator());
+
+            pane.setText("NOP\nHLT");
+            pane.discardAllEdits();
+            pane.setCaretPosition(0);
+            invokeEditorBinding(pane, duplicateKey);
+            assertEquals("NOP\nNOP\nHLT", pane.getText());
+            pane.undoLastAction();
+            assertEquals("NOP\nHLT", pane.getText());
+            invokeEditorBinding(pane, redoKey);
+            assertEquals("NOP\nNOP\nHLT", pane.getText());
+            pane.setCaretPosition(0);
+            invokeEditorBinding(pane, deleteKey);
+            assertEquals("NOP\nHLT", pane.getText());
+        });
+    }
+
+    private void invokeEditorBinding(TextEditorPane pane, KeyStroke stroke) {
+        Action action = pane.getActionMap().get(pane.getInputMap().get(stroke));
+        KeyEvent event = new KeyEvent(pane, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                stroke.getModifiers(), stroke.getKeyCode(), KeyEvent.CHAR_UNDEFINED);
+        assertTrue(SwingUtilities.notifyAction(action, stroke, event, pane, stroke.getModifiers()));
     }
 
     @Test

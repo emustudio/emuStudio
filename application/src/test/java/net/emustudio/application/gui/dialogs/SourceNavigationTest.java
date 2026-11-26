@@ -5,12 +5,14 @@ package net.emustudio.application.gui.dialogs;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.debugger.DebugTableImpl;
 import net.emustudio.application.gui.debugger.DebugTableModel;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.*;
 import net.emustudio.emulib.plugin.cpu.CPU;
@@ -26,10 +28,12 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import java.awt.BorderLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -209,7 +213,7 @@ public class SourceNavigationTest extends AbstractSwingTest {
     }
 
     @Test(timeout = 10000)
-    public void sourceMemorySymbolsAndEditorHistoryStaySynchronized() throws Exception {
+    public void sourceAndInstructionListingStaySynchronized() throws Exception {
         try (Fixture f = new Fixture()) {
             f.compile(false);
             runOnEdt(f.debugger::showInstructions);
@@ -217,13 +221,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
             assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
             f.sourceLine(3);
             assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-            f.sourceHistory("Back");
-            assertEquals(1, onEdt(f.table::getSelectedRow).intValue());
-            assertEquals(2, f.line());
-            f.sourceHistory("Forward");
-            assertEquals(2, onEdt(f.table::getSelectedRow).intValue());
-
-            assertEquals(3, f.line());
 
             runOnEdt(() -> f.table.setRowSelectionInterval(0, 0));
             assertEquals(1, f.line());
@@ -277,6 +274,51 @@ public class SourceNavigationTest extends AbstractSwingTest {
             f.running(false);
             verify(f.original).currentPage();
             assertEquals(2, onEdt(() -> f.original.getLocationAt(f.table.getSelectedRow())).intValue());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void workerCompilationMapsTheFileSelectedWhenCompileWasPressed() throws Exception {
+        try (Fixture f = new Fixture()) {
+            f.session.clearSourceMappings();
+            Path otherSource = files.newFile("other.asm").toPath();
+            Files.writeString(otherSource, f.text);
+            VirtualComputer computer = mock(VirtualComputer.class);
+            when(computer.getCompiler()).thenReturn(Optional.of(f.compiler));
+            when(computer.getExecution()).thenReturn(Optional.of(f.execution));
+            doAnswer(call -> {
+                runOnEdt(() -> assertTrue(f.editor.openFile(otherSource)));
+                f.publishCompilation(false, () -> {});
+                return null;
+            }).when(f.compiler).compile(eq(f.path), eq(Optional.empty()));
+
+            CountDownLatch compiled = new CountDownLatch(1);
+            runOnEdt(() -> {
+                f.compileAction = new CompileAction(computer, mock(Dialogs.class), f.editor,
+                        () -> CPU.RunState.STATE_STOPPED_BREAK, new JTextArea(), () -> {});
+                f.compileAction.addPropertyChangeListener(event -> {
+                    if ("enabled".equals(event.getPropertyName()) && f.compileAction.isEnabled()) compiled.countDown();
+                });
+                f.compileAction.actionPerformed(null);
+            });
+
+            assertTrue(compiled.await(2, TimeUnit.SECONDS));
+            runOnEdt(() -> {
+                f.debugger.showInstructions();
+                JPopupMenu popup = f.table.getComponentPopupMenu();
+                JMenuItem goToSource = findComponent(popup, JMenuItem.class, item -> "Go to source".equals(item.getText()));
+                f.table.setRowSelectionInterval(1, 1);
+                for (var listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new PopupMenuEvent(popup));
+                assertTrue(goToSource.isEnabled());
+                goToSource.doClick(0);
+                assertEquals(SourceCodePosition.of(2, 8, f.path.toString()), f.shownSource.get());
+
+                f.table.setRowSelectionInterval(3, 3);
+                for (var listener : popup.getPopupMenuListeners())
+                    listener.popupMenuWillBecomeVisible(new PopupMenuEvent(popup));
+                assertFalse(goToSource.isEnabled());
+            });
         }
     }
 
@@ -404,6 +446,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
         final SourceNavigation navigation;
         final CompilerListener compilerEvents;
         final DebugTableModel original;
+        final AtomicReference<SourceCodePosition> shownSource = new AtomicReference<>();
+        CompileAction compileAction;
 
         Fixture() throws Exception { this("first: nop\nsecond: nop\nthird: nop\n"); }
         @SuppressWarnings({"unchecked", "rawtypes"})
@@ -464,14 +508,15 @@ public class SourceNavigationTest extends AbstractSwingTest {
                 JScrollPane scroll = gui.scrollPane(listing);
                 JPanel instructions = new JPanel(new BorderLayout());
                 instructions.add(scroll);
-                return new DebuggerPanel(session, execution, listing, instructions, p -> {}, () -> {}, gui);
+                return new DebuggerPanel(session, execution, listing, instructions, shownSource::set, () -> {}, gui);
             });
             table = findComponent(debugger, JTable.class, t -> true);
             runOnEdt(() -> table.getSelectionModel().addListSelectionListener(event -> {
                 if (!event.getValueIsAdjusting() && debugger.isInstructionView() && table.getSelectedRow() >= 0)
                     debugger.followAddress(original.getLocationAt(table.convertRowIndexToModel(table.getSelectedRow())));
             }));
-            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger));
+            navigation = onEdt(() -> new SourceNavigation(compiler, session, editor, debugger,
+                    () -> compileAction == null ? Optional.of(path) : compileAction.getCompilingSource()));
             ArgumentCaptor<CompilerListener> captor = ArgumentCaptor.forClass(CompilerListener.class);
             verify(compiler).addCompilerListener(captor.capture());
             compilerEvents = captor.getValue();
@@ -510,18 +555,6 @@ public class SourceNavigationTest extends AbstractSwingTest {
         }
 
         int line() { return onEdt(() -> editor.currentSourcePosition().orElseThrow().line); }
-
-        void sourceHistory(String name) {
-            runOnEdt(() -> {
-                JMenu menu = new JMenu("Edit");
-                editor.extendEditingMenu(menu);
-                JMenu navigate = (JMenu) java.util.Arrays.stream(menu.getMenuComponents())
-                        .filter(c -> c instanceof JMenu && "Navigate".equals(((JMenu) c).getText())).findFirst().orElseThrow();
-                for (java.awt.Component component : navigate.getMenuComponents())
-                    if (component instanceof JMenuItem && name.equals(((JMenuItem) component).getText()))
-                        ((JMenuItem) component).doClick(0);
-            });
-        }
 
         void running(boolean value) {
             if (value) execution.start().join();

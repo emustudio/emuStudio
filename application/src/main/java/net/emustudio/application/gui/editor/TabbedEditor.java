@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
+import net.emustudio.application.gui.actions.editor.CloseTabAction;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
@@ -15,6 +16,7 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -37,22 +39,8 @@ public class TabbedEditor implements Editor {
     private SplitPaneView leftSplit, rightSplit;
     private int splitIndex = -1, secondaryIndex = -1;
     private InlineSearchBar searchBar;
-    private final Deque<Location> back = new ArrayDeque<>(), forward = new ArrayDeque<>();
-    private final Deque<Location> edits = new ArrayDeque<>();
-    private Location location;
-    private boolean navigating;
     private boolean synchronizingPosition;
     private Consumer<SourceCodePosition> sourcePositionChanged = position -> {};
-
-    private static final class Location {
-        final REditor editor;
-        final int offset;
-
-        Location(REditor editor, int offset) {
-            this.editor = editor;
-            this.offset = offset;
-        }
-    }
 
     private Runnable activeEditorChanged = () -> {
     };
@@ -70,7 +58,6 @@ public class TabbedEditor implements Editor {
             if (!editors.isEmpty()) {
                 notifyActiveEditorChanged();
                 notifyFontSizeChanged();
-                remember(activeEditor(), activeEditor().textPane().getCaretPosition());
                 notifySourcePosition(activeEditor());
             }
         });
@@ -146,11 +133,9 @@ public class TabbedEditor implements Editor {
         return Optional.empty();
     }
 
-    /** Follow a debugger selection without stealing focus, closing a split or recording an editor visit. */
+    /** Follow a debugger selection without stealing focus or closing a split. */
     public boolean synchronizePosition(SourceCodePosition position) {
-        boolean wasNavigating = navigating;
         synchronizingPosition = true;
-        navigating = true;
         try {
             Path path = Path.of(position.fileName).toAbsolutePath().normalize();
             REditor target = null;
@@ -168,25 +153,11 @@ public class TabbedEditor implements Editor {
                 focusedEditor = target;
             } else target = activeEditor();
             target.setPosition(position);
-            location = new Location(target.sourceEditor(), target.textPane().getCaretPosition());
             notifyActiveEditorChanged();
             return true;
         } finally {
-            navigating = wasNavigating;
             synchronizingPosition = false;
         }
-    }
-
-    /** Explicit symbol/debugger visits participate in the existing #453 source history. */
-    public boolean visitPosition(SourceCodePosition position) {
-        Location previous = location;
-        if (!synchronizePosition(position)) return false;
-        if (previous != null && (previous.editor != location.editor || previous.offset != location.offset)) {
-            back.push(previous);
-            while (back.size() > 200) back.removeLast();
-            forward.clear();
-        }
-        return true;
     }
 
     private void notifySourcePosition(REditor changed) {
@@ -422,7 +393,9 @@ public class TabbedEditor implements Editor {
             close.setFocusable(false);
             close.setContentAreaFilled(false);
             close.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-            close.setToolTipText("Close tab (Ctrl+W)");
+            KeyStroke shortcut = CloseTabAction.SHORTCUT;
+            close.setToolTipText("Close tab (" + KeyEvent.getModifiersExText(shortcut.getModifiers())
+                    + "+" + KeyEvent.getKeyText(shortcut.getKeyCode()) + ")");
             close.addActionListener(e -> closeEditor(editor));
             add(label);
             add(close);
@@ -471,58 +444,13 @@ public class TabbedEditor implements Editor {
             @Override
             public void focusGained(FocusEvent e) {
                 focusedEditor = editor;
-                remember(editor, editor.textPane().getCaretPosition());
                 notifyActiveEditorChanged();
                 notifySourcePosition(editor);
             }
         });
-        editor.textPane().addCaretListener(e -> {
-            remember(editor, e.getDot());
-            notifySourcePosition(editor);
-        });
-        editor.addChangeListener(() -> {
-            if (!navigating) {
-                edits.push(new Location(editor.sourceEditor(), editor.textPane().getCaretPosition()));
-                while (edits.size() > 200) edits.removeLast();
-            }
-            notifySourcePosition(editor);
-        });
+        editor.textPane().addCaretListener(e -> notifySourcePosition(editor));
+        editor.addChangeListener(() -> notifySourcePosition(editor));
         if (searchBar != null) searchBar.observe(editor);
-    }
-
-    private void remember(REditor editor, int offset) {
-        if (navigating) return;
-        editor = editor.sourceEditor();
-        if (location != null && (location.editor != editor || Math.abs(location.offset - offset) > 1)) {
-            back.push(location);
-            while (back.size() > 200) back.removeLast();
-            forward.clear();
-        }
-        location = new Location(editor, offset);
-    }
-
-    private void navigate(Deque<Location> from, Deque<Location> to) {
-        if (from.isEmpty()) return;
-        if (location != null) to.push(location);
-        Location next = from.pop();
-        if (next.editor == splitMirror) next = new Location(editors.get(splitIndex), next.offset);
-        int index = editors.indexOf(next.editor);
-        if (index < 0) {
-            navigate(from, to);
-            return;
-        }
-        navigating = true;
-        try {
-            unsplit();
-            tabs.setSelectedIndex(index);
-            focusedEditor = next.editor;
-            next.editor.textPane().setCaretPosition(Math.min(next.offset, next.editor.textPane().getDocument().getLength()));
-            location = next;
-            next.editor.grabFocus();
-            notifyActiveEditorChanged();
-        } finally {
-            navigating = false;
-        }
     }
 
     public void extendEditingMenu(JMenu menu) {
@@ -530,16 +458,11 @@ public class TabbedEditor implements Editor {
         Runnable refresh = () -> {
             while (menu.getMenuComponentCount() > standardItems) menu.remove(standardItems);
             menu.addSeparator();
-            List<JMenu> groups = activeEditor().commands().menus();
-            groups.forEach(menu::add);
-            JMenu navigate = groups.get(2);
-            navigate.addSeparator();
-            addCommand(navigate, "Back", () -> navigate(back, forward));
-            addCommand(navigate, "Forward", () -> navigate(forward, back));
-            addCommand(navigate, "Previous edit", () -> navigate(edits, back));
+            activeEditor().commands().editMenuItems().forEach(menu::add);
             menu.addSeparator();
             JMenu refactor = new JMenu("Refactor");
-            addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this));
+            addCommand(refactor, "Rename symbol…", () -> SourceRefactoring.rename(this))
+                    .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK));
             addCommand(refactor, "Extract selection…", () -> SourceRefactoring.extract(this));
             menu.add(refactor);
             JMenu split = new JMenu("Split view");
@@ -562,7 +485,7 @@ public class TabbedEditor implements Editor {
         refresh.run();
     }
 
-    private void addCommand(JMenu menu, String name, Runnable command) {
+    private JMenuItem addCommand(JMenu menu, String name, Runnable command) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
             try {
@@ -571,7 +494,7 @@ public class TabbedEditor implements Editor {
                 JOptionPane.showMessageDialog(tabs, ex.getMessage(), name, JOptionPane.ERROR_MESSAGE);
             }
         });
-        menu.add(item);
+        return menu.add(item);
     }
 
     void split(boolean sameFile) {
