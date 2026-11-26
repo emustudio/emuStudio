@@ -2,16 +2,24 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotapeplayer;
 
+import net.emustudio.emulib.plugin.device.DeviceContext;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TapePlaybackControllerTest {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     private TapePlaybackController controller;
 
@@ -147,5 +155,27 @@ public class TapePlaybackControllerTest {
         // State is either PLAYING (task submitted) or STOPPED (task already finished/failed)
         assert state == TapePlaybackController.CassetteState.PLAYING
                 || state == TapePlaybackController.CassetteState.STOPPED;
+    }
+
+    @Test
+    public void playbackIsReadyBeforeGuestCyclesAndShutsDownWithoutThem() throws Exception {
+        Path tape = folder.newFile("test.tap").toPath();
+        Files.write(tape, new byte[]{2, 0, (byte) 0xff, (byte) 0xff});
+        DeviceContext<Byte> lineIn = niceMock(DeviceContext.class);
+        replay(lineIn);
+        TapePlaybackImpl playback = new TapePlaybackImpl(lineIn, () -> 3500);
+        try (TapePlaybackController cassette = new TapePlaybackController(playback)) {
+            cassette.load(tape);
+            TapeTask first = cassette.play();
+            first.ready.get(2, TimeUnit.SECONDS);
+            assertFalse(first.completion.isDone());
+            playback.passedCycles(30_000_000);
+            first.completion.get(2, TimeUnit.SECONDS);
+
+            TapeTask second = cassette.play();
+            second.ready.get(2, TimeUnit.SECONDS);
+            cassette.shutdown().get(2, TimeUnit.SECONDS);
+            assertEquals(TapePlaybackController.CassetteState.CLOSED, cassette.getState());
+        }
     }
 }

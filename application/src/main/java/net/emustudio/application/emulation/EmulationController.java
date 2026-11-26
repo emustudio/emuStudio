@@ -289,6 +289,17 @@ public final class EmulationController implements Closeable {
         return stop(CPU.RunState.STATE_STOPPED_NORMAL, false, null);
     }
 
+    /** Stops the active run without changing an already published stop state. */
+    CompletableFuture<CPU.RunState> stopAutomationRun() {
+        return command(result -> {
+            if (active == null || active.operation != Operation.CONTINUOUS) {
+                result.complete(state);
+            } else {
+                requestStop(CPU.RunState.STATE_STOPPED_NORMAL, false, null, result);
+            }
+        });
+    }
+
     public CompletableFuture<CPU.RunState> reset() {
         return stop(CPU.RunState.STATE_STOPPED_BREAK, true, null);
     }
@@ -298,15 +309,17 @@ public final class EmulationController implements Closeable {
     }
 
     private CompletableFuture<CPU.RunState> stop(CPU.RunState targetState, boolean reset, Integer location) {
-        return command(result -> {
-            if (pending != null || (active != null && active.operation.isMutation()))
-                throw new IllegalStateException("Machine command is pending");
-            cancelTimer();
-            pending = new Pending(targetState, reset, location, result, active != null);
-            publish(state);
-            if (active != null) active.requestStop();
-            else finishPending();
-        });
+        return command(result -> requestStop(targetState, reset, location, result));
+    }
+
+    private void requestStop(CPU.RunState targetState, boolean reset, Integer location, CompletableFuture<CPU.RunState> result) {
+        if (pending != null || (active != null && active.operation.isMutation()))
+            throw new IllegalStateException("Machine command is pending");
+        cancelTimer();
+        pending = new Pending(targetState, reset, location, result, active != null);
+        publish(state);
+        if (active != null) active.requestStop();
+        else finishPending();
     }
 
     private void finishPending() {

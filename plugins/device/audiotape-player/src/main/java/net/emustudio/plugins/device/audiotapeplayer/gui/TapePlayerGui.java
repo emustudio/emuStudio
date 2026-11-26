@@ -77,7 +77,8 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
     private JButton btnAutoStop;
     private JButton btnAutoReset;
 
-    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller, PluginSettings settings, GUI gui) {
+    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller,
+                         AutomationController automation, PluginSettings settings, GUI gui) {
         super(parent, "Audio Tape Player", false);
         this.gui = gui;
         this.panelTapeInfo = gui.panel("", "[][grow]", "[][][]");
@@ -87,7 +88,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
         this.dialogs = Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
         this.settings = Objects.requireNonNull(settings);
-        this.automation = new AutomationController(controller);
+        this.automation = Objects.requireNonNull(automation);
         this.automation.setListener(this);
 
         this.timelinePanel = new TimelinePanel(automationEvents);
@@ -621,9 +622,7 @@ public class TapePlayerGui extends DialogBase implements AutomationController.Au
 
     @Override
     public void stateChanged(AutomationController.State state) {
-        if (state == AutomationController.State.STOPPED || state == AutomationController.State.CLOSED) {
-            SwingUtilities.invokeLater(() -> updateAutoButtons(false));
-        }
+        SwingUtilities.invokeLater(() -> updateAutoButtons(state == AutomationController.State.PLAYING));
     }
 
     @Override

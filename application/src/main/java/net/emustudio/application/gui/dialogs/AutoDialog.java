@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.application.ui.GUI;
 import net.emustudio.emulib.ui.components.DialogBase;
 
@@ -16,15 +15,15 @@ import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
  * is running.
  */
 public class AutoDialog extends DialogBase {
-    private final VirtualComputer computer;
+    private final Runnable cancel;
     private final GUI gui;
 
     private final JLabel lblAction;
     private final JButton btnStop = new JButton("Stop");
 
-    public AutoDialog(VirtualComputer computer, GUI gui) {
+    public AutoDialog(Runnable cancel, GUI gui) {
         super((JFrame) null, "Automatic Emulation", false);
-        this.computer = Objects.requireNonNull(computer);
+        this.cancel = Objects.requireNonNull(cancel);
         this.gui = gui;
         this.lblAction = gui.label("Initializing...");
         setResizable(false);
@@ -39,10 +38,10 @@ public class AutoDialog extends DialogBase {
         JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon("/net/emustudio/application/gui/icons/motherboard.png"));
 
-        btnStop.addActionListener(e -> computer.getExecution().ifPresent(execution -> {
-            btnStop.setEnabled(false);
-            execution.stop();
-        }));
+        btnStop.addActionListener(e -> {
+            setAction("Stopping emulation...", false);
+            cancel.run();
+        });
         btnStop.setEnabled(false);
 
         panel.add(lblPerforming, "wrap, gapbottom 10");

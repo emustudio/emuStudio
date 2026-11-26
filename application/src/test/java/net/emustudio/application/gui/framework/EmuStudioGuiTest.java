@@ -105,7 +105,7 @@ public class EmuStudioGuiTest {
     @Test
     public void initializeAppliesThemeAndCustomUiDefaults() {
         for (AppSettings.Theme theme : AppSettings.Theme.values()) {
-            AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+            AppSettings settings = new AppSettings(Config.inMemory(), false);
             settings.set(AppSettings.KEY_THEME, theme.name());
 
             EmuStudioGui gui = new EmuStudioGui();
@@ -125,7 +125,7 @@ public class EmuStudioGuiTest {
         frame.add(new JButton("Button"));
         frame.pack();
 
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
         settings.set(AppSettings.KEY_THEME, AppSettings.Theme.DARK.name());
 
         EmuStudioGui gui = new EmuStudioGui();

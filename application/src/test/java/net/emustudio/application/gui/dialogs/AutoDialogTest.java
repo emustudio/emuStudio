@@ -4,27 +4,21 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.framework.EmuStudioGui;
-import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.application.emulation.EmulationController;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
 
 public class AutoDialogTest extends AbstractSwingTest {
 
     @Test
-    public void setActionUpdatesStatusAndStopButtonStopsCpu() {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        EmulationController execution = mock(EmulationController.class);
-        when(computer.getExecution()).thenReturn(Optional.of(execution));
-
-        AutoDialog dialog = onEdt(() -> new AutoDialog(computer, new EmuStudioGui()));
+    public void setActionUpdatesStatusAndStopButtonCancelsSession() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        AutoDialog dialog = onEdt(() -> new AutoDialog(() -> cancelled.set(true), new EmuStudioGui()));
 
         showDialog(dialog);
         JButton stopButton = findComponent(dialog, JButton.class, button -> "Stop".equals(button.getText()));
@@ -37,6 +31,8 @@ public class AutoDialogTest extends AbstractSwingTest {
         assertTrue(onEdt(stopButton::isEnabled));
         triggerButton(stopButton);
 
-        verify(execution).stop();
+        assertTrue(cancelled.get());
+        assertFalse(onEdt(stopButton::isEnabled));
+        assertNotNull(findLabel(dialog, "Stopping emulation..."));
     }
 }

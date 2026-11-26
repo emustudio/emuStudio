@@ -71,7 +71,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     @Test public void syntaxChoiceIsPerFileAndRestoredFromSettings() throws Exception {
         Path source = Files.writeString(files.newFile("source.txt").toPath(), "public class Sample {}\n");
         Path other = Files.writeString(files.newFile("other.txt").toPath(), "plain\n");
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
         REditor editor = editor("");
         runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.openFile(source); syntaxChoice(editor, "Java").doClick(); });
         assertEquals(SyntaxConstants.SYNTAX_STYLE_JAVA, onEdt(editor.textPane()::getSyntaxEditingStyle));
@@ -141,7 +141,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         Dialogs dialogs = mock(Dialogs.class);
         when(dialogs.chooseFile(eq("Save file"), eq("Save"), any(Path.class), eq(true), anyList()))
                 .thenReturn(Optional.of(first), Optional.of(second));
-        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
         REditor editor = onEdt(() -> new REditor(dialogs));
         runOnEdt(() -> { editor.configure(new EditorState(settings)); editor.textPane().setText("{}"); syntaxChoice(editor, "JSON").doClick(); });
         assertTrue(onEdt(editor::saveFile));

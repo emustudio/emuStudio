@@ -147,7 +147,7 @@ public class Runner implements Callable<Integer> {
         }
 
         try {
-            AppSettings appConfig = AppSettings.load(true, false);
+            AppSettings appConfig = AppSettings.load(true);
             EmuStudioGui gui = new EmuStudioGui();
             gui.initialize(appConfig);
             DialogsGui dialogs = new DialogsGui(gui);

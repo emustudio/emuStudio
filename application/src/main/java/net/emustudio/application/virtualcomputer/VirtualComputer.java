@@ -277,27 +277,35 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     @Override
     public void close() {
+        closeAndReportFailures().forEach(failure -> LOGGER.error("Could not close virtual computer", failure));
+    }
+
+    /** Closes the machine and returns the failures encountered while releasing its resources. */
+    public List<Throwable> closeAndReportFailures() {
         if (destroyed) {
-            return;
+            return List.of();
         }
         destroyed = true;
         if (execution != null) execution.close();
-
-        if (debugger != null) {
-            try {
-                debugger.close();
-            } catch (Throwable e) {
-                LOGGER.error("Debugger failed to close", e);
-            }
-        }
+        List<Throwable> failures = new ArrayList<>();
+        if (debugger != null) closeResource(failures, debugger::close);
         List<PluginMeta> devices = new ArrayList<>(pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList()));
         Collections.reverse(devices);
-        devices.forEach(meta -> safeDestroy(meta.pluginInstance));
-        getCPU().ifPresent(VirtualComputer::safeDestroy);
-        getMemory().ifPresent(VirtualComputer::safeDestroy);
-        getCompiler().ifPresent(VirtualComputer::safeDestroy);
-        safeCloseClassLoader();
-        computerConfig.close();
+        devices.forEach(meta -> closeResource(failures, meta.pluginInstance::destroy));
+        getCPU().ifPresent(cpu -> closeResource(failures, cpu::destroy));
+        getMemory().ifPresent(memory -> closeResource(failures, memory::destroy));
+        getCompiler().ifPresent(compiler -> closeResource(failures, compiler::destroy));
+        if (pluginClassLoader != null) closeResource(failures, pluginClassLoader);
+        closeResource(failures, computerConfig::close);
+        return failures;
+    }
+
+    private static void closeResource(List<Throwable> failures, AutoCloseable resource) {
+        try {
+            resource.close();
+        } catch (Throwable failure) {
+            failures.add(failure);
+        }
     }
 
     private static void closeAfterFailure(AutoCloseable resource, Throwable failure) {
@@ -322,16 +330,6 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         }
     }
 
-    private void safeCloseClassLoader() {
-        if (pluginClassLoader == null) {
-            return;
-        }
-        try {
-            pluginClassLoader.close();
-        } catch (Throwable e) {
-            LOGGER.error("Plugin class loader failed to close", e);
-        }
-    }
 
     private static final class LoadedPlugins {
         private final AutoCloseable pluginClassLoader;

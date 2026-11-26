@@ -19,7 +19,6 @@ import static net.emustudio.emulib.application.settings.PluginSettings.*;
 @SuppressWarnings("unused")
 public class AppSettings extends PluginSettingsImpl {
     public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length());
-    public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
     public final static String KEY_THEME = "theme";
@@ -28,7 +27,6 @@ public class AppSettings extends PluginSettingsImpl {
     private final static int DEFAULT_GRID_GAP = 20;
     private final static Logger LOGGER = LoggerFactory.getLogger(AppSettings.class);
 
-    public transient final boolean emuStudioAuto;
     public transient final boolean noGUI;
 
     public enum Theme {
@@ -37,16 +35,15 @@ public class AppSettings extends PluginSettingsImpl {
         INTELLIJ
     }
 
-    public AppSettings(Config config, boolean nogui, boolean auto) {
+    public AppSettings(Config config, boolean nogui) {
         super(config, PluginSettings.UNAVAILABLE, () -> {});
-        this.emuStudioAuto = auto;
         this.noGUI = nogui;
         if (config.contains(REMOVED_EDITOR_BOOKMARKS)) {
             config.remove(REMOVED_EDITOR_BOOKMARKS);
         }
     }
 
-    public static AppSettings load(boolean gui, boolean auto) throws IOException {
+    public static AppSettings load(boolean gui) throws IOException {
         Path configFile = ConfigFiles.getConfigBasePath().resolve("emuStudio.toml");
         if (Files.notExists(configFile)) {
             LOGGER.warn("No configuration file found; creating empty one");
@@ -54,13 +51,13 @@ public class AppSettings extends PluginSettingsImpl {
             Files.createFile(configFile);
         }
 
-        return fromFile(configFile, !gui, auto);
+        return fromFile(configFile, !gui);
     }
 
-    public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
+    public static AppSettings fromFile(Path file, boolean nogui) {
         FileConfig config = FileConfig.builder(file).autosave().sync().build();
         config.load();
-        return new AppSettings(config, nogui, auto);
+        return new AppSettings(config, nogui);
     }
 
     public boolean useSchemaGrid() {
@@ -85,9 +82,7 @@ public class AppSettings extends PluginSettingsImpl {
 
     @Override
     public Optional<Boolean> getBoolean(String key) {
-        if (KEY_AUTO.equals(key)) {
-            return Optional.of(emuStudioAuto);
-        } else if (KEY_NOGUI.equals(key)) {
+        if (KEY_NOGUI.equals(key)) {
             return Optional.of(noGUI);
         }
         return super.getBoolean(key);

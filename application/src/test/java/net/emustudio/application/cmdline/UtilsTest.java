@@ -51,7 +51,7 @@ public class UtilsTest extends AbstractSwingTest {
         when(computer.getComputerConfig()).thenThrow(failure);
 
         InvocationTargetException thrown = assertThrows(InvocationTargetException.class, () ->
-                Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), mock(DialogsGui.class),
+                Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false), mock(DialogsGui.class),
                         mock(ContextPool.class), null, new EmuStudioGui()));
 
         assertSame(failure, thrown.getCause());
@@ -87,7 +87,7 @@ public class UtilsTest extends AbstractSwingTest {
             when(computer.getDebugger()).thenReturn(Optional.of(session));
             when(computer.getExecution()).thenReturn(Optional.of(machineExecution));
             java.util.concurrent.Callable<Void> start = () -> {
-                Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false, false), dialogs,
+                Utils.showMainWindow(computer, new AppSettings(Config.inMemory(), false), dialogs,
                         contextPool, null, new EmuStudioGui());
                 return null;
             };
@@ -117,7 +117,7 @@ public class UtilsTest extends AbstractSwingTest {
 
     @Test
     public void loadComputerConfigFromGuiReturnsEmptyWhenDialogIsClosedWithoutSelection() throws Exception {
-        AppSettings appSettings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings appSettings = new AppSettings(Config.inMemory(), false);
         DialogsGui dialogs = new DialogsGui(new EmuStudioGui());
 
         FutureTask<Optional<ComputerConfig>> task = new FutureTask<>(

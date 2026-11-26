@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -89,8 +90,7 @@ public class AutomationControllerTest {
             }
         });
 
-        tapeController.stop(false);
-        expectLastCall().once();
+        expect(tapeController.stop(false)).andReturn(CompletableFuture.completedFuture(null)).once();
         replay(tapeController);
 
         List<AutomationEvent> events = Collections.singletonList(
@@ -145,8 +145,7 @@ public class AutomationControllerTest {
             }
         });
 
-        tapeController.stop(true);
-        expectLastCall().once();
+        expect(tapeController.stop(true)).andReturn(CompletableFuture.completedFuture(null)).once();
         replay(tapeController);
 
         List<AutomationEvent> events = Collections.singletonList(
@@ -228,10 +227,10 @@ public class AutomationControllerTest {
             }
         });
 
-        tapeController.play();
-        expectLastCall().once();
-        // waitForPlaybackEnd polls getState(); return STOPPED immediately
-        expect(tapeController.getState()).andReturn(TapePlaybackController.CassetteState.STOPPED).once();
+        TapeTask playback = new TapeTask();
+        playback.ready.complete(null);
+        playback.completion.complete(null);
+        expect(tapeController.play()).andReturn(playback).once();
         replay(tapeController);
 
         List<AutomationEvent> events = Collections.singletonList(
@@ -262,11 +261,8 @@ public class AutomationControllerTest {
 
         tapeController.load(Path.of("file.tap"));
         expectLastCall().once();
-        tapeController.play();
-        expectLastCall().once();
-        expect(tapeController.getState()).andReturn(TapePlaybackController.CassetteState.STOPPED).once();
-        tapeController.stop(false);
-        expectLastCall().once();
+        expect(tapeController.play()).andReturn(null).once();
+        expect(tapeController.stop(false)).andReturn(CompletableFuture.completedFuture(null)).once();
         replay(tapeController);
 
         List<AutomationEvent> events = new ArrayList<>();
@@ -490,8 +486,6 @@ public class AutomationControllerTest {
 
     @Test
     public void testStateListenerReceivesPlayingNotification() throws InterruptedException {
-        // When play() is called, the listener should be notified with state changes.
-        // The listener is notified with STOPPED when finished.
         List<AutomationController.State> states = Collections.synchronizedList(new ArrayList<>());
         CountDownLatch done = new CountDownLatch(1);
         controller.setListener(new AutomationController.AutomationListener() {
@@ -511,7 +505,7 @@ public class AutomationControllerTest {
         replay(tapeController);
         controller.play(Collections.emptyList());
         assertTrue(done.await(5, TimeUnit.SECONDS));
-        assertTrue(states.contains(AutomationController.State.STOPPED));
+        assertEquals(List.of(AutomationController.State.PLAYING, AutomationController.State.STOPPED), states);
     }
 }
 

@@ -3,31 +3,22 @@
 package net.emustudio.plugins.device.audiotapeplayer;
 
 import net.emustudio.emulib.Numbers;
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.emulib.SleepUtils.preciseSleepNanos;
-
-/**
- * Executes a list of automation events sequentially.
- * Designed to run on a background thread.
- */
-@ThreadSafe
+/** Runs a tape event sequence and acknowledges when its worker has stopped. */
 public class AutomationController implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutomationController.class);
 
     public enum State {
-        PLAYING,
-        STOPPED,
-        CLOSED // terminal state
+        PLAYING, STOPPED, CLOSED
     }
 
     public interface AutomationListener {
@@ -36,163 +27,136 @@ public class AutomationController implements AutoCloseable {
         void currentIndexChanged(int index);
     }
 
-    private final ExecutorService pool = Executors.newFixedThreadPool(1);
-    private final Object lock = new Object();
-    @GuardedBy("lock")
-    private State state = State.STOPPED;
-    @GuardedBy("lock")
-    private Future<?> future;
-
-    private final Queue<State> stateNotifications = new ConcurrentLinkedQueue<>();
-
-    private AutomationListener listener;
     private final TapePlaybackController controller;
+    private volatile AutomationListener listener;
+    private boolean closed;
+    private TapeTask task;
 
     public AutomationController(TapePlaybackController controller) {
         this.controller = Objects.requireNonNull(controller);
     }
 
     public void reset() {
-        stop();
+        stop().handle((ignored, failure) -> null).join();
     }
 
     public void setListener(AutomationListener listener) {
         this.listener = listener;
     }
 
-    public boolean isPlaying() {
-        synchronized (lock) {
-            return this.state == State.PLAYING;
-        }
+    public synchronized boolean isPlaying() {
+        return task != null && task.isRunning();
     }
 
-    public void play(List<AutomationEvent> events) {
-        AutomationListener tmpListener = listener;
+    public synchronized CompletableFuture<Void> play(List<AutomationEvent> events) {
+        if (!closed && !isPlaying()) {
+            List<AutomationEvent> sequence = List.copyOf(events);
+            TapeTask next = new TapeTask();
+            task = next;
+            next.start("tape-automation", () -> playEvents(sequence, next));
+        }
+        return task == null ? CompletableFuture.completedFuture(null) : task.ready.copy();
+    }
 
-        synchronized (lock) {
-            if (this.state == State.STOPPED) {
-                this.state = State.PLAYING;
-
-                LOGGER.info("AudioTape started with {} events", events.size());
-                this.future = pool.submit(() -> {
-                    int currrentIndex = 0;
-                    try {
-                        for (; currrentIndex < events.size(); currrentIndex++) {
-                            if (tmpListener != null) {
-                                tmpListener.currentIndexChanged(currrentIndex);
-                            }
-
-                            AutomationEvent event = events.get(currrentIndex);
-                            LOGGER.info("AudioTape event [{}]: {}", currrentIndex, event.getDescription());
-                            executeEvent(event);
-                        }
-                        LOGGER.info("AudioTape finished");
-                    } catch (InterruptedException e) {
-                        LOGGER.info("AudioTape interrupted at event [{}]", currrentIndex);
-                        controller.stop(false);
-                        Thread.currentThread().interrupt();
-                    } finally {
-                        synchronized (lock) {
-                            this.state = this.state == State.CLOSED ? this.state : State.STOPPED;
-                            stateNotifications.add(this.state);
-                        }
-                        notifyStateChange();
-                    }
-                });
+    private void playEvents(List<AutomationEvent> events, TapeTask task) {
+        Throwable failure = null;
+        int index = 0;
+        LOGGER.info("AudioTape started with {} events", events.size());
+        try {
+            AutomationListener observer = listener;
+            if (observer != null) observer.stateChanged(State.PLAYING);
+            for (; index < events.size(); index++) {
+                if (Thread.interrupted()) throw new InterruptedException();
+                if (observer != null) observer.currentIndexChanged(index);
+                AutomationEvent event = events.get(index);
+                LOGGER.info("AudioTape event [{}]: {}", index, event.getDescription());
+                executeEvent(event, task);
             }
+            LOGGER.info("AudioTape finished");
+        } catch (InterruptedException stopped) {
+            LOGGER.info("AudioTape interrupted at event [{}]", index);
+        } catch (ExecutionException error) {
+            failure = error.getCause();
+        } catch (Throwable error) {
+            failure = error;
         }
+        finish(task, failure);
     }
 
-    public void stop() {
-        synchronized (lock) {
-            if (this.state == State.PLAYING) {
-                Future<?> tmpFuture = this.future;
-                this.future = null;
-                if (tmpFuture != null) {
-                    tmpFuture.cancel(true);
+    private synchronized void finish(TapeTask task, Throwable failure) {
+        try {
+            AutomationListener observer = listener;
+            if (observer != null) observer.stateChanged(closed ? State.CLOSED : State.STOPPED);
+        } catch (Throwable cleanup) {
+            if (failure == null) failure = cleanup;
+            else if (failure != cleanup) failure.addSuppressed(cleanup);
+        }
+        if (failure != null) LOGGER.error("AudioTape sequence failed", failure);
+        task.finish(failure);
+    }
+
+    public synchronized CompletableFuture<Void> stop() {
+        if (task == null) return CompletableFuture.completedFuture(null);
+        task.requestStop();
+        return task.completion.copy();
+    }
+
+    synchronized CompletableFuture<Void> shutdown() {
+        if (!closed) {
+            closed = true;
+            if (!isPlaying()) {
+                AutomationListener observer = listener;
+                try {
+                    if (observer != null) observer.stateChanged(State.CLOSED);
+                } catch (Throwable failure) {
+                    return CompletableFuture.failedFuture(failure);
                 }
-                this.state = State.STOPPED;
             }
-            stateNotifications.add(this.state);
         }
-        notifyStateChange();
+        return stop();
     }
 
     @Override
     public void close() {
-        synchronized (lock) {
-            this.state = State.CLOSED;
-            Future<?> tmpFuture = this.future;
-            this.future = null;
-            if (tmpFuture != null) {
-                tmpFuture.cancel(true);
-            }
-            pool.shutdown();
-            stateNotifications.add(this.state);
-        }
-        notifyStateChange();
-        try {
-            if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
-                pool.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        shutdown().handle((ignored, failure) -> null).join();
     }
 
-    private void executeEvent(AutomationEvent event) throws InterruptedException {
+    private void executeEvent(AutomationEvent event, TapeTask task) throws InterruptedException, ExecutionException {
         switch (event.getType()) {
             case LOAD_TAPE:
                 String path = event.getParameter();
-                if (!path.isEmpty()) {
-                    controller.load(Path.of(path));
-                } else {
-                    LOGGER.warn("LOAD_TAPE event has no path, skipping");
-                }
+                if (path.isEmpty()) LOGGER.warn("LOAD_TAPE event has no path, skipping");
+                else controller.load(Path.of(path));
                 break;
             case DELAY:
                 int seconds = Numbers.parseRadix(event.getParameter());
                 if (seconds > 0) {
-                    preciseSleepNanos(TimeUnit.SECONDS.toNanos(seconds));
+                    task.ready.complete(null);
+                    TimeUnit.SECONDS.sleep(seconds);
                 }
                 break;
             case PLAY:
-                controller.play();
-                waitForPlaybackEnd();
+                TapeTask playback = controller.play();
+                if (playback != null) {
+                    try {
+                        playback.ready.get();
+                        task.ready.complete(null);
+                        playback.completion.get();
+                    } catch (InterruptedException stopped) {
+                        controller.stop(false).join();
+                        throw stopped;
+                    }
+                }
                 break;
             case STOP:
-                controller.stop(false);
+                controller.stop(false).get();
                 break;
             case RESET:
                 controller.reset();
                 break;
             case UNLOAD:
-                controller.stop(true);
+                controller.stop(true).get();
                 break;
-        }
-    }
-
-    private void waitForPlaybackEnd() throws InterruptedException {
-        do {
-            TapePlaybackController.CassetteState state = controller.getState();
-            if (state != TapePlaybackController.CassetteState.PLAYING) {
-                break;
-            }
-            preciseSleepNanos(TimeUnit.MILLISECONDS.toNanos(100));
-        } while (getState() == State.PLAYING);
-    }
-
-    private State getState() {
-        synchronized (lock) {
-            return this.state;
-        }
-    }
-
-    private void notifyStateChange() {
-        State notification = stateNotifications.poll();
-        AutomationListener tmpListener = listener;
-        if (notification != null && tmpListener != null) {
-            tmpListener.stateChanged(notification);
         }
     }
 }

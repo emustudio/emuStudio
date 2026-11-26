@@ -249,7 +249,7 @@ public class VirtualComputerTest {
                         List.of((Class<Plugin>) (Class<?>) TestCompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
                 applicationApi,
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -268,7 +268,7 @@ public class VirtualComputerTest {
                         List.of((Class<Plugin>) (Class<?>) NotACompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         ));
     }
@@ -287,7 +287,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(compilerConfig, memoryConfig),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -307,7 +307,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(first, second),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         );
 
@@ -327,7 +327,7 @@ public class VirtualComputerTest {
                 pluginClasses,
                 List.of(compilerConfig),
                 mock(ApplicationApi.class),
-                new AppSettings(Config.inMemory(), true, false),
+                new AppSettings(Config.inMemory(), true),
                 () -> {}
         ));
     }
@@ -343,7 +343,7 @@ public class VirtualComputerTest {
                         (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
                         (Class<Plugin>) (Class<?>) TestCompilerPlugin.class,
                         (Class<Plugin>) (Class<?>) BrokenCompilerPlugin.class)), configs,
-                        mock(ApplicationApi.class), new AppSettings(Config.inMemory(), true, false), () -> {}));
+                        mock(ApplicationApi.class), new AppSettings(Config.inMemory(), true), () -> {}));
         assertEquals("Plug-in main class does not have proper constructor", failure.getMessage());
         assertEquals(List.of(2L, 1L), TestCompilerPlugin.destroyedIds);
     }
@@ -427,7 +427,8 @@ public class VirtualComputerTest {
         Device goodDevice = mock(Device.class);
         AutoCloseable classLoader = mock(AutoCloseable.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
-        doThrow(new RuntimeException("boom")).when(badDevice).destroy();
+        RuntimeException destroyFailure = new RuntimeException("boom");
+        doThrow(destroyFailure).when(badDevice).destroy();
 
         VirtualComputer vc = new VirtualComputer(computerConfig, plugins(
                 plugin(0L, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
@@ -437,8 +438,8 @@ public class VirtualComputerTest {
                 plugin(4L, pluginConfig("good-device", PLUGIN_TYPE.DEVICE), goodDevice)
         ), classLoader);
 
-        vc.close();
-        vc.close();
+        assertEquals(List.of(destroyFailure), vc.closeAndReportFailures());
+        assertTrue(vc.closeAndReportFailures().isEmpty());
 
         verify(goodDevice).destroy();
         verify(badDevice).destroy();

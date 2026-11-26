@@ -38,7 +38,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
 
     @Test
     public void gridControlsReflectInitialSchemaSettings() throws Exception {
-        AppSettings appSettings = new AppSettings(Config.inMemory(), false, false);
+        AppSettings appSettings = new AppSettings(Config.inMemory(), false);
         appSettings.setUseSchemaGrid(false);
         appSettings.setSchemaGridGap(42);
 
@@ -182,7 +182,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
     public void toolListenerResetsToolbarStateAfterToolUse() throws Exception {
         Path plugin = createPluginFile(PLUGIN_TYPE.COMPILER);
         try (ComputerConfig computerConfig = createComputerConfig("Listener test")) {
-            Schema schema = new Schema(computerConfig, new AppSettings(Config.inMemory(), false, false));
+            Schema schema = new Schema(computerConfig, new AppSettings(Config.inMemory(), false));
             SchemaEditorDialog dialog = createDialog(schema, mock(Dialogs.class));
 
             showDialog(dialog);
@@ -266,7 +266,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
         Path pluginFile = createPluginFile(pluginType);
 
         try (ComputerConfig computerConfig = createComputerConfig(pluginType.name() + " test")) {
-            Schema schema = new Schema(computerConfig, new AppSettings(Config.inMemory(), false, false));
+            Schema schema = new Schema(computerConfig, new AppSettings(Config.inMemory(), false));
             SchemaEditorDialog dialog = createDialog(schema, mock(Dialogs.class));
 
             showDialog(dialog);

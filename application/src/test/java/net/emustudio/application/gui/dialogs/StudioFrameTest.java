@@ -137,7 +137,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         when(computer.getDebugger()).thenReturn(Optional.of(session));
 
         StudioFrame frame = onEdt(() -> new StudioFrame(
-                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false), mock(Dialogs.class), memoryContext, null, new EmuStudioGui()
+                computer, new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false), mock(Dialogs.class), memoryContext, null, new EmuStudioGui()
         ));
         showFrame(frame);
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
@@ -211,7 +211,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         return onEdt(() -> new StudioFrame(
                 computer,
-                new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false, false),
+                new AppSettings(com.electronwill.nightconfig.core.Config.inMemory(), false),
                 mock(Dialogs.class),
                 null,
                 fileName,

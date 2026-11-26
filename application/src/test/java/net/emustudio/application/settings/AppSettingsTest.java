@@ -24,17 +24,13 @@ public class AppSettingsTest {
     public void testContradictingNoGui() throws IOException {
         FileConfig config = FileConfig.of(temporaryFolder.newFile("emustudio.toml"));
         config.set(AppSettings.KEY_NOGUI, true);
-        config.set(AppSettings.KEY_AUTO, true);
         config.save();
 
-        AppSettings appSettings = new AppSettings(config, false, false);
+        AppSettings appSettings = new AppSettings(config, false);
 
         Optional<Boolean> noguiOpt = appSettings.getBoolean(AppSettings.KEY_NOGUI);
-        Optional<Boolean> autoOpt = appSettings.getBoolean(AppSettings.KEY_AUTO);
         assertTrue(noguiOpt.isPresent());
-        assertTrue(autoOpt.isPresent());
         assertFalse(noguiOpt.get());
-        assertFalse(autoOpt.get());
     }
 
     @Test
@@ -42,7 +38,7 @@ public class AppSettingsTest {
         Path file = temporaryFolder.newFile("emuStudio.toml").toPath();
         Files.writeString(file, "editorBookmarks = \"x=1\"\neditorTabSize = 8\n");
 
-        AppSettings.fromFile(file, false, false);
+        AppSettings.fromFile(file, false);
 
         try (FileConfig reloaded = FileConfig.of(file)) {
             reloaded.load();
