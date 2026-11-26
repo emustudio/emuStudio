@@ -28,8 +28,7 @@ public class AppSettings extends PluginSettingsImpl {
 
     public enum Theme {
         LIGHT,
-        DARK,
-        INTELLIJ
+        DARK
     }
 
     public AppSettings(Config config, boolean nogui) {
@@ -71,7 +70,11 @@ public class AppSettings extends PluginSettingsImpl {
     }
 
     public Optional<Theme> getTheme() {
-        return getString(KEY_THEME).map(Theme::valueOf);
+        try {
+            return getString(KEY_THEME).map(Theme::valueOf);
+        } catch (IllegalArgumentException invalidTheme) {
+            return Optional.empty();
+        }
     }
 
     @Override

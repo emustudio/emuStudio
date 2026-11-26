@@ -3,8 +3,10 @@
 package net.emustudio.application.gui.framework;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.ui.FlatArrowButton;
+import com.formdev.flatlaf.ui.FlatSplitPaneUI;
 import com.formdev.flatlaf.util.ScaledImageIcon;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
@@ -37,13 +39,19 @@ import static net.emustudio.emulib.ui.Constants.*;
 public class EmuStudioGui implements GUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmuStudioGui.class);
     private static final int ICON_SIZE = 22;
+    private static final int SPLIT_PANE_ARROW_WIDTH = 15;
+    private static final int SPLIT_PANE_DIVIDER_SIZE = 9;
     private static final String CUSTOM_PREFIX = "emuStudio.icon.";
     private static final String TOOLBAR_ICON = "emuStudio.toolbarIcon";
     private static final String TOOLBAR_ICON_CALLER = "emuStudio.toolbarIconCaller";
     public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, 12);
     public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, 12);
 
-    private AppSettings.Theme currentTheme = AppSettings.Theme.INTELLIJ;
+    static {
+        FlatLaf.registerCustomDefaultsSource(EmuStudioGui.class.getPackageName(), EmuStudioGui.class.getClassLoader());
+    }
+
+    private AppSettings.Theme currentTheme = AppSettings.Theme.LIGHT;
 
     public static Icon loadIcon(String resource) {
         return loadIcon(resource, EmuStudioGui.class);
@@ -68,7 +76,7 @@ public class EmuStudioGui implements GUI {
     }
 
     public void initialize(AppSettings config) {
-        AppSettings.Theme theme = config.getTheme().orElse(AppSettings.Theme.INTELLIJ);
+        AppSettings.Theme theme = config.getTheme().orElse(AppSettings.Theme.LIGHT);
         try {
             switch (theme) {
                 case LIGHT:
@@ -76,10 +84,6 @@ public class EmuStudioGui implements GUI {
                     break;
                 case DARK:
                     FlatDarkLaf.setup();
-                    break;
-                case INTELLIJ:
-                default:
-                    FlatIntelliJLaf.setup();
                     break;
             }
             currentTheme = theme;
@@ -307,7 +311,21 @@ public class EmuStudioGui implements GUI {
         splitPane.setBorder(null);
         splitPane.setOneTouchExpandable(true);
         splitPane.setResizeWeight(resizeWeight);
+        enlargeSplitPaneArrows(splitPane);
+        splitPane.addPropertyChangeListener("UI", event -> enlargeSplitPaneArrows(splitPane));
         return splitPane;
+    }
+
+    private static void enlargeSplitPaneArrows(JSplitPane splitPane) {
+        if (splitPane.getUI() instanceof FlatSplitPaneUI) {
+            FlatSplitPaneUI ui = (FlatSplitPaneUI) splitPane.getUI();
+            splitPane.setDividerSize(Math.max(splitPane.getDividerSize(), SPLIT_PANE_DIVIDER_SIZE));
+            for (Component component : ui.getDivider().getComponents()) {
+                if (component instanceof FlatArrowButton) {
+                    ((FlatArrowButton) component).setArrowWidth(SPLIT_PANE_ARROW_WIDTH);
+                }
+            }
+        }
     }
 
     @Override
