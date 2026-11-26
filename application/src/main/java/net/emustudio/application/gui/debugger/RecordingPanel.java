@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.TabSet;
@@ -81,7 +82,11 @@ final class RecordingPanel extends JPanel {
         history.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         gui.styleTable(history);
         history.setFont(EmuStudioGui.monospaced(history).deriveFont(13f));
-        for (int column = 0; column < history.getColumnCount(); column++)
+        int addressWidth = history.getFontMetrics(history.getFont()).stringWidth("FFFFFFFF → FFFFFFFF") + 12;
+        TableColumn addressColumn = history.getColumnModel().getColumn(0);
+        addressColumn.setMaxWidth(addressWidth);
+        addressColumn.setPreferredWidth(addressWidth);
+        for (int column = 1; column < history.getColumnCount(); column++)
             history.getColumnModel().getColumn(column).setPreferredWidth(200);
         JPanel tools = gui.toolbarPanel();
         JToolBar capture = gui.toolBar();
