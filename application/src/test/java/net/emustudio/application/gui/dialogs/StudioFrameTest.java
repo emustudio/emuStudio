@@ -94,8 +94,8 @@ public class StudioFrameTest extends AbstractSwingTest {
             }
             return labels;
         });
-        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Column Selection Mode", "Go to line / column",
-                "Editor display", "Refactor", "Split view")));
+        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Column Selection Mode", "Go to line...",
+                "Indentation...", "Token colors...", "Editor display", "Refactor", "Split view")));
         org.junit.Assert.assertFalse(editingItems.contains("Selection"));
         org.junit.Assert.assertFalse(editingItems.contains("Navigate"));
         org.junit.Assert.assertFalse(editingItems.contains("Editing macros"));
@@ -110,7 +110,9 @@ public class StudioFrameTest extends AbstractSwingTest {
                 .filter(JMenuItem.class::isInstance)
                 .map(JMenuItem.class::cast)
                 .map(JMenuItem::getText)
-                .noneMatch(label -> "Syntax highlighting".equals(label) || "End-of-line markers".equals(label))));
+                .noneMatch(label -> "Syntax highlighting".equals(label) || "End-of-line markers".equals(label)
+                        || "Indentation...".equals(label) || "Indentation settings".equals(label)
+                        || label.startsWith("Token colors"))));
     }
 
     @Test

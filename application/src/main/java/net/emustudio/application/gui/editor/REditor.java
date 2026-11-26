@@ -34,9 +34,11 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,6 +48,7 @@ import static net.emustudio.application.Constants.FONT_CODE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
+    private static final String COMPILER_STYLE = "text/emustudio";
     private final TextEditorPane textPane = new MultipleSelection.Pane();
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
     private final List<DocumentListener> changeListeners = new ArrayList<>();
@@ -80,8 +83,7 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
-        SourceFoldParser.install(textPane, compiler);
-        scrollPane.setFoldIndicatorEnabled(true);
+        if (compiler != null) installCompilerSyntax();
 
         textPane.setCaretPosition(0);
         textPane.requestFocusInWindow();
@@ -473,6 +475,23 @@ public class REditor implements Editor {
             return Collections.emptyList();
         }
         return List.of(new FileType("All source files", sourceExtensions));
+    }
+
+    private void installCompilerSyntax() {
+        // Keep compiler tokenization with the document when two panes share it.
+        TokenMakerFactory fallback = TokenMakerFactory.getDefaultInstance();
+        ((RSyntaxDocument) textPane.getDocument()).setTokenMakerFactory(new TokenMakerFactory() {
+            @Override protected TokenMaker getTokenMakerImpl(String key) {
+                return COMPILER_STYLE.equals(key) ? new RTokenMaker(compiler) : fallback.getTokenMaker(key);
+            }
+
+            @Override public Set<String> keySet() {
+                Set<String> keys = new HashSet<>(fallback.keySet());
+                keys.add(COMPILER_STYLE);
+                return keys;
+            }
+        });
+        textPane.setSyntaxEditingStyle(COMPILER_STYLE);
     }
 
     private void setupSyntaxTheme() {

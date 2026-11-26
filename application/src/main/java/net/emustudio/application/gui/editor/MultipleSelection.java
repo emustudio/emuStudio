@@ -22,7 +22,20 @@ final class MultipleSelection {
     /** Routes selection gestures before Swing's single-caret mouse handler. */
     static final class Pane extends TextEditorPane {
         private MultipleSelection selections;
-        Pane() { super(TextMode.INSERT); }
+
+        Pane() {
+            super(TextMode.INSERT);
+            int shortcut = RTextArea.getDefaultModifier();
+            // Mask the fold shortcuts inherited from RSyntaxTextArea.
+            for (int key : new int[]{KeyEvent.VK_ADD, KeyEvent.VK_SUBTRACT, KeyEvent.VK_DIVIDE, KeyEvent.VK_MULTIPLY}) {
+                getInputMap().put(KeyStroke.getKeyStroke(key, shortcut), "none");
+            }
+        }
+
+        @Override protected void appendFoldingMenu(JPopupMenu popup, int index) {
+            // Omit RSyntaxTextArea's built-in folding submenu.
+        }
+
         @Override protected void processMouseEvent(MouseEvent e) {
             if (selections == null || !selections.mouse(e)) super.processMouseEvent(e);
         }
@@ -307,19 +320,35 @@ final class MultipleSelection {
             String text = pane.getText();
             List<Range> next = new ArrayList<>();
             for (Range r : ranges) {
-                int caret = r.end;
-                if (key == KeyEvent.VK_LEFT) caret = r.start == r.end && r.start > 0 ? text.offsetByCodePoints(r.start, -1) : r.start;
-                else if (key == KeyEvent.VK_RIGHT) caret = r.start == r.end && r.end < text.length() ? text.offsetByCodePoints(r.end, 1) : r.end;
-                else {
-                    int line = pane.getLineOfOffset(caret), column = caret - pane.getLineStartOffset(line);
-                    int nextLine = Math.max(0, Math.min(pane.getLineCount() - 1, line + (key == KeyEvent.VK_UP ? -1 : 1)));
-                    caret = Math.min(pane.getLineEndOffset(nextLine) - (nextLine + 1 < pane.getLineCount() ? 1 : 0),
-                            pane.getLineStartOffset(nextLine) + column);
+                if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                    next.add(moveHorizontally(r, text, key == KeyEvent.VK_RIGHT));
+                    continue;
                 }
+                int line = pane.getLineOfOffset(r.end), column = r.end - pane.getLineStartOffset(line);
+                int nextLine = Math.max(0, Math.min(pane.getLineCount() - 1, line + (key == KeyEvent.VK_UP ? -1 : 1)));
+                int caret = Math.min(pane.getLineEndOffset(nextLine) - (nextLine + 1 < pane.getLineCount() ? 1 : 0),
+                        pane.getLineStartOffset(nextLine) + column);
                 next.add(new Range(caret, caret));
             }
             set(next);
         } catch (BadLocationException e) { clear(); }
+    }
+
+    private Range moveHorizontally(Range range, String text, boolean right) {
+        int caret = right ? range.end : range.start;
+        if (range.start != range.end) return new Range(caret, caret);
+
+        int adjacent = right ? caret : caret - 1;
+        boolean hasCharacter = adjacent >= 0 && adjacent < text.length();
+        if (columnSelectionMode) {
+            if (!right && range.padding > 0) return new Range(caret, caret, range.padding - 1);
+            if (!hasCharacter || text.charAt(adjacent) == '\n') {
+                // Keep the caret on its row. Typing fills any columns beyond the line end.
+                return new Range(caret, caret, right ? range.padding + 1 : 0);
+            }
+        }
+        if (hasCharacter) caret = text.offsetByCodePoints(caret, right ? 1 : -1);
+        return new Range(caret, caret);
     }
 
     private void copy(boolean cut) {

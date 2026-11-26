@@ -4,10 +4,10 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import org.fife.ui.rsyntaxtextarea.*;
-import org.fife.ui.rsyntaxtextarea.folding.Fold;
 import org.fife.ui.rtextarea.*;
 
 import javax.swing.*;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
@@ -74,11 +74,9 @@ final class EditorCommands {
         add(COLUMN_SELECTION_MODE, mac ? KeyEvent.VK_8 : KeyEvent.VK_INSERT, (mac ? shortcut : alt) | shift,
                 () -> actions.get(COLUMN_SELECTION_MODE).putValue(Action.SELECTED_KEY, selections.toggleColumnSelectionMode()));
         actions.get(COLUMN_SELECTION_MODE).putValue(Action.SELECTED_KEY, false);
-        add("Go to line / column", mac ? KeyEvent.VK_L : KeyEvent.VK_G, shortcut, this::goTo);
-        add("Collapse all", KeyEvent.VK_SUBTRACT, shortcut | shift, () -> fold(true));
-        add("Expand all", KeyEvent.VK_ADD, shortcut | shift, () -> fold(false));
-        add("Indentation settings", 0, 0, this::indentationSettings);
-        add("Token colors", 0, 0, this::tokenColors);
+        add("Go to line...", mac ? KeyEvent.VK_L : KeyEvent.VK_G, shortcut, this::goTo);
+        add("Indentation...", 0, 0, this::indentationSettings);
+        add("Token colors...", 0, 0, this::tokenColors);
     }
 
     void configure(EditorState state) {
@@ -88,7 +86,6 @@ final class EditorCommands {
         pane.setWhitespaceVisible(state.flag("Whitespace", false));
         pane.setPaintTabLines(state.flag("IndentGuides", false));
         pane.setLineWrap(state.flag("Wrap", false));
-        pane.setCodeFoldingEnabled(state.flag("Folding", true));
         applyColors();
     }
 
@@ -99,13 +96,14 @@ final class EditorCommands {
     List<JMenuItem> editMenuItems() {
         JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Uppercase", "Lowercase", "Invert case", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
         JCheckBoxMenuItem columnSelection = new JCheckBoxMenuItem(actions.get(COLUMN_SELECTION_MODE));
-        JMenuItem goTo = new JMenuItem(actions.get("Go to line / column"));
-        JMenu view = menu("Editor display", "Collapse all", "Expand all", "Indentation settings", "Token colors");
+        JMenuItem goTo = new JMenuItem(actions.get("Go to line..."));
+        JMenuItem indentation = new JMenuItem(actions.get("Indentation..."));
+        JMenuItem tokenColors = new JMenuItem(actions.get("Token colors..."));
+        JMenu view = new JMenu("Editor display");
         toggle(view, "Whitespace", "Visible whitespace", pane::isWhitespaceVisible, pane::setWhitespaceVisible);
         toggle(view, "IndentGuides", "Indentation guides", pane::getPaintTabLines, pane::setPaintTabLines);
         toggle(view, "Wrap", "Soft wrap", pane::getLineWrap, pane::setLineWrap);
-        toggle(view, "Folding", "Code folding", pane::isCodeFoldingEnabled, pane::setCodeFoldingEnabled);
-        return List.of(edit, columnSelection, goTo, view);
+        return List.of(edit, columnSelection, goTo, indentation, tokenColors, view);
     }
 
     private JMenu menu(String title, String... names) {
@@ -259,16 +257,6 @@ final class EditorCommands {
         }
     }
 
-    private void fold(boolean collapsed) {
-        for (int i = 0; i < pane.getFoldManager().getFoldCount(); i++)
-            setCollapsed(pane.getFoldManager().getFold(i), collapsed);
-    }
-
-    private void setCollapsed(Fold fold, boolean collapsed) {
-        for (int i = 0; i < fold.getChildCount(); i++) setCollapsed(fold.getChild(i), collapsed);
-        fold.setCollapsed(collapsed);
-    }
-
     private void toggle(JMenu menu, String key, String label, java.util.function.BooleanSupplier get, java.util.function.Consumer<Boolean> set) {
         JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, get.getAsBoolean());
         item.addActionListener(e -> {
@@ -293,26 +281,75 @@ final class EditorCommands {
         state.setNumber("CommentColumn", (Integer) comment.getValue());
     }
 
-    private final int[] colorTypes = {Token.RESERVED_WORD, Token.IDENTIFIER, Token.ANNOTATION, Token.PREPROCESSOR, Token.COMMENT_MARKUP, Token.LITERAL_NUMBER_DECIMAL_INT, Token.RESERVED_WORD_2, Token.OPERATOR, Token.SEPARATOR, Token.ERROR_IDENTIFIER};
+    private enum TokenColor {
+        RESERVED("Reserved", "Reserved words", Token.RESERVED_WORD),
+        IDENTIFIER("Identifier", "Identifiers", Token.IDENTIFIER),
+        LABEL("Label", "Labels / definitions", Token.ANNOTATION),
+        PREPROCESSOR("Preprocessor", "Directives / blocks", Token.PREPROCESSOR),
+        COMMENT("Comment", "Comments", Token.COMMENT_MARKUP),
+        LITERAL("Literal", "Literals", Token.LITERAL_NUMBER_DECIMAL_INT),
+        REGISTER("Register", "Registers", Token.RESERVED_WORD_2),
+        OPERATOR("Operator", "Operators", Token.OPERATOR),
+        SEPARATOR("Separator", "Separators", Token.SEPARATOR),
+        ERROR("Error", "Errors", Token.ERROR_IDENTIFIER);
+
+        private final String keySuffix;
+        private final String label;
+        private final int type;
+
+        TokenColor(String keySuffix, String label, int type) {
+            this.keySuffix = keySuffix;
+            this.label = label;
+            this.type = type;
+        }
+    }
 
     private void tokenColors() {
-        String[] labels = {"Reserved words", "Identifiers", "Labels / definitions", "Directives / blocks", "Comments", "Literals", "Registers", "Operators", "Separators", "Errors"};
-        String choice = (String) JOptionPane.showInputDialog(pane, "Token category", "Token colors", JOptionPane.PLAIN_MESSAGE, null, labels, labels[0]);
-        if (choice == null) return;
-        int type = colorTypes[Arrays.asList(labels).indexOf(choice)];
-        Color value = JColorChooser.showDialog(pane, choice, pane.getSyntaxScheme().getStyle(type).foreground);
-        if (value != null) {
-            state.setNumber("Color" + type, value.getRGB());
-            applyColors();
+        TokenColor[] options = TokenColor.values();
+        String[] labels = Arrays.stream(options).map(option -> option.label).toArray(String[]::new);
+        SyntaxScheme scheme = pane.getSyntaxScheme();
+        Color[] original = Arrays.stream(options)
+                .map(option -> Objects.requireNonNullElse(scheme.getStyle(option.type).foreground, pane.getForeground()))
+                .toArray(Color[]::new);
+        Color[] colors = original.clone();
+
+        JList<String> categories = new JList<>(labels);
+        categories.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        categories.setVisibleRowCount(labels.length);
+        categories.setSelectedIndex(0);
+        categories.getAccessibleContext().setAccessibleName("Token category");
+        JColorChooser chooser = new JColorChooser(colors[0]);
+        AbstractColorChooserPanel[] panels = chooser.getChooserPanels();
+        panels[0] = new TokenColorSwatches();
+        chooser.setChooserPanels(panels);
+        categories.addListSelectionListener(event -> {
+            int index = categories.getSelectedIndex();
+            if (!event.getValueIsAdjusting() && index >= 0) chooser.setColor(colors[index]);
+        });
+        chooser.getSelectionModel().addChangeListener(event -> {
+            int index = categories.getSelectedIndex();
+            if (index >= 0) colors[index] = chooser.getColor();
+        });
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, new JScrollPane(categories), chooser);
+        split.setBorder(null);
+        int result = JOptionPane.showConfirmDialog(pane, split, "Token colors", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) return;
+
+        for (int i = 0; i < options.length; i++) {
+            if (!colors[i].equals(original[i])) state.setTokenColor(options[i].keySuffix, colors[i].getRGB());
         }
+        applyColors();
     }
 
     private void applyColors() {
         SyntaxScheme scheme = (SyntaxScheme) pane.getSyntaxScheme().clone();
-        for (int type : colorTypes) {
-            int color = state.number("Color" + type, Integer.MIN_VALUE);
-            if (color == Integer.MIN_VALUE) continue;
-            Color value = new Color(color, true);
+        for (TokenColor category : TokenColor.values()) {
+            Optional<Integer> color = state.tokenColor(category.keySuffix);
+            if (color.isEmpty()) continue;
+            int type = category.type;
+            Color value = new Color(color.get(), true);
             scheme.getStyle(type).foreground = value;
             int first = type, last = type;
             if (type == Token.LITERAL_NUMBER_DECIMAL_INT) {

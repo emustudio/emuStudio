@@ -8,11 +8,14 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.plugin.compiler.*;
 import net.emustudio.emulib.application.ui.Dialogs;
 import org.fife.ui.rsyntaxtextarea.TextEditorPane;
-import org.fife.ui.rsyntaxtextarea.folding.Fold;
+import org.fife.ui.rsyntaxtextarea.TokenTypes;
 import org.fife.ui.rtextarea.RTextArea;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import javax.swing.*;
+import java.awt.Color;
+import java.awt.Container;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.event.*;
@@ -32,6 +35,70 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     private void command(REditor editor, String name) {
         runOnEdt(() -> editor.commands().action(name).actionPerformed(new ActionEvent(editor.textPane(), 0, name)));
     }
+    @Test public void tokenColorDialogKeepsChangesAcrossCategoriesUntilConfirmed() throws Exception {
+        Path settingsFile = files.newFile("emuStudio.toml").toPath();
+        Color originalCommentColor = new Color(0x80000000, true);
+        Files.writeString(settingsFile, "tokenColorReserved = " + Color.BLACK.getRGB()
+                + "\ntokenColorComment = " + originalCommentColor.getRGB() + "\n");
+        AppSettings settings = AppSettings.fromFile(settingsFile, false);
+        REditor editor = editor("NOP");
+        runOnEdt(() -> editor.configure(new EditorState(settings)));
+        JFrame frame = showInFrame(editor.getView());
+        runOnEdt(() -> frame.setVisible(true));
+
+        JDialog dialog = openTokenColors(editor);
+        JSplitPane split = findComponent(dialog, JSplitPane.class, pane -> pane.getRightComponent() instanceof JColorChooser);
+        JList<?> categories = findComponent((Container) split.getLeftComponent(), JList.class, list -> true);
+        JColorChooser chooser = (JColorChooser) split.getRightComponent();
+        JList<?> swatches = findComponent(chooser, JList.class,
+                list -> "Swatches".equals(list.getAccessibleContext().getAccessibleName()));
+        JList<?> recent = findComponent(chooser, JList.class,
+                list -> "Recent colors".equals(list.getAccessibleContext().getAccessibleName()));
+        TextEditorPane pane = editor.textPane();
+        runOnEdt(() -> {
+            assertEquals(JSplitPane.HORIZONTAL_SPLIT, split.getOrientation());
+            assertEquals("Reserved words", categories.getSelectedValue());
+            assertEquals(pane.getSyntaxScheme().getStyle(TokenTypes.RESERVED_WORD).foreground, chooser.getColor());
+            assertEquals(Color.BLACK, swatches.getSelectedValue());
+            swatches.setSelectedValue(Color.MAGENTA, true);
+            assertEquals(Color.MAGENTA, chooser.getColor());
+            categories.setSelectedValue("Comments", true);
+            assertEquals(originalCommentColor, chooser.getColor());
+            assertTrue(swatches.isSelectionEmpty());
+            assertEquals(originalCommentColor, recent.getSelectedValue());
+            chooser.setColor(Color.ORANGE);
+            categories.setSelectedValue("Reserved words", true);
+            assertEquals(Color.MAGENTA, chooser.getColor());
+            assertEquals(Color.MAGENTA, swatches.getSelectedValue());
+            assertTrue(recent.isSelectionEmpty());
+            assertEquals(Color.BLACK.getRGB(), settings.getInt("tokenColorReserved").orElseThrow().intValue());
+        });
+        triggerButton(findButton(dialog, "OK"));
+        runOnEdt(() -> {
+            assertEquals(Color.MAGENTA, pane.getSyntaxScheme().getStyle(TokenTypes.RESERVED_WORD).foreground);
+            assertEquals(Color.ORANGE, pane.getSyntaxScheme().getStyle(TokenTypes.COMMENT_EOL).foreground);
+        });
+        AppSettings saved = AppSettings.fromFile(settingsFile, false);
+        assertEquals(Color.MAGENTA.getRGB(), saved.getInt("tokenColorReserved").orElseThrow().intValue());
+        assertEquals(Color.ORANGE.getRGB(), saved.getInt("tokenColorComment").orElseThrow().intValue());
+        String confirmedSettings = Files.readString(settingsFile);
+
+        JDialog reopened = openTokenColors(editor);
+        JColorChooser reopenedChooser = findComponent(reopened, JColorChooser.class, picker -> true);
+        runOnEdt(() -> {
+            assertEquals(Color.MAGENTA, reopenedChooser.getColor());
+            reopenedChooser.setColor(Color.CYAN);
+        });
+        triggerButton(findButton(reopened, "Cancel"));
+        assertEquals(Color.MAGENTA, onEdt(() -> pane.getSyntaxScheme().getStyle(TokenTypes.RESERVED_WORD).foreground));
+        assertEquals(confirmedSettings, Files.readString(settingsFile));
+    }
+
+    private JDialog openTokenColors(REditor editor) {
+        SwingUtilities.invokeLater(() -> command(editor, "Token colors..."));
+        return waitForWindow(JDialog.class, dialog -> "Token colors".equals(dialog.getTitle()));
+    }
+
     @Test public void caseCommandsChangeOnlyTheSelectionAndUndoTogether() {
         String[][] cases = {{"Uppercase", "MIXED"}, {"Lowercase", "mixed"}, {"Invert case", "mIxEd"}};
         for (String[] test : cases) {
@@ -60,7 +127,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
             assertEquals("aß keep éB", onEdt(editor.textPane()::getText));
         }
     }
-    @Test public void compilerSyntaxProvidesCommentRulesAndFoldsWithOldSyntaxOverride() throws Exception {
+    @Test public void compilerSyntaxProvidesCommentRulesWithOldSyntaxOverride() throws Exception {
         Path source = Files.writeString(files.newFile("program.asm").toPath(), "block\n  body\nend\n");
         String encodedPath = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(source.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8));
@@ -74,10 +141,7 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         runOnEdt(() -> {
             editor.configure(new EditorState(settings));
             assertTrue(editor.openFile(source));
-            editor.textPane().getFoldManager().reparse();
         });
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(editor.textPane()::getSyntaxEditingStyle));
-        assertEquals(1, onEdt(() -> editor.textPane().getFoldManager().getFoldCount()).intValue());
         runOnEdt(() -> editor.textPane().select(0, 5)); command(editor, "Toggle comment");
         assertTrue(onEdt(editor.textPane()::getText).startsWith("##block\n"));
     }
@@ -161,6 +225,29 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         command(editor, "Column Selection Mode");
         runOnEdt(() -> pane.replaceSelection("!"));
         assertEquals("a!c\na!\na!c", onEdt(pane::getText));
+    }
+    @Test public void columnCaretsStayOnBlankAndShortRowsWhenMovingHorizontally() {
+        REditor editor = editor("abc\n\nx\nabc");
+        TextEditorPane pane = editor.textPane();
+        runOnEdt(() -> {
+            pane.setSize(400, 180);
+            pane.setCaretPosition(1);
+            columnSelectionItem(editor).doClick(0);
+            KeyStroke extendDown = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK);
+            for (int line = 0; line < 3; line++) editorKey(pane, extendDown);
+
+            KeyStroke right = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0);
+            editorKey(pane, right);
+            List<MultipleSelection.Range> carets = editor.commands().selections().ranges();
+            assertEquals(4, carets.size());
+            assertEquals(4, carets.get(1).start);
+            assertEquals(6, carets.get(2).start);
+
+            editorKey(pane, right);
+            editorKey(pane, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
+            pane.replaceSelection("!");
+            assertEquals("ab!c\n  !\nx !\nab!c", pane.getText());
+        });
     }
     @Test public void columnSelectionModeRestoresTheOriginalKeyboardBindingWhenDisabled() {
         REditor editor = editor("abcd\na\nabcd");
@@ -249,40 +336,37 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     @Test public void invalidRegexReplacementIsRejectedBeforeEditing() {
         assertThrows(IllegalArgumentException.class, () -> EditorSearch.find("x", "(x)", "$9", true, true, false, false, 0, 1));
     }
-    @Test public void foldingUsesUnknownCompilerBlockTokens() {
-        LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "anything", null, null, null),
-                new SourceToken(Token.BLOCK_END, 16, "done", null, null, null)));
-        REditor editor = onEdt(() -> new REditor(mock(Dialogs.class), new CompilerStub(lexer)));
-        runOnEdt(() -> editor.textPane().setText("anything\n  body\ndone\n"));
-        assertTrue(onEdt(() -> editor.textPane().getParserCount() > 0));
-        List<Fold> folds = onEdt(() -> new SourceFoldParser().getFolds(editor.textPane()));
-        assertEquals(1, folds.size()); assertEquals(0, folds.get(0).getStartLine()); assertEquals(2, folds.get(0).getEndLine());
+    @Test public void sourceEditorOmitsInheritedFoldingControls() {
+        REditor editor = editor("block\n  body\nend\n");
+        TextEditorPane pane = editor.textPane();
+        runOnEdt(() -> {
+            assertFalse(pane.isCodeFoldingEnabled());
+            assertFalse(((RTextScrollPane) editor.getView()).isFoldIndicatorEnabled());
+            assertFalse(Arrays.stream(pane.getPopupMenu().getComponents()).anyMatch(JMenu.class::isInstance));
+            int shortcut = RTextArea.getDefaultModifier();
+            for (int key : new int[]{KeyEvent.VK_ADD, KeyEvent.VK_SUBTRACT, KeyEvent.VK_DIVIDE, KeyEvent.VK_MULTIPLY}) {
+                Object binding = pane.getInputMap().get(KeyStroke.getKeyStroke(key, shortcut));
+                assertTrue(binding == null || !binding.toString().contains("Fold"));
+            }
+        });
     }
-    @Test public void compilerFoldingSurvivesOpeningSplittingAndUnsplit() throws Exception {
+
+    @Test public void compilerHighlightingSurvivesOpeningSplittingAndUnsplit() throws Exception {
         Path source = files.newFile("generic.asm").toPath();
-        Files.writeString(source, "anything\n  body\ndone\n");
-        LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.BLOCK_START, 0, "anything", null, null, null),
-                new SourceToken(Token.BLOCK_END, 16, "done", null, null, null)));
+        Files.writeString(source, "nop\n");
+        LexicalAnalyzer lexer = new TokenLexer(List.of(new SourceToken(Token.RESERVED, 0, "nop", null, null, null)));
         TabbedEditor workspace = onEdt(() -> new TabbedEditor(mock(Dialogs.class), new CompilerStub(lexer)));
         assertTrue(onEdt(() -> workspace.openFile(source)));
         REditor original = workspace.activeEditor();
-        runOnEdt(() -> original.textPane().getFoldManager().reparse());
-        assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
+        assertEquals(TokenTypes.RESERVED_WORD, onEdt(() -> original.textPane().getTokenListForLine(0).getType()).intValue());
 
         runOnEdt(() -> workspace.split(true));
         JSplitPane split = onEdt(() -> (JSplitPane) ((JTabbedPane) workspace.getView()).getSelectedComponent());
         TextEditorPane mirror = findComponent((java.awt.Container) split.getRightComponent(), TextEditorPane.class, pane -> true);
-        runOnEdt(() -> mirror.getFoldManager().reparse());
-        assertEquals(1, onEdt(() -> mirror.getFoldManager().getFoldCount()).intValue());
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(mirror::getSyntaxEditingStyle));
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(original.textPane()::getSyntaxEditingStyle));
+        assertEquals(TokenTypes.RESERVED_WORD, onEdt(() -> mirror.getTokenListForLine(0).getType()).intValue());
 
-        runOnEdt(() -> {
-            workspace.unsplit();
-            original.textPane().getFoldManager().reparse();
-        });
-        assertEquals(1, onEdt(() -> original.textPane().getFoldManager().getFoldCount()).intValue());
-        assertEquals(SourceFoldParser.COMPILER_STYLE, onEdt(() -> ((org.fife.ui.rsyntaxtextarea.RSyntaxDocument) original.textPane().getDocument()).getSyntaxStyle()));
+        runOnEdt(workspace::unsplit);
+        assertEquals(TokenTypes.RESERVED_WORD, onEdt(() -> original.textPane().getTokenListForLine(0).getType()).intValue());
     }
     @Test public void commentToggleUsesAnUnknownCompilersDelimiter() {
         LexicalAnalyzer lexer = new TokenLexer(List.of()) {
@@ -326,15 +410,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         keyboard.redispatchEvent(pane, new KeyEvent(pane, KeyEvent.KEY_RELEASED, time, modifiers, KeyEvent.VK_SLASH, '/'));
     }
 
-    @Test public void foldingFallsBackToIndentationWhenAPluginRejectsIncompleteSource() {
-        LexicalAnalyzer lexer = new TokenLexer(List.of()) {
-            public void reset(char[] chars, int offset, int length) { throw new IllegalArgumentException("incomplete"); }
-        };
-        REditor editor = editor("heading\n  body\nnext\n");
-        runOnEdt(() -> editor.textPane().putClientProperty("sourceLexer", (java.util.function.Supplier<LexicalAnalyzer>) () -> lexer));
-        List<Fold> folds = onEdt(() -> new SourceFoldParser().getFolds(editor.textPane()));
-        assertEquals(1, folds.size()); assertEquals(1, folds.get(0).getEndLine());
-    }
     @Test public void sameFileSplitSharesDocumentAndKeepsTabCount() {
         TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
         REditor original = tabs.activeEditor();
