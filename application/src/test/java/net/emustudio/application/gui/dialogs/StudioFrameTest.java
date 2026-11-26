@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -110,6 +111,29 @@ public class StudioFrameTest extends AbstractSwingTest {
                 .map(JMenuItem.class::cast)
                 .map(JMenuItem::getText)
                 .noneMatch(label -> "Syntax highlighting".equals(label) || "End-of-line markers".equals(label))));
+    }
+
+    @Test
+    public void editMenuAndFindShortcutFollowTheSelectedWorkspace() {
+        StudioFrame frame = createFrame(null);
+        showFrame(frame);
+        JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
+
+        runOnEdt(() -> {
+            frame.setVisible(true);
+            JMenu edit = frame.getJMenuBar().getMenu(1);
+            assertTrue(edit.isEnabled());
+
+            tabs.setSelectedIndex(1);
+            assertFalse(edit.isEnabled());
+            KeyEvent find = new KeyEvent(frame, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                    RTextArea.getDefaultModifier(), KeyEvent.VK_F, 'f');
+            assertFalse(SwingUtilities.processKeyBindings(find));
+
+            tabs.setSelectedIndex(0);
+            assertTrue(edit.isEnabled());
+            assertTrue(SwingUtilities.processKeyBindings(find));
+        });
     }
 
     @Test

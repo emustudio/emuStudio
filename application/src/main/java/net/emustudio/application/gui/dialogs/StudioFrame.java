@@ -214,6 +214,9 @@ public class StudioFrame extends JFrame {
         mnuEdit.add(new JMenuItem(findNextAction));
         mnuEdit.add(new JMenuItem(findPreviousAction));
         editor.extendEditingMenu(mnuEdit);
+        mnuEdit.setEnabled(tabbedPane.getSelectedComponent() == editorPanel);
+        tabbedPane.addChangeListener(event ->
+                mnuEdit.setEnabled(tabbedPane.getSelectedComponent() == editorPanel));
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
