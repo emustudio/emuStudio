@@ -2,6 +2,7 @@
 SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation.debugger;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.settings.DebuggerConfig;
 import net.emustudio.emulib.application.annotations.MemoryAnnotations;
 import net.emustudio.emulib.plugin.compiler.Compiler;
@@ -22,7 +23,9 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Host debugging policy; plugins interpret machine state at the execution seam.
@@ -36,6 +39,8 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     public final MemoryContext<?> memory;
     public final MemoryAnnotations annotationEngine;
     public final DebuggerConfig config;
+    private final Set<Integer> breakpoints = new ConcurrentSkipListSet<>();
+    private UserAnnotations annotations;
     private SourceAddressMap sourceMappings;
     private boolean sourceMappingsCleared;
     private int addressSpaceSize;
@@ -59,6 +64,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     private AutoCloseable observation;
     private Debugging.Capture captureAttached;
     private boolean skipBeforeStep, observationDirty;
+    private boolean ignoreBreakpoints;
     private int stoppedAddress = -1;
     private final MemoryContext.MemoryListener memoryListener = new MemoryContext.MemoryListener() {
         @Override
@@ -107,11 +113,11 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         }
     }
 
-    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings) throws IOException {
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Config settings) {
         this(cpu, cpuContext, memory, settings, new MemoryAnnotations());
     }
 
-    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Path settings, MemoryAnnotations annotationEngine) throws IOException {
+    public DebuggerSession(CPU cpu, CPUContext cpuContext, MemoryContext<?> memory, Config settings, MemoryAnnotations annotationEngine) {
         this.cpu = Objects.requireNonNull(cpu);
         this.cpuContext = Objects.requireNonNull(cpuContext);
         this.annotationEngine = Objects.requireNonNull(annotationEngine);
@@ -120,7 +126,18 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         recording = new InstructionRecording(debug != null, cpu::getTitle, cpu::getAddressSpaceSize);
         this.memory = memory;
         if (this.memory != null || cpu.getAddressSpaceSize() > 0) addressSpaceSize();
-        config = new DebuggerConfig(settings, cpu::getAddressSpaceSize, annotationEngine);
+        config = new DebuggerConfig(settings == null ? Config.inMemory() : settings);
+        int size = cpu.getAddressSpaceSize();
+        int skipped = 0;
+        for (int address : config.getBreakpoints()) {
+            if (address >= 0 && address < size) breakpoints.add(address);
+            else skipped++;
+        }
+        if (size > 0) {
+            List<UserAnnotations.Entry> saved = config.getAnnotations();
+            if (!saved.isEmpty()) skipped += annotations().merge(saved);
+        }
+        if (skipped > 0) LOGGER.warn("Skipped {} invalid debugger setting(s) in computer configuration.", skipped);
         try {
             if (this.memory != null) this.memory.addMemoryListener(memoryListener);
             update(() -> {}).join();
@@ -392,9 +409,37 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         });
     }
 
+    public synchronized void editWatches(Consumer<List<String>> edit) {
+        List<String> expressions = new ArrayList<>(config.getWatches());
+        edit.accept(expressions);
+        config.setWatches(expressions);
+    }
+
+    public synchronized UserAnnotations annotations() {
+        int size = cpu.getAddressSpaceSize();
+        if (size < 1) throw new IllegalStateException("Memory unavailable");
+        if (annotations == null || annotations.addressSpaceSize() != size)
+            annotations = new UserAnnotations(size, annotationEngine);
+        return annotations;
+    }
+
+    public synchronized void editAnnotations(Consumer<UserAnnotations> edit) {
+        UserAnnotations current = annotations();
+        edit.accept(current);
+        config.setAnnotations(current.entries());
+    }
+
+    public synchronized int importAnnotations(Path source) throws IOException {
+        return config.importAnnotations(source, annotations());
+    }
+
+    public void exportAnnotations(Path target) throws IOException {
+        DebuggerConfig.exportAnnotations(target, annotations().entries());
+    }
+
     @Override
     public synchronized boolean canBatchInstructions() {
-        return !closed && config.breakpoints.isEmpty() && !recording.requiresFullCapture();
+        return !closed && (ignoreBreakpoints || breakpoints.isEmpty()) && !recording.requiresFullCapture();
     }
 
     @Override
@@ -451,7 +496,12 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     public boolean isBreakpointSet(int address) {
-        return config.breakpoints.contains(address);
+        return breakpoints.contains(address);
+    }
+
+    /** Disables breakpoint checks for the rest of this session. */
+    public synchronized void ignoreBreakpoints() {
+        ignoreBreakpoints = true;
     }
 
     public CompletableFuture<Void> setBreakpoint(int address, boolean enabled) {
@@ -459,8 +509,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             throw new IllegalArgumentException("Address outside CPU");
         if (debug == null) throw new IllegalStateException("Breakpoints unavailable for this CPU");
         return update(() -> {
-            if (enabled) config.breakpoints.add(address);
-            else config.breakpoints.remove(address);
+            if (enabled) breakpoints.add(address);
+            else breakpoints.remove(address);
+            config.setBreakpoints(breakpoints);
         });
     }
 
@@ -485,12 +536,6 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         } catch (IOException e) {
             LOGGER.error("Could not finish instruction recording", e);
         }
-        try {
-            config.save();
-        } catch (IOException e) {
-            LOGGER.error("Could not save debugger settings", e);
-        }
-
         if (memory != null) memory.removeMemoryListener(memoryListener);
         detachObservation();
         synchronized (this) {
@@ -539,7 +584,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
         } finally {
             // A paused view must show the final machine value, even after a very short step.
             synchronized (this) {
-                if (!closed) watches.refresh(config.watches);
+                if (!closed) watches.refresh(config.getWatches());
             }
         }
     }
@@ -566,7 +611,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     List<Integer> ordinaryBreakpoints() {
-        return List.copyOf(config.breakpoints);
+        return List.copyOf(breakpoints);
     }
 
     private void runMachineOperation(Runnable mutation, boolean invalidateMemory, CompletionStage<Void> published) {
@@ -631,8 +676,9 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
             // An I/O failure after editing settings must not leave hidden old runtime behavior.
             updateProbe();
             // Watches are evaluated only at execution boundaries, never while the CPU runs.
-            if (!running) watches.refresh(config.watches);
-            watches.retain(config.watches);
+            List<String> expressions = config.getWatches();
+            if (!running) watches.refresh(expressions);
+            watches.retain(expressions);
         }
     }
 
@@ -649,7 +695,7 @@ public final class DebuggerSession implements AutoCloseable, Debugging.Observer 
     }
 
     private boolean checkBreakpoints(int address) {
-        if (!config.breakpoints.contains(address)) return false;
+        if (ignoreBreakpoints || !breakpoints.contains(address)) return false;
         pendingHit = OptionalInt.of(address);
         return true;
     }

@@ -4,14 +4,13 @@ package net.emustudio.application.emulation.debugger;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.plugin.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugin.debugger.Debugging;
 import net.emustudio.emulib.plugin.debugger.ExpressionParser;
 import net.emustudio.emulib.plugin.memory.MemoryContext;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -145,9 +144,9 @@ public final class DebuggerTestMachine {
         net.emustudio.application.TestCpu.publish(cpu, state);
     }
 
-    public DebuggerSession session(Path settings) throws IOException { return session(settings, true); }
+    public DebuggerSession session(Config settings) { return session(settings, true); }
 
-    public DebuggerSession session(Path settings, boolean withMemory) throws IOException {
+    public DebuggerSession session(Config settings, boolean withMemory) {
         session = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), withMemory ? memory : null, settings);
         execution = net.emustudio.application.TestCpu.execution(session);
         return session;

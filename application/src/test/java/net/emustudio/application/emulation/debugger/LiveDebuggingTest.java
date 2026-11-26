@@ -26,7 +26,7 @@ public class LiveDebuggingTest {
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
             assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
 
-            session.update(() -> session.config.watches.add("mem[0]")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("mem[0]"))).join();
             assertEquals("0", session.watchValues().get("mem[0]").text);
             assertEquals(Debugging.Capture.INSTRUCTION, machine.captureMode.get());
 
@@ -63,7 +63,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("A")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("A"))).join();
             assertEquals("0", session.watchValues().get("A").text);
             verify(machine.debug).observe(any(), eq(Debugging.Capture.INSTRUCTION));
 
@@ -83,7 +83,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {memory}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("mem[0x0000]")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("mem[0x0000]"))).join();
             assertEquals("17", session.watchValues().get("mem[0x0000]").text);
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.beforeStep();
@@ -105,7 +105,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("A")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("A"))).join();
             when(machine.cpu.step()).thenAnswer(call -> {
                 session.beforeStep();
                 machine.values.put("A", 7L);
@@ -125,7 +125,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("A")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("A"))).join();
             session.update(() -> machine.values.put("A", 7L)).join();
             assertTrue(session.watchValues().get("A").changed);
 
@@ -141,7 +141,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("1 / A")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("1 / A"))).join();
             assertTrue(session.watchErrors().containsKey("1 / A"));
 
             session.update(() -> machine.values.put("A", 1L)).join();
@@ -157,7 +157,7 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("A")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("A"))).join();
             assertFalse(session.watchValues().get("A").changed);
 
             session.update(() -> machine.values.put("A", 7L)).join();
@@ -200,7 +200,7 @@ public class LiveDebuggingTest {
             session.update(() -> {
                 thread.set(Thread.currentThread().getName());
                 machine.values.put("A", 7L);
-                session.config.watches.add("A");
+                session.editWatches(expressions -> expressions.add("A"));
             }).get(2, TimeUnit.SECONDS);
             AtomicReference<ValueView> displayed = new AtomicReference<>();
             session.update(() -> displayed.set(machine.debug.compile("A").display())).get(2, TimeUnit.SECONDS);
@@ -219,11 +219,11 @@ public class LiveDebuggingTest {
         DebuggerTestMachine machine = new DebuggerTestMachine(new byte[][] {{0}}, 1);
         try (DebuggerSession session = machine.session(null);
              net.emustudio.application.emulation.EmulationController machineExecution = machine.execution) {
-            session.update(() -> session.config.watches.add("unknown")).join();
+            session.update(() -> session.editWatches(expressions -> expressions.add("unknown"))).join();
             session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
             assertTrue(session.watchErrors().containsKey("unknown"));
 
-            session.update(() -> { session.config.watches.clear(); session.config.watches.add("A + 1"); }).join();
+            session.update(() -> session.config.setWatches(List.of("A + 1"))).join();
             session.afterStep(true, Optional.empty(), OptionalInt.empty(), Optional.empty());
 
             assertTrue(session.watchErrors().isEmpty());

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.settings;
 
+import com.electronwill.nightconfig.core.io.IoUtils;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.Rule;
@@ -42,9 +43,10 @@ public class ConfigFilesTest {
         Files.writeString(pluginsRoot.resolve("device/display.jar"), "");
         ConfigFiles.setBasePaths(configRoot, pluginsRoot);
 
-        try (ComputerConfig ignored = ConfigFiles.createConfiguration("Test computer");
-             ComputerConfig loaded = ConfigFiles.loadConfiguration("Test computer").orElseThrow()) {
-            assertEquals("Test computer", loaded.getName());
+        try (ComputerConfig created = ConfigFiles.createConfiguration("Test computer")) {
+            Path file = created.getPath();
+            Files.writeString(file.resolveSibling(IoUtils.tempConfigFileName(file)), "name = 'Pending write'");
+            assertEquals(java.util.List.of("Test computer"), ConfigFiles.listConfigurationNames());
         }
         assertEquals(pluginsRoot.resolve("device/display.jar").toAbsolutePath(),
                 ConfigFiles.getAbsolutePluginPath("display.jar", net.emustudio.emulib.plugin.annotations.PLUGIN_TYPE.DEVICE));

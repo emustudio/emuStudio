@@ -5,8 +5,11 @@ package net.emustudio.application.emulation;
 import static net.emustudio.application.TestCpu.mockCpu;
 
 import com.electronwill.nightconfig.core.Config;
+import net.emustudio.application.emulation.debugger.DebuggerSession;
+import net.emustudio.application.emulation.debugger.DebuggerTestMachine;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.DebuggerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.Plugin;
 import net.emustudio.emulib.plugin.compiler.Compiler;
@@ -270,6 +273,39 @@ public class AutomationTest {
 
         verify(cpu).execute();
         verify(dialogs, never()).showError(anyString(), anyString());
+    }
+
+    @Test
+    public void headlessRunIgnoresSavedBreakpoints() throws Exception {
+        assertEquals(Automation.Reason.NORMAL_STOP, runAtSavedBreakpoint(NO_GUI_SETTINGS));
+    }
+
+    @Test
+    public void interactiveRunHonorsSavedBreakpoints() throws Exception {
+        AppSettings settings = new AppSettings(Config.inMemory(), false);
+        assertEquals(Automation.Reason.BREAKPOINT, runAtSavedBreakpoint(settings));
+    }
+
+    private Automation.Reason runAtSavedBreakpoint(AppSettings settings) throws Exception {
+        DebuggerTestMachine machine = new DebuggerTestMachine(new byte[1][16], 0);
+        Config config = Config.inMemory();
+        DebuggerConfig debuggerConfig = new DebuggerConfig(config);
+        debuggerConfig.setBreakpoints(List.of(0));
+        VirtualComputer computer = mockComputer(machine.cpu);
+        EmulationController execution = computer.getExecution().orElseThrow();
+        try (DebuggerSession debugger = new DebuggerSession(machine.cpu, execution.cpuContext(), machine.memory, config)) {
+            execution.attachDebugger(debugger);
+            when(computer.getDebugger()).thenReturn(Optional.of(debugger));
+            doAnswer(call -> debugger.beforeStep()
+                    ? CPU.RunState.STATE_STOPPED_BREAK : CPU.RunState.STATE_STOPPED_NORMAL).when(machine.cpu).execute();
+
+            Automation automation = new Automation(computer, null, settings, dialogs, Automation.DONT_WAIT, null);
+            automation.run();
+
+            assertTrue(automation.result().isSuccessful());
+            assertEquals(List.of(0), debuggerConfig.getBreakpoints());
+            return automation.result().reason;
+        }
     }
 
     private void stubCompilation(CompilerMessage.Type messageType, String message) throws Exception {

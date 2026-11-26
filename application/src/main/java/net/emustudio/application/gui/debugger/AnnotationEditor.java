@@ -104,7 +104,7 @@ final class AnnotationEditor extends JPanel {
     }
 
     void load(int at) {
-        UserAnnotations annotations = session.cpu.getAddressSpaceSize() > 0 ? session.config.annotations() : null;
+        UserAnnotations annotations = session.cpu.getAddressSpaceSize() > 0 ? session.annotations() : null;
         load(at, annotations == null ? null : annotations.get(at));
     }
 
@@ -158,11 +158,14 @@ final class AnnotationEditor extends JPanel {
         address = target;
         UserAnnotations.Entry draft = new UserAnnotations.Entry(original.id, address, end + 1, labelField.getText(),
                 KINDS.get(kind.getSelectedIndex()));
-        UserAnnotations annotations = session.config.annotations();
-        if (draft.id < 0) draft = annotations.add(draft);
-        else annotations.update(draft);
-        loadEntry(draft);
-        session.config.save();
+        session.editAnnotations(annotations -> {
+            if (draft.id < 0) {
+                loadEntry(annotations.add(draft));
+            } else {
+                annotations.update(draft);
+                loadEntry(draft);
+            }
+        });
     }
 
 }

@@ -3,11 +3,9 @@
 In **Debugger**, use **Open annotations** to load annotation metadata for the
 current computer. **Save annotations** writes an annotation-only copy.
 
-The UTF-8 Java properties file contains format version `4`, `image.identity`, and
-the entry count. Each entry stores its identity, CPU address range, label,
-and code/data classification. The range end is exclusive.
+An annotation export is a UTF-8 Java properties file. Each entry stores a CPU
+address range, label, and code/data classification. The range end is exclusive.
+Import skips entries with invalid ranges or classifications.
 
-Import requires a matching image identity and valid address ranges. The format
-is also used in the computer's `computer.toml.debugger` file, which stores
-annotations, watches and breakpoint rules together. Memory contents and execution
-recordings use separate files.
+The computer's TOML file stores watches, breakpoints, and user annotations
+under `[debugger]`. emuStudio restores them when it opens the computer.

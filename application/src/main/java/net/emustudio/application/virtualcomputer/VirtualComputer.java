@@ -207,20 +207,13 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                 MemoryContext<?> memory = null;
                 try { memory = contextPool.get(0, MemoryContext.class); }
                 catch (net.emustudio.emulib.application.ContextNotFoundException ignored) { }
-                try {
-                    java.nio.file.Path path = computerConfig.getPath();
-                    execution = new EmulationController(getCPU().get(),
-                            contextPool.get(0, CPUContext.class),
-                            getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
-                    debugger = new DebuggerSession(getCPU().get(), execution.cpuContext(), memory,
-                            path == null ? null : path.resolveSibling(path.getFileName() + ".debugger"),
-                            applicationApi == null ? new MemoryAnnotations()
-                                    : applicationApi.getAnnotations());
-                    execution.attachDebugger(debugger);
-
-                } catch (IOException e) {
-                    throw new PluginInitializationException("Could not load debugger settings", e);
-                }
+                execution = new EmulationController(getCPU().get(),
+                        contextPool.get(0, CPUContext.class),
+                        getMemory().orElse(null), getDevices(), getCompiler().orElse(null));
+                debugger = new DebuggerSession(getCPU().get(), execution.cpuContext(), memory,
+                        computerConfig.getConfig(), applicationApi == null ? new MemoryAnnotations()
+                                : applicationApi.getAnnotations());
+                execution.attachDebugger(debugger);
             } else {
                 execution = new EmulationController(null, null,
                         getMemory().orElse(null), getDevices(), getCompiler().orElse(null));

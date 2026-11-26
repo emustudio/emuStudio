@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
+import net.emustudio.application.emulation.debugger.DebuggerSession;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.Unchecked.RunnableWhichCanThrow;
@@ -171,7 +172,12 @@ public class Automation implements Runnable {
     }
 
     private synchronized CompletableFuture<CPU.RunState> startCpu(EmulationController execution) {
-        return termination.isDone() ? null : execution.start();
+        if (termination.isDone()) return null;
+        if (appSettings.noGUI) {
+            computer.getDebugger().ifPresent(DebuggerSession::ignoreBreakpoints);
+            LOGGER.info("Ignoring breakpoints in non-interactive automation.");
+        }
+        return execution.start();
     }
 
     private void awaitPluginStartup(List<Plugin> plugins)

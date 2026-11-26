@@ -46,16 +46,15 @@ public class VirtualComputerTest {
     @SuppressWarnings("unchecked")
     public void initializationLoadsUserAnnotationsIntoSharedEngineWithoutOpeningDebuggerOrReadingMemory() throws Exception {
         java.nio.file.Path computerPath = temporary.getRoot().toPath().resolve("computer.toml");
-        java.nio.file.Path debuggerPath = computerPath.resolveSibling(computerPath.getFileName() + ".debugger");
         CPU cpu = mockCpu();
         MemoryContext<Byte> memory = mock(MemoryContext.class);
         when(cpu.getTitle()).thenReturn("Test CPU");
         when(cpu.getAddressSpaceSize()).thenReturn(16);
         when(memory.getSize()).thenReturn(16);
-        try (DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, debuggerPath);
+        try (ComputerConfig config = ComputerConfig.create("Test computer", computerPath);
+             DebuggerSession seed = new DebuggerSession(cpu, net.emustudio.application.TestCpu.context(cpu), memory, config.getConfig());
              net.emustudio.application.emulation.EmulationController machineExecution = net.emustudio.application.TestCpu.execution(seed)) {
-            seed.config.annotations().add(new UserAnnotations.Entry(3, "saved label", "CODE"));
-            seed.config.save();
+            seed.editAnnotations(annotations -> annotations.add(new UserAnnotations.Entry(3, "saved label", "CODE")));
         }
         clearInvocations(memory);
 
@@ -63,8 +62,7 @@ public class VirtualComputerTest {
         doReturn(memory).when(contextPool).get(0, MemoryContext.class);
         doReturn(net.emustudio.application.TestCpu.context(cpu)).when(contextPool).get(0, net.emustudio.emulib.plugin.cpu.CPUContext.class);
         ApplicationApiImpl api = new ApplicationApiImpl(contextPool, mock(Dialogs.class), null);
-        ComputerConfig config = mock(ComputerConfig.class);
-        when(config.getPath()).thenReturn(computerPath);
+        ComputerConfig config = ComputerConfig.load(computerPath);
         VirtualComputer computer = new VirtualComputer(config, plugins(plugin(1, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu)));
         java.lang.reflect.Field apiField = VirtualComputer.class.getDeclaredField("applicationApi");
         apiField.setAccessible(true);

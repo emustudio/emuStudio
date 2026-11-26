@@ -87,10 +87,7 @@ final class WatchesPanel extends JPanel {
         expression.setToolTipText("Machine expression, e.g. A or mem[0x1234]; invalid text is saved and shown inactive until corrected.");
         JButton add = gui.toolbarButton(event -> live.accept(() -> {
             String text = expression.getText();
-            update.accept(() -> {
-                session.config.watches.add(text);
-                session.config.save();
-            });
+            update.accept(() -> session.editWatches(expressions -> expressions.add(text)));
             expression.setText("");
         }), "/net/emustudio/application/gui/icons/add.png", "Add");
         expression.addActionListener(e -> add.doClick());
@@ -109,10 +106,7 @@ final class WatchesPanel extends JPanel {
         tools.add(entry, "span, growx, wrap");
         JToolBar watchTools = gui.toolbarRow(tools, gui.toolbarButton(event -> live.accept(() -> {
                     String selected = selected();
-                    if (selected != null) update.accept(() -> {
-                        session.config.watches.remove(selected);
-                        session.config.save();
-                    });
+                    if (selected != null) update.accept(() -> session.editWatches(expressions -> expressions.remove(selected)));
                 }), "/net/emustudio/application/gui/icons/remove.png", "Remove"),
                 gui.toolbarButton(event -> live.accept(() -> edit(watches.getSelectedRow())), "/net/emustudio/application/gui/icons/rename.png", "Edit watch"),
                 gui.toolbarButton(event -> live.accept(() -> update.accept(() -> {})), "/net/emustudio/application/gui/icons/reset.png", "Refresh"));
@@ -144,7 +138,7 @@ final class WatchesPanel extends JPanel {
             }
         }
         List<Map.Entry<String, String>> watchText = new ArrayList<>();
-        for (String expression : session.config.watches) {
+        for (String expression : session.config.getWatches()) {
             ValueView view = values.get(expression);
             if (errors.containsKey(expression))
                 watchText.add(Map.entry(expression, "Inactive: " + errors.get(expression)));
@@ -222,11 +216,10 @@ final class WatchesPanel extends JPanel {
             rows = new ArrayList<>(rows);
             rows.set(row, Map.entry(expression, "Pending"));
             fireTableRowsUpdated(row, row);
-            update.accept(() -> {
-                if (row < session.config.watches.size() && session.config.watches.get(row).equals(original))
-                    session.config.watches.set(row, expression);
-                session.config.save();
-            });
+            update.accept(() -> session.editWatches(expressions -> {
+                if (row < expressions.size() && expressions.get(row).equals(original))
+                    expressions.set(row, expression);
+            }));
         }
     }
 }

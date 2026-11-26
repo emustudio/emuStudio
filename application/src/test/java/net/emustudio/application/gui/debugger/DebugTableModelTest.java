@@ -225,7 +225,7 @@ public class DebugTableModelTest {
         DebuggerSession session = session(40, 30);
         for (int at = 0; at < 30; at++) executed(session, at, 1, at + 1);
         session.setBreakpoint(12, true).join();
-        session.config.annotations().add(new net.emustudio.application.emulation.debugger.UserAnnotations.Entry(
+        session.annotations().add(new net.emustudio.application.emulation.debugger.UserAnnotations.Entry(
                 -1, 18, 22, "region", "CODE"));
         DebugTableModel model = model(session, 41);
         model.setPresentation(at -> at == 5 ? "label" : "", () -> true, () -> true);

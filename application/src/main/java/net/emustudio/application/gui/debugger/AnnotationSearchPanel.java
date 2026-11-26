@@ -106,16 +106,14 @@ final class AnnotationSearchPanel {
             MemoryAnnotations.Entry entry = list.getSelectedValue();
             if (entry == null) return;
             if (!confirm(String.format("Delete annotation at %04X?", entry.start), "Delete annotation")) return;
-            session.config.annotations().remove(AnnotationEditor.editable(entry));
-            session.config.save();
+            session.editAnnotations(annotations -> annotations.remove(AnnotationEditor.editable(entry)));
             refresh();
             editor.load(entry.start);
         });
         openAnnotations = button(gui, "open-annotations", "Open annotations", () -> {
             Path path = choose(false);
             if (path == null) return;
-            int skipped = session.config.loadAnnotations(path);
-            session.config.save();
+            int skipped = session.importAnnotations(path);
             refresh();
             editor.reload();
             if (skipped > 0) LOGGER.warn("Skipped {} invalid annotation(s).", skipped);
@@ -123,7 +121,7 @@ final class AnnotationSearchPanel {
         saveAnnotations = button(gui, "save-annotations", "Save annotations", () -> {
             Path path = choose(true);
             if (path != null && (!Files.exists(path) || confirm("Replace existing file?", "Save annotations")))
-                session.config.saveAnnotations(path);
+                session.exportAnnotations(path);
         });
         tools.add(filter, "growx, pushx, wmin 160");
         tools.addSeparator();

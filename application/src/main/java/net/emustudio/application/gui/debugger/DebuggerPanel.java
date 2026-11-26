@@ -261,7 +261,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
     /** Brings all views up to date with the emulator state; runs on the EDT. */
     private void sync() {
         if (disposed) return;
-        if (session.cpu.getAddressSpaceSize() > 0) session.config.annotations();
         watchesPanel.refresh();
         long annotationRevision = session.annotationEngine.revision();
         if (annotationRevision != appliedAnnotationRevision) {
@@ -413,7 +412,6 @@ public final class DebuggerPanel extends JPanel implements AutoCloseable {
                 throw new IllegalArgumentException("Address outside CPU");
             session.setBreakpoint(request.address, request.operation == BreakpointDialog.Operation.SET).join();
             breakpointsChanged.run();
-            session.config.save();
             sync();
             return true;
         } catch (Exception e) {
