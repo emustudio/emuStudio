@@ -318,6 +318,10 @@ public class TabbedEditor implements Editor {
         activeEditor().setPosition(position);
     }
 
+    public void setCompilerPosition(SourceCodePosition position) {
+        activeEditor().setCompilerPosition(position);
+    }
+
     @Override
     public Optional<File> getCurrentFile() {
         return activeEditor().getCurrentFile();

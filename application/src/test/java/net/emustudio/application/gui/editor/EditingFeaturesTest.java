@@ -99,34 +99,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         return waitForWindow(JDialog.class, dialog -> "Token colors".equals(dialog.getTitle()));
     }
 
-    @Test public void caseCommandsChangeOnlyTheSelectionAndUndoTogether() {
-        String[][] cases = {{"Uppercase", "MIXED"}, {"Lowercase", "mixed"}, {"Invert case", "mIxEd"}};
-        for (String[] test : cases) {
-            REditor editor = editor("before MiXeD after");
-            runOnEdt(() -> { editor.textPane().discardAllEdits(); editor.textPane().select(7, 12); });
-            command(editor, test[0]);
-            assertEquals("before " + test[1] + " after", onEdt(editor.textPane()::getText));
-            runOnEdt(editor.textPane()::undoLastAction);
-            assertEquals("before MiXeD after", onEdt(editor.textPane()::getText));
-            runOnEdt(() -> editor.textPane().setCaretPosition(0));
-            command(editor, test[0]);
-            assertEquals("before MiXeD after", onEdt(editor.textPane()::getText));
-        }
-    }
-    @Test public void caseCommandsTransformDifferentSelectionsWithoutCopyingTheFirst() {
-        String[][] cases = {{"Uppercase", "ASS keep ÉB"}, {"Lowercase", "aß keep éb"}, {"Invert case", "Aß keep Éb"}};
-        for (String[] test : cases) {
-            REditor editor = editor("aß keep éB");
-            runOnEdt(() -> {
-                editor.textPane().discardAllEdits();
-                editor.commands().selections().set(List.of(new MultipleSelection.Range(0, 2), new MultipleSelection.Range(8, 10)));
-            });
-            command(editor, test[0]);
-            assertEquals(test[1], onEdt(editor.textPane()::getText));
-            runOnEdt(editor.textPane()::undoLastAction);
-            assertEquals("aß keep éB", onEdt(editor.textPane()::getText));
-        }
-    }
     @Test public void compilerSyntaxProvidesCommentRulesWithOldSyntaxOverride() throws Exception {
         Path source = Files.writeString(files.newFile("program.asm").toPath(), "block\n  body\nend\n");
         String encodedPath = Base64.getUrlEncoder().withoutPadding()
@@ -198,6 +170,16 @@ public class EditingFeaturesTest extends AbstractSwingTest {
         REditor editor = editor("abcd\na\nabcd");
         runOnEdt(() -> { editor.commands().selections().rectangle(3, 10); editor.textPane().replaceSelection("!"); });
         assertEquals("abc!d\na  !\nabc!d", onEdt(editor.textPane()::getText));
+    }
+
+    @Test public void rectangleCountsTabsAtTabStops() {
+        REditor editor = editor("a\tb\nx\n    c");
+        runOnEdt(() -> {
+            editor.textPane().setTabSize(4);
+            editor.commands().selections().rectangle(2, 10);
+            editor.textPane().replaceSelection("!");
+        });
+        assertEquals("a\t!b\nx   !\n    !c", onEdt(editor.textPane()::getText));
     }
     @Test public void workspaceSearchShortcutsUseTheInlineQueryAndWrap() {
         TabbedEditor tabs = onEdt(() -> new TabbedEditor(mock(Dialogs.class), null));
@@ -306,17 +288,6 @@ public class EditingFeaturesTest extends AbstractSwingTest {
     private void editorKey(TextEditorPane pane, KeyStroke key) {
         Action action = pane.getActionMap().get(pane.getInputMap().get(key));
         action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, ""));
-    }
-    @Test public void transformsOnlySelectedLinesAndPreservesFinalNewline() {
-        REditor editor = editor("z\nb\na\nz\n");
-        runOnEdt(() -> editor.textPane().select(2, 6)); command(editor, "Sort lines");
-        assertEquals("z\na\nb\nz\n", onEdt(editor.textPane()::getText));
-        runOnEdt(() -> editor.textPane().setCaretPosition(0)); command(editor, "Remove duplicate lines");
-        assertEquals("z\na\nb\n", onEdt(editor.textPane()::getText));
-    }
-    @Test public void indentConversionsRespectTabStops() {
-        assertEquals("a   b\n    c", TextEdits.spaces("a\tb\n\tc", 4));
-        assertEquals("\t  x\ny", TextEdits.tabs("      x\ny", 4));
     }
     @Test public void selectionSearchReplaceNeverTouchesOutsideScope() {
         REditor editor = editor("one one one"); InlineSearchBar bar = onEdt(() -> new InlineSearchBar(() -> editor));

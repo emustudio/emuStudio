@@ -16,6 +16,8 @@ import java.awt.*;
 import static net.emustudio.emulib.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
+    private static final String INSTRUCTION_FALLOUT_STATUS = "stopped (instruction fallout)";
+
     private final GUI gui;
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
@@ -68,6 +70,8 @@ public class StatusPanel extends JPanel {
         lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
         lblRunState.setForeground(CPU_RUN_STATE_COLOR);
         lblRunState.setHorizontalAlignment(SwingConstants.CENTER);
+        int runStateWidth = lblRunState.getFontMetrics(lblRunState.getFont()).stringWidth(INSTRUCTION_FALLOUT_STATUS);
+        lblRunState.setMinimumSize(new Dimension(runStateWidth, lblRunState.getPreferredSize().height));
 
         JPanel panelRunState = gui.section("Run state", "insets dialog", "[grow]", "[]");
         panelRunState.add(lblRunState, "growx");
@@ -75,8 +79,9 @@ public class StatusPanel extends JPanel {
         tblMemory.setFont(FONT_MONOSPACED);
         tblMemory.setRowSelectionAllowed(false);
 
-        JPanel panelMemory = gui.section("Memory view", "insets dialog", "[grow]", "[grow]");
-        panelMemory.add(new JScrollPane(tblMemory), "grow");
+        JPanel panelMemory = gui.section("Memory view", "insets dialog", "[grow]", "[]0[]");
+        panelMemory.add(tblMemory.getTableHeader(), "growx, wrap");
+        panelMemory.add(tblMemory, "growx");
 
         setLayout(new BorderLayout());
         JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
@@ -114,7 +119,7 @@ public class StatusPanel extends JPanel {
                         lblRunState.setText("stopped (address fallout)");
                         break;
                     case STATE_STOPPED_BAD_INSTR:
-                        lblRunState.setText("stopped (instruction fallout)");
+                        lblRunState.setText(INSTRUCTION_FALLOUT_STATUS);
                         break;
                 }
                 lblTime.setText(String.format("%.2f ms", (double) elapsed / 1000000.0));

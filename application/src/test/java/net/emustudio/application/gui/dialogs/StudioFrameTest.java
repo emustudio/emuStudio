@@ -32,7 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,32 +87,27 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("Project", onEdt(() -> menuBar.getMenu(2).getText()));
         assertEquals("Help", onEdt(() -> menuBar.getMenu(3).getText()));
         assertEquals(4, onEdt(menuBar::getMenuCount).intValue());
+        JPopupMenu editMenu = onEdt(() -> menuBar.getMenu(1).getPopupMenu());
         List<String> editingItems = onEdt(() -> {
-            List<String> labels = new java.util.ArrayList<>();
-            for (java.awt.Component item : menuBar.getMenu(1).getMenuComponents()) {
+            List<String> labels = new ArrayList<>();
+            for (java.awt.Component item : editMenu.getComponents()) {
                 if (item instanceof JMenuItem) labels.add(((JMenuItem) item).getText());
             }
             return labels;
         });
-        org.junit.Assert.assertTrue(editingItems.containsAll(List.of("Text", "Column Selection Mode", "Go to line...",
-                "Indentation...", "Token colors...", "Editor display", "Refactor", "Split view")));
-        org.junit.Assert.assertFalse(editingItems.contains("Selection"));
-        org.junit.Assert.assertFalse(editingItems.contains("Navigate"));
-        org.junit.Assert.assertFalse(editingItems.contains("Editing macros"));
-        org.junit.Assert.assertFalse(editingItems.contains("Find / replace in files…"));
-        JPopupMenu editMenu = onEdt(() -> menuBar.getMenu(1).getPopupMenu());
+        assertTrue(editingItems.containsAll(List.of("Text", "Column Selection Mode", "Go to line...",
+                "Indentation...", "Token colors...", "Soft wrap", "Refactor", "Split view")));
+        assertFalse(editingItems.contains("Selection"));
+        assertFalse(editingItems.contains("Navigate"));
+        assertFalse(editingItems.contains("Editing macros"));
+        assertFalse(editingItems.contains("Find / replace in files…"));
         JCheckBoxMenuItem columnSelection = findComponent(editMenu, JCheckBoxMenuItem.class,
                 item -> "Column Selection Mode".equals(item.getText()));
         assertEquals(editMenu, onEdt(columnSelection::getParent));
-        JMenu editorDisplay = findComponent(editMenu, JMenu.class,
-                menu -> "Editor display".equals(menu.getText()));
-        assertTrue(onEdt(() -> Arrays.stream(editorDisplay.getMenuComponents())
-                .filter(JMenuItem.class::isInstance)
-                .map(JMenuItem.class::cast)
-                .map(JMenuItem::getText)
-                .noneMatch(label -> "Syntax highlighting".equals(label) || "End-of-line markers".equals(label)
-                        || "Indentation...".equals(label) || "Indentation settings".equals(label)
-                        || label.startsWith("Token colors"))));
+        JCheckBoxMenuItem softWrap = findComponent(editMenu, JCheckBoxMenuItem.class,
+                item -> "Soft wrap".equals(item.getText()));
+        assertEquals(editMenu, onEdt(softWrap::getParent));
+        assertFalse(editingItems.contains("Editor display"));
     }
 
     @Test

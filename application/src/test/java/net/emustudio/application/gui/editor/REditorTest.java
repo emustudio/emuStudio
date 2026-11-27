@@ -18,10 +18,14 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
+import javax.swing.text.Highlighter;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -311,6 +315,22 @@ public class REditorTest extends AbstractSwingTest {
 
         runOnEdt(() -> editor.setPosition(SourceCodePosition.of(99, 0, "test.asm")));
         assertEquals(6, onEdt(textPane::getCaretPosition).intValue());
+
+        runOnEdt(() -> editor.setPosition(SourceCodePosition.of(2, 99, "test.asm")));
+        assertEquals(10, onEdt(textPane::getCaretPosition).intValue());
+    }
+
+    @Test
+    public void compilerDiagnosticUsesCompilerColumnUnits() {
+        Compiler compiler = mock(Compiler.class);
+        when(compiler.getSourcePositionColumnUnit()).thenReturn(SourceCodePosition.ColumnUnit.CODE_POINT);
+        REditor editor = createEditor(mock(Dialogs.class), compiler);
+        TextEditorPane textPane = textPane(editor);
+        runOnEdt(() -> {
+            textPane.setText("a😀b");
+            editor.setCompilerPosition(SourceCodePosition.of(1, 2, "test.asm"));
+        });
+        assertEquals(3, onEdt(textPane::getCaretPosition).intValue());
     }
 
     @Test
@@ -398,6 +418,70 @@ public class REditorTest extends AbstractSwingTest {
                 "File not found: " + directory.resolve("missing.asm"),
                 onEdt(() -> textPane(editor).getToolTipText())
         );
+    }
+
+    @Test
+    public void ctrlHoverMarksOnlyThePathThatWillOpen() throws Exception {
+        Path directory = Files.createTempDirectory("reditor-include-hover");
+        Path first = Files.writeString(directory.resolve("first.inc"), "NOP");
+        Files.writeString(directory.resolve("second.inc"), "HLT");
+        String text = "include 'first.inc'\ninclude 'missing.inc'\ninclude 'second.inc'";
+        Path source = Files.writeString(directory.resolve("main.asm"), text);
+        REditor editor = createEditor(mock(Dialogs.class), null);
+        AtomicReference<Path> opened = new AtomicReference<>();
+        editor.setOpenFileHandler(opened::set);
+        assertTrue(onEdt(() -> editor.openFile(source)));
+        showInFrame(editor.getView());
+        TextEditorPane pane = editor.textPane();
+        int firstStart = text.indexOf("first.inc");
+        int secondStart = text.indexOf("second.inc");
+        Rectangle2D firstPoint = onEdt(() -> pane.modelToView2D(firstStart + 1));
+        Rectangle2D missingPoint = onEdt(() -> pane.modelToView2D(text.indexOf("missing.inc") + 1));
+        Rectangle2D secondPoint = onEdt(() -> pane.modelToView2D(secondStart + 1));
+
+        runOnEdt(() -> {
+            sendIncludeMouse(pane, MouseEvent.MOUSE_ENTERED, firstPoint, 0);
+            assertEquals(0, pane.getHighlighter().getHighlights().length);
+            sendControlKey(pane, KeyEvent.KEY_PRESSED);
+            assertIncludeHighlight(pane, firstStart, "first.inc".length());
+
+            sendIncludeMouse(pane, MouseEvent.MOUSE_MOVED, missingPoint, InputEvent.CTRL_DOWN_MASK);
+            assertEquals(0, pane.getHighlighter().getHighlights().length);
+            sendIncludeMouse(pane, MouseEvent.MOUSE_MOVED, secondPoint, InputEvent.CTRL_DOWN_MASK);
+            assertIncludeHighlight(pane, secondStart, "second.inc".length());
+
+            sendControlKey(pane, KeyEvent.KEY_RELEASED);
+            assertEquals(0, pane.getHighlighter().getHighlights().length);
+            assertEquals(Cursor.TEXT_CURSOR, pane.getCursor().getType());
+            sendIncludeMouse(pane, MouseEvent.MOUSE_MOVED, firstPoint, InputEvent.CTRL_DOWN_MASK);
+            assertIncludeHighlight(pane, firstStart, "first.inc".length());
+            sendIncludeMouse(pane, MouseEvent.MOUSE_EXITED, firstPoint, InputEvent.CTRL_DOWN_MASK);
+            assertEquals(0, pane.getHighlighter().getHighlights().length);
+
+            sendIncludeMouse(pane, MouseEvent.MOUSE_CLICKED, firstPoint, InputEvent.CTRL_DOWN_MASK);
+            assertEquals(first, opened.get());
+        });
+    }
+
+    private static void sendIncludeMouse(TextEditorPane pane, int id, Rectangle2D position, int mask) {
+        boolean click = id == MouseEvent.MOUSE_CLICKED;
+        pane.dispatchEvent(new MouseEvent(pane, id, System.currentTimeMillis(), mask,
+                (int) Math.ceil(position.getX()), (int) position.getCenterY(), click ? 1 : 0, false,
+                click ? MouseEvent.BUTTON1 : MouseEvent.NOBUTTON));
+    }
+
+    private static void sendControlKey(TextEditorPane pane, int id) {
+        int modifiers = id == KeyEvent.KEY_PRESSED ? InputEvent.CTRL_DOWN_MASK : 0;
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().dispatchEvent(new KeyEvent(pane, id,
+                System.currentTimeMillis(), modifiers, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED));
+    }
+
+    private static void assertIncludeHighlight(TextEditorPane pane, int start, int length) {
+        Highlighter.Highlight[] highlights = pane.getHighlighter().getHighlights();
+        assertEquals(1, highlights.length);
+        assertEquals(start, highlights[0].getStartOffset());
+        assertEquals(start + length, highlights[0].getEndOffset());
+        assertEquals(Cursor.HAND_CURSOR, pane.getCursor().getType());
     }
 
     private REditor createEditor(Dialogs dialogs, Compiler compiler) {

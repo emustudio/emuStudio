@@ -5,9 +5,7 @@ package net.emustudio.application.gui.editor;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.text.BadLocationException;
-import java.util.*;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 /**
  * Text-only transformations, independent of compiler and filesystem services.
@@ -37,49 +35,5 @@ final class TextEdits {
         } finally {
             pane.endAtomicEdit();
         }
-    }
-
-    static String reorder(String text, String operation) {
-        boolean newline = text.endsWith("\n");
-        List<String> lines = new ArrayList<>(Arrays.asList(text.split("\n", -1)));
-        if (newline) lines.remove(lines.size() - 1);
-        switch (operation) {
-            case "Sort lines":
-                Collections.sort(lines);
-                break;
-            case "Reverse lines":
-                Collections.reverse(lines);
-                break;
-            case "Remove duplicate lines":
-                lines = new ArrayList<>(new LinkedHashSet<>(lines));
-                break;
-            default:
-                throw new IllegalArgumentException(operation);
-        }
-        return String.join("\n", lines) + (newline ? "\n" : "");
-    }
-
-    static String spaces(String text, int tabSize) {
-        StringBuilder result = new StringBuilder();
-        int column = 0;
-        for (char ch : text.toCharArray()) {
-            if (ch == '\t') {
-                int count = tabSize - column % tabSize;
-                result.append(" ".repeat(count));
-                column += count;
-            } else {
-                result.append(ch);
-                column = ch == '\n' ? 0 : column + 1;
-            }
-        }
-        return result.toString();
-    }
-
-    static String tabs(String text, int tabSize) {
-        return Arrays.stream(text.split("\n", -1)).map(line -> {
-            int count = 0;
-            while (count < line.length() && line.charAt(count) == ' ') count++;
-            return "\t".repeat(count / tabSize) + " ".repeat(count % tabSize) + line.substring(count);
-        }).collect(Collectors.joining("\n"));
     }
 }

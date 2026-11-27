@@ -16,15 +16,15 @@ import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 public class OpenFileAction extends AbstractAction {
     private final Supplier<Boolean> confirmSave;
     private final Editor editor;
-    private final JTextArea compilerOutput;
+    private final Runnable clearCompilerOutput;
     private final Runnable updateTitle;
 
-    public OpenFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
+    public OpenFileAction(Supplier<Boolean> confirmSave, Editor editor, Runnable clearCompilerOutput, Runnable updateTitle) {
         super("Open...", loadIcon("/net/emustudio/application/gui/icons/open-file.png"));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);
-        this.compilerOutput = Objects.requireNonNull(compilerOutput);
+        this.clearCompilerOutput = Objects.requireNonNull(clearCompilerOutput);
         this.updateTitle = Objects.requireNonNull(updateTitle);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
@@ -35,7 +35,7 @@ public class OpenFileAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         if (confirmSave.get() && editor.openFile()) {
-            compilerOutput.setText("");
+            clearCompilerOutput.run();
             updateTitle.run();
         }
     }

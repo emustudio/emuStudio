@@ -5,7 +5,9 @@ package net.emustudio.application.gui.actions;
 
 import static net.emustudio.application.TestCpu.mockCpu;
 
+import net.emustudio.application.gui.editor.CompilerOutputPanel;
 import net.emustudio.application.gui.editor.Editor;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.compiler.Compiler;
@@ -17,9 +19,11 @@ import net.emustudio.emulib.plugin.memory.Memory;
 import net.emustudio.emulib.application.ui.Dialogs;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,7 +40,7 @@ public class CompileActionTest {
     private Dialogs dialogs;
     private Editor editor;
     private Compiler compiler;
-    private JTextArea compilerOutput;
+    private CompilerOutputPanel compilerOutput;
 
     @Before
     public void setUp() {
@@ -44,7 +48,7 @@ public class CompileActionTest {
         dialogs = mock(Dialogs.class);
         editor = mock(Editor.class);
         compiler = mock(Compiler.class);
-        compilerOutput = new JTextArea();
+        compilerOutput = new CompilerOutputPanel(new EmuStudioGui(), editor::setPosition);
         EmulationController execution = mock(EmulationController.class);
         when(computer.getExecution()).thenReturn(Optional.of(execution));
         when(execution.compile(any())).thenAnswer(call -> {
@@ -72,27 +76,46 @@ public class CompileActionTest {
     }
 
     @Test
-    public void constructorRegistersCompilerListenerThatAppendsMessagesAndMovesEditorCaret() {
-        SourceCodePosition position = SourceCodePosition.of(1, 2, "program.asm");
-        when(computer.getCompiler()).thenReturn(Optional.of(compiler));
-        ArgumentCaptor<CompilerListener> listenerCaptor = ArgumentCaptor.forClass(CompilerListener.class);
-
-        new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
+    public void diagnosticsKeepTheirPositionsAndOnlyNavigateOnActivation() throws Exception {
+        SourceCodePosition position = SourceCodePosition.of(1, 2, "include.asm");
+        compileWithMessages(
+                new CompilerMessage(CompilerMessage.Type.ERROR, "First error", position),
+                new CompilerMessage(CompilerMessage.Type.ERROR, "Second error", SourceCodePosition.of(4, 0, "program.asm")),
+                new CompilerMessage(CompilerMessage.Type.ERROR, "No source location", null)
         );
-        verify(compiler).addCompilerListener(listenerCaptor.capture());
 
-        CompilerListener listener = listenerCaptor.getValue();
-        listener.onStart();
-        listener.onMessage(new CompilerMessage(CompilerMessage.Type.WARNING, "Warn", position));
-        listener.onFinish();
-        flushEdt();
-
-        assertTrue(compilerOutput.getText().contains("Compiling started..."));
-        assertTrue(compilerOutput.getText().contains("Warn"));
-        assertTrue(compilerOutput.getText().contains("Compiling has finished."));
+        JTextArea log = components(compilerOutput, JTextArea.class).get(0);
+        assertTrue(log.getText().contains("ERROR  include.asm:1:3  First error"));
+        verify(editor, never()).setPosition(any());
+        SwingUtilities.invokeAndWait(() -> {
+            Object enter = log.getInputMap().get(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+            log.setCaretPosition(log.getText().indexOf("First error"));
+            log.getActionMap().get(enter).actionPerformed(null);
+            log.setCaretPosition(log.getText().indexOf("No source location"));
+            log.getActionMap().get(enter).actionPerformed(null);
+        });
         verify(editor).setPosition(position);
-        verifyNoMoreInteractions(editor);
+        verify(editor, times(1)).setPosition(any());
+        assertTrue(labels().contains("Compilation failed"));
+    }
+
+    @Test
+    public void resultDistinguishesConfirmedLoadFromAnUnavailableMemory() throws Exception {
+        CompilerMessage output = new CompilerMessage(CompilerMessage.Type.INFO,
+                "Compile was successful.\n\tOutput: /example/program.hex\n\tProgram starts at 0x03E8", null);
+        compileWithMessages(output, new CompilerMessage(CompilerMessage.Type.INFO,
+                "Compiled file was loaded into memory.", null));
+
+        assertTrue(labels().contains("Compiled and loaded"));
+        assertTrue(labels().stream().anyMatch(text -> text.contains("program.hex") && text.contains("0x03E8")));
+        assertTrue(components(compilerOutput, JTextArea.class).get(0).getText().contains("/example/program.hex"));
+
+        compileWithMessages(output, new CompilerMessage(CompilerMessage.Type.WARNING, "Memory is not available.", null));
+        assertTrue(labels().contains("Compiled · memory unavailable"));
+        assertFalse(labels().contains("Compiled and loaded"));
+
+        compileWithMessages(output, new CompilerMessage(CompilerMessage.Type.ERROR, "Memory write failed", null));
+        assertTrue(labels().contains("Compiled · load unconfirmed"));
     }
 
     @Test
@@ -129,7 +152,8 @@ public class CompileActionTest {
         CPU cpu = mockCpu();
         File file = new File("program.asm");
         AtomicInteger titleUpdates = new AtomicInteger();
-        compilerOutput.setText("old");
+        JTextArea log = components(compilerOutput, JTextArea.class).get(0);
+        log.setText("old");
 
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
         when(computer.getMemory()).thenReturn(Optional.of(memory));
@@ -143,7 +167,7 @@ public class CompileActionTest {
         );
         action.actionPerformed(null);
 
-        assertEquals("", compilerOutput.getText());
+        assertEquals("", log.getText());
         assertEquals(1, titleUpdates.get());
         verify(memory, never()).reset();
         verify(compiler).compile(Path.of("program.asm"), Optional.empty());
@@ -194,8 +218,40 @@ public class CompileActionTest {
         action.actionPerformed(null);
         flushEdt();
 
-        assertTrue(compilerOutput.getText().contains("Could not compile file:"));
-        assertTrue(compilerOutput.getText().contains("compile failed"));
+        assertTrue(labels().contains("Compilation failed"));
+        assertTrue(components(compilerOutput, JTextArea.class).get(0).getText().contains("ERROR  compile failed"));
+    }
+
+    private void compileWithMessages(CompilerMessage... messages) throws Exception {
+        when(computer.getCompiler()).thenReturn(Optional.of(compiler));
+        when(editor.saveFile()).thenReturn(true);
+        when(editor.getCurrentFile()).thenReturn(Optional.of(new File("program.asm")));
+        List<CompilerListener> listeners = new ArrayList<>();
+        doAnswer(call -> { listeners.add(call.getArgument(0)); return null; }).when(compiler).addCompilerListener(any());
+        doAnswer(call -> { listeners.remove(call.getArgument(0)); return null; }).when(compiler).removeCompilerListener(any());
+        doAnswer(call -> {
+            for (CompilerMessage message : messages) listeners.forEach(listener -> listener.onMessage(message));
+            return null;
+        }).when(compiler).compile(any(), any());
+        CompileAction action = new CompileAction(computer, dialogs, editor,
+                () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {});
+        SwingUtilities.invokeAndWait(() -> action.actionPerformed(null));
+        assertTrue(listeners.isEmpty());
+    }
+
+    private List<String> labels() {
+        List<String> labels = new ArrayList<>();
+        components(compilerOutput, JLabel.class).forEach(label -> labels.add(label.getText()));
+        return labels;
+    }
+
+    private static <T extends Component> List<T> components(Container parent, Class<T> type) {
+        List<T> matches = new ArrayList<>();
+        for (Component component : parent.getComponents()) {
+            if (type.isInstance(component)) matches.add(type.cast(component));
+            if (component instanceof Container) matches.addAll(components((Container) component, type));
+        }
+        return matches;
     }
 
     private static void flushEdt() {

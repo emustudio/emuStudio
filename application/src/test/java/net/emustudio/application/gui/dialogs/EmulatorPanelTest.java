@@ -28,6 +28,7 @@ import net.emustudio.emulib.application.ui.debugger.DebuggerColumn;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Optional;
@@ -635,6 +636,64 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         runOnEdt(panel::close);
         machineExecution.close();
         session.close();
+    }
+
+    @Test
+    public void cpuStatusFitsSidebarAsDividerMoves() {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        CPU cpu = mockCpu();
+        JPanel status = onEdt(() -> {
+            JPanel component = new JPanel();
+            component.setMinimumSize(new Dimension(400, 200));
+            component.setPreferredSize(new Dimension(640, 250));
+            return component;
+        });
+        when(cpu.getStatusPanel()).thenReturn(status);
+        when(computer.getCPU()).thenReturn(Optional.of(cpu));
+        when(computer.getDevices()).thenReturn(List.of());
+        EmulatorPanel panel = onEdt(() -> new EmulatorPanel(new JFrame(), computer, createDebugTableModel(),
+                mock(Dialogs.class), mockExecution(), null, position -> {}, new EmuStudioGui()));
+        JFrame frame = showInFrame(panel);
+        JSplitPane columns = findComponent(panel, JSplitPane.class, split -> "debuggerColumns".equals(split.getName()));
+        JSplitPane cpuWatches = findComponent(panel, JSplitPane.class, split -> "debuggerCpuWatches".equals(split.getName()));
+        JScrollPane scroll = (JScrollPane) cpuWatches.getTopComponent();
+
+        runOnEdt(() -> {
+            frame.setSize(1100, 650);
+            frame.setVisible(true);
+            frame.validate();
+            assertTrue(status.getWidth() >= status.getMinimumSize().width);
+
+            int narrowDividerLocation = columns.getMaximumDividerLocation();
+            columns.setDividerLocation(narrowDividerLocation - 100);
+            frame.validate();
+            int widerStatusWidth = status.getWidth();
+
+            columns.setDividerLocation(narrowDividerLocation);
+            frame.validate();
+            assertTrue(status.getWidth() < widerStatusWidth);
+            assertTrue(status.getWidth() >= status.getMinimumSize().width);
+            assertEquals(scroll.getViewport().getWidth(), scroll.getViewport().getView().getWidth());
+            assertTrue(status.getX() + status.getWidth() <= scroll.getViewport().getWidth());
+            assertFalse(scroll.getHorizontalScrollBar().isVisible());
+
+            int shortCpuPane = cpuWatches.getMinimumDividerLocation();
+            cpuWatches.setDividerLocation(shortCpuPane);
+            frame.validate();
+            int tallWatchesHeight = cpuWatches.getBottomComponent().getHeight();
+            assertTrue(scroll.getVerticalScrollBar().isVisible());
+
+            cpuWatches.setDividerLocation(cpuWatches.getMaximumDividerLocation());
+            frame.validate();
+            assertTrue(cpuWatches.getBottomComponent().getHeight() < tallWatchesHeight);
+            assertEquals(scroll.getViewport().getHeight(), status.getParent().getHeight());
+            assertFalse(scroll.getVerticalScrollBar().isVisible());
+
+            cpuWatches.setDividerLocation(shortCpuPane);
+            frame.validate();
+            assertEquals(tallWatchesHeight, cpuWatches.getBottomComponent().getHeight());
+            assertTrue(scroll.getVerticalScrollBar().isVisible());
+        });
     }
 
     @Test

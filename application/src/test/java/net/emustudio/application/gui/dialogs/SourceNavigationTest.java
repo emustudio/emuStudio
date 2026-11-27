@@ -10,6 +10,7 @@ import net.emustudio.application.gui.debugger.DebuggerPanel;
 import net.emustudio.application.gui.AbstractSwingTest;
 import net.emustudio.application.gui.debugger.DebugTableImpl;
 import net.emustudio.application.gui.debugger.DebugTableModel;
+import net.emustudio.application.gui.editor.CompilerOutputPanel;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -295,7 +296,8 @@ public class SourceNavigationTest extends AbstractSwingTest {
             CountDownLatch compiled = new CountDownLatch(1);
             runOnEdt(() -> {
                 f.compileAction = new CompileAction(computer, mock(Dialogs.class), f.editor,
-                        () -> CPU.RunState.STATE_STOPPED_BREAK, new JTextArea(), () -> {});
+                        () -> CPU.RunState.STATE_STOPPED_BREAK,
+                        new CompilerOutputPanel(new EmuStudioGui(), f.editor::setPosition), () -> {});
                 f.compileAction.addPropertyChangeListener(event -> {
                     if ("enabled".equals(event.getPropertyName()) && f.compileAction.isEnabled()) compiled.countDown();
                 });

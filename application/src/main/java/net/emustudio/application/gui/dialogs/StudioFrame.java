@@ -84,7 +84,7 @@ public class StudioFrame extends JFrame {
         );
         this.editorPanel = new EditorPanel(
                 this, dialogs, editor, computer, this::updateWindowTitle, emulatorPanel::getRunState,
-                gui
+                position -> navigateToSource(position, true), gui
         );
         this.sourceNavigation = emulatorPanel.getDebuggerPanel()
                 .flatMap(panel -> computer.getDebugger().map(session ->
@@ -254,6 +254,10 @@ public class StudioFrame extends JFrame {
     }
 
     private void navigateToSource(SourceCodePosition position) {
+        navigateToSource(position, false);
+    }
+
+    private void navigateToSource(SourceCodePosition position, boolean compilerPosition) {
         try {
             Path sourceFile = Path.of(position.fileName).toAbsolutePath().normalize();
             boolean currentFile = editor.getCurrentFile()
@@ -266,7 +270,8 @@ public class StudioFrame extends JFrame {
 
             updateWindowTitle();
             tabbedPane.setSelectedIndex(0);
-            editor.setPosition(position);
+            if (compilerPosition) editor.setCompilerPosition(position);
+            else editor.setPosition(position);
             editor.grabFocus();
         } catch (InvalidPathException e) {
             dialogs.showError("Could not open source file: " + position.fileName, "Error");

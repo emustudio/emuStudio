@@ -190,7 +190,6 @@ public class ViewComputerDialog extends DialogBase {
         infoPanel.add(lblSelectDevice, "split 2");
         infoPanel.add(cmbDevice, "grow, wrap");
         infoPanel.add(lblName, "wrap");
-        infoPanel.add(descriptionPanel, "growx, wrap");
         metadataPanel = gui.panel("insets 0, hidemode 3", "[][grow]", "[][][]");
         metadataPanel.add(gui.label("Version"));
         metadataPanel.add(lblVersion, "growx, wrap");
@@ -198,6 +197,7 @@ public class ViewComputerDialog extends DialogBase {
         metadataPanel.add(lblFileName, "growx, wrap");
         metadataPanel.add(lblCopyright, "span, growx");
         infoPanel.add(metadataPanel, "growx, wrap");
+        infoPanel.add(descriptionPanel, "growx, wrap");
 
         JPanel infoTab = gui.panel("insets dialog", "[][grow]", "[grow]");
         infoTab.add(infoToolbar, "grow");

@@ -118,7 +118,7 @@ public class EditorActionsTest {
         JTextArea compilerOutput = new JTextArea("old output");
         AtomicInteger titleUpdates = new AtomicInteger();
 
-        new NewFileAction(() -> false, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+        new NewFileAction(() -> false, editor, () -> compilerOutput.setText(""), titleUpdates::incrementAndGet).actionPerformed(null);
 
         verify(editor, never()).newFile();
         assertEquals("old output", compilerOutput.getText());
@@ -131,7 +131,7 @@ public class EditorActionsTest {
         JTextArea compilerOutput = new JTextArea("old output");
         AtomicInteger titleUpdates = new AtomicInteger();
 
-        new NewFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+        new NewFileAction(() -> true, editor, () -> compilerOutput.setText(""), titleUpdates::incrementAndGet).actionPerformed(null);
 
         verify(editor).newFile();
         assertEquals("", compilerOutput.getText());
@@ -145,7 +145,7 @@ public class EditorActionsTest {
         AtomicInteger titleUpdates = new AtomicInteger();
         when(editor.openFile()).thenReturn(false);
 
-        new OpenFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+        new OpenFileAction(() -> true, editor, () -> compilerOutput.setText(""), titleUpdates::incrementAndGet).actionPerformed(null);
 
         assertEquals("compile me", compilerOutput.getText());
         assertEquals(0, titleUpdates.get());
@@ -158,7 +158,7 @@ public class EditorActionsTest {
         AtomicInteger titleUpdates = new AtomicInteger();
         when(editor.openFile()).thenReturn(true);
 
-        new OpenFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+        new OpenFileAction(() -> true, editor, () -> compilerOutput.setText(""), titleUpdates::incrementAndGet).actionPerformed(null);
 
         assertEquals("", compilerOutput.getText());
         assertEquals(1, titleUpdates.get());

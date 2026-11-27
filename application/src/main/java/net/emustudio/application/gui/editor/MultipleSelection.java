@@ -265,7 +265,7 @@ final class MultipleSelection {
     private Point columnPosition(int offset) throws BadLocationException {
         int line = pane.getLineOfOffset(offset);
         int start = pane.getLineStartOffset(line);
-        int column = TextEdits.spaces(pane.getText(start, offset - start), pane.getTabSize()).length();
+        int column = visualWidth(pane.getText(start, offset - start));
         return new Point(column, line);
     }
 
@@ -279,7 +279,7 @@ final class MultipleSelection {
             int end = Math.min(pane.getDocument().getLength(), pane.getLineEndOffset(line));
             if (end > start && pane.getText(end - 1, 1).equals("\n")) end--;
             String row = pane.getText(start, end - start);
-            int width = TextEdits.spaces(row, pane.getTabSize()).length();
+            int width = visualWidth(row);
             int from = start + offsetForColumn(row, left), to = start + offsetForColumn(row, right);
             next.add(new Range(from, to, Math.max(0, left - width)));
             if (line == lead.y) leadOffset = lead.x == left ? from : to;
@@ -306,10 +306,24 @@ final class MultipleSelection {
         } catch (BadLocationException e) { clear(); }
     }
 
+    private int visualWidth(String row) {
+        int column = 0;
+        for (int offset = 0; offset < row.length(); offset++) {
+            column = advanceColumn(column, row.charAt(offset));
+        }
+        return column;
+    }
+
+    private int advanceColumn(int column, char character) {
+        if (character != '\t') return column + 1;
+        int tabSize = pane.getTabSize();
+        return column + tabSize - column % tabSize;
+    }
+
     private int offsetForColumn(String row, int target) {
         int column = 0, offset = 0;
         while (offset < row.length() && column < target) {
-            column += row.charAt(offset) == '\t' ? pane.getTabSize() - column % pane.getTabSize() : 1;
+            column = advanceColumn(column, row.charAt(offset));
             offset++;
         }
         return offset;

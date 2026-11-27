@@ -20,8 +20,10 @@ import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,6 +31,7 @@ import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
     private static final int SIDEBAR_SECONDARY_MIN_HEIGHT = 110;
+    private static final int SIDEBAR_MIN_WIDTH = 280;
 
     private final EmuStudioGui gui;
     private final JPanel statusWindow;
@@ -216,18 +219,21 @@ public class EmulatorPanel extends JPanel {
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        JScrollPane statusScroll = gui.scrollPane(statusWindow);
-        statusScroll.setMinimumSize(new Dimension(280, 140));
+        JScrollPane statusScroll = gui.scrollPane(new CpuStatusView(statusWindow));
+        statusScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        int sidebarMinWidth = Math.max(SIDEBAR_MIN_WIDTH,
+                statusWindow.getMinimumSize().width + statusScroll.getVerticalScrollBar().getPreferredSize().width);
+        statusScroll.setMinimumSize(new Dimension(sidebarMinWidth, 140));
         JPanel watches = gui.section("Watches", "insets 0, fill", "[grow]", "[grow]");
         watches.add(debugger != null ? debugger.watchesPanel() : gui.label("Watches need a CPU."), "grow");
-        watches.setMinimumSize(new Dimension(280, SIDEBAR_SECONDARY_MIN_HEIGHT));
+        watches.setMinimumSize(new Dimension(SIDEBAR_MIN_WIDTH, SIDEBAR_SECONDARY_MIN_HEIGHT));
         cpuWatches = gui.splitPane(JSplitPane.VERTICAL_SPLIT, statusScroll, watches, 2.0 / 3);
         cpuWatches.setName("debuggerCpuWatches");
-        peripheralPanel.setMinimumSize(new Dimension(280, SIDEBAR_SECONDARY_MIN_HEIGHT));
+        peripheralPanel.setMinimumSize(new Dimension(SIDEBAR_MIN_WIDTH, SIDEBAR_SECONDARY_MIN_HEIGHT));
         sidebar = gui.splitPane(JSplitPane.VERTICAL_SPLIT, cpuWatches, peripheralPanel, 0.75);
         sidebar.setName("debuggerSidebar");
-        sidebar.setPreferredSize(new Dimension(360, 650));
-        sidebar.setMinimumSize(new Dimension(280, 420));
+        sidebar.setPreferredSize(new Dimension(Math.max(360, sidebarMinWidth), 650));
+        sidebar.setMinimumSize(new Dimension(sidebarMinWidth, 420));
 
         JComponent workspace = debugger != null ? debugger : debuggerPanel;
         workspace.setMinimumSize(new Dimension(360, 180));
@@ -303,7 +309,8 @@ public class EmulatorPanel extends JPanel {
     public void resizeComponents(int height) {
         // Establish the initial proportions once; resizing must preserve the user's dividers.
         if (!dividersInitialized && height > 0 && splitLeftRight.getWidth() > 0 && splitLeftRight.getHeight() > 0) {
-            splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - 370));
+            int sidebarWidth = Math.max(370, sidebar.getMinimumSize().width + splitLeftRight.getDividerSize());
+            splitLeftRight.setDividerLocation(Math.max(360, splitLeftRight.getWidth() - sidebarWidth));
             int contentHeight = splitLeftRight.getHeight() - sidebar.getDividerSize() - cpuWatches.getDividerSize();
             int secondaryHeight = Math.max(SIDEBAR_SECONDARY_MIN_HEIGHT, contentHeight / 4);
             sidebar.setDividerLocation(contentHeight - secondaryHeight + cpuWatches.getDividerSize());
@@ -477,6 +484,23 @@ public class EmulatorPanel extends JPanel {
             action.run();
         } else {
             SwingUtilities.invokeLater(action);
+        }
+    }
+
+    private static final class CpuStatusView extends JPanel implements Scrollable {
+        private CpuStatusView(JPanel statusWindow) {
+            super(new BorderLayout());
+            add(statusWindow);
+        }
+
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public boolean getScrollableTracksViewportWidth() { return true; }
+        @Override public boolean getScrollableTracksViewportHeight() {
+            return getParent() instanceof JViewport && getParent().getHeight() >= getPreferredSize().height;
+        }
+        @Override public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) { return 16; }
+        @Override public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+            return Math.max(16, visible.height - 16);
         }
     }
 }

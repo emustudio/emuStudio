@@ -4,9 +4,12 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
+import net.emustudio.application.gui.editor.CompilerOutputPanel;
 import net.emustudio.application.gui.editor.Editor;
+import net.emustudio.application.gui.editor.InlineSearchBar;
 import net.emustudio.application.gui.editor.TabbedEditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugin.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugin.cpu.CPU;
 import net.emustudio.emulib.application.ui.Dialogs;
 import net.emustudio.application.gui.framework.EmuStudioGui;
@@ -20,9 +23,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.HierarchyEvent;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.application.gui.editor.Editor.MIN_FONT_ZOOM;
 import static net.emustudio.application.gui.editor.Editor.MAX_FONT_ZOOM;
 import static net.emustudio.application.Constants.FONT_CODE;
@@ -48,7 +51,7 @@ public class EditorPanel extends JPanel {
     private boolean dividerInitialized;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState, EmuStudioGui gui) {
+                       Supplier<CPU.RunState> runState, Consumer<SourceCodePosition> navigateToSource, EmuStudioGui gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -57,8 +60,7 @@ public class EditorPanel extends JPanel {
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = gui.textAreaReadOnly(3, 20);
-        compilerOutput.setFont(FONT_MONOSPACED);
+        CompilerOutputPanel compilerOutput = new CompilerOutputPanel(gui, navigateToSource);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
         this.findAction = new FindAction(findDialog, replaceDialog) {
@@ -74,17 +76,20 @@ public class EditorPanel extends JPanel {
             }
         };
         Supplier<Boolean> confirmReplace = editor instanceof TabbedEditor ? () -> true : this::confirmSave;
-        this.newFileAction = new NewFileAction(confirmReplace, editor, compilerOutput, updateTitle);
-        this.openFileAction = new OpenFileAction(confirmReplace, editor, compilerOutput, updateTitle);
+        this.newFileAction = new NewFileAction(confirmReplace, editor, compilerOutput::clear, updateTitle);
+        this.openFileAction = new OpenFileAction(confirmReplace, editor, compilerOutput::clear, updateTitle);
         this.compileAction = new CompileAction(
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = gui.scrollPane(compilerOutput);
-        splitSource = gui.splitPane(JSplitPane.VERTICAL_SPLIT, editor.getView(), compilerPane, 1.0);
+        splitSource = gui.splitPane(JSplitPane.VERTICAL_SPLIT, editor.getView(), compilerOutput, 1.0);
         // Resize the syntax editor once on release rather than repainting it throughout the drag.
         splitSource.setContinuousLayout(false);
         splitSource.setOneTouchExpandable(true);
+        splitSource.putClientProperty("SplitPaneDivider.collapseTopToolTipText", "Expand compiler output");
+        splitSource.putClientProperty("SplitPaneDivider.collapseBottomToolTipText", "Hide compiler output");
+        splitSource.putClientProperty("SplitPaneDivider.expandBottomToolTipText", "Show compiler output");
+        splitSource.putClientProperty("SplitPaneDivider.expandTopToolTipText", "Restore source editor");
         splitSource.addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent event) {
                 resizeComponents(getHeight());
@@ -156,6 +161,27 @@ public class EditorPanel extends JPanel {
         return true;
     }
 
+    private AbstractButton findToolbarButton() {
+        if (!(editor instanceof TabbedEditor)) return gui.toolbarButton(findAction);
+
+        InlineSearchBar search = ((TabbedEditor) editor).searchBar();
+        JToggleButton button = gui.toolbarToggleButton(event -> {
+            if (search.isVisible()) search.hideSearch();
+            else search.showFind();
+        }, "/net/emustudio/application/gui/icons/find.png", "Find text...");
+        button.setSelected(search.isVisible());
+        search.addComponentListener(new ComponentAdapter() {
+            @Override public void componentShown(ComponentEvent event) {
+                button.setSelected(search.isVisible());
+            }
+
+            @Override public void componentHidden(ComponentEvent event) {
+                button.setSelected(search.isVisible());
+            }
+        });
+        return button;
+    }
+
     private JToolBar setupMainToolbar() {
         JToolBar mainToolBar = gui.toolBar();
 
@@ -174,7 +200,7 @@ public class EditorPanel extends JPanel {
                 "Redo"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(gui.toolbarButton(findAction));
+        mainToolBar.add(findToolbarButton());
         mainToolBar.addSeparator();
         JButton compileButton = gui.toolbarButton(compileAction);
         compileButton.getAccessibleContext().setAccessibleName("Save & Compile source file");

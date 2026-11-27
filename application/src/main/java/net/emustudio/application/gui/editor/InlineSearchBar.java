@@ -2,8 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.miginfocom.swing.MigLayout;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
@@ -14,7 +16,10 @@ import java.util.function.Supplier;
 
 /** Inline search scoped to the active source view or a captured selection. */
 public final class InlineSearchBar extends JPanel {
-    final JTextField find = new JTextField(18), replace = new JTextField(14);
+    private static final String ICONS = "/net/emustudio/application/gui/icons/";
+    private static final String TOOLBAR_BUTTON_SIZE = "w 22px!, h 22px!";
+
+    final JTextField find, replace;
     final JToggleButton matchCase = option("Aa", "Match case"), word = option("W", "Whole word"), regex = option(".*", "Regex"),
             preserve = option("Aa", "Preserve case"), selection = option("[]", "Search only the captured selection in this pane");
     private final JLabel count = new JLabel("0 results");
@@ -27,40 +32,52 @@ public final class InlineSearchBar extends JPanel {
     private boolean moving;
 
     InlineSearchBar(Supplier<REditor> active) {
+        super(new BorderLayout());
         this.active = active;
         count.setFont(count.getFont().deriveFont(count.getFont().getSize2D() * 0.85f));
         EmuStudioGui gui = new EmuStudioGui();
-        setLayout(new net.miginfocom.swing.MigLayout("insets 2 4, fillx, hidemode 3", "[][200:400:,grow,fill][][][]", "[][][]"));
-        find.getAccessibleContext().setAccessibleName("Find text"); replace.getAccessibleContext().setAccessibleName("Replacement text");
-        JToolBar navigation = gui.toolBar();
+        JToolBar toolbar = gui.toolBar();
+        toolbar.setLayout(new MigLayout("insets 2 4, hidemode 3, novisualpadding",
+                "[pref!][80:360:520,growprio 110,grow,fill][pref!][pref!][pref!][grow,right]", "[]2[]2[]"));
+        toolbar.getAccessibleContext().setAccessibleName("Find and replace");
+        add(toolbar, BorderLayout.CENTER);
+
+        find = searchField("Find", "Find text", 18);
+        replace = searchField("Replace with", "Replacement text", 14);
         replacementToggle = gui.toolbarToggleButton(e -> setReplacementVisible(
-                ((JToggleButton) e.getSource()).isSelected()), "/net/emustudio/application/gui/icons/replace.png", "Show replacement controls");
+                ((JToggleButton) e.getSource()).isSelected()), ICONS + "replace.png", "Show replacement controls");
         replacementToggle.setIcon(new ArrowIcon(true, true));
-        replacementToggle.setFocusable(true);
-        replacementToggle.getAccessibleContext().setAccessibleName("Show replacement controls");
-        navigation.add(replacementToggle);
-        JPanel matching = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
-        for (JToggleButton option : new JToggleButton[]{matchCase, word, regex, selection}) matching.add(option);
-        JToolBar navigationMatches = gui.toolBar();
-        JButton previous = button(gui, navigationMatches, "/net/emustudio/application/gui/icons/move-up.png", "Previous match", () -> next(false));
+        JButton previous = button(gui, ICONS + "move-up.png", "Previous match", () -> next(false));
         previous.setIcon(new ArrowIcon(false, true));
-        JButton next = button(gui, navigationMatches, "/net/emustudio/application/gui/icons/move-down.png", "Next match", () -> next(true));
+        JButton next = button(gui, ICONS + "move-down.png", "Next match", () -> next(true));
         next.setIcon(new ArrowIcon(false, false));
-        JToolBar closing = gui.toolBar();
-        JButton close = button(gui, closing, "/net/emustudio/application/gui/icons/remove.png", "Close search", () -> { setVisible(false); active.get().grabFocus(); });
+        JButton close = button(gui, ICONS + "remove.png", "Close search", this::hideSearch);
         close.setIcon(new CloseIcon());
-        add(navigation); add(find); add(matching); add(navigationMatches); add(closing, "wrap");
-        add(count, "skip 1, span, wrap");
-        JPanel replacements = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 0));
+
+        toolbar.add(replacementToggle, TOOLBAR_BUTTON_SIZE);
+        toolbar.add(find);
+        toolbar.add(matchCase, TOOLBAR_BUTTON_SIZE + ", split 4");
+        toolbar.add(word, TOOLBAR_BUTTON_SIZE);
+        toolbar.add(regex, TOOLBAR_BUTTON_SIZE);
+        toolbar.add(selection, TOOLBAR_BUTTON_SIZE);
+        toolbar.add(new JToolBar.Separator(), "growy");
+        toolbar.add(previous, TOOLBAR_BUTTON_SIZE + ", split 2");
+        toolbar.add(next, TOOLBAR_BUTTON_SIZE);
+        toolbar.add(close, TOOLBAR_BUTTON_SIZE + ", wrap");
+        toolbar.add(count, "skip 1, span, wmin 0, wrap");
+
+        JPanel replacements = new JPanel(new FlowLayout(FlowLayout.LEADING, 4, 0));
+        replacements.setOpaque(false);
         JButton replaceOne = new JButton("Replace");
         replaceOne.addActionListener(e -> runReplacement(this::replaceCurrent));
         JButton replaceAll = new JButton("Replace All");
         replaceAll.addActionListener(e -> runReplacement(this::replaceAll));
-        replacements.add(replaceOne); replacements.add(replaceAll);
-        selection.setToolTipText("Search only the captured selection in this pane");
-        JLabel indent = new JLabel();
-        add(indent); add(replace); add(preserve); add(replacements, "span 3, wrap");
-        replacementControls = List.of(indent, replace, replacements, preserve);
+        replacements.add(replaceOne);
+        replacements.add(replaceAll);
+        toolbar.add(replace, "skip 1");
+        toolbar.add(preserve, TOOLBAR_BUTTON_SIZE + ", span, split 2");
+        toolbar.add(replacements);
+        replacementControls = List.of(replace, preserve, replacements);
         setReplacementVisible(false);
         find.addActionListener(e -> next(true)); replace.addActionListener(e -> replaceCurrent());
         DocumentListener listener = REditor.onChange(this::refresh);
@@ -80,21 +97,28 @@ public final class InlineSearchBar extends JPanel {
         });
         setVisible(false);
     }
+
+    private static JTextField searchField(String prompt, String accessibleName, int columns) {
+        JTextField field = new JTextField(columns);
+        field.putClientProperty("JTextField.placeholderText", prompt);
+        field.putClientProperty("FlatLaf.style", "placeholderForeground: $TextField.foreground");
+        field.getAccessibleContext().setAccessibleName(accessibleName);
+        return field;
+    }
+
     private static JToggleButton option(String text, String label) {
         JToggleButton button = new JToggleButton(text);
-        button.setMargin(new Insets(2, 5, 2, 5));
+        button.putClientProperty("JButton.buttonType", "toolBarButton");
+        button.setMargin(new Insets(0, 0, 0, 0));
         button.setToolTipText(label);
         button.getAccessibleContext().setAccessibleName(label);
         return button;
     }
-    private JButton button(EmuStudioGui gui, JToolBar toolbar, String icon, String tooltip, Runnable runnable) {
+    private JButton button(EmuStudioGui gui, String icon, String tooltip, Runnable runnable) {
         JButton button = gui.toolbarButton(e -> {
             try { runnable.run(); }
             catch (IllegalArgumentException ex) { count.setText(ex.getMessage()); }
         }, icon, tooltip);
-        button.setFocusable(true);
-        button.getAccessibleContext().setAccessibleName(tooltip);
-        toolbar.add(button);
         return button;
     }
     private static final class ArrowIcon implements Icon {
@@ -149,6 +173,12 @@ public final class InlineSearchBar extends JPanel {
     public void showReplace() {
         showSearch(true);
     }
+
+    public void hideSearch() {
+        setVisible(false);
+        active.get().grabFocus();
+    }
+
     private void showSearch(boolean replacements) {
         setReplacementVisible(replacements);
         String selected = active.get().getSelectedText();

@@ -22,15 +22,12 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,8 +37,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
@@ -57,6 +52,7 @@ public class REditor implements Editor {
     private final List<FileType> fileTypes;
     private final Compiler compiler;
     private final EditorCommands commands;
+    private final IncludeLinks includeLinks;
     private REditor sharedWith;
     private Consumer<Path> openFileHandler = path -> {
     };
@@ -82,7 +78,6 @@ public class REditor implements Editor {
         textPane.setAutoIndentEnabled(true);
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
-        textPane.clearParsers();
         if (compiler != null) installCompilerSyntax();
 
         textPane.setCaretPosition(0);
@@ -126,18 +121,8 @@ public class REditor implements Editor {
                 }
             }
         });
-        textPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown()) {
-                    int offset = textPane.viewToModel2D(e.getPoint());
-                    if (offset >= 0) {
-                        openIncludeAt(offset);
-                        e.consume();
-                    }
-                }
-            }
-        });
+        includeLinks = new IncludeLinks(textPane, compiler, () -> getCurrentFile().map(File::toPath),
+                path -> openFileHandler.accept(path));
         setupSyntaxTheme();
 
         if (compiler != null) {
@@ -146,7 +131,7 @@ public class REditor implements Editor {
             fileTypes = Collections.emptyList();
         }
         textPane.setDirty(false);
-        commands = new EditorCommands(textPane, scrollPane, compiler);
+        commands = new EditorCommands(textPane, compiler);
     }
 
     TextEditorPane textPane() {
@@ -226,13 +211,27 @@ public class REditor implements Editor {
 
     @Override
     public void setPosition(SourceCodePosition position) {
+        setPosition(position, false);
+    }
+
+    void setCompilerPosition(SourceCodePosition position) {
+        setPosition(position, compiler != null
+                && compiler.getSourcePositionColumnUnit() == SourceCodePosition.ColumnUnit.CODE_POINT);
+    }
+
+    private void setPosition(SourceCodePosition position, boolean codePointColumn) {
         if (position.line >= 0) {
             try {
-                int offset = textPane.getLineStartOffset(Math.max(0, position.line - 1));
-                if (position.column >= 0) {
-                    offset += position.column;
+                int line = Math.max(0, position.line - 1);
+                int start = textPane.getLineStartOffset(line);
+                int end = textPane.getLineEndOffset(line);
+                if (line + 1 < textPane.getLineCount()) end--;
+                int column = Math.max(0, position.column);
+                if (codePointColumn) {
+                    String text = textPane.getText(start, end - start);
+                    column = text.offsetByCodePoints(0, Math.min(column, text.codePointCount(0, text.length())));
                 }
-                textPane.setCaretPosition(offset);
+                textPane.setCaretPosition(start + Math.min(column, end - start));
             } catch (BadLocationException ignored) {
             }
         }
@@ -338,45 +337,7 @@ public class REditor implements Editor {
     }
 
     void openIncludeAt(int offset) {
-        resolveIncludeAt(offset).ifPresent(path -> {
-            if (Files.isRegularFile(path)) {
-                textPane.setToolTipText(null);
-                openFileHandler.accept(path);
-            } else {
-                textPane.setToolTipText("File not found: " + path);
-            }
-        });
-    }
-
-    private Optional<Path> resolveIncludeAt(int offset) {
-        String filename = null;
-        if (compiler != null) {
-            net.emustudio.emulib.plugin.compiler.LexicalAnalyzer lexer = compiler.createLexer();
-            char[] source = textPane.getText().toCharArray();
-            lexer.reset(source, 0, source.length);
-            while (lexer.hasNext()) {
-                net.emustudio.emulib.plugin.compiler.Token token = lexer.next();
-                if (token.getReferencedFile() != null && offset >= token.getOffset()
-                        && offset < token.getOffset() + token.getText().length()) {
-                    filename = token.getReferencedFile().replace('\\', File.separatorChar).replace('/', File.separatorChar);
-                    break;
-                }
-            }
-        } else {
-            // Plain text can open any quoted relative file path, without language keywords.
-            Matcher matcher = Pattern.compile("([\"'])([^\"']+)\\1").matcher(textPane.getText());
-            while (matcher.find()) if (offset >= matcher.start(2) && offset < matcher.end(2)) {
-                filename = matcher.group(2);
-                break;
-            }
-        }
-        if (filename == null) return Optional.empty();
-        final String path = filename;
-        try {
-            return getCurrentFile().map(File::toPath).map(Path::getParent).map(parent -> parent.resolve(path).normalize());
-        } catch (InvalidPathException e) {
-            return Optional.empty();
-        }
+        includeLinks.openAt(offset);
     }
 
     @Override

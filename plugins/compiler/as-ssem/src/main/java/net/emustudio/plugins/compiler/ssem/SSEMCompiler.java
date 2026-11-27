@@ -76,18 +76,16 @@ public class SSEMCompiler extends AbstractCompiler {
             CodeGenerator codeGenerator = new CodeGenerator();
             ByteBuffer code = codeGenerator.generateCode(program);
 
+            int programLocation = program.getStartLine() * 4;
             if (code.hasRemaining()) {
                 writeToFile(code, outputPath);
+                info(String.format(
+                        "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                        outputPath, formatHex(programLocation, 4)
+                ));
                 writeToMemory(code);
             }
-
-            int programLocation = program.getStartLine() * 4;
             applicationApi.setProgramLocation(programLocation);
-
-            info(String.format(
-                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputPath, formatHex(programLocation, 4)
-            ));
         }
     }
 
@@ -135,6 +133,7 @@ public class SSEMCompiler extends AbstractCompiler {
             code.get(data);
             memory.clear();
             memory.write(0, Numbers.nativeBytesToBytes(data));
+            info("Compiled file was loaded into memory.");
         } else {
             warning("Memory is not available.");
         }

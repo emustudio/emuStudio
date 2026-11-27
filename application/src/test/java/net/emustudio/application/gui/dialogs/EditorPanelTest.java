@@ -79,6 +79,36 @@ public class EditorPanelTest extends AbstractSwingTest {
     }
 
     @Test
+    public void toolbarFindToggleTracksInlineSearchVisibility() {
+        Dialogs dialogs = mock(Dialogs.class);
+        TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
+        EditorPanel panel = createPanel(dialogs, editor);
+        JFrame frame = showInFrame(panel);
+        try {
+            runOnEdt(() -> frame.setVisible(true));
+            JToggleButton find = findComponent(panel, JToggleButton.class,
+                    button -> "Find text...".equals(button.getToolTipText()));
+            assertFalse(onEdt(find::isSelected));
+
+            triggerButton(find);
+            assertTrue(onEdt(() -> editor.searchBar().isVisible()));
+            assertTrue(onEdt(find::isSelected));
+            triggerButton(find);
+            assertFalse(onEdt(() -> editor.searchBar().isVisible()));
+            assertFalse(onEdt(find::isSelected));
+
+            runOnEdt(() -> panel.getFindAction().actionPerformed(new ActionEvent(panel, 0, "Find")));
+            assertTrue(onEdt(find::isSelected));
+            triggerButton(findComponent(panel, JButton.class,
+                    button -> "Close search".equals(button.getToolTipText())));
+            assertFalse(onEdt(find::isSelected));
+
+            runOnEdt(() -> panel.getReplaceAction().actionPerformed(new ActionEvent(panel, 0, "Replace")));
+            assertTrue(onEdt(find::isSelected));
+        } finally { runOnEdt(panel::dispose); }
+    }
+
+    @Test
     public void fontZoomComboTracksShortcutsWheelAndActiveTabs() {
         Dialogs dialogs = mock(Dialogs.class);
         TabbedEditor editor = onEdt(() -> new TabbedEditor(dialogs, null));
@@ -320,6 +350,7 @@ public class EditorPanelTest extends AbstractSwingTest {
                 () -> {
                 },
                 () -> CPU.RunState.STATE_STOPPED_BREAK,
+                editor::setPosition,
                 new EmuStudioGui()
         ));
     }

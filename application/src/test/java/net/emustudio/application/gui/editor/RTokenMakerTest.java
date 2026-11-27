@@ -304,6 +304,38 @@ public class RTokenMakerTest {
     }
 
     @Test
+    public void testReservedPunctuationSharesPaintSpans() {
+        int reserved = net.emustudio.emulib.plugin.compiler.Token.RESERVED;
+        TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
+                token(reserved, 0, "+"),
+                token(reserved, 1, ">"),
+                token(net.emustudio.emulib.plugin.compiler.Token.BLOCK_START, 2, "["),
+                token(reserved, 3, "-"),
+                token(reserved, 4, "."),
+                token(net.emustudio.emulib.plugin.compiler.Token.BLOCK_END, 5, "]"),
+                token(net.emustudio.emulib.plugin.compiler.Token.COMMENT, 6, "note")
+        );
+        RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
+        Segment line = new Segment("xx+>[-.]note".toCharArray(), 2, 10);
+
+        List<org.fife.ui.rsyntaxtextarea.Token> tokens = collectTokens(maker.getTokenList(
+                line, org.fife.ui.rsyntaxtextarea.Token.NULL, 50
+        ));
+
+        assertEquals(6, tokens.size());
+        assertEquals("+>", tokens.get(0).getLexeme());
+        assertEquals(50, tokens.get(0).getOffset());
+        assertEquals(org.fife.ui.rsyntaxtextarea.Token.RESERVED_WORD, tokens.get(0).getType());
+        assertEquals("[", tokens.get(1).getLexeme());
+        assertEquals("-.", tokens.get(2).getLexeme());
+        assertEquals(53, tokens.get(2).getOffset());
+        assertEquals("]", tokens.get(3).getLexeme());
+        assertEquals("note", tokens.get(4).getLexeme());
+        assertEquals(org.fife.ui.rsyntaxtextarea.Token.COMMENT_MARKUP, tokens.get(4).getType());
+        assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, tokens.get(5).getType());
+    }
+
+    @Test
     public void testLexerNextExceptionBreaksLoopAndProducesNullTerminator() {
         // A lexer where next() always throws — must NOT cause an infinite loop
         int[] nextCalls = {0};

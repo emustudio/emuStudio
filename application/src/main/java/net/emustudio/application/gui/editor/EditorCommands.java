@@ -4,7 +4,8 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugin.compiler.Compiler;
 import org.fife.ui.rsyntaxtextarea.*;
-import org.fife.ui.rtextarea.*;
+import org.fife.ui.rtextarea.RTextArea;
+import org.fife.ui.rtextarea.RTextAreaEditorKit;
 
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
@@ -13,8 +14,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 /**
@@ -24,15 +23,13 @@ final class EditorCommands {
     private static final String COLUMN_SELECTION_MODE = "Column Selection Mode";
 
     private final TextEditorPane pane;
-    private final RTextScrollPane scroll;
     private final Compiler compiler;
     private final MultipleSelection selections;
     private EditorState state = new EditorState(null);
     private final Map<String, Action> actions = new LinkedHashMap<>();
 
-    EditorCommands(TextEditorPane pane, RTextScrollPane scroll, Compiler compiler) {
+    EditorCommands(TextEditorPane pane, Compiler compiler) {
         this.pane = pane;
-        this.scroll = scroll;
         this.compiler = compiler;
         selections = new MultipleSelection(pane);
         int shortcut = RTextArea.getDefaultModifier();
@@ -50,17 +47,7 @@ final class EditorCommands {
         }
 
         add("Duplicate line / selection", KeyEvent.VK_D, shortcut, this::duplicate);
-        for (String name : List.of("Sort lines", "Reverse lines", "Remove duplicate lines")) {
-            add(name, 0, 0, () -> lines(text -> TextEdits.reorder(text, name), true));
-        }
-        add("Uppercase", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaUpperSelectionCaseAction));
-        add("Lowercase", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaLowerSelectionCaseAction));
-        add("Invert case", 0, 0, () -> changeCase(RTextAreaEditorKit.rtaInvertSelectionCaseAction));
-        add("Trim trailing whitespace", 0, 0, () -> lines(text -> text.replaceAll("(?m)[ \\t]+$", ""), true));
-        add("Tabs to spaces", 0, 0, () -> lines(text -> TextEdits.spaces(text, pane.getTabSize()), true));
-        add("Leading spaces to tabs", 0, 0, () -> lines(text -> TextEdits.tabs(text, pane.getTabSize()), true));
         add("Reindent", KeyEvent.VK_I, ctrl | alt, () -> lines(this::reindent, true));
-        add("Align columns", 0, 0, this::align);
         add("Toggle comment", KeyEvent.VK_SLASH, shortcut, () -> invoke(RSyntaxTextAreaEditorKit.rstaToggleCommentAction));
         pane.addKeyListener(new KeyAdapter() {
             @Override
@@ -83,8 +70,6 @@ final class EditorCommands {
         this.state = state;
         pane.setTabSize(Math.max(1, Math.min(16, state.number("TabSize", 4))));
         pane.setTabsEmulated(state.flag("Spaces", true));
-        pane.setWhitespaceVisible(state.flag("Whitespace", false));
-        pane.setPaintTabLines(state.flag("IndentGuides", false));
         pane.setLineWrap(state.flag("Wrap", false));
         applyColors();
     }
@@ -94,16 +79,18 @@ final class EditorCommands {
     }
 
     List<JMenuItem> editMenuItems() {
-        JMenu edit = menu("Text", "Duplicate line / selection", "Sort lines", "Reverse lines", "Remove duplicate lines", "Uppercase", "Lowercase", "Invert case", "Toggle comment", "Reindent", "Align columns", "Tabs to spaces", "Leading spaces to tabs", "Trim trailing whitespace");
+        JMenu text = menu("Text", "Duplicate line / selection", "Toggle comment", "Reindent");
         JCheckBoxMenuItem columnSelection = new JCheckBoxMenuItem(actions.get(COLUMN_SELECTION_MODE));
         JMenuItem goTo = new JMenuItem(actions.get("Go to line..."));
         JMenuItem indentation = new JMenuItem(actions.get("Indentation..."));
         JMenuItem tokenColors = new JMenuItem(actions.get("Token colors..."));
-        JMenu view = new JMenu("Editor display");
-        toggle(view, "Whitespace", "Visible whitespace", pane::isWhitespaceVisible, pane::setWhitespaceVisible);
-        toggle(view, "IndentGuides", "Indentation guides", pane::getPaintTabLines, pane::setPaintTabLines);
-        toggle(view, "Wrap", "Soft wrap", pane::getLineWrap, pane::setLineWrap);
-        return List.of(edit, columnSelection, goTo, indentation, tokenColors, view);
+        JCheckBoxMenuItem softWrap = new JCheckBoxMenuItem("Soft wrap", pane.getLineWrap());
+        softWrap.addActionListener(e -> {
+            boolean enabled = softWrap.isSelected();
+            pane.setLineWrap(enabled);
+            state.setFlag("Wrap", enabled);
+        });
+        return List.of(text, columnSelection, goTo, indentation, tokenColors, softWrap);
     }
 
     private JMenu menu(String title, String... names) {
@@ -143,25 +130,6 @@ final class EditorCommands {
     private void invoke(String key) {
         Action action = pane.getActionMap().get(key);
         if (action != null) action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, key));
-    }
-
-    private void changeCase(String key) {
-        List<MultipleSelection.Range> ranges = selections.ranges();
-        pane.beginAtomicEdit();
-        try {
-            if (ranges.isEmpty()) {
-                invoke(key);
-                return;
-            }
-            selections.clear();
-            for (int i = ranges.size() - 1; i >= 0; i--) {
-                MultipleSelection.Range range = ranges.get(i);
-                pane.select(range.start, range.end);
-                invoke(key);
-            }
-        } finally {
-            pane.endAtomicEdit();
-        }
     }
 
     private void lines(UnaryOperator<String> operation, boolean wholeFile) {
@@ -205,43 +173,6 @@ final class EditorCommands {
         return String.join("\n", result);
     }
 
-    private void align() {
-        // Preserve token contents, including quoted strings and comments. Only gaps change.
-        lines(text -> {
-            if (compiler == null) throw new IllegalArgumentException("Select compiler syntax to align token columns");
-            List<net.emustudio.emulib.plugin.compiler.Token> tokens = compiler.createLexer().analyze(text);
-            List<String> result = new ArrayList<>();
-            int offset = 0;
-            for (String line : text.split("\n", -1)) {
-                final int start = offset, end = offset + line.length();
-                List<net.emustudio.emulib.plugin.compiler.Token> row = new ArrayList<>();
-                for (net.emustudio.emulib.plugin.compiler.Token token : tokens) {
-                    if (token.getOffset() >= start && token.getOffset() < end && token.getType() != net.emustudio.emulib.plugin.compiler.Token.WHITESPACE && token.getType() != net.emustudio.emulib.plugin.compiler.Token.EOF)
-                        row.add(token);
-                }
-                if (row.isEmpty()) result.add(line);
-                else {
-                    StringBuilder formatted = new StringBuilder();
-                    for (int i = 0; i < row.size(); i++) {
-                        net.emustudio.emulib.plugin.compiler.Token token = row.get(i);
-                        int target = i == 0 ? 0 : token.getType() == net.emustudio.emulib.plugin.compiler.Token.COMMENT ? state.number("CommentColumn", 40) : i == 1 ? state.number("OperandColumn", 16) : -1;
-                        if (target >= 0 && formatted.length() > 0)
-                            formatted.append(" ".repeat(Math.max(1, target - formatted.length())));
-                        else if (i > 0) {
-                            net.emustudio.emulib.plugin.compiler.Token previous = row.get(i - 1);
-                            int gap = token.getOffset() - previous.getOffset() - previous.getText().length();
-                            if (gap > 0) formatted.append(" ".repeat(gap));
-                        }
-                        formatted.append(token.getText());
-                    }
-                    result.add(formatted.toString());
-                }
-                offset = end + 1;
-            }
-            return String.join("\n", result);
-        }, true);
-    }
-
     private void goTo() {
         String value = JOptionPane.showInputDialog(pane, "Line[:column] (starts at 1)", "Go to", JOptionPane.QUESTION_MESSAGE);
         if (value == null) return;
@@ -257,28 +188,16 @@ final class EditorCommands {
         }
     }
 
-    private void toggle(JMenu menu, String key, String label, java.util.function.BooleanSupplier get, java.util.function.Consumer<Boolean> set) {
-        JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, get.getAsBoolean());
-        item.addActionListener(e -> {
-            set.accept(item.isSelected());
-            state.setFlag(key, item.isSelected());
-        });
-        menu.add(item);
-    }
-
     private void indentationSettings() {
         JSpinner size = new JSpinner(new SpinnerNumberModel(pane.getTabSize(), 1, 16, 1));
         JCheckBox spaces = new JCheckBox("Insert spaces", pane.getTabsEmulated());
-        JSpinner operand = new JSpinner(new SpinnerNumberModel(state.number("OperandColumn", 16), 1, 120, 1));
-        JSpinner comment = new JSpinner(new SpinnerNumberModel(state.number("CommentColumn", 40), 1, 200, 1));
-        if (JOptionPane.showConfirmDialog(pane, new Object[]{"Indent size", size, spaces, "Second token column", operand, "Comment column", comment}, "Indentation", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+        if (JOptionPane.showConfirmDialog(pane, new Object[]{"Tab size", size, spaces},
+                "Indentation", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
             return;
         pane.setTabSize((Integer) size.getValue());
         pane.setTabsEmulated(spaces.isSelected());
         state.setNumber("TabSize", pane.getTabSize());
         state.setFlag("Spaces", spaces.isSelected());
-        state.setNumber("OperandColumn", (Integer) operand.getValue());
-        state.setNumber("CommentColumn", (Integer) comment.getValue());
     }
 
     private enum TokenColor {

@@ -49,11 +49,20 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
             assertFalse(onEdt(deviceCombo::isVisible));
             assertEquals("CPU description", onEdt(description::getText));
             findLabel(dialog, "Demo computer");
-            findLabel(dialog, "Z80 CPU");
+            JLabel title = findLabel(dialog, "Z80 CPU");
             findLabel(dialog, "cpu.jar");
-            findLabel(dialog, "1.0");
-            findLabel(dialog, "CPU copyright");
+            JLabel version = findLabel(dialog, "1.0");
+            JLabel copyright = findLabel(dialog, "CPU copyright");
             findLabel(dialog, "CPU information");
+
+            runOnEdt(() -> {
+                int titleY = SwingUtilities.convertPoint(title, 0, 0, dialog).y;
+                int versionY = SwingUtilities.convertPoint(version, 0, 0, dialog).y;
+                int copyrightY = SwingUtilities.convertPoint(copyright, 0, 0, dialog).y;
+                int descriptionY = SwingUtilities.convertPoint(description, 0, 0, dialog).y;
+                assertTrue("Plugin metadata should follow the title", titleY < versionY);
+                assertTrue("Description should follow the plugin metadata", copyrightY < descriptionY);
+            });
         }
     }
 

@@ -101,6 +101,7 @@ public class RTokenMaker extends TokenMakerBase {
         }
 
         int previousEnd = -1;
+        boolean previousWasReservedPunctuation = false;
 
         while (lexer.hasNext()) {
             net.emustudio.emulib.plugin.compiler.Token token;
@@ -129,6 +130,8 @@ public class RTokenMaker extends TokenMakerBase {
                 int start = textOffset + token.getOffset();
                 int end = start + tokenText.length() - 1;
                 int tokenMakerType = getTokenMakerType(emuType);
+                boolean reservedPunctuation = tokenMakerType == Token.RESERVED_WORD && start == end
+                        && isReservedPunctuation(tokenText.charAt(0));
 
                 // Fill gaps with ERROR tokens (same idea as JFlex's catch-all rules)
                 if (previousEnd == -1 && start != textOffset) {
@@ -136,14 +139,30 @@ public class RTokenMaker extends TokenMakerBase {
                 } else if (previousEnd != -1 && start != previousEnd + 1) {
                     addToken(array, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousEnd + 1 + offsetShift);
                 }
+                // Paint adjacent single-character instructions as one span, keeping loop brackets separate.
+                if (reservedPunctuation && previousWasReservedPunctuation && start == previousEnd + 1) {
+                    currentToken.textCount++;
+                } else {
+                    addToken(array, start, end, tokenMakerType, start + offsetShift);
+                }
                 previousEnd = end;
-
-                addToken(array, start, end, tokenMakerType, start + offsetShift);
+                previousWasReservedPunctuation = reservedPunctuation;
             } catch (Exception ex) {
                 LOGGER.error("Could not process token", ex);
             }
         }
         addNullToken();
         return firstToken;
+    }
+
+    private static boolean isReservedPunctuation(char character) {
+        switch (Character.getType(character)) {
+            case Character.MATH_SYMBOL:
+            case Character.DASH_PUNCTUATION:
+            case Character.OTHER_PUNCTUATION:
+                return true;
+            default:
+                return false;
+        }
     }
 }

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.actions;
 
+import net.emustudio.application.gui.editor.CompilerOutputPanel;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugin.compiler.CompilerListener;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.loadIcon;
 
@@ -27,12 +29,12 @@ public class CompileAction extends AbstractAction {
     private final Dialogs dialogs;
     private final Editor editor;
     private final Supplier<CPU.RunState> runState;
-    private final JTextArea compilerOutput;
+    private final CompilerOutputPanel compilerOutput;
     private final Runnable updateTitle;
     private volatile Path compilingSource;
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
-                         JTextArea compilerOutput, Runnable updateTitle) {
+                         CompilerOutputPanel compilerOutput, Runnable updateTitle) {
         super("Compile", loadIcon("/net/emustudio/application/gui/icons/compiler.png"));
 
         this.computer = Objects.requireNonNull(computer);
@@ -46,25 +48,6 @@ public class CompileAction extends AbstractAction {
         putValue(MNEMONIC_KEY, KeyEvent.VK_C);
 
         setEnabled(computer.getCompiler().isPresent());
-        computer.getCompiler().ifPresent(c -> c.addCompilerListener(new CompilerListener() {
-            @Override
-            public void onStart() {
-                runOnEdt(() -> compilerOutput.append("Compiling started...\n"));
-            }
-
-            @Override
-            public void onMessage(CompilerMessage message) {
-                runOnEdt(() -> {
-                    compilerOutput.append(message.getFormattedMessage() + "\n");
-                    message.getPosition().ifPresent(editor::setPosition);
-                });
-            }
-
-            @Override
-            public void onFinish() {
-                runOnEdt(() -> compilerOutput.append("Compiling has finished.\n"));
-            }
-        }));
     }
 
     public Optional<Path> getCompilingSource() {
@@ -81,28 +64,23 @@ public class CompileAction extends AbstractAction {
                 updateTitle.run();
 
                 editor.getCurrentFile().ifPresent(file -> {
-                    compilerOutput.setText("");
                     Path source = file.toPath();
+                    compilerOutput.begin(source);
+                    AtomicBoolean failed = new AtomicBoolean();
 
                     Runnable compile = () -> {
-                        AtomicBoolean failed = new AtomicBoolean();
-                        CompilerListener result = new CompilerListener() {
-                            @Override public void onStart() { }
-                            @Override public void onMessage(CompilerMessage message) {
-                                if (message.getType() == CompilerMessage.Type.ERROR) failed.set(true);
-                            }
-                            @Override public void onFinish() { }
+                        CompilerListener listener = message -> {
+                            if (message.getType() == CompilerMessage.Type.ERROR) failed.set(true);
+                            runOnEdt(() -> compilerOutput.append(message));
                         };
-                        compiler.addCompilerListener(result);
+                        compiler.addCompilerListener(listener);
                         try {
                             compilingSource = source;
                             compiler.compile(source, Optional.empty());
                             if (failed.get()) throw new IllegalStateException("Compilation failed");
-                        } catch (Exception e) {
-                            throw new IllegalStateException("Could not compile file: " + e, e);
                         } finally {
                             compilingSource = null;
-                            compiler.removeCompilerListener(result);
+                            compiler.removeCompilerListener(listener);
                         }
                     };
                     setEnabled(false);
@@ -110,8 +88,14 @@ public class CompileAction extends AbstractAction {
                             .<CompletableFuture<?>>map(execution -> execution.compile(compile))
                             .orElseGet(() -> CompletableFuture.runAsync(compile));
                     completed.whenComplete((ignored, failure) -> runOnEdt(() -> {
+                        if (failure != null && !failed.get()) {
+                            Throwable cause = failure instanceof CompletionException && failure.getCause() != null
+                                    ? failure.getCause() : failure;
+                            String reason = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
+                            compilerOutput.append(new CompilerMessage(CompilerMessage.Type.ERROR, reason, null));
+                        }
+                        compilerOutput.finish(failure != null);
                         setEnabled(true);
-                        if (failure != null) compilerOutput.append("Could not compile file: " + failure + "\n");
                     }));
                 });
             }
